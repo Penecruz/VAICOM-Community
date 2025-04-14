@@ -1,0 +1,649 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!-- 
+    Microsoft ResX Schema 
+    
+    Version 2.0
+    
+    The primary goals of this format is to allow a simple XML format 
+    that is mostly human readable. The generation and parsing of the 
+    various data types are done through the TypeConverter classes 
+    associated with the data types.
+    
+    Example:
+    
+    ... ado.net/XML headers & schema ...
+    <resheader name="resmimetype">text/microsoft-resx</resheader>
+    <resheader name="version">2.0</resheader>
+    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+    <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
+    <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
+    <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
+        <value>[base64 mime encoded serialized .NET Framework object]</value>
+    </data>
+    <data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+        <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
+        <comment>This is a comment</comment>
+    </data>
+                
+    There are any number of "resheader" rows that contain simple 
+    name/value pairs.
+    
+    Each data row contains a name, and value. The row also contains a 
+    type or mimetype. Type corresponds to a .NET class that support 
+    text/value conversion through the TypeConverter architecture. 
+    Classes that don't support this are serialized and stored with the 
+    mimetype set.
+    
+    The mimetype is used for serialized objects, and tells the 
+    ResXResourceReader how to depersist the object. This is currently not 
+    extensible. For a given mimetype the value must be set accordingly:
+    
+    Note - application/x-microsoft.net.object.binary.base64 is the format 
+    that the ResXResourceWriter will generate, however the reader can 
+    read any of the formats listed below.
+    
+    mimetype: application/x-microsoft.net.object.binary.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
+            : and then encoded with base64 encoding.
+    
+    mimetype: application/x-microsoft.net.object.soap.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
+            : and then encoded with base64 encoding.
+
+    mimetype: application/x-microsoft.net.object.bytearray.base64
+    value   : The object must be serialized into a byte array 
+            : using a System.ComponentModel.TypeConverter
+            : and then encoded with base64 encoding.
+    -->
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <assembly alias="System.Windows.Forms" name="System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
+  <data name="Afghan_A10_1" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_A10_1.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_A10_10" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_A10_10.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_A10_11" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_A10_11.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_A10_12" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_A10_12.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_A10_13" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_A10_13.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_A10_2" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_A10_2.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_A10_3" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_A10_3.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_A10_4" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_A10_4.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_A10_5" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_A10_5.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_A10_6" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_A10_6.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_A10_7" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_A10_7.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_A10_8" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_A10_8.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_A10_9" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_A10_9.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Apache_1" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Apache_1.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Apache_10" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Apache_10.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Apache_11" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Apache_11.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Apache_12" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Apache_12.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Apache_13" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Apache_13.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Apache_14" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Apache_14.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Apache_15" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Apache_15.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Apache_16" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Apache_16.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Apache_17" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Apache_17.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Apache_18" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Apache_18.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Apache_19" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Apache_19.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Apache_2" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Apache_2.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Apache_20" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Apache_20.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Apache_21" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Apache_21.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Apache_22" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Apache_22.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Apache_23" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Apache_23.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Apache_24" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Apache_24.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Apache_25" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Apache_25.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Apache_26" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Apache_26.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Apache_27" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Apache_27.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Apache_28" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Apache_28.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Apache_29" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Apache_29.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Apache_3" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Apache_3.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Apache_30" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Apache_30.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Apache_31" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Apache_31.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Apache_32" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Apache_32.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Apache_33" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Apache_33.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Apache_34" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Apache_34.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Apache_35" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Apache_35.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Apache_36" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Apache_36.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Apache_37" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Apache_37.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Apache_38" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Apache_38.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Apache_39" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Apache_39.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Apache_4" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Apache_4.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Apache_40" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Apache_40.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Apache_41" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Apache_41.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Apache_42" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Apache_42.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Apache_43" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Apache_43.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Apache_44" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Apache_44.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Apache_45" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Apache_45.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Apache_46" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Apache_46.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Apache_47wav" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Apache_47wav.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Apache_48" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Apache_48.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Apache_49" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Apache_49.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Apache_5" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Apache_5.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Apache_50" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Apache_50.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Apache_51" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Apache_51.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Apache_52" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Apache_52.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Apache_53" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Apache_53.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Apache_54" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Apache_54.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Apache_55" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Apache_55.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Apache_56" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Apache_56.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Apache_57" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Apache_57.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Apache_58" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Apache_58.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Apache_59" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Apache_59.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Apache_6" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Apache_6.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Apache_60" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Apache_60.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Apache_61" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Apache_61.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Apache_62" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Apache_62.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Apache_63" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Apache_63.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Apache_64" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Apache_64.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Apache_65" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Apache_65.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Apache_66" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Apache_66.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Apache_67" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Apache_67.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Apache_7" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Apache_7.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Apache_8" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Apache_8.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Apache_9" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Apache_9.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_AWACS_1" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_AWACS_1.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_AWACS_2" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_AWACS_2.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Blizard_1" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Blizard_1.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Blizard_2" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Blizard_2.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Dragon_1" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Dragon_1.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Dragon_2" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Dragon_2.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Dragon_3" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Dragon_3.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Dragon_4" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Dragon_4.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Dragon_5" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Dragon_5.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Dragon_6" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Dragon_6.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Hog05_1" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Hog05_1.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Hog05_10" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Hog05_10.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Hog05_11" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Hog05_11.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Hog05_12" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Hog05_12.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Hog05_13" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Hog05_13.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Hog05_14" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Hog05_14.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Hog05_15" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Hog05_15.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Hog05_16" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Hog05_16.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Hog05_17" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Hog05_17.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Hog05_18" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Hog05_18.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Hog05_19" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Hog05_19.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Hog05_2" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Hog05_2.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Hog05_20" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Hog05_20.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Hog05_21" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Hog05_21.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Hog05_22" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Hog05_22.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Hog05_23" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Hog05_23.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Hog05_24" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Hog05_24.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Hog05_25" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Hog05_25.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Hog05_26" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Hog05_26.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Hog05_27" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Hog05_27.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Hog05_28" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Hog05_28.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Hog05_29" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Hog05_29.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Hog05_3" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Hog05_3.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Hog05_30" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Hog05_30.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Hog05_31" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Hog05_31.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Hog05_32" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Hog05_32.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Hog05_33" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Hog05_33.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Hog05_34" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Hog05_34.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Hog05_35" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Hog05_35.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Hog05_36" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Hog05_36.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Hog05_37" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Hog05_37.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Hog05_38" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Hog05_38.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Hog05_39" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Hog05_39.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Hog05_4" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Hog05_4.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Hog05_40" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Hog05_40.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Hog05_41" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Hog05_41.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Hog05_42" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Hog05_42.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Hog05_43" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Hog05_43.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Hog05_44" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Hog05_44.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Hog05_45" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Hog05_45.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Hog05_46" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Hog05_46.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Hog05_47" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Hog05_47.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Hog05_48" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Hog05_48.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Hog05_49" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Hog05_49.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Hog05_5" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Hog05_5.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Hog05_50" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Hog05_50.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Hog05_51" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Hog05_51.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Hog05_52" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Hog05_52.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Hog05_53" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Hog05_53.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Hog05_54" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Hog05_54.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Hog05_55" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Hog05_55.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Hog05_56" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Hog05_56.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Hog05_57" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Hog05_57.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Hog05_58" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Hog05_58.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Hog05_6" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Hog05_6.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Hog05_7" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Hog05_7.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Hog05_8" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Hog05_8.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Hog05_9" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Hog05_9.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Hog_1" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Hog_1.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Hog_10" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Hog_10.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Hog_11" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Hog_11.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Hog_12" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Hog_12.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Hog_13" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Hog_13.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Hog_14" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Hog_14.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Hog_15" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Hog_15.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Hog_16" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Hog_16.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Hog_17" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Hog_17.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Hog_18" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Hog_18.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Hog_19" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Hog_19.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Hog_2" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Hog_2.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Hog_20" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Hog_20.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Hog_21" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Hog_21.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Hog_22" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Hog_22.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Hog_23" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Hog_23.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Hog_24" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Hog_24.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Hog_25" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Hog_25.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Hog_26" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Hog_26.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Hog_27" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Hog_27.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Hog_28" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Hog_28.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Hog_3" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Hog_3.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Hog_4" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Hog_4.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Hog_5" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Hog_5.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Hog_6" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Hog_6.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Hog_7" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Hog_7.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Hog_8" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Hog_8.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Afghan_Hog_9" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\Audio\Themes\Chatter\Afghanistan\Afghan_Hog_9.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+</root>

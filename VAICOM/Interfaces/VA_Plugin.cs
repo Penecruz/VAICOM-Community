@@ -18,12 +18,12 @@ namespace VAICOM
 
             public static string VA_DisplayName()
             {
-                return "VAICOM PRO Community Edition for DCS World";
+                return "VAICOM Community Edition for DCS World";
             }
 
             public static string VA_DisplayInfo()
             {
-                return "VAICOM PRO Community Edition 2.8 for DCS World";
+                return "VAICOM Community Edition 3.0 for DCS World";
             }
 
             public static Guid VA_Id()
@@ -150,7 +150,7 @@ namespace VAICOM
                         else
                         {
                             UI.Playsound.Sorry();
-                            vaProxy.WriteToLog("Please enable Chatter in the Vaicom Pro UI extension tab to use Chatter functions.", Colors.Warning);
+                            vaProxy.WriteToLog("Please enable Chatter in the Vaicom UI extension tab to use Chatter functions.", Colors.Warning);
                         }
                         break;
 

@@ -1175,10 +1175,15 @@ Velocity = {
 
 ClientAndAWACSHandler = {
 	make = function(self, message, direction, useIndex)
+		local   header = self:makeHeader(message, direction, useIndex)
+		return 	header+ Event:make(message.event)
+	end,
+	
+	makeHeader = function(self, message, direction, useIndex)
 		if direction  then
-			return self.sub.AWACSCallsign:make(message.receiver, useIndex) + comma_space_ + self.sub.PlayerAircraftCallsign:make(message.sender,message.receiver, useIndex) + comma_space_ + Event:make(message.event)
+			return self.sub.AWACSCallsign:make(message.receiver, useIndex) + comma_space_ + self.sub.PlayerAircraftCallsign:make(message.sender,message.receiver, useIndex) + comma_space_
 		else
-			return self.sub.PlayerAircraftCallsign:make(message.receiver,message.sender, useIndex) + comma_space_ + self.sub.AWACSCallsign:make(message.sender, useIndex) + comma_space_ + Event:make(message.event)
+			return self.sub.PlayerAircraftCallsign:make(message.receiver,message.sender, useIndex) + comma_space_ + self.sub.AWACSCallsign:make(message.sender, useIndex) + comma_space_
 		end
 	end,
 	sub = {	PlayerAircraftCallsign	= PlayerAircraftCallsign,
@@ -1219,12 +1224,18 @@ ClientToAWACSHandler = {
 	make = function(self, message, language)
 		return self.sub.ClientAndAWACSHandler:make(message, true, language == 'RUS')
 	end,
+	makeHeader = function(self, message, language)
+		return self.sub.ClientAndAWACSHandler:makeHeader(message, true, language == 'RUS')
+	end,
 	sub = { ClientAndAWACSHandler = ClientAndAWACSHandler }
 }
 
 AWACSToClientHandler = {
 	make = function(self, message, language)
 		return self.sub.ClientAndAWACSHandler:make(message, false, language == 'RUS')
+	end,
+	makeHeader = function(self, message, language)
+		return self.sub.ClientAndAWACSHandler:makeHeader(message, false, language == 'RUS')
 	end,
 	sub = { ClientAndAWACSHandler = ClientAndAWACSHandler }
 }
@@ -1257,7 +1268,10 @@ AWACSTargetDir = {
 			Direction		= Direction,
 			Altitude		= Altitude,
 			cold			= Phrase:new({_('cold'),		'cold'}),
-			hot				= Phrase:new({_('hot'),			'hot'}),
+			hot				= PhraseRandom:new({{_('hot'),		'hot'},
+												{_('hot'),		'hot 2'},
+												{_('hot'),		'hot 3'},												
+												{_('hot'),		'hot 4'}}),
 			flanking		= Phrase:new({_('flanking'),	'flanking'}) }
 }
 
@@ -1271,6 +1285,29 @@ AWACSbanditBearingHandler = {
 			AWACSTargetDir			= AWACSTargetDir }
 }
 
+AWACSContactAffiliation = {
+
+	make = function(self, message, language)
+		local header  = AWACSToClientHandler:makeHeader(message, language)
+		local answer 
+		local  hostility = message.parameters.affiliation or 3
+		if 	   hostility == 0 then -- friendly
+			answer =  self.sub.ContactIsFriendly:make()
+		elseif hostility == 1 then
+			answer =  self.sub.ContactIsHostile:make()
+		elseif hostility == 2 then
+			answer =  self.sub.ContactIsNeutral:make()
+		else
+			answer =  self.sub.ContactIsUnknown:make()
+		end
+		return header + answer
+	end,
+	sub = {	ContactIsFriendly 		= Phrase:new({ _('contact is friendly'), 'contact is friendly'} ,'Messages'  ),
+			ContactIsHostile		= Phrase:new({ _('contact is hostile'),  'contact is hostile'} 	,'Messages'  ),
+			ContactIsNeutral		= Phrase:new({ _('contact is neutral'),  'contact is neutral'} 	,'Messages'  ),
+			ContactIsUnknown		= Phrase:new({ _('contact is unknown'),  'contact is unknown'} 	,'Messages'  ),
+	}
+}
 --Flight
 
 do
@@ -3273,4 +3310,4 @@ function make(self, message)
 	
 end	
 
---base.print('Speech.common modules loaded')S
+--base.print('Speech.common modules loaded')

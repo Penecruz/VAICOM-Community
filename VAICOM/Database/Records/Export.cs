@@ -253,7 +253,7 @@ namespace VAICOM
                     outputappendixwpnstring += "with " + alias.Key;
                     if (!alias.Key.EndsWith("*"))
                     {
-                        outputappendixwpnstring += "*";
+                        outputappendixwpnstring += "";
                     }
                     outputappendixwpnstring += "; ";
                     counter = counter + 1;
@@ -264,7 +264,7 @@ namespace VAICOM
                 {
                     if (!alias.Key.StartsWith("*"))
                     {
-                        outputappendixdirstring += "*";
+                        outputappendixdirstring += "";
                     }
                     outputappendixdirstring += alias.Key;
                     outputappendixdirstring += "; ";

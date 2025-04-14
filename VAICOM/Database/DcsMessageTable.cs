@@ -1015,6 +1015,30 @@ namespace VAICOM
                 DcsMessageTable.Add(4945, "wMsgLeaderToMooseRqstCommence");
                 DcsMessageTable.Add(4946, "wMsgLeaderToMooseEmerLanding");
 
+                // Add New Tac Turns messages for testing
+                DcsMessageTable.Add(4951, "wMsgLeaderTacTurnLeft30");
+                DcsMessageTable.Add(4952, "wMsgLeaderTacTurnRight30");
+                DcsMessageTable.Add(4953, "wMsgLeaderTacTurnLeft45");
+                DcsMessageTable.Add(4954, "wMsgLeaderTacTurnRight45");
+                DcsMessageTable.Add(4955, "wMsgLeaderTacTurnLeft60");
+                DcsMessageTable.Add(4956, "wMsgLeaderTacTurnRight60");
+                DcsMessageTable.Add(4957, "wMsgLeaderTacTurnLeft90");
+                DcsMessageTable.Add(4958, "wMsgLeaderTacTurnRight90");
+                DcsMessageTable.Add(4959, "wMsgLeaderTacTurnLeft180");
+                DcsMessageTable.Add(4960, "wMsgLeaderTacTurnRight180");
+                DcsMessageTable.Add(4961, "wMsgLeaderTacTurnRotate180");
+                DcsMessageTable.Add(4962, "wMsgLeaderTacTurnShackle");
+                DcsMessageTable.Add(4963, "wMsgLeaderHeading000");
+                DcsMessageTable.Add(4964, "wMsgLeaderHeading045");
+                DcsMessageTable.Add(4965, "wMsgLeaderHeading090");
+                DcsMessageTable.Add(4966, "wMsgLeaderHeading135");
+                DcsMessageTable.Add(4967, "wMsgLeaderHeading180");
+                DcsMessageTable.Add(4968, "wMsgLeaderHeading225");
+                DcsMessageTable.Add(4969, "wMsgLeaderHeading270");
+                DcsMessageTable.Add(4970, "wMsgLeaderHeading315");
+                DcsMessageTable.Add(4971, "wMsgLeaderWiden");
+                DcsMessageTable.Add(4972, "wMsgLeaderCloseUp");
+
             }
 
             public static List<int> DcsAutoEventIDs;

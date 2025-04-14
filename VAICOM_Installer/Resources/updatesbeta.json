@@ -2,16 +2,16 @@
   "updates":
   [
     {
-      "title": "VAICOM PRO Community Edition for DCS World",
+      "title": "VAICOM Community Edition for DCS World",
       "isrelease": true,
       "isbeta": false,
       "isdev": false,
       "productid": 1,
-      "releasedate": 20250121,
-      "version": 2998,
-      "versionstring": "2.9.9.8",
+      "releasedate": 20250413,
+      "version": 3018,
+      "versionstring": "3.0.1.8",
       "downloadurl": "https://raw.githubusercontent.com/Penecruz/VAICOMPRO-Community/Development/VAICOM_Installer/Resources/VAICOMPRO.zip",
-      "releasenotes": "This will be RC. large changes with carrier comms handling removed redundant Platfor and Kiss Off. Adds Logging for rearm menu not showing (WIP). Adds the Iraq north to ATC Recipients, adds Afghanistan east to ATC recipients, fixes errors in origional DCS swap files this had the effect of corrupting the radiocommandsdialog.lua and common.lua on second run of DCS. Also I changed some appended files to base line errors prior to bug hunting. Make sure you update you keywords to pick up the new recipients, happy testing!"
+      "releasenotes": " Hotfix command alias conflicts, New Taker callsigns, AI_ATC additional command, Branding Change from Vaicom Pro to Vaicom - exe and dll retain old name of Vaicompro."
     }
   ]
 }

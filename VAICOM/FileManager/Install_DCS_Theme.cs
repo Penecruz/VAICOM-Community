@@ -128,7 +128,7 @@ namespace VAICOM
                         resourcestring = Properties.Resources.optionsData;
 
                         string insert;
-                        insert = "VAICOM PRO Community Edition - interactive voice communications plugin";
+                        insert = "VAICOM Community Edition - interactive voice control plugin";
                         resourcestring = resourcestring.Replace("$HEADER$", insert);
                         insert = "Version: " + State.pluginversionnumber;
                         resourcestring = resourcestring.Replace("$VERSION$", insert);
@@ -156,7 +156,7 @@ namespace VAICOM
                         }
                         resourcestring = resourcestring.Replace("$IPCONFIG$", insert);
 
-                        insert = "DISCLAIMER: VAICOM PRO Community Edition is not an official ED partner module. Eagle Dynamics cannot be contacted with questions in relation to this software.";
+                        insert = "DISCLAIMER: VAICOM Community Edition is not an official ED partner module. Eagle Dynamics cannot be contacted with questions in relation to this software.";
                         resourcestring = resourcestring.Replace("$FOOTER$", insert);
 
                         file = optionspath + "optionsData.lua";

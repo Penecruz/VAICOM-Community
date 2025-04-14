@@ -218,7 +218,7 @@
             AI_pilot,
             ally,
             kneeboard,
-            moosemenu,
+            Moose,
         }
 
 

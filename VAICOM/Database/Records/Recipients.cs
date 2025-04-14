@@ -404,6 +404,9 @@ namespace VAICOM
                 { "Khost Heliport",             new Recipient { uniqueid = 15512, category = RecipientCategories.aiatc, name = "wAIUnitATCAfghanKhostHeliport",  displayname = Labels.airecipients["Khost Heliport"], blockedforFree = true  } },
                 { "Sharan",                     new Recipient { uniqueid = 15513, category = RecipientCategories.aiatc, name = "wAIUnitATCAfghanSharan",  displayname = Labels.airecipients["Sharan"], blockedforFree = true  } },
                 { "Urgoon Heliport",            new Recipient { uniqueid = 15514, category = RecipientCategories.aiatc, name = "wAIUnitATCAfghanUrgoonHeliport",  displayname = Labels.airecipients["Urgoon Heliport"], blockedforFree = true  } },
+                { "Maymana Zahiraddin Faryabi", new Recipient { uniqueid = 15515, category = RecipientCategories.aiatc, name = "wAIUnitATCAfghanMaymanaZahiraddinFaryabi",  displayname = Labels.airecipients["Maymana Zahiraddin Faryabi"], blockedforFree = true  } },
+                { "Mary",                       new Recipient { uniqueid = 15516, category = RecipientCategories.aiatc, name = "wAIUnitATCAfghanMary",  displayname = Labels.airecipients["Mary"], blockedforFree = true  } },
+                { "Mary North",                 new Recipient { uniqueid = 15517, category = RecipientCategories.aiatc, name = "wAIUnitATCAfghanMaryNorth",  displayname = Labels.airecipients["Mary North"], blockedforFree = true  } },
                    // North TODO
                 { "wAIUnitATCAfghanMaximum",    new Recipient { uniqueid = 15540, category = RecipientCategories.aiatc, name = "wAIUnitATCAfghanMaximum",           } },
 
@@ -506,7 +509,10 @@ namespace VAICOM
                 { "texaco",                 new Recipient { uniqueid = 16002, category = RecipientCategories.aitanker, name = "wAIUnitTankerTexaco",     displayname = Labels.airecipients["texaco"] } },
                 { "shell",                  new Recipient { uniqueid = 16003, category = RecipientCategories.aitanker, name = "wAIUnitTankerShell",      displayname = Labels.airecipients["shell"] } },
                 { "arco",                   new Recipient { uniqueid = 16004, category = RecipientCategories.aitanker, name = "wAIUnitTankerArco",       displayname = Labels.airecipients["arco"] } },
-                { "nearesttanker",          new Recipient { uniqueid = 16005, category = RecipientCategories.aitanker, name = "wAIUnitTankerNearest",    displayname = Labels.airecipients["nearesttanker"] } },
+                { "Bloodhound",             new Recipient { uniqueid = 16005, category = RecipientCategories.aitanker, name = "wAIUnitTankerBloodhound",    displayname = Labels.airecipients["Bloodhound"] } },
+                { "Mauler",                 new Recipient { uniqueid = 16006, category = RecipientCategories.aitanker, name = "wAIUnitTankerMauler",    displayname = Labels.airecipients["Mauler"] } },
+                { "Navy One",               new Recipient { uniqueid = 16007, category = RecipientCategories.aitanker, name = "wAIUnitTankerNavyone",    displayname = Labels.airecipients["Navy One"] } },
+                { "nearesttanker",          new Recipient { uniqueid = 16008, category = RecipientCategories.aitanker, name = "wAIUnitTankerNearest",    displayname = Labels.airecipients["nearesttanker"] } },
 
                 { "wAIUnitTankerMaximum",   new Recipient { uniqueid = 16999, category = RecipientCategories.aitanker, name = "wAIUnitTankerMaximum",    } },
 
@@ -540,6 +546,7 @@ namespace VAICOM
 
                 { "wAIUnitAuxNull",         new Recipient { uniqueid = 19050, category = RecipientCategories.auxmenu, name = "wAIUnitAuxNull",          } },
                 { "aux",                    new Recipient { uniqueid = 19051, category = RecipientCategories.auxmenu, name = "wAIUnitAuxMysteryGuest",  displayname = Labels.airecipients["aux"] } },
+                //{ "AI_ATC",                 new Recipient { uniqueid = 19052, category = RecipientCategories.auxmenu, name = "wAI_ATC",  displayname = Labels.airecipients["AI_ATC"] } },
                 { "wAIUnitAuxMaximum",      new Recipient { uniqueid = 19099, category = RecipientCategories.auxmenu, name = "wAIUnitAuxMaximum",       } },
 
                 { "wAIUnitCargoNull",       new Recipient { uniqueid = 19100, category = RecipientCategories.cargo, name = "wAIUnitCargoNull",          } },
@@ -562,10 +569,10 @@ namespace VAICOM
                 { "wAIUnitKneeboardMaximum",    new Recipient { uniqueid = 19499, category = RecipientCategories.kneeboard, name = "wAIUnitKneeboardMaximum",   } },
 
                 // Moose Ops 
-                { "wAIUnitMooseNull" ,           new Recipient { uniqueid = 19500, category = RecipientCategories.moosemenu,    name = "wAIUnitMooseNull" } },
-                { "Moose" ,                     new Recipient { uniqueid = 19501, category = RecipientCategories.moosemenu,    name = "wAIUnitMoose",displayname = Labels.airecipients["Moose"],blockedforFree = true   } },
-                //{ "Radio Check LSO" ,           new Recipient { uniqueid = 19502, category = RecipientCategories.moosemenu,    name = "wAIUnitRadioChkLSO",displayname = Labels.airecipients["Radio Check LSO"],blockedforFree = true   } },
-                { "wAIUnitMooseMaximum" ,       new Recipient { uniqueid = 19999, category = RecipientCategories.moosemenu,    name = "wAIUnitMooseMaximum" } },
+                { "wAIUnitMooseNull" ,          new Recipient { uniqueid = 19500, category = RecipientCategories.Moose,    name = "wAIUnitMooseNull" } },
+                { "Moose" ,                     new Recipient { uniqueid = 19501, category = RecipientCategories.Moose,    name = "wAIUnitMoose",displayname = Labels.airecipients["Moose"],blockedforFree = true   } },
+                //{ "Radio Check LSO" ,           new Recipient { uniqueid = 19502, category = RecipientCategories.Moose,    name = "wAIUnitRadioChkLSO",displayname = Labels.airecipients["Radio Check LSO"],blockedforFree = true   } },
+                { "wAIUnitMooseMaximum" ,       new Recipient { uniqueid = 19999, category = RecipientCategories.Moose,    name = "wAIUnitMooseMaximum" } },
 
             };
         }

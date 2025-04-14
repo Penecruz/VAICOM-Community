@@ -2,7 +2,7 @@
 <Profile xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <HasMB>false</HasMB>
   <Id>65ee8337-d43c-4b26-aea9-4ce0f9d4e467</Id>
-  <Name>VAICOM PRO for DCS World</Name>
+  <Name>VAICOM for DCS World</Name>
   <Commands>
     <Command>
       <Referrer xsi:nil="true" />

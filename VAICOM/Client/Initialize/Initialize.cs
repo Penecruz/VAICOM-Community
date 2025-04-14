@@ -89,12 +89,12 @@ namespace VAICOM
 
                     if (VAcurrentversion < VAminversion)
                     {
-                        Log.Write("ALERT: VoiceAttack is not up to date! Update to version " + State.vaminversion + " or higher to use with VAICOM PRO Community Edition.", Colors.Critical);
+                        Log.Write("ALERT: VoiceAttack is not up to date! Update to version " + State.vaminversion + " or higher to use with VAICOM Community Edition.", Colors.Critical);
                         UI.Playsound.Error();
                     }
                     else
                     {
-                        Log.Write("VoiceAttack current version " + VAcurrentversion.ToString() + " up-to-date for use with VAICOM PRO Community Edition.", Colors.Text);
+                        Log.Write("VoiceAttack current version " + VAcurrentversion.ToString() + " up-to-date for use with VAICOM Community Edition.", Colors.Text);
                     }
 
                 }
@@ -427,8 +427,8 @@ namespace VAICOM
                     FileHandler.Root.ExtractCompagnionApp();
                     FileHandler.Root.ExtractNoLoadContext();
 
-                    Log.Write("VAICOM PRO Community Edition for DCS World.", Colors.System);
-                    Log.Write("Press LCtrl+LAlt+C to open Vaicom Pro UI", Colors.System);
+                    Log.Write("VAICOM Community Edition for DCS World.", Colors.System);
+                    Log.Write("Press LCtrl+LAlt+C to open Vaicom UI", Colors.System);
                     Log.Write("Initializing..", Colors.System);
 
                     ResetConfig(vaProxy);

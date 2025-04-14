@@ -1,11 +1,11 @@
 <Project>
   <PropertyGroup>
-	  <AssemblyTitle>VAICOM PRO for DCS World</AssemblyTitle>
-	  <Product>VAICOM PRO Community Edition</Product>
-	  <Description>Interactive Voice Communications for DCS World</Description>
-	  <ProductVersion>2.9.9.8</ProductVersion>
-	  <AssemblyVersion>2.9.9.8</AssemblyVersion>
-	  <FileVersion>2.9.9.8</FileVersion>
+	  <AssemblyTitle>VAICOM for DCS World</AssemblyTitle>
+	  <Product>VAICOM Community Edition</Product>
+	  <Description>Interactive Voice Control for DCS World</Description>
+	  <ProductVersion>3.0.1.8</ProductVersion>
+	  <AssemblyVersion>3.0.1.8</AssemblyVersion>
+	  <FileVersion>3.0.1.8</FileVersion>
 	  <Copyright>MIT</Copyright>
   </PropertyGroup>
 </Project>

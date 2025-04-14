@@ -18,11 +18,15 @@ namespace VAICOM
                 { "Element",                "element"               },
                 { "Section",                "element"               },
                 { "One",                    "wingman1"              },
+                { "1",                      "wingman1"              },
                 { "Lead",                   "wingman1"              },
                 { "Winger",                 "wingman2"              },
                 { "Two",                    "wingman2"              },
+                { "2",                      "wingman2"              },
                 { "Three",                  "wingman3"              },
+                { "3",                      "wingman3"              },
                 { "Four",                   "wingman4"              },
+                { "4",                      "wingman4"              },
 
                 { "Gopher",                 "wingman2"              },
                 { "Pyro",                   "wingman3"              },
@@ -133,7 +137,7 @@ namespace VAICOM
                 { "Groom Lake",             "Groom Lake"            },
                 { "Dreamland",              "Groom Lake"            },
                 { "Nellis",                 "Nellis"                },
-                { "NellisControl",          "Nellis"                },
+                { "Nellis Control",         "Nellis"                },
                 { "Boulder",                "Boulder City"          },
                 { "Boulder City",           "Boulder City"          },
 
@@ -431,6 +435,10 @@ namespace VAICOM
                 { "Sharana",               "Sharan"                 },
                 { "Urgoon Heliport",       "Urgoon Heliport"        },
                 { "Urgun",                 "Urgoon Heliport"        },
+                { "Maymana Zahiraddin Faryabi", "Maymana Zahiraddin Faryabi"     },
+                { "Maymana",               "Maymana Zahiraddin Faryabi"          },
+                { "Mary",                  "Mary"                                },
+                { "Mary North",            "Mary North"                          },
                 
                 // Iraq map
                     // North
@@ -548,6 +556,10 @@ namespace VAICOM
                 { "Texaco",                 "texaco"                },
                 { "Shell",                  "shell"                 },
                 { "Arco",                   "arco"                  },
+                { "Ark oh",                 "arco"                  },
+                { "Bloodhound",             "Bloodhound"            },
+                { "Mauler",                 "Mauler"                },
+                { "Navy One",               "Navy One"              },
                 { "Nearest Tanker",         "nearesttanker"         },
 
                    // crew
@@ -566,6 +578,7 @@ namespace VAICOM
                 { "Server",                 "aux"                    },
                 { "Mystery",                "aux"                    },
                 { "Mission",                "aux"                    },
+                //{ "Nellis Ground",          "AI_ATC"                 },
 
                 { "Cargo",                  "cargo"                  },
                 { "Descent",                "descent"                },

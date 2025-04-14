@@ -413,7 +413,7 @@
             {
             "Name" = "8:VoiceAttackAppPath"
             "Root" = "2:2"
-            "RegKey" = "8:Software\\VoiceAttack.com\\VoiceAttack\\LastRun"
+            "RegKey" = "8:Software\\VoiceAttack.com\\VoiceAttack2\\LastRun"
             "Value" = "8:AppsFolder"
             "Property" = "8:VAAPPPATH"
             }
@@ -426,7 +426,7 @@
         "Product"
         {
         "Name" = "8:Microsoft Visual Studio"
-        "ProductName" = "8:VAICOM PRO Community Edition for DCS World"
+        "ProductName" = "8:VAICOM Community Edition for DCS World"
         "ProductCode" = "8:{1893BEF0-9C65-4FE9-AD1D-23D582BACAC1}"
         "PackageCode" = "8:{52E9122A-8245-4804-94A3-3B92E068F235}"
         "UpgradeCode" = "8:{16C6ACD8-D83D-44F3-93C0-5BD1BEB540A4}"
@@ -439,11 +439,11 @@
         "Manufacturer" = "8:DCS Community"
         "ARPHELPTELEPHONE" = "8:"
         "ARPHELPLINK" = "8:"
-        "Title" = "8:VAICOM PRO Community Edition for DCS World"
-        "Subject" = "8:Interactive Voice Communications Plugin"
+        "Title" = "8:VAICOM Community Edition for DCS World"
+        "Subject" = "8:Interactive Voice Control Plugin"
         "ARPCONTACT" = "8:"
         "Keywords" = "8:DCS World; VoiceAttack;  plugin"
-        "ARPCOMMENTS" = "8:VAICOM PRO Community Edition for DCS World"
+        "ARPCOMMENTS" = "8:VAICOM Community Edition for DCS World"
         "ARPURLINFOABOUT" = "8:https://discord.gg/7c22BHNSCS"
         "ARPPRODUCTICON" = "8:_0458D060CC6A4FD8A820F2F02E9779EB"
         "ARPIconIndex" = "3:0"
@@ -550,9 +550,9 @@
         {
             "{970C0BB2-C7D0-45D7-ABFA-7EC378858BC0}:_7CBD0CB4F4124F3FB8B29916DCDAF679"
             {
-            "Name" = "8:VAICOM PRO Community Edition for DCS World"
+            "Name" = "8:VAICOM Community Edition for DCS World"
             "Arguments" = "8:"
-            "Description" = "8:VAICOM PRO for DCS World"
+            "Description" = "8:VAICOM for DCS World"
             "ShowCmd" = "3:1"
             "IconIndex" = "3:0"
             "Transitive" = "11:FALSE"
@@ -564,9 +564,9 @@
             }
             "{970C0BB2-C7D0-45D7-ABFA-7EC378858BC0}:_C0F30472291E44B89DFDCCFD3AE140EC"
             {
-            "Name" = "8:VAICOM PRO Community Edition for DCS World"
+            "Name" = "8:VAICOM Community Edition for DCS World"
             "Arguments" = "8:"
-            "Description" = "8:VAICOM PRO for DCS World"
+            "Description" = "8:VAICOM for DCS World"
             "ShowCmd" = "3:1"
             "IconIndex" = "3:0"
             "Transitive" = "11:FALSE"

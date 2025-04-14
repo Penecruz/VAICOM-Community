@@ -50,7 +50,7 @@ local function _(text)
 end
 
 local function getLentaTriggerBounds(a_h)
-	local offsetTop		= 20
+	local offsetTop		= 34
 	local offsetLeft	= 20
 	local width
 	
@@ -132,7 +132,7 @@ function create()
 	selectHmdSkin()
 
     autoScrollTextTrig:setBounds(getLentaTriggerBounds(0))
-	autoScrollTextRadio:setBounds(0, 20, main_w - 650, main_h - 20)
+	autoScrollTextRadio:setBounds(0, 34, main_w - 650, main_h - 54)
     
     sPause:setVisible(false)
     onRadioCommand("")

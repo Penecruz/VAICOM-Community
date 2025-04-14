@@ -267,7 +267,7 @@ namespace VAICOM
             RIO_misc,
             AI_pilot,
             kneeboard,
-            moosemenu
+            Moose,
         }
 
     }

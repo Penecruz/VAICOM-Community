@@ -48,6 +48,12 @@ namespace VAICOM
                             case "falklands":
                                 returnstring += "SATL";
                                 break;
+                            case "afghanistan":
+                                returnstring += "AFGN";
+                                break;
+                            case "iraq":
+                                returnstring += "IRAQ";
+                                break;
                             default:
                                 returnstring += "THTR";
                                 break;
@@ -92,6 +98,12 @@ namespace VAICOM
                                 break;
                             case "falklands":
                                 returnstring += "FIST(Z-3)";
+                                break;
+                            case "afghanistan":
+                                returnstring += "AFT(Z+4:30)";
+                                break;
+                            case "iraq":
+                                returnstring += "AST(Z+3)";
                                 break;
                             default:
                                 returnstring += "Z";

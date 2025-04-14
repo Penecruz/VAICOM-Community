@@ -219,12 +219,19 @@ namespace VAICOM
                     State.currentmodule = DCSmodules.LookupTable["AJS-37"];
                     return true;
                 }
-                //F-5E
-                if ((State.currentstate.id.ToLower().Contains("f") & State.currentstate.id.ToLower().Contains("5")) || (State.currentstate.id.ToLower().Contains("tiger")))
+                //F-5E_FC Flaming Cliffs version
+                if ((State.currentstate.id.ToLower().Contains("f") & State.currentstate.id.ToLower().Contains("5E-3_FC"))) //|| (State.currentstate.id.ToLower().Contains("FC"))) //try removing the or statement on both versions??
                 {
-                    State.currentmodule = DCSmodules.LookupTable["F-5E"];
+                    State.currentmodule = DCSmodules.LookupTable["F-5E_FC"];
                     return true;
                 }
+                //F-5E
+                if ((State.currentstate.id.ToLower().Contains("f") & State.currentstate.id.ToLower().Contains("5E-3"))) //|| (State.currentstate.id.ToLower().Contains("tiger")))
+                {
+                    State.currentmodule = DCSmodules.LookupTable["F-5E-3"];
+                    return true;
+                }
+                
                 //Aviojet
                 if (State.currentstate.id.ToLower().Contains("101") || (State.currentstate.id.ToLower().Contains("avio")))
                 {

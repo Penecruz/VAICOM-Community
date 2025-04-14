@@ -292,7 +292,7 @@ namespace VAICOM
             }
             public void ChangeIselbug()
             {
-                if (State.activeconfig.UseInstantSelect && !(State.currentmodule.Equals(DCSmodules.LookupTable["F-5E"])))
+                if (State.activeconfig.UseInstantSelect && !(State.currentmodule.Equals(DCSmodules.LookupTable["F-5E"]))) // Does F5E Flaming Cliffs need this? todo
                 {
                     Iselbug.Text = "I-SEL";
                 }

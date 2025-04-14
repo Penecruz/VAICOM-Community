@@ -16,6 +16,7 @@ namespace VAICOM
                 { "Strike",                 "engage"               },
                 { "Weapons Free",           "engage"               },
                 { "Cleared Hot",            "engage"               },
+                { "Cleared In Hot",         "engage"               },
 
             };
 

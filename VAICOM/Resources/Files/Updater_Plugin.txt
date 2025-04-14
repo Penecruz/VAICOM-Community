@@ -5,7 +5,7 @@ ECHO Closing VoiceAttack...
 TASKKILL /F /IM VoiceAttack.exe
 TIMEOUT /T 2
 ECHO Updating files...
-COPY /Y "Updates\Package\VAICOMPRO\Documentation\VAICOM PRO Community User Manual.pdf" "Documentation\VAICOM PRO Community User Manual.pdf" 
+COPY /Y "Updates\Package\VAICOMPRO\Documentation\VAICOM Pro Community User Manual.pdf" "Documentation\VAICOM Pro Community User Manual.pdf" 
 COPY /Y "Updates\Package\VAICOMPRO\EULA.txt" "EULA.txt" 
 COPY /Y "Updates\Package\VAICOMPRO\VAICOMPRO.dll" "VAICOMPRO.dll" 
 RMDIR /S /Q "Updates"

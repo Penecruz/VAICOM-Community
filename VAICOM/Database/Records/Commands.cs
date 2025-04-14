@@ -109,7 +109,31 @@ namespace VAICOM
             { "helogocruise" ,          new Command { uniqueid = 11074, category = CommandCategories.aicommsflightformation, dcsid = "wMsgLeaderHelGoCruise",           displayname = Labels.aicommands["helogocruise"], blockedforFree = true } },
             { "helogocombat" ,          new Command { uniqueid = 11075, category = CommandCategories.aicommsflightformation, dcsid = "wMsgLeaderHelGoCombat",           displayname = Labels.aicommands["helogocombat"], blockedforFree = true } },
 
-            {"wMsgLeaderToWingmenMaximum",new Command{uniqueid= 11076,  category = CommandCategories.aicommsflight, dcsid = "wMsgLeaderToWingmenMaximum",  } },
+            //tac turns
+            { "30leftgo" ,              new Command { uniqueid = 11080, category = CommandCategories.aicommsflightformation, dcsid = "wMsgLeaderTacTurnLeft30",         displayname = Labels.aicommands["30leftgo"] } },
+            { "30rightgo" ,             new Command { uniqueid = 11081, category = CommandCategories.aicommsflightformation, dcsid = "wMsgLeaderTacTurnRight30",        displayname = Labels.aicommands["30rightgo"] } },
+            { "45leftgo" ,              new Command { uniqueid = 11082, category = CommandCategories.aicommsflightformation, dcsid = "wMsgLeaderTacTurnLeft45",         displayname = Labels.aicommands["45leftgo"] } },
+            { "45rightgo" ,             new Command { uniqueid = 11083, category = CommandCategories.aicommsflightformation, dcsid = "wMsgLeaderTacTurnRight45",        displayname = Labels.aicommands["45rightgo"] } },
+            { "60leftgo" ,              new Command { uniqueid = 11084, category = CommandCategories.aicommsflightformation, dcsid = "wMsgLeaderTacTurnLeft60",         displayname = Labels.aicommands["60leftgo"] } },
+            { "60rightgo" ,             new Command { uniqueid = 11085, category = CommandCategories.aicommsflightformation, dcsid = "wMsgLeaderTacTurnRight60",        displayname = Labels.aicommands["60rightgo"] } },
+            { "90leftgo" ,              new Command { uniqueid = 11086, category = CommandCategories.aicommsflightformation, dcsid = "wMsgLeaderTacTurnLeft90",         displayname = Labels.aicommands["90leftgo"] } },
+            { "90rightgo" ,             new Command { uniqueid = 11087, category = CommandCategories.aicommsflightformation, dcsid = "wMsgLeaderTacTurnRight90",        displayname = Labels.aicommands["90rightgo"] } },
+            { "turnaboutleftgo" ,       new Command { uniqueid = 11088, category = CommandCategories.aicommsflightformation, dcsid = "wMsgLeaderTacTurnLeft180",        displayname = Labels.aicommands["turnaboutleftgo"] } },
+            { "turnaboutrightgo" ,      new Command { uniqueid = 11089, category = CommandCategories.aicommsflightformation, dcsid = "wMsgLeaderTacTurnRight180",       displayname = Labels.aicommands["turnaboutrightgo"] } },
+            { "rotatego" ,              new Command { uniqueid = 11090, category = CommandCategories.aicommsflightformation, dcsid = "wMsgLeaderTacTurnRotate180",      displayname = Labels.aicommands["rotatego"] } },
+            { "shacklego" ,             new Command { uniqueid = 11091, category = CommandCategories.aicommsflightformation, dcsid = "wMsgLeaderTacTurnShackle",        displayname = Labels.aicommands["shacklego"] } },
+            { "HeadingN" ,              new Command { uniqueid = 11092, category = CommandCategories.aicommsflightformation, dcsid = "wMsgLeaderHeading000",            displayname = Labels.aicommands["HeadingN"] } },
+            { "HeadingNE" ,             new Command { uniqueid = 11093, category = CommandCategories.aicommsflightformation, dcsid = "wMsgLeaderHeading045",            displayname = Labels.aicommands["HeadingNE"] } },
+            { "HeadingE" ,              new Command { uniqueid = 11094, category = CommandCategories.aicommsflightformation, dcsid = "wMsgLeaderHeading090",            displayname = Labels.aicommands["HeadingE"] } },
+            { "HeadingSE" ,             new Command { uniqueid = 11095, category = CommandCategories.aicommsflightformation, dcsid = "wMsgLeaderHeading135",            displayname = Labels.aicommands["HeadingSE"] } },
+            { "HeadingS" ,              new Command { uniqueid = 11096, category = CommandCategories.aicommsflightformation, dcsid = "wMsgLeaderHeading180",            displayname = Labels.aicommands["HeadingS"] } },
+            { "HeadingSW" ,             new Command { uniqueid = 11097, category = CommandCategories.aicommsflightformation, dcsid = "wMsgLeaderHeading225",            displayname = Labels.aicommands["HeadingSW"] } },
+            { "HeadingW" ,              new Command { uniqueid = 11098, category = CommandCategories.aicommsflightformation, dcsid = "wMsgLeaderHeading270",            displayname = Labels.aicommands["HeadingW"] } },
+            { "HeadingNW" ,             new Command { uniqueid = 11099, category = CommandCategories.aicommsflightformation, dcsid = "wMsgLeaderHeading315",            displayname = Labels.aicommands["HeadingNW"] } },
+            { "Widen" ,                 new Command { uniqueid = 11100, category = CommandCategories.aicommsflightformation, dcsid = "wMsgLeaderWiden",                 displayname = Labels.aicommands["Widen"] } },
+            { "CloseUp" ,               new Command { uniqueid = 11101, category = CommandCategories.aicommsflightformation, dcsid = "wMsgLeaderCloseUp",               displayname = Labels.aicommands["CloseUp"] } },
+
+            {"wMsgLeaderToWingmenMaximum",new Command{uniqueid= 11130,  category = CommandCategories.aicommsflight, dcsid = "wMsgLeaderToWingmenMaximum",  } },
 
             // to JTAC 14000
             { "wMsgLeaderToFACNull",new Command { uniqueid = 14000, category = CommandCategories.aicommsjtac, dcsid = "wMsgLeaderToFACNull",          } },
@@ -228,7 +252,7 @@ namespace VAICOM
             { "eppuoff" ,                       new Command { uniqueid = 18010, category = CommandCategories.aicommscrew, dcsid = "wMsgLeaderSpecialCommand",           displayname = Labels.aicommands["eppuoff"], hasparameter = true, parametername = "EPPU", value = false } },
             { "requestrefueling" ,              new Command { uniqueid = 18011, category = CommandCategories.aicommscrew, dcsid = "wMsgLeaderRequestRefueling",      displayname = Labels.aicommands["requestrefueling"], hasparameter = true, volume = 1.0, blockedforFree = true } },
             { "requestcannonreload" ,           new Command { uniqueid = 18012, category = CommandCategories.aicommscrew, dcsid = "wMsgLeaderRequestCannonReloading",displayname = Labels.aicommands["requestcannonreload"], blockedforFree = true } },
-            { "requestrearming" ,               new Command { uniqueid = 18013, category = CommandCategories.aicommscrew, dcsid = "wMsgLeaderRequestRearming",       displayname = Labels.aicommands["requestrearming"] } },//test for parameters maybe?
+            { "requestrearming" ,               new Command { uniqueid = 18013, category = CommandCategories.aicommscrew, dcsid = "wMsgLeaderRequestRearming",       displayname = Labels.aicommands["requestrearming"] } },
             { "groundpoweron" ,                 new Command { uniqueid = 18014, category = CommandCategories.aicommscrew, dcsid = "wMsgLeaderGroundToggleElecPower",        displayname = Labels.aicommands["groundpoweron"], hasparameter = true, on = true} },
             { "groundpoweroff" ,                new Command { uniqueid = 18015, category = CommandCategories.aicommscrew, dcsid = "wMsgLeaderGroundToggleElecPower",        displayname = Labels.aicommands["groundpoweroff"], hasparameter = true, on = false} },
             { "wheelchocksplace" ,              new Command { uniqueid = 18016, category = CommandCategories.aicommscrew, dcsid = "wMsgLeaderGroundToggleWheelChocks",      displayname = Labels.aicommands["wheelchocksplace"], hasparameter = true, on = true, blockedforFree = true} },
@@ -253,7 +277,7 @@ namespace VAICOM
             { "wMsgLeaderInboundCarrier" ,      new Command { uniqueid = 18037, category = CommandCategories.aicommscarrier, dcsid = "wMsgLeaderInboundCarrier",        displayname = Labels.aicommands["wMsgLeaderInboundCarrier"], blockedforFree = true, requiresrealatc = true        } },
             { "wMsgLeaderConfirm" ,             new Command { uniqueid = 18038, category = CommandCategories.aicommscarrier, dcsid = "wMsgLeaderConfirm",               displayname = Labels.aicommands["wMsgLeaderConfirm"], blockedforFree = true, requiresrealatc = true        } },
             { "wMsgLeaderConfirmRemainingFuel", new Command { uniqueid = 18039, category = CommandCategories.aicommscarrier, dcsid = "wMsgLeaderConfirmRemainingFuel",  displayname = Labels.aicommands["wMsgLeaderConfirmRemainingFuel"], blockedforFree = true, requiresrealatc = true        } },
-            {"wMsgLeaderInboundMarshallRespond",new Command { uniqueid = 18040, category = CommandCategories.aicommscarrier, dcsid = "wMsgLeaderInboundMarshallRespond",displayname = Labels.aicommands["wMsgLeaderInboundMarshallRespond"],blockedforFree = true, requiresrealatc = true        } },
+            { "wMsgLeaderInboundMarshallRespond",new Command { uniqueid = 18040, category = CommandCategories.aicommscarrier, dcsid = "wMsgLeaderInboundMarshallRespond",displayname = Labels.aicommands["wMsgLeaderInboundMarshallRespond"],blockedforFree = true, requiresrealatc = true        } },
             { "wMsgLeaderEsteblished",          new Command { uniqueid = 18041, category = CommandCategories.aicommscarrier, dcsid = "wMsgLeaderEstablished",           displayname = Labels.aicommands["wMsgLeaderEsteblished"],blockedforFree = true, requiresrealatc = true        } },
             { "wMsgLeaderCommencing",           new Command { uniqueid = 18042, category = CommandCategories.aicommscarrier, dcsid = "wMsgLeaderCommencing",            displayname = Labels.aicommands["wMsgLeaderCommencing"],blockedforFree = true, requiresrealatc = true        } },
             { "wMsgLeaderCheckingIn",           new Command { uniqueid = 18043, category = CommandCategories.aicommscarrier, dcsid = "wMsgLeaderCheckingIn",            displayname = Labels.aicommands["wMsgLeaderCheckingIn"],blockedforFree = true, requiresrealatc = true        } },
@@ -343,6 +367,10 @@ namespace VAICOM
 
             // to Aux (F10 menu) 20000
             { "wMsgLeaderToAuxNull" ,           new Command { uniqueid = 20000, category = CommandCategories.auxmenu, eventnumber = 4000, dcsid = "wMsgLeaderToAuxNull",             } },
+            // AI_ATC endpoints start
+            //{ "Action Request Engine Start" ,   new Command { uniqueid = 20001, category = CommandCategories.auxmenu, eventnumber = 4000, dcsid = "ActionRequestEngineStart", displayname = Labels.aicommands["Request Engine Start"] } },
+            //{ "Action Request Taxi Clearance" , new Command { uniqueid = 20002, category = CommandCategories.auxmenu, eventnumber = 4000, dcsid = "ActionRequestTaxiClearance", displayname = Labels.aicommands["Request Taxi Clearance"] } },
+            // AI_ATC endpoints finish
             { "wMsgLeaderToAuxMaximum" ,        new Command { uniqueid = 20999, category = CommandCategories.auxmenu, eventnumber = 4000, dcsid = "wMsgLeaderToAuxMaximum",          } },
 
             // to Cargo 21000
@@ -418,12 +446,12 @@ namespace VAICOM
 
 
             // Moose Ops 
-            { "wMsgLeaderToMooseCmndsNull" ,       new Command { uniqueid = 25000, category = CommandCategories.moosemenu,  eventnumber = 4000, dcsid = "wMsgLeaderToMooseCmndsNull" } },
-            { "Radio Check Marshal" ,              new Command { uniqueid = 25001, category = CommandCategories.moosemenu,  eventnumber = 4000, dcsid = "wMsgLeaderToMooseRadioChkMarshal",displayname = Labels.aicommands["Radio Check Marshal"],blockedforFree = true   } },
-            { "Radio Check LSO" ,                  new Command { uniqueid = 25002, category = CommandCategories.moosemenu,  eventnumber = 4000, dcsid = "wMsgLeaderToMooseRadioChkLSO",displayname = Labels.aicommands["Radio Check LSO"],blockedforFree = true   } },
-            { "Request Commence" ,                 new Command { uniqueid = 25003, category = CommandCategories.moosemenu,  eventnumber = 4000, dcsid = "wMsgLeaderToMooseRqstCommence",displayname = Labels.aicommands["Request Commence"],blockedforFree = true   } },
-            { "Emergency Landing" ,                new Command { uniqueid = 25003, category = CommandCategories.moosemenu,  eventnumber = 4000, dcsid = "wMsgLeaderToMooseEmerLanding",displayname = Labels.aicommands["Emergency Landing"],blockedforFree = true   } },
-            { "wMsgLeaderToMooseCmndsMaximum" ,    new Command { uniqueid = 25100, category = CommandCategories.moosemenu,  eventnumber = 4000, dcsid = "wMsgLeaderToMooseCmndsMaximum" } },
+            { "wMsgLeaderToMooseCmndsNull" ,       new Command { uniqueid = 25000, category = CommandCategories.Moose,  eventnumber = 4000, dcsid = "wMsgLeaderToMooseCmndsNull" } },
+            //{ "Radio Check Marshal" ,              new Command { uniqueid = 25001, category = CommandCategories.Moose,  eventnumber = 4000, dcsid = "wMsgLeaderToMooseRadioChkMarshal",displayname = Labels.aicommands["Radio Check Marshal"],blockedforFree = true   } },
+            //{ "Radio Check LSO" ,                  new Command { uniqueid = 25002, category = CommandCategories.Moose,  eventnumber = 4000, dcsid = "wMsgLeaderToMooseRadioChkLSO",displayname = Labels.aicommands["Radio Check LSO"],blockedforFree = true   } },
+            //{ "Request Commence" ,                 new Command { uniqueid = 25003, category = CommandCategories.Moose,  eventnumber = 4000, dcsid = "wMsgLeaderToMooseRqstCommence",displayname = Labels.aicommands["Request Commence"],blockedforFree = true   } },
+            //{ "Emergency Landing" ,                new Command { uniqueid = 25003, category = CommandCategories.Moose,  eventnumber = 4000, dcsid = "wMsgLeaderToMooseEmerLanding",displayname = Labels.aicommands["Emergency Landing"],blockedforFree = true   } },
+            { "wMsgLeaderToMooseCmndsMaximum" ,    new Command { uniqueid = 25100, category = CommandCategories.Moose,  eventnumber = 4000, dcsid = "wMsgLeaderToMooseCmndsMaximum" } },
             
             // ----------------------------------------------------------------------
 

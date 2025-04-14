@@ -44,7 +44,7 @@ namespace VAICOM
 
                     if (!(menuitem.command == null)) // there's a command 'action objective blue'
                     {
-                        if (!Aliases.aicommands.ContainsValue(identifier)) // not an existing command
+                        if (!Labels.aicommands.ContainsValue(identifier)) // not an existing command check labels to allow pre loaded aliases?
                         {
                             if (!Aliases.importedmenus.ContainsValue(identifier)) // not a previously imported menu entry
                             {

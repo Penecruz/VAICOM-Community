@@ -7,11 +7,11 @@
       "isbeta": false,
       "isdev": false,
       "productid": 1,
-      "releasedate": 20241112,
-      "version": 2993,
-      "versionstring": "2.9.9.3",
-      "downloadurl": "https://github.com/Penecruz/VAICOMPRO-Community/releases/download/v2.9.9.3/VAICOMPRO.zip",
-      "releasenotes": "Release 2.9.9.3 - Adds Radio.lua patching routine for Kola Map, fixes Recipients database list error,  Adds Syrian airfields expansion new ATC recipients, CH-47 Chinook radio changes"
+      "releasedate": 20250413,
+      "version": 3018,
+      "versionstring": "3.0.1.8",
+      "downloadurl": "https://github.com/Penecruz/VAICOMPRO-Community/releases/download/v3.0.1.8/VAICOMPRO.zip",
+      "releasenotes": "Release 3.0.1.8 - Hotfix Alias conflicts with 'Request Taxi....', Add new S3 Tanker callsigns Bloodhound, Mauler and Navy One,Add Aditional AI_ATC return to Approach keywords, New Vaicom branding dropping the Pro suffix, Vaicom Manual updated. "
     }
   ]
 }

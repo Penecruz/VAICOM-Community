@@ -352,6 +352,9 @@ namespace VAICOM
                 { "Khost Heliport",        "Khost Heliport"         },
                 { "Sharan",                "Sharan"                 },
                 { "Urgoon Heliport",       "Urgoon Heliport"        },
+                { "Maymana Zahiraddin Faryabi", "Maymana Zahiraddin Faryabi"     },
+                { "Mary",                  "Mary"                                },
+                { "Mary North",            "Mary North"                          },
 
                 // Iraq map
                     // North
@@ -432,6 +435,9 @@ namespace VAICOM
                 { "texaco",                 "Texaco"                },
                 { "shell",                  "Shell"                 },
                 { "arco",                   "Arco"                  },
+                { "Bloodhound",             "Bloodhound"            },
+                { "Mauler",                 "Mauler"                },
+                { "Navy One",               "Navy One"              },
                 { "nearesttanker",          "Nearest Tanker"        },
 
                 { "crew",                   "Ground Crew"           },
@@ -439,6 +445,7 @@ namespace VAICOM
                 { "aocs",                   "AOCS"                  },
 
                 { "aux",                    "F10 Menu"              },
+                //{ "AI_ATC",                 "AI_ATC"                },
 
                 { "cargo",                  "Cargo"                 },
                 { "descent",                "Descent"               },

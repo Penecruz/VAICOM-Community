@@ -7,7 +7,7 @@
         xmlns:Properties="clr-namespace:VAICOM.Properties" 
         x:Class="VAICOM.UI.ConfigWindow"
         mc:Ignorable="d"
-        Title="VAICOM PRO for DCS World - Community Edition " Height = "335" Width = "495" 
+        Title="VAICOM for DCS World - Community Edition " Height = "335" Width = "495" 
         Closing="Window_Closing" Closed="Window_Closed"
     >
 
