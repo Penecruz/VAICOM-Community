@@ -11,6 +11,25 @@ namespace VAICOM
     {
         public class API
         {
+            private static WsoService _wsoService;
+
+            /// <summary>
+            /// Initializes the WSO service.
+            /// </summary>
+            public static void InitializeWsoService()
+            {
+                _wsoService = new WsoService();
+                _wsoService.Initialize();
+            }
+
+            /// <summary>
+            /// Sends a command to the Jester wheel backend via WSO.
+            /// </summary>
+            public static void SendWsoCommand(string category, string action, string value = "")
+            {
+                _wsoService?.SendCustomCommand(category, action, value);
+            }
+
             public static void PTT_Mode_Page_Up(dynamic vaProxy)
             {
                 if (State.configwindowopen && (State.configurationwindow != null))
