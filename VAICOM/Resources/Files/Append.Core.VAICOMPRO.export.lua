@@ -66,7 +66,13 @@ vaicom.insert = {
         if vaicom.receivefromclient then
             local newdata, err = vaicom.receivefromclient:receive()
             if newdata then
-                log("Received data from client")
+                log("Received data from client: " .. newdata)
+
+                -- Check if the message is a WSO command
+                if string.find(newdata, "wMsgWSO_") then
+                    log("Forwarding WSO command to DCS: " .. newdata)
+                end
+
                 local ok, send_err = vaicom.sendtoradio:send(newdata)
                 if not ok then
                     log("Failed to send to radio: " .. tostring(send_err))

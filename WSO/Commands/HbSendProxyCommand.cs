@@ -1,4 +1,5 @@
 using System;
+using VAICOM.Interfaces;
 
 namespace WSO.Commands
 {
@@ -17,7 +18,7 @@ namespace WSO.Commands
                 // Construct the hb_send_proxy command
                 string script = $"hb_send_proxy('{category}', '{action}', '{value}');";
 
-                // Send the command to the DCS backend
+                // Send the command to the DCS backend via VAICOM
                 ExecuteDcsScript(script);
             }
             catch (Exception ex)
@@ -27,7 +28,7 @@ namespace WSO.Commands
         }
 
         /// <summary>
-        /// Executes a script in the DCS backend.
+        /// Executes a script in the DCS backend using VAICOM's script execution mechanism.
         /// </summary>
         /// <param name="script">The script to execute.</param>
         private static void ExecuteDcsScript(string script)
