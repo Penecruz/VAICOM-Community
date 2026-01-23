@@ -96,6 +96,7 @@ TASKKILL /FI "STATUS eq RUNNING" /F /IM XDesProc.exe</PreBuildEvent>
   <ItemGroup>
     <ProjectReference Include="..\ChatterThemepack\ThemePack.csproj" />
     <ProjectReference Include="..\RIO\RIO.csproj" />
+    <ProjectReference Include="..\WSO\WSO.csproj" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Update="Properties\Resources.resx">

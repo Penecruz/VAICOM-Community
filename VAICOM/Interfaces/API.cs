@@ -4,6 +4,8 @@ using System.Windows.Forms;
 using VAICOM.Extensions.Kneeboard;
 using VAICOM.PushToTalk;
 using VAICOM.Static;
+using VAICOM.Extensions.WSO;
+using WSO.Services;
 
 namespace VAICOM
 {
@@ -20,6 +22,29 @@ namespace VAICOM
             {
                 _wsoService = new WsoService();
                 _wsoService.Initialize();
+            }
+
+            /// <summary>
+            /// Executes a Vaicom command by looking it up in the WSOCommands dictionary.
+            /// </summary>
+            public static void ExecuteVaicomCommand(string vaicomCommand, dynamic vaProxy)
+            {
+                if (WSOCommands.all.TryGetValue(vaicomCommand, out var command))
+                {
+                    try
+                    {
+                        SendWsoCommand(command.name, command.displayname, command.enabled ? "true" : "false");
+                        vaProxy.WriteToLog($"Executed WSO command: {vaicomCommand}", Colors.Text);
+                    }
+                    catch (Exception ex)
+                    {
+                        vaProxy.WriteToLog($"Failed to execute WSO command: {vaicomCommand}. Error: {ex.Message}", Colors.Warning);
+                    }
+                }
+                else
+                {
+                    vaProxy.WriteToLog($"Unknown Vaicom command: {vaicomCommand}", Colors.Warning);
+                }
             }
 
             /// <summary>
