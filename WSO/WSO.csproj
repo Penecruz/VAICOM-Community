@@ -42,7 +42,6 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Aliases\WSOAliases.cs" />
-    <Compile Include="Class1.cs" />
     <Compile Include="Commands\HbSendProxyCommand.cs" />
     <Compile Include="Helpers\Logger.cs" />
     <Compile Include="Interfaces\IWsoService.cs" />
@@ -51,6 +50,7 @@
     <Compile Include="Services\WSOCommandMappings.cs" />
     <Compile Include="Services\WSOCommands.cs" />
     <Compile Include="Services\WsoService.cs" />
+    <Compile Include="WSO.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

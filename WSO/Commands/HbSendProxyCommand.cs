@@ -1,5 +1,4 @@
 using System;
-using VAICOM.Interfaces;
 
 namespace WSO.Commands
 {
