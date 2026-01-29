@@ -178,7 +178,7 @@ namespace VAICOM
                         Log.Write($"WSO Message received: {message.text}", Colors.Message);
 
                         // Process WSO-specific logic here
-                        if (WSOLabels.aicommands.TryGetValue(message.eventkey, out var label))
+                        if (Labels.aicommands.TryGetValue(message.eventkey, out var label))
                         {
                             Log.Write($"WSO Command Processed: {label}", Colors.Message);
                         }

@@ -1,11 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Windows.Forms;
+using VAICOM.Database;
 using VAICOM.Extensions.Kneeboard;
 using VAICOM.PushToTalk;
 using VAICOM.Static;
-using VAICOM.Extensions.WSO;
-using WSO.Services;
+using VAICOM.WSO;
 
 namespace VAICOM
 {
@@ -13,32 +13,31 @@ namespace VAICOM
     {
         public class API
         {
-            private static WsoService _wsoService;
-
-            /// <summary>
-            /// Initializes the WSO service.
-            /// </summary>
-            public static void InitializeWsoService()
-            {
-                _wsoService = new WsoService();
-                _wsoService.Initialize();
-            }
-
             /// <summary>
             /// Executes a Vaicom command by looking it up in the WSOCommands dictionary.
             /// </summary>
             public static void ExecuteVaicomCommand(string vaicomCommand, dynamic vaProxy)
             {
-                if (WSOCommands.all.TryGetValue(vaicomCommand, out var command))
+                if (Commands.Table.TryGetValue(vaicomCommand, out Command command))
                 {
                     try
                     {
-                        SendWsoCommand(command.name, command.displayname, command.enabled ? "true" : "false");
-                        vaProxy.WriteToLog($"Executed WSO command: {vaicomCommand}", Colors.Text);
+                        if (command.category == CommandCategories.WSO || (command.uniqueid >= 24000 && command.uniqueid <= 24999))
+                        {
+                            // Handle WSO command
+                            HbSendProxyCommand.SendWsoCommand(command.name);
+                            vaProxy.WriteToLog($"Executed WSO command: {command.name}", Colors.Text);
+                        }
+                        else
+                        {
+                            // Handle other commands
+                            HbSendProxyCommand.SendCommand(command.category.ToString(), command.name, "");
+                            vaProxy.WriteToLog($"Executed command: {command.name}", Colors.Text);
+                        }
                     }
                     catch (Exception ex)
                     {
-                        vaProxy.WriteToLog($"Failed to execute WSO command: {vaicomCommand}. Error: {ex.Message}", Colors.Warning);
+                        vaProxy.WriteToLog($"Failed to execute command: {command.name}. Error: {ex.Message}", Colors.Warning);
                     }
                 }
                 else
@@ -48,11 +47,18 @@ namespace VAICOM
             }
 
             /// <summary>
-            /// Sends a command to the Jester wheel backend via WSO.
+            /// Sends a command to the WSO backend via HbSendProxyCommand.
             /// </summary>
-            public static void SendWsoCommand(string category, string action, string value = "")
+            public static void SendWsoCommand(string commandName)
             {
-                _wsoService?.SendCustomCommand(category, action, value);
+                try
+                {
+                    HbSendProxyCommand.SendWsoCommand(commandName);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error sending WSO command '{commandName}': {ex.Message}");
+                }
             }
 
             public static void PTT_Mode_Page_Up(dynamic vaProxy)
@@ -63,8 +69,7 @@ namespace VAICOM
                     {
                         State.configurationwindow.Page_Up();
                         vaProxy.WriteToLog("PTT: TX node SNGL set to " + State.activeconfig.SingleHotkey, Colors.Warning);
-                    }
-                   );
+                    });
                 }
                 else
                 {
@@ -97,8 +102,7 @@ namespace VAICOM
                     {
                         State.configurationwindow.Page_Dn();
                         vaProxy.WriteToLog("PTT: TX node SNGL set to " + State.activeconfig.SingleHotkey, Colors.Warning);
-                    }
-                   );
+                    });
                 }
                 else
                 {
@@ -488,10 +492,9 @@ namespace VAICOM
                     vaProxy.WriteToLog("API: test failed " + e.Message, Colors.Warning);
                 }
 
-                vaProxy.WriteToLog("API: test excuted.", Colors.Warning);
+                vaProxy.WriteToLog("API: test executed.", Colors.Warning);
                 UI.Playsound.Commandcomplete();
             }
-
         }
     }
 }

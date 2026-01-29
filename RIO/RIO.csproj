@@ -35,4 +35,7 @@
   <ItemGroup>
     <EmbeddedResource Include="Resources\Images\RIO-Logo_1.jpg" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\VAICOM.Shared\VAICOM.Shared.csproj" />
+  </ItemGroup>
 </Project>

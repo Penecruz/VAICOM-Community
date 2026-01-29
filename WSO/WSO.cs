@@ -17,6 +17,7 @@ namespace VAICOM.Extensions.WSO
         public bool requiresWSO;
         public bool enabled;
         public bool blockedforFree;
+        public bool requiresJester;
 
         public RecipientInfo()
         {
@@ -29,6 +30,8 @@ namespace VAICOM.Extensions.WSO
     public class CommandInfo : BaseCommandInfo
     {
         public bool requiresWSO;
+        public bool requiresJester;
+        internal object category;
 
         public CommandInfo()
         {
@@ -41,7 +44,7 @@ namespace VAICOM.Extensions.WSO
     {
         public static Dictionary<string, RecipientInfo> aicomms = new Dictionary<string, RecipientInfo>(StringComparer.OrdinalIgnoreCase)
         {
-            { "WSO", new RecipientInfo { uniqueid = 19401, name = "wAIUnitFlightCrewMembersWSO", displayname = Labels.airecipients["WSO"], requiresWSO = true, enabled = true } },
+            { "WSO", new RecipientInfo { uniqueid = 19501, name = "wAIUnitFlightCrewMembersWSO", displayname = Labels.airecipients["WSO"], requiresWSO = true, enabled = true } },
         };
     }
 }

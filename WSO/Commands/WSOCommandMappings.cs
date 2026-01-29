@@ -4,9 +4,10 @@ namespace VAICOM.WSO
 {
     public static class WSOCommandMappings
     {
+        // Map WSO commands to their proxy API calls
         public static readonly Dictionary<string, (string category, string action, string value)> CommandMap = new Dictionary<string, (string, string, string)>
         {
-            // Existing commands
+            // Example commands
             { "Jester.ReportSpeed", ("jester", "report_speed", "") },
             { "Jester.ToggleRadar", ("jester", "toggle_radar", "") },
             { "Jester.SetChaffMode", ("jester", "set_chaff_mode", "MULT") },
@@ -14,8 +15,6 @@ namespace VAICOM.WSO
             { "Jester.Lantirn.Undesignate", ("jester", "lantirn_undesignate", "") },
             { "Jester.Radar.GoSilent", ("jester", "radar_go_silent", "") },
             { "Jester.Radar.GoActive", ("jester", "radar_go_active", "") },
-
-            // Extracted commands from interface.js
             { "Jester.Radio.SetManualFrequency", ("radio", "radio_manual_freq_text", "") },
             { "Jester.Radio.SelectCommChannel", ("radio", "radio_comm_chan", "") },
             { "Jester.Radio.SelectAuxChannel", ("radio", "radio_aux_chan", "") },
