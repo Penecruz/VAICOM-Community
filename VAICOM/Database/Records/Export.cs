@@ -202,6 +202,12 @@ namespace VAICOM
                                 outputcommandstring = outputcommandstring + commandstrings[commandcat] + "Options;";
                             }
 
+                            //WSO
+                            if (cat.Equals("WSO") && commandcat.Contains("WSO"))                                
+                            {
+                                outputcommandstring = outputcommandstring + commandstrings[commandcat] + "Options;";
+                            }
+
                             //kneeboard commands
                             if (cat.Equals("kneeboard") && commandcat.Contains("kneeboard"))
                             {

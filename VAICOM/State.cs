@@ -442,5 +442,28 @@ namespace VAICOM
             {
             }
         }
+
+        // Add a flag to track if WSO is active
+        public static bool WSOActive { get; set; } = false;
+
+        // Add a flag to track if WSO commands are enabled
+        public static bool WSOCommandsEnabled { get; set; } = true;
+
+        // Add a dictionary to store WSO-related state
+        public static Dictionary<string, object> WSOState = new Dictionary<string, object>();
+
+        // Add a method to initialize WSO state
+        public static void InitializeWSOState()
+        {
+            WSOActive = true;
+            WSOCommandsEnabled = true;
+
+            // Initialize WSOState with default values
+            WSOState["currentCommand"] = null;
+            WSOState["currentRecipient"] = null;
+            WSOState["currentCategory"] = null;
+        }
+
+        public static bool wsoactivated = true; // Set to true if WSO extension is to be enabled
     }
 }

@@ -375,34 +375,28 @@ namespace VAICOM
                 {
                     Log.Write("Ready, sending message for recipient class " + State.currentrecipientclass.Name + ", calledisclass = " + State.calledisclass, Colors.Inline);
 
-                    if (ConstructMessage())
+                    ConstructMessage();
+                    SendNewMessage();
+
+                    State.previousmessageunit = State.currentmessageunit;
+                    State.previousrecipientclass = State.currentrecipientclass;
+
+                    Log.Write("Message sent successfully for recipient class " + State.currentrecipientclass.Name + ".", Colors.Inline);
+
+                    // for ics hotmic:
+                    if (State.AIRIOactive && State.activeconfig.ICShotmic)
                     {
-                        SendNewMessage();
-
-                        State.previousmessageunit = State.currentmessageunit;
-                        State.previousrecipientclass = State.currentrecipientclass;
-
-                        Log.Write("Message sent successfully for recipient class " + State.currentrecipientclass.Name + ".", Colors.Inline);
-
-                        // for ics hotmic:
-                        if (State.AIRIOactive && State.activeconfig.ICShotmic)
+                        if (!State.valistening)
                         {
-                            if (!State.valistening)
-                            {
-                                State.MessageReset();
-                                State.processlocked = false;
-                            }
-
-                            if (!State.currentcommand.isMenu() && !State.currentcommand.isOptions())
-                            {
-                                Extensions.RIO.helper.ShowWheel(false);
-                                Extensions.RIO.helper.showingjestermenu = false;
-                            }
+                            State.MessageReset();
+                            State.processlocked = false;
                         }
-                    }
-                    else
-                    {
-                        Log.Write("No message sent: message construction failed.", Colors.Warning);
+
+                        if (!State.currentcommand.isMenu() && !State.currentcommand.isOptions())
+                        {
+                            Extensions.RIO.helper.ShowWheel(false);
+                            Extensions.RIO.helper.showingjestermenu = false;
+                        }
                     }
                 }
 
@@ -466,7 +460,7 @@ namespace VAICOM
                                         UI.Playsound.Commandcomplete();
                                         KneeboardUpdater.SwitchPage("NOTES");
                                         KneeboardUpdater.RefreshCurrentPage(); // Force immediate refresh
-                                        KneeboardUpdater.SendHeartBeatCycle(); 
+                                        KneeboardUpdater.SendHeartBeatCycle();
                                         break;
                                     case "wMsgKneeboardShowNotes":
                                         KneeboardUpdater.SwitchPage("NOTES");
@@ -578,19 +572,15 @@ namespace VAICOM
 
                     try
                     {
-
                         // get voice input
-
                         getinputsentence();
                         scanforkeywords();
                         correctforimportedobjects();
 
                         // check if have enough data to send command?
-
                         State.haveinputscomplete = setcommand();
 
                         // if not: wait..
-
                         if (!State.haveinputscomplete)
                         {
                             waitformoreinput();
@@ -601,7 +591,6 @@ namespace VAICOM
                         //----------------------------------------------------------------------------------------------------
                         // have command complete!: now process - check contents
 
-                        //State.activenode = State.currentTXnode;
                         State.currentrecipientclass = getrecipientclass();
 
                         if (noTX())
@@ -620,7 +609,6 @@ namespace VAICOM
                         if (State.currentcommand.isSpecial()) //eventnumber.Equals(4000)
                         {
                             // Special commands:  Options / Take / Select / State / Repeat 
-
                             if (!getunitforspecialcommands() && State.dcsrunning)
                             {
                                 State.MessageReset();
@@ -631,7 +619,6 @@ namespace VAICOM
                         else
                         {
                             // Normal commands
-
                             if (!getunitforregularcommands() && State.dcsrunning)
                             {
                                 //didn't get a unit
@@ -675,7 +662,6 @@ namespace VAICOM
                         {
                         }
 
-
                         bool riocommand = State.AIRIOactive && State.currentcommand.isRIO();
                         bool optionscommand = State.currentcommand.isOptions();
                         bool menucommand = State.currentcommand.isMenu();
@@ -689,7 +675,7 @@ namespace VAICOM
                         }
                         else
                         {
-                            if (riocommand || selectcommand || optionscommand || menucommand || 
+                            if (riocommand || selectcommand || optionscommand || menucommand ||
                                 !((State.activeconfig.MP_VoIPUseSwitch || State.activeconfig.MP_VoIPParallel) && State.activeconfig.MP_DelayTransmit)) //  || !State.currentTXnode.tunedforhuman 
                             {
                                 sendmessage();
@@ -725,18 +711,34 @@ namespace VAICOM
 
                         }
 
+
+                        // Handle WSO commands
+                        if (State.currentcommand.isWSO())
+                        {
+                            if (!State.currentmodule.Id.Equals("F-4E-45MC", StringComparison.OrdinalIgnoreCase))
+                            {
+                                Log.Write("WSO commands are only available for the F-4E-45MC module.", Colors.Warning);
+                                State.processlocked = false;
+                                return false; // WSO command not processed
+                            }
+
+                            if (!Message.ProcessIfWSO())
+                            {
+                                State.processlocked = false;
+                                return false; // WSO command processing failed
+                            }
+                        }
                     }
                     catch (Exception e)
                     {
-                        Log.Write("Voice command processing error:" + e.StackTrace, Colors.Inline);
+                        Log.Write("Voice command processing error: " + e.Message, Colors.Critical);
+                        State.processlocked = false;
+                        return false;
                     }
 
                     State.processlocked = false;
-
-                    return !options && !menu;
-
+                    return true;
                 }
-
             }
         }
     }

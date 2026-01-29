@@ -206,7 +206,7 @@ namespace VAICOM
                 { "Kerman",                         new Recipient { uniqueid = 15264, category = RecipientCategories.aiatc, name = "wAIUnitATCPersianGulfKerman",        displayname = Labels.airecipients["Kerman"],                    blockedforFree = true  } },
                 { "Shiraz Intl",                    new Recipient { uniqueid = 15265, category = RecipientCategories.aiatc, name = "wAIUnitATCPersianGulfShirazIntl",    displayname = Labels.airecipients["Shiraz Intl"],               blockedforFree = true  } },
                 { "Al Dhafra AFB",                  new Recipient { uniqueid = 15266, category = RecipientCategories.aiatc, name = "wAIUnitATCPersianGulfAlDhafraAFB",   displayname = Labels.airecipients["Al Dhafra AFB"],             blockedforFree = true  } },
-                { "Al-Bateen",                      new Recipient { uniqueid = 15267, category = RecipientCategories.aiatc, name = "wAIUnitATCPersianGulfAlBateen",      displayname = Labels.airecipients["Al-Bateen"],                 blockedforFree = true  } }, //OK
+                { "Al-Bateen",                      new Recipient { uniqueid = 15267, category = RecipientCategories.aiatc, name = "wAIUnitATCPersianGulfAlBateen",      displayname = Labels.airecipients["Al-Bateen"],                 blockedforFree = true } }, //OK
                 { "Kish Intl",                      new Recipient { uniqueid = 15268, category = RecipientCategories.aiatc, name = "wAIUnitATCPersianGulfKishIsland",    displayname = Labels.airecipients["Kish Intl"],                 blockedforFree = true  } },
                 { "Lavan Island",                   new Recipient { uniqueid = 15269, category = RecipientCategories.aiatc, name = "wAIUnitATCPersianGulfLavanIsland",   displayname = Labels.airecipients["Lavan Island"],              blockedforFree = true  } },
                 { "Al Ain Intl",                    new Recipient { uniqueid = 15270, category = RecipientCategories.aiatc, name = "wAIUnitATCPersianGulfAlAinIntl",     displayname = Labels.airecipients["Al Ain Intl"],               blockedforFree = true  } },
@@ -701,6 +701,10 @@ namespace VAICOM
                 { "kneeboard",                  new Recipient { uniqueid = 19401, category = RecipientCategories.kneeboard, name = "wAIUnitKneeboard",          displayname = Labels.airecipients["kneeboard"], blockedforFree = true  } },
                 { "wAIUnitKneeboardMaximum",    new Recipient { uniqueid = 19499, category = RecipientCategories.kneeboard, name = "wAIUnitKneeboardMaximum",   } },
 
+                // WSO pack
+                { "wAIUnitFlightCrewMembersWSONull", new Recipient { uniqueid = 19500, category = RecipientCategories.WSO, name = "wAIUnitFlightCrewMembersWSONull", } },
+                
+                { "wAIUnitFlightCrewMembersWSOMaximum", new Recipient { uniqueid = 19599, category = RecipientCategories.WSO, name = "wAIUnitFlightCrewMembersWSOMaximum", } },
             };
         }
     }

@@ -1,40 +1,36 @@
 using System;
 
-namespace WSO.Commands
+namespace VAICOM.WSO
 {
     public static class HbSendProxyCommand
     {
         /// <summary>
-        /// Sends a command to the Jester wheel backend using hb_send_proxy.
+        /// Sends a WSO command using the CommandMap.
         /// </summary>
-        /// <param name="category">The category of the command (e.g., "groundcrew").</param>
-        /// <param name="action">The specific action to perform (e.g., "connect_air_supply").</param>
-        /// <param name="value">Optional value to pass with the action.</param>
-        public static void SendCommand(string category, string action, string value = "")
+        /// <param name="commandKey">The key of the command to send.</param>
+        public static void SendWsoCommand(string commandKey)
         {
-            try
+            if (WSOCommandMappings.CommandMap.TryGetValue(commandKey, out var command))
             {
-                // Construct the hb_send_proxy command
-                string script = $"hb_send_proxy('{category}', '{action}', '{value}');";
-
-                // Send the command to the DCS backend via VAICOM
-                ExecuteDcsScript(script);
+                SendCommand(command.category, command.action, command.value);
             }
-            catch (Exception ex)
+            else
             {
-                Console.WriteLine($"Error sending hb_send_proxy command: {ex.Message}");
+                Console.WriteLine($"Command '{commandKey}' not found in CommandMap.");
             }
         }
 
         /// <summary>
-        /// Executes a script in the DCS backend using VAICOM's script execution mechanism.
+        /// Sends a command to the backend.
         /// </summary>
-        /// <param name="script">The script to execute.</param>
-        private static void ExecuteDcsScript(string script)
+        /// <param name="category">The category of the command.</param>
+        /// <param name="action">The specific action to perform.</param>
+        /// <param name="value">Optional value to pass with the action.</param>
+        public static void SendCommand(string category, string action, string value = "")
         {
-            // Placeholder for integration with VAICOM's script execution logic
-            Console.WriteLine($"Executing script: {script}");
-            // TODO: Implement the actual integration with VAICOM's script execution mechanism
+            // Implementation for sending the command to the backend.
+            Console.WriteLine($"Sending command: Category='{category}', Action='{action}', Value='{value}'");
+            // Add actual backend communication logic here.
         }
     }
 }
