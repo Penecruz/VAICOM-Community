@@ -117,26 +117,23 @@ namespace VAICOM
 
                 public static bool ProcessIfWSO()
                 {
-                    if (State.wsoactivated && State.WSOActive && State.currentcommand.isWSO())
+                    if (State.currentcommand.isWSO())
                     {
-                        if (!State.currentmodule.Id.Equals("F-4E-45MC", StringComparison.OrdinalIgnoreCase))
-                        {
-                            Log.Write("WSO commands are only available for the F-4E-45MC module.", Colors.Warning);
-                            return false;
-                        }
-
-                        if (State.WSOCommandsEnabled)
+                        if (State.wsoactivated && State.IsF4E)
                         {
                             ConstructWSOMessage();
                             return true;
                         }
                         else
                         {
-                            Log.Write("WSO commands are currently disabled.", Colors.Warning);
+                            Log.Write("WSO extension is not active or Module is not F-4E.", Colors.Warning);
                             return false;
                         }
                     }
-                    return true; // Not a WSO command, continue processing
+                    else
+                    {
+                        return true; // Not a WSO command, proceed with other processing
+                    }
                 }
 
                 public static void ConstructWSOMessage()

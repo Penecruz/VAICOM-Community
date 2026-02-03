@@ -432,9 +432,9 @@ namespace VAICOM
             { "wMsgAIPilotCmndsMaximum" ,      new Command { uniqueid = 23999, category = CommandCategories.AI_pilot, eventnumber = 4000,dcsid = "wMsgAIPilotCmndsMaximum" } },
 
             // WSO commands 24000-24999
-            { "wMsgWSOCmndsNull" ,             new Command { uniqueid = 24000, category = CommandCategories.RIO,    eventnumber = 4000,  dcsid = "wMsgRIOCmndsNull",   } },
+            { "wMsgWSOCmndsNull" ,             new Command { uniqueid = 24000, category = CommandCategories.WSO,    eventnumber = 4000,  dcsid = "wMsgWSOCmndsNull",   } },
             // extension pack 
-            { "wMsgWSOCmndsMaximum" ,          new Command { uniqueid = 24999, category = CommandCategories.RIO,    eventnumber = 4000,  dcsid = "wMsgRIOCmndsMaximum" } },
+            { "wMsgWSOCmndsMaximum" ,          new Command { uniqueid = 24999, category = CommandCategories.WSO,    eventnumber = 4000,  dcsid = "wMsgWSOCmndsMaximum" } },
             
             // Kneeboard 25000
             { "wMsgKneeboardCmndsNull" ,             new Command { uniqueid = 25000, category = CommandCategories.kneeboard,    eventnumber = 4000,  dcsid = "wMsgKneeboardCmndsNull" } },
