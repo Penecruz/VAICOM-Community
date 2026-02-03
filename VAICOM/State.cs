@@ -443,7 +443,7 @@ namespace VAICOM
             {
             }
         }
-
+        // WSO extension state tracking
         // Add a flag to track if WSO is active
         public static bool WSOActive { get; set; } = false;
 
@@ -466,5 +466,13 @@ namespace VAICOM
         }
 
         public static bool wsoactivated = true; // Set to true if WSO extension is to be enabled
+
+        public static bool IsF4E
+        {
+            get
+            {
+                return currentmodule != null && currentmodule.Id.Equals("F-4E-45MC", StringComparison.OrdinalIgnoreCase);
+            }
+        }
     }
 }

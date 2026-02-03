@@ -16,8 +16,7 @@ namespace VAICOM.Extensions.WSO
         public string displayname;
         public bool requiresWSO;
         public bool enabled;
-        public bool blockedforFree;
-        public bool requiresJester;
+        public bool blockedforFree;        
 
         public RecipientInfo()
         {
@@ -29,13 +28,12 @@ namespace VAICOM.Extensions.WSO
 
     public class CommandInfo : BaseCommandInfo
     {
-        public bool requiresWSO;
-        public bool requiresJester;
+        public bool requiresWSO;        
         internal object category;
 
         public CommandInfo()
         {
-            eventnumber = 5000; // Default event number for WSO commands
+            eventnumber = 4000; // Default event number for WSO commands
             requiresWSO = true;
         }
     }

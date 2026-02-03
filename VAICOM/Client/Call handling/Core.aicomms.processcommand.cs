@@ -6,6 +6,7 @@ using VAICOM.Extensions.WorldAudio;
 using VAICOM.PushToTalk;
 using VAICOM.Servers;
 using VAICOM.Static;
+using VAICOM.WSO;
 
 namespace VAICOM
 {
@@ -555,6 +556,14 @@ namespace VAICOM
                 // processes voice command, called directly from plugin
                 public static bool processcommand()
                 {
+                    // Check if DCS is running
+                    if (!State.dcsrunning)
+                    {
+                        Log.Write("DCS is not connected. Command processing is disabled.", Colors.Warning);
+                        UI.Playsound.Error();
+                        return false;
+                    }
+
                     // thread-safe locking
                     if (State.processlocked)
                     {
@@ -681,6 +690,29 @@ namespace VAICOM
                         {
                             sendvoid();
                         }
+                        else if (State.currentcommand.isWSO()) // Handle WSO commands
+                        {
+                            Log.Write("WSO command detected. Starting WSO command processing...", Colors.Text);
+
+                            if (!State.currentmodule.Id.Equals("F-4E-45MC", StringComparison.OrdinalIgnoreCase))
+                            {
+                                Log.Write("WSO commands are only available for the F-4E-45MC module.", Colors.Warning);
+                                State.processlocked = false;
+                                return false; // WSO command not processed
+                            }
+
+                            if (!Message.ProcessIfWSO())
+                            {
+                                Log.Write("WSO command processing failed.", Colors.Warning);
+                                State.processlocked = false;
+                                return false; // WSO command processing failed
+                            }
+
+                            Log.Write("WSO command processing succeeded. Sending command to Jester 2.0 API...", Colors.Text);
+
+                            // Send the WSO command to the Jester 2.0 API
+                            SendCommandToJesterAPI(State.currentcommand.dcsid);
+                        }
                         else
                         {
                             if (riocommand || selectcommand || optionscommand || menucommand ||
@@ -718,24 +750,6 @@ namespace VAICOM
                             }
 
                         }
-
-
-                        // Handle WSO commands
-                        if (State.currentcommand.isWSO())
-                        {
-                            if (!State.currentmodule.Id.Equals("F-4E-45MC", StringComparison.OrdinalIgnoreCase))
-                            {
-                                Log.Write("WSO commands are only available for the F-4E-45MC module.", Colors.Warning);
-                                State.processlocked = false;
-                                return false; // WSO command not processed
-                            }
-
-                            if (!Message.ProcessIfWSO())
-                            {
-                                State.processlocked = false;
-                                return false; // WSO command processing failed
-                            }
-                        }
                     }
                     catch (Exception e)
                     {
@@ -746,6 +760,88 @@ namespace VAICOM
 
                     State.processlocked = false;
                     return true;
+                }
+                //Jester 2.0 API WSO command sender
+                private static void SendCommandToJesterAPI(string commandId)
+                {
+                    try
+                    {
+                        // Check if the command exists in the WSOCommandMappings
+                        if (WSOCommandMappings.CommandMap.TryGetValue(commandId, out var commandDetails))
+                        {
+                            string category = commandDetails.category;
+                            string action = commandDetails.action;
+                            string value = commandDetails.value;
+
+                            // Construct the command string in the format "category|action|value"
+                            string commandString = $"{category}|{action}|{value}";
+
+                            // Create a new CommsMessage for the Jester API command
+                            State.currentmessage = new Message.CommsMessage
+                            {
+                                client = State.currentlicense,
+                                type = "WSOCommand", // Indicate this is a WSO command
+                                dcsid = commandString, // Pass the constructed command string
+                                dspmsg = $"Sending WSO command: {commandString}",
+                                msgdur = 5
+                            };
+
+                            // Send the command to the Jester 2.0 API using hb_send_proxy
+                            SendToHbProxy(category, action, value);
+                            Log.Write($"Command ID '{commandId}' sent using hb_send_proxy.", Colors.Text);
+                        }
+                        else
+                        {
+                            Log.Write($"Command ID '{commandId}' not found in WSOCommandMappings.", Colors.Warning);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Log.Write($"Error sending command to Jester 2.0 API: {ex.Message}", Colors.Critical);
+                    }
+                }
+
+                // Helper method to send the command via hb_send_proxy
+                private static void SendToHbProxy(string category, string action, string value)
+                {
+                    try
+                    {
+                        // Validate parameters
+                        if (string.IsNullOrWhiteSpace(category) || string.IsNullOrWhiteSpace(action))
+                        {
+                            Log.Write("hb_send_proxy error: Category or Action is null or empty.", Colors.Critical);
+                            return;
+                        }
+
+                        // Construct the request string
+                        string request = $"{category}|{action}|{value}";
+
+                        // Send the request using hb_send_proxy
+                        hb_send_proxy(category, action, value);
+                    }
+                    catch (Exception ex)
+                    {
+                        // Log detailed error message
+                        Log.Write($"Error in hb_send_proxy: {ex.Message}\n{ex.StackTrace}", Colors.Critical);
+                    }
+                }
+
+                // Helper function to send the command via hb_send_proxy
+                private static void hb_send_proxy(string category, string action, string value)
+                {
+                    try
+                    {
+                        // Log the command being sent
+                        Log.Write($"Sending command via hb_send_proxy: {category}|{action}|{value}", Colors.Text);
+
+                        // Simulate the hb_send_proxy function
+                        Console.WriteLine($"{category}:{action}:{value}");
+                    }
+                    catch (Exception ex)
+                    {
+                        // Log any errors that occur
+                        Log.Write($"Error in hb_send_proxy function: {ex.Message}\n{ex.StackTrace}", Colors.Critical);
+                    }
                 }
             }
         }

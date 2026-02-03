@@ -173,7 +173,7 @@ namespace VAICOM
                     Processor.commcat sendercat = Processor.SenderCatByEvent(message.eventid);
 
                     // Handle WSO-specific messages
-                    if (message.eventkey.StartsWith("wMsgWSO_"))
+                    if (message.eventkey.StartsWith("wMsgWSO"))
                     {
                         Log.Write($"WSO Message received: {message.text}", Colors.Message);
 

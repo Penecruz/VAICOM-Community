@@ -73,6 +73,12 @@ vaicom.insert = {
                     log("Forwarding WSO command to DCS: " .. newdata)
                 end
 
+                -- Check if the message is an hb_send_proxy command
+                if string.find(newdata, "hb_send_proxy") then
+                    log("Forwarding hb_send_proxy command to DCS: " .. newdata)
+                end
+
+                -- Forward the command to the backend
                 local ok, send_err = vaicom.sendtoradio:send(newdata)
                 if not ok then
                     log("Failed to send to radio: " .. tostring(send_err))
