@@ -550,8 +550,7 @@ namespace VAICOM
                 // Campaign Pacific Sentry Testing WIP
                 //M02 A Red Horizon
                 { "I don't see any cruise missiles",     "Action I dont see any cruise missiles"         }, //used in Imported script Dynamic F10 menu Commands for the Sentry Pacific Campaign
-                { "Yes I see cruise missiles!",          "Action Yes I see cruise missiles!"             }, //These aliases must be unique and different from the standard DCS aliases!!
-                { "Incentive Ride Over Testing Only",    "Action INCENTIVE RIDE OVER TESTING ONLY"       },
+                { "Yes I see cruise missiles!",          "Action Yes I see cruise missiles!"             }, //These aliases must be unique and different from the standard DCS aliases!!                
                 { "Captured Bogey Bull 045 120",         "Action Captured Bogey Bull 045/120"            },
                 { "Captured Bogey Bull 055 180",         "Action Captured Bogey Bull 055/180"            },
                 { "Venom is Bingo Fuel and need to RTB", "Action Venon is Bingo Fuel and need to RTB"    },
