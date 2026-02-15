@@ -44,6 +44,7 @@ namespace VAICOM
                         ChatterCollection.Add("RedFlag", Themepack.RedFlag.ResourceManager);
                         ChatterCollection.Add("Fallon", Themepack.Fallon.ResourceManager);
                         ChatterCollection.Add("Afghan", Themepack.Afghanistan.ResourceManager);
+                        ChatterCollection.Add("Andersen", Themepack.Andersen.ResourceManager);
                         ChatterCollection.Add("WWII", Themepack.WWII.ResourceManager);
                         State.chatterthemes = new List<string>();
                         foreach (KeyValuePair<string, ResourceManager> theme in ChatterCollection)
