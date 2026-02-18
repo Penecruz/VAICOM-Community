@@ -36,7 +36,7 @@ namespace VAICOM.WSO
             // Ensure value is not null or undefined
             value = value ?? "";
 
-            // Construct the hb_send_proxy command
+            // Construct the hb_send_proxy request payload (matches interface.js)
             string commandString = $"{category}|{action}|{value}";
 
             // Send the command to the Lua socket
@@ -47,7 +47,7 @@ namespace VAICOM.WSO
                     udpClient.Connect(ServerAddress, ServerPort);
                     byte[] data = Encoding.UTF8.GetBytes(commandString);
                     udpClient.Send(data, data.Length);
-                    Console.WriteLine($"Sent hb_send_proxy command to Lua socket: {commandString}");                    
+                    Console.WriteLine($"Sent hb_send_proxy request to Lua socket: {commandString}");
                 }
                 catch (Exception ex)
                 {
