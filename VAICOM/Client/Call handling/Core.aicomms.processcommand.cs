@@ -778,9 +778,9 @@ namespace VAICOM
                                 msgdur = 5
                             };
 
-                            // Send the command to the Jester 2.0 API using hb_send_proxy
-                            SendToHbProxy(category, action, value);
-                            Log.Write($"Command ID '{commandId}' sent using hb_send_proxy.", Colors.Text);
+                            // Send the command to the Jester 2.0 API using hb_send_proxy payload format
+                            HbSendProxyCommand.SendCommand(category, action, value);
+                            Log.Write($"Command ID '{commandId}' sent using hb_send_proxy payload.", Colors.Text);
                         }
                         else
                         {
@@ -793,48 +793,7 @@ namespace VAICOM
                     }
                 }
 
-                // Helper method to send the command via hb_send_proxy
-                private static void SendToHbProxy(string category, string action, string value)
-                {
-                    try
-                    {
-                        // Validate parameters
-                        if (string.IsNullOrWhiteSpace(category) || string.IsNullOrWhiteSpace(action))
-                        {
-                            Log.Write("hb_send_proxy error: Category or Action is null or empty.", Colors.Critical);
-                            return;
-                        }
-
-                        // Construct the request string
-                        string request = $"{category}|{action}|{value}";
-
-                        // Send the request using hb_send_proxy
-                        hb_send_proxy(category, action, value);
-                    }
-                    catch (Exception ex)
-                    {
-                        // Log detailed error message
-                        Log.Write($"Error in hb_send_proxy: {ex.Message}\n{ex.StackTrace}", Colors.Critical);
-                    }
-                }
-
-                // Helper function to send the command via hb_send_proxy
-                private static void hb_send_proxy(string category, string action, string value)
-                {
-                    try
-                    {
-                        // Log the command being sent
-                        Log.Write($"Sending command via hb_send_proxy: {category}|{action}|{value}", Colors.Text);
-
-                        // Simulate the hb_send_proxy function
-                        Console.WriteLine($"{category}:{action}:{value}");
-                    }
-                    catch (Exception ex)
-                    {
-                        // Log any errors that occur
-                        Log.Write($"Error in hb_send_proxy function: {ex.Message}\n{ex.StackTrace}", Colors.Critical);
-                    }
-                }
+                
             }
         }
     }
