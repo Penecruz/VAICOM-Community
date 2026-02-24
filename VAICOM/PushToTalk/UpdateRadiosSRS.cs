@@ -145,7 +145,7 @@ namespace VAICOM
                     {"Yak-52" ,     new radioslotlist() { Slot_map = { "Baklan-5", "", "" } } },
 
                     {"Mi-24P" ,     new radioslotlist() { Slot_map = { "R_852", "Jadro-1A", "R-828" } } },
-                    {"AH-64D" ,     new radioslotlist() { Slot_map = { "VHF AM", "CB UHF", "FM:1 ARC-201D" } } },
+                    {"AH-64D" ,     new radioslotlist() { Slot_map = { "VHF AM", "CB UHF", "FM1: ARC-201D" } } },
                     {"MiG-19P" ,    new radioslotlist() { Slot_map = { "RSIU-4V", "", "" } } },
                     {"JF-17" ,      new radioslotlist() { Slot_map = { "COMM1 VHF Radio", "COMM2 UHF Radio", "" } } },
                     {"I-16" ,       new radioslotlist() { Slot_map = { "Baklan 5", "", "" } } },
