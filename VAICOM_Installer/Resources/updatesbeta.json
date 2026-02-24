@@ -7,11 +7,11 @@
       "isbeta": false,
       "isdev": false,
       "productid": 1,
-      "releasedate": 20260219,
-      "version": 3086,
-      "versionstring": "3.0.8.6",
+      "releasedate": 20260224,
+      "version": 3087,
+      "versionstring": "3.0.8.7",
       "downloadurl": "https://raw.githubusercontent.com/Penecruz/VAICOM-Community/Development/VAICOM_Installer/Resources/VAICOMPRO.zip",
-      "releasenotes": " Remove WIP Andersen Chatter module (I'll be back!), Fix bug with Jester enable/disable Grid Navb, Fix bug with F10 dynamic import not running after miz load, Adds WIP campaign Key Phrases for Pacific Sentry 25 , Remove Kola Radio.lua update routine, fix f10 menu items not being removed on reset, fix blank space F10 Action Items."
+      "releasenotes": " Adds AH-6J Little Bird mod as supported module commit by Sleighzy, Adds full radio single PTT support for AH-64D WIP for other module implementation commit by Sleighzy, Remove WIP Andersen Chatter module (I'll be back!), Fix bug with Jester enable/disable Grid Navb, Fix bug with F10 dynamic import not running after miz load, Adds WIP campaign Key Phrases for Pacific Sentry 25 , Remove Kola Radio.lua update routine, fix f10 menu items not being removed on reset, fix blank space F10 Action Items."
     }
   ]
 }
