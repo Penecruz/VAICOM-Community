@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using VAICOM.Products;
 using VAICOM.Servers;
 using VAICOM.Static;
@@ -541,6 +542,12 @@ namespace VAICOM
             public static void PTT_SetConfigSingle_SRS()
             {
 
+                if (PTT.IsPTTMultiSingle())
+                {
+                    PTT_SetConfigMultiSingle_SRS();
+                    return;
+                }
+
                 PTT_SetConfigMulti_SRS();
 
                 TXNodes.TX1.enabled = false;
@@ -572,6 +579,139 @@ namespace VAICOM
                         break;
                     default:
                         TXNodes.TX1 = new TXNode() { name = "TX1", enabled = true, radios = TXConfigs.ALL_RADIOS_SEL };
+                        break;
+                }
+            }
+
+            public static void PTT_SetConfigMultiSingle_SRS()
+            {
+                TXNodes.TX1.enabled = false;
+                TXNodes.TX2.enabled = false;
+                TXNodes.TX3.enabled = false;
+                TXNodes.TX4.enabled = false;
+                TXNodes.TX5.enabled = false;
+                TXNodes.TX6.enabled = false;
+
+                Server.RadioDevice selectedRadio = State.currentstate.radios
+                    .Where(radio => radio.isselected)
+                    .First();
+
+                DCSmodule module = null;
+
+                if (!State.currentstate.id.Equals(null))
+                {
+                    module = DCSmodules.findmodulebyid(State.currentstate.id);
+                }
+
+                if (module.Equals(null))
+                {
+                    module = DCSmodules.LookupTable["----"];
+                }
+
+                radioslotlist radiolist_Ref = maps.mapping_Ref[module.Id];
+                radioslotlist radiolist_SRS = maps.mapping_SRS[module.Id];
+
+                string selectedName = selectedRadio.displayName;
+                int selectedIndex = radiolist_Ref.Slot_map.FindIndex(slot => slot.Equals(selectedName, StringComparison.OrdinalIgnoreCase));
+                if (selectedIndex >= 0 && selectedIndex < radiolist_SRS.Slot_map.Count)
+                {
+                    selectedName = radiolist_SRS.Slot_map[selectedIndex];
+                }
+
+                if (selectedName.Length > 16)
+                {
+                    selectedName = selectedName.Substring(selectedName.Length - 16, 16);
+                }
+
+                RadioDevices.SEL.deviceid = selectedRadio.deviceid;
+                RadioDevices.SEL.isavailable = selectedRadio.isavailable;
+                RadioDevices.SEL.intercom = selectedRadio.intercom;
+                RadioDevices.SEL.AM = selectedRadio.AM;
+                RadioDevices.SEL.FM = selectedRadio.FM;
+                RadioDevices.SEL.on = selectedRadio.on;
+                RadioDevices.SEL.frequency = selectedRadio.frequency.ToString();
+                RadioDevices.SEL.modulation = selectedRadio.modulation;
+                RadioDevices.SEL.name = selectedName;
+                RadioDevices.SEL.isSRSserver = false;
+
+                if (RadioDevices.SEL.name.Contains("[") && RadioDevices.SEL.name.Contains("]"))
+                {
+                    RadioDevices.SEL.name = RadioDevices.SEL.name.TrimStart('[').TrimEnd(']');
+                    RadioDevices.SEL.isSRSserver = true;
+                }
+
+                Server.RadioDevice intercomRadio = State.currentstate.radios.FirstOrDefault(radio => radio.intercom);
+                bool hasIntercom = intercomRadio != null;
+
+                TXNodes.TX5.enabled = true;
+                TXNodes.TX5.radios = TXConfigs.SNGL_RADIO_INT;
+
+                RadioDevices.INT.isavailable = hasIntercom ? intercomRadio.isavailable : true;
+                RadioDevices.INT.deviceid = hasIntercom ? intercomRadio.deviceid : 0;
+                RadioDevices.INT.name = "INT";
+                RadioDevices.INT.intercom = true;
+                RadioDevices.INT.AM = false;
+                RadioDevices.INT.FM = false;
+                RadioDevices.INT.on = hasIntercom ? intercomRadio.on : true;
+                RadioDevices.INT.frequency = "";
+                RadioDevices.INT.modulation = "";
+                RadioDevices.INT.isSRSserver = false;
+                TXNodes.TX5.number = RadioDevices.INT.deviceid;
+
+                List<RadioDevice> radios = new List<RadioDevice>() { RadioDevices.SEL };
+                State.radiocount = State.currentstate.radios.Count - 1;
+
+                bool preserveCurrentTX = State.transmitting && State.currentTXnode != null && State.currentTXnode.Equals(TXNodes.TX5);
+
+                switch (State.activeconfig.SingleHotkey)
+                {
+                    case "TX1":
+                        TXNodes.TX1 = new TXNode() { name = "TX1", enabled = true, radios = radios };
+                        if (!preserveCurrentTX)
+                        {
+                            State.currentTXnode = TXNodes.TX1;
+                        }
+                        break;
+                    case "TX2":
+                        TXNodes.TX2 = new TXNode() { name = "TX2", enabled = true, radios = radios };
+                        if (!preserveCurrentTX)
+                        {
+                            State.currentTXnode = TXNodes.TX2;
+                        }
+                        break;
+                    case "TX3":
+                        TXNodes.TX3 = new TXNode() { name = "TX3", enabled = true, radios = radios };
+                        if (!preserveCurrentTX)
+                        {
+                            State.currentTXnode = TXNodes.TX3;
+                        }
+                        break;
+                    case "TX4":
+                        TXNodes.TX4 = new TXNode() { name = "TX4", enabled = true, radios = radios };
+                        if (!preserveCurrentTX)
+                        {
+                            State.currentTXnode = TXNodes.TX4;
+                        }
+                        break;
+                    case "TX5":
+                        if (!preserveCurrentTX)
+                        {
+                            State.currentTXnode = TXNodes.TX5;
+                        }
+                        break;
+                    case "TX6":
+                        TXNodes.TX6 = new TXNode() { name = "TX6", enabled = true, radios = radios };
+                        if (!preserveCurrentTX)
+                        {
+                            State.currentTXnode = TXNodes.TX6;
+                        }
+                        break;
+                    default:
+                        TXNodes.TX1 = new TXNode() { name = "TX1", enabled = true, radios = radios };
+                        if (!preserveCurrentTX)
+                        {
+                            State.currentTXnode = TXNodes.TX1;
+                        }
                         break;
                 }
             }

@@ -59,8 +59,16 @@ namespace VAICOM
                         // single hotkey (native or forced)
                         if ((State.currentmodule.Singlehotkey & !State.activeconfig.ForceMultiHotkey) || (!State.currentmodule.Singlehotkey & State.activeconfig.ForceSingleHotkey))
                         {
-                            returndeviceid = PTT.RadioDevices.SEL.deviceid; // = 0 or deviceid from currently selected radio
-                            State.currentradiodevicename = PTT.RadioDevices.SEL.name;
+                            if (State.currentTXnode != null && State.currentTXnode.Equals(PTT.TXNodes.TX5))
+                            {
+                                returndeviceid = PTT.RadioDevices.INT.deviceid;
+                                State.currentradiodevicename = PTT.RadioDevices.INT.name;
+                            }
+                            else
+                            {
+                                returndeviceid = PTT.RadioDevices.SEL.deviceid; // = 0 or deviceid from currently selected radio
+                                State.currentradiodevicename = PTT.RadioDevices.SEL.name;
+                            }
                         }
                         else // multi hotkey (native or forced)
                         {
