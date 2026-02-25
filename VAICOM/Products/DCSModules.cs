@@ -21,6 +21,7 @@ namespace VAICOM
             public bool ApxDir;
             public bool IsHelo;
             public bool Singlehotkey;
+            public bool UseSingleRadioSelection;
             public bool Havedial;
             public string Theme;
             public List<int> Flightmenu;
@@ -61,7 +62,7 @@ namespace VAICOM
                 {"A-10C" ,  new DCSmodule() { Id ="A-10C",Name = "A-10C",   Alias = "Warthog",       ProOnly = false, IsFC = false, ApxWpn = true, ApxDir = true,   IsHelo = false, Flightmenu = DcsClient.iCommandsequences.showflight2 ,Singlehotkey = false, Havedial = false, Theme = "Afghan",   SpeechAlias = "A..Ten Cee" } },
                 {"A-10C_2", new DCSmodule() { Id ="A-10C_2",Name = "A-10C", Alias = "Warthog II",    ProOnly = false, IsFC = false, ApxWpn = true, ApxDir = true,   IsHelo = false, Flightmenu = DcsClient.iCommandsequences.showflight2 ,Singlehotkey = false, Havedial = false, Theme = "Afghan",   SpeechAlias = "A..Ten Cee two" } },
                 {"AJS-37",  new DCSmodule() { Id ="AJS37",Name = "AJS-37",  Alias = "Viggen",       ProOnly = true,  IsFC = false, ApxWpn = true, ApxDir = false,  IsHelo = false, Flightmenu = DcsClient.iCommandsequences.showflight2 ,Singlehotkey = false, Havedial = false, Theme = "NATO",      SpeechAlias = "A J S Thirty Seven"  } },
-                {"AH-64D",  new DCSmodule() { Id ="AH-64D",Name = "AH-64D",  Alias = "Apache",     ProOnly = true,  IsFC = false, ApxWpn = true, ApxDir = false,  IsHelo = true, Flightmenu = DcsClient.iCommandsequences.showflight2 ,Singlehotkey = true,  Havedial = true, Theme = "NATO",    SpeechAlias = "Apache"  } },
+                {"AH-64D",  new DCSmodule() { Id ="AH-64D",Name = "AH-64D",  Alias = "Apache",     ProOnly = true,  IsFC = false, ApxWpn = true, ApxDir = false,  IsHelo = true, Flightmenu = DcsClient.iCommandsequences.showflight2 ,Singlehotkey = true,  UseSingleRadioSelection = true, Havedial = true, Theme = "NATO",    SpeechAlias = "Apache"  } },
                 {"AV-8B",   new DCSmodule() { Id ="AV8BNA",Name = "AV-8B(NA)", Alias = "Harrier II",      ProOnly = true,  IsFC = false, ApxWpn = true, ApxDir = false,  IsHelo = false, Flightmenu = DcsClient.iCommandsequences.showflight1 ,Singlehotkey = false, Havedial = false, Theme = "Navy",      SpeechAlias = "Harrier"  } },
                 {"Bf-109",  new DCSmodule() { Id ="Bf-109K-4",Name ="Bf-109K-4",Alias = "Kurfurst",     ProOnly = true,  IsFC = false, ApxWpn = true, ApxDir = false,  IsHelo = false, Flightmenu = DcsClient.iCommandsequences.showflight2 ,Singlehotkey = true,  Havedial = false, Theme = "WWII",      SpeechAlias = "B F One Oh Nine" } },
                 {"C-101",   new DCSmodule() { Id ="C-101",Name = "C-101",   Alias = "Aviojet",      ProOnly = true,  IsFC = false, ApxWpn = true, ApxDir = false,  IsHelo = false, Flightmenu = DcsClient.iCommandsequences.showflight2 ,Singlehotkey = true , Havedial = false, Theme = "NATO",      SpeechAlias = "C One Oh One" } },
