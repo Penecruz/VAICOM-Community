@@ -219,6 +219,61 @@ function setCommunicatorId(curCommunicatorIdIn)
 	data.curCommunicatorId = curCommunicatorIdIn 	
 	updateMainCaption()	
 end
+
+-- Thanks to the amazing DCS SRS folk for their logic and permission
+-- to use parts of their codebase for the below two functions to get
+-- the currently selected radio in modules that use a radio selector.
+function getListIndicatorValue(indicatorId)
+    local listIindicator = base.list_indication(indicatorId)
+    local result = {}
+
+    if listIindicator == "" then
+        return nil
+    end
+
+    local listindicatorMatch = listIindicator:gmatch("-----------------------------------------\n([^\n]+)\n([^\n]*)\n")
+    while true do
+        local key, value = listindicatorMatch()
+        if not key then
+            break
+        end
+        result[key] = value
+    end
+
+	return result
+end
+function getSelectedRadio(dcsId)
+	local selectedRadio = ""
+	if dcsId == "AH-64D_BLK_II" then
+		-- get pilot or CP/G
+		local seat = base.get_param_handle("SEAT"):get()
+		if seat ~= nil then
+			local eufdDevice = nil
+			if seat == 0 then
+				eufdDevice = getListIndicatorValue(18)
+			else
+				eufdDevice = getListIndicatorValue(19)
+			end
+			if eufdDevice ~= nil then
+				-- get selected radio
+				if eufdDevice['Rts_VHF_'] == '<' then
+					selectedRadio = "VHF AM"
+				elseif eufdDevice['Rts_UHF_'] == '<' then
+					selectedRadio = "CB UHF"
+				elseif eufdDevice['Rts_FM1_'] == '<' then
+					selectedRadio = "FM1: ARC-201D"
+				elseif eufdDevice['Rts_FM2_'] == '<' then
+					selectedRadio = "FM2: ARC-201D"
+				elseif eufdDevice['Rts_HF_'] == '<' then
+					selectedRadio = "HF"
+				end
+			end
+		end
+
+	end
+	return selectedRadio
+end
+
 function updateMainCaption()
 	if not data.initialized or not hasUnit() then
 		return
@@ -1451,6 +1506,7 @@ base.vaicom.state = {
 									airborne			= base.vaicom.state.airborne,								
 									intercom			= data.intercomId,
 									fsmstate 			= base.tostring(base.fsm.state),
+									selectedradio		= getSelectedRadio(base.vaicom.state.dcsid), 
 									radios				= {},
 								  }
 				chunk[3] 		= {		
@@ -1506,6 +1562,7 @@ base.vaicom.state = {
 								  }
 				chunk[12] 		= {
 								  }
+				local selectedRadio = getSelectedRadio(base.vaicom.state.dcsid)
 				for n,k in base.pairs(data.communicators) do
 					local Viper_VHF = (base.vaicom.state.dcsid == "F-16C_50" and n == 38) 
 					local ICS = (n == data.intercomId)
@@ -1516,7 +1573,8 @@ base.vaicom.state = {
 									displayName = k.displayName,
 									AM = k.AM,
 									FM = k.FM,
-									isavailable = ICS_set,  
+									isavailable = ICS_set,
+									isselected = k.displayName == selectedRadio,
 									intercom = ICS,
 									on =  ICS or ((ICS_set and (( base.GetDevice(n) and base.GetDevice(n).is_on and base.GetDevice(n):is_on() ))) or false),
 									frequency = ( ICS_set and (( (not ICS) and base.GetDevice(n) and base.GetDevice(n).get_frequency and base.GetDevice(n):get_frequency() ) or 0)) or 0,

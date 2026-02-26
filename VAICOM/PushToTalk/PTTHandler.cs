@@ -28,6 +28,11 @@ namespace VAICOM
                 return !IsPTTModeSingle();
             }
 
+            public static bool IsPTTMultiSingle()
+            {
+                return IsPTTModeSingle() && !String.IsNullOrEmpty(State.currentstate.selectedradio);
+            }
+
 
             public static void PTT_Handler(dynamic vaProxy, TXNode PTTkey, bool keypress, bool longpress)
             {

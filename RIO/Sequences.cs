@@ -431,7 +431,7 @@ namespace VAICOM.Extensions.RIO
 
                 public static List<DeviceAction> Seq_J_UTIL_NAV_MAP_MARKER = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_5, RIO.Atom_J_MENU_OPTION_4 };
                 public static List<DeviceAction> Seq_J_UTIL_NAV_GRD_ENABLE = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_5, RIO.Atom_J_MENU_OPTION_6, RIO.Atom_J_MENU_OPTION_1 };
-                public static List<DeviceAction> Seq_J_UTIL_NAV_GRD_DSABLE = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_5, RIO.Atom_J_MENU_OPTION_6, RIO.Atom_J_MENU_OPTION_1 };
+                public static List<DeviceAction> Seq_J_UTIL_NAV_GRD_DSABLE = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_5, RIO.Atom_J_MENU_OPTION_6, RIO.Atom_J_MENU_OPTION_2 };
                 public static List<DeviceAction> Seq_J_UTIL_NAV_GRD_CENTER = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_5, RIO.Atom_J_MENU_OPTION_6, RIO.Atom_J_MENU_OPTION_8 };
                 public static List<DeviceAction> Seq_J_UTIL_NAV_GRD_REL_180 = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_5, RIO.Atom_J_MENU_OPTION_6, RIO.Atom_J_MENU_OPTION_4, RIO.Atom_J_MENU_OPTION_1 };
                 public static List<DeviceAction> Seq_J_UTIL_NAV_GRD_REL_u30 = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_5, RIO.Atom_J_MENU_OPTION_6, RIO.Atom_J_MENU_OPTION_4, RIO.Atom_J_MENU_OPTION_2 };

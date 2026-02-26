@@ -141,12 +141,12 @@ namespace VAICOM
 
                         // write message to log
                         // 
-                        // for single:
-                        if ((State.currentmodule.Singlehotkey & !State.activeconfig.ForceMultiHotkey) || (!State.currentmodule.Singlehotkey & State.activeconfig.ForceSingleHotkey)) // for single mode
+                        // for single ptt
+                        if (PTT.IsPTTModeSingle())
                         {
                             Log.Write(State.currentTXnode.name + " | " + PTT.RadioDevices.SEL.name + ": " + recipientlabel + senderlabel + cuelabel + commandlabel + labelwpn + labeldir, Colors.Message);
                         }
-                        else // for multi:
+                        else // for multi ptt:
                         {
                             Log.Write(State.currentTXnode.name + " | " + State.currentTXnode.radios[0].name + ": " + recipientlabel + senderlabel + cuelabel + commandlabel + labelwpn + labeldir, Colors.Message);
                         }

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using VAICOM.Products;
 using VAICOM.Servers;
 using VAICOM.Static;
@@ -87,6 +88,7 @@ namespace VAICOM
                     {"A-29B" ,              new radioslotdevicelist() { Slot_map_INT = {0,0,0}, Slot_map_SRS = {0,0,0}, Slot_map_CUS = {0,0,0} } },
                     {"UH-60L" ,             new radioslotdevicelist() { Slot_map_INT = {0,0,0}, Slot_map_SRS = {0,0,0}, Slot_map_CUS = {0,0,0} } },
                     {"OH-6A" ,              new radioslotdevicelist() { Slot_map_INT = {0,0,0}, Slot_map_SRS = {0,0,0}, Slot_map_CUS = {0,0,0} } },
+                    {"AH-6J" ,              new radioslotdevicelist() { Slot_map_INT = {0,0,0}, Slot_map_SRS = {0,0,0}, Slot_map_CUS = {0,0,0} } },
                     {"Hercules" ,           new radioslotdevicelist() { Slot_map_INT = {0,0,0}, Slot_map_SRS = {0,0,0}, Slot_map_CUS = {0,0,0} } },
                     {"T-45" ,               new radioslotdevicelist() { Slot_map_INT = {0,0,0}, Slot_map_SRS = {0,0,0}, Slot_map_CUS = {0,0,0} } },
                     {"F-4E-45MC" ,          new radioslotdevicelist() { Slot_map_INT = {0,0,0}, Slot_map_SRS = {0,0,0}, Slot_map_CUS = {0,0,0} } },
@@ -144,7 +146,7 @@ namespace VAICOM
                     {"Yak-52" ,     new radioslotlist() { Slot_map = { "Baklan-5", "", "" } } },
 
                     {"Mi-24P" ,     new radioslotlist() { Slot_map = { "R_852", "Jadro-1A", "R-828" } } },
-                    {"AH-64D" ,     new radioslotlist() { Slot_map = { "VHF AM", "CB UHF", "FM:1 ARC-201D" } } },
+                    {"AH-64D" ,     new radioslotlist() { Slot_map = { "VHF AM", "CB UHF", "FM1: ARC-201D" } } },
                     {"MiG-19P" ,    new radioslotlist() { Slot_map = { "RSIU-4V", "", "" } } },
                     {"JF-17" ,      new radioslotlist() { Slot_map = { "COMM1 VHF Radio", "COMM2 UHF Radio", "" } } },
                     {"I-16" ,       new radioslotlist() { Slot_map = { "Baklan 5", "", "" } } },
@@ -160,6 +162,7 @@ namespace VAICOM
                     {"A-29B" ,      new radioslotlist() { Slot_map = { "V/UHF XT-6013", "V/UHF XT-6013", "V/UHF XT-6013" } } }, //Pene
                     {"UH-60L" ,     new radioslotlist() { Slot_map = { "VHF-FM Radio AN/ARC-201 (1)", "Direction Finder Set AN/ARN-149", "VHF Radio AN/ARC-186" } } }, //Pene
                     {"OH-6A" ,      new radioslotlist() { Slot_map = { "VHF Radio KX 155", "FM Radio", "" } } },
+                    {"AH-6J" ,      new radioslotlist() { Slot_map = { "AnArc186 Radio", "AnArc210 FM Radio", "AnArc186 FM Radio" } } },
                     {"Hercules" ,   new radioslotlist() { Slot_map = { "", "CB UHF", ""} } }, //Pene
                     {"T-45" ,       new radioslotlist() { Slot_map = { "RADIO2", "RADIO1", ""} } }, //Pene
                     {"F-4E-45MC" ,  new radioslotlist() { Slot_map = { "UHF ARC-164", "", ""} } }, //Pene
@@ -243,6 +246,7 @@ namespace VAICOM
                     {"A-29B" ,      new radioslotlist() { Slot_map = { "AN/ARC-150V", "SRT-651/N", ""} } },
                     {"UH-60L" ,     new radioslotlist() { Slot_map = { "[AN/ARC-201]", "AN/ARN-149 DF", "AN/ARC-186" } } },
                     {"OH-6A" ,      new radioslotlist() { Slot_map = { "AN/ARC-51", "AN/ARC-54", "" } } },
+                    {"AH-6J" ,      new radioslotlist() { Slot_map = { "AN/ARC-186", "AN/ARC-182", "AN/ARC-210" } } },
                     {"Hercules" ,   new radioslotlist() { Slot_map = { "", "AN/ARC-164", ""} } },
                     {"T-45" ,       new radioslotlist() { Slot_map = { "AN/ARC-182 1", "AN/ARC-182 2", ""} } }, //Pene WIP
                     {"F-4E-45MC" ,  new radioslotlist() { Slot_map = { "UHF ARC-164", "", ""} } }, //Pene
@@ -538,6 +542,12 @@ namespace VAICOM
             public static void PTT_SetConfigSingle_SRS()
             {
 
+                if (PTT.IsPTTMultiSingle())
+                {
+                    PTT_SetConfigMultiSingle_SRS();
+                    return;
+                }
+
                 PTT_SetConfigMulti_SRS();
 
                 TXNodes.TX1.enabled = false;
@@ -569,6 +579,139 @@ namespace VAICOM
                         break;
                     default:
                         TXNodes.TX1 = new TXNode() { name = "TX1", enabled = true, radios = TXConfigs.ALL_RADIOS_SEL };
+                        break;
+                }
+            }
+
+            public static void PTT_SetConfigMultiSingle_SRS()
+            {
+                TXNodes.TX1.enabled = false;
+                TXNodes.TX2.enabled = false;
+                TXNodes.TX3.enabled = false;
+                TXNodes.TX4.enabled = false;
+                TXNodes.TX5.enabled = false;
+                TXNodes.TX6.enabled = false;
+
+                Server.RadioDevice selectedRadio = State.currentstate.radios
+                    .Where(radio => radio.isselected)
+                    .First();
+
+                DCSmodule module = null;
+
+                if (!State.currentstate.id.Equals(null))
+                {
+                    module = DCSmodules.findmodulebyid(State.currentstate.id);
+                }
+
+                if (module.Equals(null))
+                {
+                    module = DCSmodules.LookupTable["----"];
+                }
+
+                radioslotlist radiolist_Ref = maps.mapping_Ref[module.Id];
+                radioslotlist radiolist_SRS = maps.mapping_SRS[module.Id];
+
+                string selectedName = selectedRadio.displayName;
+                int selectedIndex = radiolist_Ref.Slot_map.FindIndex(slot => slot.Equals(selectedName, StringComparison.OrdinalIgnoreCase));
+                if (selectedIndex >= 0 && selectedIndex < radiolist_SRS.Slot_map.Count)
+                {
+                    selectedName = radiolist_SRS.Slot_map[selectedIndex];
+                }
+
+                if (selectedName.Length > 16)
+                {
+                    selectedName = selectedName.Substring(selectedName.Length - 16, 16);
+                }
+
+                RadioDevices.SEL.deviceid = selectedRadio.deviceid;
+                RadioDevices.SEL.isavailable = selectedRadio.isavailable;
+                RadioDevices.SEL.intercom = selectedRadio.intercom;
+                RadioDevices.SEL.AM = selectedRadio.AM;
+                RadioDevices.SEL.FM = selectedRadio.FM;
+                RadioDevices.SEL.on = selectedRadio.on;
+                RadioDevices.SEL.frequency = selectedRadio.frequency.ToString();
+                RadioDevices.SEL.modulation = selectedRadio.modulation;
+                RadioDevices.SEL.name = selectedName;
+                RadioDevices.SEL.isSRSserver = false;
+
+                if (RadioDevices.SEL.name.Contains("[") && RadioDevices.SEL.name.Contains("]"))
+                {
+                    RadioDevices.SEL.name = RadioDevices.SEL.name.TrimStart('[').TrimEnd(']');
+                    RadioDevices.SEL.isSRSserver = true;
+                }
+
+                Server.RadioDevice intercomRadio = State.currentstate.radios.FirstOrDefault(radio => radio.intercom);
+                bool hasIntercom = intercomRadio != null;
+
+                TXNodes.TX5.enabled = true;
+                TXNodes.TX5.radios = TXConfigs.SNGL_RADIO_INT;
+
+                RadioDevices.INT.isavailable = hasIntercom ? intercomRadio.isavailable : true;
+                RadioDevices.INT.deviceid = hasIntercom ? intercomRadio.deviceid : 0;
+                RadioDevices.INT.name = "INT";
+                RadioDevices.INT.intercom = true;
+                RadioDevices.INT.AM = false;
+                RadioDevices.INT.FM = false;
+                RadioDevices.INT.on = hasIntercom ? intercomRadio.on : true;
+                RadioDevices.INT.frequency = "";
+                RadioDevices.INT.modulation = "";
+                RadioDevices.INT.isSRSserver = false;
+                TXNodes.TX5.number = RadioDevices.INT.deviceid;
+
+                List<RadioDevice> radios = new List<RadioDevice>() { RadioDevices.SEL };
+                State.radiocount = State.currentstate.radios.Count - 1;
+
+                bool preserveCurrentTX = State.transmitting && State.currentTXnode != null && State.currentTXnode.Equals(TXNodes.TX5);
+
+                switch (State.activeconfig.SingleHotkey)
+                {
+                    case "TX1":
+                        TXNodes.TX1 = new TXNode() { name = "TX1", enabled = true, radios = radios };
+                        if (!preserveCurrentTX)
+                        {
+                            State.currentTXnode = TXNodes.TX1;
+                        }
+                        break;
+                    case "TX2":
+                        TXNodes.TX2 = new TXNode() { name = "TX2", enabled = true, radios = radios };
+                        if (!preserveCurrentTX)
+                        {
+                            State.currentTXnode = TXNodes.TX2;
+                        }
+                        break;
+                    case "TX3":
+                        TXNodes.TX3 = new TXNode() { name = "TX3", enabled = true, radios = radios };
+                        if (!preserveCurrentTX)
+                        {
+                            State.currentTXnode = TXNodes.TX3;
+                        }
+                        break;
+                    case "TX4":
+                        TXNodes.TX4 = new TXNode() { name = "TX4", enabled = true, radios = radios };
+                        if (!preserveCurrentTX)
+                        {
+                            State.currentTXnode = TXNodes.TX4;
+                        }
+                        break;
+                    case "TX5":
+                        if (!preserveCurrentTX)
+                        {
+                            State.currentTXnode = TXNodes.TX5;
+                        }
+                        break;
+                    case "TX6":
+                        TXNodes.TX6 = new TXNode() { name = "TX6", enabled = true, radios = radios };
+                        if (!preserveCurrentTX)
+                        {
+                            State.currentTXnode = TXNodes.TX6;
+                        }
+                        break;
+                    default:
+                        TXNodes.TX1 = new TXNode() { name = "TX1", enabled = true, radios = radios };
+                        if (!preserveCurrentTX)
+                        {
+                            State.currentTXnode = TXNodes.TX1;
+                        }
                         break;
                 }
             }

@@ -13,6 +13,7 @@ namespace VAICOM
             {
                 public int deviceid;
                 public bool isavailable;
+                public bool isselected;
                 public string displayName;
                 public bool AM;
                 public bool FM;
@@ -299,6 +300,7 @@ namespace VAICOM
                 public object missioncmds;
 
                 public int intercom;
+                public string selectedradio;
                 public List<RadioDevice> radios;
 
                 public Dictionary<string, List<DcsUnit>> availablerecipients;
@@ -372,6 +374,7 @@ namespace VAICOM
                 public campos cpos;
                 public string fsmstate;
                 public int intercom;
+                public string selectedradio;
                 public List<RadioDevice> radios;
 
                 public string missiontitle;

@@ -126,6 +126,7 @@ namespace VAICOM
                     State.currentstate.airborne = serverMessage.airborne;
                     State.currentstate.intercom = serverMessage.intercom;
                     State.currentstate.fsmstate = serverMessage.fsmstate;
+                    State.currentstate.selectedradio = serverMessage.selectedradio;
                     State.currentstate.radios = serverMessage.radios;
                 }
                 catch (Exception e)
