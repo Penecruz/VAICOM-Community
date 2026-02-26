@@ -242,13 +242,23 @@ private static void Chatter_Timer_Elapsed_Handler(object sender, ElapsedEventArg
             }
 
             Stream fragment = (Stream)playbackfile;
-            currentduration = (fragment.Length / 8); // for 8 bit 8khz mono
 
             fragment.Seek(0, SeekOrigin.Begin);
             WaveFileReader reader = new WaveFileReader(fragment);
-            var upsampler = new WaveFormatConversionStream(new WaveFormat(22050, 16, 1), reader); // was 8000
+            currentduration = reader.TotalTime.TotalMilliseconds;
 
-            var volumeSampleProvider = new NAudio.Wave.SampleProviders.VolumeSampleProvider(upsampler.ToSampleProvider());
+            var sampleProvider = reader.ToSampleProvider(); // Add new sample provider offer greater flexibility for processing (resampling, panning, volume, etc)
+                            if (sampleProvider.WaveFormat.Channels > 1)
+            {
+                sampleProvider = new NAudio.Wave.SampleProviders.StereoToMonoSampleProvider(sampleProvider);
+            }
+
+            if (sampleProvider.WaveFormat.SampleRate != 22050)
+            {
+                sampleProvider = new NAudio.Wave.SampleProviders.WdlResamplingSampleProvider(sampleProvider, 22050);
+            }
+
+            var volumeSampleProvider = new NAudio.Wave.SampleProviders.VolumeSampleProvider(sampleProvider);
             volumeSampleProvider.Volume = 3 * State.activeconfig.ChatterVolume;
 
             var panningSampleProvider = new NAudio.Wave.SampleProviders.PanningSampleProvider(volumeSampleProvider);
