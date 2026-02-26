@@ -71,6 +71,23 @@ namespace VAICOM
                             currenttheme = State.activeconfig.ChatterFolder;
                         }
 
+                        switch (currenttheme) // Set chatter interval ranges based on theme (to give a different "feel" to the different themes based on real activity levels, while still random within each theme)
+                        {
+                            case "Afghan":
+                            case "Andersen":
+                                State.chatterintervalmin = 4000;
+                                State.chatterintervalmax = 90000;
+                                break;
+                            case "Fallon":
+                                State.chatterintervalmin = 4000;
+                                State.chatterintervalmax = 60000;
+                                break;
+                            default:
+                                State.chatterintervalmin = 4000;
+                                State.chatterintervalmax = 24000;
+                                break;
+                        }
+
                         if (State.chatterthemesactivated)
                         {
                             Log.Write("Chatter theme set to " + currenttheme, Colors.Text);
@@ -151,13 +168,20 @@ namespace VAICOM
                 {
                     try
                     {
+                        if (CurrentPlayStatus)
+                        {
+                            return;
+                        }
+
                         if (!Created)
                         {
                             PlaybackTimer = new System.Timers.Timer(1000);
+                            Created = true;
                         }
 
-                        PlaybackTimer.Start();
+                        PlaybackTimer.Elapsed -= Chatter_Timer_Elapsed_Handler;
                         PlaybackTimer.Elapsed += Chatter_Timer_Elapsed_Handler;
+                        PlaybackTimer.Start();
                         CurrentPlayStatus = true;
                         State.chatteractive = true;
 
