@@ -250,6 +250,27 @@ function getSelectorPosition(arg, step)
 
     return nil
 end
+local function normalizeRadioName(name)
+    return base.string.lower(name):gsub("[^%w]", "")
+end
+local function findRadioDisplayName(...)
+    if data.communicators == nil then
+        return nil
+    end
+    local lookup = {}
+    for _, name in base.pairs({ ... }) do
+        lookup[normalizeRadioName(name)] = true
+    end
+    for _, communicator in base.pairs(data.communicators) do
+        if communicator.displayName ~= nil then
+            local normalizedName = normalizeRadioName(communicator.displayName)
+            if lookup[normalizedName] then
+                return communicator.displayName
+            end
+        end
+    end
+    return nil
+end
 function getSelectedRadio(dcsId)
 	local selectedRadio = ""
 	if dcsId == "AH-64D_BLK_II" then
@@ -304,6 +325,45 @@ function getSelectedRadio(dcsId)
 					return selectorOffset == 591 and "VHF ARC-186" or "CB UHF"
 				else
 					return selectorOffset == 591 and "CB UHF" or "VHF ARC-186"
+				end
+			end
+		end
+	elseif dcsId == "C-130J-30" then
+		local seat = base.get_param_handle("SEAT"):get()
+		local selectorId = nil
+		if seat == 0 then
+			selectorId = 294
+		elseif seat == 1 then
+			selectorId = 296
+		elseif seat == 3 then
+			selectorId = 298
+		end
+		if selectorId ~= nil then
+			local selectorValue = base.GetDevice(0):get_argument_value(selectorId)
+			if selectorValue ~= nil then
+				local selectorPosition = base.math.floor(selectorValue * 9 + 0.5) + 1
+				selectorPosition = selectorPosition + 1
+				if selectorPosition > 9 then
+					selectorPosition = 1
+				end
+				if selectorPosition == 1 then
+					selectedRadio = findRadioDisplayName("Intercom", "Interphone", "INT") or selectedRadio
+				elseif selectorPosition == 2 then
+					selectedRadio = findRadioDisplayName("UHF1", "UHF-1", "UHF 1") or selectedRadio
+				elseif selectorPosition == 3 then
+					selectedRadio = findRadioDisplayName("UHF2", "UHF-2", "UHF 2") or selectedRadio
+				elseif selectorPosition == 4 then
+					selectedRadio = findRadioDisplayName("VHF1", "VHF-1", "VHF 1") or selectedRadio
+				elseif selectorPosition == 5 then
+					selectedRadio = findRadioDisplayName("VHF2", "VHF-2", "VHF 2") or selectedRadio
+				elseif selectorPosition == 6 then
+					selectedRadio = findRadioDisplayName("HF1", "HF-1", "HF 1") or selectedRadio -- not currently implemented
+				elseif selectorPosition == 7 then
+					selectedRadio = findRadioDisplayName("HF2", "HF-2", "HF 2") or selectedRadio -- not currently implemented
+				elseif selectorPosition == 8 then
+					selectedRadio = findRadioDisplayName("SAT", "SATCOM") or selectedRadio -- not currently implemented
+				elseif selectorPosition == 9 then
+					selectedRadio = findRadioDisplayName("PVT", "PVT 1", "PVT-1") or selectedRadio
 				end
 			end
 		end
