@@ -220,13 +220,11 @@ namespace VAICOM
                     PTT_SetConfigSingle_SRS();
                     return;
                 }
-
                 else if (PTT.IsPTTUseSingleRadioSelection())
-                
-                        {
-                            PTT_SetConfigMultiSingle();
-                            return;
-                        }
+                {
+                    PTT_SetConfigMultiSingle();
+                    return;
+                }
 
                 PTT_SetConfigMulti();
 
