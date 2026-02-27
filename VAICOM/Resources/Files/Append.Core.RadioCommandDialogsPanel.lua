@@ -221,8 +221,8 @@ function setCommunicatorId(curCommunicatorIdIn)
 end
 
 -- Thanks to the amazing DCS SRS folk for their logic and permission
--- to use parts of their codebase for the below two functions to get
--- the currently selected radio in modules that use a radio selector.
+-- to use parts of their codebase for the below functions to get the
+-- currently selected radio in modules that use a radio selector.
 function getListIndicatorValue(indicatorId)
     local listIindicator = base.list_indication(indicatorId)
     local result = {}
@@ -279,8 +279,8 @@ function getSelectedRadio(dcsId)
 		end
 	elseif dcsId == "CH-47Fbl1" then
 		-- pilot (seat 0) has offset 591 for the selector, copilot (seat 1) has offset 624
-		local pilotSelectorOffset = 591
-		local selectorPosition = getSelectorPosition(pilotSelectorOffset + 22, 0.05)
+		local selectorOffset = 591
+		local selectorPosition = getSelectorPosition(selectorOffset + 22, 0.05)
 		if selectorPosition ~= nil then
 			if selectorPosition == 1 then
 				--return "FM1: ARC-201D"  (AN/ARC-201 FM1) -- not currently implemented
@@ -296,6 +296,15 @@ function getSelectedRadio(dcsId)
 			end
 			if selectorPosition == 5 then
 				--return "AN/ARC-201 FM2" -- not currently implemented
+			end
+			if selectorPosition == 9 then
+				-- backup radio is in use
+				local switchPosition = base.GetDevice(0):get_argument_value(1466)
+				if switchPosition < 0.5 then
+					return selectorOffset == 591 and "VHF ARC-186" or "CB UHF"
+				else
+					return selectorOffset == 591 and "CB UHF" or "VHF ARC-186"
+				end
 			end
 		end
 	end
