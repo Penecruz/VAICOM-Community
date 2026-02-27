@@ -28,9 +28,9 @@ namespace VAICOM
                 return !IsPTTModeSingle();
             }
 
-            public static bool IsPTTMultiSingle()
+            public static bool IsPTTUseSingleRadioSelection()
             {
-                return IsPTTModeSingle() && !String.IsNullOrEmpty(State.currentstate.selectedradio);
+                return State.currentmodule != null && State.currentmodule.UseSingleRadioSelection && !String.IsNullOrEmpty(State.currentstate.selectedradio);
             }
 
 

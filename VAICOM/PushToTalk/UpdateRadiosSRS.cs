@@ -94,7 +94,7 @@ namespace VAICOM
                     {"T-45" ,               new radioslotdevicelist() { Slot_map_INT = {0,0,0}, Slot_map_SRS = {0,0,0}, Slot_map_CUS = {0,0,0} } },
                     {"F-4E-45MC" ,          new radioslotdevicelist() { Slot_map_INT = {0,0,0}, Slot_map_SRS = {0,0,0}, Slot_map_CUS = {0,0,0} } },
                     {"OH58D" ,              new radioslotdevicelist() { Slot_map_INT = {0,0,0}, Slot_map_SRS = {0,0,0}, Slot_map_CUS = {0,0,0} } },
-                    {"CH-47F" ,             new radioslotdevicelist() { Slot_map_INT = {0,0,0}, Slot_map_SRS = {0,0,0}, Slot_map_CUS = {0,0,0} } },
+                    {"CH-47Fbl1" ,          new radioslotdevicelist() { Slot_map_INT = {0,0,0}, Slot_map_SRS = {0,0,0}, Slot_map_CUS = {0,0,0} } },
                     {"F4U-1D" ,             new radioslotdevicelist() { Slot_map_INT = {0,0,0}, Slot_map_SRS = {0,0,0}, Slot_map_CUS = {0,0,0} } },
                     {"MiG-29 Fulcrum" ,     new radioslotdevicelist() { Slot_map_INT = {0,0,0}, Slot_map_SRS = {0,0,0}, Slot_map_CUS = {0,0,0} } },
                     {"C-130J" ,             new radioslotdevicelist() { Slot_map_INT = {0,0,0}, Slot_map_SRS = {0,0,0}, Slot_map_CUS = {0,0,0} } },
@@ -169,7 +169,7 @@ namespace VAICOM
                     {"T-45" ,       new radioslotlist() { Slot_map = { "RADIO2", "RADIO1", ""} } }, //Pene
                     {"F-4E-45MC" ,  new radioslotlist() { Slot_map = { "UHF ARC-164", "", ""} } }, //Pene
                     {"OH58D" ,      new radioslotlist() { Slot_map = { "UHF AM", "VHF AM", "VHF FM2" } } }, //Pene
-                    {"CH-47F" ,     new radioslotlist() { Slot_map = { "VHF AM", "VHF ARC-186", "VHF FM" } } }, //Pene CB .9.9.2280
+                    {"CH-47Fbl1" ,  new radioslotlist() { Slot_map = { "VHF ARC-186", "CB UHF", "FM1: ARC-201D" } } }, //Pene updated to refect Chunk2
                     {"F-16I" ,      new radioslotlist() { Slot_map = { "UHF Radio AN/ARC-164", "VHF Radio AN/ARC-222", "" } } },
                     {"F-16D_50" ,   new radioslotlist() { Slot_map = { "UHF Radio AN/ARC-164", "VHF Radio AN/ARC-222", "" } } },
                     {"F-16D_50_NS", new radioslotlist() { Slot_map = { "UHF Radio AN/ARC-164", "VHF Radio AN/ARC-222", "" } } },
@@ -254,7 +254,7 @@ namespace VAICOM
                     {"T-45" ,       new radioslotlist() { Slot_map = { "AN/ARC-182 1", "AN/ARC-182 2", ""} } }, //Pene WIP
                     {"F-4E-45MC" ,  new radioslotlist() { Slot_map = { "UHF ARC-164", "", ""} } }, //Pene
                     {"OH58D" ,      new radioslotlist() { Slot_map = { "AN/ARC-231(U)", "AN/ARC-231(V)", "AN/ARC-231(FM)" } } },
-                    {"CH-47F" ,     new radioslotlist() { Slot_map = { "AN/ARC-186(V)", "AN/ARC-186(U)", "AN/ARC-186(FM)" } } }, 
+                    {"CH-47Fbl1" ,  new radioslotlist() { Slot_map = { "AN/ARC-186(V)", "AN/ARC-164(U)", "AN/ARC-210D(FM)" } } }, 
                     {"F-16I" ,      new radioslotlist() { Slot_map = { "AN/ARC-164 UHF", "AN/ARC-222 VHF", "" } } },
                     {"F-16D_50" ,   new radioslotlist() { Slot_map = { "AN/ARC-164 UHF", "AN/ARC-222 VHF", "" } } },
                     {"F-16D_50_NS", new radioslotlist() { Slot_map = { "AN/ARC-164 UHF", "AN/ARC-222 VHF", "" } } },
@@ -545,7 +545,7 @@ namespace VAICOM
             public static void PTT_SetConfigSingle_SRS()
             {
 
-                if (PTT.IsPTTMultiSingle())
+                if (PTT.IsPTTUseSingleRadioSelection())
                 {
                     PTT_SetConfigMultiSingle_SRS();
                     return;

@@ -28,11 +28,7 @@ namespace VAICOM
             public static void PTT_ApplyNewConfig()
             {
 
-                if (State.currentmodule != null && State.currentmodule.Singlehotkey && !State.currentmodule.UseSingleRadioSelection)
-                {
-                    return;
-                }
-
+                
                 if (IsPTTModeSingle())
                 {
                     PTT_SetConfigSingle();
@@ -46,7 +42,6 @@ namespace VAICOM
                     Update_PTT_GUI();
                     return;
                 }
-
             }
         }
     }

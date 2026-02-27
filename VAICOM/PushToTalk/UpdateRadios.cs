@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Diagnostics.Eventing.Reader;
 using System.Linq;
 using VAICOM.Products;
 using VAICOM.Servers;
@@ -220,11 +221,12 @@ namespace VAICOM
                     return;
                 }
 
-                if (PTT.IsPTTMultiSingle())
-                {
-                    PTT_SetConfigMultiSingle();
-                    return;
-                }
+                else if (PTT.IsPTTUseSingleRadioSelection())
+                
+                        {
+                            PTT_SetConfigMultiSingle();
+                            return;
+                        }
 
                 PTT_SetConfigMulti();
 
@@ -239,24 +241,31 @@ namespace VAICOM
                 {
                     case "TX1":
                         TXNodes.TX1 = new TXNode() { name = "TX1", enabled = true, radios = TXConfigs.ALL_RADIOS_SEL };
+                        State.currentTXnode = TXNodes.TX1;
                         break;
                     case "TX2":
                         TXNodes.TX2 = new TXNode() { name = "TX2", enabled = true, radios = TXConfigs.ALL_RADIOS_SEL };
+                        State.currentTXnode = TXNodes.TX2;
                         break;
                     case "TX3":
                         TXNodes.TX3 = new TXNode() { name = "TX3", enabled = true, radios = TXConfigs.ALL_RADIOS_SEL };
+                        State.currentTXnode = TXNodes.TX3;
                         break;
                     case "TX4":
                         TXNodes.TX4 = new TXNode() { name = "TX4", enabled = true, radios = TXConfigs.ALL_RADIOS_SEL };
+                        State.currentTXnode = TXNodes.TX4;
                         break;
                     case "TX5":
                         TXNodes.TX5 = new TXNode() { name = "TX5", enabled = true, radios = TXConfigs.ALL_RADIOS_SEL };
+                        State.currentTXnode = TXNodes.TX5;
                         break;
                     case "TX6":
                         TXNodes.TX6 = new TXNode() { name = "TX6", enabled = true, radios = TXConfigs.ALL_RADIOS_SEL };
+                        State.currentTXnode = TXNodes.TX6;
                         break;
                     default:
                         TXNodes.TX1 = new TXNode() { name = "TX1", enabled = true, radios = TXConfigs.ALL_RADIOS_SEL };
+                        State.currentTXnode = TXNodes.TX1;
                         break;
                 }
             }
