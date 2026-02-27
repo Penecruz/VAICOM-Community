@@ -221,8 +221,8 @@ function setCommunicatorId(curCommunicatorIdIn)
 end
 
 -- Thanks to the amazing DCS SRS folk for their logic and permission
--- to use parts of their codebase for the below two functions to get
--- the currently selected radio in modules that use a radio selector.
+-- to use parts of their codebase for the below functions to get the
+-- currently selected radio in modules that use a radio selector.
 function getListIndicatorValue(indicatorId)
     local listIindicator = base.list_indication(indicatorId)
     local result = {}
@@ -245,31 +245,13 @@ end
 function getSelectorPosition(arg, step)
     local value = base.GetDevice(0):get_argument_value(arg)
     if value ~= nil then
-        base.print("selector value"..value)
-        local position = base.math.abs(base.tonumber(base.string.format("%.0f", (value) / step)))
-        if position > -1 then
-            base.print("selector position"..position)
-            return position
-        else
-            base.print("no selector position")
-        end
-    else
-        base.print("no selector value")
+        return base.math.abs(base.tonumber(base.string.format("%.0f", (value) / step)))
     end
 
     return nil
 end
 function getSelectedRadio(dcsId)
-	base.print("dcsId: "..dcsId)
-	if data.curCommunicatorId ~= nil then
-		base.print("data.curCommunicatorId: "..data.curCommunicatorId)
-	else
-		base.print("no data.curCommunicatorId")
-	end
 	local selectedRadio = ""
-	local deviceId = -1
-	local frequency = -1
-	local modulation = -1
 	if dcsId == "AH-64D_BLK_II" then
 		-- get pilot or CP/G
 		local seat = base.get_param_handle("SEAT"):get()
@@ -296,33 +278,34 @@ function getSelectedRadio(dcsId)
 			end
 		end
 	elseif dcsId == "CH-47Fbl1" then
-		base.print("CH-47Fbl1")
-		-- get select, pilot (seat 0) has offset 591 for the selector, copilot (seat 1) has offset 624
-		local pilotSelectorOffset = 591
-		local selectorPosition = getSelectorPosition(pilotSelectorOffset + 22, 0.05)
+		-- pilot (seat 0) has offset 591 for the selector, copilot (seat 1) has offset 624
+		local selectorOffset = 591
+		local selectorPosition = getSelectorPosition(selectorOffset + 22, 0.05)
 		if selectorPosition ~= nil then
 			if selectorPosition == 1 then
-				base.print("FM1: ARC-201D (AN/ARC-201 FM1)")
-				return "FM1: ARC-201D"  -- AN/ARC-201 FM1  -- deviceId = 52
+				--return "FM1: ARC-201D"  (AN/ARC-201 FM1) -- not currently implemented
 			end
 			if selectorPosition == 2 then
-				base.print("CB UHF (AN/ARC-164 UHF)")
-				return "CB UHF"  -- AN/ARC-164 UHF -- deviceId = 50
+				return "CB UHF"
 			end
 			if selectorPosition == 3 then
-				base.print("VHF ARC-186 (AN/ARC-186 VHF)")
-				return "VHF ARC-186"  -- AN/ARC-186 VHF  -- device = 51
+				return "VHF ARC-186"
 			end
 			if selectorPosition == 4 then
-				base.print("HF (AN/ARC-220 HF)")
-				return "HF" -- AN/ARC-220 HF   -- deviceId = 53
+				--return "HF"   (AN/ARC-220 HF) -- not currently implemented
 			end
 			if selectorPosition == 5 then
-				base.print("AN/ARC-201 FM2  -- todo????")
-				--return "AN/ARC-201 FM2" -- todo
+				--return "AN/ARC-201 FM2" -- not currently implemented
 			end
-		else
-			base.print("no selector position returned")
+			if selectorPosition == 9 then
+				-- backup radio is in use
+				local switchPosition = base.GetDevice(0):get_argument_value(1466)
+				if switchPosition < 0.5 then
+					return selectorOffset == 591 and "VHF ARC-186" or "CB UHF"
+				else
+					return selectorOffset == 591 and "CB UHF" or "VHF ARC-186"
+				end
+			end
 		end
 	end
 	return selectedRadio
