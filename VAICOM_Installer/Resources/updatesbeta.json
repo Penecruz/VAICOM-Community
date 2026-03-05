@@ -7,11 +7,11 @@
       "isbeta": false,
       "isdev": false,
       "productid": 1,
-      "releasedate": 20260305,
-      "version": 30814,
-      "versionstring": "3.0.8.14",
+      "releasedate": 20260306,
+      "version": 3091,
+      "versionstring": "3.0.9.1",
       "downloadurl": "https://raw.githubusercontent.com/Penecruz/VAICOM-Community/Development/VAICOM_Installer/Resources/VAICOMPRO.zip",
-      "releasenotes": " Adds dark Mode for Vaicom UI, Adds F-14 Jester Grid Nav changes Please TEST ASAP, Adds C130J-30 as Single Hotkey module, Adds CH-47F as Single Hotkey module, Fix bugs with UI and TX Node behaviour Adds New Chatter theme Andersen, Adds variable playback interval min/max for Andersen, Afghan and Fallon themes to better reflect activity levels, Adds MH-6J as supported Community Module, Fixes bug with rotary select SINGL on modules not using the new single PTT support, Adds SRS PTT mapping version of Sleighzy's Single PTT support to AH-64D retaining TX5 as dedicated interphone PTT, Adds AH-6J Little Bird mod as supported module commit by Sleighzy, Adds full radio single PTT support for AH-64D WIP for other module implementation commit by Sleighzy, Remove WIP Andersen Chatter module (I'll be back!), Fix bug with Jester enable/disable Grid Navb, Fix bug with F10 dynamic import not running after miz load, Adds WIP campaign Key Phrases for Pacific Sentry 25 , Remove Kola Radio.lua update routine, fix f10 menu items not being removed on reset, fix blank space F10 Action Items."
+      "releasenotes": "Fix JF-17 not being detected, Adds Dark Mode for Vaicom UI, Adds F-14 Jester Grid Nav changes Please TEST ASAP, Adds C130J-30 as Single Hotkey module, Adds CH-47F as Single Hotkey module, Fix bugs with UI and TX Node behaviour, Adds New Chatter theme Andersen, Adds variable playback interval min/max for Andersen, Afghan and Fallon themes to better reflect activity levels, Adds MH-6J as supported Community Module, Fixes bug with rotary select SINGL on modules not using the new single PTT support, Adds SRS PTT mapping version of Sleighzy's Single PTT support to AH-64D retaining TX5 as dedicated interphone PTT, Adds AH-6J Little Bird mod as supported module commit by Sleighzy, Adds full radio single PTT support for AH-64D WIP for other module implementation commit by Sleighzy, Remove WIP Andersen Chatter module (I'll be back!), Fix bug with Jester enable/disable Grid Navb, Fix bug with F10 dynamic import not running after miz load, Adds WIP campaign Key Phrases for Pacific Sentry 25 , Remove Kola Radio.lua update routine, fix f10 menu items not being removed on reset, fix blank space F10 Action Items."
     }
   ]
 }
