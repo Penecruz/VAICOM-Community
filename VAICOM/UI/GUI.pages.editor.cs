@@ -9,6 +9,7 @@ using VAICOM.Database;
 using VAICOM.FileManager;
 using VAICOM.Servers;
 using VAICOM.Static;
+using StaticColors = VAICOM.Static.Colors;
 
 
 namespace VAICOM
@@ -344,7 +345,7 @@ namespace VAICOM
                             Aliases.categories[State.editorcurrentsourcetable].Remove(State.editorcurrentalias);
                             message = "Changed " + State.editorcurrentalias + " to " + State.editorcurrenttext;
                             Message.Text = message;
-                            Log.Write(message, Colors.Text);
+                            Log.Write(message, StaticColors.Text);
                             Aliases.BuildNewMasterTable();
                             comboBoxAlias.ItemsSource = null;
                             comboBoxAlias.ItemsSource = Aliases.master;
@@ -356,14 +357,14 @@ namespace VAICOM
                         {
                             message = "Command phrase '" + State.editorcurrenttext + "' is already in use!";
                             Message.Text = message;
-                            Log.Write(message, Colors.Text);
+                            Log.Write(message, StaticColors.Text);
                         }
                     }
                     else
                     {
                         message = "(first enter a new command phrase)";
                         Message.Text = message;
-                        Log.Write(message, Colors.Text);
+                        Log.Write(message, StaticColors.Text);
                     }
 
                 }
