@@ -155,8 +155,9 @@ namespace VAICOM
                             State.uitimerinterval = 250;
                             // RELAY TO KNEEBOARD
                             string dictbuffer = State.Proxy.Utility.ParseTokens("{DICTATION:NEWLINE}");
-                            if (!State.kneeboardcurrentbuffer.Equals(dictbuffer) || State.kneeboardcurrentbuffer == "") // something changed
+                            if (!State.kneeboardlastdictbuffer.Equals(dictbuffer))
                             {
+                                State.kneeboardlastdictbuffer = dictbuffer;
                                 State.kneeboardcurrentbuffer = dictbuffer;
                                 msg.logdata = new LogData("NOTES", dictbuffer);
                             }

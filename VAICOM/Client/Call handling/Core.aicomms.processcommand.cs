@@ -463,6 +463,14 @@ namespace VAICOM
                                     case "wMsgKneeboardClearNotes":
                                         State.Proxy.Dictation.ClearBuffer(false, out String Message2);
                                         State.kneeboardcurrentbuffer = "";
+                                        if (State.Proxy.Dictation.IsOn())
+                                        {
+                                            State.kneeboardlastdictbuffer = State.Proxy.Utility.ParseTokens("{DICTATION:NEWLINE}");
+                                        }
+                                        else
+                                        {
+                                            State.kneeboardlastdictbuffer = "";
+                                        }
                                         UI.Playsound.Commandcomplete();
                                         KneeboardUpdater.SwitchPage("NOTES");
                                         KneeboardUpdater.RefreshCurrentPage(); // Force immediate refresh
