@@ -250,6 +250,9 @@ function getSelectorPosition(arg, step)
 
     return nil
 end
+function nearlyEqual(a, b, diff)
+    return math.abs(a - b) < diff
+end
 local function normalizeRadioName(name)
     return base.string.lower(name):gsub("[^%w]", "")
 end
@@ -365,6 +368,20 @@ function getSelectedRadio(dcsId)
 				elseif selectorPosition == 9 then
 					selectedRadio = findRadioDisplayName("PVT", "PVT 1", "PVT-1") or selectedRadio
 				end
+			end
+		end
+	elseif dcsId == "UH-1H" then
+		local selectorValue = base.GetDevice(0):get_argument_value(30)
+		if selectorValue ~= nil then
+			if nearlyEqual(selectorValue, 0.1, 0.03) then
+				-- intercom
+            	--selectedRadio = ""
+			elseif nearlyEqual(selectorValue, 0.2, 0.03) then
+				selectedRadio = "VHF FM"
+			elseif nearlyEqual(selectorValue, 0.3, 0.03) then
+				selectedRadio = "UHF"
+			elseif nearlyEqual(selectorValue, 0.4, 0.03) then
+				selectedRadio = "VHF AM"
 			end
 		end
 	end
