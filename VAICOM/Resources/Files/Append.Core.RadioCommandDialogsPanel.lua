@@ -374,8 +374,7 @@ function getSelectedRadio(dcsId)
 		local selectorValue = base.GetDevice(0):get_argument_value(30)
 		if selectorValue ~= nil then
 			if nearlyEqual(selectorValue, 0.1, 0.03) then
-				-- intercom
-            	--selectedRadio = ""
+				selectedRadio = "INTERCOM"
 			elseif nearlyEqual(selectorValue, 0.2, 0.03) then
 				selectedRadio = "VHF FM"
 			elseif nearlyEqual(selectorValue, 0.3, 0.03) then
