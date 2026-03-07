@@ -7,11 +7,11 @@
       "isbeta": false,
       "isdev": false,
       "productid": 1,
-      "releasedate": 20260307,
-      "version": 3094,
-      "versionstring": "3.0.9.4",
+      "releasedate": 20260308,
+      "version": 3095,
+      "versionstring": "3.0.9.5",
       "downloadurl": "https://raw.githubusercontent.com/Penecruz/VAICOM-Community/Development/VAICOM_Installer/Resources/VAICOMPRO.zip",
-      "releasenotes": "BETA 3.0.9.4/n- Adds AI_ATC Andersen dynamic keywords to database"
+      "releasenotes": "BETA 3.0.9.5\n- Adds AI_ATC Andersen 2.0 dynamic keywords to database\n- Add UH-1 Single PTT logic by Sleighzy"
     }
   ]
 }
