@@ -580,12 +580,14 @@ namespace VAICOM
                 { "Request a fighter Seven",        "Action FYTTR 7"                                  },
                 { "Request I F R fighter Seven",    "Action FYTTR 7"                                  },
                 { "Request a Mesa Eight",           "Action MORMON MESA 8"                            },
-                { "Request I F R Mesa Eight",       "Action MORMON MESA 8"                            },
+                { "Request I F R Mesa Eight",       "Action MORMON MESA 8"                            }, 
+                { "Request Clearance I F R",        "Action IFR"                                      }, //Andersen
                         //VFR Sub Menu
                 { "Request V F R for GASS PEAK",    "Action GASS_PEAK"                                },
                 { "Request V F R for DRY LAKE",     "Action DRY_LAKE"                                 },
                 { "Request V F R for RED HORSE",    "Action RED_HORSE"                                },
                 { "Request V F R for SUNRISE",      "Action SUNRISE"                                  },
+                { "Request Clearance V F R",        "Action VFR"                                      }, //Andersen
 
                         //Clearance Readback
                 { "Squawk One Zero Zero One",       "Action Squawk 1001"                              },
@@ -600,26 +602,37 @@ namespace VAICOM
                 { "Request To Start Engines",       "Action Request Engine Start"                     },
                 { "Engine Start",                   "Action Request Engine Start"                     },
                 { "Requesting Start",               "Action Request Engine Start"                     },
+                { "Request Engine Start",           "Action Request Engine Start"                     },
                 { "Requesting Taxi Clearance",      "Action Request Taxi Clearance"                   } ,
+                { "Request Taxi clearance",          "Action Request Taxi Clearance"                   },
                 { "Requesting Taxi to Active",      "Action Request Taxi Clearance"                   },
                 { "Taxi to Active",                 "Action Request Taxi Clearance"                   },
                 { "Clear of Runway",                "Action Taxi to Parking"                          },
                 { "Ground with you",                "Action Taxi to Parking"                          },                
+                { "Taxi to Parking",                "Action Taxi to Parking"                          },                    
 
                     //Tower
-                      //Runway Crossing
+                      //Runway Crossing Nellis
                 { "Clearance to Cross three Right", "Action Request clearance to cross 03R"           }, //Nellis
                 { "Clearance to Cross three Left",  "Action Request clearance to cross 03L"           }, //Nellis
                 { "Clearance to Cross Two One Left","Action Request clearance to cross 21L"           }, //Nellis
                 { "Clearance to Cross Two One Right","Action Request clearance to cross 21R"          }, //Nellis
+
+                     //Runway Crossing Andersen
                 { "Clearance to Cross Six Left",    "Action Request clearance to cross 06L"           }, //Andersen
                 { "Clearance to Cross Six Right",   "Action Request clearance to cross 06R"           }, //Andersen
                 { "Clearance to Cross Two Four Left", "Action Request clearance to cross 24L"         }, //Andersen
                 { "Clearance to Cross Two Four Right","Action Request clearance to cross 24R"         }, //Andersen
+
+                    //Rotary Specific
+                { "Request Hover check",            "Action Request Hover check"                      },
+                { "Request Takeoff from parking",   "Action Request Takeoff from parking"             },
+
                     //Takeoff
                 { "Requesting Takeoff Clearance",   "Action Request Takeoff"                          },
                 { "Ready in turn",                  "Action Request Takeoff"                          },
                 { "Ready at the Hold",              "Action Request Takeoff"                          },
+                
                     //Request Unrestricted climb
                 { "Requesting Unrestricted Climb 5000",                               "Action 5000"   },
                 { "Requesting Unrestricted Climb 6000",                               "Action 6000"   },
@@ -656,12 +669,13 @@ namespace VAICOM
                 { "Request Overhead",               "Action Overhead"                                 },
                 { "Simulated Flame Out",            "Action SFO"                                      },// Simulated Flameout 
                 { "P A R Rollout",                  "Action PAR"                                      },// Precision Approach Radar
-                { "I L S Final",                  "Action ILS"                                      },
+                { "I L S Final",                    "Action ILS"                                      },
                     //Tower Options Sub Menu
                 { "Request Low Approach",           "Action Low Approach"                             },
                 { "Request back to departure",      "Action Request Departure"                        },
                 { "Request Back to Radar",          "Action Request Back to Radar"                    },
                 { "Request Instrument Final",       "Action Instrument Straight In"                   },
+                
                     //Tower Report responses
                 { "Five Miles To land",             "Action Full Stop"                                },
                 { "Five Miles Touch and Go",        "Action Touch and Go"                             },
@@ -677,6 +691,15 @@ namespace VAICOM
                 { "Passing FLEX",                   "Action Report FLEX"                              },
                 { "High Key",                       "Action Report High Key"                          },//use with Simulated Flameout
                 { "Low Key",                        "Action Report Low Key"                           },//use with Simulated Flameout
+
+                    //Andersen                
+                { "Requesting the Option",          "Action Option"                                   }, //Andersen
+                { "Established initial",            "Action Report initial"                           }, //Andersen                
+                { "On base",                        "Action Report base"                              }, //Andersen
+                { "Passing Three miles",            "Action Report 3 miles"                           }, //Andersen                
+                { "Full stop",                      "Action Full Stop"                                }, //Andersen
+                { "Passing SOUTH POINT",            "Action Report SOUTH POINT"                       }, //Andersen
+
                     //Tower Ancillary
                 { "Traffic in sight",               "Action Traffic in sight"                         },
                 { "Nothing Seen",                   "Action No Joy"                                   },
@@ -694,17 +717,31 @@ namespace VAICOM
                 { "Checking In V F R",                 "Action VFR"                                   },
                 { "Checking In I F R",                 "Action IFR"                                   },
                 { "Checking In Again",                 "Action Check In"                              },//Back to radar after tower
+                
                        //IFR Sub Menu
                 { "Request Hi TACAN Zulu",          "Action HI-TAC Z"                                 },
                 { "Request TACAN Two One left",     "Action TAC21L"                                   },
                 { "Request I L S Approach",         "Action ILS\\LOC"                                 },
                 { "Request Localizer Approach",     "Action ILS\\LOC"                                 },
                 { "Request Hi TACAN Yankee",        "Action HI-TAC Y"                                 },
-                { "Cancel I F R",                   "Action Cancel IFR"                               },
-                { "Request G C A",                  "Action Request GCA"                              },// for PAR
+
+                //Andersen
+                { "Request HI TACAN Xray",               "Action HI-TAC X"                                 }, //Andersen
+                { "Request HI-ILS Y",                    "Action HI-ILS Y"                                 }, //Andersen
+                { "Request TACAN Six Left",              "Action TAC06L"                                   }, //Andersen
+                { "Request TACAN Six Left Final",        "Action TAC06L Final"                             }, //Andersen
+                { "Request TACAN Six Right",             "Action TAC06R"                                   }, //Andersen
+                { "Request TACAN Six Right Final",       "Action TAC06R Final"                             }, //Andersen
+                { "Request TACAN Two Four Left",         "Action TAC24L"                                   }, //Andersen
+                { "Request TACAN Two Four Left Final",   "Action TAC24L Final"                             }, //Andersen
+                { "Request I L S Approach Final",        "Action ILS\\LOC Final"                           }, //Andersen
+                { "Request Localizer Approach Final",    "Action ILS\\LOC Final"                           }, //Andersen
+
+                { "Request Cancel I F R",                "Action Cancel IFR"                               },
+                { "Request G C A",                       "Action Request GCA"                              },// for PAR
     
                     //Approach NAV Assist
-                     // VFR Nav points
+                     // Nellis
                 { "Vector for NIXON",                "Action Vector for NIXON"                         },
                 { "Vector for APEX",                 "Action Vector for APEX"                          },
                 { "Vector for PHINN",                "Action Vector for PHINN"                         },
@@ -723,7 +760,24 @@ namespace VAICOM
                 { "Vector for DREAM",                "Action Vector for DREAM"                         },
                 { "Vector for MMM",                  "Action Vector for MMM"                           },
 
-                    // VFR Report points
+                    //Andersen
+                { "Vectors for Point Alpha",         "Action Vectors for Point Alpha"                  }, //Andersen
+                { "Vectors for Point Bravo",         "Action Vectors for Point Bravo"                  }, //Andersen
+                { "Vectors for Point Charlie",       "Action Vectors for Point Charlie"                }, //Andersen
+                { "Vectors for Point Delta",         "Action Vectors for Point Delta"                  }, //Andersen
+                { "Vectors for Point Echo",          "Action Vectors for Point Echo"                   }, //Andersen
+                { "Vectors for Point Foxtrot",       "Action Vectors for Point Foxtrot"                }, //Andersen
+                { "Vectors for Point Golf",          "Action Vectors for Point Golf"                   }, //Andersen
+                { "Vectors for Point Hotel",         "Action Vectors for Point Hotel"                  }, //Andersen
+                { "Vectors for NORTH POINT",         "Action Vectors for NORTH_POINT"                  }, //Andersen
+                { "Vectors for SOUTH POINT",         "Action Vectors for SOUTH_POINT"                  }, //Andersen
+                { "Vectors for RITIDIAN POINT",      "Action Vectors for RITIDIAN_POINT"               }, //Andersen
+                { "Vectors for POTTS JUNCTION",      "Action Vectors for POTTS_JUNCTION"               }, //Andersen
+                { "Vectors for PATI POINT",          "Action Vectors for PATI_POINT"                   }, //Andersen
+                { "Vectors for TWO LOVERS POINT",    "Action Vectors for TWO_LOVERS_POINT"             }, //Andersen
+                { "Vectors for MT SANTA ROSA",       "Action Vectors for MT_SANTA_ROSA"                }, //Andersen
+
+                    // VNellis VFR Report points
                 { "Passing STRYK",                  "Action Report STRYK"                             },
                 { "Passing ACTON",                  "Action Report ACTON"                             },
                 { "Passing ARCOE",                  "Action Report ARCOE"                             },
@@ -739,7 +793,42 @@ namespace VAICOM
                 { "Passing Three Mike",             "Action Report MMM"                               },
                 { "Passing SAND DUNES",             "Action Report SAND_DUNES"                        },
 
-                    // IFR Nav points
+                    //Andersen VFR Report points
+                { "Request IFR Pickup",             "Action Request IFR Pickup"                       }, //Andersen
+                { "Report Established",             "Action Report Established"                       }, //Andersen
+                { "Report FOVEM",                   "Action Report FOVEM"                             }, //Andersen
+                { "Report WELKU",                   "Action Report WELKU"                             }, //Andersen
+                
+                    //Andersen IFR Nav points
+                { "Vectors for FOVEM",              "Action Vectors for FOVEM"                        }, //Andersen
+                { "Vectors for ARKEE",              "Action Vectors for ARKEE"                        }, //Andersen
+                { "Vectors for HURUG",              "Action Vectors for HURUG"                        }, //Andersen
+                { "Vectors for FOMOD",              "Action Vectors for FOMOD"                        }, //Andersen
+                { "Vectors for ITUME",              "Action Vectors for ITUME"                        }, //Andersen
+                { "Vectors for LOGLE",              "Action Vectors for LOGLE"                        }, //Andersen
+                { "Vectors for JORUN",              "Action Vectors for JORUN"                        }, //Andersen
+                { "Vectors for KATNE",              "Action Vectors for KATNE"                        }, //Andersen
+                { "Vectors for ADTIN",              "Action Vectors for ADTIN"                        }, //Andersen
+                { "Vectors for COLMA",              "Action Vectors for COLMA"                        }, //Andersen
+                { "Vectors for FAXEL",              "Action Vectors for FAXEL"                        }, //Andersen
+                { "Vectors for HILRI",              "Action Vectors for HILRI"                        }, //Andersen
+                { "Vectors for ANIKA",              "Action Vectors for ANIKA"                        }, //Andersen
+                { "Vectors for SULUE",              "Action Vectors for SULUE"                        }, //Andersen
+                { "Vectors for WELKU",              "Action Vectors for WELKU"                        }, //Andersen
+                { "Vectors for OKIBE",              "Action Vectors for OKIBE"                        }, //Andersen
+                { "Vectors for BAVAC",              "Action Vectors for BAVAC"                        }, //Andersen
+                { "Vectors for PANNS",              "Action Vectors for PANNS"                        }, //Andersen
+                { "Vectors for WESOK",              "Action Vectors for WESOK"                        }, //Andersen
+                { "Vectors for ACUYU",              "Action Vectors for ACUYU"                        }, //Andersen
+                { "Vectors for EVEBE",              "Action Vectors for EVEBE"                        }, //Andersen
+                { "Vectors for JIPRO",              "Action Vectors for JIPRO"                        }, //Andersen
+                { "Vectors for FABED",              "Action Vectors for FABED"                        }, //Andersen
+                { "Vectors for HASRA",              "Action Vectors for HASRA"                        }, //Andersen
+                { "Vectors for INIME",              "Action Vectors for INIME"                        }, //Andersen
+                { "Request Radar Downwind",         "Action Radar Downwind"                           }, //Andersen
+                { "Request Radar Base",             "Action Radar Base"                               }, //Andersen
+
+                    // Nellis IFR Nav points
                 { "Vectors for ACTON",               "Action Vectors for ACTON"                        },
                 { "Vectors for DUDBE",               "Action Vectors for DUDBE"                        },
                 { "Vectors for SECRT",               "Action Vectors for SECRT"                        },
@@ -785,8 +874,18 @@ namespace VAICOM
                 { "Request Vectors for Tonopah",             "Action Tonopah"                         },
                 { "Request Vectors for Tonopah Test Range",  "Action Tonopah Test Range"              },
 
+                    //Vextors to Airports Marianas
+                { "Request Vectors for Andersen",            "Action Andersen AFB"                     }, //Andersen
+                { "Request Vectors for Aganga",              "Action Antonio B. Won Pat Intl"          }, //Andersen
+                { "Request Vectors for North West Field",     "Action North West Field"                }, //Andersen
+                { "Request Vectors for Olf Orote",            "Action Olf Orote"                       }, //Andersen
+                { "Request Vectors for Pagan Airstrip",       "Action Pagan Airstrip"                  }, //Andersen
+                { "Request Vectors for Rota",                 "Action Rota Intl"                       }, //Andersen
+                { "Request Vectors for Saipan",               "Action Saipan Intl"                     }, //Andersen
+                { "Request Vectors for Tinian",               "Action Tinian Intl"                     }, //Andersen
+
                     //Range Control
-                      //Blackjack Entry/Exit
+                      //Blackjack Nellis
                 { "Blackjack entry gate one",       "Action Check in Gate 1"                          },
                 { "Blackjack entry gate two",       "Action Check in Gate 2"                          },
                 { "Blackjack entry gate three",     "Action Check in Gate 3"                          },
@@ -799,13 +898,31 @@ namespace VAICOM
                 { "Blackjack exit gate four",       "Action Check Out Gate 4"                         },
                 { "Blackjack exit NIXON",           "Action Check Out NIXON"                          },
                 { "Blackjack exit SARAH",           "Action Check Out SARAH"                          },
-                   // Request vectors from Blackjack
                 { "Blackjack vector to gate one",   "Action Vector to Gate 1"                         },
                 { "Blackjack vector to gate two",   "Action Vector to Gate 2"                         },
                 { "Blackjack vector to NIXON",      "Action Vector to NIXON"                          },
                 { "Blackjack vector to SARAH",      "Action Vector to SARAH"                          },
                 { "Blackjack vector to gate three", "Action Vector to Gate 3"                         },
                 { "Blackjack vector to gate four",  "Action Vector to Gate 4"                         },
+
+                    //Hammerhead Andersen
+                { "Hammerhead Point Alpha",                   "Action Check in Alpha"                 }, //Andersen
+                { "Hammerhead Point Charlie",                 "Action Check in Charlie"               }, //Andersen
+                { "Hammerhead Point Echo",                    "Action Check in Echo"                  }, //Andersen
+                { "Hammerhead Point Golf",                    "Action Check in Golf"                  }, //Andersen
+                { "Hammerhead Vector to Point Alpha",         "Action Vector to Alpha"                }, //Andersen
+                { "Hammerhead Vector to Point Bravo",         "Action Vector to Bravo"                }, //Andersen
+                { "Hammerhead Vector to Point Charlie",       "Action Vector to Charlie"              }, //Andersen
+                { "Hammerhead Vector to Point Delta",         "Action Vector to Delta"                }, //Andersen
+                { "Hammerhead Vector to Point Echo",          "Action Vector to Echo"                 }, //Andersen
+                { "Hammerhead Vector to Point Foxtrot",       "Action Vector to Foxtrot"              }, //Andersen
+                { "Hammerhead Vector to Point Golf",          "Action Vector to Golf"                 }, //Andersen
+                { "Hammerhead Vector to Point Hotel",         "Action Vector to Hotel"                }, //Andersen
+                { "Hammerhead Vector to Tanker",              "Action Vector to Tanker"               }, //Andersen
+                { "Hammerhead Check Out Point Bravo",         "Action Check Out Bravo"                }, //Andersen
+                { "Hammerhead Check Out Point Delta",         "Action Check Out Delta"                }, //Andersen
+                { "Hammerhead Check Out Point Foxtrot",       "Action Check Out Foxtrot"              }, //Andersen
+                { "Hammerhead Check Out Point Hotel",         "Action Check Out Hotel"                }, //Andersen
 
 
                    //NATCF
