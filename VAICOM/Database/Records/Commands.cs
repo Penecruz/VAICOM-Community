@@ -441,6 +441,8 @@ namespace VAICOM
             { "wMsgKneeboardClearNotes" ,            new Command { uniqueid = 24004, category = CommandCategories.kneeboard,    eventnumber = 4000,  dcsid = "wMsgKneeboardClearNotes",blockedforFree = true   } },
             { "wMsgKneeboardShowNotes" ,             new Command { uniqueid = 24005, category = CommandCategories.kneeboard,    eventnumber = 4000,  dcsid = "wMsgKneeboardShowNotes",blockedforFree = true   } },
             { "wMsgKneeboardShowLog" ,               new Command { uniqueid = 24006, category = CommandCategories.kneeboard,    eventnumber = 4000,  dcsid = "wMsgKneeboardShowLog",blockedforFree = true   } },
+            { "wMsgKneeboardNextTab" ,               new Command { uniqueid = 24007, category = CommandCategories.kneeboard,    eventnumber = 4000,  dcsid = "wMsgKneeboardNextTab",blockedforFree = true   } },
+            { "wMsgKneeboardPreviousTab" ,           new Command { uniqueid = 24008, category = CommandCategories.kneeboard,    eventnumber = 4000,  dcsid = "wMsgKneeboardPreviousTab",blockedforFree = true   } },
             { "wMsgKneeboardCmndsMaximum" ,          new Command { uniqueid = 24100, category = CommandCategories.kneeboard,    eventnumber = 4000,  dcsid = "wMsgKneeboardCmndsMaximum" } },
 
             };

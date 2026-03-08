@@ -347,17 +347,21 @@ local update_messagelog = function(receivedmsg)
 					set_page_active(cat)
 				end
 				if receivedmsg.logdata.content then		
-					local append = receivedmsg.logdata.content:gsub(logkeywords[cat], ""):gsub(logcategories[cat], "")
-					append = string.sub(append,2)
-					local timestamp = stringstartswith(append,"*")
-					if timestamp then
+					if cat == "NOTES" and receivedmsg.logdata.content == "" then
+						messagelog[cat] = ""
+					else
+						local append = receivedmsg.logdata.content:gsub(logkeywords[cat], ""):gsub(logcategories[cat], "")
 						append = string.sub(append,2)
-					end
-					if append ~= "" then
-						if cat == "NOTES" then 
-							messagelog[cat] = mergelog("",receivedmsg.logdata.content:gsub(logkeywords[cat], ""))	
-						else
-							messagelog[cat] = mergelog(messagelog[cat],inserttime(timestamp)..append)	
+						local timestamp = stringstartswith(append,"*")
+						if timestamp then
+							append = string.sub(append,2)
+						end
+						if append ~= "" then
+							if cat == "NOTES" then 
+								messagelog[cat] = mergelog("",receivedmsg.logdata.content:gsub(logkeywords[cat], ""))	
+							else
+								messagelog[cat] = mergelog(messagelog[cat],inserttime(timestamp)..append)	
+							end
 						end
 					end
 				end

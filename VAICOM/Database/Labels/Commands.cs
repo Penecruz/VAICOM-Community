@@ -279,6 +279,8 @@ namespace VAICOM
                 { "wMsgKneeboardClearNotes", "Dictation Clear Notes" },
                 { "wMsgKneeboardShowNotes", "Flip to Notes tab"      },
                 { "wMsgKneeboardShowLog", "Flip to LOG/ATO tab"      },
+                { "wMsgKneeboardNextTab", "Next kneeboard tab"       },
+                { "wMsgKneeboardPreviousTab", "Previous kneeboard tab" },
                 { "wMsgShowKneeboardTab", "Show kneeboard tab"       },
             //};
 

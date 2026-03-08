@@ -473,6 +473,8 @@ namespace VAICOM
                 { "Correction",            "wMsgKneeboardCorrection"      },
                 { "Show Log",              "wMsgKneeboardShowLog"         },
                 { "Show Tasking Order",    "wMsgKneeboardShowLog"         },
+                { "Show Next Tab",         "wMsgKneeboardNextTab"         },
+                { "Show Previous Tab",     "wMsgKneeboardPreviousTab"     },
 
                 { "Page",                  "wMsgShowKneeboardTab"         },
 
