@@ -113,7 +113,7 @@ namespace VAICOM
                     {"F-86F Sabre" ,new radioslotlist() { Slot_map = { "AN/ARC-27", "", "" } } },
                     {"Ka-50" ,      new radioslotlist() { Slot_map = { "R-800", "R-828", "" } } },
                     {"Mi-8MT" ,     new radioslotlist() { Slot_map = { "R-863", "JADRO-1A", "R-828" } } },
-                    {"UH-1H" ,      new radioslotlist() { Slot_map = { "INTERCOM", "VHF FM", "UHF", "VHF AM"  } } },
+                    {"UH-1H" ,      new radioslotlist() { Slot_map = { "Interphone", "VHF FM", "CB UHF", "VHF AM"  } } },
                     {"A-10C" ,      new radioslotlist() { Slot_map = { "VHF AM (ARC-210)", "UHF AM (ARC-164)", "VHF FM (ARC-186)" } } },
                     {"TF-51D" ,     new radioslotlist() { Slot_map = { "SCR522A", "", "" } } },
                     {"MiG-15Bis" ,  new radioslotlist() { Slot_map = { "RSI-6K", "", "" } } },
@@ -182,7 +182,7 @@ namespace VAICOM
                     {"EA-18G",      new radioslotlist() { Slot_map = { "COMM1: ARC-210", "COMM2: ARC-210", ""} } },
                     {"F4U-1D" ,     new radioslotlist() { Slot_map = { "R-ARC5", "", ""} } },
                     {"MiG-29 Fulcrum" ,     new radioslotlist() { Slot_map = { "VHF/UHF R-862", "VHF R-855UM", "" } } },
-                    {"C-130J-30" ,  new radioslotlist() { Slot_map = { "Intercom", "UHF1", "UHF2", "VHF1", "VHF2", "HF1", "HF2", "SAT", "PVT" } } },
+                    {"C-130J-30" ,  new radioslotlist() { Slot_map = { "INTERCOM", "UHF-1", "UHF-2", "VHF-1", "VHF-2", "HF-1", "HF-2", "VHF AM(ARC-210)", "PVT" } } },
                     {"F-22A" ,      new radioslotlist() { Slot_map = { "VHF AM", "UHF", "VHF FM" } } }, //Pene WIP
 
                 };
@@ -198,7 +198,7 @@ namespace VAICOM
                     {"F-86F Sabre" ,new radioslotlist() { Slot_map = { "AN/ARC-27", "", "" } } },
                     {"Ka-50" ,      new radioslotlist() { Slot_map = { "R-800L14 VHF/UHF", "R-828", "[SPU-9 SW]" } } },
                     {"Mi-8MT" ,     new radioslotlist() { Slot_map = { "R-863", "JADRO-1A", "R-828" } } },
-                    {"UH-1H" ,      new radioslotlist() { Slot_map = { "Intercom", "AN/ARC-131", "AN/ARC-51BX - UHF", "AN/ARC-134",  } } },
+                    {"UH-1H" ,      new radioslotlist() { Slot_map = { "Interphone", "AN/ARC-131", "AN/ARC-51BX - UHF", "AN/ARC-134",  } } },
                     {"A-10C" ,      new radioslotlist() { Slot_map = { "AN/ARC-210(G5)", "AN/ARC-164", "AN/ARC-186(V)" } } },
                     {"TF-51D" ,     new radioslotlist() { Slot_map = { "SCR522A", "", "" } } },
                     {"MiG-15Bis" ,  new radioslotlist() { Slot_map = { "RSI-6K", "", "" } } },
@@ -596,8 +596,14 @@ namespace VAICOM
                 TXNodes.TX6.enabled = false;
 
                 Server.RadioDevice selectedRadio = State.currentstate.radios
-                    .Where(radio => radio.isselected)
-                    .First();
+                    .FirstOrDefault(radio => radio.isselected)
+                    ?? State.currentstate.radios.FirstOrDefault(radio => !radio.intercom)
+                    ?? State.currentstate.radios.FirstOrDefault();
+
+                if (selectedRadio == null)
+                {
+                    return;
+                }
 
                 DCSmodule module = null;
 

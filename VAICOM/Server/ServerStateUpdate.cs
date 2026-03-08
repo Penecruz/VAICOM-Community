@@ -128,6 +128,8 @@ namespace VAICOM
                     State.currentstate.fsmstate = serverMessage.fsmstate;
                     State.currentstate.selectedradio = serverMessage.selectedradio;
                     State.currentstate.radios = serverMessage.radios;
+
+                    Log.Write("CHUNK2: " + JsonConvert.SerializeObject(serverMessage, Formatting.None), Colors.Inline);
                 }
                 catch (Exception e)
                 {

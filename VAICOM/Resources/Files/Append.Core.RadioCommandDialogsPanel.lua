@@ -203,10 +203,12 @@ function selectAndTuneCommunicator(targetCommunicator)
 						haveFreq = true
 					end
 				end
-				if haveFreq then
-						commDevice:set_modulation(freqMod.modulation) 	
-					break
+			if haveFreq then
+				if communicator.AM and communicator.FM then --try only setting modulation for radios that have both AM and FM.
+					commDevice:set_modulation(freqMod.modulation)
 				end
+				break
+			end
 			end	
 		else
 		end
@@ -251,7 +253,7 @@ function getSelectorPosition(arg, step)
     return nil
 end
 function nearlyEqual(a, b, diff)
-    return math.abs(a - b) < diff
+	return base.math.abs(a - b) < diff
 end
 local function normalizeRadioName(name)
     return base.string.lower(name):gsub("[^%w]", "")
@@ -275,6 +277,7 @@ local function findRadioDisplayName(...)
     return nil
 end
 function getSelectedRadio(dcsId)
+	base.print("dcsId: "..dcsId) -- print the dcsId for debugging
 	local selectedRadio = ""
 	if dcsId == "AH-64D_BLK_II" then
 		-- get pilot or CP/G
@@ -350,7 +353,7 @@ function getSelectedRadio(dcsId)
 					selectorPosition = 1
 				end
 				if selectorPosition == 1 then
-					selectedRadio = findRadioDisplayName("Intercom", "Interphone", "INT") or selectedRadio
+					selectedRadio = findRadioDisplayName("INTERCOM", "Interphone", "INT") or selectedRadio
 				elseif selectorPosition == 2 then
 					selectedRadio = findRadioDisplayName("UHF1", "UHF-1", "UHF 1") or selectedRadio
 				elseif selectorPosition == 3 then
@@ -364,7 +367,7 @@ function getSelectedRadio(dcsId)
 				elseif selectorPosition == 7 then
 					selectedRadio = findRadioDisplayName("HF2", "HF-2", "HF 2") or selectedRadio -- not currently implemented
 				elseif selectorPosition == 8 then
-					selectedRadio = findRadioDisplayName("SAT", "SATCOM") or selectedRadio -- not currently implemented
+					selectedRadio = findRadioDisplayName("VHF AM(ARC-210)", "VHF AM", "ARC-210") or selectedRadio -- not currently implemented
 				elseif selectorPosition == 9 then
 					selectedRadio = findRadioDisplayName("PVT", "PVT 1", "PVT-1") or selectedRadio
 				end
@@ -374,13 +377,13 @@ function getSelectedRadio(dcsId)
 		local selectorValue = base.GetDevice(0):get_argument_value(30)
 		if selectorValue ~= nil then
 			if nearlyEqual(selectorValue, 0.1, 0.03) then
-				selectedRadio = "INTERCOM"
+				selectedRadio = findRadioDisplayName("Intercom", "Interphone", "INTERCOM", "INT") or selectedRadio
 			elseif nearlyEqual(selectorValue, 0.2, 0.03) then
-				selectedRadio = "VHF FM"
+				selectedRadio = findRadioDisplayName("AN/ARC-131", "ARC-131", "VHF FM") or selectedRadio
 			elseif nearlyEqual(selectorValue, 0.3, 0.03) then
-				selectedRadio = "UHF"
+				selectedRadio = findRadioDisplayName("AN/ARC-51BX - UHF", "AN/ARC-51BX", "CB UHF", "UHF") or selectedRadio
 			elseif nearlyEqual(selectorValue, 0.4, 0.03) then
-				selectedRadio = "VHF AM"
+				selectedRadio = findRadioDisplayName("AN/ARC-134", "ARC-134", "VHF AM") or selectedRadio
 			end
 		end
 	end
