@@ -17,6 +17,9 @@ namespace VAICOM
             { "iCommandNull" ,          new Command { uniqueid = 00000, category = CommandCategories.cockpit, dcsid = "iCommandNull" } },
             { "gearup" ,                new Command { uniqueid = 00001, category = CommandCategories.cockpit, eventnumber = 0068, dcsid = "iCommandGearUp" ,   displayname=Labels.aicommands["gearup"],   hasparameter =  true, on = true} },
             { "geardown" ,              new Command { uniqueid = 00002, category = CommandCategories.cockpit, eventnumber = 0068, dcsid = "iCommandGearDown" , displayname=Labels.aicommands["geardown"], hasparameter =  true, on = false} },
+            { "georgesearchtargets" ,   new Command { uniqueid = 00003, category = CommandCategories.cockpit, eventnumber = 32001, dcsid = "iCommandGeorgeAI_SearchTargets", displayname = Labels.aicommands["georgesearchtargets"] } },
+            { "georgeengagemytarget" ,  new Command { uniqueid = 00004, category = CommandCategories.cockpit, eventnumber = 32002, dcsid = "iCommandGeorgeAI_EngageMyTarget", displayname = Labels.aicommands["georgeengagemytarget"] } },
+            { "georgeceasefire" ,       new Command { uniqueid = 00005, category = CommandCategories.cockpit, eventnumber = 32003, dcsid = "iCommandGeorgeAI_CeaseFire", displayname = Labels.aicommands["georgeceasefire"] } },
             //{ "loadout" ,               new Command { uniqueid = 00003, category = CommandCategories.cockpit, eventnumber = 1754, dcsid = "iCommandViewRearm" , displayname=Labels.aicommands["loadout"], hasparameter =  true, on = true} },
             { "iCommandMaximum" ,       new Command { uniqueid = 09999, category = CommandCategories.cockpit, dcsid = "iCommandMaximum" } },
 

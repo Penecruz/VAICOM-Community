@@ -15,6 +15,9 @@ namespace VAICOM
                 { "",                           " "                             },
 
                 { "mytarget",                   "Engage My Target"              },
+                { "georgesearchtargets",        "George Search Targets"         },
+                { "georgeengagemytarget",       "George Engage My Target"       },
+                { "georgeceasefire",            "George Cease Fire"             },
                 { "bandit",                     "Engage Bandits"                },
                 { "groundtarget",               "Engage Ground Targets"         },
                 { "armor",                      "Engage Armor"                  },

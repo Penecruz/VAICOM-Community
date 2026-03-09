@@ -14,6 +14,9 @@ namespace VAICOM
 
                 //flight
                 { "My Target",              "mytarget"              },
+                { "George Search Targets",  "georgesearchtargets"   },
+                { "George Engage My Target","georgeengagemytarget"  },
+                { "George Cease Fire",      "georgeceasefire"       },
                 { "My Contact",             "mytarget"              },
                 { "Bandit",                 "bandit"                },
                 { "Bandits",                "bandit"                },
