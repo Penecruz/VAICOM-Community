@@ -1,0 +1,22 @@
+dofile(LockOn_Options.script_path.."sounds.lua")
+sounds = {}
+sounds[SOUND_SW1]		= {"Aircrafts/AH-64D/Cockpit/SW_01"}
+sounds[SOUND_SW1_OFF]	= {"Aircrafts/AH-64D/Cockpit/SW_01_Off"}
+sounds[SOUND_SW2]		= {"Aircrafts/AH-64D/Cockpit/SW_02"}
+sounds[SOUND_SW3]		= {"Aircrafts/AH-64D/Cockpit/SW_03"}
+sounds[SOUND_SW3_OFF]	= {"Aircrafts/AH-64D/Cockpit/SW_03_Off"}
+sounds[SOUND_SW4_ON]	= {"Aircrafts/AH-64D/Cockpit/SW_04_On"}
+sounds[SOUND_SW4_OFF]	= {"Aircrafts/AH-64D/Cockpit/SW_04_Off"}
+sounds[SOUND_SW5_OPEN]	= {"Aircrafts/AH-64D/Cockpit/SW_05_Open"}
+sounds[SOUND_SW5_CLOSE]	= {"Aircrafts/AH-64D/Cockpit/SW_05_Close"}
+sounds[SOUND_SW6]		= {"Aircrafts/AH-64D/Cockpit/SW_06"}
+sounds[SOUND_SW7_LEFT]	= {"Aircrafts/AH-64D/Cockpit/SW_07_Left"}
+sounds[SOUND_SW7_RIGHT]	= {"Aircrafts/AH-64D/Cockpit/SW_07_Right"}
+sounds[SOUND_SW8_OPEN]	= {"Aircrafts/AH-64D/Cockpit/SW_08_Open"}
+sounds[SOUND_SW8_CLOSE]	= {"Aircrafts/AH-64D/Cockpit/SW_08_Close"}
+sounds[SOUND_SW9_PULL]	= {"Aircrafts/AH-64D/Cockpit/SW_09_Pull"}
+sounds[SOUND_SW9_PUSH]	= {"Aircrafts/AH-64D/Cockpit/SW_09_Push"}
+sounds[SOUND_SW10_OPEN]	= {"Aircrafts/AH-64D/Cockpit/SW_10_Open"}
+sounds[SOUND_SW10_CLOSE]	= {"Aircrafts/AH-64D/Cockpit/SW_10_Close"}
+sounds[SOUND_SW11_ON]	= {"Aircrafts/AH-64D/Cockpit/SW_11_On"}
+sounds[SOUND_SW11_OFF]	= {"Aircrafts/AH-64D/Cockpit/SW_11_Off"}

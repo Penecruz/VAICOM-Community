@@ -1,0 +1,46 @@
+dofile(LockOn_Options.script_path.."Displays/BRU/BRU_Symbology.lua")
+--local function addCombinerGlass(name, verts, inds, pos, rot)
+--	local glass				= CreateElement "ceMeshPoly"
+--	glass.name				= name
+--	glass.primitivetype		= "triangles"
+--	glass.vertices			= verts
+--	glass.indices			= inds
+--	glass.init_pos			= pos
+--	glass.init_rot			= rot
+--	glass.h_clip_relation	= h_clip_relations.REWRITE_LEVEL
+--	glass.level				= BRU_LEVEL - 1
+--	glass.isdraw			= true
+--	glass.change_opacity	= false
+--	
+----	setAsInvisibleMask(glass) -- changes material
+--	
+--	Add(glass)
+--end
+--
+--local BRU_glassScale = 1 / GetScale()
+--local function scaleCombinerPos(pos)
+--	return {pos[1] * BRU_glassScale, pos[2] * BRU_glassScale, pos[3] * BRU_glassScale}
+--end
+--
+--local BRU_GlassVerts =  buildEllipseVerts({0,0}, math.rad(0.85)*BRU_glassScale, math.rad(0.85)*BRU_glassScale)
+--local BRU_GlassInds = buildEllipseIndices()
+--
+--local BRU_glassAngle = 0 -- -51 -- degrees
+--
+--addCombinerGlass("BRU_glass",
+--	HUD_GlassVerts,
+--	HUD_GlassInds,
+--	scaleCombinerPos({0, 0, 0}), -- meters to Mils
+--	{0, 0, BRU_glassAngle}) -- clipping mask
+--
+---- Circle projected onto the combiner glass
+--local function Add_FOV_projection(name, radius, pos)
+--	local FOV_lens = openMaskArea(-1, name, {}, {}, pos, nil, nil, "HUD_GREEN_FOV")
+--	set_circle(FOV_lens, radius)
+--	FOV_lens.collimated = false
+--end
+--
+--
+--	Add_FOV_projection("upper_reflection", math.rad(0.85)*BRU_glassScale, {0, Yshift, 0})
+--
+addPattern() 

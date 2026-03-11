@@ -1,0 +1,1 @@
+return _('AH-64D CP/G')
