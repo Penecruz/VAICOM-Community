@@ -404,7 +404,14 @@ namespace VAICOM
                         {
                             counter = counter + 1;
                             string subcatcatstr = "";
-                            if (set.Key.Equals("aicommands") & Commands.Table.ContainsKey(entry.Value)) { subcatcatstr = Commands.Table[entry.Value].RecipientClass().Name.ToString(); }
+                            if (set.Key.Equals("aicommands") & Commands.Table.ContainsKey(entry.Value))
+                            {
+                                subcatcatstr = Commands.Table[entry.Value].RecipientClass().Name.ToString();
+                                if (Commands.Table[entry.Value].dcsid.StartsWith("wMsgGeorge", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    subcatcatstr = "CPG";
+                                }
+                            }
                             if (set.Key.Equals("airecipients") & Recipients.Table.ContainsKey(entry.Value)) { subcatcatstr = Recipients.Table[entry.Value].RecipientClass().Name.ToString(); }
                             try
                             {

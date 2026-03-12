@@ -202,6 +202,12 @@ namespace VAICOM
                                 outputcommandstring = outputcommandstring + commandstrings[commandcat] + "Options;";
                             }
 
+                            // George AI
+                            if (cat.Equals("aicrew") && commandcat.Contains("AH64D_GeorgeAI"))
+                            {
+                                outputcommandstring = outputcommandstring + commandstrings[commandcat];
+                            }
+
                             //kneeboard commands
                             if (cat.Equals("kneeboard") && commandcat.Contains("kneeboard"))
                             {

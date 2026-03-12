@@ -124,6 +124,171 @@ namespace VAICOM
 
                     }
                 }
+                // George AI commands are only available in AH-64D, Device Command Macros for message construction.
+                public static bool ProcessIfGeorge()
+                {
+                    if (!State.currentcommand.dcsid.StartsWith("wMsgGeorge", StringComparison.OrdinalIgnoreCase))
+                    {
+                        return true;
+                    }
+
+                    if (State.currentmodule == null || !State.currentmodule.Id.Equals("AH-64D", StringComparison.OrdinalIgnoreCase))
+                    {
+                        Log.Write("George AI commands are only available in AH-64D.", Colors.Warning);
+                        return false;
+                    }
+
+                    constructGeorge();
+                    return true;
+                }
+
+                public static void constructGeorge()
+                {
+                    State.currentmessage.type = Messagetypes.DeviceControl;
+                    State.currentmessage.extsequence = new List<Extensions.RIO.DeviceAction>();
+
+                    if (State.activeconfig.UIaddhints)
+                    {
+                        State.currentmessage.dspmsg = "VAICOM PRO: GEORGE | " + Database.Labels.aicommands[State.currentkey["command"]];
+                        State.currentmessage.msgdur = 3;
+                    }
+
+                    switch (State.currentcommand.dcsid)
+                    {
+                        case "wMsgGeorgeShowHide":
+                            AddGeorgeButton(3002);
+                            break;
+                        case "wMsgGeorgeUp":
+                            AddGeorgeButton(3003);
+                            break;
+                        case "wMsgGeorgeDown":
+                            AddGeorgeButton(3004);
+                            break;
+                        case "wMsgGeorgeLeft":
+                            AddGeorgeButton(3005);
+                            break;
+                        case "wMsgGeorgeRight":
+                            AddGeorgeButton(3006);
+                            break;
+                        case "wMsgGeorgeLaseTarget":
+                        case "wMsgGeorgeLaserOn":
+                        case "wMsgGeorgeLaserOff":
+                        case "wMsgGeorgeBurstLimit":
+                        case "wMsgGeorgeRocketQuantity":
+                        case "wMsgGeorgeLOBL":
+                        case "wMsgGeorgeLOAL":
+                            AddGeorgeButton(3006);
+                            break;
+                        case "wMsgGeorgeCenter":
+                            AddGeorgeButton(3008);
+                            break;
+                        case "wMsgGeorgeClearedFire":
+                            AddGeorgeButton(3008);
+                            break;
+                        case "wMsgGeorgeControlRequest":
+                            AddGeorgeAction(3001, 1.0);
+                            break;
+                        case "wMsgGeorgeStoreTarget":
+                            AddGeorgeAction(3009, 1.0);
+                            break;
+                        case "wMsgGeorgeNextWeapon":
+                            AddGeorgeButton(3005);
+                            break;
+                        case "wMsgGeorgeUpLong":
+                            AddGeorgeLongButton(3003);
+                            break;
+                        case "wMsgGeorgeWeaponsFree":
+                        case "wMsgGeorgeHoldFire":
+                            AddGeorgeLongButton(3003);
+                            break;
+                        case "wMsgGeorgeDownLong":
+                            AddGeorgeLongButton(3004);
+                            break;
+                        case "wMsgGeorgeLeftLong":
+                            AddGeorgeLongButton(3005);
+                            break;
+                        case "wMsgGeorgeRightLong":
+                            AddGeorgeLongButton(3006);
+                            break;
+                        case "wMsgGeorgeCenterLong":
+                            AddGeorgeLongButton(3008);
+                            break;                         
+                        case "wMsgGeorgeStartUp":
+                        case "wMsgGeorgeShutdown":
+                        case "wMsgGeorgeAdjustAim":
+                            AddGeorgeLongButton(3008);
+                            break;
+                        
+                        //Search Tasks
+                        //Direct Searches
+                        case "wMsgGeorgeMacroPHSsearch":                            
+                            AddGeorgeButton(3003);
+                            break;
+                        case "wMsgGeorgeMacroTADSLOS":                            
+                            AddGeorgeLongButton(3004);
+                            break;
+                        //Area Searches
+                        case "wMsgGeorgeMacroNextSearch":
+                            AddGeorgeLongButton(3005, 200);
+                            AddGeorgeButton(3004, 150);
+                            AddGeorgeButton(3006);
+                            break;
+                        case "wMsgGeorgeMacroPreviousSearch":
+                            AddGeorgeLongButton(3005, 200);
+                            AddGeorgeButton(3003, 150);
+                            AddGeorgeButton(3006);
+                            break;
+                        //Point Searches
+                        case "wMsgGeorgeMacroNextPoint":
+                            AddGeorgeLongButton(3006, 200);
+                            AddGeorgeButton(3004, 150);
+                            AddGeorgeButton(3006);
+                            break;
+                        case "wMsgGeorgeMacroPreviousPoint":
+                            AddGeorgeLongButton(3006, 200);
+                            AddGeorgeButton(3003, 150);
+                            AddGeorgeButton(3006);
+                            break;                         
+
+
+
+                    }
+                }
+
+                public static void AddGeorgeLongButton(int command)
+                {
+                    AddGeorgeAction(command, 1.0, 1200);
+                    AddGeorgeAction(command, 0.0);
+                }
+
+                public static void AddGeorgeLongButton(int command, int postDelayMs)
+                {
+                    AddGeorgeAction(command, 1.0, 1200);
+                    AddGeorgeAction(command, 0.0, postDelayMs);
+                }
+
+                public static void AddGeorgeButton(int command)
+                {
+                    AddGeorgeAction(command, 1.0);
+                    AddGeorgeAction(command, 0.0);
+                }
+
+                public static void AddGeorgeButton(int command, int postDelayMs)
+                {
+                    AddGeorgeAction(command, 1.0);
+                    AddGeorgeAction(command, 0.0, postDelayMs);
+                }
+
+                public static void AddGeorgeAction(int command, double value, int delayMs = 0)
+                {
+                    State.currentmessage.extsequence.Add(new Extensions.RIO.DeviceAction
+                    {
+                        device = 87, // George AI
+                        command = command,
+                        value = value,
+                        delayMs = delayMs
+                    });
+                }
 
 
                 public static void F14Salute()
@@ -285,6 +450,12 @@ namespace VAICOM
 
                         State.currentmessage.AIRIO = State.currentmodule.Equals(Products.DCSmodules.LookupTable[State.riomod]);
                         State.currentmessage.carriersuppressauto = State.activeconfig.CarrierSuppressAuto;
+
+                        // SPECIAL: CONSTRUCT MESSAGE FOR GEORGE
+                        if (!ProcessIfGeorge())
+                        {
+                            return false;
+                        }
 
                         // SPECIAL: CONSTRUCT MESSAGE FOR AIRIO
                         if (!ProcessIfRIO())

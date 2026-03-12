@@ -492,13 +492,28 @@ function ProcessRemoteCommand()
 		return
 	end				
 	if clientmessage.type == base.vaicom.messagetype.devicecontrol  	then
-		for i= 1, #clientmessage.extsequence do
-		  base.GetDevice(clientmessage.extsequence[i].device):performClickableAction(clientmessage.extsequence[i].command,clientmessage.extsequence[i].value)
-		end		
-		for i= 1, #clientmessage.devsequence do
-		  base.GetDevice(clientmessage.devsequence[i].device):performClickableAction(clientmessage.devsequence[i].command,clientmessage.devsequence[i].value) 
-		end		
-		socket.try(base.vaicom.sender:send(base.vaicom.flags.raw))
+		local now = base.Export.LoGetModelTime and base.Export.LoGetModelTime() or 0
+		local cumulativeDelay = 0
+		local function queueActions(actions)
+			for i = 1, #actions do
+				local action = actions[i]
+				base.table.insert(base.vaicom.devicecontrol.queue,
+					{
+						executeAt = now + cumulativeDelay,
+						device = action.device,
+						command = action.command,
+						value = action.value
+					})
+				local d = action.delayMs or 0
+				if d > 0 then
+					cumulativeDelay = cumulativeDelay + (d / 1000)
+				end
+			end
+		end
+
+		queueActions(clientmessage.extsequence)
+		queueActions(clientmessage.devsequence)
+		base.vaicom.devicecontrol.busy = true
 		return
 	end
 	if clientmessage.type == base.vaicom.messagetype.commandsequence	then	
@@ -819,6 +834,20 @@ end
 base.vaicom = base.vaicom or {}
 local function vaicom_loop()
 	local 	JSON    	= base.require('JSON') -- is it really needed? had a weird error, maybe it was something else causing a issue
+	if base.vaicom and base.vaicom.devicecontrol and base.vaicom.devicecontrol.busy then
+		local now = base.Export.LoGetModelTime and base.Export.LoGetModelTime() or 0
+		while #base.vaicom.devicecontrol.queue > 0 and base.vaicom.devicecontrol.queue[1].executeAt <= now do
+			local action = base.table.remove(base.vaicom.devicecontrol.queue, 1)
+			local dev = base.GetDevice(action.device)
+			if dev and dev.performClickableAction then
+				dev:performClickableAction(action.command, action.value)
+			end
+		end
+		if #base.vaicom.devicecontrol.queue == 0 then
+			base.vaicom.devicecontrol.busy = false
+			socket.try(base.vaicom.sender:send(base.vaicom.flags.raw))
+		end
+	end
 	if base.vaicom and base.vaicom.receiver and data.initialized and data.pUnit then 
 		if RemoteInputs() then 	
 			base.vaicom.flags.remote = true
@@ -1739,6 +1768,10 @@ base.vaicom.state = {
 					socket.try(base.vaicom.sender:send(JSON:encode(sndtbl)))
 				end	
 			end,								
+}
+base.vaicom.devicecontrol = {
+	queue = {},
+	busy = false,
 }
 base.vaicom.init = {
 	start = function(self)	 

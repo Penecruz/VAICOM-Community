@@ -130,6 +130,7 @@ namespace VAICOM
                 {CommandCategories.RIO_defensive,          "F-14 AI RIO | Defensive"       },
                 {CommandCategories.RIO_misc,               "F-14 AI RIO | Misc"            },
                 {CommandCategories.AI_pilot,               "F-14 AI Pilot"                 },
+                {CommandCategories.AH64D_GeorgeAI,         "AH-64D | George AI"            },
                 {CommandCategories.kneeboard,              "Interactive Kneeboard extension"},
             };
         }

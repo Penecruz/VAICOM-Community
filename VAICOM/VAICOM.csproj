@@ -344,4 +344,7 @@ TASKKILL /FI "STATUS eq RUNNING" /F /IM XDesProc.exe</PreBuildEvent>
     <None Remove="FileManager\LuaFiles.cs~RF30cd3c9d.TMP" />
     <None Remove="Resources\Files\NoLoadContext" />
   </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Resources\AH-64D Temp\" />
+  </ItemGroup>
 </Project>
