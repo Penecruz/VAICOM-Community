@@ -14,9 +14,13 @@ namespace VAICOM
 
                 //flight
                 { "My Target",              "mytarget"              },
-                { "George Search Targets",  "georgesearchtargets"   },
-                { "George Engage My Target","georgeengagemytarget"  },
-                { "George Cease Fire",      "georgeceasefire"       },
+                { "George Open Menu",       "georgemenuopen"        },
+                { "George Menu Up",         "georgemenuup"          },
+                { "George Menu Down",       "georgemenudown"        },
+                { "George Menu Left",       "georgemenuleft"        },
+                { "George Menu Right",      "georgemenuright"       },
+                { "George Menu Select",     "georgemenuselect"      },
+                { "George Close Menu",      "georgemenuclose"       },
                 { "My Contact",             "mytarget"              },
                 { "Bandit",                 "bandit"                },
                 { "Bandits",                "bandit"                },

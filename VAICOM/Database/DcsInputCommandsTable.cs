@@ -2156,9 +2156,12 @@ namespace VAICOM
                 DcsInputCommandsTable.Add(3000, "iCommandCockpitDeviceCommandsStart");
                 DcsInputCommandsTable.Add(3999, "iCommandCockpitDeviceCommandsEnd");
                 DcsInputCommandsTable.Add(4000, "iCommandRepKeyBegin");
-                DcsInputCommandsTable.Add(32001, "iCommandGeorgeAI_SearchTargets");
-                DcsInputCommandsTable.Add(32002, "iCommandGeorgeAI_EngageMyTarget");
-                DcsInputCommandsTable.Add(32003, "iCommandGeorgeAI_CeaseFire");
+                DcsInputCommandsTable.Add(32001, "iCommandGeorgeAI_ShowHideMenu");
+                DcsInputCommandsTable.Add(32002, "iCommandGeorgeAI_HatUp");
+                DcsInputCommandsTable.Add(32003, "iCommandGeorgeAI_HatDown");
+                DcsInputCommandsTable.Add(32004, "iCommandGeorgeAI_HatLeft");
+                DcsInputCommandsTable.Add(32005, "iCommandGeorgeAI_HatRight");
+                DcsInputCommandsTable.Add(32006, "iCommandGeorgeAI_MfInput");
 
 
 
