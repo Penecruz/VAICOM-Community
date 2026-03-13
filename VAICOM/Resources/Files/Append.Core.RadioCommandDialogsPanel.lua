@@ -199,17 +199,32 @@ function selectAndTuneCommunicator(targetCommunicator)
 					end
 				else
 					if commDevice:is_frequency_in_range(freqMod.frequency) then
-						commDevice:set_frequency(freqMod.frequency)
+						local dcsId = base.vaicom.state.dcsid
+						-- The UH-1H needs to have the UHF radio manually tuned (unlike it's VHF radios).
+						-- The normal set_frequency function does tune it, but it then reverts back
+						-- to the previous frequency.
+						if dcsId == "UH-1H" and communicator.displayName == "CB UHF" then
+							local currentFreq = base.tostring(commDevice:get_frequency())
+							local newFreq = base.tostring(freqMod.frequency)
+							-- Tune each individual radio knob based on the position of the digits in the frequency
+							-- associated with that knob. The clickableId is the knob to be turned and the increment
+							-- is the number it goes up in.
+							manuallyTuneFrequency(commDevice, 3002, 1, base.tonumber(base.string.sub(currentFreq, 1, 2)), base.tonumber(base.string.sub(newFreq, 1, 2)))
+							manuallyTuneFrequency(commDevice, 3003, 1, base.tonumber(base.string.sub(currentFreq, 3, 3)), base.tonumber(base.string.sub(newFreq, 3, 3)))
+							manuallyTuneFrequency(commDevice, 3004, 5, base.tonumber(base.string.sub(currentFreq, 4, 5)), base.tonumber(base.string.sub(newFreq, 4, 5)))
+						else
+							commDevice:set_frequency(freqMod.frequency)
+						end
 						haveFreq = true
 					end
 				end
-			if haveFreq then
-				if communicator.AM and communicator.FM then --try only setting modulation for radios that have both AM and FM.
-					commDevice:set_modulation(freqMod.modulation)
+				if haveFreq then
+					if communicator.AM and communicator.FM then --try only setting modulation for radios that have both AM and FM.
+						commDevice:set_modulation(freqMod.modulation)
+					end
+					break
 				end
-				break
 			end
-			end	
 		else
 		end
 	end	
@@ -221,7 +236,27 @@ function setCommunicatorId(curCommunicatorIdIn)
 	data.curCommunicatorId = curCommunicatorIdIn 	
 	updateMainCaption()	
 end
-
+function manuallyTuneFrequency(commDevice, clickableId, increment, currentValue, newValue)
+	local difference = currentValue - newValue
+	-- 0.0 goes up and 1.0 goes down
+	local direction = difference > 0 and 1.0 or 0.0
+	local startTime = base.timer.getTime()
+	local delay = 0.2
+	-- Loop through each knob turn with a delay for each. The increment is due to
+	-- some knobs going up/down by 1 and others by 5.
+	for i = 1, (base.math.abs(difference) / increment) do
+		-- DCS requires a delay between each knob turn to ensure they are processed
+		local scheduledTime = startTime + (i * delay)
+		base.timer.scheduleFunction(turnRadioKnob, { commDevice = commDevice, clickableId = clickableId, direction = direction }, scheduledTime)
+	end
+end
+function turnRadioKnob(args)
+	local commDevice = args.commDevice
+	commDevice:performClickableAction(args.clickableId, args.direction)
+	
+	-- nil means don't reschedule
+	return nil 
+end
 -- Thanks to the amazing DCS SRS folk for their logic and permission
 -- to use parts of their codebase for the below functions to get the
 -- currently selected radio in modules that use a radio selector.
