@@ -159,17 +159,20 @@ namespace VAICOM
                             AddGeorgeButton(3002);
                             break;
                         case "wMsgGeorgeUp":
+                        case "wMsgGeorgePreviuousTarget":
                             AddGeorgeButton(3003);
                             break;
                         case "wMsgGeorgeDown":
+                        case "wMsgGeorgeNextTarget":
                             AddGeorgeButton(3004);
                             break;
                         case "wMsgGeorgeLeft":
+                        case "wMsgGeorgeNextWeapon":
+                        case "wMsgGeorgeExitList":
                             AddGeorgeButton(3005);
                             break;
                         case "wMsgGeorgeRight":
-                            AddGeorgeButton(3006);
-                            break;
+                        case "wMsgGeorgeTrackTarget":                            
                         case "wMsgGeorgeLaseTarget":
                         case "wMsgGeorgeLaserOn":
                         case "wMsgGeorgeLaserOff":
@@ -179,10 +182,9 @@ namespace VAICOM
                         case "wMsgGeorgeLOAL":
                             AddGeorgeButton(3006);
                             break;
-                        case "wMsgGeorgeCenter":
-                            AddGeorgeButton(3008);
-                            break;
+                        case "wMsgGeorgeCenter":                        
                         case "wMsgGeorgeClearedFire":
+                        case "wMsgGeorgeTadsFov":
                             AddGeorgeButton(3008);
                             break;
                         case "wMsgGeorgeControlRequest":
@@ -190,32 +192,35 @@ namespace VAICOM
                             break;
                         case "wMsgGeorgeStoreTarget":
                             AddGeorgeAction(3009, 1.0);
-                            break;
-                        case "wMsgGeorgeNextWeapon":
-                            AddGeorgeButton(3005);
-                            break;
+                            break;                    
+                                                  
                         case "wMsgGeorgeUpLong":
-                            AddGeorgeLongButton(3003);
-                            break;
                         case "wMsgGeorgeWeaponsFree":
                         case "wMsgGeorgeHoldFire":
+                        case "wMsgGeorgeTadsZoomIn":
+                        case "wMsgGeorgeTargetListZoomIn":
                             AddGeorgeLongButton(3003);
                             break;
+
                         case "wMsgGeorgeDownLong":
+                        case "wMsgGeorgeTadsZoomOut":                            
+                        case "wMsgGeorgeTargetListZoomOut":
                             AddGeorgeLongButton(3004);
                             break;
-                        case "wMsgGeorgeLeftLong":
+                        case "wMsgGeorgeLeftLong":                                            
+                        case "wMsgGeorgeTargetListFilter":
+                        case "wMsgGeorgePointListFilterMode":
                             AddGeorgeLongButton(3005);
                             break;
-                        case "wMsgGeorgeRightLong":
+                        case "wMsgGeorgeRightLong":                            
+                        case "wMsgGeorgePointListFilterThreat":
                             AddGeorgeLongButton(3006);
                             break;
-                        case "wMsgGeorgeCenterLong":
-                            AddGeorgeLongButton(3008);
-                            break;                         
+                        case "wMsgGeorgeCenterLong":                                                     
                         case "wMsgGeorgeStartUp":
                         case "wMsgGeorgeShutdown":
                         case "wMsgGeorgeAdjustAim":
+                        case "wMsgGeorgeTadsSensor":
                             AddGeorgeLongButton(3008);
                             break;
                         
