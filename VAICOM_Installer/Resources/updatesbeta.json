@@ -7,11 +7,11 @@
       "isbeta": false,
       "isdev": false,
       "productid": 1,
-      "releasedate": 20260309,
-      "version": 3097,
-      "versionstring": "3.0.9.7",
+      "releasedate": 20260314,
+      "version": 3098,
+      "versionstring": "3.0.9.8",
       "downloadurl": "https://raw.githubusercontent.com/Penecruz/VAICOM-Community/Development/VAICOM_Installer/Resources/VAICOMPRO.zip",
-      "releasenotes": "BETA 3.0.9.7\n- Adds AI_ATC Andersen 2.0 dynamic keywords to database\n- Add UH-1H Single PTT logic by Sleighzy\n- Fix crash with UH-1H when using Single PTT enhanced mode Also Fix module detection error\n- Add a check in updateradiosSRS.cs to prevent crash if no Radio detected\n- Add Kneeboard commands and functionality for Show Next Tab and Show Previous Tab\n- Fix Kneeboard command Clear Notes will now clear notes regardless of dictate mode"
+      "releasenotes": "BETA 3.0.9.8\n- Adds AI_ATC Andersen 2.0 dynamic keywords to database\n- Add UH-1H Single PTT logic by Sleighzy\n- Fix crash with UH-1H when using Single PTT enhanced mode Also Fix module detection error\n- Add a check in updateradiosSRS.cs to prevent crash if no Radio detected\n- Add Kneeboard commands and functionality for Show Next Tab and Show Previous Tab\n- Fix Kneeboard command Clear Notes will now clear notes regardless of dictate mode\n- Fix UH-1H UHF Radio not switching in cockpit frequency\n- Add Phase 1 of AH-64D George AI implementation"
     }
   ]
 }

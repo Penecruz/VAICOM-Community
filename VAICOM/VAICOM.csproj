@@ -46,6 +46,11 @@ TASKKILL /FI "STATUS eq RUNNING" /F /IM XDesProc.exe</PreBuildEvent>
   </PropertyGroup>
   <PropertyGroup />
   <ItemGroup>
+    <Compile Remove="Resources\AH-64D Temp\**" />
+    <EmbeddedResource Remove="Resources\AH-64D Temp\**" />
+    <None Remove="Resources\AH-64D Temp\**" />
+  </ItemGroup>
+  <ItemGroup>
     <PackageReference Include="Costura.Fody" Version="5.7.0">
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
@@ -343,8 +348,5 @@ TASKKILL /FI "STATUS eq RUNNING" /F /IM XDesProc.exe</PreBuildEvent>
   <ItemGroup>
     <None Remove="FileManager\LuaFiles.cs~RF30cd3c9d.TMP" />
     <None Remove="Resources\Files\NoLoadContext" />
-  </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Resources\AH-64D Temp\" />
   </ItemGroup>
 </Project>
