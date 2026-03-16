@@ -319,6 +319,12 @@ namespace VAICOM
                 { "georgetracktarget", "George Track Target" },
                 { "georgetadszoomin", "George TADS Zoom In" },
                 { "georgetadszoomout", "George TADS Zoom Out" },
+                { "georgenextrkt", "George Next Rocket" },
+                { "georgemsltraj", "George Missile Trajectory" },
+                { "georgeselecttarget", "George Select Target" },
+                { "georgeareasearch", "George Area Search" },
+                { "georgepointsearch", "George Point Search" },
+                { "georgelaststoredtarget", "George Last Stored Target" },
 
                 { "wMsgKneeboardDictateStart", "Dictation Start"     },
                 { "wMsgKneeboardDictateStop", "Dictation Stop"       },

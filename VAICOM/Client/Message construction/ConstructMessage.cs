@@ -155,22 +155,27 @@ namespace VAICOM
 
                     switch (State.currentcommand.dcsid)
                     {
+                        //Show/Hide George Overlay
                         case "wMsgGeorgeShowHide":
                             AddGeorgeButton(3002);
                             break;
+                        //Up Short Presses
                         case "wMsgGeorgeUp":
                         case "wMsgGeorgePreviuousTarget":
                             AddGeorgeButton(3003);
                             break;
+                        //Down Short Presses
                         case "wMsgGeorgeDown":
                         case "wMsgGeorgeNextTarget":
                             AddGeorgeButton(3004);
                             break;
+                        //Left Short Presses
                         case "wMsgGeorgeLeft":
                         case "wMsgGeorgeNextWeapon":
                         case "wMsgGeorgeExitList":
                             AddGeorgeButton(3005);
                             break;
+                        //Right Short Presses
                         case "wMsgGeorgeRight":
                         case "wMsgGeorgeTrackTarget":                            
                         case "wMsgGeorgeLaseTarget":
@@ -182,18 +187,24 @@ namespace VAICOM
                         case "wMsgGeorgeLOAL":
                             AddGeorgeButton(3006);
                             break;
+                        //Multifunction Short Presses
                         case "wMsgGeorgeCenter":                        
                         case "wMsgGeorgeClearedFire":
                         case "wMsgGeorgeTadsFov":
+                        case "wMsgGeorgeSelectTarget":
+                        case "wMsgGeorgelastStoredTarget":
+                        case "wMsgGeorgePointSearch":
                             AddGeorgeButton(3008);
                             break;
+                        //Request Control when in the CPG seat
                         case "wMsgGeorgeControlRequest":
                             AddGeorgeAction(3001, 1.0);
                             break;
+                        //Store Target 
                         case "wMsgGeorgeStoreTarget":
                             AddGeorgeAction(3009, 1.0);
-                            break;                    
-                                                  
+                            break;
+                        //Up Long Presses                         
                         case "wMsgGeorgeUpLong":
                         case "wMsgGeorgeWeaponsFree":
                         case "wMsgGeorgeHoldFire":
@@ -201,26 +212,32 @@ namespace VAICOM
                         case "wMsgGeorgeTargetListZoomIn":
                             AddGeorgeLongButton(3003);
                             break;
-
+                        //Down Long Presses
                         case "wMsgGeorgeDownLong":
                         case "wMsgGeorgeTadsZoomOut":                            
                         case "wMsgGeorgeTargetListZoomOut":
                             AddGeorgeLongButton(3004);
                             break;
+                        //Left Long Presses
                         case "wMsgGeorgeLeftLong":                                            
                         case "wMsgGeorgeTargetListFilter":
                         case "wMsgGeorgePointListFilterMode":
+                        case "wMsgGeorgeNextRkt":
                             AddGeorgeLongButton(3005);
                             break;
+                        //Right Long Presses
                         case "wMsgGeorgeRightLong":                            
                         case "wMsgGeorgePointListFilterThreat":
+                        case "wMsgGeorgeMslTraj":                        
                             AddGeorgeLongButton(3006);
                             break;
+                        //Multifunction Long Presses
                         case "wMsgGeorgeCenterLong":                                                     
                         case "wMsgGeorgeStartUp":
                         case "wMsgGeorgeShutdown":
                         case "wMsgGeorgeAdjustAim":
                         case "wMsgGeorgeTadsSensor":
+                        case "wMsgGeorgeAreaSearch":
                             AddGeorgeLongButton(3008);
                             break;
                         
@@ -232,7 +249,7 @@ namespace VAICOM
                         case "wMsgGeorgeMacroTADSLOS":                            
                             AddGeorgeLongButton(3004);
                             break;
-                        //Area Searches
+                        //Area Search Macros PHS, FWD, PFZ
                         case "wMsgGeorgeMacroNextSearch":
                             AddGeorgeLongButton(3005, 200);
                             AddGeorgeButton(3004, 150);
@@ -243,7 +260,7 @@ namespace VAICOM
                             AddGeorgeButton(3003, 150);
                             AddGeorgeButton(3006);
                             break;
-                        //Point Searches
+                        //Point Search Macros
                         case "wMsgGeorgeMacroNextPoint":
                             AddGeorgeLongButton(3006, 200);
                             AddGeorgeButton(3004, 150);

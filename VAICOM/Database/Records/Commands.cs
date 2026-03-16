@@ -465,7 +465,13 @@ namespace VAICOM
             { "georgetracktarget",            new Command { uniqueid = 23054, category = CommandCategories.AH64D_GeorgeAI, eventnumber = 4000, dcsid = "wMsgGeorgeTrackTarget", displayname = Labels.aicommands["georgetracktarget"] } },
             { "georgetadszoomin",             new Command { uniqueid = 23055, category = CommandCategories.AH64D_GeorgeAI, eventnumber = 4000, dcsid = "wMsgGeorgeTadsZoomIn", displayname = Labels.aicommands["georgetadszoomin"] } },
             { "georgetadszoomout",            new Command { uniqueid = 23056, category = CommandCategories.AH64D_GeorgeAI, eventnumber = 4000, dcsid = "wMsgGeorgeTadsZoomOut", displayname = Labels.aicommands["georgetadszoomout"] } },
-            { "wMsgGeorgeCmndsMaximum",       new Command { uniqueid = 23059, category = CommandCategories.AH64D_GeorgeAI, eventnumber = 4000, dcsid = "wMsgGeorgeCmndsMaximum" } },
+            { "georgenextrkt",                new Command { uniqueid = 23057, category = CommandCategories.AH64D_GeorgeAI, eventnumber = 4000, dcsid = "wMsgGeorgeNextRkt", displayname = Labels.aicommands["georgenextrkt"] } },
+            { "georgemsltraj",                new Command { uniqueid = 23058, category = CommandCategories.AH64D_GeorgeAI, eventnumber = 4000, dcsid = "wMsgGeorgeMslTraj", displayname = Labels.aicommands["georgemsltraj"] } },
+            { "georgeselecttarget",           new Command { uniqueid = 23059, category = CommandCategories.AH64D_GeorgeAI, eventnumber = 4000, dcsid = "wMsgGeorgeSelectTarget", displayname = Labels.aicommands["georgeselecttarget"] } },
+            { "georgeareasearch",             new Command { uniqueid = 23063, category = CommandCategories.AH64D_GeorgeAI, eventnumber = 4000, dcsid = "wMsgGeorgeAreaSearch", displayname = Labels.aicommands["georgeareasearch"] } },
+            { "georgepointsearch",            new Command { uniqueid = 23064, category = CommandCategories.AH64D_GeorgeAI, eventnumber = 4000, dcsid = "wMsgGeorgePointSearch", displayname = Labels.aicommands["georgepointsearch"] } },
+            { "georgelaststoredtarget",       new Command { uniqueid = 23065, category = CommandCategories.AH64D_GeorgeAI, eventnumber = 4000, dcsid = "wMsgGeorgelastStoredTarget", displayname = Labels.aicommands["georgelaststoredtarget"] } },
+            { "wMsgGeorgeCmndsMaximum",       new Command { uniqueid = 23079, category = CommandCategories.AH64D_GeorgeAI, eventnumber = 4000, dcsid = "wMsgGeorgeCmndsMaximum" } },
 
             { "wMsgSpecialCmndsMaximum",       new Command { uniqueid = 23099, category = CommandCategories.special, eventnumber = 4000, dcsid = "wMsgSpecialCmndsMaximum" } },
 
