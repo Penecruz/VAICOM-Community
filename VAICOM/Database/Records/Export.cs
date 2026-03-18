@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using VAICOM.Static;
 
 namespace VAICOM
@@ -9,6 +10,24 @@ namespace VAICOM
 
         public static partial class Aliases
         {
+
+            private static void AppendAliasWithGunnerVariant(ref string target, string alias, ref int counter)
+            {
+                if (string.IsNullOrWhiteSpace(alias))
+                {
+                    return;
+                }
+
+                target += alias + "; ";
+                counter = counter + 1;
+
+                if (alias.StartsWith("George", StringComparison.OrdinalIgnoreCase)
+                    && (alias.Length == 6 || char.IsWhiteSpace(alias[6]) || alias[6] == ','))
+                {
+                    target += "Gunner" + alias.Substring(6) + "; ";
+                    counter = counter + 1;
+                }
+            }
 
             //VSPX
             public static string CreateMasterKeywordStringVSPX()
@@ -118,8 +137,9 @@ namespace VAICOM
                                 {
                                     if ((alias.Value).Equals(dbentry.Key))
                                     {
-                                        commandstrings[cat] += alias.Key + "; ";
-                                        counter = counter + 1;
+                                        string commandstring = commandstrings[cat];
+                                        AppendAliasWithGunnerVariant(ref commandstring, alias.Key, ref counter);
+                                        commandstrings[cat] = commandstring;
                                     }
                                 }
                             }
@@ -398,18 +418,40 @@ namespace VAICOM
                 string outputstring = "";
                 try
                 {
+                    HashSet<string> exportedphrases = new HashSet<string>(System.StringComparer.OrdinalIgnoreCase);
+
                     foreach (KeyValuePair<string, string> entry in master)
                     {
-                        if (!entry.Key.Replace(" ", "").Equals("")) // skip any empties / blanks
+                        string cleanalias = entry.Key.Replace("*", "").Trim();
+
+                        if (!cleanalias.Replace(" ", "").Equals("")) // skip any empties / blanks
                         {
-                            string insertstr = "*";
-                            insertstr = insertstr + entry.Key.Replace("*", "");
-                            insertstr = insertstr + "*";
-                            insertstr = insertstr + "; ";
+                            if (exportedphrases.Add(cleanalias))
+                            {
+                                string insertstr = "*";
+                                insertstr = insertstr + cleanalias;
+                                insertstr = insertstr + "*";
+                                insertstr = insertstr + "; ";
 
-                            outputstring = outputstring + insertstr;
+                                outputstring = outputstring + insertstr;
+                                counter = counter + 1;
+                            }
 
-                            counter = counter + 1;
+                            if (cleanalias.StartsWith("George", System.StringComparison.OrdinalIgnoreCase)
+                                && (cleanalias.Length == 6 || char.IsWhiteSpace(cleanalias[6]) || cleanalias[6] == ','))
+                            {
+                                string gunneralias = "Gunner" + cleanalias.Substring(6);
+                                if (exportedphrases.Add(gunneralias))
+                                {
+                                    string insertstr = "*";
+                                    insertstr = insertstr + gunneralias;
+                                    insertstr = insertstr + "*";
+                                    insertstr = insertstr + "; ";
+
+                                    outputstring = outputstring + insertstr;
+                                    counter = counter + 1;
+                                }
+                            }
                         }
                     }
                     outputstring = outputstring.TrimEnd("; ".ToCharArray()); // finalizer, removes last ; closes string

@@ -149,7 +149,7 @@ namespace VAICOM
 
                     if (State.activeconfig.UIaddhints)
                     {
-                        State.currentmessage.dspmsg = "VAICOM PRO: GEORGE | " + Database.Labels.aicommands[State.currentkey["command"]];
+                        State.currentmessage.dspmsg = "VAICOM: GEORGE | " + Database.Labels.aicommands[State.currentkey["command"]];
                         State.currentmessage.msgdur = 3;
                     }
 

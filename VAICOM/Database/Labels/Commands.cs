@@ -272,6 +272,7 @@ namespace VAICOM
                 { "state",              "Check Unit"            },
                 { "readbriefing",       "Read Mission Briefing" },
                 { "loadout",            "loadout"               },
+
                 //George AI
                 { "georgeshowhide",     "George Show/Hide"      },
                 { "georgeup",           "George Up"             },

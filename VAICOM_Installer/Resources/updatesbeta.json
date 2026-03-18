@@ -7,11 +7,11 @@
       "isbeta": false,
       "isdev": false,
       "productid": 1,
-      "releasedate": 20260317,
-      "version": 3099,
-      "versionstring": "3.0.9.9",
+      "releasedate": 20260318,
+      "version": 30910,
+      "versionstring": "3.0.9.10",
       "downloadurl": "https://raw.githubusercontent.com/Penecruz/VAICOM-Community/Development/VAICOM_Installer/Resources/VAICOMPRO.zip",
-      "releasenotes": "BETA 3.0.9.9\n- Adds AI_ATC Andersen 2.0 dynamic keywords to database\n- Add UH-1H Single PTT logic by Sleighzy\n- Fix crash with UH-1H when using Single PTT enhanced mode Also Fix module detection error\n- Add a check in updateradiosSRS.cs to prevent crash if no Radio detected\n- Add Kneeboard commands and functionality for Show Next Tab and Show Previous Tab\n- Fix Kneeboard command Clear Notes will now clear notes regardless of dictate mode\n- Fix UH-1H UHF Radio not switching in cockpit frequency\n- Add Phase 1 of AH-64D George AI implementation\n- Add remaining George AI contextual commands\n- Update vaicom manual to include George AI keywords"
+      "releasenotes": "BETA 3.0.9.10\n- Adds AI_ATC Andersen 2.0 dynamic keywords to database\n- Add UH-1H Single PTT logic by Sleighzy\n- Fix crash with UH-1H when using Single PTT enhanced mode Also Fix module detection error\n- Add a check in updateradiosSRS.cs to prevent crash if no Radio detected\n- Add Kneeboard commands and functionality for Show Next Tab and Show Previous Tab\n- Fix Kneeboard command Clear Notes will now clear notes regardless of dictate mode\n- Fix UH-1H UHF Radio not switching in cockpit frequency\n- Add Phase 1 of AH-64D George AI implementation\n- Add remaining George AI contextual commands\n- New George AI keywords You must reset your Keywords!"
     }
   ]
 }
