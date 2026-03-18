@@ -249,27 +249,31 @@ namespace VAICOM
                         case "wMsgGeorgeMacroTADSLOS":                            
                             AddGeorgeLongButton(3004);
                             break;
-                        //Area Search Macros PHS, FWD, PFZ
+                        //Area Search Macros PHS, FWD, PFZ and hide overlay
                         case "wMsgGeorgeMacroNextSearch":
-                            AddGeorgeLongButton(3005, 200);
-                            AddGeorgeButton(3004, 150);
-                            AddGeorgeButton(3006);
+                            AddGeorgeLongButton(3005, 120);
+                            AddGeorgeButton(3004, 80);
+                            AddGeorgeButton(3006, 80);
+                            AddGeorgeButton(3002);
                             break;
                         case "wMsgGeorgeMacroPreviousSearch":
                             AddGeorgeLongButton(3005, 200);
                             AddGeorgeButton(3003, 150);
-                            AddGeorgeButton(3006);
+                            AddGeorgeButton(3006, 80);
+                            AddGeorgeButton(3002);
                             break;
-                        //Point Search Macros
+                        //Point Search Macros and hide overlay
                         case "wMsgGeorgeMacroNextPoint":
                             AddGeorgeLongButton(3006, 200);
                             AddGeorgeButton(3004, 150);
-                            AddGeorgeButton(3006);
+                            AddGeorgeButton(3006, 80);
+                            AddGeorgeButton(3002);
                             break;
                         case "wMsgGeorgeMacroPreviousPoint":
                             AddGeorgeLongButton(3006, 200);
                             AddGeorgeButton(3003, 150);
-                            AddGeorgeButton(3006);
+                            AddGeorgeButton(3006, 80);
+                            AddGeorgeButton(3002);
                             break;                         
 
 
