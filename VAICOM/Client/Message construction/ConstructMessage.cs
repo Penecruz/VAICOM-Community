@@ -147,6 +147,11 @@ namespace VAICOM
                     State.currentmessage.type = Messagetypes.DeviceControl;
                     State.currentmessage.extsequence = new List<Extensions.RIO.DeviceAction>();
 
+                    if (State.currentstate != null && !State.currentstate.airborne && State.AH64GeorgeSelectedWeapon != State.AH64GeorgeWeaponMode.NoWeapon)
+                    {
+                        ForceGeorgeNoWeaponLocalSync("weight-on-wheels", false);
+                    }
+
                     if (State.activeconfig.UIaddhints)
                     {
                         State.currentmessage.dspmsg = "VAICOM: GEORGE | " + Database.Labels.aicommands[State.currentkey["command"]];
@@ -162,18 +167,29 @@ namespace VAICOM
                         //Up Short Presses
                         case "wMsgGeorgeUp":
                         case "wMsgGeorgePreviuousTarget":
+                        case "wMsgGeorgePreviousItem":
                             AddGeorgeButton(3003);
                             break;
                         //Down Short Presses
                         case "wMsgGeorgeDown":
                         case "wMsgGeorgeNextTarget":
+                        case "wMsgGeorgeNextItem":
                             AddGeorgeButton(3004);
                             break;
                         //Left Short Presses
                         case "wMsgGeorgeLeft":
                         case "wMsgGeorgeNextWeapon":
                         case "wMsgGeorgeExitList":
+                            if (State.currentcommand.dcsid.Equals("wMsgGeorgeNextWeapon", StringComparison.OrdinalIgnoreCase) && !CanChangeGeorgeWeaponSelection())
+                            {
+                                break;
+                            }
+
                             AddGeorgeButton(3005);
+                            if (State.currentcommand.dcsid.Equals("wMsgGeorgeNextWeapon", StringComparison.OrdinalIgnoreCase))
+                            {
+                                State.AH64GeorgeSelectedWeapon = GetNextGeorgeWeapon(State.AH64GeorgeSelectedWeapon);
+                            }
                             break;
                         //Right Short Presses
                         case "wMsgGeorgeRight":
@@ -185,6 +201,7 @@ namespace VAICOM
                         case "wMsgGeorgeRocketQuantity":
                         case "wMsgGeorgeLOBL":
                         case "wMsgGeorgeLOAL":
+                        case "wMsgGeorgeListItemSelect":
                             AddGeorgeButton(3006);
                             break;
                         //Multifunction Short Presses
@@ -216,6 +233,7 @@ namespace VAICOM
                         case "wMsgGeorgeDownLong":
                         case "wMsgGeorgeTadsZoomOut":                            
                         case "wMsgGeorgeTargetListZoomOut":
+                        case "wMsgGeorgeLastFoundTarget":
                             AddGeorgeLongButton(3004);
                             break;
                         //Left Long Presses
@@ -223,12 +241,14 @@ namespace VAICOM
                         case "wMsgGeorgeTargetListFilter":
                         case "wMsgGeorgePointListFilterMode":
                         case "wMsgGeorgeNextRkt":
+                        case "wMsgGeorgeAreaSelect":
                             AddGeorgeLongButton(3005);
                             break;
                         //Right Long Presses
                         case "wMsgGeorgeRightLong":                            
                         case "wMsgGeorgePointListFilterThreat":
-                        case "wMsgGeorgeMslTraj":                        
+                        case "wMsgGeorgeMslTraj":
+                        case "wMsgGeorgePointSelect":
                             AddGeorgeLongButton(3006);
                             break;
                         //Multifunction Long Presses
@@ -274,10 +294,196 @@ namespace VAICOM
                             AddGeorgeButton(3003, 150);
                             AddGeorgeButton(3006, 80);
                             AddGeorgeButton(3002);
-                            break;                         
+                            break;
+                         //Target List and Track macros
+                         case "wMsgGeorgeMacroAddTwoTargetsTrack": //Add and Track Top 2 targets in list
+                            AddGeorgeButton(3008, 100);
+                            AddGeorgeButton(3004, 100);
+                            AddGeorgeButton(3008, 100);
+                            AddGeorgeButton(3006);
+                            break;
+                         case "wMsgGeorgeMacroAddThreeTargetsTrack": //Add and Track Top 3 targets in list
+                            AddGeorgeButton(3008, 100);
+                            AddGeorgeButton(3004, 100);
+                            AddGeorgeButton(3008, 100);
+                            AddGeorgeButton(3004, 100);
+                            AddGeorgeButton(3008, 100);
+                            AddGeorgeButton(3006);
+                            break;
+                         case "wMsgGeorgeMacroAddFourTargetsTrack": //Add and Track Top 4 targets in list
+                            AddGeorgeButton(3008, 100);
+                            AddGeorgeButton(3004, 100);
+                            AddGeorgeButton(3008, 100);
+                            AddGeorgeButton(3004, 100);
+                            AddGeorgeButton(3008, 100);
+                            AddGeorgeButton(3004, 100);
+                            AddGeorgeButton(3008, 100);
+                            AddGeorgeButton(3006);
+                            break;
+                        case "wMsgGeorgeMacroTrackEngage": //Tracks current target and give engage command if ROE is Weapons Hold
+                            AddGeorgeButton(3006, 100);                            
+                            AddGeorgeButton(3008, 100);                            
+                            break;
+
+                        case "wMsgGeorgeMacroSelectGun":
+                            SelectGeorgeWeapon(State.AH64GeorgeWeaponMode.Gun);
+                            break;
+                        case "wMsgGeorgeMacroSelectMissiles":
+                            SelectGeorgeWeapon(State.AH64GeorgeWeaponMode.Missiles);
+                            break;
+                        case "wMsgGeorgeMacroSelectRockets":
+                            SelectGeorgeWeapon(State.AH64GeorgeWeaponMode.Rockets);
+                            break;
+                        case "wMsgGeorgeMacroSelectNoWeapon":
+                            SelectGeorgeWeapon(State.AH64GeorgeWeaponMode.NoWeapon);
+                            break;
 
 
+                    }
+                }
 
+                private static void SelectGeorgeWeapon(State.AH64GeorgeWeaponMode target)
+                {
+                    if (!CanChangeGeorgeWeaponSelection())
+                    {
+                        return;
+                    }
+
+                    if (!GeorgeWeaponAvailable(target))
+                    {
+                        Log.Write("Requested George weapon is not available with current payload.", Colors.Inline);
+                        return;
+                    }
+
+                    var current = State.AH64GeorgeSelectedWeapon;
+                    if (current == State.AH64GeorgeWeaponMode.Unknown)
+                    {
+                        current = State.AH64GeorgeWeaponMode.NoWeapon;
+                    }
+
+                    int steps = GetGeorgeCycleSteps(current, target);
+                    for (int i = 0; i < steps; i++)
+                    {
+                        AddGeorgeButton(3005, 80);
+                    }
+
+                    State.AH64GeorgeSelectedWeapon = target;
+                }
+
+                private static bool CanChangeGeorgeWeaponSelection()
+                {
+                    if (State.currentstate != null && !State.currentstate.airborne)
+                    {
+                        bool changed = ForceGeorgeNoWeaponLocalSync("selection blocked by weight-on-wheels", true);
+                        Log.Write("George weapon selection is not available with weight is off wheels. No command Sent" + changed + "; selected=" + State.AH64GeorgeSelectedWeapon + ".", Colors.Recognition);
+                        return false;
+                    }
+
+                    return true;
+                }
+
+                private static bool ForceGeorgeNoWeaponLocalSync(string reason, bool logWhenAlreadyNoWeapon)
+                {
+                    var previous = State.AH64GeorgeSelectedWeapon;
+                    if (previous != State.AH64GeorgeWeaponMode.NoWeapon)
+                    {
+                        State.AH64GeorgeSelectedWeapon = State.AH64GeorgeWeaponMode.NoWeapon;
+                        Log.Write("AH-64D George local sync: " + reason + "; " + previous + " -> NoWeapon.", Colors.Recognition);
+                        return true;
+                    }
+                    else if (logWhenAlreadyNoWeapon)
+                    {
+                        Log.Write("AH-64D George local sync: " + reason + "; already NoWeapon.", Colors.Recognition);
+                    }
+
+                    return false;
+                }
+
+                private static int GetGeorgeCycleSteps(State.AH64GeorgeWeaponMode from, State.AH64GeorgeWeaponMode to)
+                {
+                    if (from == to)
+                    {
+                        return 0;
+                    }
+
+                    var order = GetGeorgeCycleOrder();
+                    int fromIndex = order.IndexOf(from);
+                    int toIndex = order.IndexOf(to);
+
+                    if (fromIndex < 0)
+                    {
+                        fromIndex = 0;
+                    }
+
+                    if (toIndex < 0)
+                    {
+                        return 0;
+                    }
+
+                    if (toIndex >= fromIndex)
+                    {
+                        return toIndex - fromIndex;
+                    }
+
+                    return (order.Count - fromIndex) + toIndex;
+                }
+
+                private static State.AH64GeorgeWeaponMode GetNextGeorgeWeapon(State.AH64GeorgeWeaponMode current)
+                {
+                    var order = GetGeorgeCycleOrder();
+                    int idx = order.IndexOf(current);
+                    if (idx < 0)
+                    {
+                        return order[0];
+                    }
+
+                    return order[(idx + 1) % order.Count];
+                }
+
+                private static List<State.AH64GeorgeWeaponMode> GetGeorgeCycleOrder()
+                {
+                    var order = new List<State.AH64GeorgeWeaponMode>
+                    {
+                        State.AH64GeorgeWeaponMode.NoWeapon
+                    };
+
+                    if (State.AH64GeorgeGunAvailable)
+                    {
+                        order.Add(State.AH64GeorgeWeaponMode.Gun);
+                    }
+
+                    if (State.AH64GeorgeMissilesAvailable)
+                    {
+                        order.Add(State.AH64GeorgeWeaponMode.Missiles);
+                    }
+
+                    if (State.AH64GeorgeRocketsAvailable)
+                    {
+                        order.Add(State.AH64GeorgeWeaponMode.Rockets);
+                    }
+
+                    return order;
+                }
+
+                private static bool GeorgeWeaponAvailable(State.AH64GeorgeWeaponMode mode)
+                {
+                    if (!State.AH64GeorgeWeaponStateValid)
+                    {
+                        return true;
+                    }
+
+                    switch (mode)
+                    {
+                        case State.AH64GeorgeWeaponMode.NoWeapon:
+                            return true;
+                        case State.AH64GeorgeWeaponMode.Gun:
+                            return State.AH64GeorgeGunAvailable;
+                        case State.AH64GeorgeWeaponMode.Missiles:
+                            return State.AH64GeorgeMissilesAvailable;
+                        case State.AH64GeorgeWeaponMode.Rockets:
+                            return State.AH64GeorgeRocketsAvailable;
+                        default:
+                            return false;
                     }
                 }
 

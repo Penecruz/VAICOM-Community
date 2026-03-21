@@ -129,6 +129,45 @@ namespace VAICOM
                     State.currentstate.selectedradio = serverMessage.selectedradio;
                     State.currentstate.radios = serverMessage.radios;
 
+                    string currentId = State.currentstate.id ?? string.Empty;
+                    string previousId = State.previousstate != null ? (State.previousstate.id ?? string.Empty) : string.Empty;
+                    bool isAH64 = currentId.IndexOf("AH-64D", StringComparison.OrdinalIgnoreCase) >= 0
+                                  || previousId.IndexOf("AH-64D", StringComparison.OrdinalIgnoreCase) >= 0;
+
+                    if (!isAH64 && State.currentmodule != null && !string.IsNullOrEmpty(State.currentmodule.Id))
+                    {
+                        isAH64 = State.currentmodule.Id.IndexOf("AH-64D", StringComparison.OrdinalIgnoreCase) >= 0;
+                    }
+
+                    string previousFsm = State.previousstate != null ? (State.previousstate.fsmstate ?? string.Empty) : string.Empty;
+                    string currentFsm = State.currentstate.fsmstate ?? string.Empty;
+                    bool airborneChanged = State.previousstate == null || State.previousstate.airborne != State.currentstate.airborne;
+                    bool fsmChanged = !string.Equals(previousFsm, currentFsm, StringComparison.OrdinalIgnoreCase);
+
+                    if (isAH64)
+                    {
+                        Log.Write("AH-64D chunk2: id=" + currentId + "; airborne=" + State.currentstate.airborne + "; fsmstate=" + currentFsm + "; selected=" + State.AH64GeorgeSelectedWeapon, Colors.Inline);
+                    }
+                    else if (airborneChanged || fsmChanged)
+                    {
+                        Log.Write("AH-64D detect miss: id=" + currentId + "; prevId=" + previousId + "; module=" + (State.currentmodule != null ? State.currentmodule.Id : "<null>"), Colors.Inline);
+                    }
+
+                    if (isAH64 && (airborneChanged || fsmChanged))
+                    {
+                        Log.Write("AH-64D state monitor: airborne=" + State.currentstate.airborne + "; fsmstate=" + currentFsm, Colors.Inline);
+                    }
+
+                    bool onGroundByFsm = IsGroundFsmState(currentFsm);
+                    if (isAH64 && (!State.currentstate.airborne || onGroundByFsm))
+                    {
+                        if (State.AH64GeorgeSelectedWeapon != State.AH64GeorgeWeaponMode.NoWeapon)
+                        {
+                            State.AH64GeorgeSelectedWeapon = State.AH64GeorgeWeaponMode.NoWeapon;
+                            Log.Write("AH-64D George sync: reset to De Wohz (NoWeapon) on ground. airborne=" + State.currentstate.airborne + "; fsmstate=" + currentFsm, Colors.Inline);
+                        }
+                    }
+
                     Log.Write("CHUNK2: " + JsonConvert.SerializeObject(serverMessage, Formatting.None), Colors.Inline);
                 }
                 catch (Exception e)
@@ -137,6 +176,21 @@ namespace VAICOM
                 }
                 receivedupdatecomplete = false;
             }
+
+            private static bool IsGroundFsmState(string fsmstate)
+            {
+                if (string.IsNullOrEmpty(fsmstate))
+                {
+                    return false;
+                }
+
+                return fsmstate.IndexOf("taxi", StringComparison.OrdinalIgnoreCase) >= 0
+                    || fsmstate.IndexOf("ground", StringComparison.OrdinalIgnoreCase) >= 0
+                    || fsmstate.IndexOf("park", StringComparison.OrdinalIgnoreCase) >= 0
+                    || fsmstate.IndexOf("startup", StringComparison.OrdinalIgnoreCase) >= 0
+                    || fsmstate.IndexOf("shutdown", StringComparison.OrdinalIgnoreCase) >= 0;
+            }
+
             public static void ExtractChunk3(ServerMessage serverMessage)
             {
 

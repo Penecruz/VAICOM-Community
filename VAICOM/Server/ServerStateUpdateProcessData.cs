@@ -254,6 +254,8 @@ namespace VAICOM
                     return; // Exit early if module validation fails
                 }
 
+                ForceAH64GeorgeNoWeaponWhenOnGround();
+
                 // PTT configuration and activate AIRIO if conditions are met
                 PTT.PTT_ApplyNewConfig();
                 State.AIRIOactive = State.jesteractivated && 
@@ -310,6 +312,33 @@ namespace VAICOM
                 State.Stopwatch.Stop();
 
                 Log.Write("Server update processed successfully.", Colors.Text);
+            }
+
+            private static void ForceAH64GeorgeNoWeaponWhenOnGround()
+            {
+                try
+                {
+                    string moduleId = State.currentmodule != null ? (State.currentmodule.Id ?? string.Empty) : string.Empty;
+                    string stateId = State.currentstate != null ? (State.currentstate.id ?? string.Empty) : string.Empty;
+                    bool isAH64 = moduleId.IndexOf("AH-64D", StringComparison.OrdinalIgnoreCase) >= 0
+                                  || stateId.IndexOf("AH-64D", StringComparison.OrdinalIgnoreCase) >= 0;
+
+                    if (!isAH64 || State.currentstate == null || State.currentstate.airborne)
+                    {
+                        return;
+                    }
+
+                    if (State.AH64GeorgeSelectedWeapon != State.AH64GeorgeWeaponMode.NoWeapon)
+                    {
+                        var previous = State.AH64GeorgeSelectedWeapon;
+                        State.AH64GeorgeSelectedWeapon = State.AH64GeorgeWeaponMode.NoWeapon;
+                        Log.Write("AH-64D ground sync: forced local George state " + previous + " -> NoWeapon (WOW).", Colors.Warning);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Log.Write("AH-64D ground sync check failed: " + ex.Message, Colors.Warning);
+                }
             }
 
             private static void EnsureModuleConnectedAndProcessF10Menu()

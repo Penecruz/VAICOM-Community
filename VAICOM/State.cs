@@ -294,6 +294,21 @@ namespace VAICOM
         public static string kneeboardlastdictbuffer = "";
         public static bool moduleDetected;
         public static bool moduleConnected = false; // Tracks if the module is connected
+
+        public enum AH64GeorgeWeaponMode
+        {
+            Unknown,
+            NoWeapon,
+            Gun,
+            Missiles,
+            Rockets
+        }
+
+        public static bool AH64GeorgeGunAvailable;
+        public static bool AH64GeorgeRocketsAvailable;
+        public static bool AH64GeorgeMissilesAvailable;
+        public static bool AH64GeorgeWeaponStateValid;
+        public static AH64GeorgeWeaponMode AH64GeorgeSelectedWeapon = AH64GeorgeWeaponMode.Unknown;
         // -----------------------------------------------------------------------------------------------------------
         // call flow management tables
 
