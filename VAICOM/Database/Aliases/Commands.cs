@@ -718,17 +718,17 @@ namespace VAICOM
                 // Campaign Pacific Sentry Testing WIP
                 //M02 A Red Horizon
                 { "I don't see any cruise missiles",     "Action I dont see any cruise missiles"         }, //used in Imported script Dynamic F10 menu Commands for the Sentry Pacific Campaign
-                { "Yes I see cruise missiles!",          "Action Yes I see cruise missiles!"             }, //These aliases must be unique and different from the standard DCS aliases!!
+                { "Yes I see cruise missiles",           "Action Yes I see cruise missiles"              }, //These aliases must be unique and different from the standard DCS aliases!!
                 { "Captured Bogey Bull 045 120",         "Action Captured Bogey Bull 045/120"            },
                 { "Captured Bogey Bull 055 180",         "Action Captured Bogey Bull 055/180"            },
                 { "Venom is Bingo Fuel and need to RTB", "Action Venon is Bingo Fuel and need to RTB"    },
                 { "Venom is emergency fuel",             "Action Venom is emergency fuel"                },
                 { "Venom min fuel we can hold",          "Action Venom min fuel we can hold"             },
                 //M03 A Red Horizon
-                { "Ready for remarks",                   "Action Ready for remarks"                      },
-                { "Repeat nine line",                    "Action Repeat nine line"                       },
+                { "Send It",                             "Action Send it"                                },
+                { "Say again nine line",                 "Action Say again nine line"                    },
                 { "Sorry no gas",                        "Action Sorry no gas"                           },
-                { "Sure thing",                          "Action Sure thing!"                            },
+                { "Sure thing",                          "Action Sure thing"                             },
                 //M04 Sprung A Leak
                 { "Review Mission",                      "Action Review Mission"                         },
                 { "Skip It",                             "Action Skip It"                                },
