@@ -722,11 +722,22 @@ namespace VAICOM
                 { "Captured Bogey Bull 045 120",         "Action Captured Bogey Bull 045/120"            },
                 { "Captured Bogey Bull 055 180",         "Action Captured Bogey Bull 055/180"            },
                 { "Venom is Bingo Fuel and need to RTB", "Action Venon is Bingo Fuel and need to RTB"    },
-                { "Venom is declaring emergency fuel!",  "Action Venom is declaring emergency fuel!"     },
-                { "We can hold for a few more minutes",  "Action Venom is min fuel - we can hold for a few more minutes"  },
+                { "Venom is emergency fuel",             "Action Venom is emergency fuel"                },
+                { "Venom min fuel we can hold",          "Action Venom min fuel we can hold"             },
+                //M03 A Red Horizon
+                { "Ready for remarks",                   "Action Ready for remarks"                      },
+                { "Repeat nine line",                    "Action Repeat nine line"                       },
+                { "Sorry no gas",                        "Action Sorry no gas"                           },
+                { "Sure thing",                          "Action Sure thing!"                            },
+                //M04 Sprung A Leak
+                { "Review Mission",                      "Action Review Mission"                         },
+                { "Skip It",                             "Action Skip It"                                },
+                //M10 Laying It All Out There
+                { "Tiny go to Alpha",                    "Action Tiny go to Alpha"                       },
+                { "Tiny rejoin",                         "Action Tiny rejoin"                            },
                 //M11 Work Hard,Play hard
                 { "Incentive Ride Over Testing Only",    "Action INCENTIVE RIDE OVER TESTING ONLY"       }, 
-                //{ "Place Holder",                    "Place Holder"                                  },
+                //{ "Place Holder",                    "Place Holder"                                      },
 
                 // AI_ATC
                         // Transition Repeat Last

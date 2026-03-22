@@ -90,9 +90,7 @@ namespace VAICOM
 
                     if (wow && State.AH64GeorgeSelectedWeapon != State.AH64GeorgeWeaponMode.NoWeapon)
                     {
-                        var previous = State.AH64GeorgeSelectedWeapon;
                         State.AH64GeorgeSelectedWeapon = State.AH64GeorgeWeaponMode.NoWeapon;
-                        Log.Write("AH-64D WOW sync: " + previous + " -> NoWeapon.", Colors.Warning);
                     }
 
                     if (!WeaponStillAvailable(State.AH64GeorgeSelectedWeapon))

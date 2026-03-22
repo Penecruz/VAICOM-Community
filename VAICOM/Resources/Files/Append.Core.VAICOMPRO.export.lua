@@ -247,8 +247,26 @@ vaicom.insert = {
         end
     end,
 
-    InitProbe = function(self)
-        if not self.probe.enabled then return end
+    IsProbeFileLoggingEnabled = function(self)
+        local ok, enabled = pcall(function()
+            if dcsoptions and dcsoptions.getOption then
+                return dcsoptions.getOption("plugins.VAICOM.VAICOMDebugModeEnabled")
+            end
+            return false
+        end)
+
+        return ok and enabled == true
+    end,
+
+    EnsureProbeFiles = function(self, enableFileLogging)
+        if not enableFileLogging then
+            self:CloseProbe()
+            return
+        end
+
+        if self.probe.logfile and self.probe.keylogfile and self.probe.statusfile then
+            return
+        end
 
         local ok, lfs = pcall(require, "lfs")
         if not ok or not lfs or type(lfs.writedir) ~= "function" then
@@ -256,38 +274,51 @@ vaicom.insert = {
             return
         end
 
-        local statusPath = lfs.writedir() .. [[Logs\VAICOM_AH64D_ExportProbe_Status.csv]]
-        local sf = io.open(statusPath, "a")
-        if sf then
-            self.probe.statusfile = sf
-            self:WriteProbeStatus("InitProbe")
+        if not self.probe.statusfile then
+            local statusPath = lfs.writedir() .. [[Logs\VAICOM_AH64D_ExportProbe_Status.csv]]
+            local sf = io.open(statusPath, "a")
+            if sf then
+                self.probe.statusfile = sf
+                self:WriteProbeStatus("InitProbe")
+            end
         end
 
-        local path = lfs.writedir() .. [[Logs\VAICOM_AH64D_ExportProbe.csv]]
-        local f, err = io.open(path, "a")
-        if not f then
-            log("Probe init failed: " .. safe_tostring(err))
-            self:WriteProbeStatus("Main log open failed: " .. safe_tostring(err))
-            return
+        if not self.probe.logfile then
+            local path = lfs.writedir() .. [[Logs\VAICOM_AH64D_ExportProbe.csv]]
+            local f, err = io.open(path, "a")
+            if not f then
+                log("Probe init failed: " .. safe_tostring(err))
+                self:WriteProbeStatus("Main log open failed: " .. safe_tostring(err))
+                return
+            end
+
+            self.probe.logfile = f
+            self.probe.logfile:write("time;module;unit;payload\n")
+            self.probe.logfile:flush()
         end
 
-        self.probe.logfile = f
-        self.probe.logfile:write("time;module;unit;payload\n")
-        self.probe.logfile:flush()
-
-        local keyPath = lfs.writedir() .. [[Logs\VAICOM_AH64D_ExportProbe_Keys.csv]]
-        local kf, kerr = io.open(keyPath, "a")
-        if not kf then
-            log("Probe key file init failed: " .. safe_tostring(kerr))
-            self:WriteProbeStatus("Key log open failed: " .. safe_tostring(kerr))
-        else
-            self.probe.keylogfile = kf
-            self.probe.keylogfile:write("time;module;key;type\n")
-            self.probe.keylogfile:flush()
-            self:WriteProbeStatus("Key log open OK")
+        if not self.probe.keylogfile then
+            local keyPath = lfs.writedir() .. [[Logs\VAICOM_AH64D_ExportProbe_Keys.csv]]
+            local kf, kerr = io.open(keyPath, "a")
+            if not kf then
+                log("Probe key file init failed: " .. safe_tostring(kerr))
+                self:WriteProbeStatus("Key log open failed: " .. safe_tostring(kerr))
+            else
+                self.probe.keylogfile = kf
+                self.probe.keylogfile:write("time;module;key;type\n")
+                self.probe.keylogfile:flush()
+                self:WriteProbeStatus("Key log open OK")
+            end
         end
 
-        self:WriteProbeStatus("Main log open OK")
+        if self.probe.logfile then
+            self:WriteProbeStatus("Main log open OK")
+        end
+    end,
+
+    InitProbe = function(self)
+        if not self.probe.enabled then return end
+        self:EnsureProbeFiles(self:IsProbeFileLoggingEnabled())
     end,
 
     LogPayloadKey = function(self, key, valuetype)
@@ -352,7 +383,10 @@ vaicom.insert = {
     end,
 
     PollProbe = function(self)
-        if not self.probe.enabled or not self.probe.logfile then return end
+        if not self.probe.enabled then return end
+
+        local enableFileLogging = self:IsProbeFileLoggingEnabled()
+        self:EnsureProbeFiles(enableFileLogging)
 
         local now = socket.gettime()
         if (now - self.probe.lastPoll) < self.probe.intervalSeconds then
@@ -369,7 +403,7 @@ vaicom.insert = {
         self:SendWeaponStateUpdate(payloadTable)
 
         local state = moduleName .. ";" .. unitName .. ";" .. payloadText
-        if state ~= self.probe.lastState then
+        if enableFileLogging and self.probe.logfile and state ~= self.probe.lastState then
             self.probe.lastState = state
             self.probe.logfile:write(string.format("%.3f;%s\n", now, state))
             self.probe.logfile:flush()

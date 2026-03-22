@@ -178,7 +178,6 @@ namespace VAICOM
             {
                 if (!State.activeconfig.ImportOtherMenu)
                 {
-                    Log.Write("Skipping F10 menu processing due to Import F10 Menu setting being disabled in Preferences.", Colors.Text);
                     return;
                 }
 
@@ -220,8 +219,6 @@ namespace VAICOM
 
             public static void ProcessServerData()
             {
-                Log.Write("Processing server data...", Colors.Text);
-
                 State.deepdebugmode = State.clientmode.Equals(ClientModes.Debug) || State.currentstate.playerusername.Equals(State.debuguser);
 
                 if (State.currentstate.playerusername.Equals(State.debuguser))
@@ -310,8 +307,6 @@ namespace VAICOM
                 VAICOM.Interfaces.VA_Plugin.VA_ExposeVariables(State.Proxy);
 
                 State.Stopwatch.Stop();
-
-                Log.Write("Server update processed successfully.", Colors.Text);
             }
 
             private static void ForceAH64GeorgeNoWeaponWhenOnGround()
@@ -345,7 +340,6 @@ namespace VAICOM
             {
                 if (State.moduleConnected)
                 {
-                    Log.Write("Module connected. Processing F10 menu data...", Colors.Text);
                     GetAuxMenu();
                 }
                 else

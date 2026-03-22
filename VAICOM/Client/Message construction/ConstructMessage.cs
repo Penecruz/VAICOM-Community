@@ -147,6 +147,9 @@ namespace VAICOM
                     State.currentmessage.type = Messagetypes.DeviceControl;
                     State.currentmessage.extsequence = new List<Extensions.RIO.DeviceAction>();
 
+                    RefreshGeorgeWeaponAvailabilityFromPayloadProbe();
+                    ForceGeorgeNoWeaponOnDepletedSelection();
+
                     if (State.currentstate != null && !State.currentstate.airborne && State.AH64GeorgeSelectedWeapon != State.AH64GeorgeWeaponMode.NoWeapon)
                     {
                         ForceGeorgeNoWeaponLocalSync("weight-on-wheels", false);
@@ -342,6 +345,112 @@ namespace VAICOM
                     }
                 }
 
+                private static void RefreshGeorgeWeaponAvailabilityFromPayloadProbe()
+                {
+                    try
+                    {
+                        var payload = State.currentstate != null ? State.currentstate.payload : null;
+                        if (payload == null)
+                        {
+                            return;
+                        }
+
+                        if (payload.Cannon != null)
+                        {
+                            State.AH64GeorgeGunAvailable = payload.Cannon.shells > 0;
+                            State.AH64GeorgeWeaponStateValid = true;
+                        }
+
+                        bool missilesKnown = false;
+                        bool rocketsKnown = false;
+                        bool missilesAvailable = false;
+                        bool rocketsAvailable = false;
+
+                        if (payload.Stations != null)
+                        {
+                            foreach (var station in payload.Stations)
+                            {
+                                if (station == null || station.count <= 0 || string.IsNullOrEmpty(station.CLSID))
+                                {
+                                    continue;
+                                }
+
+                                string clsid = station.CLSID.ToUpperInvariant();
+
+                                if (IsGeorgeMissileStation(clsid))
+                                {
+                                    missilesKnown = true;
+                                    missilesAvailable = true;
+                                }
+
+                                if (IsGeorgeRocketStation(clsid))
+                                {
+                                    rocketsKnown = true;
+                                    rocketsAvailable = true;
+                                }
+                            }
+                        }
+
+                        if (missilesKnown)
+                        {
+                            State.AH64GeorgeMissilesAvailable = missilesAvailable;
+                            State.AH64GeorgeWeaponStateValid = true;
+                        }
+
+                        if (rocketsKnown)
+                        {
+                            State.AH64GeorgeRocketsAvailable = rocketsAvailable;
+                            State.AH64GeorgeWeaponStateValid = true;
+                        }
+                    }
+                    catch
+                    {
+                    }
+                }
+
+                private static bool IsGeorgeMissileStation(string clsid)
+                {
+                    return clsid.Contains("AGM_114")
+                        || clsid.Contains("HELLFIRE")
+                        || clsid.Contains("M299")
+                        || clsid.Contains("M310");
+                }
+
+                private static bool IsGeorgeRocketStation(string clsid)
+                {
+                    return clsid.Contains("HYDRA")
+                        || clsid.Contains("M261")
+                        || clsid.Contains("M260")
+                        || clsid.Contains("FFAR")
+                        || clsid.Contains("APKWS")
+                        || clsid.Contains("M151")
+                        || clsid.Contains("M229");
+                }
+
+                private static void ForceGeorgeNoWeaponOnDepletedSelection()
+                {
+                    if (!State.AH64GeorgeWeaponStateValid)
+                    {
+                        return;
+                    }
+
+                    var selected = State.AH64GeorgeSelectedWeapon;
+                    if (selected == State.AH64GeorgeWeaponMode.Unknown || selected == State.AH64GeorgeWeaponMode.NoWeapon)
+                    {
+                        return;
+                    }
+
+                    if (GeorgeWeaponAvailable(selected))
+                    {
+                        return;
+                    }
+
+                    AddGeorgeAction(3005, 1.0, 2000);
+                    AddGeorgeAction(3005, 0.0, 80);
+                    State.AH64GeorgeSelectedWeapon = State.AH64GeorgeWeaponMode.NoWeapon;
+                    Log.Write("AH-64D George ammo sync: " + selected + " depleted, forcing No WPN with 2s delay.", Colors.Warning);
+                }
+
                 private static void SelectGeorgeWeapon(State.AH64GeorgeWeaponMode target)
                 {
                     if (!CanChangeGeorgeWeaponSelection())
@@ -375,7 +484,7 @@ namespace VAICOM
                     if (State.currentstate != null && !State.currentstate.airborne)
                     {
                         bool changed = ForceGeorgeNoWeaponLocalSync("selection blocked by weight-on-wheels", true);
-                        Log.Write("George weapon selection is not available with weight is off wheels. No command Sent" + changed + "; selected=" + State.AH64GeorgeSelectedWeapon + ".", Colors.Recognition);
+                        Log.Write("George weapon selection is not available with Weight is on Wheels. No command Sent" + changed + "; selected=" + State.AH64GeorgeSelectedWeapon + ".", Colors.Recognition);
                         return false;
                     }
 
@@ -388,12 +497,7 @@ namespace VAICOM
                     if (previous != State.AH64GeorgeWeaponMode.NoWeapon)
                     {
                         State.AH64GeorgeSelectedWeapon = State.AH64GeorgeWeaponMode.NoWeapon;
-                        Log.Write("AH-64D George local sync: " + reason + "; " + previous + " -> NoWeapon.", Colors.Recognition);
                         return true;
-                    }
-                    else if (logWhenAlreadyNoWeapon)
-                    {
-                        Log.Write("AH-64D George local sync: " + reason + "; already NoWeapon.", Colors.Recognition);
                     }
 
                     return false;

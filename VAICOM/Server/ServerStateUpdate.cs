@@ -139,24 +139,7 @@ namespace VAICOM
                         isAH64 = State.currentmodule.Id.IndexOf("AH-64D", StringComparison.OrdinalIgnoreCase) >= 0;
                     }
 
-                    string previousFsm = State.previousstate != null ? (State.previousstate.fsmstate ?? string.Empty) : string.Empty;
                     string currentFsm = State.currentstate.fsmstate ?? string.Empty;
-                    bool airborneChanged = State.previousstate == null || State.previousstate.airborne != State.currentstate.airborne;
-                    bool fsmChanged = !string.Equals(previousFsm, currentFsm, StringComparison.OrdinalIgnoreCase);
-
-                    if (isAH64)
-                    {
-                        Log.Write("AH-64D chunk2: id=" + currentId + "; airborne=" + State.currentstate.airborne + "; fsmstate=" + currentFsm + "; selected=" + State.AH64GeorgeSelectedWeapon, Colors.Inline);
-                    }
-                    else if (airborneChanged || fsmChanged)
-                    {
-                        Log.Write("AH-64D detect miss: id=" + currentId + "; prevId=" + previousId + "; module=" + (State.currentmodule != null ? State.currentmodule.Id : "<null>"), Colors.Inline);
-                    }
-
-                    if (isAH64 && (airborneChanged || fsmChanged))
-                    {
-                        Log.Write("AH-64D state monitor: airborne=" + State.currentstate.airborne + "; fsmstate=" + currentFsm, Colors.Inline);
-                    }
 
                     bool onGroundByFsm = IsGroundFsmState(currentFsm);
                     if (isAH64 && (!State.currentstate.airborne || onGroundByFsm))
@@ -164,11 +147,8 @@ namespace VAICOM
                         if (State.AH64GeorgeSelectedWeapon != State.AH64GeorgeWeaponMode.NoWeapon)
                         {
                             State.AH64GeorgeSelectedWeapon = State.AH64GeorgeWeaponMode.NoWeapon;
-                            Log.Write("AH-64D George sync: reset to De Wohz (NoWeapon) on ground. airborne=" + State.currentstate.airborne + "; fsmstate=" + currentFsm, Colors.Inline);
                         }
                     }
-
-                    Log.Write("CHUNK2: " + JsonConvert.SerializeObject(serverMessage, Formatting.None), Colors.Inline);
                 }
                 catch (Exception e)
                 {
