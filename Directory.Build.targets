@@ -3,9 +3,9 @@
 	  <AssemblyTitle>VAICOM for DCS World</AssemblyTitle>
 	  <Product>VAICOM Community Edition</Product>
 	  <Description>Interactive Voice Control for DCS World</Description>
-	  <ProductVersion>3.0.9.17</ProductVersion>
-	  <AssemblyVersion>3.0.9.17</AssemblyVersion>
-	  <FileVersion>3.0.9.17</FileVersion>
+	  <ProductVersion>3.0.9.18</ProductVersion>
+	  <AssemblyVersion>3.0.9.18</AssemblyVersion>
+	  <FileVersion>3.0.9.18</FileVersion>
 	  <Copyright>MIT</Copyright>
   </PropertyGroup>
 </Project>

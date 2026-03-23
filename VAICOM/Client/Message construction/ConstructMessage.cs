@@ -147,8 +147,13 @@ namespace VAICOM
                     State.currentmessage.type = Messagetypes.DeviceControl;
                     State.currentmessage.extsequence = new List<Extensions.RIO.DeviceAction>();
 
+                    bool hadValidWeaponState = State.AH64GeorgeWeaponStateValid;
+                    bool previousGunAvailable = State.AH64GeorgeGunAvailable;
+                    bool previousMissilesAvailable = State.AH64GeorgeMissilesAvailable;
+                    bool previousRocketsAvailable = State.AH64GeorgeRocketsAvailable;
+
                     RefreshGeorgeWeaponAvailabilityFromPayloadProbe();
-                    ForceGeorgeNoWeaponOnDepletedSelection();
+                    ForceGeorgeNoWeaponOnDepletedSelection(hadValidWeaponState, previousGunAvailable, previousMissilesAvailable, previousRocketsAvailable);
 
                     if (State.currentstate != null && !State.currentstate.airborne && State.AH64GeorgeSelectedWeapon != State.AH64GeorgeWeaponMode.NoWeapon)
                     {
@@ -355,14 +360,8 @@ namespace VAICOM
                             return;
                         }
 
-                        if (payload.Cannon != null)
-                        {
-                            State.AH64GeorgeGunAvailable = payload.Cannon.shells > 0;
-                            State.AH64GeorgeWeaponStateValid = true;
-                        }
+                        State.AH64GeorgeGunAvailable = payload.Cannon != null && payload.Cannon.shells > 0;
 
-                        bool missilesKnown = false;
-                        bool rocketsKnown = false;
                         bool missilesAvailable = false;
                         bool rocketsAvailable = false;
 
@@ -370,38 +369,35 @@ namespace VAICOM
                         {
                             foreach (var station in payload.Stations)
                             {
-                                if (station == null || station.count <= 0 || string.IsNullOrEmpty(station.CLSID))
+                                if (station == null || string.IsNullOrEmpty(station.CLSID))
                                 {
                                     continue;
                                 }
 
                                 string clsid = station.CLSID.ToUpperInvariant();
+                                bool hasCount = station.count > 0;
 
                                 if (IsGeorgeMissileStation(clsid))
                                 {
-                                    missilesKnown = true;
-                                    missilesAvailable = true;
+                                    if (hasCount)
+                                    {
+                                        missilesAvailable = true;
+                                    }
                                 }
 
                                 if (IsGeorgeRocketStation(clsid))
                                 {
-                                    rocketsKnown = true;
-                                    rocketsAvailable = true;
+                                    if (hasCount)
+                                    {
+                                        rocketsAvailable = true;
+                                    }
                                 }
                             }
                         }
 
-                        if (missilesKnown)
-                        {
-                            State.AH64GeorgeMissilesAvailable = missilesAvailable;
-                            State.AH64GeorgeWeaponStateValid = true;
-                        }
-
-                        if (rocketsKnown)
-                        {
-                            State.AH64GeorgeRocketsAvailable = rocketsAvailable;
-                            State.AH64GeorgeWeaponStateValid = true;
-                        }
+                        State.AH64GeorgeMissilesAvailable = missilesAvailable;
+                        State.AH64GeorgeRocketsAvailable = rocketsAvailable;
+                        State.AH64GeorgeWeaponStateValid = true;
                     }
                     catch
                     {
@@ -427,7 +423,7 @@ namespace VAICOM
                         || clsid.Contains("M229");
                 }
 
-                private static void ForceGeorgeNoWeaponOnDepletedSelection()
+                private static void ForceGeorgeNoWeaponOnDepletedSelection(bool hadValidWeaponState, bool previousGunAvailable, bool previousMissilesAvailable, bool previousRocketsAvailable)
                 {
                     if (!State.AH64GeorgeWeaponStateValid)
                     {
@@ -445,10 +441,32 @@ namespace VAICOM
                         return;
                     }
 
+                    if (!hadValidWeaponState || !WeaponAvailableFromSnapshot(selected, previousGunAvailable, previousMissilesAvailable, previousRocketsAvailable))
+                    {
+                        return;
+                    }
+
                     AddGeorgeAction(3005, 1.0, 2000);
                     AddGeorgeAction(3005, 0.0, 80);
                     State.AH64GeorgeSelectedWeapon = State.AH64GeorgeWeaponMode.NoWeapon;
                     Log.Write("AH-64D George ammo sync: " + selected + " depleted, forcing No WPN with 2s delay.", Colors.Warning);
+                }
+
+                private static bool WeaponAvailableFromSnapshot(State.AH64GeorgeWeaponMode mode, bool gunAvailable, bool missilesAvailable, bool rocketsAvailable)
+                {
+                    switch (mode)
+                    {
+                        case State.AH64GeorgeWeaponMode.Gun:
+                            return gunAvailable;
+                        case State.AH64GeorgeWeaponMode.Missiles:
+                            return missilesAvailable;
+                        case State.AH64GeorgeWeaponMode.Rockets:
+                            return rocketsAvailable;
+                        case State.AH64GeorgeWeaponMode.NoWeapon:
+                        case State.AH64GeorgeWeaponMode.Unknown:
+                        default:
+                            return true;
+                    }
                 }
 
                 private static void SelectGeorgeWeapon(State.AH64GeorgeWeaponMode target)
