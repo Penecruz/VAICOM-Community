@@ -15,6 +15,19 @@ namespace VAICOM
             public static partial class Message
             {
 
+                private static readonly Dictionary<string, string> georgeoptionhints = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+                {
+                    { "wMsgGeorgeNextWeapon", "\"Next Weapon\"\nCycles through currently available George weapons." },
+                    { "wMsgGeorgeMacroSelectGun", "\"Select Gun\"\nSelects Gun when available." },
+                    { "wMsgGeorgeMacroSelectMissiles", "\"Select Missiles\"\nSelects Missiles when available." },
+                    { "wMsgGeorgeMacroSelectRockets", "\"Select Rockets\"\nSelects Rockets when available." },
+                    { "wMsgGeorgeMacroSelectNoWeapon", "\"Select No Weapon\"\nSelects No Weapon (de-WAS)." },
+                    { "wMsgGeorgeMacroAddTwoTargetsTrack", "\"Add Two Targets and Track\"\nAdds top 2 targets from list and starts track." },
+                    { "wMsgGeorgeMacroAddThreeTargetsTrack", "\"Add Three Targets and Track\"\nAdds top 3 targets from list and starts track." },
+                    { "wMsgGeorgeMacroAddFourTargetsTrack", "\"Add Four Targets and Track\"\nAdds top 4 targets from list and starts track." },
+                    { "wMsgGeorgeMacroTrackEngage", "\"Track and Engage\"\nTracks current target and sends engage sequence." }
+                };
+
                 public static bool IsAOCS(Servers.Server.DcsUnit unit)
                 {
                     return unit.id_.Equals(123456789);
@@ -160,10 +173,20 @@ namespace VAICOM
                         ForceGeorgeNoWeaponLocalSync("weight-on-wheels", false);
                     }
 
-                    if (State.activeconfig.UIaddhints)
+                    if (State.activeconfig.RIO_Messages)
                     {
-                        State.currentmessage.dspmsg = "VAICOM: GEORGE | " + Database.Labels.aicommands[State.currentkey["command"]];
-                        State.currentmessage.msgdur = 3;
+                        if (!State.activeconfig.RIO_Hints_Only)
+                        {
+                            State.currentmessage.dspmsg = "VAICOM: GEORGE | " + Database.Labels.aicommands[State.currentkey["command"]];
+                            State.currentmessage.msgdur = 3;
+                        }
+
+                        string contextualHint;
+                        if (georgeoptionhints.TryGetValue(State.currentkey["command"], out contextualHint))
+                        {
+                            State.currentmessage.dspmsg = "GEORGE command use:\n" + contextualHint;
+                            State.currentmessage.msgdur = 5;
+                        }
                     }
 
                     switch (State.currentcommand.dcsid)
@@ -449,6 +472,11 @@ namespace VAICOM
                     AddGeorgeAction(3005, 1.0, 2000);
                     AddGeorgeAction(3005, 0.0, 80);
                     State.AH64GeorgeSelectedWeapon = State.AH64GeorgeWeaponMode.NoWeapon;
+                    if (State.activeconfig.RIO_Messages)
+                    {
+                        State.currentmessage.dspmsg = "GEORGE ammo sync:\nSelected weapon depleted. Forcing No WPN (de-WAS).";
+                        State.currentmessage.msgdur = 5;
+                    }
                     Log.Write("AH-64D George ammo sync: " + selected + " depleted, forcing No WPN with 2s delay.", Colors.Warning);
                 }
 
@@ -502,7 +530,12 @@ namespace VAICOM
                     if (State.currentstate != null && !State.currentstate.airborne)
                     {
                         bool changed = ForceGeorgeNoWeaponLocalSync("selection blocked by weight-on-wheels", true);
-                        Log.Write("George weapon selection is not available with Weight is on Wheels. No command Sent" + changed + "; selected=" + State.AH64GeorgeSelectedWeapon + ".", Colors.Recognition);
+                        if (State.activeconfig.RIO_Messages)
+                        {
+                            State.currentmessage.dspmsg = "GEORGE command blocked:\nWeapon selection is unavailable with Weight on Wheels.";
+                            State.currentmessage.msgdur = 4;
+                        }
+                        Log.Write("George weapon selection is not available with Weight on Wheels. Command Sent " + changed + "; selected=" + State.AH64GeorgeSelectedWeapon + ".", Colors.Recognition);
                         return false;
                     }
 

@@ -99,6 +99,7 @@ vaicom.insert = {
 
     probe = {
         enabled = true,
+        debugenabled = false,
         intervalSeconds = 0.25,
         lastPoll = 0,
         lastState = nil,
@@ -248,14 +249,31 @@ vaicom.insert = {
     end,
 
     IsProbeFileLoggingEnabled = function(self)
-        local ok, enabled = pcall(function()
-            if dcsoptions and dcsoptions.getOption then
-                return dcsoptions.getOption("plugins.VAICOM.VAICOMDebugModeEnabled")
-            end
-            return false
-        end)
+        return self.probe and self.probe.debugenabled == true
+    end,
 
-        return ok and enabled == true
+    UpdateProbeDebugFromClientMessage = function(self, raw)
+        if type(raw) ~= "string" then
+            return
+        end
+
+        local enabled = nil
+        if string.find(raw, '"debug"%s*:%s*true') then
+            enabled = true
+        elseif string.find(raw, '"debug"%s*:%s*false') then
+            enabled = false
+        end
+
+        if enabled == nil then
+            return
+        end
+
+        if self.probe.debugenabled ~= enabled then
+            self.probe.debugenabled = enabled
+            if not enabled then
+                self:CloseProbe()
+            end
+        end
     end,
 
     EnsureProbeFiles = function(self, enableFileLogging)
@@ -457,6 +475,7 @@ vaicom.insert = {
         if vaicom.receivefromclient then
             local newdata, err = vaicom.receivefromclient:receive()
             if newdata then
+                self:UpdateProbeDebugFromClientMessage(newdata)
                 log("Received data from client")
                 local ok, send_err = vaicom.sendtoradio:send(newdata)
                 if not ok then

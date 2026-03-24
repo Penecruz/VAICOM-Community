@@ -715,7 +715,10 @@ namespace VAICOM
                 //{ "Place Holder",                    "Place Holder"                                  }, //Hound is tricky due to the number of dynamic commands what is important?
                 //{ "Place Holder",                    "Place Holder"                                  },
 
-                // Campaign Pacific Sentry Testing WIP
+                // Campaign Pacific Sentry 25 WIP
+                //M01 Fly to Gyam by Viper
+                { "I can find parking",                  "Action I can find parking"                     }, //used in Imported script Dynamic F10 menu Commands for the Sentry Pacific Campaign
+                { "Request assistance",                  "Action Request assistance"                     }, //These aliases must be unique and different from the standard DCS aliases!!
                 //M02 A Red Horizon
                 { "I don't see any cruise missiles",     "Action I dont see any cruise missiles"         }, //used in Imported script Dynamic F10 menu Commands for the Sentry Pacific Campaign
                 { "Yes I see cruise missiles",           "Action Yes I see cruise missiles"              }, //These aliases must be unique and different from the standard DCS aliases!!
@@ -738,6 +741,41 @@ namespace VAICOM
                 //M11 Work Hard,Play hard
                 { "Incentive Ride Over Testing Only",    "Action INCENTIVE RIDE OVER TESTING ONLY"       }, 
                 //{ "Place Holder",                    "Place Holder"                                      },
+                // Campaign Pacific Sentry 26 WIP
+
+                //M03 Vote for Pedro
+                { "Talon Bravo authenticates good",      "Action Talon Bravo authenticates good"           },
+                { "Talon Bravo authenticates bad",       "Action Talon Bravo authenticates bad"            },
+                { "Talon Alpha authenticates good",      "Action Talon Alpha authenticates good"           },
+                { "Talon Alpha authenticates bad",       "Action Talon Alpha authenticates bad"            },
+
+                //M05 Hog Litening Viper Thunder
+                { "I will sink ship",                   "Action I will sink ship"                         },
+                { "You sink ship",                      "Action You sink ship"                            },
+                { "Explode ship",                       "Action Explode ship"                             },
+
+                //M06 Contested Waters
+                { "I will hit fast boat",               "Action I will hit fast boat"                     },
+                { "You hit fast boat",                  "Action You hit fast boat"                        },
+
+                //M07 The Show Must Go On
+                { "Recommend weather cancel",           "Action Recommend weather cancel"                 },
+                { "Recommend low war",                  "Action Recommend low war"                        },
+                { "Recommend high war",                 "Action Recommend high war"                       },
+                { "Call in Bone One",                   "Action Call in Bone One"                         },
+                { "Call in Devil Dog",                  "Action Call in Devil Dog"                        },
+
+                //M08 Sails Calls, Wrong Number
+                { "Fast boat moving south",             "Action Fast boat moving south"                   },
+                { "Both boats moving north",            "Action Both boats moving north"                  },
+
+                //M09 Hot Start, Hotter DZ
+                { "Give tower excuse",                  "Action Give tower excuse"                        },
+                { "Tell tower the truth",               "Action Tell tower the truth"                     },
+
+                //M10 Snake Eaters in Paradise
+                { "Return south",                       "Action Return south"                             },
+                { "Stay here",                          "Action Stay here"                                },
 
                 // AI_ATC
                         // Transition Repeat Last
