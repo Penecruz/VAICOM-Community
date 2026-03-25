@@ -439,6 +439,7 @@ namespace VAICOM.Extensions.RIO
             {"wMsgJ_RAD_DL_HOST_TRUM",          "DL Host Truman"                },
             {"wMsgJ_RAD_DL_HOST_TICO",          "DL Host Ticonderoga"           },
             {"wMsgJ_RAD_DL_HOST_FORE",          "DL Host Forrestal"             }, // Add Forrestal
+            {"wMsgJ_RAD_DL_HOST_BURK",          "DL Host Arleigh Burke"         },
             {"wMsgJ_RAD_TCN_TAC_WASH" ,         "TACAN Tune Washington"                     },
             {"wMsgJ_RAD_TCN_TAC_ROOS",          "TACAN Tune Roosevelt"                      },
             {"wMsgJ_RAD_TCN_TAC_LINC" ,         "TACAN Tune Lincoln"                        },

@@ -132,40 +132,45 @@ namespace VAICOM
             {
                 try
                 {
-                    List<DcsUnit> DLunits = new List<DcsUnit>();
+                    List<DcsUnit> awacsUnits = new List<DcsUnit>();
+                    List<DcsUnit> supercarrierUnits = new List<DcsUnit>();
+                    List<DcsUnit> escortShipUnits = new List<DcsUnit>();
 
                     foreach (DcsUnit unit in State.currentstate.availablerecipients["AWACS"])
                     {
-                        if (unit.callsign.Contains("Darkstar") || unit.fullname.Contains("Darkstar"))
+                        string unitName = (unit.callsign ?? string.Empty) + " " + (unit.fullname ?? string.Empty);
+
+                        if (unitName.IndexOf("Darkstar", StringComparison.OrdinalIgnoreCase) >= 0
+                            || unitName.IndexOf("Focus", StringComparison.OrdinalIgnoreCase) >= 0
+                            || unitName.IndexOf("Magic", StringComparison.OrdinalIgnoreCase) >= 0
+                            || unitName.IndexOf("Overlord", StringComparison.OrdinalIgnoreCase) >= 0
+                            || unitName.IndexOf("Wizard", StringComparison.OrdinalIgnoreCase) >= 0)
                         {
-                            DLunits.Add(unit);
-                        }
-                        if (unit.callsign.Contains("Focus") || unit.fullname.Contains("Focus"))
-                        {
-                            DLunits.Add(unit);
-                        }
-                        if (unit.callsign.Contains("Magic") || unit.fullname.Contains("Magic"))
-                        {
-                            DLunits.Add(unit);
-                        }
-                        if (unit.callsign.Contains("Overlord") || unit.fullname.Contains("Overlord"))
-                        {
-                            DLunits.Add(unit);
-                        }
-                        if (unit.callsign.Contains("Wizard") || unit.fullname.Contains("Wizard"))
-                        {
-                            DLunits.Add(unit);
+                            awacsUnits.Add(unit);
                         }
                     }
+
                     foreach (DcsUnit unit in State.currentstate.availablerecipients["ATC"])
                     {
-                        if (unit.fullname.ToLower().Contains("ticonderoga") || unit.callsign.ToLower().Contains("ticonderoga") || unit.fullname.ToLower().Contains("arleigh burke") || unit.callsign.ToLower().Contains("arleigh burke") || (CheckSuperCarrier(unit.callsign + unit.fullname) && !(unit.callsign + unit.fullname).ToLower().Contains("kuznetsov") && !(unit.callsign + unit.fullname).ToLower().Contains("vinson")))
+                        string unitName = (unit.callsign ?? string.Empty) + " " + (unit.fullname ?? string.Empty);
+                        string lowerName = unitName.ToLower();
+
+                        if (CheckSuperCarrier(unitName) && !lowerName.Contains("kuznetsov") && !lowerName.Contains("vinson"))
                         {
-                            DLunits.Add(unit);
+                            supercarrierUnits.Add(unit);
+                        }
+                        else if (lowerName.Contains("ticonderoga") || lowerName.Contains("arleigh burke"))
+                        {
+                            escortShipUnits.Add(unit);
                         }
 
                     }
-                    State.currentstate.DLunits = DLunits.OrderBy(o => o.range).ToList(); //Closest DLink units add Arleigh Burke class destroyers
+
+                    State.currentstate.DLunits = awacsUnits.OrderBy(o => o.range)
+                        .Concat(supercarrierUnits.OrderBy(o => o.range))
+                        .Concat(escortShipUnits.OrderBy(o => o.range))
+                        .ToList();
+
                     helper.getDLstate();
                 }
                 catch
