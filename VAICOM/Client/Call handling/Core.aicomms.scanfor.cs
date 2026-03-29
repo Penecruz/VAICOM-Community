@@ -58,24 +58,44 @@ namespace VAICOM
                         string usedalias = "";
                         string finalresult = "";
 
-                        int longest = 0;
+                        int bestscore = -1;
+                        bool preferengageforflight = false;
+
+                        if (category.Equals("command") && State.have["recipient"] && Recipients.Table.ContainsKey(State.currentkey["recipient"]))
+                        {
+                            preferengageforflight = Recipients.Table[State.currentkey["recipient"]].RecipientClass().Equals(Recipientclasses.Flight);
+                        }
 
                         foreach (KeyValuePair<string, string> set in localresults)
                         {
-                            if (set.Key.ToLower().Equals("two")) // added bias for Two in calls
+                            if (category.Equals("recipient") && set.Key.Equals("two", System.StringComparison.OrdinalIgnoreCase)) // added bias for Two in calls
                             {
                                 usedalias = set.Key;
                                 finalresult = set.Value;
                                 break;
                             }
-                            else
+
+                            int currentscore = set.Key.Length;
+
+                            if (preferengageforflight)
                             {
-                                if (set.Key.Length > longest)
+                                try
                                 {
-                                    usedalias = set.Key;
-                                    finalresult = set.Value;
-                                    longest = set.Key.Length;
+                                    if (Commands.Table.ContainsKey(set.Value) && Commands.Table[set.Value].isEngage())
+                                    {
+                                        currentscore += 1000;
+                                    }
                                 }
+                                catch
+                                {
+                                }
+                            }
+
+                            if (currentscore > bestscore)
+                            {
+                                usedalias = set.Key;
+                                finalresult = set.Value;
+                                bestscore = currentscore;
                             }
                         }
 

@@ -274,27 +274,37 @@ namespace VAICOM
                 }
 
                 string outputappendixwpnstring = "";
+                HashSet<string> exportedappendixwpn = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
                 foreach (KeyValuePair<string, string> alias in Aliases.appendiceswpn)
                 {
-                    outputappendixwpnstring += "with " + alias.Key;
-                    if (!alias.Key.EndsWith("*"))
+                    string phrase = "with " + alias.Key;
+                    string[] variants = { phrase, "*" + phrase, phrase + "*", "*" + phrase + "*" };
+
+                    foreach (string variant in variants)
                     {
-                        outputappendixwpnstring += "";
+                        if (exportedappendixwpn.Add(variant))
+                        {
+                            outputappendixwpnstring += variant + "; ";
+                            counter = counter + 1;
+                        }
                     }
-                    outputappendixwpnstring += "; ";
-                    counter = counter + 1;
                 }
 
                 string outputappendixdirstring = "";
+                HashSet<string> exportedappendixdir = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
                 foreach (KeyValuePair<string, string> alias in Aliases.appendicesdir)
                 {
-                    if (!alias.Key.StartsWith("*"))
+                    string phrase = alias.Key;
+                    string[] variants = { phrase, "*" + phrase, phrase + "*", "*" + phrase + "*" };
+
+                    foreach (string variant in variants)
                     {
-                        outputappendixdirstring += "";
+                        if (exportedappendixdir.Add(variant))
+                        {
+                            outputappendixdirstring += variant + "; ";
+                            counter = counter + 1;
+                        }
                     }
-                    outputappendixdirstring += alias.Key;
-                    outputappendixdirstring += "; ";
-                    counter = counter + 1;
                 }
 
                 // pragmatic add of Switch for vspx 
