@@ -764,6 +764,8 @@ namespace VAICOM
                 { "Recommend high war",                 "Action Recommend high war"                       },
                 { "Call in Bone One",                   "Action Call in Bone One"                         },
                 { "Call in Devil Dog",                  "Action Call in Devil Dog"                        },
+                { "I will hit trucks",                  "Action I will hit trucks"                        },
+                { "Dozer hit trucks",                   "Action Dozer hit trucks"                         },
 
                 //M08 Sails Calls, Wrong Number
                 { "Fast boat moving south",             "Action Fast boat moving south"                   },
@@ -776,6 +778,10 @@ namespace VAICOM
                 //M10 Snake Eaters in Paradise
                 { "Return south",                       "Action Return south"                             },
                 { "Stay here",                          "Action Stay here"                                },
+
+                //M11 Check Out before Checking Out
+                { "Tally wingloon drone",               "Action Tally wingloon drone"                     },
+                { "Tally lost caravan",                 "Action Tally lost caravan"                       },
 
                 // AI_ATC
                         // Transition Repeat Last
