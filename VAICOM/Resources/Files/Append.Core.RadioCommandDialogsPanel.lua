@@ -196,6 +196,18 @@ function selectAndTuneCommunicator(targetCommunicator)
 					if channelNum ~= nil then
 						haveFreq = true
 						commDevice:set_channel(channelNum)
+
+						-- Manually change the channel selector in the cockpit for some modules
+						-- so that it correctly reflects the channel for the freqeuncy we are tuned to.
+						local dcsId = base.vaicom.state.dcsid
+						if dcsId == "Mi-24P" then
+							-- Clickable Ids for the channel selectors were obtained from DCS-BIOS
+							if communicator.displayName == "R-863" then
+								manuallySetChannel(commDevice, 3007, channelNum, 20)
+							elseif communicator.displayName == "R-828" then
+								manuallySetChannel(commDevice, 3001, channelNum, 10)
+							end
+						end
 					end
 				else
 					if commDevice:is_frequency_in_range(freqMod.frequency) then
@@ -235,6 +247,9 @@ end
 function setCommunicatorId(curCommunicatorIdIn)
 	data.curCommunicatorId = curCommunicatorIdIn 	
 	updateMainCaption()	
+end
+function manuallySetChannel(commDevice, clickableId, channelNum, positions)
+	commDevice:performClickableAction(clickableId, channelNum * (1 / positions))
 end
 function manuallyTuneFrequency(commDevice, clickableId, increment, currentValue, newValue)
 	local difference = currentValue - newValue
@@ -405,6 +420,29 @@ function getSelectedRadio(dcsId)
 					selectedRadio = findRadioDisplayName("VHF AM(ARC-210)", "VHF AM", "ARC-210") or selectedRadio -- not currently implemented
 				elseif selectorPosition == 9 then
 					selectedRadio = findRadioDisplayName("PVT", "PVT 1", "PVT-1") or selectedRadio
+				end
+			end
+		end
+	elseif dcsId == "Mi-24P" then
+		-- Pilot: 455, CP/G: 659
+		local seat = base.get_param_handle("SEAT"):get()
+		local selectorId = nil
+		if seat == 0 then
+			selectorId = 455
+		elseif seat == 1 then
+			selectorId = 659
+		end
+		if selectorId ~= nil then
+			local selectorPosition = getSelectorPosition(selectorId, 0.2)
+			if selectorPosition ~= nil then
+				if selectorPosition == 0 then
+					selectedRadio = "R-863"
+				elseif selectorPosition == 2 then
+					selectedRadio = "R-828"
+				elseif selectorPosition == 3 then
+					selectedRadio = "Jadro-1A"
+				elseif selectorPosition == 4 then
+					selectedRadio = "R_852"
 				end
 			end
 		end
