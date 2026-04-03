@@ -340,6 +340,7 @@ namespace VAICOM
                 { "georgemacroselectmissiles", "George Select Missiles" },
                 { "georgemacroselectrockets", "George Select Rockets" },
                 { "georgemacroselectnoweapon", "George Select No Weapon" },
+                { "georgenextmsl", "George Next Missile Type" },
 
                 { "wMsgKneeboardDictateStart", "Dictation Start"     },
                 { "wMsgKneeboardDictateStop", "Dictation Stop"       },

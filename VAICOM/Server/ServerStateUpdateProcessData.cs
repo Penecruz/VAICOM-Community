@@ -325,8 +325,14 @@ namespace VAICOM
 
                     if (!isAH64 || State.currentstate == null || State.currentstate.airborne)
                     {
+                        if (isAH64)
+                        {
+                            State.AH64GeorgeWowFromServerState = false;
+                        }
                         return;
                     }
+
+                    State.AH64GeorgeWowFromServerState = true;
 
                     if (State.AH64GeorgeSelectedWeapon != State.AH64GeorgeWeaponMode.NoWeapon)
                     {
