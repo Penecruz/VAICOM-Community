@@ -485,6 +485,7 @@ namespace VAICOM
             { "georgemacroselectmissiles",    new Command { uniqueid = 23074, category = CommandCategories.AH64D_GeorgeAI, eventnumber = 4000, dcsid = "wMsgGeorgeMacroSelectMissiles", displayname = Labels.aicommands["georgemacroselectmissiles"] } },
             { "georgemacroselectrockets",     new Command { uniqueid = 23075, category = CommandCategories.AH64D_GeorgeAI, eventnumber = 4000, dcsid = "wMsgGeorgeMacroSelectRockets", displayname = Labels.aicommands["georgemacroselectrockets"] } },
             { "georgemacroselectnoweapon",    new Command { uniqueid = 23076, category = CommandCategories.AH64D_GeorgeAI, eventnumber = 4000, dcsid = "wMsgGeorgeMacroSelectNoWeapon", displayname = Labels.aicommands["georgemacroselectnoweapon"] } },
+            { "georgenextmsl",                new Command { uniqueid = 23077, category = CommandCategories.AH64D_GeorgeAI, eventnumber = 4000, dcsid = "wMsgGeorgeNextMSL", displayname = Labels.aicommands["georgenextmsl"] } },
             { "wMsgGeorgeCmndsMaximum",       new Command { uniqueid = 23079, category = CommandCategories.AH64D_GeorgeAI, eventnumber = 4000, dcsid = "wMsgGeorgeCmndsMaximum" } },
 
             { "wMsgSpecialCmndsMaximum",       new Command { uniqueid = 23099, category = CommandCategories.special, eventnumber = 4000, dcsid = "wMsgSpecialCmndsMaximum" } },

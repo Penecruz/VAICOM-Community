@@ -87,6 +87,7 @@ namespace VAICOM
                     State.AH64GeorgeRocketsAvailable = rocketsAvailable;
                     State.AH64GeorgeMissilesAvailable = missilesAvailable;
                     State.AH64GeorgeWeaponStateValid = true;
+                    State.AH64GeorgeWowFromExport = wow;
 
                     if (wow && State.AH64GeorgeSelectedWeapon != State.AH64GeorgeWeaponMode.NoWeapon)
                     {

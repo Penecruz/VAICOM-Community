@@ -272,6 +272,7 @@ namespace VAICOM
                         case "wMsgGeorgeTargetListFilter":
                         case "wMsgGeorgePointListFilterMode":
                         case "wMsgGeorgeNextRkt":
+                        case "wMsgGeorgeNextMSL":
                         case "wMsgGeorgeAreaSelect":
                             AddGeorgeLongButton(3005);
                             break;
@@ -429,8 +430,19 @@ namespace VAICOM
 
                 private static bool IsGeorgeMissileStation(string clsid)
                 {
+                    if (string.IsNullOrEmpty(clsid))
+                    {
+                        return false;
+                    }
+
+                    if (clsid.Contains("EMPTY") || clsid.Contains("INERT") || clsid.Contains("DUMMY"))
+                    {
+                        return false;
+                    }
+
                     return clsid.Contains("AGM_114")
                         || clsid.Contains("HELLFIRE")
+                        || clsid.Contains("88D18A5E-99C8-4B04-B40B-1C02F2018B6E")
                         || clsid.Contains("M299")
                         || clsid.Contains("M310");
                 }
@@ -469,6 +481,11 @@ namespace VAICOM
                         return;
                     }
 
+                    if (selected == State.AH64GeorgeWeaponMode.Missiles && HasGeorgeEmptyM299Stations())
+                    {
+                        return;
+                    }
+
                     AddGeorgeAction(3005, 1.0, 2000);
                     AddGeorgeAction(3005, 0.0, 80);
                     State.AH64GeorgeSelectedWeapon = State.AH64GeorgeWeaponMode.NoWeapon;
@@ -478,6 +495,31 @@ namespace VAICOM
                         State.currentmessage.msgdur = 5;
                     }
                     Log.Write("AH-64D George ammo sync: " + selected + " depleted, forcing No WPN with 2s delay.", Colors.Warning);
+                }
+
+                private static bool HasGeorgeEmptyM299Stations()
+                {
+                    var payload = State.currentstate != null ? State.currentstate.payload : null;
+                    if (payload == null || payload.Stations == null)
+                    {
+                        return false;
+                    }
+
+                    foreach (var station in payload.Stations)
+                    {
+                        if (station == null || string.IsNullOrEmpty(station.CLSID))
+                        {
+                            continue;
+                        }
+
+                        string clsid = station.CLSID.ToUpperInvariant();
+                        if (clsid.Contains("M299_EMPTY"))
+                        {
+                            return true;
+                        }
+                    }
+
+                    return false;
                 }
 
                 private static bool WeaponAvailableFromSnapshot(State.AH64GeorgeWeaponMode mode, bool gunAvailable, bool missilesAvailable, bool rocketsAvailable)
@@ -532,7 +574,7 @@ namespace VAICOM
                         bool changed = ForceGeorgeNoWeaponLocalSync("selection blocked by weight-on-wheels", true);
                         if (State.activeconfig.RIO_Messages)
                         {
-                            State.currentmessage.dspmsg = "GEORGE command blocked:\nWeapon selection is unavailable with Weight on Wheels.";
+                            State.currentmessage.dspmsg = "GEORGE command blocked:\nWeapon selection is unavailable with Weight on Wheels.\nWOW src export=" + (State.AH64GeorgeWowFromExport ? "1" : "0") + " server=" + (State.AH64GeorgeWowFromServerState ? "1" : "0");
                             State.currentmessage.msgdur = 4;
                         }
                         Log.Write("George weapon selection is not available with Weight on Wheels. Command Sent " + changed + "; selected=" + State.AH64GeorgeSelectedWeapon + ".", Colors.Recognition);
