@@ -146,7 +146,7 @@ namespace VAICOM
                     {"F-16C_50" ,   new radioslotlist() { Slot_map = { "UHF Radio AN/ARC-164", "VHF Radio AN/ARC-222", "" } } },
                     {"Yak-52" ,     new radioslotlist() { Slot_map = { "Baklan-5", "", "" } } },
 
-                    {"Mi-24P" ,     new radioslotlist() { Slot_map = { "R_852", "Jadro-1A", "R-828" } } },
+                    {"Mi-24P" ,     new radioslotlist() { Slot_map = { "R-863", "R-828", "Jadro-1A", "R_852" } } },
                     {"AH-64D" ,     new radioslotlist() { Slot_map = { "VHF AM", "CB UHF", "FM1: ARC-201D" } } },
                     {"MiG-19P" ,    new radioslotlist() { Slot_map = { "RSIU-4V", "", "" } } },
                     {"JF-17" ,      new radioslotlist() { Slot_map = { "COMM1 VHF Radio", "COMM2 UHF Radio", "" } } },
@@ -231,7 +231,7 @@ namespace VAICOM
                     {"F-16C_50" ,   new radioslotlist() { Slot_map = { "AN/ARC-164 UHF", "AN/ARC-222 VHF", "" } } },
                     {"Yak-52" ,     new radioslotlist() { Slot_map = {"Baklan 5", "", "" } } },
 
-                    {"Mi-24P" ,     new radioslotlist() { Slot_map = { "R_852", "Jadro-1A", "R-828" } } },
+                    {"Mi-24P" ,     new radioslotlist() { Slot_map = { "R-863", "R-828", "Jadro-1A", "R_852" } } },
                     {"AH-64D" ,     new radioslotlist() { Slot_map = { "ARC-186(V) VHF", "ARC-164(V) UHF", "ARC-210D V/UHF" } } },
                     {"MiG-19P" ,    new radioslotlist() { Slot_map = { "RSIU-4V", "", "" } } },
                     {"JF-17" ,      new radioslotlist() { Slot_map = { " R&S M3AR (VHF)", " R&S M3AR (UHF/DL)", "" } } },
