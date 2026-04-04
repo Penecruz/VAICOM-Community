@@ -574,7 +574,14 @@ namespace VAICOM
                         bool changed = ForceGeorgeNoWeaponLocalSync("selection blocked by weight-on-wheels", true);
                         if (State.activeconfig.RIO_Messages)
                         {
-                            State.currentmessage.dspmsg = "GEORGE command blocked:\nWeapon selection is unavailable with Weight on Wheels.";
+                            if (changed)
+                            {
+                                State.currentmessage.dspmsg = "GEORGE:\nWeapon selection synced to No WPN with Weight on Wheels.";
+                            }
+                            else
+                            {
+                                State.currentmessage.dspmsg = "GEORGE:\nWeapon selection not available with Weight on Wheels.";
+                            }
                             State.currentmessage.msgdur = 4;
                         }
                         Log.Write("George weapon selection is not available with Weight on Wheels. Command Sent " + changed + "; selected=" + State.AH64GeorgeSelectedWeapon + ".", Colors.Recognition);
