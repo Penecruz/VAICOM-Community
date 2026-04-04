@@ -129,20 +129,7 @@ namespace VAICOM
                     State.currentstate.selectedradio = serverMessage.selectedradio;
                     State.currentstate.radios = serverMessage.radios;
 
-                    string currentId = State.currentstate.id ?? string.Empty;
-                    string previousId = State.previousstate != null ? (State.previousstate.id ?? string.Empty) : string.Empty;
-                    bool isAH64 = currentId.IndexOf("AH-64D", StringComparison.OrdinalIgnoreCase) >= 0
-                                  || previousId.IndexOf("AH-64D", StringComparison.OrdinalIgnoreCase) >= 0;
-
-                    if (!isAH64 && State.currentmodule != null && !string.IsNullOrEmpty(State.currentmodule.Id))
-                    {
-                        isAH64 = State.currentmodule.Id.IndexOf("AH-64D", StringComparison.OrdinalIgnoreCase) >= 0;
-                    }
-
-                    string currentFsm = State.currentstate.fsmstate ?? string.Empty;
-
-                    bool onGroundByFsm = IsGroundFsmState(currentFsm);
-                    if (isAH64 && (!State.currentstate.airborne || onGroundByFsm))
+                    if (!State.currentstate.airborne)
                     {
                         if (State.AH64GeorgeSelectedWeapon != State.AH64GeorgeWeaponMode.NoWeapon)
                         {
@@ -155,20 +142,6 @@ namespace VAICOM
                     Log.Write("ERROR 2/" + chunkcount + " :" + e.StackTrace, Colors.Inline);
                 }
                 receivedupdatecomplete = false;
-            }
-
-            private static bool IsGroundFsmState(string fsmstate)
-            {
-                if (string.IsNullOrEmpty(fsmstate))
-                {
-                    return false;
-                }
-
-                return fsmstate.IndexOf("taxi", StringComparison.OrdinalIgnoreCase) >= 0
-                    || fsmstate.IndexOf("ground", StringComparison.OrdinalIgnoreCase) >= 0
-                    || fsmstate.IndexOf("park", StringComparison.OrdinalIgnoreCase) >= 0
-                    || fsmstate.IndexOf("startup", StringComparison.OrdinalIgnoreCase) >= 0
-                    || fsmstate.IndexOf("shutdown", StringComparison.OrdinalIgnoreCase) >= 0;
             }
 
             public static void ExtractChunk3(ServerMessage serverMessage)

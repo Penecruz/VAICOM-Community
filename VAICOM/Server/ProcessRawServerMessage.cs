@@ -89,11 +89,6 @@ namespace VAICOM
                     State.AH64GeorgeWeaponStateValid = true;
                     State.AH64GeorgeWowFromExport = wow;
 
-                    if (wow && State.AH64GeorgeSelectedWeapon != State.AH64GeorgeWeaponMode.NoWeapon)
-                    {
-                        State.AH64GeorgeSelectedWeapon = State.AH64GeorgeWeaponMode.NoWeapon;
-                    }
-
                     if (!WeaponStillAvailable(State.AH64GeorgeSelectedWeapon))
                     {
                         State.AH64GeorgeSelectedWeapon = State.AH64GeorgeWeaponMode.NoWeapon;
