@@ -707,10 +707,10 @@
                 <TabItem x:Name="debugpage" Header="*" FontSize="13" Initialized="InitDebugTab">
                     <Grid Background="{DynamicResource UiWindowBackgroundBrush}" >
                         <Button x:Name="SendButton" Content="" HorizontalAlignment="Left" Margin="437,211,0,0" VerticalAlignment="Top" Width="26" FontSize="9" Cursor="Hand" Height="26" Click="SendDebugCode" ToolTip="Reset the selected items." BorderBrush="White" Background="#FF333333" Panel.ZIndex="255" Initialized="InitDebugBtn"/>
-                        <TextBox x:Name="CodeBlock" TextWrapping="Wrap" AcceptsReturn="True" HorizontalAlignment="Left" Height="246" Margin="10,10,0,0" Text="TextBox" VerticalAlignment="Top" Width="414" Initialized="InitCodeBlock"/>
+                        <TextBox x:Name="CodeBlock" TextWrapping="Wrap" AcceptsReturn="True" HorizontalAlignment="Left" Height="246" Margin="10,10,0,0" Text="TextBox" VerticalAlignment="Top" Width="414" Foreground="{DynamicResource UiWindowForegroundBrush}" Initialized="InitCodeBlock"/>
                         <Image x:Name="DumpCurrentState" HorizontalAlignment="Left" Height="20" Margin="440,100,0,0" VerticalAlignment="Top" Width="20" Source="Resources/Images/SRS_Dn.png" MouseDown="DumpState" Cursor="Hand" ToolTip="Dump Current State to Log" Panel.ZIndex="2"/>
-                        <TextBlock x:Name="labeldumpstate" FontSize="11" Foreground="#FFEEEEEE" HorizontalAlignment="Left" Margin="431,83,0,0" TextWrapping="Wrap" Text="STATE" VerticalAlignment="Top" Width="38" TextAlignment="Center" Height="16" FontWeight="Bold" Panel.ZIndex="1" />
-                        <TextBlock x:Name="labelsendchunk" FontSize="11" Foreground="#FFEEEEEE" HorizontalAlignment="Left" Margin="431,193,0,0" TextWrapping="Wrap" Text="SEND" VerticalAlignment="Top" Width="38" TextAlignment="Center" Height="16" FontWeight="Bold" Panel.ZIndex="1" />
+                        <TextBlock x:Name="labeldumpstate" FontSize="11" Foreground="{DynamicResource UiWindowForegroundBrush}" HorizontalAlignment="Left" Margin="431,83,0,0" TextWrapping="Wrap" Text="STATE" VerticalAlignment="Top" Width="38" TextAlignment="Center" Height="16" FontWeight="Bold" Panel.ZIndex="1" />
+                        <TextBlock x:Name="labelsendchunk" FontSize="11" Foreground="{DynamicResource UiWindowForegroundBrush}" HorizontalAlignment="Left" Margin="431,193,0,0" TextWrapping="Wrap" Text="SEND" VerticalAlignment="Top" Width="38" TextAlignment="Center" Height="16" FontWeight="Bold" Panel.ZIndex="1" />
                     </Grid>
                 </TabItem>
 
