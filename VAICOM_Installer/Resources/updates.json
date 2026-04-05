@@ -6,11 +6,11 @@
       "isbeta": false,
       "isdev": false,
       "productid": 1,
-      "releasedate": 20260306,
-      "version": 3092,
-      "versionstring": "3.0.9.2",
-      "downloadurl": "https://github.com/Penecruz/VAICOM-Community/releases/download/V3.0.9.2/VAICOMPRO.zip",
-      "releasenotes": "Release 3.0.9.2\n- Add support for AH/MH-6j Little Bird community mod\n- Adds new Single PTT mode functionality for AH-64D Apache\n- Adds new Single PTT mode functionality for CH-47F Chinook\n- Adds new Single PTT mode functionality for C-130J Hercules\n- Adds a new Chatter Theme ‘Andersen’\n- Adds new Chatter theme independent randomization timing\n- Adds new Dark Mode support for Vaicom UI\n- Fixes Jester Nav Grid commands not working\n- Fixes Jester NAV GRID Enable/Disable toggle\n- Fixes JF-17 not being detected\n- Fixes F10 menu scanning not running after initial mission scan\n- Fixes F10 menu items not being reset and removes blank spaces\n- Fixes Kola terrain radio.lua updating no longer required"
+      "releasedate": 20260405,
+      "version": 3104,
+      "versionstring": "3.1.0.4",
+      "downloadurl": "https://github.com/Penecruz/VAICOM-Community/releases/download/v3.1.0.4/VAICOMPRO.zip",
+      "releasenotes": "Release 3.1.0.4\n- Add George AI support for the AH-64D (phase 1 CPG).\n- Add combined AI CREW controls on the VAICOM UI Extensions tab.\n- Adds dynamic keyword support for AI_ATC Andersen 2.0.\n- Adds dynamic keyword support for the updated Sentry Pacific 25 Campaign F-16C.\n- Adds dynamic keyword support for the upcoming Sentry Pacific 26 Campaign A-10C II.\n- Adds new Single PTT logic for UH-1H Huey.\n- Fixes radio tuning on the UH-1H Huey UHF radio.\n- Adds new Single PTT logic for Mi-24P Hind.\n- Fixes radio tuning on the Mi-24P Hind radio with channel change.\n- Adds commands for Kneeboard tab browsing (Show Next Tab / Show Previous Tab).\n- Fixes Kneeboard \"Clear Notes\" command; now clears notes regardless of dictate state.\n- Fixes Jester AI link host commands; Jester now selects the correct DL host.\n- Adds DDG Arleigh Burke as selectable DL host for F-14A/B Jester AI.\n- Fixes nav grid handling for F-14A/B Jester AI.\n- Fixes an issue where rapid PTT presses caused a race condition in listening state and state desync.\n- Fixes minor graphical errors with Dark Mode."
     }
   ]
 }
