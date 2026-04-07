@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
 namespace VAICOM
@@ -389,6 +389,9 @@ namespace VAICOM
                 public ServerAuxmenu menuaux;
                 public ServerAuxmenu menucargo;
 
+                public int parts;
+                public int part;
+                public string segment;
 
             }
 

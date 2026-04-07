@@ -287,20 +287,67 @@ namespace VAICOM
                 }
                 receivedupdatecomplete = false;
             }
+
+            private static int totalParts = 0;
+            private static int receivedParts = 0;
+            private static string[] chunkSegments = null;
+
             public static void ExtractChunk9(ServerMessage serverMessage)
             {
                 processingchunks = true;
                 try
                 {
-                    if (serverMessage.menuaux != null)
+                    if (serverMessage.parts <= 1)
                     {
-                        State.currentstate.menuaux = serverMessage.menuaux;
-                        State.currentstate.menucargo = serverMessage.menucargo;
+                        // Single part chunk
+                        if (serverMessage.menuaux != null)
+                        {
+                            State.currentstate.menuaux = serverMessage.menuaux;
+                            State.currentstate.menucargo = serverMessage.menucargo;
+                        }
+                    }
+                    else
+                    {
+                        // Multi-part: segments may arrive out of order via UDP.
+                        // Use an array indexed by part number to store each segment
+                        // and reassemble in correct order once all parts have arrived.
+                        if (serverMessage.parts != totalParts)
+                        {
+                            totalParts = serverMessage.parts;
+                            receivedParts = 0;
+                            chunkSegments = new string[totalParts];
+                        }
+
+                        int index = serverMessage.part - 1;
+                        if (index >= 0 && index < totalParts)
+                        {
+                            chunkSegments[index] = serverMessage.segment;
+                            receivedParts++;
+                        }
+
+                        // Check if all segments have been received
+                        if (receivedParts == totalParts)
+                        {
+                            // Reassemble segments in order and deserialize
+                            var assembled = string.Concat(chunkSegments);
+                            var chunk = JsonConvert.DeserializeObject<ServerMessage>(assembled);
+                            if (chunk?.menuaux != null)
+                            {
+                                State.currentstate.menuaux = chunk.menuaux;
+                                State.currentstate.menucargo = chunk.menucargo;
+                            }
+                            chunkSegments = null;
+                            totalParts = 0;
+                            receivedParts = 0;
+                        }
                     }
                 }
                 catch (Exception e)
                 {
                     Log.Write("ERROR 9/" + chunkcount + " :" + e.StackTrace, Colors.Inline);
+                    chunkSegments = null;
+                    totalParts = 0;
+                    receivedParts = 0;
                 }
                 receivedupdatecomplete = false;
             }
