@@ -15,7 +15,7 @@ immersive environment free from the constraints of keyboard or mouse-controlled 
 
 A group of community members have patched his work to make it compatible with DCS 2.8.XXXXX and later. This is a standalone installer that will replace your previous version of VAICOM. It will not work with DCS 2.7.XXXXX or erlier.
 
-We now have VAICOM Community Edition running well with DCS 2.8.X.X and are looking where we can take it going forward with lots of new modules coming to DCS World.
+We now have VAICOM Community Edition running well with DCS 3.0.X.X and are looking where we can take it going forward with lots of new modules coming to DCS World.
 We continue to develop VAICOMPRO to keep it functioning with changes to DCS. That said, there will be issues from time to time. So please use the issues register here on GitHub to report them.
 
 Remember this is a community group, a group that donates their time to keep this awesome software alive. Be respectful and patient, we all have real jobs too. Join our Discord Server (link Below) and become part of our community.
@@ -30,7 +30,7 @@ The VAICOM Community Team
 
 ## Known Issues
 
-VAICOM Community 2.8.X.X is not designed to be backwards compatible with DCS 2.7.X If you wish to continue using VAICOMPRO for DCS 2.7, please use Hollywood_315's final release and not VAICOMPRO Community.
+VAICOM Community 3.0.X.X is not designed to be backwards compatible with DCS 2.7.X If you wish to continue using VAICOMPRO for DCS 2.7, please use Hollywood_315's final release and not VAICOMPRO Community.
 
 VAICOM Community Edition will not pass the Integrity Check on Multiplayer Servers that require Pure Client Scripts unless the AIRIO and Kneeboard extensions are deactivated via the VAICOMPRO UI.
 This is because VAICOMPRO adds lines to some of DCS World's core LUA files to enable it to function. Multiplayer Server administrators must enable Pure Client Scripts as an option as it is off by default. Very few Servers require Pure Client Scripts. This is something that only ED can change.
@@ -74,27 +74,35 @@ Flashing Comms Menu after DCS World update is a known issue and can be resolved 
 ## Patch Notes
 
 
-**VAICOM plugin 3.0.8.1**
+This is a major update, George AI for the AH-64D, Andersen AI_ATC 2.0 support, our first collaboration with a DCS campaign creator, SOB Simulations, which adds dynamic keyword support for his Sentry Pacific 25 Campaign and upcoming Sentry Pacific 26 Campaign, If you haven’t played them you are missing out. Some more single radio PTT fixes from Sleighzy with the UH-1H and Mi-24 getting the treatment, Kneeboard QOL changes and bug fixes to a couple of long-term bugs with the F-14 A/B Jester AI link Host and Navgrid. And some other minor bug fixes we found along the way.
 
-This update fixes a few bugs, adds a new Import F10 Menu scanning routine, enhances the logic of the Chatter expansion module to include the monitoring of radio frequency as well as power, which allows muting/unmuting by changing the frequency. It also adds some new command aliases for CASE III carrier Comms and an update of core DCS files.
-
-
--	Update core DCS files.
--	Adds new iterative scan and stack traversal for F10 menu importing to improve performance.
--	Add a check to wait for module connection before processing F10 menu items.
--	Add additional aliases for CASE III carrier communications to respond to "Say Needles" request.
--	Adds new Chatter logic to include check for frequency 281.0 and radio power.
--	Add Frequency monitor and new Chatter Auto Start logic.
--	New Kneeboard refresh routine to improve performance.
+-	Add George AI support for the AH-64D (phase 1 CPG),
+-	Add new combine AI CREW controls on Vaicom UI Extensions Tab.
+-	Adds dynamic keyword support for AI_ATC Andersen 2.0.
+-	Adds dynamic keyword support for the updated Sentry Pacific 25 Campaign F-16C.
+-	Adds dynamic keyword support for the upcoming Sentry Pacific 26 Campaign A-10CII.
+-	Adds new Single PTT logic for UH-1H Huey.
+-	Fixes radio tuning on the UH-1H Huey UHF radio.
+-	Adds new Single PTT logic for Mi-24P Hind.
+-	Fixes radio tuning on the Mi-24P Hind radio with channel change.
+-	Adds commands for Kneeboard tab browsing Show Next Tab/Show Previous Tab.
+-	Fix Kneeboard “Clear Notes” command, now clears notes regardless of dictate state.
+-	Fix jester AI link Host commands, Jester will now select the correct DL Host.
+-	Add DDG Arleigh Burke as selectable DL Host for F-14A/B Jester AI.
+-	Fixes to nav Grid handling for F-14A/B Jester AI
+-	Fix an issue where rapid PTT presses resulted in a race condition in listening state and state desync.
+-	Fix minor graphical errors with Dark Mode.
 
 
 Known Issues
 
--	Chatter Frequency monitor updates are linked to the processing of DCS traffic this may take upto 6 seconds (keying the PTT will make this instant by forcing the update).
+-	C-130J Select Tunes radio command will tune radio but not change AMU or CNI-MU display.
+-	George AI the AH-64D M299_EMPTY racks if loaded with other missiles break direct weapon selection (still working a fix for this).
+-	George AI user must key the TX button or wait for the next server side update after landing with a weapon selected for Vaicom to sync with Georges automatic selection of No WPN with Weight on Wheels.
 
 ## Community Team
 
-Pene, Special K, D3adCy11nd3r, Folgers, Hornblower793, Liam8, MAXsenna, MisterOutofTime, Raskit, Hue Jass and stag1975
+Pene, Special K, Sleighzy, D3adCy11nd3r, Folgers, Hornblower793, Liam8, MAXsenna, MisterOutofTime, Raskit, Hue Jass and stag1975
 
 ## Patreon Donations
 
@@ -103,4 +111,4 @@ If you want to donate a beer, visit the Official Vaicom Patreon.
 
 
 #### Beta Team
-104th_Aeons, GSG-3|Turbine|202, DrChainsaw, Jaeger, Nicola, Padinn, SPAZ-505, tomeye, Virus, Bonz RexExGSR, LawnBoy, Scotia, Sleighzy and MrAxen, 
+104th_Aeons, GSG-3|Turbine|202, DrChainsaw, Jaeger, Nicola, Padinn, SPAZ-505, tomeye, Virus, Bonz RexExGSR, LawnBoy, Scotia and MrAxen 
