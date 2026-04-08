@@ -51,38 +51,47 @@ namespace VAICOM
 
                     foreach (MenuCommand menuItem in currentMenu.items)
                     {
-                        string identifier = "Action " + Helpers.Common.RemoveIllegalCharsForDB(menuItem.name);
-                        Log.Write($"Processing menu item: {menuItem.name}, Identifier: {identifier}", Colors.Text);
-
-                        // Consolidate checks to minimize redundant lookups
-                        if (menuItem.command != null && 
-                            !Labels.aicommands.ContainsValue(identifier) &&
-                            !Aliases.importedmenus.ContainsKey(identifier))
+                        string menuItemName = Helpers.Common.RemoveIllegalCharsForDB(menuItem.name);
+                        // Skip entries that consist only of blank text after any illegal characters were removed.
+                        if (string.IsNullOrWhiteSpace(menuItemName))
                         {
-                            Log.Write($"Adding new menu item: {identifier}", Colors.Text);
-
-                            // Add new menu item
-                            Aliases.importedmenus[identifier] = identifier;
-
-                            MenuItem item = new MenuItem
-                            {
-                                menuname = State.menuauxname,
-                                itemname = identifier,
-                                actionIndex = menuItem.command.actionIndex ?? -1,
-                                server = State.menuauxserver
-                            };
-
-                            auxmenuitems[identifier] = item;
-                            newCommandCounter++;
+                            Log.Write($"Ignoring menu item with blank text: '{menuItemName}', original name: '{menuItem.name}'", Colors.Text);
                         }
-                        else if (menuItem.command != null && Aliases.importedmenus.ContainsValue(identifier))
+                        else
                         {
-                            Log.Write($"Updating existing menu item: {identifier}", Colors.Text);
+                            string identifier = "Action " + menuItemName;
+                            Log.Write($"Processing menu item: {menuItem.name}, Identifier: {identifier}", Colors.Text);
 
-                            // Update action index for existing menu item
-                            if (Commands.Table.TryGetValue(identifier, out Command existingCommand))
+                            // Consolidate checks to minimize redundant lookups
+                            if (menuItem.command != null && 
+                                !Labels.aicommands.ContainsValue(identifier) &&
+                                !Aliases.importedmenus.ContainsKey(identifier))
                             {
-                                existingCommand.actionIndex = menuItem.command.actionIndex ?? existingCommand.actionIndex;
+                                Log.Write($"Adding new menu item: {identifier}", Colors.Text);
+
+                                // Add new menu item
+                                Aliases.importedmenus[identifier] = identifier;
+
+                                MenuItem item = new MenuItem
+                                {
+                                    menuname = State.menuauxname,
+                                    itemname = identifier,
+                                    actionIndex = menuItem.command.actionIndex ?? -1,
+                                    server = State.menuauxserver
+                                };
+
+                                auxmenuitems[identifier] = item;
+                                newCommandCounter++;
+                            }
+                            else if (menuItem.command != null && Aliases.importedmenus.ContainsValue(identifier))
+                            {
+                                Log.Write($"Updating existing menu item: {identifier}", Colors.Text);
+
+                                // Update action index for existing menu item
+                                if (Commands.Table.TryGetValue(identifier, out Command existingCommand))
+                                {
+                                    existingCommand.actionIndex = menuItem.command.actionIndex ?? existingCommand.actionIndex;
+                                }
                             }
                         }
 

@@ -115,8 +115,10 @@ namespace VAICOM
                                 // Check the Folders for the DB
                                 FileHandler.Root.CheckSubFolders();
                                 //Clear imported encrypted DB, remove imported aliases and rebuild master table
-
                                 ClearImporteddb();                                
+                                FileHandler.Database.WriteCategoryToFile("importedatcs", Aliases.importedatcs, true);
+                                FileHandler.Database.WriteCategoryToFile("importedmenus", Aliases.importedmenus, true);
+                                FileHandler.Database.WriteAuxMenuItemsToFile(true);
                                 Aliases.ResetImported();
                                 Aliases.BuildNewMasterTable();
                                 State.activeconfig.Editorunsavedchanges = true;
@@ -253,6 +255,8 @@ namespace VAICOM
                 try
                 {
                     Aliases.importedatcs = new Dictionary<string, string>();
+                    Aliases.importedmenus = new Dictionary<string, string>();
+                    Server.auxmenuitems = new Dictionary<string, Server.MenuItem>();
                 }
                 catch
                 {

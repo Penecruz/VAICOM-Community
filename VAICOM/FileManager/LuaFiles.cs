@@ -576,30 +576,32 @@ namespace VAICOM
                   kneeboard = false,
                 } },
 
-                {"2.8 Kola_radio.lua",new Server.LuaFile
-                {
-                  filename = "radio.lua",
-                  installfolder = "Mods\\terrains\\Kola",
-                  installfolder_legacy = "Mods\\terrains\\Kola",
-                  append = false, // <--- Do Not append must replace,
-                  root = true,
-                  hardreset = true,
-                  orig = Properties.Resources.Orig_Terrain_Kola_radio,
-                  source = Properties.Resources.Append_Terrain_Kola_radio,
-                  stringreplace = false,
-                  stringorig = Properties.Resources.Orig_Terrain_Kola_radio,
-                  stringsource = Properties.Resources.Append_Terrain_Kola_radio,
-                  version ="2.8",
-                  canremove = true,
-                  reset = false,
-                  //ACTIVE:
-                  install = true,
-                  export = false,
-                  autoremove  = true,
-                  quiet  = false,
-                  AIRIO = true,
-                  kneeboard = false,
-                } },
+                // Currently unused.
+                // Template to be used for future releases of terrains needing radio.lua replacement.
+                // {"2.8 Kola_radio.lua",new Server.LuaFile
+                // {
+                //   filename = "radio.lua",
+                //   installfolder = "Mods\\terrains\\Kola",
+                //   installfolder_legacy = "Mods\\terrains\\Kola",
+                //   append = false, // <--- Do Not append must replace,
+                //   root = true,
+                //   hardreset = true,
+                //   orig = Properties.Resources.Orig_Terrain_Kola_radio,
+                //   source = Properties.Resources.Append_Terrain_Kola_radio,
+                //   stringreplace = false,
+                //   stringorig = Properties.Resources.Orig_Terrain_Kola_radio,
+                //   stringsource = Properties.Resources.Append_Terrain_Kola_radio,
+                //   version ="2.8",
+                //   canremove = true,
+                //   reset = false,
+                //   //ACTIVE:
+                //   install = true,
+                //   export = false,
+                //   autoremove  = true,
+                //   quiet  = false,
+                //   AIRIO = true,
+                //   kneeboard = false,
+                // } },
                 };
 
             }

@@ -6,6 +6,7 @@
         public int device;
         public int command;
         public double value;
+        public int delayMs;
     }
 
     public static partial class DeviceActionsLibrary

@@ -1,6 +1,8 @@
-﻿using VAICOM.Products;
+﻿using System.Collections.Generic;
+using System.Diagnostics.Eventing.Reader;
+using System.Linq;
+using VAICOM.Products;
 using VAICOM.Servers;
-using static VAICOM.Extensions.RIO.DeviceActionsLibrary;
 
 namespace VAICOM
 {
@@ -218,7 +220,11 @@ namespace VAICOM
                     PTT_SetConfigSingle_SRS();
                     return;
                 }
-
+                else if (PTT.IsPTTUseSingleRadioSelection())
+                {
+                    PTT_SetConfigMultiSingle();
+                    return;
+                }
 
                 PTT_SetConfigMulti();
 
@@ -233,28 +239,103 @@ namespace VAICOM
                 {
                     case "TX1":
                         TXNodes.TX1 = new TXNode() { name = "TX1", enabled = true, radios = TXConfigs.ALL_RADIOS_SEL };
+                        State.currentTXnode = TXNodes.TX1;
                         break;
                     case "TX2":
                         TXNodes.TX2 = new TXNode() { name = "TX2", enabled = true, radios = TXConfigs.ALL_RADIOS_SEL };
+                        State.currentTXnode = TXNodes.TX2;
                         break;
                     case "TX3":
                         TXNodes.TX3 = new TXNode() { name = "TX3", enabled = true, radios = TXConfigs.ALL_RADIOS_SEL };
+                        State.currentTXnode = TXNodes.TX3;
                         break;
                     case "TX4":
                         TXNodes.TX4 = new TXNode() { name = "TX4", enabled = true, radios = TXConfigs.ALL_RADIOS_SEL };
+                        State.currentTXnode = TXNodes.TX4;
                         break;
                     case "TX5":
                         TXNodes.TX5 = new TXNode() { name = "TX5", enabled = true, radios = TXConfigs.ALL_RADIOS_SEL };
+                        State.currentTXnode = TXNodes.TX5;
                         break;
                     case "TX6":
                         TXNodes.TX6 = new TXNode() { name = "TX6", enabled = true, radios = TXConfigs.ALL_RADIOS_SEL };
+                        State.currentTXnode = TXNodes.TX6;
                         break;
                     default:
                         TXNodes.TX1 = new TXNode() { name = "TX1", enabled = true, radios = TXConfigs.ALL_RADIOS_SEL };
+                        State.currentTXnode = TXNodes.TX1;
                         break;
                 }
             }
 
+            public static void PTT_SetConfigMultiSingle()
+            {
+                TXNodes.TX1.enabled = false;
+                TXNodes.TX2.enabled = false;
+                TXNodes.TX3.enabled = false;
+                TXNodes.TX4.enabled = false;
+                TXNodes.TX5.enabled = false;
+                TXNodes.TX6.enabled = false;
+
+                // Filter the list of all radios and locate the currently selected one.
+                // Should be a list of one radio entry after filter so get the first entry.
+                Server.RadioDevice selectedRadio = State.currentstate.radios
+                    .Where(radio => radio.isselected)
+                    .First();
+
+
+                RadioDevices.SEL.deviceid = selectedRadio.deviceid;
+                RadioDevices.SEL.isavailable = selectedRadio.isavailable;
+                RadioDevices.SEL.intercom = selectedRadio.intercom;
+                RadioDevices.SEL.AM = selectedRadio.AM;
+                RadioDevices.SEL.FM = selectedRadio.FM;
+                RadioDevices.SEL.on = selectedRadio.on;
+                RadioDevices.SEL.frequency = selectedRadio.frequency.ToString();
+                RadioDevices.SEL.modulation = selectedRadio.modulation;
+                if (selectedRadio.displayName.Length > 16)
+                {
+                    RadioDevices.SEL.name = selectedRadio.displayName.Substring(selectedRadio.displayName.Length - 16, 16);
+                }
+                else
+                {
+                    RadioDevices.SEL.name = selectedRadio.displayName;
+                }
+
+                List<RadioDevice> radios = new List<RadioDevice>() { RadioDevices.SEL };
+                State.radiocount = State.currentstate.radios.Count - 1;
+                
+                switch (State.activeconfig.SingleHotkey)
+                {
+                    case "TX1":
+                        TXNodes.TX1 = new TXNode() { name = "TX1", enabled = true, radios = radios };
+                        State.currentTXnode = TXNodes.TX1;
+                        break;
+                    case "TX2":
+                        TXNodes.TX2 = new TXNode() { name = "TX2", enabled = true, radios = radios };
+                        State.currentTXnode = TXNodes.TX2;
+                        break;
+                    case "TX3":
+                        TXNodes.TX3 = new TXNode() { name = "TX3", enabled = true, radios = radios };
+                        State.currentTXnode = TXNodes.TX3;
+                        break;
+                    case "TX4":
+                        TXNodes.TX4 = new TXNode() { name = "TX4", enabled = true, radios = radios };
+                        State.currentTXnode = TXNodes.TX4;
+                        break;
+                    case "TX5":
+                        TXNodes.TX5 = new TXNode() { name = "TX5", enabled = true, radios = radios };
+                        State.currentTXnode = TXNodes.TX5;
+                        break;
+                    case "TX6":
+                        TXNodes.TX6 = new TXNode() { name = "TX6", enabled = true, radios = radios };
+                        State.currentTXnode = TXNodes.TX6;
+                        break;
+                    default:
+                        TXNodes.TX1 = new TXNode() { name = "TX1", enabled = true, radios = TXConfigs.ALL_RADIOS_SEL };
+                        State.currentTXnode = TXNodes.TX1;
+                        break;
+                }
+            }
         }
     }
 }

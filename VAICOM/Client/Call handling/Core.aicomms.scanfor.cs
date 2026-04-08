@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Text.RegularExpressions;
 using VAICOM.Database;
 using VAICOM.Static;
 
@@ -25,6 +26,11 @@ namespace VAICOM
 
                         string cat = category.ToLower();
                         string searchinput = State.currentfullsentence.ToLower();
+
+                        if (category.Equals("command") && Regex.IsMatch(searchinput, @"^\s*gunner\b", RegexOptions.IgnoreCase))
+                        {
+                            searchinput = Regex.Replace(searchinput, @"^\s*gunner[\s,]*", "george ", RegexOptions.IgnoreCase);
+                        }
 
                         //Log.Write("scanning "+ cat +" search input = " + searchinput, colors.Text);
 

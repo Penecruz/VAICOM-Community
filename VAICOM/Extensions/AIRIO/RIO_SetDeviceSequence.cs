@@ -398,6 +398,9 @@ namespace VAICOM
                             case "wMsgJ_RAD_DL_HOST_TICO": //
                                 unitstr = "Ticonderoga";
                                 break;
+                            case "wMsgJ_RAD_DL_HOST_BURK": //
+                                unitstr = "ArleighBurke";
+                                break;
                             case "wMsgJ_RAD_DL_HOST_FORE": // 
                                 unitstr = "Forrestal";
                                 break;

@@ -17,6 +17,7 @@ namespace VAICOM
 
             public static bool TXLinkApply;
             public static bool TXLinkToggle;
+            private static readonly object ListenStateLock = new object();
 
             public static bool IsPTTModeSingle()
             {
@@ -28,37 +29,45 @@ namespace VAICOM
                 return !IsPTTModeSingle();
             }
 
+            public static bool IsPTTUseSingleRadioSelection()
+            {
+                return State.currentmodule != null && State.currentmodule.UseSingleRadioSelection && !String.IsNullOrEmpty(State.currentstate.selectedradio);
+            }
+
 
             public static void PTT_Handler(dynamic vaProxy, TXNode PTTkey, bool keypress, bool longpress)
             {
-                State.currentTXnode = PTTkey;
-                State.Proxy = vaProxy;
-                State.valistening = vaProxy.State.GetListeningEnabled();
-
-                TXLinkApply = State.PRO && State.activeconfig.MP_UseTXLink && !(State.activeconfig.MP_TXLink_MPOnly && !State.currentstate.multiplayer);
-                Log.Write("TXLinkApply = " + TXLinkApply, Colors.Inline);
-
-                bool applylong = !TXLinkApply || longpress;
-                Log.Write("apply long press = " + applylong, Colors.Inline);
-
-                if (!PTT_Detect_Blocked(PTTkey, keypress))
+                lock (ListenStateLock)
                 {
-                    if (PTTkey.enabled)
+                    State.currentTXnode = PTTkey;
+                    State.Proxy = vaProxy;
+                    State.valistening = vaProxy.State.GetListeningEnabled();
+
+                    TXLinkApply = State.PRO && State.activeconfig.MP_UseTXLink && !(State.activeconfig.MP_TXLink_MPOnly && !State.currentstate.multiplayer);
+                    Log.Write("TXLinkApply = " + TXLinkApply, Colors.Inline);
+
+                    bool applylong = !TXLinkApply || longpress;
+                    Log.Write("apply long press = " + applylong, Colors.Inline);
+
+                    if (!PTT_Detect_Blocked(PTTkey, keypress))
                     {
-                        PTT_Handle_TX_Enabled(PTTkey, keypress, applylong);
+                        if (PTTkey.enabled)
+                        {
+                            PTT_Handle_TX_Enabled(PTTkey, keypress, applylong);
+                        }
+                        else
+                        {
+                            PTT_Handle_TX_Disabled(PTTkey, keypress);
+                        }
                     }
                     else
                     {
-                        PTT_Handle_TX_Disabled(PTTkey, keypress);
+                        return;
                     }
-                }
-                else
-                {
-                    return;
-                }
 
-                State.MessageReset();
-                State.processlocked = false; // accept new voice phrases for processing
+                    State.MessageReset();
+                    State.processlocked = false; // accept new voice phrases for processing
+                }
             }
 
             public static bool PTT_Detect_Blocked(TXNode PTTkey, bool keypress)
@@ -325,36 +334,41 @@ namespace VAICOM
 
             public static void PTT_Manage_Listen_VA(bool on)
             {
-
-                new Thread(() =>
+                lock (ListenStateLock)
                 {
-                    Thread.CurrentThread.IsBackground = true;
-                    if (!State.Proxy.State.GetListeningEnabled().Equals(on))
+                    try
                     {
-                        State.Proxy.State.SetListeningEnabled(on);
+                        if (!State.Proxy.State.GetListeningEnabled().Equals(on))
+                        {
+                            State.Proxy.State.SetListeningEnabled(on);
+                        }
+                        State.valistening = on;
                     }
-                    State.valistening = on;
-
-                }).Start();
+                    catch
+                    {
+                    }
+                }
 
             }
 
             public static void PTT_Manage_Listen_VAICOM(bool on)
             {
-
-                new Thread(() =>
+                lock (ListenStateLock)
                 {
-                    Thread.CurrentThread.IsBackground = true;
-
-                    State.Proxy.Command.SetSessionEnabledByCategory("Keyword Collections", on);
-                    State.Proxy.Command.SetSessionEnabledByCategory("Extension packs", on);
-
-                    if (State.Proxy.GetProfileName().ToLower().Contains(State.defProfileName.ToLower()))
+                    try
                     {
-                        State.Proxy.Command.SetSessionEnabled("Chatter", true);
-                    }
+                        State.Proxy.Command.SetSessionEnabledByCategory("Keyword Collections", on);
+                        State.Proxy.Command.SetSessionEnabledByCategory("Extension packs", on);
 
-                }).Start();
+                        if (State.Proxy.GetProfileName().ToLower().Contains(State.defProfileName.ToLower()))
+                        {
+                            State.Proxy.Command.SetSessionEnabled("Chatter", true);
+                        }
+                    }
+                    catch
+                    {
+                    }
+                }
 
             }
 

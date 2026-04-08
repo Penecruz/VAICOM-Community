@@ -370,7 +370,7 @@ namespace VAICOM
                     //Datalink
                     { "wMsgJ_RAD_DL_SET_MODE"       ,"\"Link Mode [ Tactical| Fighter | Off ] \"\nSets Datalink mode" },
                     { "wMsgJ_RAD_DL_SET_FREQ_PRST"  ,"\"Link Preset [1-8] \"\nSelects Datalink frequency preset (1 = default)" },
-                    { "wMsgJ_RAD_DL_SET_HOST"       ,"\"Link Host [ Stennis | Washington | Roosevelt | Lincoln | Ticonderoga | Truman | Forrestal | Darkstar | Focus | Magic | Overlord | Wizard ]\"\nSelect Datalink (Carrier,AWACS) host unit." },
+                    { "wMsgJ_RAD_DL_SET_HOST"       ,"\"Link Host [ Stennis | Washington | Roosevelt | Lincoln | Ticonderoga | Arleigh Burke | Truman | Forrestal | Darkstar | Focus | Magic | Overlord | Wizard ]\"\nSelect Datalink (Carrier,AWACS) host unit." },
 
                     //Iceman
                     { "wMsgI_ALT"                   ,"\"Go Angels [ 1 | 5 | 10 | 15 | 20 | 25 | 30 | 35 ] \"\nSets absolute altitude" },
