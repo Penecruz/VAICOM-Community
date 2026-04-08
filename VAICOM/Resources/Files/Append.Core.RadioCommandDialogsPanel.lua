@@ -1765,7 +1765,7 @@ base.vaicom.state = {
 								  }								  
 				chunk[9] 		= {
 									menuaux		= (base.vaicom.state.activemessage.importmenus and base.vaicom.state.menuaux) 	or nil,
-									menucargo	= (base.vaicom.state.activemessage.importmenus and base.vaicom.state.menucargo) or nil,		
+									menucargo	= (base.vaicom.state.activemessage.importmenus and base.vaicom.state.menucargo) or nil,
 								  }						
 				chunk[10] 		= {
 									riostate = base.vaicom.state.riostate or nil,
@@ -1829,22 +1829,49 @@ base.vaicom.state = {
 								
 					end
 				end
-				for i= 1,11 do
-					local sndtbl = chunk[i]
-					sndtbl.cid 				= i									
-					sndtbl.client 			= "VAICOMPRO"
-					sndtbl.mode 			= "normal"
-					sndtbl.type 			= "missiondata.update"
-					-- Attempt to send message and log error instead of throwing error and
-					-- preventing rest of data being sent. These should succeed, however there
-					-- can be cases where large F10 menus can exceed the allowable packet size.
+				local function sendChunk(tbl, label)
 					local ok, err = base.pcall(function()
-          				socket.try(base.vaicom.sender:send(JSON:encode(sndtbl)))
+						socket.try(base.vaicom.sender:send(JSON:encode(tbl)))
 					end)
 					if not ok then
-						for _, value in base.pairs(err) do
-							base.env.error("VAICOM error sending chunk "..i..", error: "..base.tostring(value))
+						base.env.error("VAICOM error sending "..label..", error: "..base.tostring(err))
+					end
+					return ok
+				end
+				local function addChunkHeader(tbl, cid)
+					tbl.cid    = cid
+					tbl.client = "VAICOMPRO"
+					tbl.mode   = "normal"
+					tbl.type   = "missiondata.update"
+					return tbl
+				end
+				for chunkNum = 1, 11 do
+					if chunkNum == 9 then
+						-- Send chunk 9 (aux menus) separately, splitting into multiple
+						-- packets if the payload exceeds the maximum UDP packet size.
+						local encoded = JSON:encode(chunk[chunkNum])
+						local maxSize = 60000
+						if #encoded <= maxSize then
+							chunk[chunkNum].parts = 1
+							chunk[chunkNum].part  = 1
+							sendChunk(addChunkHeader(chunk[chunkNum], chunkNum), "chunk "..chunkNum)
+						else
+							local totalParts = base.math.ceil(#encoded / maxSize)
+							for partNum = 1, totalParts do
+								local startPos = (partNum - 1) * maxSize + 1
+								local segment = base.string.sub(encoded, startPos, startPos + maxSize - 1)
+								local partMsg = addChunkHeader({
+									parts		= totalParts,
+									part		= partNum,
+									segment		= segment,
+								}, chunkNum)
+								if not sendChunk(partMsg, "chunk "..chunkNum.." part "..partNum.."/"..totalParts) then
+									break
+								end
+							end
 						end
+					else
+						sendChunk(addChunkHeader(chunk[chunkNum], chunkNum), "chunk "..chunkNum)
 					end
 				end
 			end,
