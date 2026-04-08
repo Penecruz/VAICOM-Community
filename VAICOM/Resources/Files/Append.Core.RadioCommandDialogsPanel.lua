@@ -1597,7 +1597,6 @@ base.vaicom.state = {
 		rawcommand 				= base.vaicom.flags.raw,
 		menuaux					= {}, 
 		menucargo				= {},
-		menumoose				= {}, -- Add Moose
 		activemessage			= {},
 		availableradios			= {},
 		messagesent				= false,
@@ -1677,7 +1676,6 @@ base.vaicom.state = {
 					base.vaicom.state.availabilitycounter[recipientclass] = base.vaicom.helper.tablelength(base.vaicom.state.availablerecipients[recipientclass])
 				end
 				base.vaicom.state.menuaux							= data.initialized and data.menuOther
-				base.vaicom.state.menumoose							= data.initialized and data.menuOther -- Add Moose is this required?
 				base.vaicom.state.menucargo							= data.initialized and data.menuEmbarkToTransport
 				base.vaicom.state.dcsversion						= data.initialized and base.vaicom.get.serverdata.dcsversion()
 				base.vaicom.state.easycomms							= data.initialized and data.radioAutoTune
@@ -1767,7 +1765,6 @@ base.vaicom.state = {
 								  }								  
 				chunk[9] 		= {
 									menuaux		= (base.vaicom.state.activemessage.importmenus and base.vaicom.state.menuaux) 	or nil,
-									menumoose	= (base.vaicom.state.activemessage.importmenus and base.vaicom.state.menumoose) or nil, -- Add Moose
 									menucargo	= (base.vaicom.state.activemessage.importmenus and base.vaicom.state.menucargo) or nil,		
 								  }						
 				chunk[10] 		= {
@@ -1838,9 +1835,19 @@ base.vaicom.state = {
 					sndtbl.client 			= "VAICOMPRO"
 					sndtbl.mode 			= "normal"
 					sndtbl.type 			= "missiondata.update"
-					socket.try(base.vaicom.sender:send(JSON:encode(sndtbl)))
-				end	
-			end,								
+					-- Attempt to send message and log error instead of throwing error and
+					-- preventing rest of data being sent. These should succeed, however there
+					-- can be cases where large F10 menus can exceed the allowable packet size.
+					local ok, err = base.pcall(function()
+          				socket.try(base.vaicom.sender:send(JSON:encode(sndtbl)))
+					end)
+					if not ok then
+						for _, value in base.pairs(err) do
+							base.env.error("VAICOM error sending chunk "..i..", error: "..base.tostring(value))
+						end
+					end
+				end
+			end,
 }
 base.vaicom.devicecontrol = {
 	queue = {},
