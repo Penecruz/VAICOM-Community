@@ -11,7 +11,7 @@
       "version": 3106,
       "versionstring": "3.1.0.6",
       "downloadurl": "https://raw.githubusercontent.com/Penecruz/VAICOM-Community/Development/VAICOM_Installer/Resources/VAICOMPRO.zip",
-      "releasenotes": "BETA 3.1.0.6 RC\n- New F10 menu processing routine and error handling - mitigate large server F10 menu errors Foothold etc.\n- Ignore larger F10 menus that exceed chunk limits, revert previous F10 handling changes."
+      "releasenotes": "BETA 3.1.0.6 \n- New F10 menu processing routine and error handling - mitigate large server F10 menu errors Foothold etc.\n- Ignore larger F10 menus that exceed chunk limits, revert previous F10 handling changes."
     }
   ]
 }
