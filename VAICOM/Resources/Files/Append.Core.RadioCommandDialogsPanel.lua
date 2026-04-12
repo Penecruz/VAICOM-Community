@@ -1829,14 +1829,15 @@ base.vaicom.state = {
 								
 					end
 				end
-				local function sendChunk(tbl, label)
+				local function sendChunk(payload, chunkId)
 					local ok, err = base.pcall(function()
-						socket.try(base.vaicom.sender:send(JSON:encode(tbl)))
+						socket.try(base.vaicom.sender:send(payload))
 					end)
 					if not ok then
-						base.env.error("VAICOM error sending "..label..", error: "..base.tostring(err))
+						for _, value in base.pairs(err) do
+							base.env.error("VAICOM error sending chunk "..chunkId..", error: "..base.tostring(value))
+						end
 					end
-					return ok
 				end
 				local function addChunkHeader(tbl, cid)
 					tbl.cid    = cid
@@ -1845,33 +1846,20 @@ base.vaicom.state = {
 					tbl.type   = "missiondata.update"
 					return tbl
 				end
-				for chunkNum = 1, 11 do
-					if chunkNum == 9 then
-						-- Send chunk 9 (aux menus) separately, splitting into multiple
-						-- packets if the payload exceeds the maximum UDP packet size.
-						local encoded = JSON:encode(chunk[chunkNum])
-						local maxSize = 60000
-						if #encoded <= maxSize then
-							chunk[chunkNum].parts = 1
-							chunk[chunkNum].part  = 1
-							sendChunk(addChunkHeader(chunk[chunkNum], chunkNum), "chunk "..chunkNum)
-						else
-							local totalParts = base.math.ceil(#encoded / maxSize)
-							for partNum = 1, totalParts do
-								local startPos = (partNum - 1) * maxSize + 1
-								local segment = base.string.sub(encoded, startPos, startPos + maxSize - 1)
-								local partMsg = addChunkHeader({
-									parts		= totalParts,
-									part		= partNum,
-									segment		= segment,
-								}, chunkNum)
-								if not sendChunk(partMsg, "chunk "..chunkNum.." part "..partNum.."/"..totalParts) then
-									break
-								end
-							end
+				-- Maximum udp packet size for localhost
+				-- (64K - 20 IP header - 8 UDP header)
+				local maxSize = (64 * 1024) - 20 - 8
+				for chunkId = 1, 11 do
+					local chunkPayload = addChunkHeader(chunk[chunkId], chunkId)
+					local payload = JSON:encode(chunkPayload)
+					if chunkId == 9 then
+						-- Large menus that exceed the maximum payload cause errors
+						-- during sending and prevent sending all chunks to VAICOM.
+						if #payload < maxSize then
+							sendChunk(payload, chunkId)
 						end
 					else
-						sendChunk(addChunkHeader(chunk[chunkNum], chunkNum), "chunk "..chunkNum)
+						sendChunk(payload, chunkId)
 					end
 				end
 			end,
