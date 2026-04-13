@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
+using System.Net.WebSockets;
 using System.Reflection;
 using System.Resources;
 using System.Speech.Recognition;
@@ -32,7 +33,7 @@ namespace VAICOM
         public static bool versionbeta = true; //set if Beta version
         public static bool versiondev = false; //set if Dev version
         public static bool usenewselectmethod = false;
-        public static string debuguser = "VAICOM_Tester";
+        public static string debuguser = "sleighzy";
         public static string clientmode = ClientModes.Debug; //set to Normal for release, Debug for development
 
         public static string versionstring = "";
@@ -101,6 +102,9 @@ namespace VAICOM
         public static AsyncCallback ReturnCall;
         public static UdpClient ReceivingUdpClient;
         public static IPEndPoint ReceiveIpEndPoint;
+
+        // WebSocket Server
+        public static WebSocket WebSocketClient;
 
         // for world Messages receive
 
@@ -458,68 +462,6 @@ namespace VAICOM
             }
             catch
             {
-            }
-        }
-        // WSO extension state tracking
-        // Add a flag to track if WSO is active
-        public static bool WSOActive { get; set; } = false;
-
-        // Add a flag to track if WSO commands are enabled
-        public static bool WSOCommandsEnabled { get; set; } = true;
-
-        // Add a dictionary to store WSO-related state
-        public static Dictionary<string, object> WSOState = new Dictionary<string, object>();
-
-        // Add a method to initialize WSO state
-        public static void InitializeWSOState()
-        {
-            WSOActive = true;
-            WSOCommandsEnabled = true;
-
-            // Initialize WSOState with default values
-            WSOState["currentCommand"] = null;
-            WSOState["currentRecipient"] = null;
-            WSOState["currentCategory"] = null;
-        }
-
-        public static bool wsoactivated = true; // Set to true if WSO extension is to be enabled
-
-        public static bool IsF4E
-        {
-            get
-            {
-                return currentmodule != null && currentmodule.Id.Equals("F-4E-45MC", StringComparison.OrdinalIgnoreCase);
-            }
-        }
-        // WSO extension state tracking
-        // Add a flag to track if WSO is active
-        public static bool WSOActive { get; set; } = false;
-
-        // Add a flag to track if WSO commands are enabled
-        public static bool WSOCommandsEnabled { get; set; } = true;
-
-        // Add a dictionary to store WSO-related state
-        public static Dictionary<string, object> WSOState = new Dictionary<string, object>();
-
-        // Add a method to initialize WSO state
-        public static void InitializeWSOState()
-        {
-            WSOActive = true;
-            WSOCommandsEnabled = true;
-
-            // Initialize WSOState with default values
-            WSOState["currentCommand"] = null;
-            WSOState["currentRecipient"] = null;
-            WSOState["currentCategory"] = null;
-        }
-
-        public static bool wsoactivated = true; // Set to true if WSO extension is to be enabled
-
-        public static bool IsF4E
-        {
-            get
-            {
-                return currentmodule != null && currentmodule.Id.Equals("F-4E-45MC", StringComparison.OrdinalIgnoreCase);
             }
         }
         // WSO extension state tracking

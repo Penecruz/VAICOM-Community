@@ -503,17 +503,6 @@ namespace VAICOM
             // extension pack 
             { "wMsgAIPilotCmndsMaximum" ,      new Command { uniqueid = 23999, category = CommandCategories.AI_pilot, eventnumber = 4000,dcsid = "wMsgAIPilotCmndsMaximum" } },
 
-            // Kneeboard 24000
-            { "wMsgKneeboardCmndsNull" ,             new Command { uniqueid = 24000, category = CommandCategories.kneeboard,    eventnumber = 4000,  dcsid = "wMsgKneeboardCmndsNull" } },
-            { "wMsgKneeboardDictateStart" ,          new Command { uniqueid = 24001, category = CommandCategories.kneeboard,    eventnumber = 4000,  dcsid = "wMsgKneeboardDictateStart",blockedforFree = true   } },
-            { "wMsgKneeboardDictateStop" ,           new Command { uniqueid = 24002, category = CommandCategories.kneeboard,    eventnumber = 4000,  dcsid = "wMsgKneeboardDictateStop",blockedforFree = true   } },
-            { "wMsgKneeboardCorrection" ,            new Command { uniqueid = 24003, category = CommandCategories.kneeboard,    eventnumber = 4000,  dcsid = "wMsgKneeboardCorrection",blockedforFree = true   } },
-            { "wMsgKneeboardClearNotes" ,            new Command { uniqueid = 24004, category = CommandCategories.kneeboard,    eventnumber = 4000,  dcsid = "wMsgKneeboardClearNotes",blockedforFree = true   } },
-            { "wMsgKneeboardShowNotes" ,             new Command { uniqueid = 24005, category = CommandCategories.kneeboard,    eventnumber = 4000,  dcsid = "wMsgKneeboardShowNotes",blockedforFree = true   } },
-            { "wMsgKneeboardShowLog" ,               new Command { uniqueid = 24006, category = CommandCategories.kneeboard,    eventnumber = 4000,  dcsid = "wMsgKneeboardShowLog",blockedforFree = true   } },
-            
-            { "wMsgKneeboardCmndsMaximum" ,          new Command { uniqueid = 24100, category = CommandCategories.kneeboard,    eventnumber = 4000,  dcsid = "wMsgKneeboardCmndsMaximum" } },
-
             // WSO commands 24000-24999
             { "wMsgWSOCmndsNull" ,             new Command { uniqueid = 24000, category = CommandCategories.WSO,    eventnumber = 4000,  dcsid = "wMsgWSOCmndsNull",   } },
             // extension pack 
