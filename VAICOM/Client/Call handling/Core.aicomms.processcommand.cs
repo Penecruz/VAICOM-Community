@@ -7,6 +7,7 @@ using VAICOM.Interfaces;
 using VAICOM.PushToTalk;
 using VAICOM.Servers;
 using VAICOM.Static;
+using VAICOM.WSO;
 
 namespace VAICOM
 {
@@ -376,34 +377,28 @@ namespace VAICOM
                 {
                     Log.Write("Ready, sending message for recipient class " + State.currentrecipientclass.Name + ", calledisclass = " + State.calledisclass, Colors.Inline);
 
-                    if (ConstructMessage())
+                    ConstructMessage();
+                    SendNewMessage();
+
+                    State.previousmessageunit = State.currentmessageunit;
+                    State.previousrecipientclass = State.currentrecipientclass;
+
+                    Log.Write("Message sent successfully for recipient class " + State.currentrecipientclass.Name + ".", Colors.Inline);
+
+                    // for ics hotmic:
+                    if (State.AIRIOactive && State.activeconfig.ICShotmic)
                     {
-                        SendNewMessage();
-
-                        State.previousmessageunit = State.currentmessageunit;
-                        State.previousrecipientclass = State.currentrecipientclass;
-
-                        Log.Write("Message sent successfully for recipient class " + State.currentrecipientclass.Name + ".", Colors.Inline);
-
-                        // for ics hotmic:
-                        if (State.AIRIOactive && State.activeconfig.ICShotmic)
+                        if (!State.valistening)
                         {
-                            if (!State.valistening)
-                            {
-                                State.MessageReset();
-                                State.processlocked = false;
-                            }
-
-                            if (!State.currentcommand.isMenu() && !State.currentcommand.isOptions())
-                            {
-                                Extensions.RIO.helper.ShowWheel(false);
-                                Extensions.RIO.helper.showingjestermenu = false;
-                            }
+                            State.MessageReset();
+                            State.processlocked = false;
                         }
-                    }
-                    else
-                    {
-                        Log.Write("No message sent: message construction failed.", Colors.Warning);
+
+                        if (!State.currentcommand.isMenu() && !State.currentcommand.isOptions())
+                        {
+                            Extensions.RIO.helper.ShowWheel(false);
+                            Extensions.RIO.helper.showingjestermenu = false;
+                        }
                     }
                 }
 
@@ -475,7 +470,7 @@ namespace VAICOM
                                         UI.Playsound.Commandcomplete();
                                         KneeboardUpdater.SwitchPage("NOTES");
                                         KneeboardUpdater.RefreshCurrentPage(); // Force immediate refresh
-                                        KneeboardUpdater.SendHeartBeatCycle(); 
+                                        KneeboardUpdater.SendHeartBeatCycle();
                                         break;
                                     case "wMsgKneeboardShowNotes":
                                         KneeboardUpdater.SwitchPage("NOTES");
@@ -597,6 +592,14 @@ namespace VAICOM
                 // processes voice command, called directly from plugin
                 public static bool processcommand()
                 {
+                    // Check if DCS is running
+                    if (!State.dcsrunning)
+                    {
+                        Log.Write("DCS is not connected. Command processing is disabled.", Colors.Warning);
+                        UI.Playsound.Error();
+                        return false;
+                    }
+
                     // thread-safe locking
                     if (State.processlocked)
                     {
@@ -622,19 +625,15 @@ namespace VAICOM
 
                     try
                     {
-
                         // get voice input
-
                         getinputsentence();
                         scanforkeywords();
                         correctforimportedobjects();
 
                         // check if have enough data to send command?
-
                         State.haveinputscomplete = setcommand();
 
                         // if not: wait..
-
                         if (!State.haveinputscomplete)
                         {
                             waitformoreinput();
@@ -645,7 +644,6 @@ namespace VAICOM
                         //----------------------------------------------------------------------------------------------------
                         // have command complete!: now process - check contents
 
-                        //State.activenode = State.currentTXnode;
                         State.currentrecipientclass = getrecipientclass();
 
                         if (noTX())
@@ -664,7 +662,6 @@ namespace VAICOM
                         if (State.currentcommand.isSpecial()) //eventnumber.Equals(4000)
                         {
                             // Special commands:  Options / Take / Select / State / Repeat 
-
                             if (!getunitforspecialcommands() && State.dcsrunning)
                             {
                                 State.MessageReset();
@@ -675,7 +672,6 @@ namespace VAICOM
                         else
                         {
                             // Normal commands
-
                             if (!getunitforregularcommands() && State.dcsrunning)
                             {
                                 //didn't get a unit
@@ -719,7 +715,6 @@ namespace VAICOM
                         {
                         }
 
-
                         bool riocommand = State.AIRIOactive && State.currentcommand.isRIO();
                         bool optionscommand = State.currentcommand.isOptions();
                         bool menucommand = State.currentcommand.isMenu();
@@ -731,9 +726,32 @@ namespace VAICOM
                         {
                             sendvoid();
                         }
+                        else if (State.currentcommand.isWSO()) // Handle WSO commands
+                        {
+                            Log.Write("WSO command detected. Starting WSO command processing...", Colors.Text);
+
+                            if (!State.currentmodule.Id.Equals("F-4E-45MC", StringComparison.OrdinalIgnoreCase))
+                            {
+                                Log.Write("WSO commands are only available for the F-4E-45MC module.", Colors.Warning);
+                                State.processlocked = false;
+                                return false; // WSO command not processed
+                            }
+
+                            if (!Message.ProcessIfWSO())
+                            {
+                                Log.Write("WSO command processing failed.", Colors.Warning);
+                                State.processlocked = false;
+                                return false; // WSO command processing failed
+                            }
+
+                            Log.Write("WSO command processing succeeded. Sending command to Jester 2.0 API...", Colors.Text);
+
+                            // Send the WSO command to the Jester 2.0 API
+                            SendCommandToJesterAPI(State.currentcommand.dcsid);
+                        }
                         else
                         {
-                            if (riocommand || selectcommand || optionscommand || menucommand || 
+                            if (riocommand || selectcommand || optionscommand || menucommand ||
                                 !((State.activeconfig.MP_VoIPUseSwitch || State.activeconfig.MP_VoIPParallel) && State.activeconfig.MP_DelayTransmit)) //  || !State.currentTXnode.tunedforhuman 
                             {
                                 sendmessage();
@@ -768,19 +786,58 @@ namespace VAICOM
                             }
 
                         }
-
                     }
                     catch (Exception e)
                     {
-                        Log.Write("Voice command processing error:" + e.StackTrace, Colors.Inline);
+                        Log.Write("Voice command processing error: " + e.Message, Colors.Critical);
+                        State.processlocked = false;
+                        return false;
                     }
 
                     State.processlocked = false;
+                    return true;
+                }
+                //Jester 2.0 API WSO command sender
+                private static void SendCommandToJesterAPI(string commandId)
+                {
+                    try
+                    {
+                        // Check if the command exists in the WSOCommandMappings
+                        if (WSOCommandMappings.CommandMap.TryGetValue(commandId, out var commandDetails))
+                        {
+                            string category = commandDetails.category;
+                            string action = commandDetails.action;
+                            string value = commandDetails.value;
 
-                    return !options && !menu;
+                            // Construct the command string in the format "category|action|value"
+                            string commandString = $"{category}|{action}|{value}";
 
+                            // Create a new CommsMessage for the Jester API command
+                            State.currentmessage = new Message.CommsMessage
+                            {
+                                client = State.currentlicense,
+                                type = "WSOCommand", // Indicate this is a WSO command
+                                dcsid = commandString, // Pass the constructed command string
+                                dspmsg = $"Sending WSO command: {commandString}",
+                                msgdur = 5
+                            };
+
+                            // Send the command to the Jester 2.0 API using hb_send_proxy payload format
+                            HbSendProxyCommand.SendCommand(category, action, value);
+                            Log.Write($"Command ID '{commandId}' sent using hb_send_proxy payload.", Colors.Text);
+                        }
+                        else
+                        {
+                            Log.Write($"Command ID '{commandId}' not found in WSOCommandMappings.", Colors.Warning);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Log.Write($"Error sending command to Jester 2.0 API: {ex.Message}", Colors.Critical);
+                    }
                 }
 
+                
             }
         }
     }

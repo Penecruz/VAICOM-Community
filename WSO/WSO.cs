@@ -1,11 +1,12 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using VAICOM.Shared;
 
-namespace VAICOM.Extensions.RIO
+namespace VAICOM.Extensions.WSO
 {
     public class AuxData
     {
+        // Placeholder for auxiliary data related to WSO
     }
 
     public class RecipientInfo
@@ -13,13 +14,13 @@ namespace VAICOM.Extensions.RIO
         public int uniqueid;
         public string name;
         public string displayname;
-        public bool requiresJester;
+        public bool requiresWSO;
         public bool enabled;
-        public bool blockedforFree;
+        public bool blockedforFree;        
 
         public RecipientInfo()
         {
-            requiresJester = true;
+            requiresWSO = true;
             enabled = false;
             blockedforFree = true;
         }
@@ -27,11 +28,13 @@ namespace VAICOM.Extensions.RIO
 
     public class CommandInfo : BaseCommandInfo
     {
-        public bool requiresJester;
+        public bool requiresWSO;        
+        internal object category;
 
         public CommandInfo()
         {
-            requiresJester = true;
+            eventnumber = 4000; // Default event number for WSO commands
+            requiresWSO = true;
         }
     }
 
@@ -39,8 +42,7 @@ namespace VAICOM.Extensions.RIO
     {
         public static Dictionary<string, RecipientInfo> aicomms = new Dictionary<string, RecipientInfo>(StringComparer.OrdinalIgnoreCase)
         {
-            { "RIO",    new RecipientInfo { uniqueid = 19301, name = "wAIUnitFlightCrewMembersRIO",     displayname = Labels.airecipients["RIO"], requiresJester = true, enabled = true } },
-            { "Iceman", new RecipientInfo { uniqueid = 19302, name = "wAIUnitFlightCrewMembersIceman",  displayname = Labels.airecipients["Iceman"], requiresJester = true, enabled = true } },
+            { "WSO", new RecipientInfo { uniqueid = 19501, name = "wAIUnitFlightCrewMembersWSO", displayname = Labels.airecipients["WSO"], requiresWSO = true, enabled = true } },
         };
     }
 }

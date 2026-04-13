@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using static VAICOM.Extensions.WorldAudio.Processor;
 
 namespace VAICOM
 {
@@ -504,7 +503,6 @@ namespace VAICOM
             // extension pack 
             { "wMsgAIPilotCmndsMaximum" ,      new Command { uniqueid = 23999, category = CommandCategories.AI_pilot, eventnumber = 4000,dcsid = "wMsgAIPilotCmndsMaximum" } },
 
-
             // Kneeboard 24000
             { "wMsgKneeboardCmndsNull" ,             new Command { uniqueid = 24000, category = CommandCategories.kneeboard,    eventnumber = 4000,  dcsid = "wMsgKneeboardCmndsNull" } },
             { "wMsgKneeboardDictateStart" ,          new Command { uniqueid = 24001, category = CommandCategories.kneeboard,    eventnumber = 4000,  dcsid = "wMsgKneeboardDictateStart",blockedforFree = true   } },
@@ -513,10 +511,25 @@ namespace VAICOM
             { "wMsgKneeboardClearNotes" ,            new Command { uniqueid = 24004, category = CommandCategories.kneeboard,    eventnumber = 4000,  dcsid = "wMsgKneeboardClearNotes",blockedforFree = true   } },
             { "wMsgKneeboardShowNotes" ,             new Command { uniqueid = 24005, category = CommandCategories.kneeboard,    eventnumber = 4000,  dcsid = "wMsgKneeboardShowNotes",blockedforFree = true   } },
             { "wMsgKneeboardShowLog" ,               new Command { uniqueid = 24006, category = CommandCategories.kneeboard,    eventnumber = 4000,  dcsid = "wMsgKneeboardShowLog",blockedforFree = true   } },
-            { "wMsgKneeboardNextTab" ,               new Command { uniqueid = 24007, category = CommandCategories.kneeboard,    eventnumber = 4000,  dcsid = "wMsgKneeboardNextTab",blockedforFree = true   } },
-            { "wMsgKneeboardPreviousTab" ,           new Command { uniqueid = 24008, category = CommandCategories.kneeboard,    eventnumber = 4000,  dcsid = "wMsgKneeboardPreviousTab",blockedforFree = true   } },
+            
             { "wMsgKneeboardCmndsMaximum" ,          new Command { uniqueid = 24100, category = CommandCategories.kneeboard,    eventnumber = 4000,  dcsid = "wMsgKneeboardCmndsMaximum" } },
 
+            // WSO commands 24000-24999
+            { "wMsgWSOCmndsNull" ,             new Command { uniqueid = 24000, category = CommandCategories.WSO,    eventnumber = 4000,  dcsid = "wMsgWSOCmndsNull",   } },
+            // extension pack 
+            { "wMsgWSOCmndsMaximum" ,          new Command { uniqueid = 24999, category = CommandCategories.WSO,    eventnumber = 4000,  dcsid = "wMsgWSOCmndsMaximum" } },
+            
+            // Kneeboard 25000
+            { "wMsgKneeboardCmndsNull" ,             new Command { uniqueid = 25000, category = CommandCategories.kneeboard,    eventnumber = 4000,  dcsid = "wMsgKneeboardCmndsNull" } },
+            { "wMsgKneeboardDictateStart" ,          new Command { uniqueid = 25001, category = CommandCategories.kneeboard,    eventnumber = 4000,  dcsid = "wMsgKneeboardDictateStart",blockedforFree = true   } },
+            { "wMsgKneeboardDictateStop" ,           new Command { uniqueid = 25002, category = CommandCategories.kneeboard,    eventnumber = 4000,  dcsid = "wMsgKneeboardDictateStop",blockedforFree = true   } },
+            { "wMsgKneeboardCorrection" ,            new Command { uniqueid = 25003, category = CommandCategories.kneeboard,    eventnumber = 4000,  dcsid = "wMsgKneeboardCorrection",blockedforFree = true   } },
+            { "wMsgKneeboardClearNotes" ,            new Command { uniqueid = 25004, category = CommandCategories.kneeboard,    eventnumber = 4000,  dcsid = "wMsgKneeboardClearNotes",blockedforFree = true   } },
+            { "wMsgKneeboardShowNotes" ,             new Command { uniqueid = 25005, category = CommandCategories.kneeboard,    eventnumber = 4000,  dcsid = "wMsgKneeboardShowNotes",blockedforFree = true   } },
+            { "wMsgKneeboardShowLog" ,               new Command { uniqueid = 25006, category = CommandCategories.kneeboard,    eventnumber = 4000,  dcsid = "wMsgKneeboardShowLog",blockedforFree = true   } },
+            { "wMsgKneeboardNextTab" ,               new Command { uniqueid = 25007, category = CommandCategories.kneeboard,    eventnumber = 4000,  dcsid = "wMsgKneeboardNextTab",blockedforFree = true   } },
+            { "wMsgKneeboardPreviousTab" ,           new Command { uniqueid = 25008, category = CommandCategories.kneeboard,    eventnumber = 4000,  dcsid = "wMsgKneeboardPreviousTab",blockedforFree = true   } },
+            { "wMsgKneeboardCmndsMaximum" ,          new Command { uniqueid = 25100, category = CommandCategories.kneeboard,    eventnumber = 4000,  dcsid = "wMsgKneeboardCmndsMaximum" } },
             };
 
         }

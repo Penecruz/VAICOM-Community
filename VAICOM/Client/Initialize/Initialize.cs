@@ -286,6 +286,30 @@ namespace VAICOM
 
             }
 
+            public static bool MergeWSO(dynamic vaProxy)
+            {
+                bool WSOmerged = false;
+
+                try
+                {
+                    if (State.wsoactivated) // Ensure WSO is activated
+                    {
+                        int updates = Extensions.WSO.ExtImport.MergeWSO();
+                        if (updates > 0)
+                        {
+                            WSOmerged = true;
+                        }
+                    }
+                }
+                catch
+                {
+                    Log.Write("WARNING: Could not load the WSO plugin extension.", Colors.Warning);
+                    WSOmerged = false;
+                }
+
+                return WSOmerged;
+            }
+
             public static void CreateDatabase(dynamic vaProxy)
             {
 
@@ -420,7 +444,6 @@ namespace VAICOM
 
             public static void Initialize(dynamic vaProxy)
             {
-
                 State.startup = true;
 
                 try
@@ -445,7 +468,6 @@ namespace VAICOM
 
                     CheckVAVersion(vaProxy);
                     GetAssemblies(vaProxy);
-
                 }
                 catch
                 {
@@ -465,7 +487,13 @@ namespace VAICOM
                     ResetPTTConfig(vaProxy);
                     InstallLuaFiles(vaProxy);
                     FileHandler.Root.CheckProfile(false);
+
+                    // Call MergeRIO
                     MergeRIO(vaProxy);
+
+                    // Call MergeWSO
+                    MergeWSO(vaProxy);
+
                     CreateDatabase(vaProxy);
                     StartNetwork(vaProxy);
                     StartTimers(vaProxy);
@@ -481,7 +509,6 @@ namespace VAICOM
                     {
                         State.realatcactivated = true;
                     }
-
                 }
                 catch (Exception e)
                 {
