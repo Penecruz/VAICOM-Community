@@ -267,20 +267,6 @@ namespace VAICOM
 
                 }
 
-                public class JesterMessage
-                {
-                    public string category;
-                    public string action;
-                    public string value;
-
-                    public JesterMessage(string category, string action, string value)
-                    {
-                        this.category = category;
-                        this.action = action;
-                        this.value = value;
-                    }
-                }
-
                 // for manual radio tuning.
                 public class RadioTuneMessage
                 {
@@ -385,27 +371,6 @@ namespace VAICOM
                 {
                     Log.Write("there was a problem sending the SRS message:" + e.Message + e.ToString(), Colors.Inline);
                     return "";
-                }
-            }
-
-            public static async void SendWebSocketMessage(string category, string action, string value)
-            {
-                if (State.WebSocketClient != null && State.WebSocketClient.State == WebSocketState.Open)
-                {
-                    // select|systems_chaff|single
-                    Message.JesterMessage jesterCommand = new Message.JesterMessage(category, action, value);
-                    string message = JsonConvert.SerializeObject(jesterCommand);
-                    byte[] messageBuffer = Encoding.UTF8.GetBytes(message);
-                    Log.Write($"Sending message to web socket client: {message}", Colors.Text);
-                    await State.WebSocketClient.SendAsync(
-                        new ArraySegment<byte>(messageBuffer),
-                        WebSocketMessageType.Text,
-                        true,
-                        CancellationToken.None);
-                }
-                else
-                {
-                    Log.Write("websocket was null or closed", Colors.Text);
                 }
             }
 

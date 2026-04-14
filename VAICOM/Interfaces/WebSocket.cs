@@ -13,10 +13,13 @@ namespace VAICOM
 
         public partial class Network
         {
+            private static readonly string ServerAddress = "127.0.0.1";
+            private static readonly int ServerPort = 33495;
+
 
             public static void WebSocketSetup()
             {
-                // do stuff in for config, currently hardcoded
+                // do stuff for config, currently hardcoded
             }
 
             public static void WebSocketStart()
@@ -27,10 +30,11 @@ namespace VAICOM
 
             public static async void WebSocketServerStart()
             {
+                string webSocketEndpoint = $"http://{ServerAddress}:{ServerPort}/vaicom/wso/";
                 HttpListener listener = new HttpListener();
-                listener.Prefixes.Add("http://localhost:5000/vaicom/");
+                listener.Prefixes.Add(webSocketEndpoint);
                 listener.Start();
-                Log.Write("WebSocket server started at ws://localhost:5000/vaicom/", Colors.Text);
+                Log.Write($"WebSocket server started at {webSocketEndpoint}", Colors.Text);
 
                 while (true)
                 {

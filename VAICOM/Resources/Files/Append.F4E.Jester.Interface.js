@@ -1,9 +1,9 @@
 // VAICOM PRO server-side script
-// JesterAI_Page.lua
+// Jester 2.0 interface.js
 // www.vaicompro.com
 
 // Create WebSocket connection.
-const socket = new WebSocket("ws://localhost:5000/vaicom/");
+const socket = new WebSocket("ws://127.0.0.1:33495/vaicom/wso/");
 
 // Connection opened
 socket.addEventListener("open", (event) => {

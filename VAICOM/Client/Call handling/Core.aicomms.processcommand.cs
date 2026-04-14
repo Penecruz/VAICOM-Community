@@ -823,8 +823,7 @@ namespace VAICOM
                             };
 
                             // Send the command to the Jester 2.0 API using hb_send_proxy fields
-                            //HbSendProxyCommand.SendCommand(category, action, value);
-                            DcsClient.SendWebSocketMessage(category, action, value);
+                            HbSendProxyCommand.SendCommand(State.WebSocketClient, category, action, value);
                             Log.Write($"Command ID '{commandId}' sent using hb_send_proxy payload.", Colors.Text);
                         }
                         else
