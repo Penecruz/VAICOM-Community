@@ -361,6 +361,8 @@ namespace VAICOM
                 {
                     Interfaces.Network.UDPsetup();
                     Interfaces.Network.UDPstart();
+                    Interfaces.Network.WebSocketSetup();
+                    Interfaces.Network.WebSocketStart();
                     Log.Write("Network setup completed successfully.", Colors.Message);
                 }
                 catch (Exception e)
