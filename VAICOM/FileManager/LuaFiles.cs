@@ -252,6 +252,32 @@ namespace VAICOM
                   kneeboard = false,
                 } },
 
+                // ---- F-4E WSO interface.js
+                 {"2.9 WSO Interface.js",new Server.LuaFile
+                { fileid = "2D8D5F9E-7721-4FCD-ADCB-C04F1294F986",
+                  filename = "interface.js",
+                  installfolder = "Mods\\aircraft\\F-4E\\UI\\JesterWheel\\js",
+                  installfolder_legacy = "Mods\\aircraft\\F-4E\\UI\\JesterWheel\\js",
+                  append = true,
+                  root = true,
+                  hardreset = true,
+                  orig = Properties.Resources.Orig_F4E_Jester_Interface,
+                  source = Properties.Resources.Append_F4E_Jester_Interface,
+                  stringreplace = false,
+                  stringorig    = Properties.Resources.Orig_F4E_Jester_Interface,
+                  stringsource  = Properties.Resources.Append_F4E_Jester_Interface,
+                  version ="2.9",
+                  canremove = true,
+                  reset = false,
+                  //ACTIVE:
+                  install = true,
+                  export = true,
+                  autoremove  = false,
+                  quiet  = false,
+                  AIRIO = true,
+                  kneeboard = false,
+                } },
+
                 // kneeboard page
                 {"1.lua",new Server.LuaFile
                 { fileid = "5B148082-1834-4E8E-8010-D0ED6AD22A80",
