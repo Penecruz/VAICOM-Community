@@ -83,6 +83,23 @@ namespace VAICOM.Extensions.WSO
             { "wMsgWSO_Crew_Ejection_Both", "WSO Eject Both" },
             { "wMsgWSO_Crew_Countermeasures_Manual", "WSO Countermeasures Manual" },
             { "wMsgWSO_Crew_Countermeasures_Jester", "WSO Countermeasures Jester" },
+
+            // Ground Crew commands
+            { "wMsgWSO_Ground_WheelChocks_Place", "WSO Ground Place Chocks" },
+            { "wMsgWSO_Ground_WheelChocks_Remove", "WSO Ground Remove Chocks" },
+            { "wMsgWSO_Ground_Power_Connect", "WSO Ground Connect Power" },
+            { "wMsgWSO_Ground_Power_Disconnect", "WSO Ground Disconnect Power" },
+            { "wMsgWSO_Ground_Air_ConnectRight", "WSO Ground Connect Air Right" },
+            { "wMsgWSO_Ground_Air_ConnectLeft", "WSO Ground Connect Air Left" },
+            { "wMsgWSO_Ground_Air_StartAirflow", "WSO Ground Start Airflow" },
+            { "wMsgWSO_Ground_Air_StopAirflow", "WSO Ground Stop Airflow" },
+            { "wMsgWSO_Ground_Air_Disconnect", "WSO Ground Disconnect Air" },
+            { "wMsgWSO_Ground_EngineStartCartridges_Load", "WSO Ground Load Start Cartridges" },
+            { "wMsgWSO_Ground_EngineStartCartridges_Remove", "WSO Ground Remove Start Cartridges" },
+            { "wMsgWSO_Ground_Ladder_Place", "WSO Ground Place Ladder" },
+            { "wMsgWSO_Ground_Ladder_Remove", "WSO Ground Remove Ladder" },
+            { "wMsgWSO_Ground_Steps_Extend", "WSO Ground Extend Steps" },
+            { "wMsgWSO_Ground_Steps_Retract", "WSO Ground Retract Steps" },
         };
     }
 }

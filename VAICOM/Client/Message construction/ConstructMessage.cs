@@ -749,22 +749,24 @@ namespace VAICOM
                 {
                     State.currentmessage.type = Messagetypes.DeviceControl;
 
-                    if (DatabaseCommands.Table.TryGetValue(State.currentcommand.name, out var command) &&
+                    string commandKey = State.currentkey.ContainsKey("command") ? State.currentkey["command"] : State.currentcommand?.dcsid;
+
+                    if (!string.IsNullOrEmpty(commandKey) && DatabaseCommands.Table.TryGetValue(commandKey, out var command) &&
                         (command.category == CommandCategories.WSO || (command.uniqueid >= 24000 && command.uniqueid <= 24999)))
                     {
                         // Handle WSO-specific parameters
                         State.currentmessage.parameters = new List<object>
                         {
-                            command.name,
+                            command.dcsid,
                             command.displayname,
                             command.uniqueid
                         };
 
-                        Log.Write($"Constructed WSO message for command: {command.name}", Colors.Text);
+                        Log.Write($"Constructed WSO message for command: {command.dcsid}", Colors.Text);
                     }
                     else
                     {
-                        Log.Write($"Failed to construct WSO message. Command not found: {State.currentcommand.name}", Colors.Warning);
+                        Log.Write($"Failed to construct WSO message. Command not found: {commandKey ?? State.currentcommand?.dcsid}", Colors.Warning);
                     }
                 }
 

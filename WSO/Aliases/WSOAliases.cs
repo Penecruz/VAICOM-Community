@@ -79,12 +79,29 @@ namespace VAICOM.Extensions.WSO
             { "Crew Auto", "wMsgWSO_Crew_Presence_Auto" },
             { "Crew Force", "wMsgWSO_Crew_Presence_Force" },
             { "Crew Disable", "wMsgWSO_Crew_Presence_Disable" },
-            { "Talk", "wMsgWSO_Crew_Talking_Talk" },
-            { "Silence", "wMsgWSO_Crew_Talking_Silence" },
+            { "Talk to Me", "wMsgWSO_Crew_Talking_Talk" },
+            { "Lets enjoy some Silence ", "wMsgWSO_Crew_Talking_Silence" },
             { "Eject WSO", "wMsgWSO_Crew_Ejection_WSO" },
             { "Eject Both", "wMsgWSO_Crew_Ejection_Both" },
             { "Countermeasures Mine", "wMsgWSO_Crew_Countermeasures_Manual" },
             { "Countermeasures Yours", "wMsgWSO_Crew_Countermeasures_Jester" },
+
+            // Ground Crew aliases
+            { "Ground Chocks Place", "wMsgWSO_Ground_WheelChocks_Place" },
+            { "Ground Chocks Remove", "wMsgWSO_Ground_WheelChocks_Remove" },
+            { "Ground Power Connect", "wMsgWSO_Ground_Power_Connect" },
+            { "Ground Power Disconnect", "wMsgWSO_Ground_Power_Disconnect" },
+            { "Ground Air Connect Right", "wMsgWSO_Ground_Air_ConnectRight" },
+            { "Ground Air Connect Left", "wMsgWSO_Ground_Air_ConnectLeft" },
+            { "Ground Air On", "wMsgWSO_Ground_Air_StartAirflow" },
+            { "Ground Air Off", "wMsgWSO_Ground_Air_StopAirflow" },
+            { "Ground Air Disconnect", "wMsgWSO_Ground_Air_Disconnect" },
+            { "Ground Load Start Cartridges", "wMsgWSO_Ground_EngineStartCartridges_Load" },
+            { "Ground Remove Start Cartridges", "wMsgWSO_Ground_EngineStartCartridges_Remove" },
+            { "Ground Set The Ladder", "wMsgWSO_Ground_Ladder_Place" },
+            { "Ground Remove The Ladder", "wMsgWSO_Ground_Ladder_Remove" },
+            { "Ground Extend Steps", "wMsgWSO_Ground_Steps_Extend" },
+            { "Ground Retract Steps", "wMsgWSO_Ground_Steps_Retract" },
         };
     }
 }

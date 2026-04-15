@@ -77,6 +77,23 @@ namespace VAICOM.WSO
             { "wMsgWSO_Crew_Ejection_Both", ("select", "crew_ejection", "both") },
             { "wMsgWSO_Crew_Countermeasures_Manual", ("select", "crew_countermeasures", "manual") },
             { "wMsgWSO_Crew_Countermeasures_Jester", ("select", "crew_countermeasures", "jester") },
+
+            // Ground Crew commands
+            { "wMsgWSO_Ground_WheelChocks_Place", ("select", "wheel_chocks_place", "") },
+            { "wMsgWSO_Ground_WheelChocks_Remove", ("select", "wheel_chocks_remove", "") },
+            { "wMsgWSO_Ground_Power_Connect", ("select", "power_connect", "") },
+            { "wMsgWSO_Ground_Power_Disconnect", ("select", "power_disconnect", "") },
+            { "wMsgWSO_Ground_Air_ConnectRight", ("select", "air_connect_right", "") },
+            { "wMsgWSO_Ground_Air_ConnectLeft", ("select", "air_connect_left", "") },
+            { "wMsgWSO_Ground_Air_StartAirflow", ("select", "air_start_airflow", "") },
+            { "wMsgWSO_Ground_Air_StopAirflow", ("select", "air_stop_airflow", "") },
+            { "wMsgWSO_Ground_Air_Disconnect", ("select", "air_disconnect", "") },
+            { "wMsgWSO_Ground_EngineStartCartridges_Load", ("select", "engine_start_cartridges_load", "") },
+            { "wMsgWSO_Ground_EngineStartCartridges_Remove", ("select", "engine_start_cartridges_remove", "") },
+            { "wMsgWSO_Ground_Ladder_Place", ("select", "ladder_place", "") },
+            { "wMsgWSO_Ground_Ladder_Remove", ("select", "ladder_remove", "") },
+            { "wMsgWSO_Ground_Steps_Extend", ("select", "steps_extend", "") },
+            { "wMsgWSO_Ground_Steps_Retract", ("select", "steps_retract", "") },
         };
     }
 }

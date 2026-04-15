@@ -90,6 +90,23 @@ namespace VAICOM.Extensions.WSO
             { "wMsgWSO_Crew_Ejection_Both", new CommandInfo { uniqueid = 24067, category = CommandCategories.WSO, name = "wMsgWSO_Crew_Ejection_Both", displayname = Labels.aicommands["wMsgWSO_Crew_Ejection_Both"], enabled = true } },
             { "wMsgWSO_Crew_Countermeasures_Manual", new CommandInfo { uniqueid = 24510, category = CommandCategories.WSO, name = "wMsgWSO_Crew_Countermeasures_Manual", displayname = Labels.aicommands["wMsgWSO_Crew_Countermeasures_Manual"], enabled = true } },
             { "wMsgWSO_Crew_Countermeasures_Jester", new CommandInfo { uniqueid = 24511, category = CommandCategories.WSO, name = "wMsgWSO_Crew_Countermeasures_Jester", displayname = Labels.aicommands["wMsgWSO_Crew_Countermeasures_Jester"], enabled = true } },
+
+            // Ground Crew commands
+            { "wMsgWSO_Ground_WheelChocks_Place", new CommandInfo { uniqueid = 24420, category = CommandCategories.WSO, name = "wMsgWSO_Ground_WheelChocks_Place", displayname = Labels.aicommands["wMsgWSO_Ground_WheelChocks_Place"], enabled = true } },
+            { "wMsgWSO_Ground_WheelChocks_Remove", new CommandInfo { uniqueid = 24421, category = CommandCategories.WSO, name = "wMsgWSO_Ground_WheelChocks_Remove", displayname = Labels.aicommands["wMsgWSO_Ground_WheelChocks_Remove"], enabled = true } },
+            { "wMsgWSO_Ground_Power_Connect", new CommandInfo { uniqueid = 24422, category = CommandCategories.WSO, name = "wMsgWSO_Ground_Power_Connect", displayname = Labels.aicommands["wMsgWSO_Ground_Power_Connect"], enabled = true } },
+            { "wMsgWSO_Ground_Power_Disconnect", new CommandInfo { uniqueid = 24423, category = CommandCategories.WSO, name = "wMsgWSO_Ground_Power_Disconnect", displayname = Labels.aicommands["wMsgWSO_Ground_Power_Disconnect"], enabled = true } },
+            { "wMsgWSO_Ground_Air_ConnectRight", new CommandInfo { uniqueid = 24424, category = CommandCategories.WSO, name = "wMsgWSO_Ground_Air_ConnectRight", displayname = Labels.aicommands["wMsgWSO_Ground_Air_ConnectRight"], enabled = true } },
+            { "wMsgWSO_Ground_Air_ConnectLeft", new CommandInfo { uniqueid = 24425, category = CommandCategories.WSO, name = "wMsgWSO_Ground_Air_ConnectLeft", displayname = Labels.aicommands["wMsgWSO_Ground_Air_ConnectLeft"], enabled = true } },
+            { "wMsgWSO_Ground_Air_StartAirflow", new CommandInfo { uniqueid = 24426, category = CommandCategories.WSO, name = "wMsgWSO_Ground_Air_StartAirflow", displayname = Labels.aicommands["wMsgWSO_Ground_Air_StartAirflow"], enabled = true } },
+            { "wMsgWSO_Ground_Air_StopAirflow", new CommandInfo { uniqueid = 24427, category = CommandCategories.WSO, name = "wMsgWSO_Ground_Air_StopAirflow", displayname = Labels.aicommands["wMsgWSO_Ground_Air_StopAirflow"], enabled = true } },
+            { "wMsgWSO_Ground_Air_Disconnect", new CommandInfo { uniqueid = 24428, category = CommandCategories.WSO, name = "wMsgWSO_Ground_Air_Disconnect", displayname = Labels.aicommands["wMsgWSO_Ground_Air_Disconnect"], enabled = true } },
+            { "wMsgWSO_Ground_EngineStartCartridges_Load", new CommandInfo { uniqueid = 24429, category = CommandCategories.WSO, name = "wMsgWSO_Ground_EngineStartCartridges_Load", displayname = Labels.aicommands["wMsgWSO_Ground_EngineStartCartridges_Load"], enabled = true } },
+            { "wMsgWSO_Ground_EngineStartCartridges_Remove", new CommandInfo { uniqueid = 24430, category = CommandCategories.WSO, name = "wMsgWSO_Ground_EngineStartCartridges_Remove", displayname = Labels.aicommands["wMsgWSO_Ground_EngineStartCartridges_Remove"], enabled = true } },
+            { "wMsgWSO_Ground_Ladder_Place", new CommandInfo { uniqueid = 24431, category = CommandCategories.WSO, name = "wMsgWSO_Ground_Ladder_Place", displayname = Labels.aicommands["wMsgWSO_Ground_Ladder_Place"], enabled = true } },
+            { "wMsgWSO_Ground_Ladder_Remove", new CommandInfo { uniqueid = 24432, category = CommandCategories.WSO, name = "wMsgWSO_Ground_Ladder_Remove", displayname = Labels.aicommands["wMsgWSO_Ground_Ladder_Remove"], enabled = true } },
+            { "wMsgWSO_Ground_Steps_Extend", new CommandInfo { uniqueid = 24433, category = CommandCategories.WSO, name = "wMsgWSO_Ground_Steps_Extend", displayname = Labels.aicommands["wMsgWSO_Ground_Steps_Extend"], enabled = true } },
+            { "wMsgWSO_Ground_Steps_Retract", new CommandInfo { uniqueid = 24434, category = CommandCategories.WSO, name = "wMsgWSO_Ground_Steps_Retract", displayname = Labels.aicommands["wMsgWSO_Ground_Steps_Retract"], enabled = true } },
             // Additional WSO commands can be added here within the reserved range (24000 - 24998)            
          };
 
