@@ -435,6 +435,10 @@ namespace VAICOM
                     if (Commands.Table.ContainsKey(comboBoxAlias.SelectedValue.ToString()))
                     {
                         foundcategory = Commands.Table[comboBoxAlias.SelectedValue.ToString()].RecipientClass().Name;
+                        if (Commands.Table[comboBoxAlias.SelectedValue.ToString()].dcsid.StartsWith("wMsgGeorge", StringComparison.OrdinalIgnoreCase))
+                        {
+                            foundcategory = "CPG";
+                        }
                         if (EditorCatLabels.Commands.ContainsKey(Commands.Table[comboBoxAlias.SelectedValue.ToString()].category))
                         {
                             maincat = EditorCatLabels.Commands[Commands.Table[comboBoxAlias.SelectedValue.ToString()].category];

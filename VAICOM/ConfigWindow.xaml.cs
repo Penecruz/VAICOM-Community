@@ -34,6 +34,7 @@ namespace VAICOM
             private Brush tabItemSelectedBackground;
             private Brush tabItemSelectedForeground;
             private readonly bool? useDarkModeOverride;
+            private bool debugCodeInitialized;
 
             [DllImport("dwmapi.dll")]
             private static extern int DwmSetWindowAttribute(IntPtr hwnd, int attr, ref int attrValue, int attrSize);
@@ -911,13 +912,18 @@ namespace VAICOM
                 {
                     CodeBlock.IsEnabled = true;
                     CodeBlock.Visibility = Visibility.Visible;
-                    CodeBlock.Text = Properties.Resources.Debug_code;
+                    if (!debugCodeInitialized)
+                    {
+                        CodeBlock.Text = Properties.Resources.Debug_code;
+                        debugCodeInitialized = true;
+                    }
                 }
                 else
                 {
                     CodeBlock.IsEnabled = false;
                     CodeBlock.Visibility = Visibility.Hidden;
                     CodeBlock.Text = "";
+                    debugCodeInitialized = false;
                 }
             }
 
@@ -959,7 +965,11 @@ namespace VAICOM
                     SendButton.Visibility = Visibility.Visible;
                     CodeBlock.IsEnabled = true;
                     CodeBlock.Visibility = Visibility.Visible;
-                    CodeBlock.Text = Properties.Resources.Debug_code;
+                    if (!debugCodeInitialized)
+                    {
+                        CodeBlock.Text = Properties.Resources.Debug_code;
+                        debugCodeInitialized = true;
+                    }
                 }
                 else
                 {
@@ -971,6 +981,7 @@ namespace VAICOM
                     CodeBlock.IsEnabled = false;
                     CodeBlock.Visibility = Visibility.Hidden;
                     CodeBlock.Text = "";
+                    debugCodeInitialized = false;
                 }
             }
 

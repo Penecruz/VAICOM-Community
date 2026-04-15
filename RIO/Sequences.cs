@@ -468,6 +468,7 @@ namespace VAICOM.Extensions.RIO
                 public static List<DeviceAction> Seq_J_RAD_DL_HOST_TRUM = new List<DeviceAction>() { RIO.Atom_J_RAD_DL_HOST_TRUM };
                 public static List<DeviceAction> Seq_J_RAD_DL_HOST_TICO = new List<DeviceAction>() { RIO.Atom_J_RAD_DL_HOST_TICO };
                 public static List<DeviceAction> Seq_J_RAD_DL_HOST_FORE = new List<DeviceAction>() { RIO.Atom_J_RAD_DL_HOST_FORE };
+                public static List<DeviceAction> Seq_J_RAD_DL_HOST_BURK = new List<DeviceAction>() { RIO.Atom_J_RAD_DL_HOST_BURK };
                 //public static List<DeviceAction> Seq_PlaceHolder388 = new List<DeviceAction>() { RIO.Atom_Placeholder388 };
                 //public static List<DeviceAction> Seq_PlaceHolder389 = new List<DeviceAction>() { RIO.Atom_Placeholder389 };
                 // end of utility

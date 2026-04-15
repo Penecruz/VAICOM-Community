@@ -440,6 +440,8 @@ namespace VAICOM.Extensions.RIO
             {"Link Host Truman",            "wMsgJ_RAD_DL_HOST_TRUM"                },
             {"Link Host Ticonderoga",       "wMsgJ_RAD_DL_HOST_TICO"                },
             {"Link Host Forrestal",         "wMsgJ_RAD_DL_HOST_FORE"                }, //Forrestal
+            {"Link Host Arleigh Burke",     "wMsgJ_RAD_DL_HOST_BURK"                },
+            {"Link Host Arliegh Burke",     "wMsgJ_RAD_DL_HOST_BURK"                },
 
             {"TACAN Tune Washington",       "wMsgJ_RAD_TCN_TAC_WASH"                },
             {"TACAN Tune Roosevelt",        "wMsgJ_RAD_TCN_TAC_ROOS"                },

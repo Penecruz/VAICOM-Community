@@ -196,18 +196,47 @@ function selectAndTuneCommunicator(targetCommunicator)
 					if channelNum ~= nil then
 						haveFreq = true
 						commDevice:set_channel(channelNum)
+
+						-- Manually change the channel selector in the cockpit for some modules
+						-- so that it correctly reflects the channel for the freqeuncy we are tuned to.
+						local dcsId = base.vaicom.state.dcsid
+						if dcsId == "Mi-24P" then
+							-- Clickable Ids for the channel selectors were obtained from DCS-BIOS
+							if communicator.displayName == "R-863" then
+								manuallySetChannel(commDevice, 3007, channelNum, 20)
+							elseif communicator.displayName == "R-828" then
+								manuallySetChannel(commDevice, 3001, channelNum, 10)
+							end
+						end
 					end
 				else
 					if commDevice:is_frequency_in_range(freqMod.frequency) then
-						commDevice:set_frequency(freqMod.frequency)
+						local dcsId = base.vaicom.state.dcsid
+						-- The UH-1H needs to have the UHF radio manually tuned (unlike it's VHF radios).
+						-- The normal set_frequency function does tune it, but it then reverts back
+						-- to the previous frequency.
+						if dcsId == "UH-1H" and communicator.displayName == "CB UHF" then
+							local currentFreq = base.tostring(commDevice:get_frequency())
+							local newFreq = base.tostring(freqMod.frequency)
+							-- Tune each individual radio knob based on the position of the digits in the frequency
+							-- associated with that knob. The clickableId is the knob to be turned and the increment
+							-- is the number it goes up in.
+							manuallyTuneFrequency(commDevice, 3002, 1, base.tonumber(base.string.sub(currentFreq, 1, 2)), base.tonumber(base.string.sub(newFreq, 1, 2)))
+							manuallyTuneFrequency(commDevice, 3003, 1, base.tonumber(base.string.sub(currentFreq, 3, 3)), base.tonumber(base.string.sub(newFreq, 3, 3)))
+							manuallyTuneFrequency(commDevice, 3004, 5, base.tonumber(base.string.sub(currentFreq, 4, 5)), base.tonumber(base.string.sub(newFreq, 4, 5)))
+						else
+							commDevice:set_frequency(freqMod.frequency)
+						end
 						haveFreq = true
 					end
 				end
 				if haveFreq then
-						commDevice:set_modulation(freqMod.modulation) 	
+					if communicator.AM and communicator.FM then --try only setting modulation for radios that have both AM and FM.
+						commDevice:set_modulation(freqMod.modulation)
+					end
 					break
 				end
-			end	
+			end
 		else
 		end
 	end	
@@ -219,7 +248,30 @@ function setCommunicatorId(curCommunicatorIdIn)
 	data.curCommunicatorId = curCommunicatorIdIn 	
 	updateMainCaption()	
 end
-
+function manuallySetChannel(commDevice, clickableId, channelNum, positions)
+	commDevice:performClickableAction(clickableId, channelNum * (1 / positions))
+end
+function manuallyTuneFrequency(commDevice, clickableId, increment, currentValue, newValue)
+	local difference = currentValue - newValue
+	-- 0.0 goes up and 1.0 goes down
+	local direction = difference > 0 and 1.0 or 0.0
+	local startTime = base.timer.getTime()
+	local delay = 0.2
+	-- Loop through each knob turn with a delay for each. The increment is due to
+	-- some knobs going up/down by 1 and others by 5.
+	for i = 1, (base.math.abs(difference) / increment) do
+		-- DCS requires a delay between each knob turn to ensure they are processed
+		local scheduledTime = startTime + (i * delay)
+		base.timer.scheduleFunction(turnRadioKnob, { commDevice = commDevice, clickableId = clickableId, direction = direction }, scheduledTime)
+	end
+end
+function turnRadioKnob(args)
+	local commDevice = args.commDevice
+	commDevice:performClickableAction(args.clickableId, args.direction)
+	
+	-- nil means don't reschedule
+	return nil 
+end
 -- Thanks to the amazing DCS SRS folk for their logic and permission
 -- to use parts of their codebase for the below functions to get the
 -- currently selected radio in modules that use a radio selector.
@@ -250,6 +302,9 @@ function getSelectorPosition(arg, step)
 
     return nil
 end
+function nearlyEqual(a, b, diff)
+	return base.math.abs(a - b) < diff
+end
 local function normalizeRadioName(name)
     return base.string.lower(name):gsub("[^%w]", "")
 end
@@ -272,6 +327,7 @@ local function findRadioDisplayName(...)
     return nil
 end
 function getSelectedRadio(dcsId)
+	base.print("dcsId: "..dcsId) -- print the dcsId for debugging
 	local selectedRadio = ""
 	if dcsId == "AH-64D_BLK_II" then
 		-- get pilot or CP/G
@@ -347,7 +403,7 @@ function getSelectedRadio(dcsId)
 					selectorPosition = 1
 				end
 				if selectorPosition == 1 then
-					selectedRadio = findRadioDisplayName("Intercom", "Interphone", "INT") or selectedRadio
+					selectedRadio = findRadioDisplayName("INTERCOM", "Interphone", "INT") or selectedRadio
 				elseif selectorPosition == 2 then
 					selectedRadio = findRadioDisplayName("UHF1", "UHF-1", "UHF 1") or selectedRadio
 				elseif selectorPosition == 3 then
@@ -361,10 +417,46 @@ function getSelectedRadio(dcsId)
 				elseif selectorPosition == 7 then
 					selectedRadio = findRadioDisplayName("HF2", "HF-2", "HF 2") or selectedRadio -- not currently implemented
 				elseif selectorPosition == 8 then
-					selectedRadio = findRadioDisplayName("SAT", "SATCOM") or selectedRadio -- not currently implemented
+					selectedRadio = findRadioDisplayName("VHF AM(ARC-210)", "VHF AM", "ARC-210") or selectedRadio -- not currently implemented
 				elseif selectorPosition == 9 then
 					selectedRadio = findRadioDisplayName("PVT", "PVT 1", "PVT-1") or selectedRadio
 				end
+			end
+		end
+	elseif dcsId == "Mi-24P" then
+		-- Pilot: 455, CP/G: 659
+		local seat = base.get_param_handle("SEAT"):get()
+		local selectorId = nil
+		if seat == 0 then
+			selectorId = 455
+		elseif seat == 1 then
+			selectorId = 659
+		end
+		if selectorId ~= nil then
+			local selectorPosition = getSelectorPosition(selectorId, 0.2)
+			if selectorPosition ~= nil then
+				if selectorPosition == 0 then
+					selectedRadio = "R-863"
+				elseif selectorPosition == 2 then
+					selectedRadio = "R-828"
+				elseif selectorPosition == 3 then
+					selectedRadio = "Jadro-1A"
+				elseif selectorPosition == 4 then
+					selectedRadio = "R_852"
+				end
+			end
+		end
+	elseif dcsId == "UH-1H" then
+		local selectorValue = base.GetDevice(0):get_argument_value(30)
+		if selectorValue ~= nil then
+			if nearlyEqual(selectorValue, 0.1, 0.03) then
+				selectedRadio = findRadioDisplayName("Intercom", "Interphone", "INTERCOM", "INT") or selectedRadio
+			elseif nearlyEqual(selectorValue, 0.2, 0.03) then
+				selectedRadio = findRadioDisplayName("AN/ARC-131", "ARC-131", "VHF FM") or selectedRadio
+			elseif nearlyEqual(selectorValue, 0.3, 0.03) then
+				selectedRadio = findRadioDisplayName("AN/ARC-51BX - UHF", "AN/ARC-51BX", "CB UHF", "UHF") or selectedRadio
+			elseif nearlyEqual(selectorValue, 0.4, 0.03) then
+				selectedRadio = findRadioDisplayName("AN/ARC-134", "ARC-134", "VHF AM") or selectedRadio
 			end
 		end
 	end
@@ -473,13 +565,28 @@ function ProcessRemoteCommand()
 		return
 	end				
 	if clientmessage.type == base.vaicom.messagetype.devicecontrol  	then
-		for i= 1, #clientmessage.extsequence do
-		  base.GetDevice(clientmessage.extsequence[i].device):performClickableAction(clientmessage.extsequence[i].command,clientmessage.extsequence[i].value)
-		end		
-		for i= 1, #clientmessage.devsequence do
-		  base.GetDevice(clientmessage.devsequence[i].device):performClickableAction(clientmessage.devsequence[i].command,clientmessage.devsequence[i].value) 
-		end		
-		socket.try(base.vaicom.sender:send(base.vaicom.flags.raw))
+		local now = base.Export.LoGetModelTime and base.Export.LoGetModelTime() or 0
+		local cumulativeDelay = 0
+		local function queueActions(actions)
+			for i = 1, #actions do
+				local action = actions[i]
+				base.table.insert(base.vaicom.devicecontrol.queue,
+					{
+						executeAt = now + cumulativeDelay,
+						device = action.device,
+						command = action.command,
+						value = action.value
+					})
+				local d = action.delayMs or 0
+				if d > 0 then
+					cumulativeDelay = cumulativeDelay + (d / 1000)
+				end
+			end
+		end
+
+		queueActions(clientmessage.extsequence)
+		queueActions(clientmessage.devsequence)
+		base.vaicom.devicecontrol.busy = true
 		return
 	end
 	if clientmessage.type == base.vaicom.messagetype.commandsequence	then	
@@ -800,6 +907,20 @@ end
 base.vaicom = base.vaicom or {}
 local function vaicom_loop()
 	local 	JSON    	= base.require('JSON') -- is it really needed? had a weird error, maybe it was something else causing a issue
+	if base.vaicom and base.vaicom.devicecontrol and base.vaicom.devicecontrol.busy then
+		local now = base.Export.LoGetModelTime and base.Export.LoGetModelTime() or 0
+		while #base.vaicom.devicecontrol.queue > 0 and base.vaicom.devicecontrol.queue[1].executeAt <= now do
+			local action = base.table.remove(base.vaicom.devicecontrol.queue, 1)
+			local dev = base.GetDevice(action.device)
+			if dev and dev.performClickableAction then
+				dev:performClickableAction(action.command, action.value)
+			end
+		end
+		if #base.vaicom.devicecontrol.queue == 0 then
+			base.vaicom.devicecontrol.busy = false
+			socket.try(base.vaicom.sender:send(base.vaicom.flags.raw))
+		end
+	end
 	if base.vaicom and base.vaicom.receiver and data.initialized and data.pUnit then 
 		if RemoteInputs() then 	
 			base.vaicom.flags.remote = true
@@ -1476,7 +1597,6 @@ base.vaicom.state = {
 		rawcommand 				= base.vaicom.flags.raw,
 		menuaux					= {}, 
 		menucargo				= {},
-		menumoose				= {}, -- Add Moose
 		activemessage			= {},
 		availableradios			= {},
 		messagesent				= false,
@@ -1556,7 +1676,6 @@ base.vaicom.state = {
 					base.vaicom.state.availabilitycounter[recipientclass] = base.vaicom.helper.tablelength(base.vaicom.state.availablerecipients[recipientclass])
 				end
 				base.vaicom.state.menuaux							= data.initialized and data.menuOther
-				base.vaicom.state.menumoose							= data.initialized and data.menuOther -- Add Moose is this required?
 				base.vaicom.state.menucargo							= data.initialized and data.menuEmbarkToTransport
 				base.vaicom.state.dcsversion						= data.initialized and base.vaicom.get.serverdata.dcsversion()
 				base.vaicom.state.easycomms							= data.initialized and data.radioAutoTune
@@ -1646,8 +1765,7 @@ base.vaicom.state = {
 								  }								  
 				chunk[9] 		= {
 									menuaux		= (base.vaicom.state.activemessage.importmenus and base.vaicom.state.menuaux) 	or nil,
-									menumoose	= (base.vaicom.state.activemessage.importmenus and base.vaicom.state.menumoose) or nil, -- Add Moose
-									menucargo	= (base.vaicom.state.activemessage.importmenus and base.vaicom.state.menucargo) or nil,		
+									menucargo	= (base.vaicom.state.activemessage.importmenus and base.vaicom.state.menucargo) or nil,
 								  }						
 				chunk[10] 		= {
 									riostate = base.vaicom.state.riostate or nil,
@@ -1711,15 +1829,44 @@ base.vaicom.state = {
 								
 					end
 				end
-				for i= 1,11 do
-					local sndtbl = chunk[i]
-					sndtbl.cid 				= i									
-					sndtbl.client 			= "VAICOMPRO"
-					sndtbl.mode 			= "normal"
-					sndtbl.type 			= "missiondata.update"
-					socket.try(base.vaicom.sender:send(JSON:encode(sndtbl)))
-				end	
-			end,								
+				local function sendChunk(payload, chunkId)
+					local ok, err = base.pcall(function()
+						socket.try(base.vaicom.sender:send(payload))
+					end)
+					if not ok then
+						for _, value in base.pairs(err) do
+							base.env.error("VAICOM error sending chunk "..chunkId..", error: "..base.tostring(value))
+						end
+					end
+				end
+				local function addChunkHeader(tbl, cid)
+					tbl.cid    = cid
+					tbl.client = "VAICOMPRO"
+					tbl.mode   = "normal"
+					tbl.type   = "missiondata.update"
+					return tbl
+				end
+				-- Maximum udp packet size for localhost
+				-- (64K - 20 IP header - 8 UDP header)
+				local maxSize = (64 * 1024) - 20 - 8
+				for chunkId = 1, 11 do
+					local chunkPayload = addChunkHeader(chunk[chunkId], chunkId)
+					local payload = JSON:encode(chunkPayload)
+					if chunkId == 9 then
+						-- Large menus that exceed the maximum payload cause errors
+						-- during sending and prevent sending all chunks to VAICOM.
+						if #payload < maxSize then
+							sendChunk(payload, chunkId)
+						end
+					else
+						sendChunk(payload, chunkId)
+					end
+				end
+			end,
+}
+base.vaicom.devicecontrol = {
+	queue = {},
+	busy = false,
 }
 base.vaicom.init = {
 	start = function(self)	 

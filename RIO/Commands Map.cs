@@ -414,6 +414,7 @@ namespace VAICOM.Extensions.RIO
             {"wMsgJ_RAD_DL_HOST_TRUM",          new List<List<DeviceAction>> {Macro.Seq_J_MENU_MAIN, Macro.Seq_J_RAD_DL_HOST_TRUM     }},
             {"wMsgJ_RAD_DL_HOST_TICO",          new List<List<DeviceAction>> {Macro.Seq_J_MENU_MAIN, Macro.Seq_J_RAD_DL_HOST_TICO     }},
             {"wMsgJ_RAD_DL_HOST_FORE",          new List<List<DeviceAction>> {Macro.Seq_J_MENU_MAIN, Macro.Seq_J_RAD_DL_HOST_FORE     }},
+            {"wMsgJ_RAD_DL_HOST_BURK",          new List<List<DeviceAction>> {Macro.Seq_J_MENU_MAIN, Macro.Seq_J_RAD_DL_HOST_BURK     }},
 
             {"wMsgJESTER_Steerpoint_SP1",       new List<List<DeviceAction>> { Macro.Seq_J_MENU_CONTEXT, Macro.Seq_JESTER_Steerpoint_SP1     }},
             {"wMsgJESTER_Steerpoint_SP2",       new List<List<DeviceAction>> { Macro.Seq_J_MENU_CONTEXT, Macro.Seq_JESTER_Steerpoint_SP2     }},

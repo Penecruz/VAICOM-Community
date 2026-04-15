@@ -128,6 +128,14 @@ namespace VAICOM
                     State.currentstate.fsmstate = serverMessage.fsmstate;
                     State.currentstate.selectedradio = serverMessage.selectedradio;
                     State.currentstate.radios = serverMessage.radios;
+
+                    if (!State.currentstate.airborne)
+                    {
+                        if (State.AH64GeorgeSelectedWeapon != State.AH64GeorgeWeaponMode.NoWeapon)
+                        {
+                            State.AH64GeorgeSelectedWeapon = State.AH64GeorgeWeaponMode.NoWeapon;
+                        }
+                    }
                 }
                 catch (Exception e)
                 {
@@ -135,6 +143,7 @@ namespace VAICOM
                 }
                 receivedupdatecomplete = false;
             }
+
             public static void ExtractChunk3(ServerMessage serverMessage)
             {
 
@@ -349,4 +358,3 @@ namespace VAICOM
         }
     }
 }
-

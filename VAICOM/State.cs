@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
+using System.Net.WebSockets;
 using System.Reflection;
 using System.Resources;
 using System.Speech.Recognition;
@@ -36,7 +37,7 @@ namespace VAICOM
         public static string clientmode = ClientModes.Debug; //set to Normal for release, Debug for development
 
         public static string versionstring = "";
-        public static string pluginversionnumber = "3.0.9"; // used by Theme (Special page)
+        public static string pluginversionnumber = "3.1.0"; // used by Theme (Special page)
         public static string vaminversion = "1.16";
         public static string defProfileName = "VAICOM for DCS World";
         public static bool requirecarrierregkey = false;
@@ -101,6 +102,9 @@ namespace VAICOM
         public static AsyncCallback ReturnCall;
         public static UdpClient ReceivingUdpClient;
         public static IPEndPoint ReceiveIpEndPoint;
+
+        // WebSocket Server
+        public static WebSocket WebSocketClient;
 
         // for world Messages receive
 
@@ -294,6 +298,23 @@ namespace VAICOM
         public static string kneeboardlastdictbuffer = "";
         public static bool moduleDetected;
         public static bool moduleConnected = false; // Tracks if the module is connected
+
+        public enum AH64GeorgeWeaponMode
+        {
+            Unknown,
+            NoWeapon,
+            Gun,
+            Missiles,
+            Rockets
+        }
+
+        public static bool AH64GeorgeGunAvailable;
+        public static bool AH64GeorgeRocketsAvailable;
+        public static bool AH64GeorgeMissilesAvailable;
+        public static bool AH64GeorgeWeaponStateValid;
+        public static bool AH64GeorgeWowFromExport;
+        public static bool AH64GeorgeWowFromServerState;
+        public static AH64GeorgeWeaponMode AH64GeorgeSelectedWeapon = AH64GeorgeWeaponMode.Unknown;
         // -----------------------------------------------------------------------------------------------------------
         // call flow management tables
 

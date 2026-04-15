@@ -182,8 +182,12 @@ namespace VAICOM
                 if ((this.uniqueid >= Commands.Table["wMsgRIOCmndsNull"].uniqueid) & (this.uniqueid <= Commands.Table["wMsgRIOCmndsMaximum"].uniqueid)) { value = Recipientclasses.RIO; }
                 if ((this.uniqueid >= Commands.Table["wMsgAIPilotCmndsNull"].uniqueid) & (this.uniqueid <= Commands.Table["wMsgAIPilotCmndsMaximum"].uniqueid)) { value = Recipientclasses.AI_pilot; }
 
+                // George AI extension
+                if (this.dcsid != null && this.dcsid.StartsWith("wMsgGeorge", StringComparison.OrdinalIgnoreCase)) { value = Recipientclasses.Crew; }
+
                 // WSO extension
                 if ((this.uniqueid >= Commands.Table["wMsgWSOCmndsNull"].uniqueid) & (this.uniqueid <= Commands.Table["wMsgWSOCmndsMaximum"].uniqueid)) { value = Recipientclasses.WSO; }
+
                 // Kneeboard
                 if ((this.uniqueid >= Commands.Table["wMsgKneeboardCmndsNull"].uniqueid) & (this.uniqueid <= Commands.Table["wMsgKneeboardCmndsMaximum"].uniqueid)) { value = Recipientclasses.Kneeboard; }
 
@@ -210,10 +214,15 @@ namespace VAICOM
                 return value;
             }
 
+            public bool isGeorge()
+            {
+                return this.dcsid != null && this.dcsid.StartsWith("wMsgGeorge", StringComparison.OrdinalIgnoreCase);
+            }
+
             public bool isVoid()
             {
 
-                return (this.isSpecial() & !this.isOptions() & !this.isSelect() & !this.isMenu() & !this.isState() & !this.isRIO());
+                return (this.isSpecial() & !this.isOptions() & !this.isSelect() & !this.isMenu() & !this.isState() & !this.isRIO() & !this.isWSO() & !this.isGeorge());
 
             }
 
@@ -272,6 +281,7 @@ namespace VAICOM
             RIO_defensive,
             RIO_misc,
             AI_pilot,
+            AH64D_GeorgeAI,
             kneeboard,
             WSO,
             WSO_menu,

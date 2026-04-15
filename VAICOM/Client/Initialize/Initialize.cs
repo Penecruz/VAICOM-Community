@@ -132,6 +132,8 @@ namespace VAICOM
                 State.currentstate.easycomms = true;
                 State.currentmodule = DCSmodules.LookupTable["----"];
                 State.currentrecipientclass = Recipientclasses.Undefined;
+                State.AH64GeorgeWowFromExport = false;
+                State.AH64GeorgeWowFromServerState = false;
                 State.oneradioactive = true;
                 State.currentradiodevicename = "";
                 State.lastupdaterequesttimer = 0;
@@ -359,6 +361,8 @@ namespace VAICOM
                 {
                     Interfaces.Network.UDPsetup();
                     Interfaces.Network.UDPstart();
+                    Interfaces.Network.WebSocketSetup();
+                    Interfaces.Network.WebSocketStart();
                     Log.Write("Network setup completed successfully.", Colors.Message);
                 }
                 catch (Exception e)

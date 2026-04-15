@@ -315,7 +315,15 @@ namespace VAICOM.Properties {
                 return ResourceManager.GetString("Append_F14_JesterInit", resourceCulture);
             }
         }
-        
+
+        public static string Append_F4E_Jester_Interface
+        {
+            get
+            {
+                return ResourceManager.GetString("Append_F4E_Jester_Interface", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to -- VAICOM PRO server-side script
         ///-- 1.lua
@@ -1414,7 +1422,15 @@ namespace VAICOM.Properties {
                 return ResourceManager.GetString("Orig_F14_JesterInit", resourceCulture);
             }
         }
-        
+
+        public static string Orig_F4E_Jester_Interface
+        {
+            get
+            {
+                return ResourceManager.GetString("Orig_F4E_Jester_Interface", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to dofile(LockOn_Options.common_script_path..&quot;devices_defs.lua&quot;)
         ///dofile(LockOn_Options.common_script_path..&quot;ViewportHandling.lua&quot;)

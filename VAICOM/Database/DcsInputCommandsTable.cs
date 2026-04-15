@@ -2152,7 +2152,8 @@ namespace VAICOM
                 DcsInputCommandsTable.Add(2656, "iCommandViewSetObjectID");
                 DcsInputCommandsTable.Add(2657, "iCommandViewAWACSCASSetMapClickState");
                 DcsInputCommandsTable.Add(2658, "iCommandViewMapRouteTool");
-                DcsInputCommandsTable.Add(2659, "iCommandKeyMaximum");
+                DcsInputCommandsTable.Add(2659, "iCommandPlaneFeedbackRudderPedals");
+                DcsInputCommandsTable.Add(2660, "iCommandKeyMaximum");
                 DcsInputCommandsTable.Add(3000, "iCommandCockpitDeviceCommandsStart");
                 DcsInputCommandsTable.Add(3999, "iCommandCockpitDeviceCommandsEnd");
                 DcsInputCommandsTable.Add(4000, "iCommandRepKeyBegin");

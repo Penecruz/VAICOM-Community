@@ -131,6 +131,7 @@ namespace VAICOM
                 {CommandCategories.RIO_defensive,          "F-14 AI RIO | Defensive"       },
                 {CommandCategories.RIO_misc,               "F-14 AI RIO | Misc"            },
                 {CommandCategories.AI_pilot,               "F-14 AI Pilot"                 },
+                {CommandCategories.AH64D_GeorgeAI,         "AH-64D | George AI"            },
                 {CommandCategories.WSO,                    "F-4E AI WSO"                   },
                 {CommandCategories.WSO_menu,               "F-4E AI WSO | Crew Control"    },
                 {CommandCategories.WSO_radar,              "F-4E AI WSO | Radar"           },

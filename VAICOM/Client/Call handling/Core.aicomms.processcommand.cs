@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using VAICOM.Database;
 using VAICOM.Extensions.Kneeboard;
 using VAICOM.Extensions.WorldAudio;
+using VAICOM.Interfaces;
 using VAICOM.PushToTalk;
 using VAICOM.Servers;
 using VAICOM.Static;
@@ -479,6 +480,14 @@ namespace VAICOM
                                         KneeboardUpdater.SwitchPage("LOG");
                                         UI.Playsound.Proceed();
                                         break;
+                                    case "wMsgKneeboardNextTab":
+                                        CycleKneeboardTab(1);
+                                        UI.Playsound.Proceed();
+                                        break;
+                                    case "wMsgKneeboardPreviousTab":
+                                        CycleKneeboardTab(-1);
+                                        UI.Playsound.Proceed();
+                                        break;
                                     default:
                                         break;
                                 }
@@ -534,6 +543,33 @@ namespace VAICOM
 
                     }
 
+                }
+
+                private static void CycleKneeboardTab(int offset)
+                {
+                    List<string> tabcats = API.tabcats;
+                    int catnum = tabcats.IndexOf(State.KneeboardState.activecat.ToUpper()) + offset;
+                    if (catnum < 1)
+                    {
+                        catnum = tabcats.Count - 1;
+                    }
+                    if (catnum > tabcats.Count - 1)
+                    {
+                        catnum = 1;
+                    }
+
+                    string cat = tabcats[catnum];
+                    switch (cat)
+                    {
+                        case "TANKER":
+                            cat = "Tanker";
+                            break;
+                        case "FLIGHT":
+                            cat = "Flight";
+                            break;
+                    }
+
+                    KneeboardUpdater.SwitchPage(cat);
                 }
 
                 public static void SwapSRSListeningStates()
@@ -786,8 +822,8 @@ namespace VAICOM
                                 msgdur = 5
                             };
 
-                            // Send the command to the Jester 2.0 API using hb_send_proxy payload format
-                            HbSendProxyCommand.SendCommand(category, action, value);
+                            // Send the command to the Jester 2.0 API using hb_send_proxy fields
+                            HbSendProxyCommand.SendCommand(State.WebSocketClient, category, action, value);
                             Log.Write($"Command ID '{commandId}' sent using hb_send_proxy payload.", Colors.Text);
                         }
                         else

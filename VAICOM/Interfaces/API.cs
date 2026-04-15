@@ -25,13 +25,13 @@ namespace VAICOM
                         if (command.category == CommandCategories.WSO || (command.uniqueid >= 24000 && command.uniqueid <= 24999))
                         {
                             // Handle WSO command
-                            HbSendProxyCommand.SendWsoCommand(command.name);
+                            HbSendProxyCommand.SendWsoCommand(State.WebSocketClient, command.name);
                             vaProxy.WriteToLog($"Executed WSO command: {command.name}", Colors.Text);
                         }
                         else
                         {
                             // Handle other commands
-                            HbSendProxyCommand.SendCommand(command.category.ToString(), command.name, "");
+                            HbSendProxyCommand.SendCommand(State.WebSocketClient, command.category.ToString(), command.name, "");
                             vaProxy.WriteToLog($"Executed command: {command.name}", Colors.Text);
                         }
                     }
@@ -53,7 +53,7 @@ namespace VAICOM
             {
                 try
                 {
-                    HbSendProxyCommand.SendWsoCommand(commandName);
+                    HbSendProxyCommand.SendWsoCommand(State.WebSocketClient, commandName);
                 }
                 catch (Exception ex)
                 {
