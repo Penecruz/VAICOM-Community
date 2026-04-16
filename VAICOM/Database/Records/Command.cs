@@ -46,10 +46,6 @@ namespace VAICOM
             public double direction;
 
             public bool blockedforFC;
-            public bool blockedforFCnonPro;
-            public bool blockedforFree;
-            public bool requiresJester;
-            public bool requiresrealatc;
 
             public string servername;
             public string menuitemname;

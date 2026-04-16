@@ -131,7 +131,7 @@ namespace VAICOM
                                             string modinitfilecontent = File.ReadAllText(initfile);
 
                                             int desiredentryoccurrences = 0;
-                                            if (State.kneeboardactivated && State.activeconfig.Kneeboard_Enabled)
+                                            if (State.activeconfig.Kneeboard_Enabled)
                                             {
                                                 desiredentryoccurrences = 1;
                                             }

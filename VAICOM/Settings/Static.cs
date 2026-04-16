@@ -146,7 +146,6 @@ namespace VAICOM
                 { "database",   "Database"  },
                 { "profiles",   "Profiles"  },
                 { "export",     "Export"    },
-                //{ "extensions", "Extensions"}, //Extensions folder no longer required
             };
 
         }

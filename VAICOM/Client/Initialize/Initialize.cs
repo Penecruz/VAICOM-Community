@@ -108,8 +108,6 @@ namespace VAICOM
             public static void ResetProcessValues(dynamic vaProxy)
             {
                 State.dcsrunning = false;
-                State.tempblockedcommands = false;
-                State.blockedmodule = false;
                 State.blockallcommands = false;
             }
 
@@ -239,7 +237,7 @@ namespace VAICOM
                     try
                     {
                         // KNEEBOARD ADDITION
-                        if (State.kneeboardactivated && State.activeconfig.Kneeboard_Enabled && State.installkneeboard)
+                        if (State.activeconfig.Kneeboard_Enabled)
                         {
                             FileHandler.Lua.LuaFiles_Install_Kneeboard(false, State.clientmode.Equals(ClientModes.Normal)); // quiet if not debug
                         }
@@ -265,16 +263,11 @@ namespace VAICOM
 
                 try
                 {
-
-                    if (State.jesteractivated)
+                    int updates = Extensions.RIO.ExtImport.MergeRIO();
+                    if (updates > 0)
                     {
-                        int updates = Extensions.RIO.ExtImport.MergeRIO();
-                        if (updates > 0)
-                        {
-                            RIOmerged = true;
-                        }
+                        RIOmerged = true;
                     }
-
                 }
                 catch
                 {
@@ -429,8 +422,6 @@ namespace VAICOM
                     State.SetEnvironment(vaProxy);
                     ResetProcessValues(vaProxy);
 
-                    Products.Products.CheckActiveLicenses();
-
                     FileHandler.Root.CheckSubFolders();
                     FileHandler.Root.ExtractCompagnionApp();
                     FileHandler.Root.ExtractNoLoadContext();
@@ -476,12 +467,6 @@ namespace VAICOM
 
                     Log.Write("Startup finished.", Colors.Text);
                     Log.Write("Ready for commands.", Colors.Message);
-
-                    if (State.clientmode.Equals(ClientModes.Debug))
-                    {
-                        State.realatcactivated = true;
-                    }
-
                 }
                 catch (Exception e)
                 {
