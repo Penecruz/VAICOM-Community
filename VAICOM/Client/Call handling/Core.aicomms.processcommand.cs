@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Text;
+using System.Text.RegularExpressions;
 using VAICOM.Database;
 using VAICOM.Extensions.Kneeboard;
 using VAICOM.Extensions.WorldAudio;
@@ -797,6 +799,172 @@ namespace VAICOM
                     State.processlocked = false;
                     return true;
                 }
+
+                private static bool IsLaserCodeCommand(string commandId)
+                {
+                    return commandId.Equals("wMsgWSO_A2G_PaveSpike_LaserCode", StringComparison.OrdinalIgnoreCase)
+                        || commandId.Equals("wMsgWSO_A2G_PaveSpike_LaserCode_Silent", StringComparison.OrdinalIgnoreCase);
+                }
+
+                private static bool TryResolveDynamicWsoValue(string commandId, string mappedValue, out string resolvedValue)
+                {
+                    resolvedValue = mappedValue ?? "";
+
+                    if (!IsLaserCodeCommand(commandId) || !string.IsNullOrWhiteSpace(resolvedValue))
+                    {
+                        return true;
+                    }
+
+                    if (TryExtractLaserCodeFromSentence(State.currentfullsentence, out string extractedCode))
+                    {
+                        resolvedValue = extractedCode;
+                        return true;
+                    }
+
+                    Log.Write("WSO laser code command requires a valid 4-digit code (1111-1788).", Colors.Warning);
+                    return false;
+                }
+
+                private static bool TryExtractLaserCodeFromSentence(string sentence, out string laserCode)
+                {
+                    laserCode = "";
+
+                    if (string.IsNullOrWhiteSpace(sentence))
+                    {
+                        return false;
+                    }
+
+                    string preferredSearchText = sentence;
+                    int anchorIndex = sentence.IndexOf("laser code", StringComparison.OrdinalIgnoreCase);
+                    if (anchorIndex >= 0)
+                    {
+                        preferredSearchText = sentence.Substring(anchorIndex + "laser code".Length);
+                    }
+
+                    if (TryExtractLaserCodeFromText(preferredSearchText, out laserCode))
+                    {
+                        return true;
+                    }
+
+                    return !preferredSearchText.Equals(sentence, StringComparison.OrdinalIgnoreCase)
+                        && TryExtractLaserCodeFromText(sentence, out laserCode);
+                }
+
+                private static bool TryExtractLaserCodeFromText(string text, out string laserCode)
+                {
+                    laserCode = "";
+
+                    if (string.IsNullOrWhiteSpace(text))
+                    {
+                        return false;
+                    }
+
+                    Match directDigitsMatch = Regex.Match(text, @"\b([1-8]{4})\b");
+                    if (directDigitsMatch.Success)
+                    {
+                        string directCode = directDigitsMatch.Groups[1].Value;
+                        if (IsValidLaserCode(directCode))
+                        {
+                            laserCode = directCode;
+                            return true;
+                        }
+                    }
+
+                    StringBuilder spokenDigits = new StringBuilder(4);
+                    foreach (Match tokenMatch in Regex.Matches(text.ToLowerInvariant(), @"[a-z0-9]+"))
+                    {
+                        if (TryGetSpokenLaserDigit(tokenMatch.Value, out char digit))
+                        {
+                            spokenDigits.Append(digit);
+                            if (spokenDigits.Length == 4)
+                            {
+                                break;
+                            }
+                        }
+                    }
+
+                    if (spokenDigits.Length != 4)
+                    {
+                        return false;
+                    }
+
+                    string spokenCode = spokenDigits.ToString();
+                    if (!IsValidLaserCode(spokenCode))
+                    {
+                        return false;
+                    }
+
+                    laserCode = spokenCode;
+                    return true;
+                }
+
+                private static bool TryGetSpokenLaserDigit(string token, out char digit)
+                {
+                    switch (token)
+                    {
+                        case "1":
+                        case "one":
+                            digit = '1';
+                            return true;
+                        case "2":
+                        case "two":
+                            digit = '2';
+                            return true;
+                        case "3":
+                        case "three":
+                            digit = '3';
+                            return true;
+                        case "4":
+                        case "four":
+                        case "for":
+                            digit = '4';
+                            return true;
+                        case "5":
+                        case "five":
+                            digit = '5';
+                            return true;
+                        case "6":
+                        case "six":
+                            digit = '6';
+                            return true;
+                        case "7":
+                        case "seven":
+                            digit = '7';
+                            return true;
+                        case "8":
+                        case "eight":
+                        case "ate":
+                            digit = '8';
+                            return true;
+                        default:
+                            digit = '\0';
+                            return false;
+                    }
+                }
+
+                private static bool IsValidLaserCode(string code)
+                {
+                    if (string.IsNullOrWhiteSpace(code) || code.Length != 4)
+                    {
+                        return false;
+                    }
+
+                    foreach (char c in code)
+                    {
+                        if (c < '1' || c > '8')
+                        {
+                            return false;
+                        }
+                    }
+
+                    if (!int.TryParse(code, out int numericCode))
+                    {
+                        return false;
+                    }
+
+                    return numericCode >= 1111 && numericCode <= 1788;
+                }
+
                 //Jester 2.0 API WSO command sender
                 private static void SendCommandToJesterAPI(string commandId)
                 {
@@ -808,6 +976,11 @@ namespace VAICOM
                             string category = commandDetails.category;
                             string action = commandDetails.action;
                             string value = commandDetails.value;
+
+                            if (!TryResolveDynamicWsoValue(commandId, value, out value))
+                            {
+                                return;
+                            }
 
                             // Construct the command string in the format "category|action|value"
                             string commandString = $"{category}|{action}|{value}";

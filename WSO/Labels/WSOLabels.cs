@@ -100,6 +100,30 @@ namespace VAICOM.Extensions.WSO
             { "wMsgWSO_Ground_Ladder_Remove", "WSO Ground Remove Ladder" },
             { "wMsgWSO_Ground_Steps_Extend", "WSO Ground Extend Steps" },
             { "wMsgWSO_Ground_Steps_Retract", "WSO Ground Retract Steps" },
+            { "wMsgWSO_Ground_CommsCheck", "WSO Ground Comms Check" },
+            { "wMsgWSO_Ground_PitotCheck", "WSO Ground Pitot Check" },
+            { "wMsgWSO_Ground_SpoilerActuatorCheck", "WSO Ground Spoiler Actuator Check" },
+            { "wMsgWSO_Ground_FlightControlsCheck", "WSO Ground Flight Controls Check" },
+            { "wMsgWSO_Ground_AriCheck", "WSO Ground ARI Check" },
+            { "wMsgWSO_Ground_StabAugCheck", "WSO Ground Stab Aug Check" },
+            { "wMsgWSO_Ground_TrimCheck", "WSO Ground Trim Check" },
+
+            // Phase 2 commands
+            { "wMsgWSO_Systems_FlaresJettison", "WSO Flares Jettison" },
+            { "wMsgWSO_Systems_Countermeasures_Quantity", "WSO Countermeasures Quantity" },
+            { "wMsgWSO_Radar_FocusTarget_Direct", "WSO Focus Target Direct" },
+            { "wMsgWSO_Radar_LockTarget_Direct", "WSO Lock Target Direct" },
+            { "wMsgWSO_Radar_UnlockTarget", "WSO Unlock Target" },
+            { "wMsgWSO_Radio_TuneATC_Direct", "WSO Tune ATC Direct" },
+            { "wMsgWSO_A2G_PaveSpike_Operation", "WSO Pave Spike Operation" },
+            { "wMsgWSO_A2G_PaveSpike_LockUnlockTargetAhead", "WSO Pave Spike Lock Target Ahead" },
+            { "wMsgWSO_A2G_PaveSpike_LaserCode", "WSO Pave Spike Laser Code" },
+            { "wMsgWSO_A2G_PaveSpike_LaserCode_Silent", "WSO Pave Spike Laser Code Silent" },
+
+            // Context response commands
+            { "wMsgWSO_Context_Action_Short", "WSO Context Action Short" },
+            { "wMsgWSO_Context_Action_Long", "WSO Context Action Long" },
+            { "wMsgWSO_Context_Action_Double", "WSO Context Action Double" },
         };
     }
 }

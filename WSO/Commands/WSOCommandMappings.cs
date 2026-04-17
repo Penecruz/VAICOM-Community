@@ -94,6 +94,30 @@ namespace VAICOM.WSO
             { "wMsgWSO_Ground_Ladder_Remove", ("select", "ladder_remove", "") },
             { "wMsgWSO_Ground_Steps_Extend", ("select", "steps_extend", "") },
             { "wMsgWSO_Ground_Steps_Retract", ("select", "steps_retract", "") },
+            { "wMsgWSO_Ground_CommsCheck", ("select", "comms_check", "") },
+            { "wMsgWSO_Ground_PitotCheck", ("select", "pitot_check", "") },
+            { "wMsgWSO_Ground_SpoilerActuatorCheck", ("select", "spoiler_actuator_check", "") },
+            { "wMsgWSO_Ground_FlightControlsCheck", ("select", "flight_controls_check", "") },
+            { "wMsgWSO_Ground_AriCheck", ("select", "ari_check", "") },
+            { "wMsgWSO_Ground_StabAugCheck", ("select", "stab_aug_check", "") },
+            { "wMsgWSO_Ground_TrimCheck", ("select", "trim_check", "") },
+
+            // Phase 2 commands Values? TODO: Update these with correct values if needed
+            { "wMsgWSO_Systems_FlaresJettison", ("select", "systems_flares_jettison", "") },
+            { "wMsgWSO_Systems_Countermeasures_Quantity", ("select", "systems_countermeasures_quantity", "") },
+            { "wMsgWSO_Radar_FocusTarget_Direct", ("select", "radar_focus_target", "") },
+            { "wMsgWSO_Radar_LockTarget_Direct", ("select", "radar_lock_target", "") },
+            { "wMsgWSO_Radar_UnlockTarget", ("select", "radar_unlock_tgt", "") },
+            { "wMsgWSO_Radio_TuneATC_Direct", ("select", "radio_tune_atc", "") },
+            { "wMsgWSO_A2G_PaveSpike_Operation", ("select", "pave_spike_op", "") },
+            { "wMsgWSO_A2G_PaveSpike_LockUnlockTargetAhead", ("select", "pave_spike_lock_unlock_tgt_ahead", "") },
+            { "wMsgWSO_A2G_PaveSpike_LaserCode", ("select", "pave_spike_laser_code", "") },
+            { "wMsgWSO_A2G_PaveSpike_LaserCode_Silent", ("select", "pave_spike_laser_code_silent", "") },
+
+            // Jester Contextual Menu response commands
+            { "wMsgWSO_Context_Action_Short", ("select", "context_action_short", "") },
+            { "wMsgWSO_Context_Action_Long", ("select", "context_action_long", "") },
+            { "wMsgWSO_Context_Action_Double", ("select", "context_action_double", "") },
         };
     }
 }

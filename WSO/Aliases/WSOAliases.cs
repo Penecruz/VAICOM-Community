@@ -86,7 +86,7 @@ namespace VAICOM.Extensions.WSO
             { "Countermeasures Mine", "wMsgWSO_Crew_Countermeasures_Manual" },
             { "Countermeasures Yours", "wMsgWSO_Crew_Countermeasures_Jester" },
 
-            // Ground Crew aliases
+            // F-4E Ground Crew aliases
             { "Ground Chocks Place", "wMsgWSO_Ground_WheelChocks_Place" },
             { "Ground Chocks Remove", "wMsgWSO_Ground_WheelChocks_Remove" },
             { "Ground Power Connect", "wMsgWSO_Ground_Power_Connect" },
@@ -98,10 +98,34 @@ namespace VAICOM.Extensions.WSO
             { "Ground Air Disconnect", "wMsgWSO_Ground_Air_Disconnect" },
             { "Ground Load Start Cartridges", "wMsgWSO_Ground_EngineStartCartridges_Load" },
             { "Ground Remove Start Cartridges", "wMsgWSO_Ground_EngineStartCartridges_Remove" },
-            { "Ground Set The Ladder", "wMsgWSO_Ground_Ladder_Place" },
-            { "Ground Remove The Ladder", "wMsgWSO_Ground_Ladder_Remove" },
+            { "Ground Place the Ladder", "wMsgWSO_Ground_Ladder_Place" },
+            { "Ground Remove the Ladder", "wMsgWSO_Ground_Ladder_Remove" },
             { "Ground Extend Steps", "wMsgWSO_Ground_Steps_Extend" },
             { "Ground Retract Steps", "wMsgWSO_Ground_Steps_Retract" },
+            { "Ground Comms Check", "wMsgWSO_Ground_CommsCheck" },
+            { "Ground Pitot Check", "wMsgWSO_Ground_PitotCheck" },
+            { "Ground Spoilers Check", "wMsgWSO_Ground_SpoilerActuatorCheck" },
+            { "Ground Flight Controls Check", "wMsgWSO_Ground_FlightControlsCheck" },
+            { "Ground A R I Check", "wMsgWSO_Ground_AriCheck" },
+            { "Ground Stab Aug Check", "wMsgWSO_Ground_StabAugCheck" },
+            { "Ground Trim Check", "wMsgWSO_Ground_TrimCheck" },
+
+            // Phase 2 aliases
+            { "Systems Jettison Flares", "wMsgWSO_Systems_FlaresJettison" },
+            { "Systems Countermeasures Quantity", "wMsgWSO_Systems_Countermeasures_Quantity" },
+            { "Radar Focus Target Direct", "wMsgWSO_Radar_FocusTarget_Direct" },
+            { "Radar Lock Target Direct", "wMsgWSO_Radar_LockTarget_Direct" },
+            { "Radar Unlock Target", "wMsgWSO_Radar_UnlockTarget" },
+            { "Radio Tune ATC Direct", "wMsgWSO_Radio_TuneATC_Direct" },
+            { "Pave Spike Operation", "wMsgWSO_A2G_PaveSpike_Operation" },
+            { "Pave Spike Lock Target Ahead", "wMsgWSO_A2G_PaveSpike_LockUnlockTargetAhead" },
+            { "Pave Spike Laser Code", "wMsgWSO_A2G_PaveSpike_LaserCode" },
+            { "Pave Spike Laser Code Silent", "wMsgWSO_A2G_PaveSpike_LaserCode_Silent" },
+
+            // Context response aliases
+            { "Context Select", "wMsgWSO_Context_Action_Short" },
+            { "Context Hold", "wMsgWSO_Context_Action_Long" },
+            { "Context Double", "wMsgWSO_Context_Action_Double" },
         };
     }
 }
