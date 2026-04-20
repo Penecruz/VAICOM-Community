@@ -105,6 +105,9 @@ namespace VAICOM
 
         // WebSocket Server
         public static WebSocket WebSocketClient;
+        public static readonly object WsoNavCacheLock = new object();
+        public static Dictionary<string, string> WsoNavCacheByActionAndIndex = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        public static Dictionary<string, string> WsoNavCacheByActionAndName = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
         // for world Messages receive
 

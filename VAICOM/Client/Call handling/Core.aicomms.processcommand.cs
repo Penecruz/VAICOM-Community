@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using VAICOM.Database;
@@ -800,169 +801,292 @@ namespace VAICOM
                     return true;
                 }
 
-                private static bool IsLaserCodeCommand(string commandId)
-                {
-                    return commandId.Equals("wMsgWSO_A2G_PaveSpike_LaserCode", StringComparison.OrdinalIgnoreCase)
-                        || commandId.Equals("wMsgWSO_A2G_PaveSpike_LaserCode_Silent", StringComparison.OrdinalIgnoreCase);
-                }
-
-                private static bool TryResolveDynamicWsoValue(string commandId, string mappedValue, out string resolvedValue)
+                private static bool TryResolveDynamicWsoValue(string commandId, string action, string mappedValue, out string resolvedValue)
                 {
                     resolvedValue = mappedValue ?? "";
 
-                    if (!IsLaserCodeCommand(commandId) || !string.IsNullOrWhiteSpace(resolvedValue))
+                    if (!string.IsNullOrWhiteSpace(resolvedValue))
                     {
                         return true;
                     }
 
-                    if (TryExtractLaserCodeFromSentence(State.currentfullsentence, out string extractedCode))
+                    if (TryResolveValueFromNavCache(action, State.currentfullsentence, out string cachedValue, out string cacheKey))
                     {
-                        resolvedValue = extractedCode;
+                        resolvedValue = cachedValue;
+                        Log.Write($"WSO command '{commandId}' resolved from NAV cache [{cacheKey}] => {cachedValue}", Colors.Text);
                         return true;
                     }
 
-                    Log.Write("WSO laser code command requires a valid 4-digit code (1111-1788).", Colors.Warning);
+                    return true;
+                }
+
+                private static bool TryResolveValueFromNavCache(string action, string sentence, out string resolvedValue, out string cacheKey)
+                {
+                    resolvedValue = "";
+                    cacheKey = "";
+
+                    if (string.IsNullOrWhiteSpace(action))
+                    {
+                        return false;
+                    }
+
+                    if (TryExtractIndexFromCommandAlias(out string aliasIndex))
+                    {
+                        lock (State.WsoNavCacheLock)
+                        {
+                            if (action.Equals("divert_tgt1_lat_lon", StringComparison.OrdinalIgnoreCase)
+                                && AliasRequestsSecondaryFlightPlan()
+                                && State.WsoNavCacheByActionAndIndex.TryGetValue($"{action}|fp2|{aliasIndex}", out string secondaryAliasIndexedValue)
+                                && !string.IsNullOrWhiteSpace(secondaryAliasIndexedValue))
+                            {
+                                resolvedValue = secondaryAliasIndexedValue;
+                                cacheKey = $"fp2-alias-idx={aliasIndex}";
+                                return true;
+                            }
+
+                            if (State.WsoNavCacheByActionAndIndex.TryGetValue($"{action}|{aliasIndex}", out string aliasIndexedValue)
+                                && !string.IsNullOrWhiteSpace(aliasIndexedValue))
+                            {
+                                resolvedValue = aliasIndexedValue;
+                                cacheKey = $"alias-idx={aliasIndex}";
+                                return true;
+                            }
+                        }
+                    }
+
+                    if (TryExtractIndexFromSentence(sentence, out string index))
+                    {
+                        lock (State.WsoNavCacheLock)
+                        {
+                            if (action.Equals("divert_tgt1_lat_lon", StringComparison.OrdinalIgnoreCase)
+                                && AliasRequestsSecondaryFlightPlan()
+                                && State.WsoNavCacheByActionAndIndex.TryGetValue($"{action}|fp2|{index}", out string secondaryIndexedValue)
+                                && !string.IsNullOrWhiteSpace(secondaryIndexedValue))
+                            {
+                                resolvedValue = secondaryIndexedValue;
+                                cacheKey = $"fp2-idx={index}";
+                                return true;
+                            }
+
+                            if (State.WsoNavCacheByActionAndIndex.TryGetValue($"{action}|{index}", out string indexedValue)
+                                && !string.IsNullOrWhiteSpace(indexedValue))
+                            {
+                                resolvedValue = indexedValue;
+                                cacheKey = $"idx={index}";
+                                return true;
+                            }
+                        }
+                    }
+
+                    string normalizedSentence = NormalizeNavLookupText(sentence);
+                    if (!string.IsNullOrWhiteSpace(normalizedSentence))
+                    {
+                        string bestValue = "";
+                        string bestName = "";
+                        int bestMatchLength = -1;
+
+                        lock (State.WsoNavCacheLock)
+                        {
+                            foreach (KeyValuePair<string, string> entry in State.WsoNavCacheByActionAndName)
+                            {
+                                if (!entry.Key.StartsWith(action + "|", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    continue;
+                                }
+
+                                string candidateName = entry.Key.Substring(action.Length + 1);
+                                string normalizedCandidate = NormalizeNavLookupText(candidateName);
+                                if (string.IsNullOrWhiteSpace(normalizedCandidate))
+                                {
+                                    continue;
+                                }
+
+                                if (!normalizedSentence.Contains(normalizedCandidate) || normalizedCandidate.Length <= bestMatchLength)
+                                {
+                                    continue;
+                                }
+
+                                bestMatchLength = normalizedCandidate.Length;
+                                bestName = candidateName;
+                                bestValue = entry.Value;
+                            }
+                        }
+
+                        if (!string.IsNullOrWhiteSpace(bestValue))
+                        {
+                            resolvedValue = bestValue;
+                            cacheKey = $"name={bestName}";
+                            return true;
+                        }
+                    }
+
+                    lock (State.WsoNavCacheLock)
+                    {
+                        HashSet<string> actionValues = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+                        foreach (KeyValuePair<string, string> entry in State.WsoNavCacheByActionAndName)
+                        {
+                            if (entry.Key.StartsWith(action + "|", StringComparison.OrdinalIgnoreCase)
+                                && !string.IsNullOrWhiteSpace(entry.Value))
+                            {
+                                actionValues.Add(entry.Value);
+                            }
+                        }
+
+                        foreach (KeyValuePair<string, string> entry in State.WsoNavCacheByActionAndIndex)
+                        {
+                            if (entry.Key.StartsWith(action + "|", StringComparison.OrdinalIgnoreCase)
+                                && !string.IsNullOrWhiteSpace(entry.Value))
+                            {
+                                actionValues.Add(entry.Value);
+                            }
+                        }
+
+                        if (actionValues.Count == 1)
+                        {
+                            resolvedValue = actionValues.First();
+                            cacheKey = "single-action-value";
+                            return true;
+                        }
+                    }
+
                     return false;
                 }
 
-                private static bool TryExtractLaserCodeFromSentence(string sentence, out string laserCode)
+                private static bool AliasRequestsSecondaryFlightPlan()
                 {
-                    laserCode = "";
+                    if (!State.usedalias.ContainsKey("command"))
+                    {
+                        return false;
+                    }
+
+                    string commandAlias = State.usedalias["command"] ?? "";
+                    return commandAlias.IndexOf("flight plan 2", StringComparison.OrdinalIgnoreCase) >= 0
+                        || commandAlias.IndexOf("flight plan two", StringComparison.OrdinalIgnoreCase) >= 0
+                        || commandAlias.IndexOf("secondary flight plan", StringComparison.OrdinalIgnoreCase) >= 0;
+                }
+
+                private static bool TryExtractIndexFromCommandAlias(out string index)
+                {
+                    index = "";
+
+                    if (!State.usedalias.ContainsKey("command"))
+                    {
+                        return false;
+                    }
+
+                    string commandAlias = State.usedalias["command"];
+                    if (string.IsNullOrWhiteSpace(commandAlias))
+                    {
+                        return false;
+                    }
+
+                    return TryExtractIndexFromSentence(commandAlias, out index);
+                }
+
+                private static bool TryExtractIndexFromSentence(string sentence, out string index)
+                {
+                    index = "";
 
                     if (string.IsNullOrWhiteSpace(sentence))
                     {
                         return false;
                     }
 
-                    string preferredSearchText = sentence;
-                    int anchorIndex = sentence.IndexOf("laser code", StringComparison.OrdinalIgnoreCase);
-                    if (anchorIndex >= 0)
+                    MatchCollection matches = Regex.Matches(sentence, @"\b\d{1,3}\b");
+                    foreach (Match match in matches)
                     {
-                        preferredSearchText = sentence.Substring(anchorIndex + "laser code".Length);
-                    }
+                        if (!int.TryParse(match.Value, out int parsedIndex))
+                        {
+                            continue;
+                        }
 
-                    if (TryExtractLaserCodeFromText(preferredSearchText, out laserCode))
-                    {
+                        if (parsedIndex < 0)
+                        {
+                            continue;
+                        }
+
+                        index = parsedIndex.ToString();
                         return true;
                     }
 
-                    return !preferredSearchText.Equals(sentence, StringComparison.OrdinalIgnoreCase)
-                        && TryExtractLaserCodeFromText(sentence, out laserCode);
+                    foreach (Match tokenMatch in Regex.Matches(sentence.ToLowerInvariant(), @"[a-z0-9]+"))
+                    {
+                        if (!TryParseSpokenWaypointIndex(tokenMatch.Value, out int spokenIndex))
+                        {
+                            continue;
+                        }
+
+                        index = spokenIndex.ToString();
+                        return true;
+                    }
+
+                    return false;
                 }
 
-                private static bool TryExtractLaserCodeFromText(string text, out string laserCode)
+                private static bool TryParseSpokenWaypointIndex(string token, out int index)
                 {
-                    laserCode = "";
+                    index = 0;
 
-                    if (string.IsNullOrWhiteSpace(text))
-                    {
-                        return false;
-                    }
-
-                    Match directDigitsMatch = Regex.Match(text, @"\b([1-8]{4})\b");
-                    if (directDigitsMatch.Success)
-                    {
-                        string directCode = directDigitsMatch.Groups[1].Value;
-                        if (IsValidLaserCode(directCode))
-                        {
-                            laserCode = directCode;
-                            return true;
-                        }
-                    }
-
-                    StringBuilder spokenDigits = new StringBuilder(4);
-                    foreach (Match tokenMatch in Regex.Matches(text.ToLowerInvariant(), @"[a-z0-9]+"))
-                    {
-                        if (TryGetSpokenLaserDigit(tokenMatch.Value, out char digit))
-                        {
-                            spokenDigits.Append(digit);
-                            if (spokenDigits.Length == 4)
-                            {
-                                break;
-                            }
-                        }
-                    }
-
-                    if (spokenDigits.Length != 4)
-                    {
-                        return false;
-                    }
-
-                    string spokenCode = spokenDigits.ToString();
-                    if (!IsValidLaserCode(spokenCode))
-                    {
-                        return false;
-                    }
-
-                    laserCode = spokenCode;
-                    return true;
-                }
-
-                private static bool TryGetSpokenLaserDigit(string token, out char digit)
-                {
                     switch (token)
                     {
-                        case "1":
                         case "one":
-                            digit = '1';
+                        case "first":
+                            index = 1;
                             return true;
-                        case "2":
                         case "two":
-                            digit = '2';
+                        case "second":
+                            index = 2;
                             return true;
-                        case "3":
                         case "three":
-                            digit = '3';
+                        case "third":
+                            index = 3;
                             return true;
-                        case "4":
                         case "four":
-                        case "for":
-                            digit = '4';
+                        case "fourth":
+                            index = 4;
                             return true;
-                        case "5":
                         case "five":
-                            digit = '5';
+                        case "fifth":
+                            index = 5;
                             return true;
-                        case "6":
                         case "six":
-                            digit = '6';
+                        case "sixth":
+                            index = 6;
                             return true;
-                        case "7":
                         case "seven":
-                            digit = '7';
+                        case "seventh":
+                            index = 7;
                             return true;
-                        case "8":
                         case "eight":
-                        case "ate":
-                            digit = '8';
+                        case "eighth":
+                            index = 8;
+                            return true;
+                        case "nine":
+                        case "ninth":
+                            index = 9;
+                            return true;
+                        case "ten":
+                        case "tenth":
+                            index = 10;
                             return true;
                         default:
-                            digit = '\0';
                             return false;
                     }
                 }
 
-                private static bool IsValidLaserCode(string code)
+                private static string NormalizeNavLookupText(string input)
                 {
-                    if (string.IsNullOrWhiteSpace(code) || code.Length != 4)
+                    if (string.IsNullOrWhiteSpace(input))
                     {
-                        return false;
+                        return "";
                     }
 
-                    foreach (char c in code)
-                    {
-                        if (c < '1' || c > '8')
-                        {
-                            return false;
-                        }
-                    }
-
-                    if (!int.TryParse(code, out int numericCode))
-                    {
-                        return false;
-                    }
-
-                    return numericCode >= 1111 && numericCode <= 1788;
+                    string lowered = input.ToLowerInvariant();
+                    lowered = lowered.Replace("int'l", "international");
+                    lowered = Regex.Replace(lowered, @"\bintl\b", "international");
+                    string normalized = Regex.Replace(lowered, @"[^a-z0-9]+", " ");
+                    return Regex.Replace(normalized, @"\s+", " ").Trim();
                 }
 
                 //Jester 2.0 API WSO command sender
@@ -977,7 +1101,7 @@ namespace VAICOM
                             string action = commandDetails.action;
                             string value = commandDetails.value;
 
-                            if (!TryResolveDynamicWsoValue(commandId, value, out value))
+                            if (!TryResolveDynamicWsoValue(commandId, action, value, out value))
                             {
                                 return;
                             }
