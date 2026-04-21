@@ -495,6 +495,26 @@ namespace VAICOM
                         break;
 
                     // F-4E WSO commands
+                    case "wso.navigation.waypoint":
+                        string waypoint = GetNumberFromCommand();
+                        // If a waypoint number was in the command then resolve it to the full value, otherwise it's just the next turning point
+                        if (String.IsNullOrEmpty(waypoint))
+                        {
+                            HbSendProxyCommand.SendWsoCommand(State.WebSocketClient, "wMsgWSO_Navigation_ResumeNextWaypoint");
+                        }
+                        else
+                        {
+                            if (State.WsoNavCacheByActionAndIndex.TryGetValue($"resume_flightplan_1|{waypoint}", out string resolvedWaypoint)
+                                    && !string.IsNullOrWhiteSpace(resolvedWaypoint))
+                            {
+                                HbSendProxyCommand.SendWsoCommand(State.WebSocketClient, "wMsgWSO_Navigation_GoToResume", resolvedWaypoint);
+                            }
+                            else
+                            {
+                                vaProxy.WriteToLog($"Waypoint {waypoint} not found", Colors.Warning);
+                            }
+                        }
+                        break;
 
                     case "wso.radio.setchn":
                         string commChannel = GetNumberFromCommand();

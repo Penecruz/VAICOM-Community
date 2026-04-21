@@ -801,7 +801,7 @@ namespace VAICOM
                     return true;
                 }
 
-                private static bool TryResolveDynamicWsoValue(string commandId, string action, string mappedValue, out string resolvedValue)
+                public static bool TryResolveDynamicWsoValue(string commandId, string action, string mappedValue, out string resolvedValue)
                 {
                     resolvedValue = mappedValue ?? "";
 
