@@ -23,8 +23,6 @@ namespace VAICOM.Extensions.WSO
             { "Lantirn Undesignate", "wMsgWSO_Lantirn_Undesignate" },
             { "Go Radar Silent", "wMsgWSO_Radar_GoSilent" },
             { "Go Radar Active", "wMsgWSO_Radar_GoActive" },
-            { "Set Manual Frequency", "wMsgWSO_Radio_SetManualFrequency" },
-            { "Select Comm Channel", "wMsgWSO_Radio_SelectCommChannel" },
             { "Select Aux Channel", "wMsgWSO_Radio_SelectAuxChannel" },
             { "Tune ATC", "wMsgWSO_Radio_TuneATC" },
             { "Tune Assets", "wMsgWSO_Radio_TuneAssets" },

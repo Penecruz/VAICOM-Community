@@ -5,6 +5,7 @@ using VAICOM.Extensions.WorldAudio;
 using VAICOM.FileManager;
 using VAICOM.PushToTalk;
 using VAICOM.Static;
+using VAICOM.WSO;
 
 namespace VAICOM
 {
@@ -493,7 +494,23 @@ namespace VAICOM
                         }
                         break;
 
-                    // --------------------------------------------------------------------------
+                    // F-4E WSO commands
+
+                    case "wso.radio.setchn":
+                        string commChannel = GetNumberFromCommand();
+                        HbSendProxyCommand.SendWsoCommand(State.WebSocketClient, "wMsgWSO_Radio_SelectCommChannel", commChannel);
+                        break;
+
+                    case "wso.radio.setauxchn":
+                        string auxChannel = GetNumberFromCommand();
+                        HbSendProxyCommand.SendWsoCommand(State.WebSocketClient, "wMsgWSO_Radio_SelectAuxChannel", auxChannel);
+                        break;
+
+                    case "wso.radio.tunefreq":
+                        string radioFrequency = GetNumberFromCommand();
+                        string fullRadioFrequency = radioFrequency.PadRight(6, '0');
+                        HbSendProxyCommand.SendWsoCommand(State.WebSocketClient, "wMsgWSO_Radio_SetManualFrequency", fullRadioFrequency);
+                        break;
 
                     case "test":
                         API.API_Test(vaProxy);
@@ -561,6 +578,11 @@ namespace VAICOM
                 }
             }
 
+            private static string GetNumberFromCommand()
+            {
+                string tokens = "{TXTNUM:\"{CMD}\"}";
+                return State.Proxy.Utility.ParseTokens(tokens);
+            }
         }
     }
 }

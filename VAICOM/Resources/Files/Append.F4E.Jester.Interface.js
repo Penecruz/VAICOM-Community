@@ -59,7 +59,7 @@ function sendNavCacheSnapshot(reason) {
 		}));
 	} catch (e) {
 		if (isSocketOpen()) {
-			socket.send(`F4E nav cache error: ${e}`);
+			socket.send(`F-4E nav cache error: ${e}`);
 		}
 	}
 }
@@ -70,9 +70,10 @@ function hb_send_proxy(category, action, value = "") {
 	}
 
 	if (typeof window.edQuery === "function") {
-      if (isSocketOpen()) {
+		if (isSocketOpen()) {
 			socket.send(`Jester Menu: ${category}|${action}|${value}`);
 		}
+
 		window.edQuery({
 			request: `${category}|${action}|${value}`,
 			persistent: false,
@@ -81,6 +82,7 @@ function hb_send_proxy(category, action, value = "") {
 			onFailure: function (error_code, error_message) {
 			}
 		});
+
         setTimeout(function () {
 			sendNavCacheSnapshot("command");
 		}, 50);
@@ -94,22 +96,23 @@ const socket = new WebSocket("ws://127.0.0.1:33495/vaicom/wso/");
 
 // Connection opened
 socket.addEventListener("open", (event) => {
-	socket.send("F4-E: connected");
- setTimeout(function () {
+	socket.send("F-4E: connected");
+	
+	setTimeout(function () {
 		sendNavCacheSnapshot("socket_open");
 	}, 200);
 });
 
 // Listen for messages
 socket.addEventListener("message", (event) => {
-  if (isSocketOpen()) {
+	if (isSocketOpen()) {
 		try {
 			const { category, action, value } = JSON.parse(event.data);
 			if (category !== undefined && action !== undefined) {
 				hb_send_proxy(category, action, value);
 			}
 		} catch (e) {
-			socket.send(`F4E error: ${e}`);
+			socket.send(`F-4E error: ${e}`);
 		}
 	}
 });
