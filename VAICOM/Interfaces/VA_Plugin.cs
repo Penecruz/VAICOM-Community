@@ -516,6 +516,19 @@ namespace VAICOM
                         }
                         break;
 
+                    case "wso.navigation.holdpoint":
+                        string holdpoint = GetNumberFromCommand();
+                        // If a waypoint number was in the command then hold at that waypoint, otherwise it's just the current turning point
+                        if (String.IsNullOrEmpty(holdpoint))
+                        {
+                            HbSendProxyCommand.SendWsoCommand(State.WebSocketClient, "wMsgWSO_Navigation_Holding_CurrentTurnPoint");
+                        }
+                        else
+                        {
+                            HbSendProxyCommand.SendWsoCommand(State.WebSocketClient, "wMsgWSO_Navigation_Holding_FlightPlan1TurnPoint", holdpoint);
+                        }
+                        break;
+
                     case "wso.radio.setchn":
                         string commChannel = GetNumberFromCommand();
                         HbSendProxyCommand.SendWsoCommand(State.WebSocketClient, "wMsgWSO_Radio_SelectCommChannel", commChannel);

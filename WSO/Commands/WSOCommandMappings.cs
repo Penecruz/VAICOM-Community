@@ -51,6 +51,7 @@ namespace VAICOM.WSO
             { "wMsgWSO_Navigation_GoToResume", ("select", "resume_flightplan_1", "") },
             { "wMsgWSO_Navigation_ResumeNextWaypoint", ("select", "resume_next_wpt", "") },
             { "wMsgWSO_Navigation_Holding_CurrentTurnPoint", ("select", "hold_curr_wpt", "") },
+            { "wMsgWSO_Navigation_Holding_FlightPlan1TurnPoint", ("select", "hold_flightplan_1", "") },
             { "wMsgWSO_Navigation_Divert_LatLong", ("select", "divert_tgt1_lat_lon", "") },
             { "wMsgWSO_Navigation_TACAN_SelectMode_Off", ("select", "nav_tacan_mode", "off") },
             { "wMsgWSO_Navigation_TACAN_SelectMode_R", ("select", "nav_tacan_mode", "r") },

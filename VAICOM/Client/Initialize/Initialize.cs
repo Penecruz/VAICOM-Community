@@ -301,9 +301,9 @@ namespace VAICOM
                         }
                     }
                 }
-                catch
+                catch(Exception e)
                 {
-                    Log.Write("WARNING: Could not load the WSO plugin extension.", Colors.Warning);
+                    Log.Write($"WARNING: Could not load the WSO plugin extension: {e.Message}, {e.StackTrace}", Colors.Warning);
                     WSOmerged = false;
                 }
 
