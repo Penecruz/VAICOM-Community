@@ -18,18 +18,18 @@ namespace VAICOM
 
             private void SetConfigEnableWorldSpeech(object sender, RoutedEventArgs e) { State.activeconfig.Redirect_World_Speech = true; }
             private void SetConfigDisableWorldSpeech(object sender, RoutedEventArgs e) { State.activeconfig.Redirect_World_Speech = false; }
-            private void SetCurrentValueWorldSpeech(object sender, EventArgs e) { Redirect_World_Speech.IsEnabled = State.PRO; Redirect_World_Speech.IsChecked = State.activeconfig.Redirect_World_Speech; }
+            private void SetCurrentValueWorldSpeech(object sender, EventArgs e) { Redirect_World_Speech.IsEnabled = true; Redirect_World_Speech.IsChecked = State.activeconfig.Redirect_World_Speech; }
 
             // wingman
 
             private void SetConfigEnableWingman(object sender, RoutedEventArgs e) { State.activeconfig.Wingman_Emulate = true; }
             private void SetConfigDisableWingman(object sender, RoutedEventArgs e) { State.activeconfig.Wingman_Emulate = false; }
-            private void SetCurrentValueWingman(object sender, EventArgs e) { Wingman_Enable.IsEnabled = (State.PRO && State.dll_installed_wingman); Wingman_Enable.IsChecked = (State.activeconfig.Wingman_Emulate && State.dll_installed_wingman); }
+            private void SetCurrentValueWingman(object sender, EventArgs e) { Wingman_Enable.IsEnabled = State.dll_installed_wingman; Wingman_Enable.IsChecked = (State.activeconfig.Wingman_Emulate && State.dll_installed_wingman); }
 
             // no longer used
             private void Liveliness_Init(object sender, EventArgs e)
             {
-                Wingman_Liveliness.IsEnabled = (State.PRO && State.dll_installed_wingman);
+                Wingman_Liveliness.IsEnabled = State.dll_installed_wingman;
                 Wingman_Liveliness.Value = State.activeconfig.Wingman_Liveliness;
             }
             private void Liveliness_Change(object sender, RoutedPropertyChangedEventArgs<double> e)
@@ -98,7 +98,7 @@ namespace VAICOM
 
             public void SetAudioDeviceSelector()
             {
-                AudioDevice_Selector.IsEnabled = (State.PRO && State.activeconfig.Redirect_World_Speech);
+                AudioDevice_Selector.IsEnabled = State.activeconfig.Redirect_World_Speech;
                 string displaytext = "---";
                 try
                 {
@@ -153,7 +153,7 @@ namespace VAICOM
             // for chatter (independent)
             private void Pan_Setting_Init(object sender, EventArgs e)
             {
-                Chatter_Pan.IsEnabled = State.chatterthemesactivated;
+                Chatter_Pan.IsEnabled = true;
                 Chatter_Pan.Value = State.activeconfig.ChatterPanSetting;
             }
             private void Pan_Setting_Change(object sender, RoutedPropertyChangedEventArgs<double> e)
@@ -253,7 +253,7 @@ namespace VAICOM
 
             private void Pan_AOCS_Setting_Init(object sender, EventArgs e)
             {
-                Pan_AOCS.IsEnabled = State.PRO;
+                Pan_AOCS.IsEnabled = true;
                 Pan_AOCS.Value = State.activeconfig.PanSetting_AOCS;
             }
             private void Pan_AOCS_Setting_Change(object sender, RoutedPropertyChangedEventArgs<double> e)
@@ -268,7 +268,7 @@ namespace VAICOM
 
             private void Init_Button_init(object sender, EventArgs e)
             {
-                World_Init_Button.IsEnabled = (State.PRO && State.activeconfig.Redirect_World_Speech);
+                World_Init_Button.IsEnabled = State.activeconfig.Redirect_World_Speech;
             }
             private void WorldReset(object sender, MouseButtonEventArgs e) // press init button
             {
@@ -303,7 +303,7 @@ namespace VAICOM
                     World_Sw_Up.Visibility = Visibility.Hidden;
                 }
 
-                World_Sw_Up.IsEnabled = State.PRO;
+                World_Sw_Up.IsEnabled = true;
             }
             public void World_SetMode_Dn()
             {
@@ -317,7 +317,7 @@ namespace VAICOM
                     World_Sw_Dn.Visibility = Visibility.Visible;
                 }
 
-                World_Sw_Dn.IsEnabled = State.PRO;
+                World_Sw_Dn.IsEnabled = true;
 
             }
 
@@ -344,7 +344,7 @@ namespace VAICOM
                 UI.Playsound.Soft_Switch();
                 State.activeconfig.Redirect_World_Speech = false;
                 Settings.ConfigFile.WriteConfigToFile(true);
-                World_Init_Button.IsEnabled = (State.PRO && State.activeconfig.Redirect_World_Speech);
+                World_Init_Button.IsEnabled = State.activeconfig.Redirect_World_Speech;
 
                 SetAudioDeviceSelector();
                 SetWorldVolumeKnob();
@@ -363,7 +363,7 @@ namespace VAICOM
                 UI.Playsound.Soft_Switch();
                 State.activeconfig.Redirect_World_Speech = true;
                 Settings.ConfigFile.WriteConfigToFile(true);
-                World_Init_Button.IsEnabled = (State.PRO && State.activeconfig.Redirect_World_Speech);
+                World_Init_Button.IsEnabled = State.activeconfig.Redirect_World_Speech;
 
                 SetAudioDeviceSelector();
                 SetWorldVolumeKnob();

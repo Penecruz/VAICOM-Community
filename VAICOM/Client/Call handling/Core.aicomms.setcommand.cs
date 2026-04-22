@@ -38,20 +38,10 @@ namespace VAICOM
                             return true;
                         }
 
-                        // Catch exceptional cases:
-                        if (State.currentcommand.blockedforFree)
+                        if (!State.activeconfig.AllowAddCommands)
                         {
-                            if (!State.PRO)
-                            {
-                                Log.Write("(this command is available only with PRO license)", Colors.Warning);
-                                UI.Playsound.Sorry();
-                                return false;
-                            }
-                            if (!State.activeconfig.AllowAddCommands)
-                            {
-                                Log.Write("Extended command set is currently disabled in preferences.", Colors.Warning);
-                                return false;
-                            }
+                            Log.Write("Extended command set is currently disabled in preferences.", Colors.Warning);
+                            return false;
                         }
 
                         // Options
@@ -62,45 +52,12 @@ namespace VAICOM
                             return false;
                         }
 
-                        // RIO LICENSE CHECK:
-                        if (State.currentcommand.requiresJester & !State.jesteractivated)
-                        {
-                            Log.Write("Activate your RIO Dialog extension license to use RIO commands.", Colors.Warning);
-                            UI.Playsound.Sorry();
-                            return false;
-                        }
-
                         // Reject if AIRIO but not in F14.
                         if (State.currentcommand.isRIO() && !State.AIRIOactive)
                         {
                             Log.Write("AIRIO commands are not available.", Colors.Warning);
                             UI.Playsound.Recipientna();
                             return false;
-                        }
-
-                        // CARRIER COMMS CHECK:
-                        if (State.currentcommand.requiresrealatc & !State.realatcactivated)
-                        {
-                            Log.Write("To use this command, activate your Realistic ATC extension license.", Colors.Warning);
-                            UI.Playsound.Sorry();
-                            return false;
-                        }
-
-                        // FC3
-                        if (State.currentcommand.blockedforFCnonPro & State.currentmodule.IsFC)
-                        {
-                            if (!State.PRO)
-                            {
-                                Log.Write("(for " + State.currentmodule.Name + " module this command is available only with PRO license)", Colors.Warning);
-                                UI.Playsound.Sorry();
-                                return false;
-                            }
-                            if (!State.activeconfig.AllowAddCommands)
-                            {
-                                Log.Write("Extended command set is currently disabled in preferences.", Colors.Warning);
-                                UI.Playsound.Sorry();
-                                return false;
-                            }
                         }
 
                         // FC3

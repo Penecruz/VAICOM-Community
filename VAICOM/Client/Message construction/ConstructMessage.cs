@@ -102,7 +102,7 @@ namespace VAICOM
 
                     if (State.currentcommand.isRIO())
                     {
-                        if (State.jesteractivated && State.dll_installed_rio && State.activeconfig.RIO_Enabled)
+                        if (State.dll_installed_rio && State.activeconfig.RIO_Enabled)
                         {
                             constructRIO();
                             return true;
@@ -844,7 +844,7 @@ namespace VAICOM
                         State.currentmessage = new CommsMessage();
 
                         State.currentmessage.debug = State.activeconfig.Debugmode;
-                        State.currentmessage.client = State.currentlicense;
+                        State.currentmessage.client = State.client;
                         State.currentmessage.mode = State.clientmode;
                         State.currentmessage.tgtdevid = Message.GetSendDeviceId();
                         State.currentmessage.tgtdevname = State.currentradiodevicename;
@@ -896,7 +896,7 @@ namespace VAICOM
                         // SPECIAL: CONSTRUCT MESSAGE FOR AIRIO
                         if (!ProcessIfRIO())
                         {
-                            return false; // tried AIRIO cmd but not licensed
+                            return false; // tried AIRIO but not enabled
                         }
 
                         // ------------------------------------------------------------------------

@@ -22,7 +22,7 @@ namespace VAICOM
 
 
                     State.currentmessage.debug = State.activeconfig.Debugmode;
-                    State.currentmessage.client = State.currentlicense;
+                    State.currentmessage.client = State.client;
                     State.currentmessage.mode = State.clientmode;
 
                     try
@@ -60,7 +60,7 @@ namespace VAICOM
                     {
 
                         // exit if AIRIO not valid
-                        if (!State.jesteractivated || !State.dll_installed_rio || !State.activeconfig.RIO_Enabled || !State.currentmodule.Equals(Products.DCSmodules.LookupTable[State.riomod]))
+                        if (!State.dll_installed_rio || !State.activeconfig.RIO_Enabled || !State.currentmodule.Equals(Products.DCSmodules.LookupTable[State.riomod]))
                         {
                             Log.Write("AIRIO commands are not available at this time.", Colors.Warning);
                             UI.Playsound.Recipientna();

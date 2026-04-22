@@ -179,58 +179,7 @@ namespace VAICOM
                 {
                 }
             }
-            private void removeallactivelicenses()
-            {
-                try
-                {
-                    RegistryKey getkey = Registry.CurrentUser.OpenSubKey(Products.Products.Families.Vaicom.RegKeyBase, true);
-                    if (getkey != null)
-                    {
-                        RegistryKey testkey = Registry.CurrentUser.OpenSubKey(Products.Products.Families.Vaicom.RegKeyRoot);
-                        if (testkey != null)
-                        {
-                            string keyname = "VAICOMPRO";
-                            Log.Write("Deleting reg key for " + keyname, Static.Colors.System);
-                            getkey.DeleteSubKeyTree(keyname, true);
-                        }
-                    }
-                    getkey.Close();
-                }
-                catch (Exception a)
-                {
-                    Log.Write(a.Message, Static.Colors.System);
-                }
 
-                Products.Products.CheckActiveLicenses();
-                resetenabledfeatures();
-
-                string productidstring = Products.Products.Families.Vaicom.VaicomProPlugin.product_id.ToString();
-
-                if (State.activelicenses.ContainsKey(productidstring))
-                {
-                    State.PRO = true;
-                }
-                else
-                {
-                    State.PRO = false;
-                }
-
-                productidstring = Products.Products.Families.Vaicom.ChatterThemePack.product_id.ToString();
-
-                if (State.activelicenses.ContainsKey(productidstring))
-                {
-                    State.chatterthemesactivated = true;
-                }
-                else
-                {
-                    State.chatterthemesactivated = false;
-                }
-
-                Products.Products.UpdateClientLicense();
-                showproductname();
-                showprolight();
-
-            }
             private void Clearkeywordsdb()
             {
                 try

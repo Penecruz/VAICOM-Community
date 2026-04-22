@@ -125,7 +125,7 @@ namespace VAICOM
 
                             if (true) //(sendcat.Equals("NOTES") || sendcat.Equals("LOG") || msg.aliasdata.content.Count > 0) // if chunk not empty
                             {
-                                if (State.kneeboardactivated && State.activeconfig.Kneeboard_Enabled)
+                                if (State.activeconfig.Kneeboard_Enabled)
                                 {
                                     msg.switchpage = true; // usually false
                                     Client.DcsClient.SendKneeboardMessage(msg); // send chunk
@@ -182,7 +182,6 @@ namespace VAICOM
                         // generic device action
 
                         State.currentmessage = new DcsClient.Message.CommsMessage();
-                        State.currentmessage.client = State.currentlicense;
                         State.currentmessage.type = Messagetypes.DeviceControl;
 
                         DcsClient.DeviceAction action = new DcsClient.DeviceAction();

@@ -69,7 +69,7 @@ namespace VAICOM
                             }
 
                             State.currentmessage.debug = State.activeconfig.Debugmode;
-                            State.currentmessage.client = State.currentlicense;
+                            State.currentmessage.client = State.client;
                             State.currentmessage.mode = State.clientmode;
                             State.currentmessage.AIRIO = true;
 
@@ -133,7 +133,7 @@ namespace VAICOM
                             //State.currentmessage.extsequence.AddRange(openmenu);
 
                             State.currentmessage.debug = State.activeconfig.Debugmode;
-                            State.currentmessage.client = State.currentlicense;
+                            State.currentmessage.client = State.client;
                             State.currentmessage.mode = State.clientmode;
                             State.currentmessage.AIRIO = true;
 
