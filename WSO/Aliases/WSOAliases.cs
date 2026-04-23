@@ -23,7 +23,6 @@ namespace VAICOM.Extensions.WSO
             { "Lantirn Undesignate", "wMsgWSO_Lantirn_Undesignate" },
             { "Go Radar Silent", "wMsgWSO_Radar_GoSilent" },
             { "Go Radar Active", "wMsgWSO_Radar_GoActive" },
-            { "Select Aux Channel", "wMsgWSO_Radio_SelectAuxChannel" },
             { "Tune ATC", "wMsgWSO_Radio_TuneATC" },
             { "Tune Assets", "wMsgWSO_Radio_TuneAssets" },
             { "Select Mode", "wMsgWSO_Radio_SelectMode" },
@@ -159,7 +158,7 @@ namespace VAICOM.Extensions.WSO
 
             // Context response aliases
             { "Context Select", "wMsgWSO_Context_Action_Short" },
-            { "Next Target", "wMsgWSO_Context_Action_Short" },
+            { "Select Next Target", "wMsgWSO_Context_Action_Short" },
             { "We Sure Are", "wMsgWSO_Context_Action_Short" },
             { "Context Hold", "wMsgWSO_Context_Action_Long" },
             { "Lock That Target", "wMsgWSO_Context_Action_Long" },
