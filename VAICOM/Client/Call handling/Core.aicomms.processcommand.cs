@@ -792,7 +792,7 @@ namespace VAICOM
                     }
                     catch (Exception e)
                     {
-                        Log.Write("Voice command processing error: " + e.Message, Colors.Critical);
+                        Log.Write("Voice command processing error: " + e.Message + ", " + e.StackTrace, Colors.Critical);
                         State.processlocked = false;
                         return false;
                     }

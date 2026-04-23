@@ -96,8 +96,8 @@ namespace VAICOM.Extensions.WSO
             { "Divert To Flight Plan 2 Waypoint Eight", "wMsgWSO_Navigation_Divert_LatLong" },
             { "Divert To Flight Plan 2 Waypoint Nine", "wMsgWSO_Navigation_Divert_LatLong" },
             { "TACAN Off", "wMsgWSO_Navigation_TACAN_SelectMode_Off" },
-            { "TACAN Recieve", "wMsgWSO_Navigation_TACAN_SelectMode_R" },
-            { "TACAN Transmit and Recieve", "wMsgWSO_Navigation_TACAN_SelectMode_TR" },
+            { "TACAN Receive", "wMsgWSO_Navigation_TACAN_SelectMode_R" },
+            { "TACAN Transmit and Receive", "wMsgWSO_Navigation_TACAN_SelectMode_TR" },
             { "TACAN Air refuel", "wMsgWSO_Navigation_TACAN_SelectMode_AAR" },
             { "TACAN Air to Air", "wMsgWSO_Navigation_TACAN_SelectMode_AATR" },
             { "Chaff Mode Off", "wMsgWSO_Systems_ChaffMode_Off" },
@@ -129,7 +129,6 @@ namespace VAICOM.Extensions.WSO
             { "Radio Tune ATC", "wMsgWSO_Radio_TuneATC_Direct" },
             { "Pave Spike Operation", "wMsgWSO_A2G_PaveSpike_Operation" },
             { "Pave Spike Lock Target Ahead", "wMsgWSO_A2G_PaveSpike_LockUnlockTargetAhead" },
-            { "Pave Spike Laser Code", "wMsgWSO_A2G_PaveSpike_LaserCode" },
             { "Pave Spike Laser Code Silent", "wMsgWSO_A2G_PaveSpike_LaserCode_Silent" },
 
             // F-4E Ground Crew aliases

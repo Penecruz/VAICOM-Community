@@ -545,6 +545,19 @@ namespace VAICOM
                         HbSendProxyCommand.SendWsoCommand(State.WebSocketClient, "wMsgWSO_Radio_SetManualFrequency", fullRadioFrequency);
                         break;
 
+                    case "wso.pavespike.laser":
+                        string laserCode = GetNumberFromCommand();
+                        // If a code was provided then use it, otherwise this was a command to silence it
+                        if (String.IsNullOrEmpty(laserCode))
+                        {
+                            HbSendProxyCommand.SendWsoCommand(State.WebSocketClient, "wMsgWSO_A2G_PaveSpike_LaserCode_Silent");
+                        }
+                        else
+                        {
+                            HbSendProxyCommand.SendWsoCommand(State.WebSocketClient, "wMsgWSO_A2G_PaveSpike_LaserCode", laserCode);
+                        }
+                        break;
+
                     case "test":
                         API.API_Test(vaProxy);
                         break;

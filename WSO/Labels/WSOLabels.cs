@@ -112,7 +112,6 @@ namespace VAICOM.Extensions.WSO
             { "wMsgWSO_Radio_TuneATC_Direct", "WSO Tune ATC Direct" },
             { "wMsgWSO_A2G_PaveSpike_Operation", "WSO Pave Spike Operation" },
             { "wMsgWSO_A2G_PaveSpike_LockUnlockTargetAhead", "WSO Pave Spike Lock Target Ahead" },
-            { "wMsgWSO_A2G_PaveSpike_LaserCode", "WSO Pave Spike Laser Code" },
             { "wMsgWSO_A2G_PaveSpike_LaserCode_Silent", "WSO Pave Spike Laser Code Silent" },
 
             // Context response commands

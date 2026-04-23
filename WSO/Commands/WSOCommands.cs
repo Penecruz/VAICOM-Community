@@ -119,7 +119,6 @@ namespace VAICOM.Extensions.WSO
             { "wMsgWSO_Radio_TuneATC_Direct", new CommandInfo { uniqueid = 24440, category = CommandCategories.WSO, name = "wMsgWSO_Radio_TuneATC_Direct", displayname = Labels.aicommands["wMsgWSO_Radio_TuneATC_Direct"], enabled = true } },
             { "wMsgWSO_A2G_PaveSpike_Operation", new CommandInfo { uniqueid = 24441, category = CommandCategories.WSO, name = "wMsgWSO_A2G_PaveSpike_Operation", displayname = Labels.aicommands["wMsgWSO_A2G_PaveSpike_Operation"], enabled = true } },
             { "wMsgWSO_A2G_PaveSpike_LockUnlockTargetAhead", new CommandInfo { uniqueid = 24442, category = CommandCategories.WSO, name = "wMsgWSO_A2G_PaveSpike_LockUnlockTargetAhead", displayname = Labels.aicommands["wMsgWSO_A2G_PaveSpike_LockUnlockTargetAhead"], enabled = true } },
-            { "wMsgWSO_A2G_PaveSpike_LaserCode", new CommandInfo { uniqueid = 24443, category = CommandCategories.WSO, name = "wMsgWSO_A2G_PaveSpike_LaserCode", displayname = Labels.aicommands["wMsgWSO_A2G_PaveSpike_LaserCode"], enabled = true } },
             { "wMsgWSO_A2G_PaveSpike_LaserCode_Silent", new CommandInfo { uniqueid = 24444, category = CommandCategories.WSO, name = "wMsgWSO_A2G_PaveSpike_LaserCode_Silent", displayname = Labels.aicommands["wMsgWSO_A2G_PaveSpike_LaserCode_Silent"], enabled = true } },
 
             // Context response commands
