@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
+using System.Net.WebSockets;
 using System.Reflection;
 using System.Resources;
 using System.Speech.Recognition;
@@ -100,6 +101,12 @@ namespace VAICOM
         public static AsyncCallback ReturnCall;
         public static UdpClient ReceivingUdpClient;
         public static IPEndPoint ReceiveIpEndPoint;
+
+        // WebSocket Server
+        public static WebSocket WebSocketClient;
+        public static readonly object WsoNavCacheLock = new object();
+        public static Dictionary<string, string> WsoNavCacheByActionAndIndex = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        public static Dictionary<string, string> WsoNavCacheByActionAndName = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
         // for world Messages receive
 
@@ -443,6 +450,37 @@ namespace VAICOM
             }
             catch
             {
+            }
+        }
+        // WSO extension state tracking
+        // Add a flag to track if WSO is active
+        public static bool WSOActive { get; set; } = false;
+
+        // Add a flag to track if WSO commands are enabled
+        public static bool WSOCommandsEnabled { get; set; } = true;
+
+        // Add a dictionary to store WSO-related state
+        public static Dictionary<string, object> WSOState = new Dictionary<string, object>();
+
+        // Add a method to initialize WSO state
+        public static void InitializeWSOState()
+        {
+            WSOActive = true;
+            WSOCommandsEnabled = true;
+
+            // Initialize WSOState with default values
+            WSOState["currentCommand"] = null;
+            WSOState["currentRecipient"] = null;
+            WSOState["currentCategory"] = null;
+        }
+
+        public static bool wsoactivated = true; // Set to true if WSO extension is to be enabled
+
+        public static bool IsF4E
+        {
+            get
+            {
+                return currentmodule != null && currentmodule.Id.Equals("F-4E-45MC", StringComparison.OrdinalIgnoreCase);
             }
         }
     }

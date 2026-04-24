@@ -2,25 +2,22 @@
 using System.Collections.Generic;
 using VAICOM.Static;
 
+
 namespace VAICOM
 {
     namespace Database
     {
-
         public static partial class Labels
         {
-
             public static Dictionary<string, string> importedmenus = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
             public static Dictionary<string, string> importedatcs = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
             public static Dictionary<string, string> cockpitcontrol = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
             public static Dictionary<string, string> simcontrol = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
-
             public static Dictionary<string, Dictionary<string, string>> categories;
 
             public static void ResetDatabase()
             {
-
                 categories = new Dictionary<string, Dictionary<string, string>>(StringComparer.OrdinalIgnoreCase)
                 {
                     { "aiappendiceswpn",    Labels.aiappendiceswpn      },
@@ -32,7 +29,9 @@ namespace VAICOM
                     { "importedatcs",       Labels.importedatcs         },
                     { "importedmenus",      Labels.importedmenus        },
                     { "playercallsigns",    Labels.playercallsigns      },
-                    { "simcontrol",         Labels.simcontrol           },
+                    { "simcontrol",         Labels.simcontrol           },                    
+                    { "wsorecipients",      Extensions.WSO.Labels.airecipients      }, // Reference WSO recipients
+                    { "wsocommands",        Extensions.WSO.Labels.aicommands  }, // Reference WSO aliases
                 };
 
                 if (State.dll_installed_rio)
@@ -46,9 +45,7 @@ namespace VAICOM
                     {
                     }
                 }
-
             }
-
 
             public static Dictionary<string, string> categorylabels = new Dictionary<string, string>()
             {
@@ -63,16 +60,17 @@ namespace VAICOM
                 { "playercallsigns",    "Player Group Callsigns"    },
                 { "simcontrol",         "----"                      },
 
-                { "riorecipients",      "RIO recipients"                    },
-                { "riocommands",        "RIO Commands"                      },
+                { "riorecipients",      "RIO Recipients"            },
+                { "riocommands",        "RIO Commands"              },
 
+                { "wsorecipients",      "WSO Recipients"            }, // Add WSO recipients label
+                { "wsocommands",        "WSO Commands"              }, // Add WSO commands label
             };
 
             public static Dictionary<string, string> master = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
             public static void BuildNewMasterTable()
             {
-
                 try
                 {
                     ResetDatabase();
@@ -84,7 +82,6 @@ namespace VAICOM
 
                     foreach (KeyValuePair<string, Dictionary<string, string>> subset in categories)
                     {
-
                         Dictionary<string, string> set = subset.Value;
 
                         foreach (KeyValuePair<string, string> element in set)
@@ -92,7 +89,10 @@ namespace VAICOM
                             try
                             {
                                 if (!master.ContainsKey(element.Key))
-                                { master.Add(element.Key, element.Value); count = count + 1; }
+                                { 
+                                    master.Add(element.Key, element.Value); 
+                                    count = count + 1; 
+                                }
                             }
                             catch
                             {

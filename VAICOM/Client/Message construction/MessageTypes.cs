@@ -1,7 +1,10 @@
-﻿using Newtonsoft.Json;
-using System;
+﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
+using System.Net.WebSockets;
 using System.Text;
+using System.Threading;
+using Newtonsoft.Json;
 using VAICOM.Extensions.Kneeboard;
 using VAICOM.Static;
 
@@ -337,12 +340,18 @@ namespace VAICOM
                     string formatmessage = JsonConvert.SerializeObject(State.currentmessage);
                     byte[] sendbuffer = Encoding.UTF8.GetBytes(formatmessage);
                     State.SendSocket.SendTo(sendbuffer, State.SendIpEndPoint);
-                    //Log.Write("Message sent: " + formatmessage, Colors.Inline); 
+
+                    // Log WSO-specific commands
+                    if (State.currentmessage.type == "WSOCommand")
+                    {
+                        Log.Write($"WSO Command sent: {formatmessage}", Colors.Inline);
+                    }
+
                     return formatmessage;
                 }
                 catch (Exception e)
                 {
-                    Log.Write("there was a problem sending the client message:" + e.Message + e.ToString(), Colors.Inline);
+                    Log.Write("There was a problem sending the client message: " + e.Message + e.ToString(), Colors.Inline);
                     return "";
                 }
             }

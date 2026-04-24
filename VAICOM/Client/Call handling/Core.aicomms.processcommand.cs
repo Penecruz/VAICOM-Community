@@ -1,5 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Text.RegularExpressions;
 using VAICOM.Database;
 using VAICOM.Extensions.Kneeboard;
 using VAICOM.Extensions.WorldAudio;
@@ -7,6 +10,7 @@ using VAICOM.Interfaces;
 using VAICOM.PushToTalk;
 using VAICOM.Servers;
 using VAICOM.Static;
+using VAICOM.WSO;
 
 namespace VAICOM
 {
@@ -359,34 +363,28 @@ namespace VAICOM
                 {
                     Log.Write("Ready, sending message for recipient class " + State.currentrecipientclass.Name + ", calledisclass = " + State.calledisclass, Colors.Inline);
 
-                    if (ConstructMessage())
+                    ConstructMessage();
+                    SendNewMessage();
+
+                    State.previousmessageunit = State.currentmessageunit;
+                    State.previousrecipientclass = State.currentrecipientclass;
+
+                    Log.Write("Message sent successfully for recipient class " + State.currentrecipientclass.Name + ".", Colors.Inline);
+
+                    // for ics hotmic:
+                    if (State.AIRIOactive && State.activeconfig.ICShotmic)
                     {
-                        SendNewMessage();
-
-                        State.previousmessageunit = State.currentmessageunit;
-                        State.previousrecipientclass = State.currentrecipientclass;
-
-                        Log.Write("Message sent successfully for recipient class " + State.currentrecipientclass.Name + ".", Colors.Inline);
-
-                        // for ics hotmic:
-                        if (State.AIRIOactive && State.activeconfig.ICShotmic)
+                        if (!State.valistening)
                         {
-                            if (!State.valistening)
-                            {
-                                State.MessageReset();
-                                State.processlocked = false;
-                            }
-
-                            if (!State.currentcommand.isMenu() && !State.currentcommand.isOptions())
-                            {
-                                Extensions.RIO.helper.ShowWheel(false);
-                                Extensions.RIO.helper.showingjestermenu = false;
-                            }
+                            State.MessageReset();
+                            State.processlocked = false;
                         }
-                    }
-                    else
-                    {
-                        Log.Write("No message sent: message construction failed.", Colors.Warning);
+
+                        if (!State.currentcommand.isMenu() && !State.currentcommand.isOptions())
+                        {
+                            Extensions.RIO.helper.ShowWheel(false);
+                            Extensions.RIO.helper.showingjestermenu = false;
+                        }
                     }
                 }
 
@@ -457,7 +455,7 @@ namespace VAICOM
                                         UI.Playsound.Commandcomplete();
                                         KneeboardUpdater.SwitchPage("NOTES");
                                         KneeboardUpdater.RefreshCurrentPage(); // Force immediate refresh
-                                        KneeboardUpdater.SendHeartBeatCycle(); 
+                                        KneeboardUpdater.SendHeartBeatCycle();
                                         break;
                                     case "wMsgKneeboardShowNotes":
                                         KneeboardUpdater.SwitchPage("NOTES");
@@ -579,6 +577,14 @@ namespace VAICOM
                 // processes voice command, called directly from plugin
                 public static bool processcommand()
                 {
+                    // Check if DCS is running
+                    if (!State.dcsrunning)
+                    {
+                        Log.Write("DCS is not connected. Command processing is disabled.", Colors.Warning);
+                        UI.Playsound.Error();
+                        return false;
+                    }
+
                     // thread-safe locking
                     if (State.processlocked)
                     {
@@ -604,19 +610,15 @@ namespace VAICOM
 
                     try
                     {
-
                         // get voice input
-
                         getinputsentence();
                         scanforkeywords();
                         correctforimportedobjects();
 
                         // check if have enough data to send command?
-
                         State.haveinputscomplete = setcommand();
 
                         // if not: wait..
-
                         if (!State.haveinputscomplete)
                         {
                             waitformoreinput();
@@ -627,7 +629,6 @@ namespace VAICOM
                         //----------------------------------------------------------------------------------------------------
                         // have command complete!: now process - check contents
 
-                        //State.activenode = State.currentTXnode;
                         State.currentrecipientclass = getrecipientclass();
 
                         if (noTX())
@@ -646,7 +647,6 @@ namespace VAICOM
                         if (State.currentcommand.isSpecial()) //eventnumber.Equals(4000)
                         {
                             // Special commands:  Options / Take / Select / State / Repeat 
-
                             if (!getunitforspecialcommands() && State.dcsrunning)
                             {
                                 State.MessageReset();
@@ -657,7 +657,6 @@ namespace VAICOM
                         else
                         {
                             // Normal commands
-
                             if (!getunitforregularcommands() && State.dcsrunning)
                             {
                                 //didn't get a unit
@@ -701,7 +700,6 @@ namespace VAICOM
                         {
                         }
 
-
                         bool riocommand = State.AIRIOactive && State.currentcommand.isRIO();
                         bool optionscommand = State.currentcommand.isOptions();
                         bool menucommand = State.currentcommand.isMenu();
@@ -713,9 +711,32 @@ namespace VAICOM
                         {
                             sendvoid();
                         }
+                        else if (State.currentcommand.isWSO()) // Handle WSO commands
+                        {
+                            Log.Write("WSO command detected. Starting WSO command processing...", Colors.Text);
+
+                            if (!State.currentmodule.Id.Equals("F-4E-45MC", StringComparison.OrdinalIgnoreCase))
+                            {
+                                Log.Write("WSO commands are only available for the F-4E-45MC module.", Colors.Warning);
+                                State.processlocked = false;
+                                return false; // WSO command not processed
+                            }
+
+                            if (!Message.ProcessIfWSO())
+                            {
+                                Log.Write("WSO command processing failed.", Colors.Warning);
+                                State.processlocked = false;
+                                return false; // WSO command processing failed
+                            }
+
+                            Log.Write("WSO command processing succeeded. Sending command to Jester 2.0 API...", Colors.Text);
+
+                            // Send the WSO command to the Jester 2.0 API
+                            SendCommandToJesterAPI(State.currentcommand.dcsid);
+                        }
                         else
                         {
-                            if (riocommand || selectcommand || optionscommand || menucommand || 
+                            if (riocommand || selectcommand || optionscommand || menucommand ||
                                 !((State.activeconfig.MP_VoIPUseSwitch || State.activeconfig.MP_VoIPParallel) && State.activeconfig.MP_DelayTransmit)) //  || !State.currentTXnode.tunedforhuman 
                             {
                                 sendmessage();
@@ -750,19 +771,352 @@ namespace VAICOM
                             }
 
                         }
-
                     }
                     catch (Exception e)
                     {
-                        Log.Write("Voice command processing error:" + e.StackTrace, Colors.Inline);
+                        Log.Write("Voice command processing error: " + e.Message + ", " + e.StackTrace, Colors.Critical);
+                        State.processlocked = false;
+                        return false;
                     }
 
                     State.processlocked = false;
-
-                    return !options && !menu;
-
+                    return true;
                 }
 
+                public static bool TryResolveDynamicWsoValue(string commandId, string action, string mappedValue, out string resolvedValue)
+                {
+                    resolvedValue = mappedValue ?? "";
+
+                    if (!string.IsNullOrWhiteSpace(resolvedValue))
+                    {
+                        return true;
+                    }
+
+                    if (TryResolveValueFromNavCache(action, State.currentfullsentence, out string cachedValue, out string cacheKey))
+                    {
+                        resolvedValue = cachedValue;
+                        Log.Write($"WSO command '{commandId}' resolved from NAV cache [{cacheKey}] => {cachedValue}", Colors.Text);
+                        return true;
+                    }
+
+                    return true;
+                }
+
+                private static bool TryResolveValueFromNavCache(string action, string sentence, out string resolvedValue, out string cacheKey)
+                {
+                    resolvedValue = "";
+                    cacheKey = "";
+
+                    if (string.IsNullOrWhiteSpace(action))
+                    {
+                        return false;
+                    }
+
+                    if (TryExtractIndexFromCommandAlias(out string aliasIndex))
+                    {
+                        lock (State.WsoNavCacheLock)
+                        {
+                            if (action.Equals("divert_tgt1_lat_lon", StringComparison.OrdinalIgnoreCase)
+                                && AliasRequestsSecondaryFlightPlan()
+                                && State.WsoNavCacheByActionAndIndex.TryGetValue($"{action}|fp2|{aliasIndex}", out string secondaryAliasIndexedValue)
+                                && !string.IsNullOrWhiteSpace(secondaryAliasIndexedValue))
+                            {
+                                resolvedValue = secondaryAliasIndexedValue;
+                                cacheKey = $"fp2-alias-idx={aliasIndex}";
+                                return true;
+                            }
+
+                            if (State.WsoNavCacheByActionAndIndex.TryGetValue($"{action}|{aliasIndex}", out string aliasIndexedValue)
+                                && !string.IsNullOrWhiteSpace(aliasIndexedValue))
+                            {
+                                resolvedValue = aliasIndexedValue;
+                                cacheKey = $"alias-idx={aliasIndex}";
+                                return true;
+                            }
+                        }
+                    }
+
+                    if (TryExtractIndexFromSentence(sentence, out string index))
+                    {
+                        lock (State.WsoNavCacheLock)
+                        {
+                            if (action.Equals("divert_tgt1_lat_lon", StringComparison.OrdinalIgnoreCase)
+                                && AliasRequestsSecondaryFlightPlan()
+                                && State.WsoNavCacheByActionAndIndex.TryGetValue($"{action}|fp2|{index}", out string secondaryIndexedValue)
+                                && !string.IsNullOrWhiteSpace(secondaryIndexedValue))
+                            {
+                                resolvedValue = secondaryIndexedValue;
+                                cacheKey = $"fp2-idx={index}";
+                                return true;
+                            }
+
+                            if (State.WsoNavCacheByActionAndIndex.TryGetValue($"{action}|{index}", out string indexedValue)
+                                && !string.IsNullOrWhiteSpace(indexedValue))
+                            {
+                                resolvedValue = indexedValue;
+                                cacheKey = $"idx={index}";
+                                return true;
+                            }
+                        }
+                    }
+
+                    string normalizedSentence = NormalizeNavLookupText(sentence);
+                    if (!string.IsNullOrWhiteSpace(normalizedSentence))
+                    {
+                        string bestValue = "";
+                        string bestName = "";
+                        int bestMatchLength = -1;
+
+                        lock (State.WsoNavCacheLock)
+                        {
+                            foreach (KeyValuePair<string, string> entry in State.WsoNavCacheByActionAndName)
+                            {
+                                if (!entry.Key.StartsWith(action + "|", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    continue;
+                                }
+
+                                string candidateName = entry.Key.Substring(action.Length + 1);
+                                string normalizedCandidate = NormalizeNavLookupText(candidateName);
+                                if (string.IsNullOrWhiteSpace(normalizedCandidate))
+                                {
+                                    continue;
+                                }
+
+                                if (!normalizedSentence.Contains(normalizedCandidate) || normalizedCandidate.Length <= bestMatchLength)
+                                {
+                                    continue;
+                                }
+
+                                bestMatchLength = normalizedCandidate.Length;
+                                bestName = candidateName;
+                                bestValue = entry.Value;
+                            }
+                        }
+
+                        if (!string.IsNullOrWhiteSpace(bestValue))
+                        {
+                            resolvedValue = bestValue;
+                            cacheKey = $"name={bestName}";
+                            return true;
+                        }
+                    }
+
+                    lock (State.WsoNavCacheLock)
+                    {
+                        HashSet<string> actionValues = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+                        foreach (KeyValuePair<string, string> entry in State.WsoNavCacheByActionAndName)
+                        {
+                            if (entry.Key.StartsWith(action + "|", StringComparison.OrdinalIgnoreCase)
+                                && !string.IsNullOrWhiteSpace(entry.Value))
+                            {
+                                actionValues.Add(entry.Value);
+                            }
+                        }
+
+                        foreach (KeyValuePair<string, string> entry in State.WsoNavCacheByActionAndIndex)
+                        {
+                            if (entry.Key.StartsWith(action + "|", StringComparison.OrdinalIgnoreCase)
+                                && !string.IsNullOrWhiteSpace(entry.Value))
+                            {
+                                actionValues.Add(entry.Value);
+                            }
+                        }
+
+                        if (actionValues.Count == 1)
+                        {
+                            resolvedValue = actionValues.First();
+                            cacheKey = "single-action-value";
+                            return true;
+                        }
+                    }
+
+                    return false;
+                }
+
+                private static bool AliasRequestsSecondaryFlightPlan()
+                {
+                    if (!State.usedalias.ContainsKey("command"))
+                    {
+                        return false;
+                    }
+
+                    string commandAlias = State.usedalias["command"] ?? "";
+                    return commandAlias.IndexOf("flight plan 2", StringComparison.OrdinalIgnoreCase) >= 0
+                        || commandAlias.IndexOf("flight plan two", StringComparison.OrdinalIgnoreCase) >= 0
+                        || commandAlias.IndexOf("secondary flight plan", StringComparison.OrdinalIgnoreCase) >= 0;
+                }
+
+                private static bool TryExtractIndexFromCommandAlias(out string index)
+                {
+                    index = "";
+
+                    if (!State.usedalias.ContainsKey("command"))
+                    {
+                        return false;
+                    }
+
+                    string commandAlias = State.usedalias["command"];
+                    if (string.IsNullOrWhiteSpace(commandAlias))
+                    {
+                        return false;
+                    }
+
+                    return TryExtractIndexFromSentence(commandAlias, out index);
+                }
+
+                private static bool TryExtractIndexFromSentence(string sentence, out string index)
+                {
+                    index = "";
+
+                    if (string.IsNullOrWhiteSpace(sentence))
+                    {
+                        return false;
+                    }
+
+                    MatchCollection matches = Regex.Matches(sentence, @"\b\d{1,3}\b");
+                    foreach (Match match in matches)
+                    {
+                        if (!int.TryParse(match.Value, out int parsedIndex))
+                        {
+                            continue;
+                        }
+
+                        if (parsedIndex < 0)
+                        {
+                            continue;
+                        }
+
+                        index = parsedIndex.ToString();
+                        return true;
+                    }
+
+                    foreach (Match tokenMatch in Regex.Matches(sentence.ToLowerInvariant(), @"[a-z0-9]+"))
+                    {
+                        if (!TryParseSpokenWaypointIndex(tokenMatch.Value, out int spokenIndex))
+                        {
+                            continue;
+                        }
+
+                        index = spokenIndex.ToString();
+                        return true;
+                    }
+
+                    return false;
+                }
+
+                private static bool TryParseSpokenWaypointIndex(string token, out int index)
+                {
+                    index = 0;
+
+                    switch (token)
+                    {
+                        case "one":
+                        case "first":
+                            index = 1;
+                            return true;
+                        case "two":
+                        case "second":
+                            index = 2;
+                            return true;
+                        case "three":
+                        case "third":
+                            index = 3;
+                            return true;
+                        case "four":
+                        case "fourth":
+                            index = 4;
+                            return true;
+                        case "five":
+                        case "fifth":
+                            index = 5;
+                            return true;
+                        case "six":
+                        case "sixth":
+                            index = 6;
+                            return true;
+                        case "seven":
+                        case "seventh":
+                            index = 7;
+                            return true;
+                        case "eight":
+                        case "eighth":
+                            index = 8;
+                            return true;
+                        case "nine":
+                        case "ninth":
+                            index = 9;
+                            return true;
+                        case "ten":
+                        case "tenth":
+                            index = 10;
+                            return true;
+                        default:
+                            return false;
+                    }
+                }
+
+                private static string NormalizeNavLookupText(string input)
+                {
+                    if (string.IsNullOrWhiteSpace(input))
+                    {
+                        return "";
+                    }
+
+                    string lowered = input.ToLowerInvariant();
+                    lowered = lowered.Replace("int'l", "international");
+                    lowered = Regex.Replace(lowered, @"\bintl\b", "international");
+                    string normalized = Regex.Replace(lowered, @"[^a-z0-9]+", " ");
+                    return Regex.Replace(normalized, @"\s+", " ").Trim();
+                }
+
+                //Jester 2.0 API WSO command sender
+                private static void SendCommandToJesterAPI(string commandId)
+                {
+                    try
+                    {
+                        // Check if the command exists in the WSOCommandMappings
+                        if (WSOCommandMappings.CommandMap.TryGetValue(commandId, out var commandDetails))
+                        {
+                            string category = commandDetails.category;
+                            string action = commandDetails.action;
+                            string value = commandDetails.value;
+
+                            if (!TryResolveDynamicWsoValue(commandId, action, value, out value))
+                            {
+                                return;
+                            }
+
+                            // Construct the command string in the format "category|action|value"
+                            string commandString = $"{category}|{action}|{value}";
+
+                            // Create a new CommsMessage for the Jester API command
+                            State.currentmessage = new Message.CommsMessage
+                            {
+                                client = State.currentlicense,
+                                type = "WSOCommand", // Indicate this is a WSO command
+                                dcsid = commandString, // Pass the constructed command string
+                                dspmsg = $"Sending WSO command: {commandString}",
+                                msgdur = 5
+                            };
+
+                            // Send the command to the Jester 2.0 API using hb_send_proxy fields
+                            HbSendProxyCommand.SendCommand(State.WebSocketClient, category, action, value);
+                            Log.Write($"Command ID '{commandId}' sent using hb_send_proxy payload.", Colors.Text);
+                        }
+                        else
+                        {
+                            Log.Write($"Command ID '{commandId}' not found in WSOCommandMappings.", Colors.Warning);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Log.Write($"Error sending command to Jester 2.0 API: {ex.Message}", Colors.Critical);
+                    }
+                }
+
+                
             }
         }
     }

@@ -701,6 +701,10 @@ namespace VAICOM
                 { "kneeboard",                  new Recipient { uniqueid = 19401, category = RecipientCategories.kneeboard, name = "wAIUnitKneeboard",          displayname = Labels.airecipients["kneeboard"]  } },
                 { "wAIUnitKneeboardMaximum",    new Recipient { uniqueid = 19499, category = RecipientCategories.kneeboard, name = "wAIUnitKneeboardMaximum",   } },
 
+                // WSO pack
+                { "wAIUnitFlightCrewMembersWSONull", new Recipient { uniqueid = 19500, category = RecipientCategories.WSO, name = "wAIUnitFlightCrewMembersWSONull", } },
+                
+                { "wAIUnitFlightCrewMembersWSOMaximum", new Recipient { uniqueid = 19599, category = RecipientCategories.WSO, name = "wAIUnitFlightCrewMembersWSOMaximum", } },
             };
         }
     }

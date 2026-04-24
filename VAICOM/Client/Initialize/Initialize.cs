@@ -279,6 +279,30 @@ namespace VAICOM
 
             }
 
+            public static bool MergeWSO(dynamic vaProxy)
+            {
+                bool WSOmerged = false;
+
+                try
+                {
+                    if (State.wsoactivated) // Ensure WSO is activated
+                    {
+                        int updates = Extensions.WSO.ExtImport.MergeWSO();
+                        if (updates > 0)
+                        {
+                            WSOmerged = true;
+                        }
+                    }
+                }
+                catch(Exception e)
+                {
+                    Log.Write($"WARNING: Could not load the WSO plugin extension: {e.Message}, {e.StackTrace}", Colors.Warning);
+                    WSOmerged = false;
+                }
+
+                return WSOmerged;
+            }
+
             public static void CreateDatabase(dynamic vaProxy)
             {
 
@@ -330,6 +354,8 @@ namespace VAICOM
                 {
                     Interfaces.Network.UDPsetup();
                     Interfaces.Network.UDPstart();
+                    Interfaces.Network.WebSocketSetup();
+                    Interfaces.Network.WebSocketStart();
                     Log.Write("Network setup completed successfully.", Colors.Message);
                 }
                 catch (Exception e)
@@ -413,7 +439,6 @@ namespace VAICOM
 
             public static void Initialize(dynamic vaProxy)
             {
-
                 State.startup = true;
 
                 try
@@ -436,7 +461,6 @@ namespace VAICOM
 
                     CheckVAVersion(vaProxy);
                     GetAssemblies(vaProxy);
-
                 }
                 catch
                 {
@@ -456,7 +480,14 @@ namespace VAICOM
                     ResetPTTConfig(vaProxy);
                     InstallLuaFiles(vaProxy);
                     FileHandler.Root.CheckProfile(false);
+                    FileHandler.Root.CheckWSOProfile(false);  // WSO
+
+                    // Call MergeRIO
                     MergeRIO(vaProxy);
+
+                    // Call MergeWSO
+                    MergeWSO(vaProxy);
+
                     CreateDatabase(vaProxy);
                     StartNetwork(vaProxy);
                     StartTimers(vaProxy);
@@ -467,6 +498,11 @@ namespace VAICOM
 
                     Log.Write("Startup finished.", Colors.Text);
                     Log.Write("Ready for commands.", Colors.Message);
+
+                    if (State.clientmode.Equals(ClientModes.Debug))
+                    {
+                        State.realatcactivated = true;
+                    }
                 }
                 catch (Exception e)
                 {

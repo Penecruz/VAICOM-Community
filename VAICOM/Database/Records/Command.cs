@@ -4,10 +4,8 @@ using VAICOM.Static;
 
 namespace VAICOM
 {
-
     namespace Database
     {
-
         public class Command
         {
             public int uniqueid;
@@ -58,6 +56,15 @@ namespace VAICOM
                 dcsid = "";
             }
 
+            public string name => displayname; // Add name property to return the display name of the command
+
+            public bool isWSO()
+            {
+                // Ensure the active module is "F-4E-45MC" and the command falls within the WSO range
+                return State.currentmodule.Id.Equals("F-4E-45MC", StringComparison.OrdinalIgnoreCase) &&
+                       (category == CommandCategories.WSO || (uniqueid >= 24000 && uniqueid <= 24999));
+            }
+
             public bool RequiresFlightNumInsert()
             {
                 bool value = false;
@@ -71,7 +78,6 @@ namespace VAICOM
                 if ((this.uniqueid >= Commands.Table["wMsgReplyNull"].uniqueid) & (this.uniqueid <= Commands.Table["wMsgReplyMaximum"].uniqueid)) { value = true; }
                 return value;
             }
-
 
             public bool isState()
             {
@@ -117,7 +123,6 @@ namespace VAICOM
                 if ((this.uniqueid >= Commands.Table["groundtarget"].uniqueid) & (this.uniqueid <= Commands.Table["ship"].uniqueid)) { value = true; }
                 return value;
             }
-
 
             public bool isInputcommand()
             {
@@ -175,6 +180,9 @@ namespace VAICOM
                 // George AI extension
                 if (this.dcsid != null && this.dcsid.StartsWith("wMsgGeorge", StringComparison.OrdinalIgnoreCase)) { value = Recipientclasses.Crew; }
 
+                // WSO extension
+                if ((this.uniqueid >= Commands.Table["wMsgWSOCmndsNull"].uniqueid) & (this.uniqueid <= Commands.Table["wMsgWSOCmndsMaximum"].uniqueid)) { value = Recipientclasses.WSO; }
+
                 // Kneeboard
                 if ((this.uniqueid >= Commands.Table["wMsgKneeboardCmndsNull"].uniqueid) & (this.uniqueid <= Commands.Table["wMsgKneeboardCmndsMaximum"].uniqueid)) { value = Recipientclasses.Kneeboard; }
 
@@ -209,7 +217,7 @@ namespace VAICOM
             public bool isVoid()
             {
 
-                return (this.isSpecial() & !this.isOptions() & !this.isSelect() & !this.isMenu() & !this.isState() & !this.isRIO() & !this.isGeorge());
+                return (this.isSpecial() & !this.isOptions() & !this.isSelect() & !this.isMenu() & !this.isState() & !this.isRIO() & !this.isWSO() & !this.isGeorge());
 
             }
 
@@ -270,6 +278,14 @@ namespace VAICOM
             AI_pilot,
             AH64D_GeorgeAI,
             kneeboard,
+            WSO,
+            WSO_menu,
+            WSO_radar,
+            WSO_weapons,
+            WSO_radio,
+            WSO_utility,
+            WSO_defensive,
+            WSO_misc,
         }
 
     }

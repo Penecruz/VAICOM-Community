@@ -42,6 +42,9 @@
                 // RIO
                 if ((this.uniqueid >= Recipients.Table["wAIUnitFlightCrewMembersNull"].uniqueid) & (this.uniqueid <= Recipients.Table["wAIUnitFlightCrewMembersMaximum"].uniqueid)) { value = Recipientclasses.RIO; }
 
+                // WSO
+                if ((this.uniqueid >= Recipients.Table["wAIUnitFlightCrewMembersWSONull"].uniqueid) & (this.uniqueid <= Recipients.Table["wAIUnitFlightCrewMembersWSOMaximum"].uniqueid)) { value = Recipientclasses.WSO; }
+
                 //Kneeboard
                 if ((this.uniqueid >= Recipients.Table["wAIUnitKneeboardNull"].uniqueid) & (this.uniqueid <= Recipients.Table["wAIUnitKneeboardMaximum"].uniqueid)) { value = Recipientclasses.Kneeboard; }
 
@@ -136,6 +139,9 @@
                     case ("ai_pilot"):
                         returnclass = AI_pilot;
                         break;
+                    case ("wso"):
+                        returnclass = WSO;
+                        break;
                     case ("kneeboard"):
                         returnclass = Kneeboard;
                         break;
@@ -177,8 +183,8 @@
 
             public static Recipientclass RIO = new Recipientclass { Name = "RIO" };
             public static Recipientclass AI_pilot = new Recipientclass { Name = "Iceman" };
-
-            public static Recipientclass Kneeboard = new Recipientclass { Name = "Kneeboard" };
+            public static Recipientclass WSO = new Recipientclass { Name = "WSO" };
+            public static Recipientclass Kneeboard = new Recipientclass { Name = "Kneeboard" };            
 
         }
 
@@ -203,8 +209,9 @@
             cargo,
             RIO,
             AI_pilot,
+            WSO,
             ally,
-            kneeboard,
+            kneeboard,            
         }
 
 
