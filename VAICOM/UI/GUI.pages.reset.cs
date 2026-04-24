@@ -75,8 +75,8 @@ namespace VAICOM
                         {
                             try
                             {
-                                // replace profile file 
                                 FileHandler.Root.CheckProfile(true);
+                                FileHandler.Root.CheckWSOProfile(true);  // <-- WSO .vap if present will also be reset to default, if not present it will be created
                                 Log.Write("VA profile file restored.", Static.Colors.Text);
                             }
                             catch
@@ -413,8 +413,3 @@ namespace VAICOM
         }
     }
 }
-
-
-
-
-

@@ -613,4 +613,7 @@
   <data name="LegacyExportmatch" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\Files\LegacyExportmatch.lua;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-8</value>
   </data>
+  <data name="VAICOM_F-4E_WSO" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Files\VAICOM F-4E WSO.vap;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
 </root>
