@@ -952,7 +952,7 @@ namespace VAICOM
                         // SPECIAL: CONSTRUCT MESSAGE FOR AIRIO
                         if (!ProcessIfRIO())
                         {
-                            return false; // tried AIRIO but not enabled
+                            return;
                         }
 
                         // EXCEPTION: F14 Cat Launch

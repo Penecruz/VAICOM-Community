@@ -1093,8 +1093,7 @@ namespace VAICOM
 
                             // Create a new CommsMessage for the Jester API command
                             State.currentmessage = new Message.CommsMessage
-                            {
-                                client = State.currentlicense,
+                            {                                
                                 type = "WSOCommand", // Indicate this is a WSO command
                                 dcsid = commandString, // Pass the constructed command string
                                 dspmsg = $"Sending WSO command: {commandString}",

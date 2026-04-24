@@ -501,7 +501,7 @@ namespace VAICOM
 
                     if (State.clientmode.Equals(ClientModes.Debug))
                     {
-                        State.realatcactivated = true;
+                        
                     }
                 }
                 catch (Exception e)

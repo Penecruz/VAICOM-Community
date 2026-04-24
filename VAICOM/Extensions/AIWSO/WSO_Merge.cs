@@ -73,10 +73,8 @@ namespace VAICOM
                             newrecipient.category = RecipientCatbyId(entry.Value.uniqueid);
                             newrecipient.uniqueid = entry.Value.uniqueid;
                             newrecipient.name = entry.Value.name;
-                            newrecipient.displayname = entry.Value.displayname;
-                            newrecipient.requiresWSO = entry.Value.requiresWSO;
-                            newrecipient.enabled = entry.Value.enabled;
-                            newrecipient.blockedforFree = entry.Value.blockedforFree;
+                            newrecipient.displayname = entry.Value.displayname;                            
+                            newrecipient.enabled = entry.Value.enabled;                            
 
                             if (newrecipient.enabled)
                             {
@@ -102,10 +100,8 @@ namespace VAICOM
                             newcommand.uniqueid = entry.Value.uniqueid;
                             newcommand.dcsid = entry.Value.name;
                             newcommand.displayname = entry.Value.displayname;
-                            newcommand.eventnumber = entry.Value.eventnumber;
-                            newcommand.requiresWSO = entry.Value.requiresWSO;
-                            newcommand.enabled = entry.Value.enabled;
-                            newcommand.blockedforFree = entry.Value.blockedforFree;
+                            newcommand.eventnumber = entry.Value.eventnumber;                            
+                            newcommand.enabled = entry.Value.enabled;                            
 
                             if (newcommand.enabled)
                             {
