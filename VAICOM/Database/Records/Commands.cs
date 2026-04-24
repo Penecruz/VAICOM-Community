@@ -503,6 +503,9 @@ namespace VAICOM
             // extension pack 
             { "wMsgAIPilotCmndsMaximum" ,      new Command { uniqueid = 23999, category = CommandCategories.AI_pilot, eventnumber = 4000,dcsid = "wMsgAIPilotCmndsMaximum" } },
 
+            // WSO commands 24200-24999
+            { "wMsgWSOCmndsNull" ,             new Command { uniqueid = 24200, category = CommandCategories.WSO,    eventnumber = 4000,  dcsid = "wMsgWSOCmndsNull"    } },            
+            { "wMsgWSOCmndsMaximum" ,          new Command { uniqueid = 24999, category = CommandCategories.WSO,    eventnumber = 4000,  dcsid = "wMsgWSOCmndsMaximum" } },
 
             // Kneeboard 24000
             { "wMsgKneeboardCmndsNull" ,             new Command { uniqueid = 24000, category = CommandCategories.kneeboard,    eventnumber = 4000,  dcsid = "wMsgKneeboardCmndsNull" } },

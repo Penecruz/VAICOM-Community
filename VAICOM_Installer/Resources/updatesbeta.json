@@ -7,11 +7,11 @@
       "isbeta": false,
       "isdev": false,
       "productid": 1,
-      "releasedate": 20260422,
-      "version": 3107,
-      "versionstring": "3.1.0.7",
+      "releasedate": 20260425,
+      "version": 3113,
+      "versionstring": "3.1.1.3",
       "downloadurl": "https://raw.githubusercontent.com/Penecruz/VAICOM-Community/Development/VAICOM_Installer/Resources/VAICOMPRO.zip",
-      "releasenotes": "BETA 3.1.0.7 \n- New F10 menu processing routine and error handling - mitigate large server F10 menu errors Foothold etc.\n- Ignore larger F10 menus that exceed chunk limits, revert previous F10 handling changes.\n- Remove all Pro licensing code and artwork F-14 Jockeys test AIRIO please "
+      "releasenotes": "BETA 3.1.1.3 \n- New F10 menu processing routine and error handling - mitigate large server F10 menu errors Foothold etc.\n- Ignore larger F10 menus that exceed chunk limits, revert previous F10 handling changes.\n- Remove all Pro licensing code and artwork F-14 Jockeys test AIRIO please.\n- Major Update to add F-4E Phantom II Jester 2.0 - testers see Discord for how to setup your Voice Attack Profile. "
     }
   ]
 }
