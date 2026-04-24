@@ -34,14 +34,13 @@ namespace VAICOM
         public static bool versiondev = false; //set if Dev version
         public static bool usenewselectmethod = false;
         public static string debuguser = "VAICOM_Tester";
+        public static string client = "VAICOM";
         public static string clientmode = ClientModes.Debug; //set to Normal for release, Debug for development
 
         public static string versionstring = "";
         public static string pluginversionnumber = "3.1.0"; // used by Theme (Special page)
         public static string vaminversion = "1.16";
         public static string defProfileName = "VAICOM for DCS World";
-        public static bool requirecarrierregkey = false;
-        public static bool installkneeboard = true;
         // Add a new property to control Voice Access priority
         public static bool UseVoiceAccessPriority { get; set; } = false; // Default to unchecked
 
@@ -144,8 +143,6 @@ namespace VAICOM
         // call handling control flags
 
         public static string currentfullsentence;
-        public static bool blockedmodule;
-        public static bool tempblockedcommands;
         public static bool blockallcommands;
         public static bool showingoptions;
         public static bool processlocked;
@@ -273,18 +270,6 @@ namespace VAICOM
         // debugging
 
         public static string logfile;
-
-        // -----------------------------------------------------------------------------------------------------------
-        // licence handling
-
-        public static Dictionary<string, Product> activelicenses;
-        public static string currentlicense;
-        public static bool PRO;
-        public static bool chatterthemesactivated;
-        public static bool jesteractivated;
-        public static bool kneeboardactivated;
-        public static bool icshotmicactive;
-        public static bool realatcactivated;
 
         // -----------------------------------------------------------------------------------------------------------
         // server state handling

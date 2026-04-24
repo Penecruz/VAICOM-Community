@@ -12,11 +12,7 @@
             public string displayname;
             public RecipientCategories category;
 
-            public bool requiresJester;
-            public bool requiresWSO;
-            public bool requiresrealatc;
             public bool enabled;
-            public bool blockedforFree;
             public bool isallowed;
             public bool hasunit;
             public int unitid;

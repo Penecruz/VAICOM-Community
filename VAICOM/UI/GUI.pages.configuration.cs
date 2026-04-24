@@ -19,7 +19,7 @@ namespace VAICOM
             // remote IP
             private void AutoImportATCon(object sender, RoutedEventArgs e) { State.activeconfig.Checkfornewatcs = true; }
             private void AutoImportATCoff(object sender, RoutedEventArgs e) { State.activeconfig.Checkfornewatcs = false; }
-            private void SetCurrentValueAutoImportATC(object sender, EventArgs e) { AutoImportATC.IsEnabled = State.PRO; AutoImportATC.IsChecked = State.activeconfig.Checkfornewatcs; }
+            private void SetCurrentValueAutoImportATC(object sender, EventArgs e) { AutoImportATC.IsEnabled = true; AutoImportATC.IsChecked = State.activeconfig.Checkfornewatcs; }
             // include custom folders
             private void UseCustomFolderson(object sender, RoutedEventArgs e) { State.activeconfig.UseCustomFolders = true; }
             private void UseCustomFoldersoff(object sender, RoutedEventArgs e) { State.activeconfig.UseCustomFolders = false; }
@@ -238,7 +238,7 @@ namespace VAICOM
             // import new modules
             private void AutoImportModuleson(object sender, RoutedEventArgs e) { State.activeconfig.AutoImportModules = true; }
             private void AutoImportModulesoff(object sender, RoutedEventArgs e) { State.activeconfig.AutoImportModules = false; }
-            private void SetCurrentValueAutoImportModules(object sender, EventArgs e) { AutoImportModules.IsEnabled = State.PRO; AutoImportModules.IsChecked = State.activeconfig.AutoImportModules; }
+            private void SetCurrentValueAutoImportModules(object sender, EventArgs e) { AutoImportModules.IsEnabled = true; AutoImportModules.IsChecked = State.activeconfig.AutoImportModules; }
 
             // manual server files
             private void ManualServerFilesOn(object sender, RoutedEventArgs e) { State.activeconfig.ManualInstallServerFiles = true; }

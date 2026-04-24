@@ -223,7 +223,8 @@ namespace VAICOM.Properties {
         ///    self.window = Window.new(0, 0, 1280, 30)
         ///    self.window:setHasCursor(false)
         ///    self.window:setVisible(false)
-        ///        /// [rest of string was truncated]&quot;;.
+        ///
+        /// [rest of string was truncated]&quot;;.
         /// </summary>
         public static string Append_Core_TabSheetBar {
             get {
@@ -1175,7 +1176,8 @@ namespace VAICOM.Properties {
         ///				[&quot;text&quot;] = {
         ///					[&quot;fontSize&quot;] = 10,
         ///					[&quot;horzAlign&quot;] = {
-        ///						[&quot;type&quot;] = &quot;min&quot;        /// [rest of string was truncated]&quot;;.
+        ///						[&quot;type&quot;] = &quot;min&quot;
+        /// [rest of string was truncated]&quot;;.
         /// </summary>
         public static string options {
             get {

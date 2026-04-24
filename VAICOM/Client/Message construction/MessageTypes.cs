@@ -119,7 +119,7 @@ namespace VAICOM
                     public UpdateRequest()
                     {
                         debug = State.activeconfig.Debugmode;
-                        client = State.currentlicense;
+                        client = State.client;
                         mode = State.clientmode;
                         type = Messagetypes.RequestUpdate;
                         command = 4000;
@@ -164,7 +164,7 @@ namespace VAICOM
                     public SettingsChange()
                     {
                         debug = State.activeconfig.Debugmode;
-                        client = State.currentlicense;
+                        client = State.client;
                         mode = State.clientmode;
                         type = Messagetypes.SettingsChange;
                         command = 4000;
@@ -196,7 +196,7 @@ namespace VAICOM
                     {
                         debug = State.activeconfig.Debugmode;
                         showmenu = true;
-                        client = State.currentlicense;
+                        client = State.client;
                         mode = State.clientmode;
                         type = Messagetypes.iCommandSequence;
                         tgtdevname = State.currentradiodevicename.Replace(":", " ");
@@ -228,7 +228,7 @@ namespace VAICOM
                     public ActionIndexSequence()
                     {
                         debug = State.activeconfig.Debugmode;
-                        client = State.currentlicense;
+                        client = State.client;
                         mode = State.clientmode;
                         type = Messagetypes.ActionIndexSequence;
                         command = 4000;
@@ -254,7 +254,6 @@ namespace VAICOM
                     public DebugMsg()
                     {
                         debug = true;
-                        client = State.currentlicense;
                         mode = ClientModes.Debug;
                         exec = "";
                         dictmode = State.Proxy.Dictation.IsOn();
@@ -291,7 +290,7 @@ namespace VAICOM
                     public RadioTuneMessage()
                     {
                         debug = State.activeconfig.Debugmode;
-                        client = State.currentlicense;
+                        client = State.client;
                         mode = State.clientmode;
                         type = Messagetypes.SettingsChange;
                         command = 4000;
@@ -315,7 +314,7 @@ namespace VAICOM
                 try
                 {
 
-                    if (!State.kneeboardactivated && State.activeconfig.Kneeboard_Enabled)
+                    if (!State.activeconfig.Kneeboard_Enabled)
                     {
                         msg = new KneeboardMessage();
                         msg.logdata = new LogData("", "Please enable kneeboard extension to use this page.");

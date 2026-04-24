@@ -43,7 +43,7 @@ namespace VAICOM
                     State.Proxy = vaProxy;
                     State.valistening = vaProxy.State.GetListeningEnabled();
 
-                    TXLinkApply = State.PRO && State.activeconfig.MP_UseTXLink && !(State.activeconfig.MP_TXLink_MPOnly && !State.currentstate.multiplayer);
+                    TXLinkApply = State.activeconfig.MP_UseTXLink && !(State.activeconfig.MP_TXLink_MPOnly && !State.currentstate.multiplayer);
                     Log.Write("TXLinkApply = " + TXLinkApply, Colors.Inline);
 
                     bool applylong = !TXLinkApply || longpress;
@@ -79,15 +79,6 @@ namespace VAICOM
                     {
                         string message = "Keyword Training Mode active: PTT is disabled.";
                         Log.Write(message, Colors.Warning);
-                        return true;
-                    }
-
-                    if (State.blockedmodule)
-                    {
-                        string message = "DCS module " + State.currentmodule.Name + " is available with PRO license only.";
-                        Log.Write(message, Colors.Warning);
-                        State.MessageReset();
-                        DcsClient.SendUpdateRequest();
                         return true;
                     }
 

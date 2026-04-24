@@ -89,18 +89,6 @@ namespace VAICOM
                         return true;
                     }
 
-                    // block for PRO
-                    if (State.blockedmodule)
-                    {
-                        Log.Write("PRO license is required for this module.", Colors.Warning);
-                        return true;
-                    }
-                    // temporary block
-                    if (State.tempblockedcommands)
-                    {
-                        Log.Write("(plugin commands are currently not available)", Colors.Warning);
-                        return true;
-                    }
                     // script conflicts
                     if (State.blockallcommands)
                     {
@@ -206,7 +194,7 @@ namespace VAICOM
                                 // Handle Kneeboard recipient
                                 try
                                 {
-                                    if (State.kneeboardactivated && State.activeconfig.Kneeboard_Enabled)
+                                    if (State.activeconfig.Kneeboard_Enabled)
                                     {
                                         KneeboardToggle();
                                     }
@@ -337,11 +325,6 @@ namespace VAICOM
                         State.currentkey["recipient"] = State.currentcommand.RecipientClass().Name.ToLower();
                     }
 
-                    if (!AllowRecipient(Recipients.Table[State.currentkey["recipient"]]))
-                    {
-                        return false;
-                    }
-
                     // get rid if any inconsistencies
                     filterconflicts();
 
@@ -415,9 +398,8 @@ namespace VAICOM
                         // for kneeboard commands
                         if (State.currentcommand.isKneeboard() || State.currentcommand.uniqueid.Equals(23004) || State.currentcommand.uniqueid.Equals(23005))
                         {
-                            if (State.kneeboardactivated)
+                            if (State.activeconfig.Kneeboard_Enabled)
                             {
-
                                 switch (State.currentcommand.dcsid)
                                 {
                                     case "wMsgShowKneeboardTab":

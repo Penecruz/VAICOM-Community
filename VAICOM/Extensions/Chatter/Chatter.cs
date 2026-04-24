@@ -88,10 +88,7 @@ namespace VAICOM
                                 break;
                         }
 
-                        if (State.chatterthemesactivated)
-                        {
-                            Log.Write("Chatter theme set to " + currenttheme, Colors.Text);
-                        }
+                        Log.Write("Chatter theme set to " + currenttheme, Colors.Text);
 
                         // Create list of resource names
                         Log.Write("Adding chatter resources.. " + currenttheme, Colors.Text);

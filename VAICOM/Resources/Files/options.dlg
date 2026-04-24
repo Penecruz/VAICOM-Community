@@ -79,24 +79,6 @@ dialog = {
 					["type"] = "Static",
 				},
 
-				["VAICOMOptionsSubLicenseLabel"] = {
-					["params"] = {
-						["bounds"] = {
-							["x"] = LeftMargin,
-							["y"] = 85,
-							["w"] = 380,
-							["h"] = 24,
-						},
-						["enabled"] = true,
-						["text"] = "$VAICOM_LICENSE",
-						["tooltip"] = "",
-						["visible"] = true,
-						["zindex"] = 0,
-					},
-					["skin"] = TitleSkin,
-					["type"] = "Static",
-				},
-
 				["VAICOMOptionsSubDLLPlugin"] = {
 					["params"] = {
 						["bounds"] = {

@@ -80,7 +80,6 @@ namespace VAICOM
                         {
                             Name = id,
                             Alias = "",
-                            ProOnly = true,
                             IsFC = false,
                             ApxWpn = true,
                             ApxDir = true,
@@ -97,23 +96,10 @@ namespace VAICOM
                         State.currentmodule = DCSmodules.LookupTable[id];
                     }
 
-                    // Module is resolved, check if allowed
-                    if (!State.PRO & State.currentmodule.ProOnly)
+
+                    if (!silent)
                     {
-                        if (!silent)
-                        {
-                            Log.Write("DCS module " + State.currentmodule.Name + " is available with PRO license only.", Colors.Warning);
-                        }
-                        State.blockedmodule = false;
-                        UI.Playsound.Sorry();
-                    }
-                    else
-                    {
-                        if (!silent)
-                        {
-                            DisplayCurrentModule();
-                        }
-                        State.blockedmodule = false;
+                        DisplayCurrentModule();
                     }
 
                     // If module is resolved, set moduleConnected to true
@@ -137,13 +123,10 @@ namespace VAICOM
                 catch (Exception)
                 {
                     // When error, revert to default
-                    if (State.PRO)
+                    State.currentmodule = DCSmodules.LookupTable["Module Error"];
+                    if (!silent)
                     {
-                        State.currentmodule = DCSmodules.LookupTable["Module Error"];
-                        if (!silent)
-                        {
-                            DisplayCurrentModule();
-                        }
+                        DisplayCurrentModule();
                     }
                 }
             }

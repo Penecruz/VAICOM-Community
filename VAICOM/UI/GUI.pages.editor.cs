@@ -29,23 +29,23 @@ namespace VAICOM
 
             private void InitAddNewAlias(object sender, EventArgs e)
             {
-                newalias.IsEnabled = State.PRO;
+                newalias.IsEnabled = true;
             }
             private void InitDeleteCurrentAlias(object sender, EventArgs e)
             {
-                deletealias.IsEnabled = State.PRO;
+                deletealias.IsEnabled = true;
             }
             private void InitcomboBoxAlias_TextRevert(object sender, EventArgs e)
             {
-                Revert_Button.IsEnabled = State.PRO;
+                Revert_Button.IsEnabled = true;
             }
             private void InitcomboBoxAlias_TextUpdate(object sender, EventArgs e)
             {
-                Apply_Button.IsEnabled = State.PRO;
+                Apply_Button.IsEnabled = true;
             }
             private void InitKeywordsReloadOriginalDB(object sender, EventArgs e)
             {
-                Restore_Button.IsEnabled = State.PRO;
+                Restore_Button.IsEnabled = true;
                 if (Restore_Button.IsEnabled)
                 {
                     Reflectrequiresreload();
@@ -61,15 +61,12 @@ namespace VAICOM
             }
             private void InitKeywordsExport(object sender, EventArgs e)
             {
-                KeywordsExport.IsEnabled = State.PRO;
-                if (KeywordsExport.IsEnabled)
-                {
-                    Reflectunsavedchanges();
-                }
+                KeywordsExport.IsEnabled = true;
+                Reflectunsavedchanges();
             }
             private void InitCancel(object sender, EventArgs e)
             {
-                Cancel.IsEnabled = State.PRO;
+                Cancel.IsEnabled = true;
             }
 
             private void ComboSetInitialValue(object sender, EventArgs e)
@@ -514,10 +511,7 @@ namespace VAICOM
                 {
                     Microphone.IsEnabled = false;
                     Microphone.Visibility = Visibility.Hidden;
-                    if (State.PRO)
-                    {
-                        Message.Text = "Keywords Training Mode is active.";
-                    }
+                    Message.Text = "Keywords Training Mode is active.";
                     Microphone_train.IsEnabled = true;
                     Microphone_train.Visibility = Visibility.Visible;
                 }
@@ -538,10 +532,7 @@ namespace VAICOM
                 {
                     FileHandler.Database.ExportMasterKeywordString();
                     FileHandler.Database.WriteAllCategoriesToFile(true);
-                    if (State.PRO)
-                    {
-                        Message.Text = "Keywords exported. Follow instructions to update VA profile.";
-                    }
+                    Message.Text = "Keywords exported. Follow instructions to update VA profile.";
                     string caption = "Modified database";
                     string message = "The keywords database was updated.\n\nIMPORTANT: YOU MUST NOW UPDATE THE VOICEATTACK PROFILE.\n\nThe updated keyword set was placed in Windows clipboard.\nOpen the VoiceAttack window now and edit the profile (pencil icon).\n\nIn the profile, double-click the 'AI Communications' command (category Keywords collection) and clear all existing keywords in the 'When I Say' field (use Ctrl+A, then Delete key).\nThen apply Paste (Ctrl+V) to place the new keyword set and press Apply/Done to store.\n\nNOTES:\nIn VA make sure multipart commands are consolidated.\n";
                     System.Windows.MessageBox.Show(message, caption, MessageBoxButton.OK, MessageBoxImage.Information);
@@ -561,17 +552,11 @@ namespace VAICOM
 
                 if (FileHandler.Database.ExportKeywordsAsCSV())
                 {
-                    if (State.PRO)
-                    {
-                        Message.Text = "keywords.csv file published to Export folder.";
-                    }
+                    Message.Text = "keywords.csv file published to Export folder.";
                 }
                 else
                 {
-                    if (State.PRO)
-                    {
-                        Message.Text = "there was an error exporting the .csv file.";
-                    }
+                    Message.Text = "there was an error exporting the .csv file.";
                 }
 
             }

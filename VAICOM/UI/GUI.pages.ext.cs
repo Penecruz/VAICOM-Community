@@ -26,7 +26,7 @@ namespace VAICOM
             private void SetConfigDisableKNEEOff(object sender, RoutedEventArgs e) { State.activeconfig.Kneeboard_Enabled = false; }
             private void SetCurrentValueKNEE(object sender, EventArgs e)
             {
-                KNEE_Enable_Box.IsEnabled = State.kneeboardactivated = true;
+                KNEE_Enable_Box.IsEnabled = true;
                 KNEE_Enable_Box.IsChecked = State.activeconfig.Kneeboard_Enabled;
             }
             public void UpdateKneeboard()
@@ -67,7 +67,7 @@ namespace VAICOM
 
             private void SetCurrentValueRIO_Enable(object sender, EventArgs e)
             {
-                if (State.jesteractivated && State.dll_installed_rio)
+                if (State.dll_installed_rio)
                 {
                     RIO_Enable_Box.Visibility = Visibility.Visible;
                 }
@@ -75,7 +75,7 @@ namespace VAICOM
                 {
                     RIO_Enable_Box.Visibility = Visibility.Hidden;
                 }
-                RIO_Enable_Box.IsEnabled = State.jesteractivated;
+                RIO_Enable_Box.IsEnabled = true;
                 RIO_Enable_Box.IsChecked = State.activeconfig.RIO_Enabled;
             }
 
@@ -83,7 +83,7 @@ namespace VAICOM
             private void SetConfigDisableRIO_Disable_Rose(object sender, RoutedEventArgs e) { State.activeconfig.RIO_Messages = false; }
             private void SetCurrentValueRIO_Disable_Rose(object sender, EventArgs e)
             {
-                if (State.jesteractivated && State.dll_installed_rio)
+                if (State.dll_installed_rio)
                 {
                     RIO_Hints.Visibility = Visibility.Visible;
                 }
@@ -91,7 +91,7 @@ namespace VAICOM
                 {
                     RIO_Hints.Visibility = Visibility.Hidden;
                 }
-                RIO_Hints.IsEnabled = State.jesteractivated;
+                RIO_Hints.IsEnabled = true;
                 RIO_Hints.IsChecked = State.activeconfig.RIO_Messages;
             }
 
@@ -99,7 +99,7 @@ namespace VAICOM
             private void SetConfigDisableRIO_Hints_Only(object sender, RoutedEventArgs e) { State.activeconfig.RIO_Hints_Only = false; }
             private void SetCurrentValueRIO_Hints_Only(object sender, EventArgs e)
             {
-                if (State.jesteractivated && State.dll_installed_rio)
+                if (State.dll_installed_rio)
                 {
                     RIO_Hints_Only.Visibility = Visibility.Visible;
                 }
@@ -107,7 +107,7 @@ namespace VAICOM
                 {
                     RIO_Hints_Only.Visibility = Visibility.Hidden;
                 }
-                RIO_Hints_Only.IsEnabled = State.jesteractivated;
+                RIO_Hints_Only.IsEnabled = true;
                 RIO_Hints_Only.IsChecked = State.activeconfig.RIO_Hints_Only;
             }
 
@@ -173,7 +173,7 @@ namespace VAICOM
 
             private void SetCurrentValueRIO_ICShotmic_useswitch(object sender, EventArgs e)
             {
-                if (State.jesteractivated && State.dll_installed_rio)
+                if (State.dll_installed_rio)
                 {
                     RIO_ICShotmic_useswitch.Visibility = Visibility.Visible;
                 }
@@ -181,13 +181,13 @@ namespace VAICOM
                 {
                     RIO_ICShotmic_useswitch.Visibility = Visibility.Hidden;
                 }
-                RIO_ICShotmic_useswitch.IsEnabled = State.jesteractivated;
+                RIO_ICShotmic_useswitch.IsEnabled = true;
                 RIO_ICShotmic_useswitch.IsChecked = State.activeconfig.ICShotmic_useswitch;
             }
 
             private void InitRIODllWarning(object sender, EventArgs e)
             {
-                if (State.jesteractivated && !State.dll_installed_rio)
+                if (!State.dll_installed_rio)
                 {
                     RIO_Dll_missing.Visibility = Visibility.Visible;
                 }
@@ -198,7 +198,7 @@ namespace VAICOM
             }
             private void Init_RIO_Dll_missing_Pic(object sender, EventArgs e)
             {
-                if (State.jesteractivated && !State.dll_installed_rio)
+                if (!State.dll_installed_rio)
                 {
                     RIO_Dll_missing_Pic.Visibility = Visibility.Visible;
                 }
@@ -209,20 +209,20 @@ namespace VAICOM
 
             }
 
-            private void CarrierCommsOn(object sender, RoutedEventArgs e) { CarrierComms.IsChecked = State.realatcactivated; }
-            private void CarrierCommsOff(object sender, RoutedEventArgs e) { CarrierComms.IsChecked = State.realatcactivated; }
+            private void CarrierCommsOn(object sender, RoutedEventArgs e) { CarrierComms.IsChecked = true; }
+            private void CarrierCommsOff(object sender, RoutedEventArgs e) { CarrierComms.IsChecked = true; }
             private void SetCurrentValueCarrierComms(object sender, EventArgs e)
             {
-                CarrierComms.IsEnabled = State.realatcactivated;
-                CarrierComms.IsChecked = State.realatcactivated;
+                CarrierComms.IsEnabled = true;
+                CarrierComms.IsChecked = true;
             }
 
             private void CarrierSuppressAutoOn(object sender, RoutedEventArgs e) { State.activeconfig.CarrierSuppressAuto = true; }
             private void CarrierSuppressAutoOff(object sender, RoutedEventArgs e) { State.activeconfig.CarrierSuppressAuto = false; }
             private void SetCurrentValueCarrierSuppressAuto(object sender, EventArgs e)
             {
-                CarrierSuppressAuto.IsEnabled = State.realatcactivated;
-                CarrierSuppressAuto.IsChecked = State.realatcactivated && State.activeconfig.CarrierSuppressAuto;
+                CarrierSuppressAuto.IsEnabled = true;
+                CarrierSuppressAuto.IsChecked = State.activeconfig.CarrierSuppressAuto;
             }
 
             // Right column:
@@ -230,17 +230,17 @@ namespace VAICOM
             // auto brief
             private void AutoBriefOn(object sender, RoutedEventArgs e) { State.activeconfig.AutoBrief = true; }
             private void AutoBriefOff(object sender, RoutedEventArgs e) { State.activeconfig.AutoBrief = false; }
-            private void SetCurrentValueAutoBrief(object sender, EventArgs e) { autobrief.IsEnabled = State.PRO; autobrief.IsChecked = State.activeconfig.AutoBrief; }
+            private void SetCurrentValueAutoBrief(object sender, EventArgs e) { autobrief.IsEnabled = true; autobrief.IsChecked = State.activeconfig.AutoBrief; }
 
             // concise
             private void BriefConciseOn(object sender, RoutedEventArgs e) { State.activeconfig.BriefConcise = true; }
             private void BriefConciseOff(object sender, RoutedEventArgs e) { State.activeconfig.BriefConcise = false; }
-            private void SetCurrentValueBriefConcise(object sender, EventArgs e) { briefconcise.IsEnabled = State.PRO; briefconcise.IsChecked = State.activeconfig.BriefConcise; }
+            private void SetCurrentValueBriefConcise(object sender, EventArgs e) { briefconcise.IsEnabled = true; briefconcise.IsChecked = State.activeconfig.BriefConcise; }
 
             // deepinterrogate
             private void DeepInterrogateOn(object sender, RoutedEventArgs e) { State.activeconfig.DeepInterrogate = true; }
             private void DeepInterrogateOff(object sender, RoutedEventArgs e) { State.activeconfig.DeepInterrogate = false; }
-            private void SetCurrentValueDeepInterrogate(object sender, EventArgs e) { deepinterrogate.IsEnabled = State.PRO; deepinterrogate.IsChecked = State.activeconfig.DeepInterrogate; }
+            private void SetCurrentValueDeepInterrogate(object sender, EventArgs e) { deepinterrogate.IsEnabled = true; deepinterrogate.IsChecked = State.activeconfig.DeepInterrogate; }
 
             // chatter
 
@@ -260,7 +260,7 @@ namespace VAICOM
 
             private void SetCurrentValueChatterSilentOffline(object sender, EventArgs e)
             {
-                ChatterSilentOffline.IsEnabled = State.chatterthemesactivated && State.dll_installed_chatter;
+                ChatterSilentOffline.IsEnabled = State.dll_installed_chatter;
                 ChatterSilentOffline.IsChecked = State.activeconfig.ChatterSilentOffline;
             }
 
@@ -268,7 +268,7 @@ namespace VAICOM
             private void KneeboardlinkPTTOff(object sender, RoutedEventArgs e) { State.activeconfig.KneeboardlinkPTT = false; }
             private void SetCurrentValueKneeboardlinkPTT(object sender, EventArgs e)
             {
-                KneeboardlinkPTT.IsEnabled = State.kneeboardactivated;
+                KneeboardlinkPTT.IsEnabled = true;
                 KneeboardlinkPTT.IsChecked = State.activeconfig.KneeboardlinkPTT;
             }
 
@@ -277,13 +277,13 @@ namespace VAICOM
             private void ChatterAutostartOff(object sender, RoutedEventArgs e) { State.activeconfig.ChatterAutostart = false; }
             private void SetCurrentValueChatterAutostart(object sender, EventArgs e)
             {
-                ChatterAutostart.IsEnabled = State.chatterthemesactivated && State.dll_installed_chatter;
+                ChatterAutostart.IsEnabled = State.dll_installed_chatter;
                 ChatterAutostart.IsChecked = State.activeconfig.ChatterAutostart;
             }
 
             private void ChatterFolderInitialValue(object sender, EventArgs e)
             {
-                ChatterTheme.IsEnabled = State.chatterthemesactivated && State.dll_installed_chatter;
+                ChatterTheme.IsEnabled = State.dll_installed_chatter;
                 string displaytext = "---";
                 try
                 {
@@ -323,7 +323,7 @@ namespace VAICOM
             private void SetConfigDisableCHATOff(object sender, RoutedEventArgs e) { State.activeconfig.Chatter_Enabled = false; }
             private void SetCurrentValueCHAT(object sender, EventArgs e)
             {
-                CHAT_Enable_Box.IsEnabled = State.chatterthemesactivated = true;
+                CHAT_Enable_Box.IsEnabled = true;
                 CHAT_Enable_Box.IsChecked = State.activeconfig.Chatter_Enabled;
             }
 

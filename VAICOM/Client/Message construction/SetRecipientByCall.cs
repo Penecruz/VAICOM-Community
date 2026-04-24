@@ -198,43 +198,6 @@ namespace VAICOM
 
                 }
 
-                public static bool AllowCommand(Command command)
-                {
-                    return true;
-                }
-
-                public static bool AllowRecipient(Recipient recipient)
-                {
-
-                    // PRO LICENSE CHECK:
-                    if (State.currentrecipient.blockedforFree & !State.PRO)
-                    {
-                        Log.Write("This recipient is available only with PRO license.", Colors.Warning);
-                        UI.Playsound.Sorry();
-                        return false;
-                    }
-
-                    // RIO LICENSE CHECK:
-                    if (recipient.requiresJester & !State.jesteractivated)
-                    {
-                        Log.Write("Activate your RIO Dialog extension license to use RIO commands.", Colors.Warning);
-                        UI.Playsound.Sorry();
-                        return false;
-                    }
-
-                    // REAL ATC LICENSE CHECK:
-                    if (recipient.requiresrealatc & !State.realatcactivated)
-                    {
-                        Log.Write("To contact this unit, activate your Realistic ATC extension license.", Colors.Warning);
-                        UI.Playsound.Sorry();
-                        return false;
-                    }
-
-                    // called recipient is allowed
-                    return true;
-
-                }
-
                 public static bool CatCanHaveUnits(Recipientclass cat)
                 {
 
