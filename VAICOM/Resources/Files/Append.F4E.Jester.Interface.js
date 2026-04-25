@@ -1,9 +1,58 @@
-// VAICOM PRO server-side script
+// VAICOM server-side script
 // Jester 2.0 interface.js
-// www.vaicompro.com
+
+// WebSocket connection to VAICOM
+let socket;
+
+// Create WebSocket connection and event listeners.
+function openSocketConnection() {
+	// Don't reconnect if we already have an open connection, or are
+	// already attempting to open a new one.
+	if (isSocketOpen() || isSocketConnecting()) {
+		return;
+	}
+
+	socket = new WebSocket("ws://127.0.0.1:33495/vaicom/wso/");
+
+	// Connection opened
+	socket.addEventListener("open", (event) => {
+		socket.send("F-4E: connected");
+		
+		setTimeout(function () {
+			sendNavCacheSnapshot("socket_open");
+		}, 200);
+	});
+
+	// Listen for messages
+	socket.addEventListener("message", (event) => {
+		try {
+			const { category, action, value } = JSON.parse(event.data);
+			if (category !== undefined && action !== undefined) {
+				hb_send_proxy(category, action, value);
+			}
+		} catch (e) {
+			sendSocketMessage(`F-4E error: ${e}`);
+		}
+	});
+}
+
+function isSocketConnecting() {
+	return socket && socket.readyState === WebSocket.CONNECTING;
+}
 
 function isSocketOpen() {
 	return socket && socket.readyState === WebSocket.OPEN;
+}
+
+function sendSocketMessage(data) {
+	if (isSocketOpen()) {
+		socket.send(data);
+	} else {
+		// If the socket wasn't open then open a new connection. The next message
+		// should then be sent as expected. This handles the case when the server-side
+		// connection is closed, e.g. if VAICOM is started after this interface page is loaded.
+		openSocketConnection();
+	}
 }
 
 function collectNavCacheEntries(menu, path, entries) {
@@ -41,10 +90,6 @@ function collectNavCacheEntries(menu, path, entries) {
 
 function sendNavCacheSnapshot(reason) {
 	try {
-		if (!isSocketOpen()) {
-			return;
-		}
-
 		if (typeof main_menu === "undefined" || !main_menu) {
 			return;
 		}
@@ -52,15 +97,13 @@ function sendNavCacheSnapshot(reason) {
 		const entries = [];
 		collectNavCacheEntries(main_menu, ["Main Menu"], entries);
 
-		socket.send(JSON.stringify({
+		sendSocketMessage(JSON.stringify({
 			type: "nav_cache_bulk",
 			reason: reason || "menu_update",
 			items: entries
 		}));
 	} catch (e) {
-		if (isSocketOpen()) {
-			socket.send(`F-4E nav cache error: ${e}`);
-		}
+		sendSocketMessage(`F-4E nav cache error: ${e}`);
 	}
 }
 
@@ -70,9 +113,7 @@ function hb_send_proxy(category, action, value = "") {
 	}
 
 	if (typeof window.edQuery === "function") {
-		if (isSocketOpen()) {
-			socket.send(`Jester Menu: ${category}|${action}|${value}`);
-		}
+		sendSocketMessage(`Jester Menu: ${category}|${action}|${value}`);
 
 		window.edQuery({
 			request: `${category}|${action}|${value}`,
@@ -82,40 +123,15 @@ function hb_send_proxy(category, action, value = "") {
 			onFailure: function (error_code, error_message) {
 			}
 		});
+        
 
-        setTimeout(function () {
+		setTimeout(function () {
 			sendNavCacheSnapshot("command");
 		}, 50);
 	} else {
 		console.log(category + ":" + action + ":" + value);
 	}
 }
-
-// Create WebSocket connection.
-const socket = new WebSocket("ws://127.0.0.1:33495/vaicom/wso/");
-
-// Connection opened
-socket.addEventListener("open", (event) => {
-	socket.send("F-4E: connected");
-	
-	setTimeout(function () {
-		sendNavCacheSnapshot("socket_open");
-	}, 200);
-});
-
-// Listen for messages
-socket.addEventListener("message", (event) => {
-	if (isSocketOpen()) {
-		try {
-			const { category, action, value } = JSON.parse(event.data);
-			if (category !== undefined && action !== undefined) {
-				hb_send_proxy(category, action, value);
-			}
-		} catch (e) {
-			socket.send(`F-4E error: ${e}`);
-		}
-	}
-});
 
 const vaicomOriginalUpdateMenus = window.updateMenus;
 window.updateMenus = function updateMenusWithNavCache() {
@@ -124,3 +140,6 @@ window.updateMenus = function updateMenusWithNavCache() {
 	}
 	sendNavCacheSnapshot("updateMenus");
 };
+
+// Connect to VAICOM during initialisation
+openSocketConnection();
