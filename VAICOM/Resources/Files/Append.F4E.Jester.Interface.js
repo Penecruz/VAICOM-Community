@@ -44,14 +44,20 @@ function isSocketOpen() {
 	return socket && socket.readyState === WebSocket.OPEN;
 }
 
+function checkSocketStatus() {
+	if (!isSocketOpen()) {
+		// If the socket wasn't open then open a new connection.This handles the
+		// case when the server-side connection is closed, e.g. if VAICOM is restarted
+		// after this interface page is loaded.
+		openSocketConnection();
+	}
+}
+
 function sendSocketMessage(data) {
 	if (isSocketOpen()) {
 		socket.send(data);
 	} else {
-		// If the socket wasn't open then open a new connection. The next message
-		// should then be sent as expected. This handles the case when the server-side
-		// connection is closed, e.g. if VAICOM is started after this interface page is loaded.
-		openSocketConnection();
+		checkSocketStatus();
 	}
 }
 
@@ -90,6 +96,10 @@ function collectNavCacheEntries(menu, path, entries) {
 
 function sendNavCacheSnapshot(reason) {
 	try {
+		if (!isSocketOpen()) {
+			return;
+		}
+
 		if (typeof main_menu === "undefined" || !main_menu) {
 			return;
 		}
@@ -143,3 +153,6 @@ window.updateMenus = function updateMenusWithNavCache() {
 
 // Connect to VAICOM during initialisation
 openSocketConnection();
+
+// Check every 3 seconds if the socket is open
+setInterval(checkSocketStatus, 3000);
