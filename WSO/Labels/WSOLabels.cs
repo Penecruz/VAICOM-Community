@@ -115,9 +115,9 @@ namespace VAICOM.Extensions.WSO
             { "wMsgWSO_A2G_PaveSpike_LaserCode_Silent", "WSO Pave Spike Laser Code Silent" },
 
             // Context response commands
-            { "wMsgWSO_Context_Action_Short", "WSO Context Action Short" },
-            { "wMsgWSO_Context_Action_Long", "WSO Context Action Long" },
-            { "wMsgWSO_Context_Action_Double", "WSO Context Action Double" },
+            { "wMsgWSO_Context_Short", "WSO Context Action Short" },
+            { "wMsgWSO_Context_Long", "WSO Context Action Long" },
+            { "wMsgWSO_Context_Double", "WSO Context Action Double" },
         };
     }
 }

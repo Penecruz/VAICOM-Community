@@ -197,6 +197,8 @@ namespace VAICOM
                 if ((this.uniqueid >= Commands.Table["iCommandNull"].uniqueid) & (this.uniqueid < Commands.Table["iCommandMaximum"].uniqueid)) { value = Messagetypes.DeviceControl; }
                 if ((this.uniqueid >= Commands.Table["wMsgNull"].uniqueid) & (this.uniqueid < Commands.Table["wMsgMaximum"].uniqueid)) { value = Messagetypes.CommsMessage; }
                 if ((this.uniqueid == Commands.Table["select"].uniqueid)) { value = Messagetypes.CommsMessage; }
+                // Imported F10 aux menu commands
+                if ((this.uniqueid >= Commands.Table["wMsgLeaderToAuxNull"].uniqueid) & (this.uniqueid <= Commands.Table["wMsgLeaderToAuxMaximum"].uniqueid)) { value = Messagetypes.CommsMessage; }
 
                 return value;
             }

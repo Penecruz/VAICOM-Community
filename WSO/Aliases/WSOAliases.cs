@@ -156,13 +156,13 @@ namespace VAICOM.Extensions.WSO
             { "Ground Trim Check", "wMsgWSO_Ground_TrimCheck" },           
 
             // Context response aliases
-            { "Context Select", "wMsgWSO_Context_Action_Short" },
-            { "Select Next Target", "wMsgWSO_Context_Action_Short" },
-            { "We Sure Are", "wMsgWSO_Context_Action_Short" },
-            { "Context Hold", "wMsgWSO_Context_Action_Long" },
-            { "Lock That Target", "wMsgWSO_Context_Action_Long" },
-            { "Context Double", "wMsgWSO_Context_Action_Double" },
-            { "Back to search", "wMsgWSO_Context_Action_Double" },
+            { "Context Select", "wMsgWSO_Context_Short" },
+            { "Select Next Target", "wMsgWSO_Context_Short" },
+            { "We Sure Are", "wMsgWSO_Context_Short" },
+            { "Context Hold", "wMsgWSO_Context_Long" },
+            { "Lock That Target", "wMsgWSO_Context_Long" },
+            { "Context Double", "wMsgWSO_Context_Double" },
+            { "Back to search", "wMsgWSO_Context_Double" },
         };
     }
 }

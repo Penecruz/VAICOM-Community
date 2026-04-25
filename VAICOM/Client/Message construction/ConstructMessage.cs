@@ -752,7 +752,7 @@ namespace VAICOM
                     string commandKey = State.currentkey.ContainsKey("command") ? State.currentkey["command"] : State.currentcommand?.dcsid;
 
                     if (!string.IsNullOrEmpty(commandKey) && DatabaseCommands.Table.TryGetValue(commandKey, out var command) &&
-                        (command.category == CommandCategories.WSO || (command.uniqueid >= 24000 && command.uniqueid <= 24999)))
+                        (command.category == CommandCategories.WSO || (command.uniqueid >= 24200 && command.uniqueid <= 24999)))
                     {
                         // Handle WSO-specific parameters
                         State.currentmessage.parameters = new List<object>
