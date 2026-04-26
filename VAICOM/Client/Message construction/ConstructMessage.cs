@@ -752,7 +752,7 @@ namespace VAICOM
                     string commandKey = State.currentkey.ContainsKey("command") ? State.currentkey["command"] : State.currentcommand?.dcsid;
 
                     if (!string.IsNullOrEmpty(commandKey) && DatabaseCommands.Table.TryGetValue(commandKey, out var command) &&
-                        (command.category == CommandCategories.WSO || (command.uniqueid >= 24200 && command.uniqueid <= 24999)))
+                        (command.category == CommandCategories.WSO || (command.uniqueid >= 24000 && command.uniqueid <= 24999)))
                     {
                         // Handle WSO-specific parameters
                         State.currentmessage.parameters = new List<object>
@@ -1037,6 +1037,13 @@ namespace VAICOM
                                 Message.SetMenuCmdSequence();
                                 State.showingoptions = true;
                             }
+                        }
+
+                        // For imported F10 menu commands: change type and add action sequence..
+                        if ((State.currentrecipientclass.Equals(Recipientclasses.Aux) && !State.currentrecipientclass.Name.Equals("AOCS")) & !State.currentcommand.isOptions())
+                        {
+                            State.currentmessage.type = Messagetypes.ActionIndexSequence;
+                            Message.SetMenuItemAction();
                         }
 
                         Log.Write("Message construction completed.", Colors.Text);
