@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using VAICOM.Client;
 using VAICOM.Extensions.WorldAudio;
@@ -401,23 +403,51 @@ namespace VAICOM
 
                     // F-4E WSO commands
                     case "wso.navigation.waypoint":
-                        string waypoint = GetNumberFromCommand();
-                        // If a waypoint number was in the command then resolve it to the full value, otherwise it's just the next turning point
-                        if (String.IsNullOrEmpty(waypoint))
+                        string waypointValue = GetNumberFromCommand();
+                        // If the command contains no numbers then it's just the next turning point,
+                        // otherwise it contains a waypoint and optional flight plan.
+                        if (String.IsNullOrEmpty(waypointValue))
                         {
                             HbSendProxyCommand.SendWsoCommand(State.WebSocketClient, "wMsgWSO_Navigation_ResumeNextWaypoint");
+                            break;
+                        }
+
+                        List<string> waypointCacheKeys = new List<string>();
+                        string waypointCommandKey = "";
+                        string flightPlanWaypoint = State.Proxy.Utility.ParseTokens("{TXTNUM:\"{CMDSEGMENT:4}\"}");
+
+                        string waypointflightPlan = State.Proxy.Utility.ParseTokens("{CMDSEGMENT:2}");
+                        // Check if a flight plan was included in the command, and whether or not it was flight plan 2.
+                        // Although the issued action will be resume_flightplan_X we look up the cache entry using
+                        // divert_tgt1_lat_lon. This is due to when adding new points to the flight plan they are not
+                        // automatically given a cache key of resume_flightplan_X so will not be found in the cache.
+                        // They are however given a cache key of divert_tgt1_lat_lon.
+                        if (!String.IsNullOrEmpty(waypointflightPlan) && IsSecondaryFlightPlan(waypointflightPlan))
+                        {
+                            waypointCommandKey = "wMsgWSO_Navigation_ResumeFlightPlan2Waypoint";
+                            waypointCacheKeys.Add("divert_tgt1_lat_lon");
+                            waypointCacheKeys.Add("fp2");
+                            waypointCacheKeys.Add(flightPlanWaypoint);
                         }
                         else
                         {
-                            if (State.WsoNavCacheByActionAndIndex.TryGetValue($"resume_flightplan_1|{waypoint}", out string resolvedWaypoint)
-                                    && !string.IsNullOrWhiteSpace(resolvedWaypoint))
-                            {
-                                HbSendProxyCommand.SendWsoCommand(State.WebSocketClient, "wMsgWSO_Navigation_GoToResume", resolvedWaypoint);
-                            }
-                            else
-                            {
-                                vaProxy.WriteToLog($"Waypoint {waypoint} not found", Colors.Warning);
-                            }
+                            waypointCommandKey = "wMsgWSO_Navigation_ResumeFlightPlan1Waypoint";
+                            waypointCacheKeys.Add("divert_tgt1_lat_lon");
+                            waypointCacheKeys.Add("fp1"); ;
+                            waypointCacheKeys.Add(flightPlanWaypoint);
+                        }
+
+                        string waypointCacheKey = String.Join("|", waypointCacheKeys);
+                        if (State.WsoNavCacheByActionAndIndex.TryGetValue(waypointCacheKey, out string resolvedWaypoint)
+                                && !string.IsNullOrWhiteSpace(resolvedWaypoint))
+                        {
+                            vaProxy.WriteToLog($"Cache key {waypointCacheKey} resolved to {resolvedWaypoint}", Colors.Text);
+                            // Append the waypoint number, after a semi-colon; to the lat long when sending the command as this is required
+                            HbSendProxyCommand.SendWsoCommand(State.WebSocketClient, waypointCommandKey, $"{resolvedWaypoint};{flightPlanWaypoint}");
+                        }
+                        else
+                        {
+                            vaProxy.WriteToLog($"Waypoint not resolved for cache key {waypointCacheKey}", Colors.Warning);
                         }
                         break;
 
@@ -427,10 +457,38 @@ namespace VAICOM
                         if (String.IsNullOrEmpty(holdpoint))
                         {
                             HbSendProxyCommand.SendWsoCommand(State.WebSocketClient, "wMsgWSO_Navigation_Holding_CurrentTurnPoint");
+                            break;
+                        }
+
+                        List<string> holdpointCacheKeys = new List<string>();
+                        string holdpointCommandKey = "";
+                        string flightPlanHoldpoint = State.Proxy.Utility.ParseTokens("{TXTNUM:\"{CMDSEGMENT:4}\"}");
+
+                        string holdpointFlightPlan = State.Proxy.Utility.ParseTokens("{CMDSEGMENT:2}");
+                        // Check if a flight plan was included in the command, and whether or not it was flight plan 2
+                        if (!String.IsNullOrEmpty(holdpointFlightPlan) && IsSecondaryFlightPlan(holdpointFlightPlan))
+                        {
+                            holdpointCommandKey = "wMsgWSO_Navigation_Holding_FlightPlan2TurnPoint";
+                            holdpointCacheKeys.Add("hold_flightplan_2");
+                            holdpointCacheKeys.Add(flightPlanHoldpoint);
                         }
                         else
                         {
-                            HbSendProxyCommand.SendWsoCommand(State.WebSocketClient, "wMsgWSO_Navigation_Holding_FlightPlan1TurnPoint", holdpoint);
+                            holdpointCommandKey = "wMsgWSO_Navigation_Holding_FlightPlan1TurnPoint";
+                            holdpointCacheKeys.Add("hold_flightplan_1");
+                            holdpointCacheKeys.Add(flightPlanHoldpoint);
+                        }
+
+                        string holdpointCacheKey = String.Join("|", holdpointCacheKeys);
+                        if (State.WsoNavCacheByActionAndIndex.TryGetValue(holdpointCacheKey, out string resolvedHoldpoint)
+                                && !string.IsNullOrWhiteSpace(resolvedHoldpoint))
+                        {
+                            vaProxy.WriteToLog($"Cache key {holdpointCacheKey} resolved to {resolvedHoldpoint}", Colors.Text);
+                            HbSendProxyCommand.SendWsoCommand(State.WebSocketClient, holdpointCommandKey, resolvedHoldpoint);
+                        }
+                        else
+                        {
+                            vaProxy.WriteToLog($"Holdpoint not resolved for cache key {holdpointCacheKey}", Colors.Warning);
                         }
                         break;
 
@@ -530,6 +588,11 @@ namespace VAICOM
             {
                 string tokens = "{TXTNUM:\"{CMD}\"}";
                 return State.Proxy.Utility.ParseTokens(tokens);
+            }
+
+            private static Boolean IsSecondaryFlightPlan(string flightPlan)
+            {
+                return flightPlan.Contains("2") || flightPlan.Contains("second");
             }
         }
     }

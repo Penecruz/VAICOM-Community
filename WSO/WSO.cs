@@ -14,27 +14,21 @@ namespace VAICOM.Extensions.WSO
         public int uniqueid;
         public string name;
         public string displayname;
-        public bool requiresWSO;
         public bool enabled;
-        public bool blockedforFree;        
 
         public RecipientInfo()
         {
-            requiresWSO = true;
             enabled = false;
-            blockedforFree = true;
         }
     }
 
     public class CommandInfo : BaseCommandInfo
     {
-        public bool requiresWSO;        
         internal object category;
 
         public CommandInfo()
         {
             eventnumber = 4000; // Default event number for WSO commands
-            requiresWSO = true;
         }
     }
 
@@ -42,7 +36,7 @@ namespace VAICOM.Extensions.WSO
     {
         public static Dictionary<string, RecipientInfo> aicomms = new Dictionary<string, RecipientInfo>(StringComparer.OrdinalIgnoreCase)
         {
-            { "WSO", new RecipientInfo { uniqueid = 19501, name = "wAIUnitFlightCrewMembersWSO", displayname = Labels.airecipients["WSO"], requiresWSO = true, enabled = true } },
+            { "WSO", new RecipientInfo { uniqueid = 19501, name = "wAIUnitFlightCrewMembersWSO", displayname = Labels.airecipients["WSO"], enabled = true } },
         };
     }
 }

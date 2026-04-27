@@ -66,20 +66,28 @@ function collectNavCacheEntries(menu, path, entries) {
 		return;
 	}
 
+	// Allowable list of actions to be included within the sent cache data
+	const allowedActions = [
+		"divert_tgt1_lat_lon", "hold_flightplan_1", "hold_flightplan_2",
+		"resume_flightplan_1", "resume_flightplan_2"
+	];
+
 	for (let i = 0; i < menu.items.length; i++) {
 		const item = menu.items[i];
 		if (!item) {
 			continue;
 		}
 
-		const itemName = item.name || "";
+		const { name, action, action_value } = item;
+		const itemName = name || "";
 		const itemPath = path.concat([itemName]);
 
-		if (item.action && typeof item.action_value === "string" && item.action_value.indexOf(";") >= 0) {
+		// Only add cache entries for specific actions
+		if (allowedActions.includes(action)) {
 			entries.push({
-				action: item.action,
+				action,
 				name: itemName,
-				value: item.action_value,
+				value: action_value,
 				path: itemPath.join(" > ")
 			});
 		}
