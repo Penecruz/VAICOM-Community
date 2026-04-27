@@ -16,7 +16,7 @@ function openSocketConnection() {
 
 	// Connection opened
 	socket.addEventListener("open", (event) => {
-		socket.send("F-4E: connected");
+		socket.send("WSO Jester 2.0: Connected");
 		
 		setTimeout(function () {
 			sendNavCacheSnapshot("socket_open");
@@ -31,7 +31,7 @@ function openSocketConnection() {
 				hb_send_proxy(category, action, value);
 			}
 		} catch (e) {
-			sendSocketMessage(`F-4E error: ${e}`);
+			sendSocketMessage(`WSO Jester 2.0: Error ${e}`);
 		}
 	});
 }
@@ -113,7 +113,7 @@ function sendNavCacheSnapshot(reason) {
 			items: entries
 		}));
 	} catch (e) {
-		sendSocketMessage(`F-4E nav cache error: ${e}`);
+		sendSocketMessage(`WSO Jester 2.0: Cache Error ${e}`);
 	}
 }
 
@@ -123,7 +123,7 @@ function hb_send_proxy(category, action, value = "") {
 	}
 
 	if (typeof window.edQuery === "function") {
-		sendSocketMessage(`Jester Menu: ${category}|${action}|${value}`);
+		sendSocketMessage(`Jester 2.0 Menu: ${category}|${action}|${value}`);
 
 		window.edQuery({
 			request: `${category}|${action}|${value}`,

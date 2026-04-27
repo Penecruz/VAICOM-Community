@@ -223,11 +223,11 @@ namespace VAICOM
 
                     if (cachedCount > 0)
                     {
-                        Log.Write($"WSO NAV cache updated ({cachedCount} entries).", Colors.Text);
-                        if (State.deepdebugmode)
-                        {
-                            LogWsoNavCacheSnapshot(50);
-                        }
+                        // Log.Write($"WSO NAV cache updated ({cachedCount} entries).", Colors.Text);
+                        // if (State.deepdebugmode)
+                        // {
+                        //     LogWsoNavCacheSnapshot(50);
+                        // }
                         return true;
                     }
 
@@ -393,7 +393,7 @@ namespace VAICOM
                     }
 
                     string keyInfo = keyParts.Count > 0 ? string.Join(", ", keyParts) : "no key";
-                    Log.Write($"WSO NAV cache entry: action={action}, {keyInfo}, value={value}", Colors.Text);
+                    // Log.Write($"WSO NAV cache entry: action={action}, {keyInfo}, value={value}", Colors.Text);
                 }
 
                 return true;
