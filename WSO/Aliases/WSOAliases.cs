@@ -53,6 +53,7 @@ namespace VAICOM.Extensions.WSO
             { "Lock Target", "wMsgWSO_Radar_LockTarget" },
             { "TV Weapons", "wMsgWSO_A2G_TVWeapons" },
             { "TV Pave Spike", "wMsgWSO_A2G_TVPaveSpike" },
+            { "Divert To Airfield", "wMsgWSO_Navigation_Divert_Airfield" },
             { "Divert Lat Long", "wMsgWSO_Navigation_Divert_LatLong" },
             { "Divert To", "wMsgWSO_Navigation_Divert_LatLong" },
             { "Divert To Waypoint", "wMsgWSO_Navigation_Divert_LatLong" },

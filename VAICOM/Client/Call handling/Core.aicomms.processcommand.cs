@@ -1057,6 +1057,29 @@ namespace VAICOM
                     }
                 }
 
+                private static bool TryResolveLatLongForAirfield(out string value)
+                {
+                    string airfield = State.Proxy.Utility.ParseTokens("{CMDSEGMENT:2}");
+
+                    lock (State.WsoNavCacheLock)
+                    {
+                        if (!String.IsNullOrEmpty(airfield)
+                            && State.WsoNavCacheByActionAndName.TryGetValue($"divert_tgt1_lat_lon|{airfield}", out string resolvedValue)
+                            && !string.IsNullOrWhiteSpace(resolvedValue))
+                        {
+                            value = resolvedValue;
+                            return true;
+                        }
+                        else
+                        {
+                            value = "";
+                            Log.Write($"Divert lat/long not resolved for airfield {airfield}", Colors.Warning);
+                        }
+                    }
+
+                    return false;
+                }
+
                 private static string NormalizeNavLookupText(string input)
                 {
                     if (string.IsNullOrWhiteSpace(input))
@@ -1083,7 +1106,12 @@ namespace VAICOM
                             string action = commandDetails.action;
                             string value = commandDetails.value;
 
-                            if (!TryResolveDynamicWsoValue(commandId, action, value, out value))
+                            if (commandId.Equals("wMsgWSO_Navigation_Divert_Airfield")
+                                && !TryResolveLatLongForAirfield(out value))
+                            {
+                                return;
+                            }
+                            else if (!TryResolveDynamicWsoValue(commandId, action, value, out value))
                             {
                                 return;
                             }

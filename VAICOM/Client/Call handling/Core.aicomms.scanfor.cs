@@ -62,7 +62,8 @@ namespace VAICOM
 
                         foreach (KeyValuePair<string, string> set in localresults)
                         {
-                            if (set.Key.ToLower().Equals("two")) // added bias for Two in calls
+                            // Add bias for WSO and Two in calls
+                            if (set.Value.Equals("WSO") || set.Key.ToLower().Equals("two")) 
                             {
                                 usedalias = set.Key;
                                 finalresult = set.Value;

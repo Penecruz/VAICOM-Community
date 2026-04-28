@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using VAICOM.Extensions.WSO;
 using VAICOM.Static;
 
 namespace VAICOM
@@ -81,6 +82,16 @@ namespace VAICOM
                 }
 
 
+                // create keywords string for Jester 2.0 WSO commands
+                string wsoRecipients = String.Join("; ", Extensions.WSO.Aliases.airecipients.Keys);
+                string wsoCommands = String.Join("; ", Extensions.WSO.Aliases.aicommands.Keys);
+                // The ATC recipients string should end with a semi-colon as this is optional and only needed
+                // for certain commands, e.g. diverting or tuning the radio to a specific airfield.
+                // The WSO command string ends in a semi-colon so that any commands following it are
+                // considered to be a new set of different commands.
+                string wsoCommandsString = $"[{wsoRecipients}][{wsoCommands}][{recipientstrings["aiatc"]}];";
+
+                outputstring += wsoCommandsString;
 
                 recipientstrings["aiatc"] = recipientstrings["aiatc"] + recipientstrings["aifarp"];
                 recipientstrings["aiatc"] = recipientstrings["aiatc"] + recipientstrings["aiship"];

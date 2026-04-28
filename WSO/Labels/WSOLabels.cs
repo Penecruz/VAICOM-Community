@@ -51,6 +51,7 @@ namespace VAICOM.Extensions.WSO
             { "wMsgWSO_Radar_LockTarget", "WSO Lock Target" },
             { "wMsgWSO_A2G_TVWeapons", "WSO TV Weapons" },
             { "wMsgWSO_A2G_TVPaveSpike", "WSO TV Pave Spike" },
+            { "wMsgWSO_Navigation_Divert_Airfield", "WSO Divert To Airfield" },
             { "wMsgWSO_Navigation_Divert_LatLong", "WSO Divert Lat Long" },
             { "wMsgWSO_Navigation_TACAN_SelectMode_Off", "WSO TACAN Mode Off" },
             { "wMsgWSO_Navigation_TACAN_SelectMode_R", "WSO TACAN Mode R" },
