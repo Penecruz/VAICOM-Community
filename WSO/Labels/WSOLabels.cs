@@ -110,7 +110,6 @@ namespace VAICOM.Extensions.WSO
             { "wMsgWSO_Radar_FocusTarget_Direct", "WSO Focus Target Direct" },
             { "wMsgWSO_Radar_LockTarget_Direct", "WSO Lock Target Direct" },
             { "wMsgWSO_Radar_UnlockTarget", "WSO Unlock Target" },
-            { "wMsgWSO_Radio_TuneATC_Direct", "WSO Tune ATC Direct" },
             { "wMsgWSO_A2G_PaveSpike_Ready", "WSO Pave Spike Ready" },
             { "wMsgWSO_A2G_PaveSpike_Standby", "WSO Pave Spike Standby" },
             { "wMsgWSO_A2G_PaveSpike_LockUnlockTargetAhead", "WSO Pave Spike Lock Target Ahead" },

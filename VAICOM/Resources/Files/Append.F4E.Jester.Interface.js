@@ -61,7 +61,7 @@ function sendSocketMessage(data) {
 	}
 }
 
-function collectNavCacheEntries(menu, path, entries) {
+function collectNavCacheEntries(menu, path, entries, all = false) {
 	if (!menu || !menu.items || !entries) {
 		return;
 	}
@@ -69,7 +69,7 @@ function collectNavCacheEntries(menu, path, entries) {
 	// Allowable list of actions to be included within the sent cache data
 	const allowedActions = [
 		"divert_tgt1_lat_lon", "hold_flightplan_1", "hold_flightplan_2",
-		"resume_flightplan_1", "resume_flightplan_2"
+		"resume_flightplan_1", "resume_flightplan_2", "radio_tune_atc"
 	];
 
 	for (let i = 0; i < menu.items.length; i++) {
@@ -83,7 +83,7 @@ function collectNavCacheEntries(menu, path, entries) {
 		const itemPath = path.concat([itemName]);
 
 		// Only add cache entries for specific actions
-		if (allowedActions.includes(action)) {
+		if (all || allowedActions.includes(action)) {
 			entries.push({
 				action,
 				name: itemName,
@@ -93,11 +93,11 @@ function collectNavCacheEntries(menu, path, entries) {
 		}
 
 		if (item.menu) {
-			collectNavCacheEntries(item.menu, itemPath, entries);
+			collectNavCacheEntries(item.menu, itemPath, entries, all);
 		}
 
 		if (item.outer_menu) {
-			collectNavCacheEntries(item.outer_menu, itemPath, entries);
+			collectNavCacheEntries(item.outer_menu, itemPath, entries, all);
 		}
 	}
 }

@@ -352,33 +352,46 @@ namespace VAICOM
                     return false;
                 }
 
-                if (string.IsNullOrWhiteSpace(index))
+                if (action.Equals("radio_tune_atc") && !string.IsNullOrEmpty(name))
                 {
-                    index = TryExtractIndexFromValue(value);
+                    lock (State.WsoNavCacheLock)
+                    {
+                        string airfield = name.Substring(0, name.IndexOf('(') - 1);
+                        State.WsoNavCacheByActionAndName[$"{action}|{airfield.ToLowerInvariant()}"] = value;
+                    }
+                    return true;
+                }
+                else
+                {
                     if (string.IsNullOrWhiteSpace(index))
                     {
-                        index = TryExtractIndexFromNameOrPath(name, path);
-                    }
-                }
-
-                lock (State.WsoNavCacheLock)
-                {
-                    if (!string.IsNullOrWhiteSpace(index))
-                    {
-                        State.WsoNavCacheByActionAndIndex[$"{action}|{index}"] = value;
-
-                        string flightPlan = TryExtractFlightPlanFromPath(path);
-                        if (!string.IsNullOrWhiteSpace(flightPlan))
+                        index = TryExtractIndexFromValue(value);
+                        if (string.IsNullOrWhiteSpace(index))
                         {
-                            State.WsoNavCacheByActionAndIndex[$"{action}|fp{flightPlan}|{index}"] = value;
+                            index = TryExtractIndexFromNameOrPath(name, path);
                         }
                     }
 
-                    if (!string.IsNullOrWhiteSpace(name))
+                    lock (State.WsoNavCacheLock)
                     {
-                        State.WsoNavCacheByActionAndName[$"{action}|{name.ToLowerInvariant()}"] = value;
+                        if (!string.IsNullOrWhiteSpace(index))
+                        {
+                            State.WsoNavCacheByActionAndIndex[$"{action}|{index}"] = value;
+
+                            string flightPlan = TryExtractFlightPlanFromPath(path);
+                            if (!string.IsNullOrWhiteSpace(flightPlan))
+                            {
+                                State.WsoNavCacheByActionAndIndex[$"{action}|fp{flightPlan}|{index}"] = value;
+                            }
+                        }
+
+                        if (!string.IsNullOrWhiteSpace(name))
+                        {
+                            State.WsoNavCacheByActionAndName[$"{action}|{name.ToLowerInvariant()}"] = value;
+                        }
                     }
                 }
+
 
                 if (logSingleEntry)
                 {

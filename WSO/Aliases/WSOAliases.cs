@@ -127,7 +127,6 @@ namespace VAICOM.Extensions.WSO
             { "Radar Focus Target", "wMsgWSO_Radar_FocusTarget_Direct" },
             { "Radar Lock Target", "wMsgWSO_Radar_LockTarget_Direct" },
             { "Radar Unlock", "wMsgWSO_Radar_UnlockTarget" },
-            { "Radio Tune ATC", "wMsgWSO_Radio_TuneATC_Direct" },
             { "Pave Spike Ready", "wMsgWSO_A2G_PaveSpike_Ready" },
             { "Pave Spike On", "wMsgWSO_A2G_PaveSpike_Ready" },
             { "Pave Spike Standby", "wMsgWSO_A2G_PaveSpike_Standby" },
