@@ -352,14 +352,21 @@ namespace VAICOM
                     return false;
                 }
 
-                if (action.Equals("radio_tune_atc") && !string.IsNullOrEmpty(name))
+                if (string.Equals(action, "radio_tune_atc") && !string.IsNullOrEmpty(name))
                 {
-                    lock (State.WsoNavCacheLock)
+                    int freqIndex = name.IndexOf('(');
+                    if (freqIndex > 0)
                     {
-                        string airfield = name.Substring(0, name.IndexOf('(') - 1);
-                        State.WsoNavCacheByActionAndName[$"{action}|{airfield.ToLowerInvariant()}"] = value;
+                        lock (State.WsoNavCacheLock)
+                        {
+                            string airfield = name.Substring(0, freqIndex - 1);
+                            State.WsoNavCacheByActionAndName[$"{action}|{airfield.ToLowerInvariant()}"] = value;
+                        }
                     }
-                    return true;
+                    else
+                    {
+                        return false;
+                    }
                 }
                 else
                 {
