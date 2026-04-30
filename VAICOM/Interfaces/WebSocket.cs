@@ -211,6 +211,17 @@ namespace VAICOM
                     {
                         return true;
                     }
+                    else
+                    {
+                        // An update has been made to the menu items. Rebuild the cache so that
+                        // it is in a consistent state as entries may have been removed.
+                        lock (State.WsoNavCacheLock)
+                        {
+                            Log.Write($"WSO menus have been updated so rebuilding caches", Colors.Text);
+                            State.WsoNavCacheByActionAndIndex = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+                            State.WsoNavCacheByActionAndName = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+                        }
+                    }
 
                     int cachedCount = 0;
                     foreach (JToken item in items)
