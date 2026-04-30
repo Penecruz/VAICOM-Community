@@ -298,6 +298,14 @@ namespace VAICOM
                     string path = entry["path"]?.ToString() ?? "";
                     string index = entry["idx"]?.ToString() ?? "";
 
+                    // Exclude any entries for diverting to assets as those
+                    // can have constantly changing lat long coordinates which
+                    // break the signature causing continuous cache rebuilds.
+                    if (path.Contains("Divert To > Assets"))
+                    {
+                        continue;
+                    }
+
                     if (string.IsNullOrWhiteSpace(index))
                     {
                         index = TryExtractIndexFromValue(value);
