@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <Profile xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <HasMB>false</HasMB>
-  <Id>2beee061-a2be-4aa4-892b-1314a314de60</Id>
+  <Id>758b2047-9a1f-46e4-8c43-cd0d89250258</Id>
   <Name>VAICOM F-4E WSO</Name>
   <Commands>
     <Command>
@@ -17,7 +17,7 @@
       <ExecFromWildcard>false</ExecFromWildcard>
       <IsSubCommand>false</IsSubCommand>
       <IsOverride>false</IsOverride>
-      <BaseId>478a7b84-050f-4144-a781-73e7e5531a02</BaseId>
+      <BaseId>17b909b4-5b5a-4e04-9418-c3126ee38748</BaseId>
       <OriginId>00000000-0000-0000-0000-000000000000</OriginId>
       <SessionEnabled>true</SessionEnabled>
       <DoubleTapInvoked>false</DoubleTapInvoked>
@@ -25,8 +25,8 @@
       <LongTapInvoked>false</LongTapInvoked>
       <ShortTapDelayedInvoked>false</ShortTapDelayedInvoked>
       <SleepFlag>0</SleepFlag>
-      <Id>dbeac017-c9dc-49e7-a3ce-955891dad780</Id>
-      <CommandString>[WSO; Wizzo; Boots][Go to; Goto; Resume; Resume at][Flight plan 1; Primary flight plan; Flight plan 2; Secondary flight plan;] waypoint [1..9]</CommandString>
+      <Id>d3ecff07-a273-4d62-81b1-ac5b4d11dc10</Id>
+      <CommandString> [WSO; Wizzo; Boots][Deactivate;][Hold; Hold at][Flight plan 1; Primary flight plan; Flight plan 2; Secondary flight plan;] waypoint [1..9]</CommandString>
       <ActionSequence>
         <CommandAction>
           <PairingSet>false</PairingSet>
@@ -37,147 +37,7 @@
           <ConditionSkip>false</ConditionSkip>
           <IsSuffixAction>false</IsSuffixAction>
           <DecimalTransient1>0</DecimalTransient1>
-          <Id>3ed7599d-36a2-4dbb-a861-0a4a03bece22</Id>
-          <ActionType>ExternalInvoke</ActionType>
-          <Duration>0</Duration>
-          <Delay>0</Delay>
-          <KeyCodes />
-          <Context>5b433065-dec8-4852-8912-2ff6edf9807f</Context>
-          <Context2 />
-          <Context3 />
-          <Context4>wso.navigation.waypoint</Context4>
-          <X>0</X>
-          <Y>0</Y>
-          <Z>0</Z>
-          <InputMode>0</InputMode>
-          <ConditionSetName />
-          <ConditionSetCondition />
-          <ConditionPairing>0</ConditionPairing>
-          <ConditionGroup>0</ConditionGroup>
-          <ConditionStartNameFrom />
-          <ConditionStartOperator>0</ConditionStartOperator>
-          <ConditionStartValue>0</ConditionStartValue>
-          <ConditionStartValueType>0</ConditionStartValueType>
-          <ConditionStartCompareToCondtion />
-          <ConditionStartType>0</ConditionStartType>
-          <DecimalContext1>0</DecimalContext1>
-          <DecimalContext2>0</DecimalContext2>
-          <DateContext1>0001-01-01T00:00:00</DateContext1>
-          <DateContext2>0001-01-01T00:00:00</DateContext2>
-          <Disabled>false</Disabled>
-          <RandomSounds />
-          <ConditionExpressions />
-          <IntegerContext1>0</IntegerContext1>
-          <IntegerContext2>0</IntegerContext2>
-        </CommandAction>
-      </ActionSequence>
-      <Async>true</Async>
-      <Enabled>true</Enabled>
-      <Description>Go To Waypoint</Description>
-      <Category>F-4E WSO</Category>
-      <UseShortcut>false</UseShortcut>
-      <keyValue>0</keyValue>
-      <keyShift>0</keyShift>
-      <keyAlt>0</keyAlt>
-      <keyCtrl>0</keyCtrl>
-      <keyWin>0</keyWin>
-      <keyPassthru>false</keyPassthru>
-      <UseSpokenPhrase>true</UseSpokenPhrase>
-      <onlyKeyUp>false</onlyKeyUp>
-      <RepeatNumber>2</RepeatNumber>
-      <RepeatType>0</RepeatType>
-      <CommandType>0</CommandType>
-      <SourceProfile>00000000-0000-0000-0000-000000000000</SourceProfile>
-      <UseConfidence>false</UseConfidence>
-      <minimumConfidenceLevel>0</minimumConfidenceLevel>
-      <UseJoystick>false</UseJoystick>
-      <joystickNumber>0</joystickNumber>
-      <joystickButton>0</joystickButton>
-      <joystickNumber2>0</joystickNumber2>
-      <joystickButton2>0</joystickButton2>
-      <joystickUp>false</joystickUp>
-      <KeepRepeating>false</KeepRepeating>
-      <UseProcessOverride>false</UseProcessOverride>
-      <ProcessOverrideActiveWindow>true</ProcessOverrideActiveWindow>
-      <LostFocusStop>false</LostFocusStop>
-      <PauseLostFocus>false</PauseLostFocus>
-      <LostFocusBackCompat>true</LostFocusBackCompat>
-      <UseMouse>false</UseMouse>
-      <Mouse1>false</Mouse1>
-      <Mouse2>false</Mouse2>
-      <Mouse3>false</Mouse3>
-      <Mouse4>false</Mouse4>
-      <Mouse5>false</Mouse5>
-      <Mouse6>false</Mouse6>
-      <Mouse7>false</Mouse7>
-      <Mouse8>false</Mouse8>
-      <Mouse9>false</Mouse9>
-      <MouseUpOnly>false</MouseUpOnly>
-      <MousePassThru xsi:nil="true" />
-      <joystickExclusive>false</joystickExclusive>
-      <lastEditedAction>761525b8-0647-48da-9f35-d51615cfe0a8</lastEditedAction>
-      <UseProfileProcessOverride>false</UseProfileProcessOverride>
-      <ProfileProcessOverrideActiveWindow>false</ProfileProcessOverrideActiveWindow>
-      <RepeatIfKeysDown>false</RepeatIfKeysDown>
-      <RepeatIfMouseDown>false</RepeatIfMouseDown>
-      <RepeatIfJoystickDown>false</RepeatIfJoystickDown>
-      <AH>0</AH>
-      <CL>0</CL>
-      <HasMB>false</HasMB>
-      <UseVariableHotkey>false</UseVariableHotkey>
-      <CLE>0</CLE>
-      <EX1>false</EX1>
-      <EX2>false</EX2>
-      <InternalId xsi:nil="true" />
-      <HasInput>false</HasInput>
-      <HotkeyDoubleTapLevel>0</HotkeyDoubleTapLevel>
-      <MouseDoubleTapLevel>0</MouseDoubleTapLevel>
-      <JoystickDoubleTapLevel>0</JoystickDoubleTapLevel>
-      <HotkeyLongTapLevel>0</HotkeyLongTapLevel>
-      <MouseLongTapLevel>0</MouseLongTapLevel>
-      <JoystickLongTapLevel>0</JoystickLongTapLevel>
-      <AlwaysExec>false</AlwaysExec>
-      <ResourceBalance>0</ResourceBalance>
-      <PreventExec>false</PreventExec>
-      <ExternalEventsEnabled>false</ExternalEventsEnabled>
-      <ExcludeExecOnRecognized>false</ExcludeExecOnRecognized>
-      <UseVariableMouseShortcut>false</UseVariableMouseShortcut>
-      <UseVariableJoystickShortcut>false</UseVariableJoystickShortcut>
-    </Command>
-    <Command>
-      <Referrer xsi:nil="true" />
-      <ExecType>3</ExecType>
-      <Confidence>0</Confidence>
-      <PrefixActionCount>0</PrefixActionCount>
-      <IsDynamicallyCreated>false</IsDynamicallyCreated>
-      <TargetProcessSet>false</TargetProcessSet>
-      <TargetProcessType>0</TargetProcessType>
-      <TargetProcessLevel>0</TargetProcessLevel>
-      <CompareType>0</CompareType>
-      <ExecFromWildcard>false</ExecFromWildcard>
-      <IsSubCommand>false</IsSubCommand>
-      <IsOverride>false</IsOverride>
-      <BaseId>7e10267e-9928-4b1d-8c49-1e94378e38d1</BaseId>
-      <OriginId>00000000-0000-0000-0000-000000000000</OriginId>
-      <SessionEnabled>true</SessionEnabled>
-      <DoubleTapInvoked>false</DoubleTapInvoked>
-      <SingleTapDelayedInvoked>false</SingleTapDelayedInvoked>
-      <LongTapInvoked>false</LongTapInvoked>
-      <ShortTapDelayedInvoked>false</ShortTapDelayedInvoked>
-      <SleepFlag>0</SleepFlag>
-      <Id>22e20125-29eb-4aa5-8a89-aaac4a7bcd31</Id>
-      <CommandString>[WSO; Wizzo; Boots][Hold current turn point; Hold at waypoint; Hold waypoint]; [WSO; Wizzo; Boots][Hold; Hold at][Flight plan 1; Primary flight plan; Flight plan 2; Secondary flight plan;] waypoint [1..9]</CommandString>
-      <ActionSequence>
-        <CommandAction>
-          <PairingSet>false</PairingSet>
-          <PairingSetElse>false</PairingSetElse>
-          <Ordinal>0</Ordinal>
-          <ConditionMet xsi:nil="true" />
-          <IndentLevel>0</IndentLevel>
-          <ConditionSkip>false</ConditionSkip>
-          <IsSuffixAction>false</IsSuffixAction>
-          <DecimalTransient1>0</DecimalTransient1>
-          <Id>077d6ace-5609-4f7a-a747-12eef7431703</Id>
+          <Id>ca6c6384-3ba6-4e6c-9507-b268d8611598</Id>
           <ActionType>ExternalInvoke</ActionType>
           <Duration>0</Duration>
           <Delay>0</Delay>
@@ -297,7 +157,7 @@
       <ExecFromWildcard>false</ExecFromWildcard>
       <IsSubCommand>false</IsSubCommand>
       <IsOverride>false</IsOverride>
-      <BaseId>6cba47bd-511a-4e53-bcc6-33972758b796</BaseId>
+      <BaseId>478a7b84-050f-4144-a781-73e7e5531a02</BaseId>
       <OriginId>00000000-0000-0000-0000-000000000000</OriginId>
       <SessionEnabled>true</SessionEnabled>
       <DoubleTapInvoked>false</DoubleTapInvoked>
@@ -305,8 +165,8 @@
       <LongTapInvoked>false</LongTapInvoked>
       <ShortTapDelayedInvoked>false</ShortTapDelayedInvoked>
       <SleepFlag>0</SleepFlag>
-      <Id>a2f2dd08-e676-413d-8980-4ee06ed85fac</Id>
-      <CommandString>[WSO; Wizzo; Boots][Resume waypoint; Resume at waypoint; Resume next waypoint]</CommandString>
+      <Id>8c6ce1e3-e09d-4817-bea1-a66d0d6f00a2</Id>
+      <CommandString>[WSO; Wizzo; Boots][Go to; Goto; Resume; Resume at][Flight plan 1; Primary flight plan; Flight plan 2; Secondary flight plan;] waypoint [1..9]</CommandString>
       <ActionSequence>
         <CommandAction>
           <PairingSet>false</PairingSet>
@@ -317,7 +177,7 @@
           <ConditionSkip>false</ConditionSkip>
           <IsSuffixAction>false</IsSuffixAction>
           <DecimalTransient1>0</DecimalTransient1>
-          <Id>a9f8f727-662e-41a5-acf2-9b284ffb68cd</Id>
+          <Id>12ce7538-b537-4351-8c86-ebb092bdad22</Id>
           <ActionType>ExternalInvoke</ActionType>
           <Duration>0</Duration>
           <Delay>0</Delay>
@@ -353,7 +213,7 @@
       </ActionSequence>
       <Async>true</Async>
       <Enabled>true</Enabled>
-      <Description>Resume Waypoint</Description>
+      <Description>Go To Waypoint</Description>
       <Category>F-4E WSO</Category>
       <UseShortcut>false</UseShortcut>
       <keyValue>0</keyValue>
@@ -445,7 +305,7 @@
       <LongTapInvoked>false</LongTapInvoked>
       <ShortTapDelayedInvoked>false</ShortTapDelayedInvoked>
       <SleepFlag>0</SleepFlag>
-      <Id>ba7cc18c-86d5-469f-b1a1-8979d2116972</Id>
+      <Id>e6e18cdc-f01a-4fec-ad00-ae51a1c992c0</Id>
       <CommandString>[WSO; Wizzo; Boots]Pave spike laser code [1] [1..7] [1..8] [1..8]</CommandString>
       <ActionSequence>
         <CommandAction>
@@ -457,7 +317,7 @@
           <ConditionSkip>false</ConditionSkip>
           <IsSuffixAction>false</IsSuffixAction>
           <DecimalTransient1>0</DecimalTransient1>
-          <Id>2838e205-78f8-479b-ac67-cb1c436ef214</Id>
+          <Id>c0de61f9-bdab-4dce-b796-3148e89dad09</Id>
           <ActionType>ExternalInvoke</ActionType>
           <Duration>0</Duration>
           <Delay>0</Delay>
@@ -585,10 +445,11 @@
       <LongTapInvoked>false</LongTapInvoked>
       <ShortTapDelayedInvoked>false</ShortTapDelayedInvoked>
       <SleepFlag>0</SleepFlag>
-      <Id>c10ad18a-d4a3-4630-ae0b-e087d6f67dea</Id>
+      <Id>7c43eab0-fb4c-4a78-9b4a-3ab17bf60575</Id>
       <CommandString>[WSO; Wizzo; Boots]Select [Aux] Channel [1..20]</CommandString>
       <ActionSequence>
         <CommandAction>
+          <_caption>Execute external plugin, 'VAICOM Community Edition for DCS World' using context 'wso.radio.setauxchn' </_caption>
           <PairingSet>false</PairingSet>
           <PairingSetElse>false</PairingSetElse>
           <Ordinal>0</Ordinal>
@@ -597,7 +458,8 @@
           <ConditionSkip>false</ConditionSkip>
           <IsSuffixAction>false</IsSuffixAction>
           <DecimalTransient1>0</DecimalTransient1>
-          <Id>0864c7ca-9727-4271-a4a5-f0f0c578d5ed</Id>
+          <Caption>Execute external plugin, 'VAICOM Community Edition for DCS World' using context 'wso.radio.setauxchn' </Caption>
+          <Id>c3042343-6040-4948-b775-9abd8b9cda4e</Id>
           <ActionType>ExternalInvoke</ActionType>
           <Duration>0</Duration>
           <Delay>0</Delay>
@@ -633,7 +495,7 @@
       </ActionSequence>
       <Async>true</Async>
       <Enabled>true</Enabled>
-      <Description>Radio Tune Channel</Description>
+      <Description>Radio Tune Aux Channel</Description>
       <Category>F-4E WSO</Category>
       <UseShortcut>false</UseShortcut>
       <keyValue>0</keyValue>
@@ -725,7 +587,7 @@
       <LongTapInvoked>false</LongTapInvoked>
       <ShortTapDelayedInvoked>false</ShortTapDelayedInvoked>
       <SleepFlag>0</SleepFlag>
-      <Id>63b2ae43-68df-4af7-9f9a-6b9375b5bceb</Id>
+      <Id>cdef2c69-126f-4889-aff7-1d190b138ac6</Id>
       <CommandString>[WSO; Wizzo; Boots]Select [Comm;Radio] Channel [1..18]</CommandString>
       <ActionSequence>
         <CommandAction>
@@ -737,7 +599,7 @@
           <ConditionSkip>false</ConditionSkip>
           <IsSuffixAction>false</IsSuffixAction>
           <DecimalTransient1>0</DecimalTransient1>
-          <Id>4e4c1e7a-59b4-415b-8fcd-4e9fabc6ca94</Id>
+          <Id>21907ff9-2fbf-4577-90db-9354c01194f8</Id>
           <ActionType>ExternalInvoke</ActionType>
           <Duration>0</Duration>
           <Delay>0</Delay>
@@ -865,7 +727,7 @@
       <LongTapInvoked>false</LongTapInvoked>
       <ShortTapDelayedInvoked>false</ShortTapDelayedInvoked>
       <SleepFlag>0</SleepFlag>
-      <Id>9781b2c6-c4b4-44ef-b30b-c2228acd34f3</Id>
+      <Id>ff509fe0-016c-45b6-97b9-75a8b8c94f4d</Id>
       <CommandString>[WSO; Wizzo; Boots]Tune Radio Frequency [2..3] [0..9] [0..9] decimal [0..9] [0; 2 5; 5 0; 7 5]</CommandString>
       <ActionSequence>
         <CommandAction>
@@ -877,7 +739,7 @@
           <ConditionSkip>false</ConditionSkip>
           <IsSuffixAction>false</IsSuffixAction>
           <DecimalTransient1>0</DecimalTransient1>
-          <Id>e33c12d7-a7ba-479e-bb5d-4ac7c8fa427f</Id>
+          <Id>a5c0c965-2a90-4cd3-9dab-754935fe7001</Id>
           <ActionType>ExternalInvoke</ActionType>
           <Duration>0</Duration>
           <Delay>0</Delay>
@@ -1029,7 +891,7 @@
   <EnableProfileSwitch>false</EnableProfileSwitch>
   <CategoryGroups />
   <GroupCategory>false</GroupCategory>
-  <LastEditedCommand>46b24fcf-5bb2-4d2d-8a7c-fd6a6f7e769b</LastEditedCommand>
+  <LastEditedCommand>6cf18bdc-4f0b-44c2-b35c-fbf5681a0cc6</LastEditedCommand>
   <IS>0</IS>
   <IO>0</IO>
   <IP>0</IP>

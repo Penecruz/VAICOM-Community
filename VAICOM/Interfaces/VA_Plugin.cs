@@ -403,39 +403,28 @@ namespace VAICOM
 
                     // F-4E WSO commands
                     case "wso.navigation.waypoint":
-                        string waypointValue = GetNumberFromCommand();
-                        // If the command contains no numbers then it's just the next turning point,
-                        // otherwise it contains a waypoint and optional flight plan.
-                        if (String.IsNullOrEmpty(waypointValue))
-                        {
-                            HbSendProxyCommand.SendWsoCommand(State.WebSocketClient, "wMsgWSO_Navigation_ResumeNextWaypoint");
-                            break;
-                        }
+                        // Although the issued action will be resume_flightplan_X we look up the cache entry using
+                        // divert_tgt1_lat_lon. This is due to when adding new points to the flight plan they are not
+                        // automatically given a cache key of resume_flightplan_X so will not be found in the cache.
+                        // They are however given a cache key of divert_tgt1_lat_lon.
+                        List<string> waypointCacheKeys = new List<string> { "divert_tgt1_lat_lon" };
 
-                        List<string> waypointCacheKeys = new List<string>();
                         string waypointCommandKey = "";
                         string flightPlanWaypoint = State.Proxy.Utility.ParseTokens("{TXTNUM:\"{CMDSEGMENT:4}\"}");
 
                         string waypointflightPlan = State.Proxy.Utility.ParseTokens("{CMDSEGMENT:2}");
                         // Check if a flight plan was included in the command, and whether or not it was flight plan 2.
-                        // Although the issued action will be resume_flightplan_X we look up the cache entry using
-                        // divert_tgt1_lat_lon. This is due to when adding new points to the flight plan they are not
-                        // automatically given a cache key of resume_flightplan_X so will not be found in the cache.
-                        // They are however given a cache key of divert_tgt1_lat_lon.
                         if (!String.IsNullOrEmpty(waypointflightPlan) && IsSecondaryFlightPlan(waypointflightPlan))
                         {
                             waypointCommandKey = "wMsgWSO_Navigation_ResumeFlightPlan2Waypoint";
-                            waypointCacheKeys.Add("divert_tgt1_lat_lon");
                             waypointCacheKeys.Add("fp2");
-                            waypointCacheKeys.Add(flightPlanWaypoint);
                         }
                         else
                         {
                             waypointCommandKey = "wMsgWSO_Navigation_ResumeFlightPlan1Waypoint";
-                            waypointCacheKeys.Add("divert_tgt1_lat_lon");
                             waypointCacheKeys.Add("fp1"); ;
-                            waypointCacheKeys.Add(flightPlanWaypoint);
                         }
+                        waypointCacheKeys.Add(flightPlanWaypoint);
 
                         string waypointCacheKey = String.Join("|", waypointCacheKeys);
                         if (State.WsoNavCacheByActionAndIndex.TryGetValue(waypointCacheKey, out string resolvedWaypoint)
@@ -452,32 +441,42 @@ namespace VAICOM
                         break;
 
                     case "wso.navigation.holdpoint":
-                        string holdpoint = GetNumberFromCommand();
-                        // If a waypoint number was in the command then hold at that waypoint, otherwise it's just the current turning point
-                        if (String.IsNullOrEmpty(holdpoint))
-                        {
-                            HbSendProxyCommand.SendWsoCommand(State.WebSocketClient, "wMsgWSO_Navigation_Holding_CurrentTurnPoint");
-                            break;
-                        }
-
+                        string deactivate = State.Proxy.Utility.ParseTokens("{CMDSEGMENT:1}");
+                        string holdpointFlightPlan = State.Proxy.Utility.ParseTokens("{CMDSEGMENT:3}");
+                        string flightPlanHoldpoint = State.Proxy.Utility.ParseTokens("{TXTNUM:\"{CMDSEGMENT:5}\"}");
                         List<string> holdpointCacheKeys = new List<string>();
                         string holdpointCommandKey = "";
-                        string flightPlanHoldpoint = State.Proxy.Utility.ParseTokens("{TXTNUM:\"{CMDSEGMENT:4}\"}");
 
-                        string holdpointFlightPlan = State.Proxy.Utility.ParseTokens("{CMDSEGMENT:2}");
                         // Check if a flight plan was included in the command, and whether or not it was flight plan 2
-                        if (!String.IsNullOrEmpty(holdpointFlightPlan) && IsSecondaryFlightPlan(holdpointFlightPlan))
+                        if (IsSecondaryFlightPlan(holdpointFlightPlan))
                         {
-                            holdpointCommandKey = "wMsgWSO_Navigation_Holding_FlightPlan2TurnPoint";
+                            // Check if we are activating or deactivating the hold point.
+                            if (String.IsNullOrEmpty(deactivate))
+                            {
+                                holdpointCommandKey = "wMsgWSO_Navigation_Holding_ActivateFlightPlan2TurnPoint";
+                            }
+                            else
+                            {
+                                holdpointCommandKey = "wMsgWSO_Navigation_Holding_DeactivateFlightPlan2TurnPoint";
+                            }
+                            // There is no cache key for deactivate so we lookup based on the hold_flightplan_x key
                             holdpointCacheKeys.Add("hold_flightplan_2");
-                            holdpointCacheKeys.Add(flightPlanHoldpoint);
+                            holdpointCacheKeys.Add("fp2");
                         }
                         else
                         {
-                            holdpointCommandKey = "wMsgWSO_Navigation_Holding_FlightPlan1TurnPoint";
+                            if (String.IsNullOrEmpty(deactivate))
+                            {
+                                holdpointCommandKey = "wMsgWSO_Navigation_Holding_ActivateFlightPlan1TurnPoint";
+                            }
+                            else
+                            {
+                                holdpointCommandKey = "wMsgWSO_Navigation_Holding_DeactivateFlightPlan1TurnPoint";
+                            }
                             holdpointCacheKeys.Add("hold_flightplan_1");
-                            holdpointCacheKeys.Add(flightPlanHoldpoint);
+                            holdpointCacheKeys.Add("fp1");
                         }
+                        holdpointCacheKeys.Add(flightPlanHoldpoint);
 
                         string holdpointCacheKey = String.Join("|", holdpointCacheKeys);
                         if (State.WsoNavCacheByActionAndIndex.TryGetValue(holdpointCacheKey, out string resolvedHoldpoint)
@@ -489,6 +488,35 @@ namespace VAICOM
                         else
                         {
                             vaProxy.WriteToLog($"Holdpoint not resolved for cache key {holdpointCacheKey}", Colors.Warning);
+                        }
+                        break;
+
+                    case "wso.navigation.divert":
+                        List<string> divertCacheKeys = new List<string> { "divert_tgt1_lat_lon" };
+
+                        string divertCommandKey = "wMsgWSO_Navigation_Divert_LatLong";
+                        string divertFlightPlan = State.Proxy.Utility.ParseTokens("{CMDSEGMENT:2}");
+                        string divertWaypoint = State.Proxy.Utility.ParseTokens("{TXTNUM:\"{CMDSEGMENT:4}\"}");
+
+                        if (!String.IsNullOrEmpty(divertFlightPlan) && IsSecondaryFlightPlan(divertFlightPlan))
+                        {
+                            divertCacheKeys.Add("fp2");
+                        }
+                        else
+                        {
+                            divertCacheKeys.Add("fp1"); ;
+                        }
+                        divertCacheKeys.Add(divertFlightPlan);
+
+                        string divertCacheKey = String.Join("|", divertCacheKeys);
+                        if (State.WsoNavCacheByActionAndName.TryGetValue(divertCacheKey, out string resolvedLatLong)
+                                && !string.IsNullOrWhiteSpace(resolvedLatLong))
+                        {
+                            HbSendProxyCommand.SendWsoCommand(State.WebSocketClient, divertCommandKey, resolvedLatLong);
+                        }
+                        else
+                        {
+                            vaProxy.WriteToLog($"Divert lat/long not resolved for cache key {divertCacheKey}", Colors.Warning);
                         }
                         break;
 
