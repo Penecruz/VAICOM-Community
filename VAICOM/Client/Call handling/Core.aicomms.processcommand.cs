@@ -64,7 +64,7 @@ namespace VAICOM
                     if (State.elapsedsincelastpttrelease > 2)
                     {
                         // void hotkey
-                        if (!State.transmitting && !State.currentrecipientclass.Equals(Recipientclasses.Crew) && !(State.currentmodule.Equals(Products.DCSmodules.LookupTable[State.riomod]) && State.activeconfig.ICShotmic))
+                        if (!State.transmitting && !State.currentrecipientclass.Equals(Recipientclasses.Crew) && !State.IsCrewHotMicActive())
                         {
                             Log.Write("PTT: use an active TX node", Colors.Warning);
                             return true;
@@ -180,7 +180,7 @@ namespace VAICOM
 
                 public static void waitformoreinput()
                 {
-                    if (!State.valistening && State.AIRIOactive && State.activeconfig.ICShotmic)
+                    if (!State.valistening && State.IsCrewHotMicActive())
                     {
                         State.MessageReset();
                     }

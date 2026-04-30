@@ -271,8 +271,8 @@ namespace VAICOM
                 else //release
                 {
                     Log.Write("PTT: RELEASE.", Colors.Inline);
-                    PTT.PTT_Manage_Listen_VA(State.activeconfig.ReleaseHot || (State.AIRIOactive && State.activeconfig.ICShotmic));
-                    PTT.PTT_Manage_Listen_VAICOM(!State.activeconfig.ReleaseHot);
+                    PTT.PTT_Manage_Listen_VA(State.activeconfig.ReleaseHot || State.IsCrewHotMicActive());
+                    PTT.PTT_Manage_Listen_VAICOM(!State.activeconfig.ReleaseHot || State.IsCrewHotMicActive());
                     PTT.PTT_Manage_Listen_VC(State.activeconfig.MP_VCHotMic);
                     PTT.PTT_Manage_Listen_SRS(true);
                     State.elapsedsincelastpttrelease = 0;

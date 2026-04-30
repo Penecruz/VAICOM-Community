@@ -1655,7 +1655,17 @@ base.vaicom.state = {
 				base.vaicom.state.riostate.pstt						= base.vaicom.state.activemessage.AIRIO and (data.initialized and base.GetDevice(0).get_argument_value and (base.GetDevice(0):get_argument_value(11504) >0)) or false
 				base.vaicom.state.riostate.amt						= base.vaicom.state.activemessage.AIRIO and (data.initialized and base.GetDevice(0).get_argument_value and (base.GetDevice(0):get_argument_value(2022) == 0)) or false
 				base.vaicom.state.riostate.tcn						= base.vaicom.state.activemessage.AIRIO and (data.initialized and base.GetDevice(0).get_argument_value and (base.GetDevice(0):get_argument_value(374))) or 0
-				base.vaicom.state.riostate.ics						= base.vaicom.state.activemessage.AIRIO and (data.initialized and base.GetDevice(0).get_argument_value and (base.GetDevice(0):get_argument_value(2044) > -1)) or false
+              local f4eICSHot = false
+				if data.initialized and base.vaicom.state.dcsid == "F-4E-45MC" and base.GetDevice(0) and base.GetDevice(0).get_argument_value then
+					local pilotIcs = base.GetDevice(0):get_argument_value(1378)
+                   base.vaicom.state.riostate.f4ePilotIcs = pilotIcs or 0
+                 -- F-4E ICS selector: cold mic is negative, hot mic is centered, radio override is positive.
+					-- Treat hot mic and radio override as active intercom states.
+                   f4eICSHot = (pilotIcs ~= nil and pilotIcs > -0.1)
+				else
+					base.vaicom.state.riostate.f4ePilotIcs = 0
+				end
+               base.vaicom.state.riostate.ics						= (base.vaicom.state.activemessage.AIRIO and (data.initialized and base.GetDevice(0).get_argument_value and (base.GetDevice(0):get_argument_value(2044) > -1))) or f4eICSHot -- Check for F-14 ICS state or F-4E pilot ICS hot mic position
 				base.vaicom.state.riostate.sngl						= base.vaicom.state.activemessage.AIRIO and (data.initialized and base.GetDevice(0).get_argument_value and (base.GetDevice(0):get_argument_value(60) >0)) or false
 				base.vaicom.state.riostate.jmr						= base.vaicom.state.activemessage.AIRIO and (data.initialized and base.GetDevice(0).get_argument_value and (base.GetDevice(0):get_argument_value(151) ==1)) or false
 				base.vaicom.state.riostate.AM182					= base.vaicom.state.activemessage.AIRIO and (data.initialized and base.GetDevice(0).get_argument_value and (base.GetDevice(0):get_argument_value(359) ==1)) or false

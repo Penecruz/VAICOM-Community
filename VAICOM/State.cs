@@ -276,6 +276,50 @@ namespace VAICOM
 
         public static bool dcsrunning;
         public static bool AIRIOactive;
+
+        public static bool IsCrewHotMicModuleActive()
+        {
+            if (AIRIOactive)
+            {
+                return true;
+            }
+
+            return currentmodule != null
+                && currentmodule.Id.Equals("F-4E-45MC", StringComparison.OrdinalIgnoreCase);
+        }
+
+        public static bool IsF4EIntercomSelected()
+        {
+            if (currentstate == null)
+            {
+                return false;
+            }
+
+            if (currentstate.riostate != null)
+            {
+                return currentstate.riostate.ics;
+            }
+
+            return false;
+        }
+
+        public static bool IsCrewHotMicActive()
+        {
+            if (activeconfig == null || !IsCrewHotMicModuleActive())
+            {
+                return false;
+            }
+
+            if (currentmodule != null
+                && currentmodule.Id.Equals("F-4E-45MC", StringComparison.OrdinalIgnoreCase)
+                && activeconfig.ICShotmic_useswitch)
+            {
+                return IsF4EIntercomSelected();
+            }
+
+            return activeconfig.ICShotmic;
+        }
+
         public static Server.ServerState previousstate;
         public static Server.ServerState currentstate;
         public static int radiocount;

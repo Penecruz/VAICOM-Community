@@ -114,7 +114,7 @@ namespace VAICOM
             private void SetConfigEnableRIO_ICShotmic(object sender, RoutedEventArgs e)
             {
                 State.activeconfig.ICShotmic = true;
-                if (State.AIRIOactive)
+                if (State.IsCrewHotMicModuleActive())
                 {
                     State.Proxy.Command.SetSessionEnabledByCategory("Keyword Collections", true);
                     State.Proxy.Command.SetSessionEnabledByCategory("Extension packs", true);
@@ -124,7 +124,7 @@ namespace VAICOM
             private void SetConfigDisableRIO_ICShotmic(object sender, RoutedEventArgs e)
             {
                 State.activeconfig.ICShotmic = false;
-                if (State.AIRIOactive)
+                if (State.IsCrewHotMicModuleActive())
                 {
                     if (State.activeconfig.ReleaseHot)
                     {

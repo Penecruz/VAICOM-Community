@@ -286,6 +286,34 @@ namespace VAICOM
                     }
                 }
 
+                if (!State.AIRIOactive
+                    && State.currentmodule != null
+                    && State.currentmodule.Id.Equals("F-4E-45MC", StringComparison.OrdinalIgnoreCase)
+                    && State.activeconfig.ICShotmic_useswitch)
+                {
+                    bool hotmic = State.IsF4EIntercomSelected();
+                    bool previous = State.activeconfig.ICShotmic;
+                    State.activeconfig.ICShotmic = hotmic;
+
+                    if (previous != hotmic)
+                    {
+                        double pilotIcsArg = State.currentstate.riostate != null ? State.currentstate.riostate.f4ePilotIcs : 0;
+                        Log.Write($"F-4E ICS switch: hotmic={hotmic}, releaseHot={State.activeconfig.ReleaseHot}, intercomDevice={State.currentstate.intercom}, pilotIcsArg={pilotIcsArg:0.000}", Colors.Inline);
+                        PushToTalk.PTT.PTT_Manage_Listen_VA(State.activeconfig.ReleaseHot || hotmic);
+                        PushToTalk.PTT.PTT_Manage_Listen_VAICOM(!State.activeconfig.ReleaseHot || hotmic);
+                    }
+
+                    if (State.configwindowopen
+                        && (State.configurationwindow != null))
+                    {
+                        State.configurationwindow.Dispatcher.BeginInvoke((MethodInvoker)delegate
+                        {
+                            State.configurationwindow.CheckBoxHotMic();
+                            State.configurationwindow.Dictate_set_relhot_Light(State.activeconfig.ICShotmic);
+                        });
+                    }
+                }
+
                 FixBadNamingAndRemove();
 
                 Client.DcsClient.Assign_Tuned_Units_to_Radios();

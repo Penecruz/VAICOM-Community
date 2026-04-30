@@ -205,6 +205,7 @@ namespace VAICOM
                 public bool amt;
                 public double tcn;
                 public bool ics;
+                public double f4ePilotIcs;
                 public bool sngl;
                 public bool jmr;
                 public bool AM182;

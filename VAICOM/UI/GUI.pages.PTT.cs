@@ -1265,7 +1265,7 @@ namespace VAICOM
                 State.Proxy.Command.SetSessionEnabledByCategory("Keyword Collections", true);
                 State.Proxy.Command.SetSessionEnabledByCategory("Extension packs", true);
 
-                if (State.AIRIOactive && State.activeconfig.ICShotmic) //  
+                if (State.IsCrewHotMicActive()) //  
                 {
                     State.Proxy.State.SetListeningEnabled(true);
                 }
@@ -1288,7 +1288,7 @@ namespace VAICOM
                 Settings.ConfigFile.WriteConfigToFile(true);
                 State.Proxy.State.SetListeningEnabled(true);
 
-                if (State.AIRIOactive && State.activeconfig.ICShotmic) //  
+                if (State.IsCrewHotMicActive()) //  
                 {
                     State.Proxy.Command.SetSessionEnabledByCategory("Keyword Collections", true);
                     State.Proxy.Command.SetSessionEnabledByCategory("Extension packs", true);
