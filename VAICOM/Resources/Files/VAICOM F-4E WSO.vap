@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <Profile xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <HasMB>false</HasMB>
-  <Id>758b2047-9a1f-46e4-8c43-cd0d89250258</Id>
+  <Id>72d44b32-b802-4857-bf20-d7cc2944944b</Id>
   <Name>VAICOM F-4E WSO</Name>
   <Commands>
     <Command>
@@ -25,10 +25,11 @@
       <LongTapInvoked>false</LongTapInvoked>
       <ShortTapDelayedInvoked>false</ShortTapDelayedInvoked>
       <SleepFlag>0</SleepFlag>
-      <Id>d3ecff07-a273-4d62-81b1-ac5b4d11dc10</Id>
-      <CommandString> [WSO; Wizzo; Boots][Deactivate;][Hold; Hold at][Flight plan 1; Primary flight plan; Flight plan 2; Secondary flight plan;] waypoint [1..9]</CommandString>
+      <Id>5ebda166-3bde-4d9a-b621-9d99d65294e8</Id>
+      <CommandString> [WSO; Wizzo; Boots;][Deactivate;][Hold; Hold at][Flight plan 1; Primary flight plan; Flight plan 2; Secondary flight plan;] waypoint [1..9]</CommandString>
       <ActionSequence>
         <CommandAction>
+          <_caption>Execute external plugin, 'VAICOM Community Edition for DCS World' using context 'wso.navigation.holdpoint' </_caption>
           <PairingSet>false</PairingSet>
           <PairingSetElse>false</PairingSetElse>
           <Ordinal>0</Ordinal>
@@ -37,7 +38,8 @@
           <ConditionSkip>false</ConditionSkip>
           <IsSuffixAction>false</IsSuffixAction>
           <DecimalTransient1>0</DecimalTransient1>
-          <Id>ca6c6384-3ba6-4e6c-9507-b268d8611598</Id>
+          <Caption>Execute external plugin, 'VAICOM Community Edition for DCS World' using context 'wso.navigation.holdpoint' </Caption>
+          <Id>27f4d3cd-6212-4ee1-b1bd-a0cc35850e6e</Id>
           <ActionType>ExternalInvoke</ActionType>
           <Duration>0</Duration>
           <Delay>0</Delay>
@@ -165,10 +167,11 @@
       <LongTapInvoked>false</LongTapInvoked>
       <ShortTapDelayedInvoked>false</ShortTapDelayedInvoked>
       <SleepFlag>0</SleepFlag>
-      <Id>8c6ce1e3-e09d-4817-bea1-a66d0d6f00a2</Id>
-      <CommandString>[WSO; Wizzo; Boots][Go to; Goto; Resume; Resume at][Flight plan 1; Primary flight plan; Flight plan 2; Secondary flight plan;] waypoint [1..9]</CommandString>
+      <Id>842bd4a4-dcce-4ff3-a361-ec554e12d261</Id>
+      <CommandString>[WSO; Wizzo; Boots;][Go to; Goto; Resume; Resume at][Flight plan 1; Primary flight plan; Flight plan 2; Secondary flight plan;] waypoint [1..9]</CommandString>
       <ActionSequence>
         <CommandAction>
+          <_caption>Execute external plugin, 'VAICOM Community Edition for DCS World' using context 'wso.navigation.waypoint' </_caption>
           <PairingSet>false</PairingSet>
           <PairingSetElse>false</PairingSetElse>
           <Ordinal>0</Ordinal>
@@ -177,7 +180,8 @@
           <ConditionSkip>false</ConditionSkip>
           <IsSuffixAction>false</IsSuffixAction>
           <DecimalTransient1>0</DecimalTransient1>
-          <Id>12ce7538-b537-4351-8c86-ebb092bdad22</Id>
+          <Caption>Execute external plugin, 'VAICOM Community Edition for DCS World' using context 'wso.navigation.waypoint' </Caption>
+          <Id>66447827-cadc-40df-a491-6681dac11178</Id>
           <ActionType>ExternalInvoke</ActionType>
           <Duration>0</Duration>
           <Delay>0</Delay>
@@ -305,10 +309,11 @@
       <LongTapInvoked>false</LongTapInvoked>
       <ShortTapDelayedInvoked>false</ShortTapDelayedInvoked>
       <SleepFlag>0</SleepFlag>
-      <Id>e6e18cdc-f01a-4fec-ad00-ae51a1c992c0</Id>
-      <CommandString>[WSO; Wizzo; Boots]Pave spike laser code [1] [1..7] [1..8] [1..8]</CommandString>
+      <Id>a4e298fb-2f9d-4e0e-918e-2716d3a5865e</Id>
+      <CommandString>[WSO; Wizzo; Boots;]Pave spike laser code [1] [1..7] [1..8] [1..8]</CommandString>
       <ActionSequence>
         <CommandAction>
+          <_caption>Execute external plugin, 'VAICOM Community Edition for DCS World' using context 'wso.pavespike.laser' </_caption>
           <PairingSet>false</PairingSet>
           <PairingSetElse>false</PairingSetElse>
           <Ordinal>0</Ordinal>
@@ -317,7 +322,8 @@
           <ConditionSkip>false</ConditionSkip>
           <IsSuffixAction>false</IsSuffixAction>
           <DecimalTransient1>0</DecimalTransient1>
-          <Id>c0de61f9-bdab-4dce-b796-3148e89dad09</Id>
+          <Caption>Execute external plugin, 'VAICOM Community Edition for DCS World' using context 'wso.pavespike.laser' </Caption>
+          <Id>2009cfdb-1204-486e-bd81-2662cc69d8ca</Id>
           <ActionType>ExternalInvoke</ActionType>
           <Duration>0</Duration>
           <Delay>0</Delay>
@@ -445,8 +451,8 @@
       <LongTapInvoked>false</LongTapInvoked>
       <ShortTapDelayedInvoked>false</ShortTapDelayedInvoked>
       <SleepFlag>0</SleepFlag>
-      <Id>7c43eab0-fb4c-4a78-9b4a-3ab17bf60575</Id>
-      <CommandString>[WSO; Wizzo; Boots]Select [Aux] Channel [1..20]</CommandString>
+      <Id>9e6f370f-04ca-4399-91a1-464e98e923e8</Id>
+      <CommandString>[WSO; Wizzo; Boots;]Select [Aux] Channel [1..20]</CommandString>
       <ActionSequence>
         <CommandAction>
           <_caption>Execute external plugin, 'VAICOM Community Edition for DCS World' using context 'wso.radio.setauxchn' </_caption>
@@ -459,7 +465,7 @@
           <IsSuffixAction>false</IsSuffixAction>
           <DecimalTransient1>0</DecimalTransient1>
           <Caption>Execute external plugin, 'VAICOM Community Edition for DCS World' using context 'wso.radio.setauxchn' </Caption>
-          <Id>c3042343-6040-4948-b775-9abd8b9cda4e</Id>
+          <Id>f207c4d8-1071-4643-8aa6-46a0a0fa4819</Id>
           <ActionType>ExternalInvoke</ActionType>
           <Duration>0</Duration>
           <Delay>0</Delay>
@@ -587,10 +593,11 @@
       <LongTapInvoked>false</LongTapInvoked>
       <ShortTapDelayedInvoked>false</ShortTapDelayedInvoked>
       <SleepFlag>0</SleepFlag>
-      <Id>cdef2c69-126f-4889-aff7-1d190b138ac6</Id>
-      <CommandString>[WSO; Wizzo; Boots]Select [Comm;Radio] Channel [1..18]</CommandString>
+      <Id>ab2a9629-01af-49d5-91ab-adf7220069cc</Id>
+      <CommandString>[WSO; Wizzo; Boots;]Select [Comm;Radio] Channel [1..18]</CommandString>
       <ActionSequence>
         <CommandAction>
+          <_caption>Execute external plugin, 'VAICOM Community Edition for DCS World' using context 'wso.radio.setchn' </_caption>
           <PairingSet>false</PairingSet>
           <PairingSetElse>false</PairingSetElse>
           <Ordinal>0</Ordinal>
@@ -599,7 +606,8 @@
           <ConditionSkip>false</ConditionSkip>
           <IsSuffixAction>false</IsSuffixAction>
           <DecimalTransient1>0</DecimalTransient1>
-          <Id>21907ff9-2fbf-4577-90db-9354c01194f8</Id>
+          <Caption>Execute external plugin, 'VAICOM Community Edition for DCS World' using context 'wso.radio.setchn' </Caption>
+          <Id>d43a7e2f-8720-4d03-8025-8dcb229dfdc5</Id>
           <ActionType>ExternalInvoke</ActionType>
           <Duration>0</Duration>
           <Delay>0</Delay>
@@ -727,10 +735,11 @@
       <LongTapInvoked>false</LongTapInvoked>
       <ShortTapDelayedInvoked>false</ShortTapDelayedInvoked>
       <SleepFlag>0</SleepFlag>
-      <Id>ff509fe0-016c-45b6-97b9-75a8b8c94f4d</Id>
-      <CommandString>[WSO; Wizzo; Boots]Tune Radio Frequency [2..3] [0..9] [0..9] decimal [0..9] [0; 2 5; 5 0; 7 5]</CommandString>
+      <Id>59a58670-f880-4139-96c2-48c2c90919fb</Id>
+      <CommandString>[WSO; Wizzo; Boots;]Tune Radio Frequency [2..3] [0..9] [0..9] decimal [0..9] [0; 2 5; 5 0; 7 5]</CommandString>
       <ActionSequence>
         <CommandAction>
+          <_caption>Execute external plugin, 'VAICOM Community Edition for DCS World' using context 'wso.radio.tunefreq' </_caption>
           <PairingSet>false</PairingSet>
           <PairingSetElse>false</PairingSetElse>
           <Ordinal>0</Ordinal>
@@ -739,7 +748,8 @@
           <ConditionSkip>false</ConditionSkip>
           <IsSuffixAction>false</IsSuffixAction>
           <DecimalTransient1>0</DecimalTransient1>
-          <Id>a5c0c965-2a90-4cd3-9dab-754935fe7001</Id>
+          <Caption>Execute external plugin, 'VAICOM Community Edition for DCS World' using context 'wso.radio.tunefreq' </Caption>
+          <Id>08cb5062-1b06-4729-9ce8-a0d72be71073</Id>
           <ActionType>ExternalInvoke</ActionType>
           <Duration>0</Duration>
           <Delay>0</Delay>
@@ -891,7 +901,7 @@
   <EnableProfileSwitch>false</EnableProfileSwitch>
   <CategoryGroups />
   <GroupCategory>false</GroupCategory>
-  <LastEditedCommand>6cf18bdc-4f0b-44c2-b35c-fbf5681a0cc6</LastEditedCommand>
+  <LastEditedCommand>46b24fcf-5bb2-4d2d-8a7c-fd6a6f7e769b</LastEditedCommand>
   <IS>0</IS>
   <IO>0</IO>
   <IP>0</IP>
