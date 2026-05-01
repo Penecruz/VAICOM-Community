@@ -504,12 +504,12 @@ namespace VAICOM
                         }
                         else
                         {
-                            divertCacheKeys.Add("fp1"); ;
+                            divertCacheKeys.Add("fp1");
                         }
-                        divertCacheKeys.Add(divertFlightPlan);
+                        divertCacheKeys.Add(divertWaypoint);
 
                         string divertCacheKey = String.Join("|", divertCacheKeys);
-                        if (State.WsoNavCacheByActionAndName.TryGetValue(divertCacheKey, out string resolvedLatLong)
+                        if (State.WsoNavCacheByActionAndIndex.TryGetValue(divertCacheKey, out string resolvedLatLong)
                                 && !string.IsNullOrWhiteSpace(resolvedLatLong))
                         {
                             HbSendProxyCommand.SendWsoCommand(State.WebSocketClient, divertCommandKey, resolvedLatLong);
