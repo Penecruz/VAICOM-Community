@@ -69,7 +69,8 @@ function collectNavCacheEntries(menu, path, entries, all = false) {
 	// Allowable list of actions to be included within the sent cache data
 	const allowedActions = [
 		"divert_tgt1_lat_lon", "hold_flightplan_1", "hold_flightplan_2",
-		"resume_flightplan_1", "resume_flightplan_2", "radio_tune_atc"
+		"resume_flightplan_1", "resume_flightplan_2", "radio_tune_atc",
+		"nav_tacan_tr"
 	];
 
 	for (let i = 0; i < menu.items.length; i++) {

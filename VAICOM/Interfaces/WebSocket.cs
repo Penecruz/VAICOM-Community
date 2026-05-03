@@ -387,6 +387,21 @@ namespace VAICOM
                         return false;
                     }
                 }
+                else if (string.Equals(action, "nav_tacan_tr"))
+                {
+                    if (!path.Contains("Tune Assets"))
+                    {
+                        lock (State.WsoNavCacheLock)
+                        {
+                            string station = name.Substring(0, 3);
+                            State.WsoNavCacheByActionAndName[$"{action}|{station.ToLowerInvariant()}"] = value;
+                        }
+                    }
+                    else
+                    {
+                        return false;
+                    }
+                }
                 else
                 {
                     if (string.IsNullOrWhiteSpace(index))
