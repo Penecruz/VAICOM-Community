@@ -1057,14 +1057,23 @@ namespace VAICOM
                     }
                 }
 
-                private static bool TryResolveLatLongForAirfield(out string value)
+                private static bool TryResolveValueForAirfield(string action, out string value)
                 {
-                    string airfield = State.Proxy.Utility.ParseTokens("{CMDSEGMENT:2}");
+                    if (!State.usedalias.ContainsKey("command"))
+                    {
+                        value = "";
+                        return false;
+                    }
+
+                    // Capture the airfield name from the full sentence and resolve this from the cache
+                    string commandAlias = State.usedalias["command"] ?? "";
+                    string sentence = State.currentfullsentence;
+                    string airfield = sentence.Replace(commandAlias.ToLower(), "").Trim().ToLower();
 
                     lock (State.WsoNavCacheLock)
                     {
                         if (!String.IsNullOrEmpty(airfield)
-                            && State.WsoNavCacheByActionAndName.TryGetValue($"divert_tgt1_lat_lon|{airfield}", out string resolvedValue)
+                            && State.WsoNavCacheByActionAndName.TryGetValue($"{action}|{airfield}", out string resolvedValue)
                             && !string.IsNullOrWhiteSpace(resolvedValue))
                         {
                             value = resolvedValue;
@@ -1072,12 +1081,11 @@ namespace VAICOM
                         }
                         else
                         {
+                            Log.Write($"Cache value not resolved for action {action} and airfield '{airfield}'", Colors.Warning);
                             value = "";
-                            Log.Write($"Divert lat/long not resolved for airfield {airfield}", Colors.Warning);
+                            return false;
                         }
                     }
-
-                    return false;
                 }
 
                 private static string NormalizeNavLookupText(string input)
@@ -1106,8 +1114,8 @@ namespace VAICOM
                             string action = commandDetails.action;
                             string value = commandDetails.value;
 
-                            if (commandId.Equals("wMsgWSO_Navigation_Divert_Airfield")
-                                && !TryResolveLatLongForAirfield(out value))
+                            if ((commandId.Equals("wMsgWSO_Navigation_Divert_Airfield") || commandId.Equals("wMsgWSO_Radio_TuneATC"))
+                                && !TryResolveValueForAirfield(action, out value))
                             {
                                 return;
                             }
@@ -1142,8 +1150,6 @@ namespace VAICOM
                         Log.Write($"Error sending command to Jester 2.0 API: {ex.Message}", Colors.Critical);
                     }
                 }
-
-                
             }
         }
     }
