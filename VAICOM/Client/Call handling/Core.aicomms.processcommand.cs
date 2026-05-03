@@ -1067,8 +1067,10 @@ namespace VAICOM
 
                     // Capture the airfield name from the full sentence and resolve this from the cache
                     string commandAlias = State.usedalias["command"] ?? "";
-                    string sentence = State.currentfullsentence;
-                    string airfield = sentence.Replace(commandAlias.ToLower(), "").Trim().ToLower();
+                    string sentence = State.currentfullsentence.ToLower();
+                    int index = sentence.LastIndexOf(commandAlias.ToLower(), StringComparison.Ordinal);
+                    int startIndex = index + commandAlias.Length;
+                    string airfield = sentence.Substring(startIndex).Trim();
 
                     lock (State.WsoNavCacheLock)
                     {
