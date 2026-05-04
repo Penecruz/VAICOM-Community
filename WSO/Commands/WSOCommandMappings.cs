@@ -65,6 +65,8 @@ namespace VAICOM.WSO
             { "wMsgWSO_Navigation_TACAN_SelectMode_TR", ("select", "nav_tacan_mode", "tr") },
             { "wMsgWSO_Navigation_TACAN_SelectMode_AAR", ("select", "nav_tacan_mode", "aar") },
             { "wMsgWSO_Navigation_TACAN_SelectMode_AATR", ("select", "nav_tacan_mode", "aatr") },
+            { "wMsgWSO_Navigation_TACAN_SelectChannel", ("select", "nav_tacan_chan_band", "") },
+            { "wMsgWSO_Navigation_TACAN_TuneStation", ("select", "nav_tacan_tr", "") },
             { "wMsgWSO_Systems_ChaffMode_Off", ("select", "systems_chaff", "off") },
             { "wMsgWSO_Systems_ChaffMode_Single", ("select", "systems_chaff", "single") },
             { "wMsgWSO_Systems_ChaffMode_Multiple", ("select", "systems_chaff", "multiple") },

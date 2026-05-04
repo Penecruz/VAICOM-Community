@@ -403,6 +403,8 @@ namespace VAICOM
 
                     // F-4E WSO commands
                     case "wso.navigation.waypoint":
+                        if (!IsWSO()) break;
+
                         // Although the issued action will be resume_flightplan_X we look up the cache entry using
                         // divert_tgt1_lat_lon. This is due to when adding new points to the flight plan they are not
                         // automatically given a cache key of resume_flightplan_X so will not be found in the cache.
@@ -412,7 +414,7 @@ namespace VAICOM
                         string waypointCommandKey = "";
                         string flightPlanWaypoint = State.Proxy.Utility.ParseTokens("{TXTNUM:\"{CMDSEGMENT:4}\"}");
 
-                        string waypointflightPlan = State.Proxy.Utility.ParseTokens("{CMDSEGMENT:2}");
+                        string waypointflightPlan = State.Proxy.Command.Segment(2);
                         // Check if a flight plan was included in the command, and whether or not it was flight plan 2.
                         if (!String.IsNullOrEmpty(waypointflightPlan) && IsSecondaryFlightPlan(waypointflightPlan))
                         {
@@ -430,7 +432,6 @@ namespace VAICOM
                         if (State.WsoNavCacheByActionAndIndex.TryGetValue(waypointCacheKey, out string resolvedWaypoint)
                                 && !string.IsNullOrWhiteSpace(resolvedWaypoint))
                         {
-                            vaProxy.WriteToLog($"Cache key {waypointCacheKey} resolved to {resolvedWaypoint}", Colors.Text);
                             // Append the waypoint number, after a semi-colon; to the lat long when sending the command as this is required
                             HbSendProxyCommand.SendWsoCommand(State.WebSocketClient, waypointCommandKey, $"{resolvedWaypoint};{flightPlanWaypoint}");
                         }
@@ -441,8 +442,10 @@ namespace VAICOM
                         break;
 
                     case "wso.navigation.holdpoint":
+                        if (!IsWSO()) break;
+
                         string deactivate = State.Proxy.Utility.ParseTokens("{CMDSEGMENT:1}");
-                        string holdpointFlightPlan = State.Proxy.Utility.ParseTokens("{CMDSEGMENT:3}");
+                        string holdpointFlightPlan = State.Proxy.Command.Segment(3);
                         string flightPlanHoldpoint = State.Proxy.Utility.ParseTokens("{TXTNUM:\"{CMDSEGMENT:5}\"}");
                         List<string> holdpointCacheKeys = new List<string>();
                         string holdpointCommandKey = "";
@@ -482,7 +485,6 @@ namespace VAICOM
                         if (State.WsoNavCacheByActionAndIndex.TryGetValue(holdpointCacheKey, out string resolvedHoldpoint)
                                 && !string.IsNullOrWhiteSpace(resolvedHoldpoint))
                         {
-                            vaProxy.WriteToLog($"Cache key {holdpointCacheKey} resolved to {resolvedHoldpoint}", Colors.Text);
                             HbSendProxyCommand.SendWsoCommand(State.WebSocketClient, holdpointCommandKey, resolvedHoldpoint);
                         }
                         else
@@ -492,11 +494,13 @@ namespace VAICOM
                         break;
 
                     case "wso.navigation.divert":
+                        if (!IsWSO()) break;
+
                         List<string> divertCacheKeys = new List<string> { "divert_tgt1_lat_lon" };
 
                         string divertCommandKey = "wMsgWSO_Navigation_Divert_LatLong";
-                        string divertFlightPlan = State.Proxy.Utility.ParseTokens("{CMDSEGMENT:2}");
-                        string divertWaypoint = State.Proxy.Utility.ParseTokens("{TXTNUM:\"{CMDSEGMENT:4}\"}");
+                        string divertFlightPlan = State.Proxy.Command.Segment(2);
+                        string divertWaypoint = State.Proxy.Command.Segment(4); ;
 
                         if (!String.IsNullOrEmpty(divertFlightPlan) && IsSecondaryFlightPlan(divertFlightPlan))
                         {
@@ -504,12 +508,12 @@ namespace VAICOM
                         }
                         else
                         {
-                            divertCacheKeys.Add("fp1"); ;
+                            divertCacheKeys.Add("fp1");
                         }
-                        divertCacheKeys.Add(divertFlightPlan);
+                        divertCacheKeys.Add(divertWaypoint);
 
                         string divertCacheKey = String.Join("|", divertCacheKeys);
-                        if (State.WsoNavCacheByActionAndName.TryGetValue(divertCacheKey, out string resolvedLatLong)
+                        if (State.WsoNavCacheByActionAndIndex.TryGetValue(divertCacheKey, out string resolvedLatLong)
                                 && !string.IsNullOrWhiteSpace(resolvedLatLong))
                         {
                             HbSendProxyCommand.SendWsoCommand(State.WebSocketClient, divertCommandKey, resolvedLatLong);
@@ -520,17 +524,60 @@ namespace VAICOM
                         }
                         break;
 
+                    case "wso.navigation.tacan.channel":
+                        if (!IsWSO()) break;
+
+                        string digit1 = State.Proxy.Command.Segment(2);
+                        // If the command uses zero at the beginning then is in text and the TXTUM
+                        // function does not convert it so we need to do manually.
+                        if (digit1.Equals("zero"))
+                        {
+                            digit1 = "0";
+                        }
+                        string digit2 = State.Proxy.Command.Segment(3);
+                        string digit3 = State.Proxy.Command.Segment(4);
+                        // Use the first character for the band so we can support the NATO alphabet.
+                        string tacanBand = State.Proxy.Utility.ParseTokens("{TXTSUBSTR:\"{CMDSEGMENT:5}\":0:1}");
+                        HbSendProxyCommand.SendWsoCommand(State.WebSocketClient, "wMsgWSO_Navigation_TACAN_SelectChannel", $"{digit1}{digit2}{digit3}{tacanBand}");
+                        break;
+
+                    case "wso.navigation.tacan.station":
+                        if (!IsWSO()) break;
+
+                        // Use the first character for the station letters so we can support the NATO alphabet.
+                        string alpha1 = State.Proxy.Utility.ParseTokens("{TXTSUBSTR:\"{CMDSEGMENT:2}\":0:1}");
+                        string alpha2 = State.Proxy.Utility.ParseTokens("{TXTSUBSTR:\"{CMDSEGMENT:3}\":0:1}");
+                        string alpha3 = State.Proxy.Utility.ParseTokens("{TXTSUBSTR:\"{CMDSEGMENT:4}\":0:1}");
+
+                        string tacanCacheKey = $"nav_tacan_tr|{alpha1}{alpha2}{alpha3}";
+                        if (State.WsoNavCacheByActionAndName.TryGetValue(tacanCacheKey, out string resolvedTacanStation)
+                                && !string.IsNullOrWhiteSpace(resolvedTacanStation))
+                        {
+                            HbSendProxyCommand.SendWsoCommand(State.WebSocketClient, "wMsgWSO_Navigation_TACAN_TuneStation", resolvedTacanStation);
+                        }
+                        else
+                        {
+                            vaProxy.WriteToLog($"TACAN station not found for cache key {tacanCacheKey}", Colors.Warning);
+                        }
+                        break;
+
                     case "wso.radio.setchn":
+                        if (!IsWSO()) break;
+
                         string commChannel = GetNumberFromCommand();
                         HbSendProxyCommand.SendWsoCommand(State.WebSocketClient, "wMsgWSO_Radio_SelectCommChannel", commChannel);
                         break;
 
                     case "wso.radio.setauxchn":
+                        if (!IsWSO()) break;
+
                         string auxChannel = GetNumberFromCommand();
                         HbSendProxyCommand.SendWsoCommand(State.WebSocketClient, "wMsgWSO_Radio_SelectAuxChannel", auxChannel);
                         break;
 
                     case "wso.radio.tunefreq":
+                        if (!IsWSO()) break;
+
                         string radioFrequency = GetNumberFromCommand();
                         string fullRadioFrequency = radioFrequency.PadRight(6, '0');
                         HbSendProxyCommand.SendWsoCommand(State.WebSocketClient, "wMsgWSO_Radio_SetManualFrequency", fullRadioFrequency);
@@ -610,6 +657,17 @@ namespace VAICOM
                 catch
                 {
                 }
+            }
+
+            private static bool IsWSO()
+            {
+                if (!State.currentmodule.Id.Equals("F-4E-45MC", StringComparison.OrdinalIgnoreCase))
+                {
+                    State.Proxy.WriteToLog("WSO commands are only available for the F-4E-45MC module.", Colors.Warning);
+                    return false;
+                }
+
+                return true;
             }
 
             private static string GetNumberFromCommand()

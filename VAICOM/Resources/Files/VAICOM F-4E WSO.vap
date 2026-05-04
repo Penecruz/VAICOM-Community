@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <Profile xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <HasMB>false</HasMB>
-  <Id>72d44b32-b802-4857-bf20-d7cc2944944b</Id>
+  <Id>370d8635-137a-49e0-9d9b-3d0126a7d02d</Id>
   <Name>VAICOM F-4E WSO</Name>
   <Commands>
     <Command>
@@ -25,11 +25,11 @@
       <LongTapInvoked>false</LongTapInvoked>
       <ShortTapDelayedInvoked>false</ShortTapDelayedInvoked>
       <SleepFlag>0</SleepFlag>
-      <Id>5ebda166-3bde-4d9a-b621-9d99d65294e8</Id>
+      <Id>366f49ed-5a81-41be-a258-52c41ece6c04</Id>
       <CommandString> [WSO; Wizzo; Boots;][Deactivate;][Hold; Hold at][Flight plan 1; Primary flight plan; Flight plan 2; Secondary flight plan;] waypoint [1..9]</CommandString>
       <ActionSequence>
         <CommandAction>
-          <_caption>Execute external plugin, 'VAICOM Community Edition for DCS World' using context 'wso.navigation.holdpoint' </_caption>
+          <_caption>Execute external plugin, 'VAICOM Community Edition for DCS World' using context 'wso.navigation.holdpoint' and wait for return</_caption>
           <PairingSet>false</PairingSet>
           <PairingSetElse>false</PairingSetElse>
           <Ordinal>0</Ordinal>
@@ -38,8 +38,8 @@
           <ConditionSkip>false</ConditionSkip>
           <IsSuffixAction>false</IsSuffixAction>
           <DecimalTransient1>0</DecimalTransient1>
-          <Caption>Execute external plugin, 'VAICOM Community Edition for DCS World' using context 'wso.navigation.holdpoint' </Caption>
-          <Id>27f4d3cd-6212-4ee1-b1bd-a0cc35850e6e</Id>
+          <Caption>Execute external plugin, 'VAICOM Community Edition for DCS World' using context 'wso.navigation.holdpoint' and wait for return</Caption>
+          <Id>0a34cf4a-d6d6-4083-97d7-d5bd3e661b7f</Id>
           <ActionType>ExternalInvoke</ActionType>
           <Duration>0</Duration>
           <Delay>0</Delay>
@@ -48,7 +48,7 @@
           <Context2 />
           <Context3 />
           <Context4>wso.navigation.holdpoint</Context4>
-          <X>0</X>
+          <X>1</X>
           <Y>0</Y>
           <Z>0</Z>
           <InputMode>0</InputMode>
@@ -159,7 +159,7 @@
       <ExecFromWildcard>false</ExecFromWildcard>
       <IsSubCommand>false</IsSubCommand>
       <IsOverride>false</IsOverride>
-      <BaseId>478a7b84-050f-4144-a781-73e7e5531a02</BaseId>
+      <BaseId>65f42827-315a-4272-a967-4c61638e891e</BaseId>
       <OriginId>00000000-0000-0000-0000-000000000000</OriginId>
       <SessionEnabled>true</SessionEnabled>
       <DoubleTapInvoked>false</DoubleTapInvoked>
@@ -167,11 +167,11 @@
       <LongTapInvoked>false</LongTapInvoked>
       <ShortTapDelayedInvoked>false</ShortTapDelayedInvoked>
       <SleepFlag>0</SleepFlag>
-      <Id>842bd4a4-dcce-4ff3-a361-ec554e12d261</Id>
-      <CommandString>[WSO; Wizzo; Boots;][Go to; Goto; Resume; Resume at][Flight plan 1; Primary flight plan; Flight plan 2; Secondary flight plan;] waypoint [1..9]</CommandString>
+      <Id>697e976c-d735-44d0-a0e8-8a68b212d1ae</Id>
+      <CommandString>[WSO; Wizzo; Boots;][Divert to][Flight plan 1; Primary flight plan; Flight plan 2; Secondary flight plan] waypoint [1..9]</CommandString>
       <ActionSequence>
         <CommandAction>
-          <_caption>Execute external plugin, 'VAICOM Community Edition for DCS World' using context 'wso.navigation.waypoint' </_caption>
+          <_caption>Execute external plugin, 'VAICOM Community Edition for DCS World' using context 'wso.navigation.divert' and wait for return</_caption>
           <PairingSet>false</PairingSet>
           <PairingSetElse>false</PairingSetElse>
           <Ordinal>0</Ordinal>
@@ -180,8 +180,150 @@
           <ConditionSkip>false</ConditionSkip>
           <IsSuffixAction>false</IsSuffixAction>
           <DecimalTransient1>0</DecimalTransient1>
-          <Caption>Execute external plugin, 'VAICOM Community Edition for DCS World' using context 'wso.navigation.waypoint' </Caption>
-          <Id>66447827-cadc-40df-a491-6681dac11178</Id>
+          <Caption>Execute external plugin, 'VAICOM Community Edition for DCS World' using context 'wso.navigation.divert' and wait for return</Caption>
+          <Id>1e23e81d-2f7d-44c9-8978-0c4aa81b46a6</Id>
+          <ActionType>ExternalInvoke</ActionType>
+          <Duration>0</Duration>
+          <Delay>0</Delay>
+          <KeyCodes />
+          <Context>5b433065-dec8-4852-8912-2ff6edf9807f</Context>
+          <Context2 />
+          <Context3 />
+          <Context4>wso.navigation.divert</Context4>
+          <X>1</X>
+          <Y>0</Y>
+          <Z>0</Z>
+          <InputMode>0</InputMode>
+          <ConditionSetName />
+          <ConditionSetCondition />
+          <ConditionPairing>0</ConditionPairing>
+          <ConditionGroup>0</ConditionGroup>
+          <ConditionStartNameFrom />
+          <ConditionStartOperator>0</ConditionStartOperator>
+          <ConditionStartValue>0</ConditionStartValue>
+          <ConditionStartValueType>0</ConditionStartValueType>
+          <ConditionStartCompareToCondtion />
+          <ConditionStartType>0</ConditionStartType>
+          <DecimalContext1>0</DecimalContext1>
+          <DecimalContext2>0</DecimalContext2>
+          <DateContext1>0001-01-01T00:00:00</DateContext1>
+          <DateContext2>0001-01-01T00:00:00</DateContext2>
+          <Disabled>false</Disabled>
+          <RandomSounds />
+          <ConditionExpressions />
+          <IntegerContext1>0</IntegerContext1>
+          <IntegerContext2>0</IntegerContext2>
+        </CommandAction>
+      </ActionSequence>
+      <Async>true</Async>
+      <Enabled>true</Enabled>
+      <Description>Divert To Waypoint</Description>
+      <Category>F-4E WSO</Category>
+      <UseShortcut>false</UseShortcut>
+      <keyValue>0</keyValue>
+      <keyShift>0</keyShift>
+      <keyAlt>0</keyAlt>
+      <keyCtrl>0</keyCtrl>
+      <keyWin>0</keyWin>
+      <keyPassthru>false</keyPassthru>
+      <UseSpokenPhrase>true</UseSpokenPhrase>
+      <onlyKeyUp>false</onlyKeyUp>
+      <RepeatNumber>2</RepeatNumber>
+      <RepeatType>0</RepeatType>
+      <CommandType>0</CommandType>
+      <SourceProfile>00000000-0000-0000-0000-000000000000</SourceProfile>
+      <UseConfidence>false</UseConfidence>
+      <minimumConfidenceLevel>0</minimumConfidenceLevel>
+      <UseJoystick>false</UseJoystick>
+      <joystickNumber>0</joystickNumber>
+      <joystickButton>0</joystickButton>
+      <joystickNumber2>0</joystickNumber2>
+      <joystickButton2>0</joystickButton2>
+      <joystickUp>false</joystickUp>
+      <KeepRepeating>false</KeepRepeating>
+      <UseProcessOverride>false</UseProcessOverride>
+      <ProcessOverrideActiveWindow>true</ProcessOverrideActiveWindow>
+      <LostFocusStop>false</LostFocusStop>
+      <PauseLostFocus>false</PauseLostFocus>
+      <LostFocusBackCompat>true</LostFocusBackCompat>
+      <UseMouse>false</UseMouse>
+      <Mouse1>false</Mouse1>
+      <Mouse2>false</Mouse2>
+      <Mouse3>false</Mouse3>
+      <Mouse4>false</Mouse4>
+      <Mouse5>false</Mouse5>
+      <Mouse6>false</Mouse6>
+      <Mouse7>false</Mouse7>
+      <Mouse8>false</Mouse8>
+      <Mouse9>false</Mouse9>
+      <MouseUpOnly>false</MouseUpOnly>
+      <MousePassThru xsi:nil="true" />
+      <joystickExclusive>false</joystickExclusive>
+      <lastEditedAction>22e1f00b-3880-4520-bd55-8709978d64f4</lastEditedAction>
+      <UseProfileProcessOverride>false</UseProfileProcessOverride>
+      <ProfileProcessOverrideActiveWindow>false</ProfileProcessOverrideActiveWindow>
+      <RepeatIfKeysDown>false</RepeatIfKeysDown>
+      <RepeatIfMouseDown>false</RepeatIfMouseDown>
+      <RepeatIfJoystickDown>false</RepeatIfJoystickDown>
+      <AH>0</AH>
+      <CL>0</CL>
+      <HasMB>false</HasMB>
+      <UseVariableHotkey>false</UseVariableHotkey>
+      <CLE>0</CLE>
+      <EX1>false</EX1>
+      <EX2>false</EX2>
+      <InternalId xsi:nil="true" />
+      <HasInput>false</HasInput>
+      <HotkeyDoubleTapLevel>0</HotkeyDoubleTapLevel>
+      <MouseDoubleTapLevel>0</MouseDoubleTapLevel>
+      <JoystickDoubleTapLevel>0</JoystickDoubleTapLevel>
+      <HotkeyLongTapLevel>0</HotkeyLongTapLevel>
+      <MouseLongTapLevel>0</MouseLongTapLevel>
+      <JoystickLongTapLevel>0</JoystickLongTapLevel>
+      <AlwaysExec>false</AlwaysExec>
+      <ResourceBalance>0</ResourceBalance>
+      <PreventExec>false</PreventExec>
+      <ExternalEventsEnabled>false</ExternalEventsEnabled>
+      <ExcludeExecOnRecognized>false</ExcludeExecOnRecognized>
+      <UseVariableMouseShortcut>false</UseVariableMouseShortcut>
+      <UseVariableJoystickShortcut>false</UseVariableJoystickShortcut>
+    </Command>
+    <Command>
+      <Referrer xsi:nil="true" />
+      <ExecType>3</ExecType>
+      <Confidence>0</Confidence>
+      <PrefixActionCount>0</PrefixActionCount>
+      <IsDynamicallyCreated>false</IsDynamicallyCreated>
+      <TargetProcessSet>false</TargetProcessSet>
+      <TargetProcessType>0</TargetProcessType>
+      <TargetProcessLevel>0</TargetProcessLevel>
+      <CompareType>0</CompareType>
+      <ExecFromWildcard>false</ExecFromWildcard>
+      <IsSubCommand>false</IsSubCommand>
+      <IsOverride>false</IsOverride>
+      <BaseId>478a7b84-050f-4144-a781-73e7e5531a02</BaseId>
+      <OriginId>00000000-0000-0000-0000-000000000000</OriginId>
+      <SessionEnabled>true</SessionEnabled>
+      <DoubleTapInvoked>false</DoubleTapInvoked>
+      <SingleTapDelayedInvoked>false</SingleTapDelayedInvoked>
+      <LongTapInvoked>false</LongTapInvoked>
+      <ShortTapDelayedInvoked>false</ShortTapDelayedInvoked>
+      <SleepFlag>0</SleepFlag>
+      <Id>b82c152d-4ba0-4e41-b178-e743be6cb14d</Id>
+      <CommandString>[WSO; Wizzo; Boots;][Go to; Goto; Resume; Resume at][Flight plan 1; Primary flight plan; Flight plan 2; Secondary flight plan;] waypoint [1..9]</CommandString>
+      <ActionSequence>
+        <CommandAction>
+          <_caption>Execute external plugin, 'VAICOM Community Edition for DCS World' using context 'wso.navigation.waypoint' and wait for return</_caption>
+          <PairingSet>false</PairingSet>
+          <PairingSetElse>false</PairingSetElse>
+          <Ordinal>0</Ordinal>
+          <ConditionMet xsi:nil="true" />
+          <IndentLevel>0</IndentLevel>
+          <ConditionSkip>false</ConditionSkip>
+          <IsSuffixAction>false</IsSuffixAction>
+          <DecimalTransient1>0</DecimalTransient1>
+          <Caption>Execute external plugin, 'VAICOM Community Edition for DCS World' using context 'wso.navigation.waypoint' and wait for return</Caption>
+          <Id>658ba8ed-f962-40e7-8b3e-de2e502ed44f</Id>
           <ActionType>ExternalInvoke</ActionType>
           <Duration>0</Duration>
           <Delay>0</Delay>
@@ -190,7 +332,7 @@
           <Context2 />
           <Context3 />
           <Context4>wso.navigation.waypoint</Context4>
-          <X>0</X>
+          <X>1</X>
           <Y>0</Y>
           <Z>0</Z>
           <InputMode>0</InputMode>
@@ -309,11 +451,11 @@
       <LongTapInvoked>false</LongTapInvoked>
       <ShortTapDelayedInvoked>false</ShortTapDelayedInvoked>
       <SleepFlag>0</SleepFlag>
-      <Id>a4e298fb-2f9d-4e0e-918e-2716d3a5865e</Id>
+      <Id>21c900bb-b91e-4536-9154-b75be98941a2</Id>
       <CommandString>[WSO; Wizzo; Boots;]Pave spike laser code [1] [1..7] [1..8] [1..8]</CommandString>
       <ActionSequence>
         <CommandAction>
-          <_caption>Execute external plugin, 'VAICOM Community Edition for DCS World' using context 'wso.pavespike.laser' </_caption>
+          <_caption>Execute external plugin, 'VAICOM Community Edition for DCS World' using context 'wso.pavespike.laser' and wait for return</_caption>
           <PairingSet>false</PairingSet>
           <PairingSetElse>false</PairingSetElse>
           <Ordinal>0</Ordinal>
@@ -322,8 +464,8 @@
           <ConditionSkip>false</ConditionSkip>
           <IsSuffixAction>false</IsSuffixAction>
           <DecimalTransient1>0</DecimalTransient1>
-          <Caption>Execute external plugin, 'VAICOM Community Edition for DCS World' using context 'wso.pavespike.laser' </Caption>
-          <Id>2009cfdb-1204-486e-bd81-2662cc69d8ca</Id>
+          <Caption>Execute external plugin, 'VAICOM Community Edition for DCS World' using context 'wso.pavespike.laser' and wait for return</Caption>
+          <Id>f0d1f792-9515-4f6e-872c-a8717395ef5c</Id>
           <ActionType>ExternalInvoke</ActionType>
           <Duration>0</Duration>
           <Delay>0</Delay>
@@ -332,7 +474,7 @@
           <Context2 />
           <Context3 />
           <Context4>wso.pavespike.laser</Context4>
-          <X>0</X>
+          <X>1</X>
           <Y>0</Y>
           <Z>0</Z>
           <InputMode>0</InputMode>
@@ -451,11 +593,11 @@
       <LongTapInvoked>false</LongTapInvoked>
       <ShortTapDelayedInvoked>false</ShortTapDelayedInvoked>
       <SleepFlag>0</SleepFlag>
-      <Id>9e6f370f-04ca-4399-91a1-464e98e923e8</Id>
+      <Id>c4409f92-948d-4a1e-aff9-5c33debd09b5</Id>
       <CommandString>[WSO; Wizzo; Boots;]Select [Aux] Channel [1..20]</CommandString>
       <ActionSequence>
         <CommandAction>
-          <_caption>Execute external plugin, 'VAICOM Community Edition for DCS World' using context 'wso.radio.setauxchn' </_caption>
+          <_caption>Execute external plugin, 'VAICOM Community Edition for DCS World' using context 'wso.radio.setauxchn' and wait for return</_caption>
           <PairingSet>false</PairingSet>
           <PairingSetElse>false</PairingSetElse>
           <Ordinal>0</Ordinal>
@@ -464,8 +606,8 @@
           <ConditionSkip>false</ConditionSkip>
           <IsSuffixAction>false</IsSuffixAction>
           <DecimalTransient1>0</DecimalTransient1>
-          <Caption>Execute external plugin, 'VAICOM Community Edition for DCS World' using context 'wso.radio.setauxchn' </Caption>
-          <Id>f207c4d8-1071-4643-8aa6-46a0a0fa4819</Id>
+          <Caption>Execute external plugin, 'VAICOM Community Edition for DCS World' using context 'wso.radio.setauxchn' and wait for return</Caption>
+          <Id>6230ba6f-5249-48b8-bfc3-861b85b82958</Id>
           <ActionType>ExternalInvoke</ActionType>
           <Duration>0</Duration>
           <Delay>0</Delay>
@@ -474,7 +616,7 @@
           <Context2 />
           <Context3 />
           <Context4>wso.radio.setauxchn</Context4>
-          <X>0</X>
+          <X>1</X>
           <Y>0</Y>
           <Z>0</Z>
           <InputMode>0</InputMode>
@@ -593,11 +735,11 @@
       <LongTapInvoked>false</LongTapInvoked>
       <ShortTapDelayedInvoked>false</ShortTapDelayedInvoked>
       <SleepFlag>0</SleepFlag>
-      <Id>ab2a9629-01af-49d5-91ab-adf7220069cc</Id>
+      <Id>27fe4735-c774-41b8-9639-58c60e6565ce</Id>
       <CommandString>[WSO; Wizzo; Boots;]Select [Comm;Radio] Channel [1..18]</CommandString>
       <ActionSequence>
         <CommandAction>
-          <_caption>Execute external plugin, 'VAICOM Community Edition for DCS World' using context 'wso.radio.setchn' </_caption>
+          <_caption>Execute external plugin, 'VAICOM Community Edition for DCS World' using context 'wso.radio.setchn' and wait for return</_caption>
           <PairingSet>false</PairingSet>
           <PairingSetElse>false</PairingSetElse>
           <Ordinal>0</Ordinal>
@@ -606,8 +748,8 @@
           <ConditionSkip>false</ConditionSkip>
           <IsSuffixAction>false</IsSuffixAction>
           <DecimalTransient1>0</DecimalTransient1>
-          <Caption>Execute external plugin, 'VAICOM Community Edition for DCS World' using context 'wso.radio.setchn' </Caption>
-          <Id>d43a7e2f-8720-4d03-8025-8dcb229dfdc5</Id>
+          <Caption>Execute external plugin, 'VAICOM Community Edition for DCS World' using context 'wso.radio.setchn' and wait for return</Caption>
+          <Id>944645fd-cc69-4b0c-93cb-f12c708a5421</Id>
           <ActionType>ExternalInvoke</ActionType>
           <Duration>0</Duration>
           <Delay>0</Delay>
@@ -616,7 +758,7 @@
           <Context2 />
           <Context3 />
           <Context4>wso.radio.setchn</Context4>
-          <X>0</X>
+          <X>1</X>
           <Y>0</Y>
           <Z>0</Z>
           <InputMode>0</InputMode>
@@ -727,7 +869,7 @@
       <ExecFromWildcard>false</ExecFromWildcard>
       <IsSubCommand>false</IsSubCommand>
       <IsOverride>false</IsOverride>
-      <BaseId>46b24fcf-5bb2-4d2d-8a7c-fd6a6f7e769b</BaseId>
+      <BaseId>fca42d31-5868-4e60-973c-8628f08c6110</BaseId>
       <OriginId>00000000-0000-0000-0000-000000000000</OriginId>
       <SessionEnabled>true</SessionEnabled>
       <DoubleTapInvoked>false</DoubleTapInvoked>
@@ -735,11 +877,10 @@
       <LongTapInvoked>false</LongTapInvoked>
       <ShortTapDelayedInvoked>false</ShortTapDelayedInvoked>
       <SleepFlag>0</SleepFlag>
-      <Id>59a58670-f880-4139-96c2-48c2c90919fb</Id>
-      <CommandString>[WSO; Wizzo; Boots;]Tune Radio Frequency [2..3] [0..9] [0..9] decimal [0..9] [0; 2 5; 5 0; 7 5]</CommandString>
+      <Id>da22f461-2f2b-42ae-b7ec-0dc7ebb2427c</Id>
+      <CommandString>[WSO; Wizzo; Boots;]Select TACAN channel [zero;0;1] [0..9] [0..9] [X-ray;Yankee]</CommandString>
       <ActionSequence>
         <CommandAction>
-          <_caption>Execute external plugin, 'VAICOM Community Edition for DCS World' using context 'wso.radio.tunefreq' </_caption>
           <PairingSet>false</PairingSet>
           <PairingSetElse>false</PairingSetElse>
           <Ordinal>0</Ordinal>
@@ -748,8 +889,149 @@
           <ConditionSkip>false</ConditionSkip>
           <IsSuffixAction>false</IsSuffixAction>
           <DecimalTransient1>0</DecimalTransient1>
-          <Caption>Execute external plugin, 'VAICOM Community Edition for DCS World' using context 'wso.radio.tunefreq' </Caption>
-          <Id>08cb5062-1b06-4729-9ce8-a0d72be71073</Id>
+          <Id>4bc23b32-f77b-456a-9d20-3337aa2d7b38</Id>
+          <ActionType>ExternalInvoke</ActionType>
+          <Duration>0</Duration>
+          <Delay>0</Delay>
+          <KeyCodes />
+          <Context>5b433065-dec8-4852-8912-2ff6edf9807f</Context>
+          <Context2 />
+          <Context3 />
+          <Context4>wso.navigation.tacan.channel</Context4>
+          <X>1</X>
+          <Y>0</Y>
+          <Z>0</Z>
+          <InputMode>0</InputMode>
+          <ConditionSetName />
+          <ConditionSetCondition />
+          <ConditionPairing>0</ConditionPairing>
+          <ConditionGroup>0</ConditionGroup>
+          <ConditionStartNameFrom />
+          <ConditionStartOperator>0</ConditionStartOperator>
+          <ConditionStartValue>0</ConditionStartValue>
+          <ConditionStartValueType>0</ConditionStartValueType>
+          <ConditionStartCompareToCondtion />
+          <ConditionStartType>0</ConditionStartType>
+          <DecimalContext1>0</DecimalContext1>
+          <DecimalContext2>0</DecimalContext2>
+          <DateContext1>0001-01-01T00:00:00</DateContext1>
+          <DateContext2>0001-01-01T00:00:00</DateContext2>
+          <Disabled>false</Disabled>
+          <RandomSounds />
+          <ConditionExpressions />
+          <IntegerContext1>0</IntegerContext1>
+          <IntegerContext2>0</IntegerContext2>
+        </CommandAction>
+      </ActionSequence>
+      <Async>true</Async>
+      <Enabled>true</Enabled>
+      <Description>Select TACAN Channel</Description>
+      <Category>F-4E WSO</Category>
+      <UseShortcut>false</UseShortcut>
+      <keyValue>0</keyValue>
+      <keyShift>0</keyShift>
+      <keyAlt>0</keyAlt>
+      <keyCtrl>0</keyCtrl>
+      <keyWin>0</keyWin>
+      <keyPassthru>false</keyPassthru>
+      <UseSpokenPhrase>true</UseSpokenPhrase>
+      <onlyKeyUp>false</onlyKeyUp>
+      <RepeatNumber>2</RepeatNumber>
+      <RepeatType>0</RepeatType>
+      <CommandType>0</CommandType>
+      <SourceProfile>00000000-0000-0000-0000-000000000000</SourceProfile>
+      <UseConfidence>false</UseConfidence>
+      <minimumConfidenceLevel>0</minimumConfidenceLevel>
+      <UseJoystick>false</UseJoystick>
+      <joystickNumber>0</joystickNumber>
+      <joystickButton>0</joystickButton>
+      <joystickNumber2>0</joystickNumber2>
+      <joystickButton2>0</joystickButton2>
+      <joystickUp>false</joystickUp>
+      <KeepRepeating>false</KeepRepeating>
+      <UseProcessOverride>false</UseProcessOverride>
+      <ProcessOverrideActiveWindow>true</ProcessOverrideActiveWindow>
+      <LostFocusStop>false</LostFocusStop>
+      <PauseLostFocus>false</PauseLostFocus>
+      <LostFocusBackCompat>true</LostFocusBackCompat>
+      <UseMouse>false</UseMouse>
+      <Mouse1>false</Mouse1>
+      <Mouse2>false</Mouse2>
+      <Mouse3>false</Mouse3>
+      <Mouse4>false</Mouse4>
+      <Mouse5>false</Mouse5>
+      <Mouse6>false</Mouse6>
+      <Mouse7>false</Mouse7>
+      <Mouse8>false</Mouse8>
+      <Mouse9>false</Mouse9>
+      <MouseUpOnly>false</MouseUpOnly>
+      <MousePassThru xsi:nil="true" />
+      <joystickExclusive>false</joystickExclusive>
+      <lastEditedAction>a9074a17-fbae-4626-a0d0-b159ab34347e</lastEditedAction>
+      <UseProfileProcessOverride>false</UseProfileProcessOverride>
+      <ProfileProcessOverrideActiveWindow>false</ProfileProcessOverrideActiveWindow>
+      <RepeatIfKeysDown>false</RepeatIfKeysDown>
+      <RepeatIfMouseDown>false</RepeatIfMouseDown>
+      <RepeatIfJoystickDown>false</RepeatIfJoystickDown>
+      <AH>0</AH>
+      <CL>0</CL>
+      <HasMB>false</HasMB>
+      <UseVariableHotkey>false</UseVariableHotkey>
+      <CLE>0</CLE>
+      <EX1>false</EX1>
+      <EX2>false</EX2>
+      <InternalId xsi:nil="true" />
+      <HasInput>false</HasInput>
+      <HotkeyDoubleTapLevel>0</HotkeyDoubleTapLevel>
+      <MouseDoubleTapLevel>0</MouseDoubleTapLevel>
+      <JoystickDoubleTapLevel>0</JoystickDoubleTapLevel>
+      <HotkeyLongTapLevel>0</HotkeyLongTapLevel>
+      <MouseLongTapLevel>0</MouseLongTapLevel>
+      <JoystickLongTapLevel>0</JoystickLongTapLevel>
+      <AlwaysExec>false</AlwaysExec>
+      <ResourceBalance>0</ResourceBalance>
+      <PreventExec>false</PreventExec>
+      <ExternalEventsEnabled>false</ExternalEventsEnabled>
+      <ExcludeExecOnRecognized>false</ExcludeExecOnRecognized>
+      <UseVariableMouseShortcut>false</UseVariableMouseShortcut>
+      <UseVariableJoystickShortcut>false</UseVariableJoystickShortcut>
+    </Command>
+    <Command>
+      <Referrer xsi:nil="true" />
+      <ExecType>3</ExecType>
+      <Confidence>0</Confidence>
+      <PrefixActionCount>0</PrefixActionCount>
+      <IsDynamicallyCreated>false</IsDynamicallyCreated>
+      <TargetProcessSet>false</TargetProcessSet>
+      <TargetProcessType>0</TargetProcessType>
+      <TargetProcessLevel>0</TargetProcessLevel>
+      <CompareType>0</CompareType>
+      <ExecFromWildcard>false</ExecFromWildcard>
+      <IsSubCommand>false</IsSubCommand>
+      <IsOverride>false</IsOverride>
+      <BaseId>46b24fcf-5bb2-4d2d-8a7c-fd6a6f7e769b</BaseId>
+      <OriginId>00000000-0000-0000-0000-000000000000</OriginId>
+      <SessionEnabled>true</SessionEnabled>
+      <DoubleTapInvoked>false</DoubleTapInvoked>
+      <SingleTapDelayedInvoked>false</SingleTapDelayedInvoked>
+      <LongTapInvoked>false</LongTapInvoked>
+      <ShortTapDelayedInvoked>false</ShortTapDelayedInvoked>
+      <SleepFlag>0</SleepFlag>
+      <Id>50753eee-d724-439a-8204-ab8738b39579</Id>
+      <CommandString>[WSO; Wizzo; Boots;]Tune Radio Frequency [2..3] [0..9] [0..9] decimal [0..9] [0; 2 5; 5 0; 7 5]</CommandString>
+      <ActionSequence>
+        <CommandAction>
+          <_caption>Execute external plugin, 'VAICOM Community Edition for DCS World' using context 'wso.radio.tunefreq' and wait for return</_caption>
+          <PairingSet>false</PairingSet>
+          <PairingSetElse>false</PairingSetElse>
+          <Ordinal>0</Ordinal>
+          <ConditionMet xsi:nil="true" />
+          <IndentLevel>0</IndentLevel>
+          <ConditionSkip>false</ConditionSkip>
+          <IsSuffixAction>false</IsSuffixAction>
+          <DecimalTransient1>0</DecimalTransient1>
+          <Caption>Execute external plugin, 'VAICOM Community Edition for DCS World' using context 'wso.radio.tunefreq' and wait for return</Caption>
+          <Id>17aa316e-2aea-4afe-88e5-8bd9cf9024b1</Id>
           <ActionType>ExternalInvoke</ActionType>
           <Duration>0</Duration>
           <Delay>0</Delay>
@@ -758,7 +1040,7 @@
           <Context2 />
           <Context3 />
           <Context4>wso.radio.tunefreq</Context4>
-          <X>0</X>
+          <X>1</X>
           <Y>0</Y>
           <Z>0</Z>
           <InputMode>0</InputMode>
@@ -856,6 +1138,146 @@
       <UseVariableMouseShortcut>false</UseVariableMouseShortcut>
       <UseVariableJoystickShortcut>false</UseVariableJoystickShortcut>
     </Command>
+    <Command>
+      <Referrer xsi:nil="true" />
+      <ExecType>3</ExecType>
+      <Confidence>0</Confidence>
+      <PrefixActionCount>0</PrefixActionCount>
+      <IsDynamicallyCreated>false</IsDynamicallyCreated>
+      <TargetProcessSet>false</TargetProcessSet>
+      <TargetProcessType>0</TargetProcessType>
+      <TargetProcessLevel>0</TargetProcessLevel>
+      <CompareType>0</CompareType>
+      <ExecFromWildcard>false</ExecFromWildcard>
+      <IsSubCommand>false</IsSubCommand>
+      <IsOverride>false</IsOverride>
+      <BaseId>802bef79-2f71-455f-a455-3e0d527392e4</BaseId>
+      <OriginId>00000000-0000-0000-0000-000000000000</OriginId>
+      <SessionEnabled>true</SessionEnabled>
+      <DoubleTapInvoked>false</DoubleTapInvoked>
+      <SingleTapDelayedInvoked>false</SingleTapDelayedInvoked>
+      <LongTapInvoked>false</LongTapInvoked>
+      <ShortTapDelayedInvoked>false</ShortTapDelayedInvoked>
+      <SleepFlag>0</SleepFlag>
+      <Id>052965a4-c5f0-452a-af33-dcd3b61a626a</Id>
+      <CommandString>[WSO; Wizzo; Boots;]Tune TACAN station [Alpha;Bravo;Charlie;Delta;Echo;Foxtrot;Golf;Hotel;India;Juliet;Kilo;Lima;Mike;November;Oscar;Papa;Quebec;Romeo;Sierra;Tango;Uniform;Victor;Whiskey;X-Ray;Yankee;Zulu] [Alpha;Bravo;Charlie;Delta;Echo;Foxtrot;Golf;Hotel;India;Juliet;Kilo;Lima;Mike;November;Oscar;Papa;Quebec;Romeo;Sierra;Tango;Uniform;Victor;Whiskey;X-Ray;Yankee;Zulu] [Alpha;Bravo;Charlie;Delta;Echo;Foxtrot;Golf;Hotel;India;Juliet;Kilo;Lima;Mike;November;Oscar;Papa;Quebec;Romeo;Sierra;Tango;Uniform;Victor;Whiskey;X-Ray;Yankee;Zulu]</CommandString>
+      <ActionSequence>
+        <CommandAction>
+          <PairingSet>false</PairingSet>
+          <PairingSetElse>false</PairingSetElse>
+          <Ordinal>0</Ordinal>
+          <ConditionMet xsi:nil="true" />
+          <IndentLevel>0</IndentLevel>
+          <ConditionSkip>false</ConditionSkip>
+          <IsSuffixAction>false</IsSuffixAction>
+          <DecimalTransient1>0</DecimalTransient1>
+          <Id>a40be4cb-3aef-4d00-b76b-1c72725afe04</Id>
+          <ActionType>ExternalInvoke</ActionType>
+          <Duration>0</Duration>
+          <Delay>0</Delay>
+          <KeyCodes />
+          <Context>5b433065-dec8-4852-8912-2ff6edf9807f</Context>
+          <Context2 />
+          <Context3 />
+          <Context4>wso.navigation.tacan.station</Context4>
+          <X>1</X>
+          <Y>0</Y>
+          <Z>0</Z>
+          <InputMode>0</InputMode>
+          <ConditionSetName />
+          <ConditionSetCondition />
+          <ConditionPairing>0</ConditionPairing>
+          <ConditionGroup>0</ConditionGroup>
+          <ConditionStartNameFrom />
+          <ConditionStartOperator>0</ConditionStartOperator>
+          <ConditionStartValue>0</ConditionStartValue>
+          <ConditionStartValueType>0</ConditionStartValueType>
+          <ConditionStartCompareToCondtion />
+          <ConditionStartType>0</ConditionStartType>
+          <DecimalContext1>0</DecimalContext1>
+          <DecimalContext2>0</DecimalContext2>
+          <DateContext1>0001-01-01T00:00:00</DateContext1>
+          <DateContext2>0001-01-01T00:00:00</DateContext2>
+          <Disabled>false</Disabled>
+          <RandomSounds />
+          <ConditionExpressions />
+          <IntegerContext1>0</IntegerContext1>
+          <IntegerContext2>0</IntegerContext2>
+        </CommandAction>
+      </ActionSequence>
+      <Async>true</Async>
+      <Enabled>true</Enabled>
+      <Description>Tune TACAN Station</Description>
+      <Category>F-4E WSO</Category>
+      <UseShortcut>false</UseShortcut>
+      <keyValue>0</keyValue>
+      <keyShift>0</keyShift>
+      <keyAlt>0</keyAlt>
+      <keyCtrl>0</keyCtrl>
+      <keyWin>0</keyWin>
+      <keyPassthru>false</keyPassthru>
+      <UseSpokenPhrase>true</UseSpokenPhrase>
+      <onlyKeyUp>false</onlyKeyUp>
+      <RepeatNumber>2</RepeatNumber>
+      <RepeatType>0</RepeatType>
+      <CommandType>0</CommandType>
+      <SourceProfile>00000000-0000-0000-0000-000000000000</SourceProfile>
+      <UseConfidence>false</UseConfidence>
+      <minimumConfidenceLevel>0</minimumConfidenceLevel>
+      <UseJoystick>false</UseJoystick>
+      <joystickNumber>0</joystickNumber>
+      <joystickButton>0</joystickButton>
+      <joystickNumber2>0</joystickNumber2>
+      <joystickButton2>0</joystickButton2>
+      <joystickUp>false</joystickUp>
+      <KeepRepeating>false</KeepRepeating>
+      <UseProcessOverride>false</UseProcessOverride>
+      <ProcessOverrideActiveWindow>true</ProcessOverrideActiveWindow>
+      <LostFocusStop>false</LostFocusStop>
+      <PauseLostFocus>false</PauseLostFocus>
+      <LostFocusBackCompat>true</LostFocusBackCompat>
+      <UseMouse>false</UseMouse>
+      <Mouse1>false</Mouse1>
+      <Mouse2>false</Mouse2>
+      <Mouse3>false</Mouse3>
+      <Mouse4>false</Mouse4>
+      <Mouse5>false</Mouse5>
+      <Mouse6>false</Mouse6>
+      <Mouse7>false</Mouse7>
+      <Mouse8>false</Mouse8>
+      <Mouse9>false</Mouse9>
+      <MouseUpOnly>false</MouseUpOnly>
+      <MousePassThru xsi:nil="true" />
+      <joystickExclusive>false</joystickExclusive>
+      <lastEditedAction>94abbb48-c44d-42a0-999e-3dc2acc902f3</lastEditedAction>
+      <UseProfileProcessOverride>false</UseProfileProcessOverride>
+      <ProfileProcessOverrideActiveWindow>false</ProfileProcessOverrideActiveWindow>
+      <RepeatIfKeysDown>false</RepeatIfKeysDown>
+      <RepeatIfMouseDown>false</RepeatIfMouseDown>
+      <RepeatIfJoystickDown>false</RepeatIfJoystickDown>
+      <AH>0</AH>
+      <CL>0</CL>
+      <HasMB>false</HasMB>
+      <UseVariableHotkey>false</UseVariableHotkey>
+      <CLE>0</CLE>
+      <EX1>false</EX1>
+      <EX2>false</EX2>
+      <InternalId xsi:nil="true" />
+      <HasInput>false</HasInput>
+      <HotkeyDoubleTapLevel>0</HotkeyDoubleTapLevel>
+      <MouseDoubleTapLevel>0</MouseDoubleTapLevel>
+      <JoystickDoubleTapLevel>0</JoystickDoubleTapLevel>
+      <HotkeyLongTapLevel>0</HotkeyLongTapLevel>
+      <MouseLongTapLevel>0</MouseLongTapLevel>
+      <JoystickLongTapLevel>0</JoystickLongTapLevel>
+      <AlwaysExec>false</AlwaysExec>
+      <ResourceBalance>0</ResourceBalance>
+      <PreventExec>false</PreventExec>
+      <ExternalEventsEnabled>false</ExternalEventsEnabled>
+      <ExcludeExecOnRecognized>false</ExcludeExecOnRecognized>
+      <UseVariableMouseShortcut>false</UseVariableMouseShortcut>
+      <UseVariableJoystickShortcut>false</UseVariableJoystickShortcut>
+    </Command>
   </Commands>
   <OverrideGlobal>false</OverrideGlobal>
   <GlobalHotkeyIndex>0</GlobalHotkeyIndex>
@@ -901,7 +1323,7 @@
   <EnableProfileSwitch>false</EnableProfileSwitch>
   <CategoryGroups />
   <GroupCategory>false</GroupCategory>
-  <LastEditedCommand>46b24fcf-5bb2-4d2d-8a7c-fd6a6f7e769b</LastEditedCommand>
+  <LastEditedCommand>fca42d31-5868-4e60-973c-8628f08c6110</LastEditedCommand>
   <IS>0</IS>
   <IO>0</IO>
   <IP>0</IP>
