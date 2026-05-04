@@ -1126,6 +1126,12 @@ namespace VAICOM
                                 return;
                             }
 
+                            if (commandDetails.valueRequired && string.IsNullOrEmpty(commandDetails.value))
+                            {
+                                Log.Write($"Command '{commandId}' missing required value.", Colors.Warning);
+                                return;
+                            }
+
                             // Construct the command string in the format "category|action|value"
                             string commandString = $"{category}|{action}|{value}";
 

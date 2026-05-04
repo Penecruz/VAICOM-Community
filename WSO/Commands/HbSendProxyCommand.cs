@@ -30,7 +30,14 @@ namespace VAICOM.WSO
         {
             if (WSOCommandMappings.CommandMap.TryGetValue(commandKey, out var command))
             {
-                SendCommand(webSocket, command.category, command.action, command.value);
+                if (command.valueRequired && string.IsNullOrEmpty(command.value))
+                {
+                    Console.WriteLine($"Command '{commandKey}' missing required value.");
+                }
+                else
+                {
+                    SendCommand(webSocket, command.category, command.action, command.value);
+                }
             }
             else
             {
@@ -47,7 +54,14 @@ namespace VAICOM.WSO
         {
             if (WSOCommandMappings.CommandMap.TryGetValue(commandKey, out var command))
             {
-                SendCommand(webSocket, command.category, command.action, value);
+                if (command.valueRequired && string.IsNullOrEmpty(value))
+                {
+                    Console.WriteLine($"Command '{commandKey}' missing required value.");
+                }
+                else
+                {
+                    SendCommand(webSocket, command.category, command.action, value);
+                }
             }
             else
             {

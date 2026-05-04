@@ -412,11 +412,16 @@ namespace VAICOM
                         List<string> waypointCacheKeys = new List<string> { "divert_tgt1_lat_lon" };
 
                         string waypointCommandKey = "";
-                        string flightPlanWaypoint = State.Proxy.Utility.ParseTokens("{TXTNUM:\"{CMDSEGMENT:4}\"}");
+                        int waypointIndex = GetLastSegmentIndex(4);
+                        if (!GetNumberFromSegment(waypointIndex, out string flightPlanWaypoint))
+                        {
+                            vaProxy.WriteToLog($"Invalid waypoint for go to flightplan and waypoint", Colors.Warning);
+                            break;
+                        }
 
-                        string waypointflightPlan = State.Proxy.Command.Segment(2);
+                        string waypointFlightPlan = State.Proxy.Command.Segment(waypointIndex - 2);
                         // Check if a flight plan was included in the command, and whether or not it was flight plan 2.
-                        if (!String.IsNullOrEmpty(waypointflightPlan) && IsSecondaryFlightPlan(waypointflightPlan))
+                        if (!String.IsNullOrEmpty(waypointFlightPlan) && IsSecondaryFlightPlan(waypointFlightPlan))
                         {
                             waypointCommandKey = "wMsgWSO_Navigation_ResumeFlightPlan2Waypoint";
                             waypointCacheKeys.Add("fp2");
@@ -437,16 +442,23 @@ namespace VAICOM
                         }
                         else
                         {
-                            vaProxy.WriteToLog($"Waypoint not resolved for cache key {waypointCacheKey}", Colors.Warning);
+                            vaProxy.WriteToLog($"Waypoint not found for flight plan {waypointFlightPlan} waypoint {flightPlanWaypoint}", Colors.Warning);
                         }
                         break;
 
                     case "wso.navigation.holdpoint":
                         if (!IsWSO()) break;
 
-                        string deactivate = State.Proxy.Utility.ParseTokens("{CMDSEGMENT:1}");
-                        string holdpointFlightPlan = State.Proxy.Command.Segment(3);
-                        string flightPlanHoldpoint = State.Proxy.Utility.ParseTokens("{TXTNUM:\"{CMDSEGMENT:5}\"}");
+                        string deactivate = GetSegment(1);
+                        // We work backwards as the command may have been edited with additional segments added.
+                        int holdpointIndex = GetLastSegmentIndex(5);
+                        if (!GetNumberFromSegment(holdpointIndex, out string flightPlanHoldpoint))
+                        {
+                            vaProxy.WriteToLog($"Invalid waypoint for holding to flightplan and waypoint", Colors.Warning);
+                            break;
+                        }
+
+                        string holdpointFlightPlan = GetSegment(holdpointIndex - 2);
                         List<string> holdpointCacheKeys = new List<string>();
                         string holdpointCommandKey = "";
 
@@ -489,7 +501,7 @@ namespace VAICOM
                         }
                         else
                         {
-                            vaProxy.WriteToLog($"Holdpoint not resolved for cache key {holdpointCacheKey}", Colors.Warning);
+                            vaProxy.WriteToLog($"Holdpoint not found for flight plan {holdpointFlightPlan} waypoint {flightPlanHoldpoint}", Colors.Warning);
                         }
                         break;
 
@@ -499,8 +511,15 @@ namespace VAICOM
                         List<string> divertCacheKeys = new List<string> { "divert_tgt1_lat_lon" };
 
                         string divertCommandKey = "wMsgWSO_Navigation_Divert_LatLong";
-                        string divertFlightPlan = State.Proxy.Command.Segment(2);
-                        string divertWaypoint = State.Proxy.Command.Segment(4); ;
+
+                        // We work backwards as the command may have been edited with additional segments added.
+                        int divertWaypointIndex = GetLastSegmentIndex(4);
+                        if (!GetNumberFromSegment(divertWaypointIndex, out string divertWaypoint))
+                        {
+                            vaProxy.WriteToLog($"Invalid waypoint for divert to flightplan and waypoint", Colors.Warning);
+                            break;
+                        }
+                        string divertFlightPlan = GetSegment(divertWaypointIndex - 2);
 
                         if (!String.IsNullOrEmpty(divertFlightPlan) && IsSecondaryFlightPlan(divertFlightPlan))
                         {
@@ -520,34 +539,37 @@ namespace VAICOM
                         }
                         else
                         {
-                            vaProxy.WriteToLog($"Divert lat/long not resolved for cache key {divertCacheKey}", Colors.Warning);
+                            vaProxy.WriteToLog($"Divert lat/long not found for flight plan {divertFlightPlan} waypoint {divertWaypoint}", Colors.Warning);
                         }
                         break;
 
                     case "wso.navigation.tacan.channel":
                         if (!IsWSO()) break;
 
-                        string digit1 = State.Proxy.Command.Segment(2);
+                        // We work backwards as the command may have been edited with additional segments added.
+                        int bandIndex = GetLastSegmentIndex(5);
+                        string digit1 = GetSegment(bandIndex - 3);
+                        string digit2 = GetSegment(bandIndex - 2);
+                        string digit3 = GetSegment(bandIndex - 1);
+                        // Use the first character for the band so we can support the NATO alphabet.
+                        string tacanBand = GetSegment(bandIndex).Substring(0, 1);
+
                         // If the command uses zero at the beginning then is in text and the TXTUM
                         // function does not convert it so we need to do manually.
                         if (digit1.Equals("zero"))
                         {
                             digit1 = "0";
                         }
-                        string digit2 = State.Proxy.Command.Segment(3);
-                        string digit3 = State.Proxy.Command.Segment(4);
-                        // Use the first character for the band so we can support the NATO alphabet.
-                        string tacanBand = State.Proxy.Utility.ParseTokens("{TXTSUBSTR:\"{CMDSEGMENT:5}\":0:1}");
                         HbSendProxyCommand.SendWsoCommand(State.WebSocketClient, "wMsgWSO_Navigation_TACAN_SelectChannel", $"{digit1}{digit2}{digit3}{tacanBand}");
                         break;
 
                     case "wso.navigation.tacan.station":
                         if (!IsWSO()) break;
 
-                        // Use the first character for the station letters so we can support the NATO alphabet.
-                        string alpha1 = State.Proxy.Utility.ParseTokens("{TXTSUBSTR:\"{CMDSEGMENT:2}\":0:1}");
-                        string alpha2 = State.Proxy.Utility.ParseTokens("{TXTSUBSTR:\"{CMDSEGMENT:3}\":0:1}");
-                        string alpha3 = State.Proxy.Utility.ParseTokens("{TXTSUBSTR:\"{CMDSEGMENT:4}\":0:1}");
+                        int stationIndex = GetLastSegmentIndex(4);
+                        string alpha1 = GetSegment(stationIndex - 2).Substring(0, 1);
+                        string alpha2 = GetSegment(stationIndex - 1).Substring(0, 1);
+                        string alpha3 = GetSegment(stationIndex).Substring(0, 1);
 
                         string tacanCacheKey = $"nav_tacan_tr|{alpha1}{alpha2}{alpha3}";
                         if (State.WsoNavCacheByActionAndName.TryGetValue(tacanCacheKey, out string resolvedTacanStation)
@@ -557,22 +579,20 @@ namespace VAICOM
                         }
                         else
                         {
-                            vaProxy.WriteToLog($"TACAN station not found for cache key {tacanCacheKey}", Colors.Warning);
+                            vaProxy.WriteToLog($"TACAN station '{alpha1}{alpha2}{alpha3}' not found", Colors.Warning);
                         }
                         break;
 
                     case "wso.radio.setchn":
                         if (!IsWSO()) break;
 
-                        string commChannel = GetNumberFromCommand();
-                        HbSendProxyCommand.SendWsoCommand(State.WebSocketClient, "wMsgWSO_Radio_SelectCommChannel", commChannel);
+                        HbSendProxyCommand.SendWsoCommand(State.WebSocketClient, "wMsgWSO_Radio_SelectCommChannel", GetNumberFromCommand());
                         break;
 
                     case "wso.radio.setauxchn":
                         if (!IsWSO()) break;
 
-                        string auxChannel = GetNumberFromCommand();
-                        HbSendProxyCommand.SendWsoCommand(State.WebSocketClient, "wMsgWSO_Radio_SelectAuxChannel", auxChannel);
+                        HbSendProxyCommand.SendWsoCommand(State.WebSocketClient, "wMsgWSO_Radio_SelectAuxChannel", GetNumberFromCommand());
                         break;
 
                     case "wso.radio.tunefreq":
@@ -670,13 +690,48 @@ namespace VAICOM
                 return true;
             }
 
-            private static string GetNumberFromCommand()
+            private static string GetSegment(int index)
             {
-                string tokens = "{TXTNUM:\"{CMD}\"}";
-                return State.Proxy.Utility.ParseTokens(tokens);
+                return State.Proxy.Command.Segment(index);
             }
 
-            private static Boolean IsSecondaryFlightPlan(string flightPlan)
+            private static int GetLastSegmentIndex(int start)
+            {
+                // Walk forwards till we hit "Not set" which is the VoiceAttack value
+                // if there are no further segments in the configured command.
+                int end = start;
+                while (!string.Equals(GetSegment(end), "Not set"))
+                {
+                    end++;
+                }
+
+                return end - 1;
+            }
+
+            private static string GetNumberFromCommand()
+            {
+                return State.Proxy.Utility.ParseTokens("{TXTNUM:\"{CMD}\"}");
+            }
+
+            private static bool GetNumberFromSegment(int index, out string number)
+            {
+                string segment = GetSegment(index);
+                if (segment.Equals("zero"))
+                {
+                    number = "0";
+                    return true;
+                }
+               
+                number = State.Proxy.Utility.ParseTokens("{TXTNUM:\"" + segment + "\"}");
+                if (string.IsNullOrEmpty(number))
+                {
+                    return false;
+                }
+
+                return true;
+            }
+
+            private static bool IsSecondaryFlightPlan(string flightPlan)
             {
                 return flightPlan.Contains("2") || flightPlan.Contains("second");
             }
