@@ -288,7 +288,8 @@ namespace VAICOM
 
                 if (!State.AIRIOactive
                     && State.currentmodule != null
-                    && State.currentmodule.Id.Equals("F-4E-45MC", StringComparison.OrdinalIgnoreCase)
+                    && (State.currentmodule.Id.Equals("F-4E-45MC", StringComparison.OrdinalIgnoreCase)
+                        || State.currentmodule.Id.Equals("AH-64D", StringComparison.OrdinalIgnoreCase))
                     && State.activeconfig.ICShotmic_useswitch)
                 {
                     bool hotmic = State.IsF4EIntercomSelected();
@@ -298,7 +299,7 @@ namespace VAICOM
                     if (previous != hotmic)
                     {
                         double pilotIcsArg = State.currentstate.riostate != null ? State.currentstate.riostate.f4ePilotIcs : 0;
-                        Log.Write($"F-4E ICS switch: hotmic={hotmic}, releaseHot={State.activeconfig.ReleaseHot}, intercomDevice={State.currentstate.intercom}, pilotIcsArg={pilotIcsArg:0.000}", Colors.Inline);
+                        Log.Write($"{State.currentmodule.Id} ICS switch: hotmic={hotmic}, releaseHot={State.activeconfig.ReleaseHot}, intercomDevice={State.currentstate.intercom}, pilotIcsArg={pilotIcsArg:0.000}", Colors.Inline);
                         PushToTalk.PTT.PTT_Manage_Listen_VA(State.activeconfig.ReleaseHot || hotmic);
                         PushToTalk.PTT.PTT_Manage_Listen_VAICOM(!State.activeconfig.ReleaseHot || hotmic);
                     }

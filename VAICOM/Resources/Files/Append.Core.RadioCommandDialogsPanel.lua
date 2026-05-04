@@ -1656,16 +1656,32 @@ base.vaicom.state = {
 				base.vaicom.state.riostate.amt						= base.vaicom.state.activemessage.AIRIO and (data.initialized and base.GetDevice(0).get_argument_value and (base.GetDevice(0):get_argument_value(2022) == 0)) or false
 				base.vaicom.state.riostate.tcn						= base.vaicom.state.activemessage.AIRIO and (data.initialized and base.GetDevice(0).get_argument_value and (base.GetDevice(0):get_argument_value(374))) or 0
               local f4eICSHot = false
+				local ah64ICSHot = false
 				if data.initialized and base.vaicom.state.dcsid == "F-4E-45MC" and base.GetDevice(0) and base.GetDevice(0).get_argument_value then
 					local pilotIcs = base.GetDevice(0):get_argument_value(1378)
                    base.vaicom.state.riostate.f4ePilotIcs = pilotIcs or 0
                  -- F-4E ICS selector: cold mic is negative, hot mic is centered, radio override is positive.
-					-- Treat hot mic and radio override as active intercom states.
+					-- Treat HOT MIC and radio override as active intercom states. (Off is inactive)
                    f4eICSHot = (pilotIcs ~= nil and pilotIcs > -0.1)
 				else
 					base.vaicom.state.riostate.f4ePilotIcs = 0
 				end
-               base.vaicom.state.riostate.ics						= (base.vaicom.state.activemessage.AIRIO and (data.initialized and base.GetDevice(0).get_argument_value and (base.GetDevice(0):get_argument_value(2044) > -1))) or f4eICSHot -- Check for F-14 ICS state or F-4E pilot ICS hot mic position
+             local dcsId = base.vaicom.state.dcsid or ""
+				if data.initialized and base.GetDevice(0) and base.GetDevice(0).get_argument_value and base.string.find(dcsId, "AH-64D", 1, true) ~= nil then
+                    local seat = base.get_param_handle("SEAT"):get() -- Determine pilot or CPG seat
+					local pltIcsMode = base.GetDevice(0):get_argument_value(346)
+					local cpgIcsMode = base.GetDevice(0):get_argument_value(387) -- Added CPG controls for George Pilot expansion
+                   -- AH-64 ICS mode switch labels are HOT MIC/VOX/PTT.
+					-- Treat HOT MIC and VOX as active intercom states (PTT only is inactive).
+                   if seat == 0 then
+						ah64ICSHot = (pltIcsMode ~= nil and pltIcsMode < 0.5)
+					elseif seat == 1 then
+						ah64ICSHot = (cpgIcsMode ~= nil and cpgIcsMode < 0.5)
+					else
+						ah64ICSHot = (pltIcsMode ~= nil and pltIcsMode < 0.5) or (cpgIcsMode ~= nil and cpgIcsMode < 0.5)
+					end
+				end
+			   base.vaicom.state.riostate.ics						= (base.vaicom.state.activemessage.AIRIO and (data.initialized and base.GetDevice(0).get_argument_value and (base.GetDevice(0):get_argument_value(2044) > -1))) or f4eICSHot or ah64ICSHot -- Check for F-14 ICS state, F-4E pilot ICS hot mic position, or AH-64 ICS hot mic position
 				base.vaicom.state.riostate.sngl						= base.vaicom.state.activemessage.AIRIO and (data.initialized and base.GetDevice(0).get_argument_value and (base.GetDevice(0):get_argument_value(60) >0)) or false
 				base.vaicom.state.riostate.jmr						= base.vaicom.state.activemessage.AIRIO and (data.initialized and base.GetDevice(0).get_argument_value and (base.GetDevice(0):get_argument_value(151) ==1)) or false
 				base.vaicom.state.riostate.AM182					= base.vaicom.state.activemessage.AIRIO and (data.initialized and base.GetDevice(0).get_argument_value and (base.GetDevice(0):get_argument_value(359) ==1)) or false

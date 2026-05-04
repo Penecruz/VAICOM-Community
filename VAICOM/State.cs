@@ -285,7 +285,8 @@ namespace VAICOM
             }
 
             return currentmodule != null
-                && currentmodule.Id.Equals("F-4E-45MC", StringComparison.OrdinalIgnoreCase);
+                && (currentmodule.Id.Equals("F-4E-45MC", StringComparison.OrdinalIgnoreCase)
+                    || currentmodule.Id.Equals("AH-64D", StringComparison.OrdinalIgnoreCase));
         }
 
         public static bool IsF4EIntercomSelected()
@@ -311,7 +312,8 @@ namespace VAICOM
             }
 
             if (currentmodule != null
-                && currentmodule.Id.Equals("F-4E-45MC", StringComparison.OrdinalIgnoreCase)
+                && (currentmodule.Id.Equals("F-4E-45MC", StringComparison.OrdinalIgnoreCase)
+                    || currentmodule.Id.Equals("AH-64D", StringComparison.OrdinalIgnoreCase))
                 && activeconfig.ICShotmic_useswitch)
             {
                 return IsF4EIntercomSelected();
