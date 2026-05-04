@@ -272,6 +272,28 @@ namespace VAICOM
                 KneeboardlinkPTT.IsChecked = State.activeconfig.KneeboardlinkPTT;
             }
 
+            private void OpenKneeboardOutOn(object sender, RoutedEventArgs e)
+            {
+                State.activeconfig.OpenKneeboard_Out = true;
+                Extensions.Kneeboard.OpenKneeboardBridge.SetEnabled(true);
+            }
+
+            private void OpenKneeboardOutOff(object sender, RoutedEventArgs e)
+            {
+                State.activeconfig.OpenKneeboard_Out = false;
+                Extensions.Kneeboard.OpenKneeboardBridge.SetEnabled(false);
+            }
+
+            private void SetCurrentValueOpenKneeboardOut(object sender, EventArgs e)
+            {
+                CheckBox checkbox = sender as CheckBox;
+                if (checkbox != null)
+                {
+                    checkbox.IsEnabled = true;
+                    checkbox.IsChecked = State.activeconfig.OpenKneeboard_Out;
+                }
+            }
+
 
             private void ChatterAutostartOn(object sender, RoutedEventArgs e) { State.activeconfig.ChatterAutostart = true; }
             private void ChatterAutostartOff(object sender, RoutedEventArgs e) { State.activeconfig.ChatterAutostart = false; }

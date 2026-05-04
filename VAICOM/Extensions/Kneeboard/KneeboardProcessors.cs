@@ -608,7 +608,12 @@ namespace VAICOM
                                 summarynote = "*" + Flight_processgeneral(message.text, sendercallsign);
                                 break;
 
-                            default: // no processing for this mesage
+                            // generic CREW fallback -----------------------------------------------
+                            default:
+                                if (string.IsNullOrWhiteSpace(summarynote) && dcsid.StartsWith("wMsgGroundCrew", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    summarynote = "*" + "REF " + Crew_processgeneral(message.text, sendercallsign);
+                                }
                                 break;
                         }
 

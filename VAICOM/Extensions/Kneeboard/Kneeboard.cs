@@ -23,8 +23,13 @@ namespace VAICOM
                         KneeboardMessage msg = new KneeboardMessage();
                         msg.eventid = message.eventid;
                         string sendercat = Database.Dcs.SenderCatByString(message.eventkey).ToString().ToUpper();
-                        msg.logdata = new LogData(sendercat, KneeboardHelper.ProcessMessageByEvent(message));
+                        string processedMessage = KneeboardHelper.ProcessMessageByEvent(message);
+                        msg.logdata = new LogData(sendercat, processedMessage);
                         Client.DcsClient.SendKneeboardMessage(msg);
+                        if (!string.IsNullOrWhiteSpace(processedMessage))
+                        {
+                            OpenKneeboardBridge.UpdateLog(sendercat, processedMessage);
+                        }
                     }
                     catch
                     {
@@ -40,6 +45,10 @@ namespace VAICOM
                         KneeboardMessage msg = new KneeboardMessage();
                         msg.logdata = new LogData(cat, content);
                         Client.DcsClient.SendKneeboardMessage(msg);
+                        if (!string.IsNullOrWhiteSpace(content))
+                        {
+                            OpenKneeboardBridge.UpdateLog(cat, content);
+                        }
                     }
                     catch
                     {
@@ -54,6 +63,7 @@ namespace VAICOM
                         KneeboardMessage msg = new KneeboardMessage();
                         msg.unitsdetails = new KneeboardUnitsDetails(cat, contents, true);
                         Client.DcsClient.SendKneeboardMessage(msg);
+                        OpenKneeboardBridge.UpdateUnitsDetails(cat, contents);
                     }
                     catch
                     {
@@ -69,6 +79,7 @@ namespace VAICOM
                         KneeboardMessage msg = new KneeboardMessage();
                         msg.serverdata = new KneeboardServerData();
                         Client.DcsClient.SendKneeboardMessage(msg);
+                        OpenKneeboardBridge.UpdateServerData();
                     }
                     catch
                     {
@@ -103,6 +114,7 @@ namespace VAICOM
 
                             msg.logdata = new LogData(sendcat.ToUpper(), sendcat.ToUpper());
                             State.KneeboardState.activecat = sendcat;
+                            OpenKneeboardBridge.UpdateActiveCategory(sendcat);
 
                             if (!sendcat.Equals("NOTES") & !sendcat.Equals("LOG"))
                             {
@@ -110,6 +122,12 @@ namespace VAICOM
                                 {
                                     KneeboardUnitsData catunits = new KneeboardUnitsData(sendcat, false);
                                     msg.unitsdata = catunits;
+                                    OpenKneeboardBridge.UpdateUnits(sendcat, catunits.unitslist);
+                                }
+                                else if (cat.Equals("Crew"))
+                                {
+                                    KneeboardUnitsData crewUnits = new KneeboardUnitsData("Crew", false);
+                                    OpenKneeboardBridge.UpdateUnits("CREW", crewUnits.unitslist);
                                 }
 
                                 SortedDictionary<string, List<string>> aliasstrings = new SortedDictionary<string, List<string>>();
@@ -120,6 +138,7 @@ namespace VAICOM
 
                                 msg.aliasdata = new AliasData(sendcat.ToUpper(), aliasstrings);
                                 msg.aliasdata.chunk = i;
+                                OpenKneeboardBridge.UpdateAliasChunk(sendcat, i, aliasstrings);
 
                             }
 
@@ -149,6 +168,7 @@ namespace VAICOM
                         KneeboardMessage msg = new KneeboardMessage(); // includes dict state
 
                         msg.serverdata = new KneeboardServerData();
+                        OpenKneeboardBridge.UpdateServerData();
 
                         if (State.Proxy.Dictation.IsOn()) // in dictation mode: include buffer update every 1/4 second:
                         {
@@ -160,6 +180,8 @@ namespace VAICOM
                                 State.kneeboardlastdictbuffer = dictbuffer;
                                 State.kneeboardcurrentbuffer = dictbuffer;
                                 msg.logdata = new LogData("NOTES", dictbuffer);
+                                OpenKneeboardBridge.UpdateNotesBuffer(dictbuffer);
+                                OpenKneeboardBridge.UpdateLog("NOTES", dictbuffer);
                             }
                         }
                         else
@@ -209,6 +231,7 @@ namespace VAICOM
                         KneeboardMessage msg = new KneeboardMessage();
                         msg.logdata = new LogData(State.KneeboardState.activecat, State.kneeboardcurrentbuffer);
                         Client.DcsClient.SendKneeboardMessage(msg);
+                        OpenKneeboardBridge.UpdateLog(State.KneeboardState.activecat, State.kneeboardcurrentbuffer);
                     }
                     catch
                     {
