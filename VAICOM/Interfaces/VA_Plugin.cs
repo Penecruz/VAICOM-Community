@@ -648,6 +648,7 @@ namespace VAICOM
                     Beacon.Beacon_TimerStop();
                     Extensions.Chatter.AudioTimer.Chatter_TimerStop();
                     Processor.CloseTTSPlaybackStream();
+                    Extensions.Kneeboard.OpenKneeboardBridge.Shutdown();
 
                     AppDomain.CurrentDomain.AssemblyResolve -= Framework.Assemblies.AssemblyResolve;
                     State.Proxy = null;

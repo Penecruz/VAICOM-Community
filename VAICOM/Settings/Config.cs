@@ -85,6 +85,7 @@ namespace VAICOM
             public double KneeboardOpacity;
             public bool KneeboardlinkPTT;
             public bool Kneeboard_Enabled;
+            public bool OpenKneeboard_Out;
 
             // multiplayer page
 
@@ -282,6 +283,7 @@ namespace VAICOM
 
                 KneeboardOpacity = 128,
                 Kneeboard_Enabled = true,
+                OpenKneeboard_Out = false,
 
                 // multiplayer page
 

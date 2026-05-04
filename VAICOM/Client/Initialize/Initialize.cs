@@ -490,6 +490,10 @@ namespace VAICOM
 
                     CreateDatabase(vaProxy);
                     StartNetwork(vaProxy);
+                    if (State.activeconfig.OpenKneeboard_Out)
+                    {
+                        OpenKneeboardBridge.Initialize();
+                    }
                     StartTimers(vaProxy);
                     StartSpeechSynth(vaProxy);
                     InitListeningState(vaProxy);
