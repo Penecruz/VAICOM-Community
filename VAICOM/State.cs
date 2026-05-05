@@ -312,11 +312,17 @@ namespace VAICOM
             }
 
             if (currentmodule != null
-                && (currentmodule.Id.Equals("F-4E-45MC", StringComparison.OrdinalIgnoreCase)
-                    || currentmodule.Id.Equals("AH-64D", StringComparison.OrdinalIgnoreCase))
+                && currentmodule.Id.Equals("F-4E-45MC", StringComparison.OrdinalIgnoreCase)
                 && activeconfig.ICShotmic_useswitch)
             {
                 return IsF4EIntercomSelected();
+            }
+
+            if (currentmodule != null
+                && currentmodule.Id.Equals("AH-64D", StringComparison.OrdinalIgnoreCase)
+                && activeconfig.ICShotmic_useswitch)
+            {
+                return activeconfig.ICShotmic;
             }
 
             return activeconfig.ICShotmic;

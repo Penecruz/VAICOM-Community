@@ -217,6 +217,19 @@ namespace VAICOM
       return c;
     }
 
+    function normalizeActiveCategory(cat, data){
+      var c = String(cat || '').toUpperCase();
+      if (c === 'REF'){
+        var server = (data && data.Server) || {};
+        var aircraft = String(server.Aircraft || '').toUpperCase();
+        if (aircraft.indexOf('F-14') >= 0 || aircraft.indexOf('F-4') >= 0 || aircraft.indexOf('AH-64') >= 0 || aircraft.indexOf('AH64') >= 0){
+          return 'AI CREW';
+        }
+      }
+
+      return normalizeCategory(c);
+    }
+
     function mergeUnique(dest, src){
       (src || []).forEach(function(v){
         if (dest.indexOf(v) < 0) dest.push(v);
@@ -486,7 +499,7 @@ namespace VAICOM
     function renderTabs(data){
       const tabsEl = document.getElementById('tabs');
       tabsEl.innerHTML = '';
-      const active = normalizeCategory(data.ActiveCategory);
+      const active = normalizeActiveCategory(data.ActiveCategory, data);
       if (autoBrowse && TABS.indexOf(active) >= 0){
         selectedTab = active;
       }
@@ -517,7 +530,7 @@ namespace VAICOM
         : 'Waiting for mission data...';
 
       document.getElementById('session').textContent = [
-        'Active Category : ' + safe(normalizeCategory(data.ActiveCategory)),
+        'Active Category : ' + safe(normalizeActiveCategory(data.ActiveCategory, data)),
         'Updated (UTC)   : ' + safe(data.UpdatedUtc),
         '',
         'Theater         : ' + safe(server.Theater),

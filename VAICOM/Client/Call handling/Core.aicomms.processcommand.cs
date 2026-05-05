@@ -194,13 +194,13 @@ namespace VAICOM
                                 // Handle Kneeboard recipient
                                 try
                                 {
-                                    if (State.activeconfig.Kneeboard_Enabled)
+                                    if (State.activeconfig.Kneeboard_Enabled || State.activeconfig.OpenKneeboard_Out)
                                     {
                                         KneeboardToggle();
                                     }
                                     else
                                     {
-                                        Log.Write("Interactive Kneeboard is disabled.", Colors.Warning);
+                                        Log.Write("Interactive Kneeboard and OpenKneeboard Out are disabled.", Colors.Warning);
                                         UI.Playsound.Error();
                                     }
                                 }
@@ -398,7 +398,7 @@ namespace VAICOM
                         // for kneeboard commands
                         if (State.currentcommand.isKneeboard() || State.currentcommand.uniqueid.Equals(23004) || State.currentcommand.uniqueid.Equals(23005))
                         {
-                            if (State.activeconfig.Kneeboard_Enabled)
+                            if (State.activeconfig.Kneeboard_Enabled || State.activeconfig.OpenKneeboard_Out)
                             {
                                 switch (State.currentcommand.dcsid)
                                 {
@@ -479,7 +479,7 @@ namespace VAICOM
                             }
                             else
                             {
-                                Log.Write("Interactive Kneeboard is disabled.Please enable in the Vaicom Pro UI extension tab", Colors.Warning);
+                                Log.Write("Interactive Kneeboard and OpenKneeboard Out are disabled. Please enable one in the Vaicom Pro UI extension tab", Colors.Warning);
                                 UI.Playsound.Error();
                             }
                         }
@@ -692,8 +692,25 @@ namespace VAICOM
                         {
                             if (State.activeconfig.KneeboardlinkPTT)
                             {
-                                string cat = Database.Recipients.Table[State.currentkey["recipient"]].RecipientClass().Name;
-                                KneeboardUpdater.SwitchPage(cat);
+                                string cat = "";
+
+                                if (State.currentcommand != null && State.currentcommand.dcsid.StartsWith("wMsgGeorge", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    cat = "Crew";
+                                }
+                                else if (State.have["recipient"])
+                                {
+                                    cat = Database.Recipients.Table[State.currentkey["recipient"]].RecipientClass().Name;
+                                }
+                                else if (State.currentrecipientclass != null)
+                                {
+                                    cat = State.currentrecipientclass.Name;
+                                }
+
+                                if (!string.IsNullOrWhiteSpace(cat))
+                                {
+                                    KneeboardUpdater.SwitchPage(cat);
+                                }
                             }
                         }
                         catch
@@ -736,7 +753,9 @@ namespace VAICOM
                         }
                         else
                         {
-                            if (riocommand || selectcommand || optionscommand || menucommand ||
+                            bool immediateHotMicSend = !State.transmitting && State.IsCrewHotMicActive();
+
+                            if (riocommand || selectcommand || optionscommand || menucommand || immediateHotMicSend ||
                                 !((State.activeconfig.MP_VoIPUseSwitch || State.activeconfig.MP_VoIPParallel) && State.activeconfig.MP_DelayTransmit)) //  || !State.currentTXnode.tunedforhuman 
                             {
                                 sendmessage();

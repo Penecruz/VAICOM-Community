@@ -314,7 +314,7 @@ namespace VAICOM
                 try
                 {
 
-                    if (!State.activeconfig.Kneeboard_Enabled)
+                    if (!State.activeconfig.Kneeboard_Enabled && !State.activeconfig.OpenKneeboard_Out)
                     {
                         msg = new KneeboardMessage();
                         msg.logdata = new LogData("", "Please enable kneeboard extension to use this page.");

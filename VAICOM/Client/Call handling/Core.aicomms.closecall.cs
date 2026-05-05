@@ -115,28 +115,31 @@ namespace VAICOM
 
                         commandlabel = "[ " + commandlabel + " ] ";
 
-                        try
+                        if (State.currentcommand.hasAppendix())
                         {
-                            labelwpn = Labels.aiappendiceswpn[State.currentkey["apxwpn"]];
-                        }
-                        catch
-                        {
-                        }
-                        if (!labelwpn.Equals("") && !labelwpn.Equals(" "))
-                        {
-                            labelwpn = "[ " + labelwpn + " ] ";
-                        }
+                            try
+                            {
+                                labelwpn = Labels.aiappendiceswpn[State.currentkey["apxwpn"]];
+                            }
+                            catch
+                            {
+                            }
+                            if (!labelwpn.Equals("") && !labelwpn.Equals(" "))
+                            {
+                                labelwpn = "[ " + labelwpn + " ] ";
+                            }
 
-                        try
-                        {
-                            labeldir = Labels.aiappendicesdir[State.currentkey["apxdir"]];
-                        }
-                        catch
-                        {
-                        }
-                        if (!labeldir.Equals("") && !labeldir.Equals(" "))
-                        {
-                            labeldir = "[ " + labeldir + " ]";
+                            try
+                            {
+                                labeldir = Labels.aiappendicesdir[State.currentkey["apxdir"]];
+                            }
+                            catch
+                            {
+                            }
+                            if (!labeldir.Equals("") && !labeldir.Equals(" "))
+                            {
+                                labeldir = "[ " + labeldir + " ]";
+                            }
                         }
 
                         // write message to log
