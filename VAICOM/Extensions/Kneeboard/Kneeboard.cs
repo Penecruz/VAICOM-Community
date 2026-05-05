@@ -30,10 +30,65 @@ namespace VAICOM
                         {
                             OpenKneeboardBridge.UpdateLog(sendercat, processedMessage);
                         }
+
+                        if (IsAiCrewResponseMessage(message))
+                        {
+                            string role = GetAiCrewRoleFromEventKey(message.eventkey);
+                            string responseText = string.IsNullOrWhiteSpace(message.text) ? processedMessage : message.text;
+                            string aiCrewEntry = OpenKneeboardBridge.BuildAiCrewResponseEntry(role, responseText);
+                            if (!string.IsNullOrWhiteSpace(aiCrewEntry))
+                            {
+                                OpenKneeboardBridge.UpdateLog("AI CREW", aiCrewEntry);
+                            }
+                        }
                     }
                     catch
                     {
                     }
+                }
+
+                private static bool IsAiCrewResponseMessage(Server.ServerCommsMessage message)
+                {
+                    if (message == null || string.IsNullOrWhiteSpace(message.eventkey))
+                    {
+                        return false;
+                    }
+
+                    string key = message.eventkey;
+                    return key.StartsWith("wMsgJ_", StringComparison.OrdinalIgnoreCase)
+                        || key.StartsWith("wMsgI_", StringComparison.OrdinalIgnoreCase)
+                        || key.StartsWith("wMsgWSO_", StringComparison.OrdinalIgnoreCase)
+                        || key.StartsWith("wMsgGeorge", StringComparison.OrdinalIgnoreCase);
+                }
+
+                private static string GetAiCrewRoleFromEventKey(string eventkey)
+                {
+                    if (string.IsNullOrWhiteSpace(eventkey))
+                    {
+                        return "AI CREW";
+                    }
+
+                    if (eventkey.StartsWith("wMsgWSO_", StringComparison.OrdinalIgnoreCase))
+                    {
+                        return "WSO";
+                    }
+
+                    if (eventkey.StartsWith("wMsgGeorge", StringComparison.OrdinalIgnoreCase))
+                    {
+                        return "GEORGE";
+                    }
+
+                    if (eventkey.StartsWith("wMsgI_", StringComparison.OrdinalIgnoreCase))
+                    {
+                        return "ICEMAN";
+                    }
+
+                    if (eventkey.StartsWith("wMsgJ_", StringComparison.OrdinalIgnoreCase))
+                    {
+                        return "RIO";
+                    }
+
+                    return "AI CREW";
                 }
 
                 // used by AOCS

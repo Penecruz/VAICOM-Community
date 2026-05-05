@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using VAICOM.Database;
+using VAICOM.Extensions.Kneeboard;
 using VAICOM.Extensions.RIO;
 using VAICOM.PushToTalk;
 using VAICOM.Static;
@@ -185,6 +186,19 @@ namespace VAICOM
                             State.currentmessage.dspmsg = "GEORGE command use:\n" + contextualHint;
                             State.currentmessage.msgdur = 5;
                         }
+                    }
+
+                    try
+                    {
+                        string georgeLog = State.currentmessage.dspmsg;
+                        if (string.IsNullOrWhiteSpace(georgeLog))
+                        {
+                            georgeLog = "GEORGE | " + Database.Labels.aicommands[State.currentkey["command"]];
+                        }
+                        OpenKneeboardBridge.UpdateLog("AI CREW", georgeLog);
+                    }
+                    catch
+                    {
                     }
 
                     switch (State.currentcommand.dcsid)
@@ -763,6 +777,16 @@ namespace VAICOM
                         };
 
                         Log.Write($"Constructed WSO message for command: {command.dcsid}", Colors.Text);
+
+                        try
+                        {
+                            string wsoLog = "WSO | " + command.displayname;
+                            OpenKneeboardBridge.UpdateLog("AI CREW", wsoLog);
+                            OpenKneeboardBridge.SetLastAiCrewCommand(wsoLog);
+                        }
+                        catch
+                        {
+                        }
                     }
                     else
                     {
@@ -874,6 +898,20 @@ namespace VAICOM
                     if (!State.activeconfig.RIO_Messages)
                     {
                         State.currentmessage.dspmsg = null;
+                    }
+
+                    try
+                    {
+                        string rioLog = State.currentmessage.dspmsg;
+                        if (string.IsNullOrWhiteSpace(rioLog))
+                        {
+                            rioLog = "RIO | " + Database.Labels.aicommands[State.currentkey["command"]];
+                        }
+                        OpenKneeboardBridge.UpdateLog("AI CREW", rioLog);
+                        OpenKneeboardBridge.SetLastAiCrewCommand(rioLog);
+                    }
+                    catch
+                    {
                     }
                 }
 

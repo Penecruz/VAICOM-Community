@@ -1,6 +1,7 @@
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.IO;
 using System.Net;
 using System.Text;
@@ -18,6 +19,7 @@ namespace VAICOM
             {
                 private static readonly object Sync = new object();
                 private static OpenKneeboardSnapshot snapshot = new OpenKneeboardSnapshot();
+                private static string lastAiCrewCommand = "";
                 private static readonly string IndexHtml = @"<!doctype html>
 <html>
 <head>
@@ -26,7 +28,7 @@ namespace VAICOM
   <title>VAICOM Kneeboard 1.0</title>
   <style>
     html, body { width: 100%; height: 100%; margin: 0; }
-    body { font-family: Consolas, monospace; background: transparent; color: #151515; letter-spacing: 0.1px; font-size: 21px; }
+    body { font-family: Consolas, monospace; background: transparent; color: #151515; letter-spacing: 0.1px; font-size: 23px; }
     .sheet {
       width: 100%;
       height: 100%;
@@ -38,15 +40,15 @@ namespace VAICOM
     }
     .sheetBody { height: 100%; overflow: hidden; padding: 8px; box-sizing: border-box; display: flex; flex-direction: column; }
     .headerRow { display:flex; align-items:flex-start; justify-content:space-between; gap:10px; margin-bottom:4px; }
-    h3 { margin: 0; font-size: 26px; color: #111; }
+    h3 { margin: 0; font-size: 28px; color: #111; }
     .logo { width: 36px; height: 36px; object-fit: contain; }
-    .meta { margin: 2px 0 8px 0; color: #444; font-size: 17px; }
+    .meta { margin: 2px 0 8px 0; color: #444; font-size: 19px; }
     .status {
       padding: 6px;
       border: 1px solid #8e8e8e;
       background: #ffffff;
       margin-bottom: 8px;
-      font-size: 18px;
+      font-size: 20px;
       color: #111;
     }
     .kneeLayout {
@@ -67,14 +69,14 @@ namespace VAICOM
       padding: 6px 8px;
       border-bottom: 1px solid #29445a;
       color: #000;
-      font-size: 16px;
+      font-size: 18px;
       text-transform: uppercase;
       letter-spacing: 0.5px;
     }
     .panel .content { padding: 10px; white-space: pre-wrap; word-break: break-word; overflow: auto; }
     .panel h4.clickable { cursor: pointer; user-select: none; }
     .session { margin-bottom: 8px; }
-    .session .content { min-height: 230px; font-size: 20px; overflow: hidden; }
+    .session .content { min-height: 230px; font-size: 22px; overflow: hidden; }
     .tabRail {
       border: 1px solid #9aa0a6;
       background: #ececec;
@@ -86,10 +88,10 @@ namespace VAICOM
     .tabs { display: flex; flex-direction: column; gap: 4px; height: 100%; width: 100%; }
     .tab {
       border: 1px solid #7c8692;
-      background: #f5f5f5;
-      color: #1d1d1d;
+      background: rgba(180, 180, 180, 0.78);
+      color: #f5f7fa;
       font-family: inherit;
-      font-size: 18px;
+      font-size: 20px;
       padding: 8px 4px;
       cursor: pointer;
       text-align: center;
@@ -103,19 +105,53 @@ namespace VAICOM
       justify-content: center;
     }
     .tab.active {
-      color: #000;
-      border-color: #46515e;
-      background: #cfd7df;
-      box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.12);
+      color: #ffffff;
+      border-color: #f2d76a;
+      border-width: 2px;
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.22), 0 0 0 2px rgba(242, 215, 106, 0.75), 0 0 10px rgba(242, 215, 106, 0.45);
+      filter: saturate(1.22) brightness(1.12);
+      font-weight: 800;
+      transform: rotate(180deg) scale(1.06);
+      z-index: 2;
+    }
+
+    .tab-LOG { background: rgba(126, 85, 56, 0.82); }
+    .tab-AWACS { background: rgba(63, 108, 136, 0.82); }
+    .tab-JTAC { background: rgba(65, 128, 132, 0.82); }
+    .tab-ATC { background: rgba(62, 128, 93, 0.82); }
+    .tab-TANKER { background: rgba(125, 104, 50, 0.82); }
+    .tab-FLIGHT { background: rgba(132, 70, 66, 0.82); }
+    .tab-AOCS { background: rgba(112, 62, 143, 0.82); }
+    .tab-REF_CREW { background: rgba(130, 129, 71, 0.82); }
+    .tab-NOTES { background: rgba(73, 80, 146, 0.82); }
+    .tab-AI_CREW { background: rgba(131, 87, 44, 0.82); }
+
+    .tab.active.tab-LOG,
+    .tab.active.tab-AWACS,
+    .tab.active.tab-JTAC,
+    .tab.active.tab-ATC,
+    .tab.active.tab-TANKER,
+    .tab.active.tab-FLIGHT,
+    .tab.active.tab-AOCS,
+    .tab.active.tab-REF_CREW,
+    .tab.active.tab-NOTES,
+    .tab.active.tab-AI_CREW {
+      color: #ffffff;
+      box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.08), 0 0 0 2px rgba(242, 215, 106, 0.75), 0 0 10px rgba(242, 215, 106, 0.45);
     }
     .tabPanel { flex: 0 0 36%; min-height: 250px; display: flex; flex-direction: column; }
     .tabPanel .content { flex: 1 1 auto; min-height: 0; }
     .keywordsPanel { flex: 1 1 auto; min-height: 180px; display: flex; flex-direction: column; }
     .keywordsPanel .content { flex: 1 1 auto; min-height: 0; }
-    .mainContent { font-size: 20px; line-height: 1.32; }
-    .keywordsContent { font-size: 19px; line-height: 1.3; }
-    .controls { margin: 8px 0; color: #222; font-size: 17px; display: flex; gap: 16px; }
-    pre { background: #ffffff; border: 1px solid #b7b7b7; padding: 10px; white-space: pre-wrap; word-break: break-word; font-size: 16px; color:#111; max-height: 190px; overflow: auto; }
+    body.notes-tab .tabPanel { flex: 0 0 55%; }
+    body.notes-tab .keywordsPanel { flex: 1 1 auto; min-height: 110px; }
+    body.notes-tab .keywordsContent { max-height: 140px; }
+    .mainContent { font-size: 22px; line-height: 1.34; }
+    .keywordsContent { font-size: 21px; line-height: 1.32; }
+    .kwCols { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .kwCol { white-space: pre-wrap; word-break: break-word; }
+    .controls { margin: 8px 0; color: #222; font-size: 19px; display: flex; gap: 16px; }
+    pre { background: #ffffff; border: 1px solid #b7b7b7; padding: 10px; white-space: pre-wrap; word-break: break-word; font-size: 18px; color:#111; max-height: 190px; overflow: auto; }
     body.raw-mode .keywordsPanel { flex: 0 0 280px; }
     .hidden { display: none; }
   </style>
@@ -157,17 +193,17 @@ namespace VAICOM
     </div>
 
     <div class='controls'>
-      <label><input id='followActive' type='checkbox' checked> Follow active category</label>
-      <label><input id='showRaw' type='checkbox'> Show raw JSON</label>
+      <label><input id='autoBrowse' type='checkbox' checked> Auto Browse</label>
+      <label id='showRawWrap'><input id='showRaw' type='checkbox'> Show raw JSON</label>
     </div>
     <pre id='json' class='hidden'></pre>
   </div>
   </div>
 
   <script>
-    const TABS = ['LOG','ATC','AWACS','JTAC','TANKER','AOCS','FLIGHT','REF/CREW','NOTES'];
+    const TABS = ['LOG','ATC','AWACS','JTAC','TANKER','AOCS','FLIGHT','AI CREW','GND CREW','NOTES'];
     let selectedTab = 'LOG';
-    let followActive = true;
+    let autoBrowse = true;
     let sessionCollapsed = false;
     let latestData = null;
 
@@ -175,7 +211,8 @@ namespace VAICOM
 
     function normalizeCategory(cat){
       var c = String(cat || '').toUpperCase();
-      if (c === 'REF' || c === 'CREW') return 'REF/CREW';
+      if (c === 'RIO' || c === 'ICEMAN' || c === 'WSO' || c === 'GEORGE' || c === 'CPG' || c === 'AICPG' || c === 'AIWSO') return 'AI CREW';
+      if (c === 'REF' || c === 'CREW' || c === 'REF/CREW') return 'GND CREW';
       if (c === 'ALLIES') return 'FLIGHT';
       return c;
     }
@@ -184,6 +221,10 @@ namespace VAICOM
       (src || []).forEach(function(v){
         if (dest.indexOf(v) < 0) dest.push(v);
       });
+    }
+
+    function tabCssClass(tab){
+      return 'tab-' + String(tab || '').replace(/[^A-Za-z0-9]+/g, '_');
     }
 
     function getMergedLog(map, tab){
@@ -198,16 +239,6 @@ namespace VAICOM
       return lines.join('\n');
     }
 
-    function formatKeywordReference(data, tab){
-      if (tab === 'LOG' || tab === 'NOTES') return 'No keyword reference for this tab.';
-      const lines = [];
-      const a0 = formatAliasSection(data.AliasesChunk0, tab, 'Primary');
-      const a1 = formatAliasSection(data.AliasesChunk1, tab, 'Secondary');
-      if (a0) lines.push(a0);
-      if (a1) lines.push(a1);
-      return lines.length ? lines.join('\n\n') : 'No keywords for this tab yet.';
-    }
-
     function getMergedList(map, tab){
       const result = [];
       if (!map) return result;
@@ -215,6 +246,80 @@ namespace VAICOM
         if (normalizeCategory(k) !== tab) return;
         mergeUnique(result, Array.isArray(map[k]) ? map[k] : []);
       });
+      return result;
+    }
+
+    function getAiCrewCategories(data){
+      const server = (data && data.Server) || {};
+      const aircraft = String(server.Aircraft || '').toUpperCase();
+
+      if (aircraft.indexOf('F-14') >= 0) return ['RIO','ICEMAN','AI CREW','REF','CREW','REF/CREW','GND CREW'];
+      if (aircraft.indexOf('F-4') >= 0) return ['WSO','AIWSO','AI CREW','REF','CREW','REF/CREW','GND CREW'];
+      if (aircraft.indexOf('AH-64') >= 0 || aircraft.indexOf('AH64') >= 0) return ['GEORGE','CPG','AICPG','AI CREW','REF','CREW','REF/CREW','GND CREW'];
+
+      return ['RIO','ICEMAN','WSO','GEORGE','CPG','AICPG','AIWSO','AI CREW','REF','CREW','REF/CREW','GND CREW'];
+    }
+
+    function getF4GroundCrewKeywords(){
+      return [
+        'Ground Chocks Place',
+        'Ground Chocks Remove',
+        'Ground Power Connect',
+        'Ground Power Disconnect',
+        'Ground Air Connect Right',
+        'Ground Air Connect Left',
+        'Ground Air On',
+        'Ground Air Off',
+        'Ground Air Disconnect',
+        'Ground Load Start Cartridges',
+        'Ground Remove Start Cartridges',
+        'Ground Place the Ladder',
+        'Ground Remove the Ladder',
+        'Ground Extend Steps',
+        'Ground Retract Steps',
+        'Ground Comms Check',
+        'Ground Pitot Check',
+        'Ground Spoilers Check',
+        'Ground Flight Controls Check',
+        'Ground A R I Check',
+        'Ground Stab Aug Check',
+        'Ground Trim Check'
+      ];
+    }
+
+    function getMergedLogByCategories(map, categories){
+      const lines = [];
+      if (!map) return '';
+      const allowed = categories.map(function(c){ return String(c).toUpperCase(); });
+
+      Object.keys(map).forEach(function(k){
+        const key = String(k || '').toUpperCase();
+        const normalized = normalizeCategory(key).toUpperCase();
+        if (allowed.indexOf(key) < 0 && allowed.indexOf(normalized) < 0) return;
+        const text = String(map[k] || '').trim();
+        if (!text) return;
+        if (lines.indexOf(text) < 0) lines.push(text);
+      });
+
+      return lines.join('\n');
+    }
+
+    function getMergedAliasesByCategories(chunkMap, categories){
+      const result = {};
+      if (!chunkMap) return result;
+      const allowed = categories.map(function(c){ return String(c).toUpperCase(); });
+
+      Object.keys(chunkMap).forEach(function(k){
+        const key = String(k || '').toUpperCase();
+        const normalized = normalizeCategory(key).toUpperCase();
+        if (allowed.indexOf(key) < 0 && allowed.indexOf(normalized) < 0) return;
+        const aliasObj = chunkMap[k] || {};
+        Object.keys(aliasObj).forEach(function(a){
+          if (!result[a]) result[a] = [];
+          mergeUnique(result[a], Array.isArray(aliasObj[a]) ? aliasObj[a] : []);
+        });
+      });
+
       return result;
     }
 
@@ -233,6 +338,18 @@ namespace VAICOM
     }
 
     function getKeywordPhrasesForTab(data, tab){
+      if (tab === 'AI CREW'){
+        const direct = Array.isArray(data.AiCrewKeywords) ? data.AiCrewKeywords.slice() : [];
+        const cleaned = [];
+        direct.forEach(function(k){
+          const phrase = String(k || '').replace(/\s+/g, ' ').trim();
+          if (!phrase) return;
+          if (cleaned.indexOf(phrase) < 0) cleaned.push(phrase);
+        });
+        cleaned.sort(function(a,b){ return a.localeCompare(b); });
+        return cleaned;
+      }
+
       const phrases = [];
 
       function pushPhrase(p){
@@ -242,7 +359,9 @@ namespace VAICOM
       }
 
       function collectFromChunk(chunkMap){
-        const alias = getMergedAliases(chunkMap, tab);
+        const alias = tab === 'AI CREW'
+          ? getMergedAliasesByCategories(chunkMap, getAiCrewCategories(data))
+          : getMergedAliases(chunkMap, tab);
         const keys = Object.keys(alias);
         keys.forEach(function(k){
           const vals = (alias[k] || []).filter(function(v){ return String(v || '').trim() !== ''; });
@@ -260,13 +379,26 @@ namespace VAICOM
       collectFromChunk(data.AliasesChunk0);
       collectFromChunk(data.AliasesChunk1);
 
+      if (tab === 'AI CREW' && !phrases.length){
+        const fallback = getKeywordPhrasesForTab(data, 'GND CREW');
+        fallback.forEach(function(p){ pushPhrase(p); });
+      }
+
+      if (tab === 'GND CREW'){
+        const server = (data && data.Server) || {};
+        const aircraft = String(server.Aircraft || '').toUpperCase();
+        if (aircraft.indexOf('F-4') >= 0){
+          getF4GroundCrewKeywords().forEach(function(k){ pushPhrase(k); });
+        }
+      }
+
       if (tab === 'NOTES'){
         pushPhrase('Start Dictate');
         pushPhrase('End Dictate');
         pushPhrase('Clear Notes');
       }
 
-      if (tab === 'REF/CREW'){
+      if (tab === 'GND CREW'){
         const filtered = [];
         phrases.forEach(function(p){
           if (!/^George\s/i.test(p)) filtered.push(p);
@@ -277,6 +409,38 @@ namespace VAICOM
 
       phrases.sort(function(a,b){ return a.localeCompare(b); });
       return phrases;
+    }
+
+    function formatKeywordReference(data, tab){
+      if (tab === 'LOG') return 'No keyword reference for this tab.';
+      const phrases = getKeywordPhrasesForTab(data, tab);
+      if (!phrases.length) return 'No keywords for this tab yet.';
+      return phrases.join('\n');
+    }
+
+    function escapeHtml(text){
+      return String(text || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+    }
+
+    function formatKeywordReferenceHtml(data, tab){
+      const text = formatKeywordReference(data, tab);
+      if (text === 'No keyword reference for this tab.' || text === 'No keywords for this tab yet.'){
+        return escapeHtml(text);
+      }
+
+      const rows = text.split('\n').filter(function(x){ return String(x).trim() !== ''; });
+      if (!rows.length){
+        return 'No keywords for this tab yet.';
+      }
+
+      const mid = Math.ceil(rows.length / 2);
+      const left = rows.slice(0, mid).map(escapeHtml).join('<br>');
+      const right = rows.slice(mid).map(escapeHtml).join('<br>');
+
+      return '<div class=""kwCols""><div class=""kwCol"">' + left + '</div><div class=""kwCol"">' + right + '</div></div>';
     }
 
     function formatTabContent(data, tab){
@@ -298,6 +462,17 @@ namespace VAICOM
         return notes || 'No notes yet.';
       }
 
+      if (tab === 'AI CREW'){
+        const aiCrewLog = getMergedLogByCategories(data.Logs, getAiCrewCategories(data));
+        const synthetic = [];
+        if (aiCrewLog) synthetic.push(aiCrewLog);
+        if (data.ActiveCategory === 'AI CREW'){
+          synthetic.push('Active AI crew interaction detected.');
+        }
+        const combined = synthetic.join('\n');
+        return combined ? ('Log:\n' + combined) : 'No AI CREW log data yet.';
+      }
+
       const log = getMergedLog(data.Logs, tab);
       const units = getMergedList(data.Units, tab);
       const details = getMergedList(data.UnitDetails, tab);
@@ -312,19 +487,19 @@ namespace VAICOM
       const tabsEl = document.getElementById('tabs');
       tabsEl.innerHTML = '';
       const active = normalizeCategory(data.ActiveCategory);
-      if (followActive && TABS.indexOf(active) >= 0){
+      if (autoBrowse && TABS.indexOf(active) >= 0){
         selectedTab = active;
       }
       if (TABS.indexOf(selectedTab) < 0) selectedTab = 'LOG';
 
       TABS.forEach(function(tab){
         const btn = document.createElement('button');
-        btn.className = 'tab' + (tab === selectedTab ? ' active' : '');
+        btn.className = 'tab ' + tabCssClass(tab) + (tab === selectedTab ? ' active' : '');
         btn.textContent = tab;
         btn.onclick = function(){
           selectedTab = tab;
-          followActive = false;
-          document.getElementById('followActive').checked = false;
+          autoBrowse = false;
+          document.getElementById('autoBrowse').checked = false;
           if (latestData) render(latestData);
         };
         tabsEl.appendChild(btn);
@@ -335,6 +510,7 @@ namespace VAICOM
       latestData = data;
       const server = data && data.Server ? data.Server : {};
       const haveMission = !!(server.Aircraft || server.MissionTitle || server.Theater);
+      const debugMode = !!server.DebugMode;
 
       document.getElementById('status').textContent = haveMission
         ? 'Live session detected.'
@@ -353,10 +529,23 @@ namespace VAICOM
       ].join('\n');
 
       renderTabs(data);
+      document.body.classList.toggle('notes-tab', selectedTab === 'NOTES');
       document.getElementById('tabTitle').textContent = 'Tab: ' + selectedTab;
       document.getElementById('tabBody').textContent = formatTabContent(data, selectedTab);
       document.getElementById('keywordTitle').textContent = 'Keywords: ' + selectedTab;
-      document.getElementById('keywordBody').textContent = formatKeywordReference(data, selectedTab);
+      document.getElementById('keywordBody').innerHTML = formatKeywordReferenceHtml(data, selectedTab);
+
+      const showRawWrap = document.getElementById('showRawWrap');
+      if (showRawWrap){
+        showRawWrap.style.display = debugMode ? 'inline-flex' : 'none';
+      }
+      if (!debugMode){
+        const showRawBox = document.getElementById('showRaw');
+        if (showRawBox) showRawBox.checked = false;
+        document.body.classList.remove('raw-mode');
+        document.getElementById('json').className = 'hidden';
+      }
+
       document.getElementById('json').textContent = JSON.stringify(data, null, 2);
     }
 
@@ -378,7 +567,7 @@ namespace VAICOM
         const j = await r.json();
         render(j);
       }catch(e){
-        document.getElementById('status').textContent = 'Error: ' + e;
+        document.getElementById('status').textContent = 'Waiting for VAICOM connection...';
       }
     }
 
@@ -387,8 +576,8 @@ namespace VAICOM
       document.getElementById('json').className = ev.target.checked ? '' : 'hidden';
     });
 
-    document.getElementById('followActive').addEventListener('change', function(ev){
-      followActive = ev.target.checked;
+    document.getElementById('autoBrowse').addEventListener('change', function(ev){
+      autoBrowse = ev.target.checked;
       if (latestData) render(latestData);
     });
 
@@ -419,7 +608,7 @@ namespace VAICOM
 
                 public static void SetEnabled(bool enabled)
                 {
-                    if (enabled)
+                    if (State.activeconfig.OpenKneeboard_Out)
                     {
                         StartWebHost();
                     }
@@ -465,9 +654,77 @@ namespace VAICOM
 
                     lock (Sync)
                     {
-                        snapshot.Logs[category.ToUpperInvariant()] = content ?? "";
+                        string key = category.ToUpperInvariant();
+                        string nextEntry = NormalizeLogEntry(content);
+
+                        if (string.IsNullOrWhiteSpace(nextEntry))
+                        {
+                            return;
+                        }
+
+                        List<string> entries = new List<string>();
+                        if (snapshot.Logs.TryGetValue(key, out string existing) && !string.IsNullOrWhiteSpace(existing))
+                        {
+                            entries.AddRange(existing
+                                .Split(new[] { '\n' }, StringSplitOptions.RemoveEmptyEntries)
+                                .Select(e => e.Trim())
+                                .Where(e => !string.IsNullOrWhiteSpace(e)));
+                        }
+
+                        entries.Add(nextEntry);
+                        if (entries.Count > 4)
+                        {
+                            if (!key.Equals("NOTES", StringComparison.OrdinalIgnoreCase))
+                            {
+                                entries = entries.Skip(entries.Count - 4).ToList();
+                            }
+                        }
+
+                        snapshot.Logs[key] = string.Join("\n", entries);
                         snapshot.UpdatedUtc = DateTime.UtcNow;
                     }
+                }
+
+                public static void SetLastAiCrewCommand(string commandText)
+                {
+                    lock (Sync)
+                    {
+                        lastAiCrewCommand = NormalizeLogEntry(commandText);
+                    }
+                }
+
+                public static string BuildAiCrewResponseEntry(string role, string response)
+                {
+                    lock (Sync)
+                    {
+                        string responseText = NormalizeLogEntry(response);
+                        if (string.IsNullOrWhiteSpace(responseText))
+                        {
+                            return "";
+                        }
+
+                        string commandText = NormalizeLogEntry(lastAiCrewCommand);
+                        if (!string.IsNullOrWhiteSpace(commandText))
+                        {
+                            return commandText + " -> " + responseText;
+                        }
+
+                        string roleText = string.IsNullOrWhiteSpace(role) ? "AI CREW" : role;
+                        return roleText + " | " + responseText;
+                    }
+                }
+
+                private static string NormalizeLogEntry(string content)
+                {
+                    if (string.IsNullOrWhiteSpace(content))
+                    {
+                        return "";
+                    }
+
+                    return content
+                        .Replace("\r", " ")
+                        .Replace("\n", " ")
+                        .Trim();
                 }
 
                 public static void UpdateUnits(string category, List<string> units)
@@ -527,13 +784,57 @@ namespace VAICOM
                     lock (Sync)
                     {
                         snapshot.Server = BuildServerSnapshot();
+                        snapshot.AiCrewKeywords = BuildAiCrewKeywords();
                         snapshot.UpdatedUtc = DateTime.UtcNow;
+                    }
+                }
+
+                private static List<string> BuildAiCrewKeywords()
+                {
+                    try
+                    {
+                        string moduleId = State.currentmodule?.Id ?? string.Empty;
+                        HashSet<string> keywords = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+                        if (moduleId.StartsWith("F-14", StringComparison.OrdinalIgnoreCase))
+                        {
+                            foreach (string key in Extensions.RIO.Aliases.aicommands.Keys)
+                            {
+                                keywords.Add(key);
+                            }
+                        }
+                        else if (moduleId.Equals("F-4E-45MC", StringComparison.OrdinalIgnoreCase))
+                        {
+                            foreach (string key in Extensions.WSO.Aliases.aicommands.Keys)
+                            {
+                                keywords.Add(key);
+                            }
+                        }
+                        else if (moduleId.StartsWith("AH-64D", StringComparison.OrdinalIgnoreCase))
+                        {
+                            foreach (string key in Database.Aliases.aicommands.Keys)
+                            {
+                                if (key.StartsWith("George ", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    keywords.Add(key);
+                                }
+                            }
+                        }
+
+                        return keywords
+                            .Where(k => !string.IsNullOrWhiteSpace(k))
+                            .OrderBy(k => k, StringComparer.OrdinalIgnoreCase)
+                            .ToList();
+                    }
+                    catch
+                    {
+                        return new List<string>();
                     }
                 }
 
                 private static void StartWebHost()
                 {
-                    if (isRunning || !State.activeconfig.Kneeboard_Enabled || !State.activeconfig.OpenKneeboard_Out)
+                    if (isRunning || !State.activeconfig.OpenKneeboard_Out)
                     {
                         return;
                     }
@@ -738,6 +1039,7 @@ namespace VAICOM
                             server.MissionBriefing = State.currentstate.missionbriefing;
                             server.MissionDetails = State.currentstate.missiondetails;
                             server.Multiplayer = State.currentstate.multiplayer;
+                            server.DebugMode = State.activeconfig.Debugmode;
                         }
                     }
                     catch
@@ -754,6 +1056,7 @@ namespace VAICOM
                 public string NotesBuffer { get; set; } = "";
                 public DateTime UpdatedUtc { get; set; } = DateTime.UtcNow;
                 public OpenKneeboardServerSnapshot Server { get; set; } = new OpenKneeboardServerSnapshot();
+                public List<string> AiCrewKeywords { get; set; } = new List<string>();
                 public Dictionary<string, string> Logs { get; set; } = new Dictionary<string, string>();
                 public Dictionary<string, List<string>> Units { get; set; } = new Dictionary<string, List<string>>();
                 public Dictionary<string, List<string>> UnitDetails { get; set; } = new Dictionary<string, List<string>>();
@@ -768,6 +1071,7 @@ namespace VAICOM
                         NotesBuffer = NotesBuffer,
                         UpdatedUtc = UpdatedUtc,
                         Server = Server == null ? new OpenKneeboardServerSnapshot() : Server.Clone(),
+                        AiCrewKeywords = new List<string>(AiCrewKeywords ?? new List<string>()),
                         Logs = new Dictionary<string, string>(Logs),
                         Units = CloneListMap(Units),
                         UnitDetails = CloneListMap(UnitDetails),
@@ -819,6 +1123,7 @@ namespace VAICOM
                 public string MissionBriefing { get; set; } = "";
                 public string MissionDetails { get; set; } = "";
                 public bool Multiplayer { get; set; }
+                public bool DebugMode { get; set; }
 
                 public OpenKneeboardServerSnapshot Clone()
                 {
@@ -832,6 +1137,7 @@ namespace VAICOM
                         MissionBriefing = MissionBriefing,
                         MissionDetails = MissionDetails,
                         Multiplayer = Multiplayer,
+                        DebugMode = DebugMode,
                     };
                 }
             }
