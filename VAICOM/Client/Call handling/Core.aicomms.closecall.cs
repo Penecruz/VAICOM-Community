@@ -40,6 +40,7 @@ namespace VAICOM
                         string commandlabel = "";
                         string labelwpn = "";
                         string labeldir = "";
+                        string wsocmdrecipientlabel = "";
 
                         recipientlabel = Labels.airecipients[State.currentkey["recipient"]];
 
@@ -142,16 +143,21 @@ namespace VAICOM
                             }
                         }
 
+                        if (State.currentWSOCommandRecipient != null)
+                        {
+                            wsocmdrecipientlabel = "[ " + State.currentWSOCommandRecipient.displayname + " ]";
+                        }
+
                         // write message to log
                         // 
                         // for single ptt
                         if (PTT.IsPTTModeSingle())
                         {
-                            Log.Write(State.currentTXnode.name + " | " + PTT.RadioDevices.SEL.name + ": " + recipientlabel + senderlabel + cuelabel + commandlabel + labelwpn + labeldir, Colors.Message);
+                            Log.Write(State.currentTXnode.name + " | " + PTT.RadioDevices.SEL.name + ": " + recipientlabel + senderlabel + cuelabel + commandlabel + labelwpn + labeldir + wsocmdrecipientlabel, Colors.Message);
                         }
                         else // for multi ptt:
                         {
-                            Log.Write(State.currentTXnode.name + " | " + State.currentTXnode.radios[0].name + ": " + recipientlabel + senderlabel + cuelabel + commandlabel + labelwpn + labeldir, Colors.Message);
+                            Log.Write(State.currentTXnode.name + " | " + State.currentTXnode.radios[0].name + ": " + recipientlabel + senderlabel + cuelabel + commandlabel + labelwpn + labeldir + wsocmdrecipientlabel, Colors.Message);
                         }
                     }
                     catch

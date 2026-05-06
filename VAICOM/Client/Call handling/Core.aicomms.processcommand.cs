@@ -180,7 +180,8 @@ namespace VAICOM
 
                 public static void waitformoreinput()
                 {
-                    if (!State.valistening && State.IsCrewHotMicActive())
+                    if (!State.valistening && State.IsCrewHotMicActive()
+                        && !(State.currentcommand.RequiresWSOCommandRecipient() && State.currentWSOCommandRecipient == null))
                     {
                         State.MessageReset();
                     }
@@ -1084,17 +1085,19 @@ namespace VAICOM
                         return false;
                     }
 
-                    // Capture the airfield name from the full sentence and resolve this from the cache
-                    string commandAlias = State.usedalias["command"] ?? "";
-                    string sentence = State.currentfullsentence.ToLower();
-                    int index = sentence.LastIndexOf(commandAlias.ToLower(), StringComparison.Ordinal);
-                    int startIndex = index + commandAlias.Length;
-                    string airfield = sentence.Substring(startIndex).Trim();
+                    Recipient commandRecipient = State.currentWSOCommandRecipient;
+                    if (commandRecipient == null)
+                    {
+                        Log.Write($"Required WSO command recipient is missing", Colors.Warning);
+                        value = "";
+                        return false;
+                    }
+
+                    string airfield = commandRecipient.displayname;
 
                     lock (State.WsoNavCacheLock)
                     {
-                        if (!String.IsNullOrEmpty(airfield)
-                            && State.WsoNavCacheByActionAndName.TryGetValue($"{action}|{airfield}", out string resolvedValue)
+                        if (State.WsoNavCacheByActionAndName.TryGetValue($"{action}|{airfield}", out string resolvedValue)
                             && !string.IsNullOrWhiteSpace(resolvedValue))
                         {
                             value = resolvedValue;
@@ -1145,7 +1148,7 @@ namespace VAICOM
                                 return;
                             }
 
-                            if (commandDetails.valueRequired && string.IsNullOrEmpty(commandDetails.value))
+                            if (commandDetails.valueRequired && string.IsNullOrEmpty(value))
                             {
                                 Log.Write($"Command '{commandId}' missing required value.", Colors.Warning);
                                 return;

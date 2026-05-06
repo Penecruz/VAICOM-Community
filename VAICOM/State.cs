@@ -360,26 +360,28 @@ namespace VAICOM
 
         public static Dictionary<string, string> currentkey = new Dictionary<string, string>()
         {
-            {"recipient",""     },
-            {"importedatcs",""  },
-            {"importedmenus","" },
-            {"sender",""        },
-            {"cue",""           },
-            {"command",""       },
-            {"apxwpn",""        },
-            {"apxdir",""        },
+            {"recipient",""         },
+            {"importedatcs",""      },
+            {"importedmenus",""     },
+            {"sender",""            },
+            {"cue",""               },
+            {"command",""           },
+            {"apxwpn",""            },
+            {"apxdir",""            },
+            {"wsocmdrecipient",""   },
         };
 
         public static Dictionary<string, string> usedalias = new Dictionary<string, string>()
         {
-            {"recipient",""     },
-            {"importedatcs",""  },
-            {"importedmenus","" },
-            {"sender",""        },
-            {"cue",""           },
-            {"command",""       },
-            {"apxwpn",""        },
-            {"apxdir",""        },
+            {"recipient",""         },
+            {"importedatcs",""      },
+            {"importedmenus",""     },
+            {"sender",""            },
+            {"cue",""               },
+            {"command",""           },
+            {"apxwpn",""            },
+            {"apxdir",""            },
+            {"wsocmdrecipient",""   },
         };
 
         public static Dictionary<string, bool> have = new Dictionary<string, bool>()
@@ -392,6 +394,7 @@ namespace VAICOM
             {"command",         false       },
             {"apxwpn",          false       },
             {"apxdir",          false       },
+            {"wsocmdrecipient", false       },
         };
 
         public static void MessageReset()
@@ -405,6 +408,7 @@ namespace VAICOM
             have["command"] = false;
             have["apxwpn"] = false;
             have["apxdir"] = false;
+            have["wsocmdrecipient"] = false;
             haveinputscomplete = false;
 
             currentkey["recipient"] = "";
@@ -415,6 +419,7 @@ namespace VAICOM
             currentkey["command"] = "";
             currentkey["apxwpn"] = "";
             currentkey["apxdir"] = "";
+            currentkey["wsocmdrecipient"] = "";
 
             currentmessage = new DcsClient.Message.CommsMessage();
             currentrecipient = new Recipient();
@@ -422,6 +427,10 @@ namespace VAICOM
             currentrecipientclass = Recipientclasses.Undefined;
             currentmessageunit = new Server.DcsUnit();
 
+            WSOState["currentCommand"] = null;
+            WSOState["currentRecipient"] = null;
+            WSOState["currentCategory"] = null;
+            currentWSOCommandRecipient = null;
         }
 
         // -----------------------------------------------------------------------------------------------------------
@@ -504,6 +513,7 @@ namespace VAICOM
             {
             }
         }
+
         // WSO extension state tracking
         // Add a flag to track if WSO is active
         public static bool WSOActive { get; set; } = false;
@@ -514,11 +524,16 @@ namespace VAICOM
         // Add a dictionary to store WSO-related state
         public static Dictionary<string, object> WSOState = new Dictionary<string, object>();
 
+        // Recipient for WSO commands, e.g. diverting to airfields.
+        public static Recipient currentWSOCommandRecipient = null;
+
         // Add a method to initialize WSO state
         public static void InitializeWSOState()
         {
             WSOActive = true;
             WSOCommandsEnabled = true;
+
+            currentWSOCommandRecipient = null;
 
             // Initialize WSOState with default values
             WSOState["currentCommand"] = null;

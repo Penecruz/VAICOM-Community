@@ -72,6 +72,11 @@ namespace VAICOM
                 return value;
             }
 
+            public bool RequiresWSOCommandRecipient()
+            {
+                return dcsid.Equals("wMsgWSO_Navigation_Divert_Airfield") || dcsid.Equals("wMsgWSO_Radio_TuneATC");
+            }
+
             public bool isReply()
             {
                 bool value = false;

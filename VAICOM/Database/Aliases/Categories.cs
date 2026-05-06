@@ -97,6 +97,7 @@ namespace VAICOM
                 { "command",            Aliases.aicommands          },
                 { "apxwpn",             Aliases.appendiceswpn       },
                 { "apxdir",             Aliases.appendicesdir       },
+                { "wsocmdrecipient",    Aliases.airecipients        },
             };
 
             public static void UpdateScanCats()
@@ -109,8 +110,9 @@ namespace VAICOM
                     { "sender",             Aliases.playercallsigns     },
                     { "cue",                Aliases.aicues              },
                     { "command",            Aliases.aicommands          },
-                    { "apxwpn",             Aliases.appendiceswpn     },
-                    { "apxdir",             Aliases.appendicesdir     },
+                    { "apxwpn",             Aliases.appendiceswpn       },
+                    { "apxdir",             Aliases.appendicesdir       },
+                    { "wsocmdrecipient",    Aliases.airecipients        },
                 };
             }
 

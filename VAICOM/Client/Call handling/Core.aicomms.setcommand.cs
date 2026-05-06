@@ -96,10 +96,37 @@ namespace VAICOM
                                 return false;
                             }
                         }
+
+                        // F-4E WSO
+                        if (State.currentcommand.isWSO())
+                        {
+                            // Check if this command requires a recipient to have been provided, e.g. an ATC
+                            // when diverting to an airfield or tuning radio.
+                            if (State.currentcommand.RequiresWSOCommandRecipient() && State.currentWSOCommandRecipient == null)
+                            {
+                                if (!State.have["wsocmdrecipient"])
+                                {
+                                    Log.Write($"This WSO command requires an additional recipient but was not present", Colors.Warning);
+                                    return false;
+                                }
+                                else
+                                {
+                                    State.currentWSOCommandRecipient = Recipients.Table[State.currentkey["wsocmdrecipient"]];
+                                }
+                            }
+
+                            // Explicitely set the WSO recipient to override any other that may have been in the spoken command,
+                            // e.g. when diverting to an airfield the airfield name gets set as the recipient.
+                            // This means that logging and output will corectly reflect that this was a WSO command.
+                            State.currentkey["recipient"] = "WSO";
+                            State.usedalias["recipient"] = "WSO";
+                            State.have["recipient"] = true;
+
+                            return true;
+                        }
                     }
 
                     return result;
-
                 }
             }
         }
