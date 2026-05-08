@@ -8,6 +8,7 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
+using VAICOM.Database;
 using VAICOM.Static;
 
 namespace VAICOM
@@ -373,33 +374,49 @@ namespace VAICOM
 
                 if (string.Equals(action, "radio_tune_atc") && !string.IsNullOrEmpty(name))
                 {
-                    int freqIndex = name.IndexOf('(');
-                    if (freqIndex > 0)
+                    lock (State.WsoNavCacheLock)
                     {
-                        lock (State.WsoNavCacheLock)
+                        string asset = name;
+                        // Remove the radio frequency from the name if present, e.g. Gelendzhik (255.000 mHz)
+                        int freqIndex = name.IndexOf('(');
+                        if (freqIndex > 0)
                         {
-                            string airfield = name.Substring(0, freqIndex - 1);
-                            State.WsoNavCacheByActionAndName[$"{action}|{airfield.ToLowerInvariant()}"] = value;
+                            asset = name.Substring(0, freqIndex - 1);
                         }
-                    }
-                    else
-                    {
-                        return false;
+
+                        if (TryGetRecipientByAsset(asset.ToLowerInvariant(), out string recipient))
+                        {
+                            State.WsoNavCacheByActionAndName[$"{action}|{recipient.ToLowerInvariant()}"] = value;
+                        }
+                        else
+                        {
+                            return false;
+                        }
                     }
                 }
                 else if (string.Equals(action, "nav_tacan_tr"))
                 {
-                    if (!path.Contains("Tune Assets"))
+                    lock (State.WsoNavCacheLock)
                     {
-                        lock (State.WsoNavCacheLock)
+                        // The path for assets (Tune Assets) is for name based TACANs, e.g. Arco 1-1 KC-135
+                        if (path.Contains("Tune Assets"))
                         {
+                            if (TryGetRecipientByAsset(name.ToLowerInvariant(), out string recipient))
+                            {
+                                State.WsoNavCacheByActionAndName[$"{action}|{recipient.ToLowerInvariant()}"] = value;
+                            }
+                            else
+                            {
+                                return false;
+                            }
+                        }
+                        else
+                        {
+                            // Ground based TACAN stations are in the format "GTB 25X" so just get
+                            // the letters for looking up the freqency.
                             string station = name.Substring(0, 3);
                             State.WsoNavCacheByActionAndName[$"{action}|{station.ToLowerInvariant()}"] = value;
                         }
-                    }
-                    else
-                    {
-                        return false;
                     }
                 }
                 else
@@ -530,6 +547,26 @@ namespace VAICOM
                 }
 
                 return "";
+            }
+
+            private static bool TryGetRecipientByAsset(string asset, out string recipient)
+            {
+                recipient = "";
+
+                // Search the recipients for one which matches the asset name. This allows us to use
+                // aliases in commands and still map them back to the actual cache entry.
+                foreach (KeyValuePair<string, string> set in Aliases.airecipients)
+                {
+                    // Check for recipients value, or if there are other aliased values.
+                    if (asset.StartsWith(set.Value, StringComparison.OrdinalIgnoreCase) || asset.StartsWith(set.Key, StringComparison.OrdinalIgnoreCase))
+                    {
+                        recipient = set.Value;
+                        return true;
+                    }
+                }
+
+                Log.Write($"No recipient found for asset '{asset}'", Colors.Text);
+                return false;
             }
         }
     }
