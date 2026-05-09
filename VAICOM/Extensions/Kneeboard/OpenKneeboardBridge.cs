@@ -18,8 +18,10 @@ namespace VAICOM
             public static class OpenKneeboardBridge
             {
                 private static readonly object Sync = new object();
+                private static readonly object RawServerLogSync = new object();
                 private static OpenKneeboardSnapshot snapshot = new OpenKneeboardSnapshot();
                 private static string lastAiCrewCommand = "";
+                private static bool captureRawServerMessages;
                 private static readonly string IndexHtml = @"<!doctype html>
 <html>
 <head>
@@ -50,7 +52,14 @@ namespace VAICOM
       margin-bottom: 8px;
       font-size: 20px;
       color: #111;
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
+    .statusIndicator { width: 12px; height: 12px; border: 1px solid #666; background: #9aa0a6; flex: 0 0 12px; }
+    .status.status-error .statusIndicator { background: #c73a36; border-color: #8d201d; }
+    .status.status-warning .statusIndicator { background: #d18627; border-color: #8b5719; }
+    .status.status-sent .statusIndicator { background: #2e8b57; border-color: #1c5c39; }
     .kneeLayout {
       display: grid;
       grid-template-columns: 1fr 86px;
@@ -150,7 +159,8 @@ namespace VAICOM
     .keywordsContent { font-size: 21px; line-height: 1.32; }
     .kwCols { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
     .kwCol { white-space: pre-wrap; word-break: break-word; }
-    .controls { margin: 8px 0; color: #222; font-size: 19px; display: flex; gap: 16px; }
+    .controls { margin: 8px 0; color: #222; font-size: 19px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+    .controls label { white-space: nowrap; }
     pre { background: #ffffff; border: 1px solid #b7b7b7; padding: 10px; white-space: pre-wrap; word-break: break-word; font-size: 18px; color:#111; max-height: 190px; overflow: auto; }
     body.raw-mode .keywordsPanel { flex: 0 0 280px; }
     .hidden { display: none; }
@@ -167,7 +177,7 @@ namespace VAICOM
       <img class='logo' src='logo.png' alt='VAICOM Logo'>
     </div>
 
-    <div id='status' class='status'>Loading...</div>
+    <div id='status' class='status'><span id='statusIndicator' class='statusIndicator'></span><span id='statusText'>Loading...</span></div>
 
     <div class='kneeLayout'>
       <div class='leftColumn'>
@@ -195,8 +205,10 @@ namespace VAICOM
     <div class='controls'>
       <label><input id='autoBrowse' type='checkbox' checked> Auto Browse</label>
       <label id='showRawWrap'><input id='showRaw' type='checkbox'> Show raw JSON</label>
+      <label id='showServerWrap'><input id='showServer' type='checkbox'> Show server messages</label>
     </div>
     <pre id='json' class='hidden'></pre>
+    <pre id='serverMessages' class='hidden'></pre>
   </div>
   </div>
 
@@ -206,6 +218,9 @@ namespace VAICOM
     let autoBrowse = true;
     let sessionCollapsed = false;
     let latestData = null;
+    let showServerMessages = false;
+    let metarPressureInHg = false;
+    let selectedAtcMetarKey = '';
 
     function safe(v){ return (v === null || v === undefined || v === '') ? '-' : String(v); }
 
@@ -238,6 +253,21 @@ namespace VAICOM
 
     function tabCssClass(tab){
       return 'tab-' + String(tab || '').replace(/[^A-Za-z0-9]+/g, '_');
+    }
+
+    function tabLabel(tab){
+      return tab === 'ATC' ? 'WX/ATC' : tab;
+    }
+
+    function setStatus(text, level){
+      const statusEl = document.getElementById('status');
+      const statusTextEl = document.getElementById('statusText');
+      if (statusTextEl) statusTextEl.textContent = text;
+      if (!statusEl) return;
+      statusEl.classList.remove('status-error', 'status-warning', 'status-sent');
+      if (level === 'error') statusEl.classList.add('status-error');
+      if (level === 'warning') statusEl.classList.add('status-warning');
+      if (level === 'sent') statusEl.classList.add('status-sent');
     }
 
     function getMergedLog(map, tab){
@@ -458,6 +488,7 @@ namespace VAICOM
 
     function formatTabContent(data, tab){
       const server = (data && data.Server) || {};
+      const atcMetars = (server && server.AtcMetars) || {};
       const parts = [];
 
       if (tab === 'LOG'){
@@ -489,11 +520,154 @@ namespace VAICOM
       const log = getMergedLog(data.Logs, tab);
       const units = getMergedList(data.Units, tab);
       const details = getMergedList(data.UnitDetails, tab);
+      const unitLines = units.slice();
       if (log) parts.push('Log:\n' + log);
-      if (units.length) parts.push('Units:\n' + units.map(function(u){ return '  ' + u; }).join('\n'));
+      if (tab === 'ATC') {
+        const metarIdx = unitLines.findIndex(function(u){
+          const t = String(u || '').trim();
+          return t.indexOf('METAR:') === 0 || t === 'METAR';
+        });
+        if (metarIdx >= 0) {
+          let metarLine = String(unitLines.splice(metarIdx, 1)[0] || '').trim();
+
+          if (metarLine === 'METAR') {
+            const metarParts = [];
+            while (metarIdx < unitLines.length) {
+              const segment = String(unitLines[metarIdx] || '');
+              if (!segment.trim()) {
+                unitLines.splice(metarIdx, 1);
+                break;
+              }
+
+              metarParts.push(segment.replace(/\s+/g, ' ').trim());
+              unitLines.splice(metarIdx, 1);
+            }
+
+            metarLine = 'METAR: ' + (metarParts.length ? metarParts.join(' ') : '-');
+          } else {
+            metarLine = metarLine.replace(/\s*\n\s*/g, ' ').trim();
+          }
+
+          parts.push('Weather:\n  ' + metarLine);
+
+          if (selectedAtcMetarKey) {
+            const selectedMetar = atcMetars[selectedAtcMetarKey] || '';
+            if (selectedMetar) {
+              parts.push('Selected Airfield Weather:\n  METAR: ' + String(selectedMetar));
+            }
+          }
+        }
+      }
+      if (unitLines.length) parts.push('Units:\n' + unitLines.map(function(u){ return '  ' + u; }).join('\n'));
       if (details.length) parts.push('Unit Details:\n' + details.map(function(u){ return '  ' + u; }).join('\n'));
 
-      return parts.length ? parts.join('\n\n') : 'No data for this tab yet.';
+      let text = parts.length ? parts.join('\n\n') : 'No data for this tab yet.';
+
+      function metersToSmToken(visMeters){
+        const m = parseInt(visMeters, 10);
+        if (!isFinite(m)) return null;
+        const sm = m / 1609.344;
+        if (sm > 6) return 'P6SM';
+        if (sm <= 0.25) return '1/4SM';
+
+        if (sm >= 2) {
+          return String(Math.round(sm)) + 'SM';
+        }
+
+        const quarter = Math.round(sm * 4) / 4;
+        if (quarter <= 0.25) return '1/4SM';
+        if (quarter <= 0.5) return '1/2SM';
+        if (quarter <= 0.75) return '3/4SM';
+
+        const whole = Math.floor(quarter + 1e-9);
+        const frac = quarter - whole;
+        if (Math.abs(frac) < 1e-6) return String(whole) + 'SM';
+        if (Math.abs(frac - 0.25) < 1e-6) return String(whole) + ' 1/4SM';
+        if (Math.abs(frac - 0.5) < 1e-6) return String(whole) + ' 1/2SM';
+        if (Math.abs(frac - 0.75) < 1e-6) return String(whole) + ' 3/4SM';
+        return String(whole) + 'SM';
+      }
+
+      if (tab === 'ATC' && metarPressureInHg) {
+        text = text.replace(/(METAR:\s+[^\n]*?)\b(\d{4})\b(\s+.*?\s+)Q(\d{4})\b/g, function(_, prefix, vism, middle, qhpa){
+          const visSm = metersToSmToken(vism);
+          const hpa = parseInt(qhpa, 10);
+          if (!isFinite(hpa)) return _;
+          const inhg = (hpa * 0.0295299830714).toFixed(2);
+          const visToken = visSm || vism;
+          return prefix + visToken + middle + 'A' + inhg;
+        });
+      }
+
+      return text;
+    }
+
+    function resolveAtcMetarKey(unitLine, atcMetars){
+      const line = String(unitLine || '');
+      if (!line) return '';
+
+      const map = atcMetars || {};
+      const upperLine = line.toUpperCase();
+      const directIcao = line.match(/\b([A-Z]{4})\b/);
+      if (directIcao && map[directIcao[1]]) return directIcao[1];
+
+      const aliasMatch = line.match(/\[([^\]]+)\]/);
+      if (aliasMatch && aliasMatch[1]) {
+        const alias = String(aliasMatch[1]).toUpperCase();
+        if (map[alias]) return alias;
+      }
+
+      const callsignMatch = line.match(/\]\s*([^\d\n][^\n]*?)\s+\d{3}\s+/);
+      if (callsignMatch && callsignMatch[1]) {
+        const cs = String(callsignMatch[1]).trim().toUpperCase();
+        if (map[cs]) return cs;
+      }
+
+      const keys = Object.keys(map).sort(function(a, b){ return String(b).length - String(a).length; });
+      for (let i = 0; i < keys.length; i++) {
+        const k = keys[i];
+        if (!k) continue;
+        if (upperLine.indexOf(String(k).toUpperCase()) >= 0) return k;
+      }
+
+      return '';
+    }
+
+    function getClickedLineFromEvent(ev, container){
+      if (!ev || !container) return '';
+
+      const fullText = String(container.textContent || '');
+      if (!fullText) return '';
+
+      let offset = -1;
+      if (document.caretPositionFromPoint){
+        const pos = document.caretPositionFromPoint(ev.clientX, ev.clientY);
+        if (pos && pos.offsetNode){
+          const r = document.createRange();
+          r.selectNodeContents(container);
+          r.setEnd(pos.offsetNode, pos.offset);
+          offset = r.toString().length;
+        }
+      } else if (document.caretRangeFromPoint){
+        const range = document.caretRangeFromPoint(ev.clientX, ev.clientY);
+        if (range){
+          const r = document.createRange();
+          r.selectNodeContents(container);
+          r.setEnd(range.startContainer, range.startOffset);
+          offset = r.toString().length;
+        }
+      }
+
+      if (offset < 0 || offset > fullText.length){
+        return '';
+      }
+
+      let start = fullText.lastIndexOf('\n', offset - 1);
+      start = (start < 0) ? 0 : (start + 1);
+      let end = fullText.indexOf('\n', offset);
+      if (end < 0) end = fullText.length;
+
+      return fullText.substring(start, end).trim();
     }
 
     function renderTabs(data){
@@ -508,7 +682,7 @@ namespace VAICOM
       TABS.forEach(function(tab){
         const btn = document.createElement('button');
         btn.className = 'tab ' + tabCssClass(tab) + (tab === selectedTab ? ' active' : '');
-        btn.textContent = tab;
+        btn.textContent = tabLabel(tab);
         btn.onclick = function(){
           selectedTab = tab;
           autoBrowse = false;
@@ -524,10 +698,20 @@ namespace VAICOM
       const server = data && data.Server ? data.Server : {};
       const haveMission = !!(server.Aircraft || server.MissionTitle || server.Theater);
       const debugMode = !!server.DebugMode;
+      const defaultStatusText = haveMission ? 'Live session detected.' : 'Waiting for mission data...';
+      let statusText = defaultStatusText;
+      let statusLevel = '';
 
-      document.getElementById('status').textContent = haveMission
-        ? 'Live session detected.'
-        : 'Waiting for mission data...';
+      if (data && data.Status && data.Status.Text) {
+        const updated = data.Status.UpdatedUtc ? Date.parse(data.Status.UpdatedUtc) : NaN;
+        const fresh = isFinite(updated) ? ((Date.now() - updated) < 10000) : true;
+        if (fresh) {
+          statusText = String(data.Status.Text);
+          statusLevel = String(data.Status.Level || '').toLowerCase();
+        }
+      }
+
+      setStatus(statusText, statusLevel);
 
       document.getElementById('session').textContent = [
         'Active Category : ' + safe(normalizeActiveCategory(data.ActiveCategory, data)),
@@ -543,9 +727,17 @@ namespace VAICOM
 
       renderTabs(data);
       document.body.classList.toggle('notes-tab', selectedTab === 'NOTES');
-      document.getElementById('tabTitle').textContent = 'Tab: ' + selectedTab;
+      document.getElementById('tabTitle').textContent = 'Tab: ' + tabLabel(selectedTab);
       document.getElementById('tabBody').textContent = formatTabContent(data, selectedTab);
-      document.getElementById('keywordTitle').textContent = 'Keywords: ' + selectedTab;
+      const tabBodyEl = document.getElementById('tabBody');
+      if (selectedTab === 'ATC' && tabBodyEl.textContent.indexOf('METAR:') >= 0) {
+        tabBodyEl.style.cursor = 'pointer';
+        tabBodyEl.title = 'Click METAR to toggle pressure units (hPa/inHg)';
+      } else {
+        tabBodyEl.style.cursor = '';
+        tabBodyEl.title = '';
+      }
+      document.getElementById('keywordTitle').textContent = 'Keywords: ' + tabLabel(selectedTab);
       document.getElementById('keywordBody').innerHTML = formatKeywordReferenceHtml(data, selectedTab);
 
       const showRawWrap = document.getElementById('showRawWrap');
@@ -560,6 +752,31 @@ namespace VAICOM
       }
 
       document.getElementById('json').textContent = JSON.stringify(data, null, 2);
+
+      const serverMessagesEl = document.getElementById('serverMessages');
+      if (serverMessagesEl){
+        const rows = Array.isArray(data.RawServerMessages) ? data.RawServerMessages : [];
+        serverMessagesEl.textContent = rows.length ? rows.join('\n') : 'No server messages captured yet.';
+      }
+
+      const showServerWrap = document.getElementById('showServerWrap');
+      if (showServerWrap){
+        showServerWrap.style.display = debugMode ? 'inline-flex' : 'none';
+      }
+
+      if (!debugMode){
+        showServerMessages = false;
+        const showServerBox = document.getElementById('showServer');
+        if (showServerBox) showServerBox.checked = false;
+        if (serverMessagesEl) serverMessagesEl.className = 'hidden';
+      }
+    }
+
+    async function setServerMessageCapture(enabled){
+      try{
+        await fetch('dev/servermessages?enabled=' + (enabled ? '1' : '0'), { method: 'POST', cache: 'no-store' });
+      }catch(e){
+      }
     }
 
     async function configureOpenKneeboard(){
@@ -580,7 +797,7 @@ namespace VAICOM
         const j = await r.json();
         render(j);
       }catch(e){
-        document.getElementById('status').textContent = 'Waiting for VAICOM connection...';
+        setStatus('Waiting for VAICOM connection...', '');
       }
     }
 
@@ -592,6 +809,55 @@ namespace VAICOM
     document.getElementById('autoBrowse').addEventListener('change', function(ev){
       autoBrowse = ev.target.checked;
       if (latestData) render(latestData);
+    });
+
+    document.getElementById('tabBody').addEventListener('click', function(ev){
+      if (selectedTab !== 'ATC' || !latestData) return;
+      const text = this.textContent || '';
+      const selection = window.getSelection ? window.getSelection() : null;
+      const selectedText = selection ? String(selection.toString() || '').trim() : '';
+      const clickedLine = getClickedLineFromEvent(ev, this);
+      const clickedUpper = String(clickedLine || '').toUpperCase();
+      const selectedUpper = String(selectedText || '').toUpperCase();
+
+      const clickedMetarArea = clickedUpper.indexOf('METAR:') >= 0
+        || clickedUpper.indexOf('WEATHER:') === 0
+        || clickedUpper.indexOf('SELECTED AIRFIELD WEATHER:') === 0;
+      const selectedMetarArea = selectedUpper.indexOf('METAR:') >= 0;
+
+      if (clickedMetarArea || selectedMetarArea) {
+        if (text.indexOf('METAR:') < 0) return;
+        metarPressureInHg = !metarPressureInHg;
+        render(latestData);
+        return;
+      }
+
+      const server = latestData && latestData.Server ? latestData.Server : {};
+      const atcMetars = server.AtcMetars || {};
+      const candidateKey = resolveAtcMetarKey(selectedText, atcMetars);
+      const lineKey = resolveAtcMetarKey(clickedLine, atcMetars);
+
+      if (candidateKey) {
+        selectedAtcMetarKey = candidateKey;
+        render(latestData);
+        return;
+      }
+
+      if (lineKey) {
+        selectedAtcMetarKey = lineKey;
+        render(latestData);
+        return;
+      }
+
+      if (text.indexOf('METAR:') < 0) return;
+      metarPressureInHg = !metarPressureInHg;
+      render(latestData);
+    });
+
+    document.getElementById('showServer').addEventListener('change', function(ev){
+      showServerMessages = ev.target.checked;
+      document.getElementById('serverMessages').className = showServerMessages ? '' : 'hidden';
+      setServerMessageCapture(showServerMessages);
     });
 
     document.getElementById('sessionHeader').addEventListener('click', function(){
@@ -628,6 +894,25 @@ namespace VAICOM
                     else
                     {
                         StopWebHost();
+                    }
+                }
+
+                public static void UpdateStatus(string text, string level)
+                {
+                    if (string.IsNullOrWhiteSpace(text))
+                    {
+                        return;
+                    }
+
+                    lock (Sync)
+                    {
+                        snapshot.Status = new OpenKneeboardStatusSnapshot
+                        {
+                            Text = text,
+                            Level = string.IsNullOrWhiteSpace(level) ? "" : level,
+                            UpdatedUtc = DateTime.UtcNow,
+                        };
+                        snapshot.UpdatedUtc = DateTime.UtcNow;
                     }
                 }
 
@@ -938,6 +1223,16 @@ namespace VAICOM
                         return;
                     }
 
+                    if (path == "/okb/dev/servermessages")
+                    {
+                        bool enable = string.Equals(context.Request.QueryString["enabled"], "1", StringComparison.OrdinalIgnoreCase)
+                            || string.Equals(context.Request.QueryString["enabled"], "true", StringComparison.OrdinalIgnoreCase);
+
+                        SetRawServerCaptureEnabled(enable);
+                        WriteJson(context.Response, "{\"ok\":true}");
+                        return;
+                    }
+
                     if (path == "/okb/logo.png")
                     {
                         byte[] logo = GetLogoBytes();
@@ -1015,6 +1310,61 @@ namespace VAICOM
                     return null;
                 }
 
+                public static void SetRawServerCaptureEnabled(bool enabled)
+                {
+                    bool allow = enabled && State.activeconfig != null && State.activeconfig.Debugmode;
+
+                    lock (Sync)
+                    {
+                        captureRawServerMessages = allow;
+                        if (!allow)
+                        {
+                            snapshot.RawServerMessages.Clear();
+                        }
+                    }
+                }
+
+                public static void AppendRawServerMessage(string rawMessage)
+                {
+                    if (string.IsNullOrWhiteSpace(rawMessage))
+                    {
+                        return;
+                    }
+
+                    bool doCapture;
+                    lock (Sync)
+                    {
+                        doCapture = captureRawServerMessages && State.activeconfig != null && State.activeconfig.Debugmode;
+                        if (!doCapture)
+                        {
+                            return;
+                        }
+
+                        string entry = DateTime.UtcNow.ToString("o") + " | " + rawMessage;
+                        snapshot.RawServerMessages.Add(entry);
+                        if (snapshot.RawServerMessages.Count > 200)
+                        {
+                            snapshot.RawServerMessages = snapshot.RawServerMessages.Skip(snapshot.RawServerMessages.Count - 200).ToList();
+                        }
+                        snapshot.UpdatedUtc = DateTime.UtcNow;
+                    }
+
+                    try
+                    {
+                        string logsFolder = Path.Combine(State.VA_APPS, Products.Products.Families.Vaicom.VaicomProPlugin.rootfoldername, AppData.SubFolders["logfiles"]);
+                        string filePath = Path.Combine(logsFolder, "VAICOMPRO.ServerMessages.log");
+
+                        lock (RawServerLogSync)
+                        {
+                            Directory.CreateDirectory(logsFolder);
+                            File.AppendAllText(filePath, DateTime.UtcNow.ToString("o") + " | " + rawMessage + Environment.NewLine);
+                        }
+                    }
+                    catch
+                    {
+                    }
+                }
+
                 private static Dictionary<string, List<string>> CloneAliasDictionary(SortedDictionary<string, List<string>> source)
                 {
                     Dictionary<string, List<string>> result = new Dictionary<string, List<string>>();
@@ -1053,6 +1403,9 @@ namespace VAICOM
                             server.MissionDetails = State.currentstate.missiondetails;
                             server.Multiplayer = State.currentstate.multiplayer;
                             server.DebugMode = State.activeconfig.Debugmode;
+                            server.AtcMetars = State.currentstate.atcmetars == null
+                                ? new Dictionary<string, string>()
+                                : new Dictionary<string, string>(State.currentstate.atcmetars);
                         }
                     }
                     catch
@@ -1069,7 +1422,9 @@ namespace VAICOM
                 public string NotesBuffer { get; set; } = "";
                 public DateTime UpdatedUtc { get; set; } = DateTime.UtcNow;
                 public OpenKneeboardServerSnapshot Server { get; set; } = new OpenKneeboardServerSnapshot();
+                public OpenKneeboardStatusSnapshot Status { get; set; } = new OpenKneeboardStatusSnapshot();
                 public List<string> AiCrewKeywords { get; set; } = new List<string>();
+                public List<string> RawServerMessages { get; set; } = new List<string>();
                 public Dictionary<string, string> Logs { get; set; } = new Dictionary<string, string>();
                 public Dictionary<string, List<string>> Units { get; set; } = new Dictionary<string, List<string>>();
                 public Dictionary<string, List<string>> UnitDetails { get; set; } = new Dictionary<string, List<string>>();
@@ -1084,7 +1439,9 @@ namespace VAICOM
                         NotesBuffer = NotesBuffer,
                         UpdatedUtc = UpdatedUtc,
                         Server = Server == null ? new OpenKneeboardServerSnapshot() : Server.Clone(),
+                        Status = Status == null ? new OpenKneeboardStatusSnapshot() : Status.Clone(),
                         AiCrewKeywords = new List<string>(AiCrewKeywords ?? new List<string>()),
+                        RawServerMessages = new List<string>(RawServerMessages ?? new List<string>()),
                         Logs = new Dictionary<string, string>(Logs),
                         Units = CloneListMap(Units),
                         UnitDetails = CloneListMap(UnitDetails),
@@ -1126,6 +1483,23 @@ namespace VAICOM
                 }
             }
 
+            public class OpenKneeboardStatusSnapshot
+            {
+                public string Text { get; set; } = "";
+                public string Level { get; set; } = "";
+                public DateTime UpdatedUtc { get; set; } = DateTime.UtcNow;
+
+                public OpenKneeboardStatusSnapshot Clone()
+                {
+                    return new OpenKneeboardStatusSnapshot
+                    {
+                        Text = Text,
+                        Level = Level,
+                        UpdatedUtc = UpdatedUtc,
+                    };
+                }
+            }
+
             public class OpenKneeboardServerSnapshot
             {
                 public string Theater { get; set; } = "";
@@ -1137,6 +1511,7 @@ namespace VAICOM
                 public string MissionDetails { get; set; } = "";
                 public bool Multiplayer { get; set; }
                 public bool DebugMode { get; set; }
+                public Dictionary<string, string> AtcMetars { get; set; } = new Dictionary<string, string>();
 
                 public OpenKneeboardServerSnapshot Clone()
                 {
@@ -1151,6 +1526,7 @@ namespace VAICOM
                         MissionDetails = MissionDetails,
                         Multiplayer = Multiplayer,
                         DebugMode = DebugMode,
+                        AtcMetars = new Dictionary<string, string>(AtcMetars ?? new Dictionary<string, string>()),
                     };
                 }
             }

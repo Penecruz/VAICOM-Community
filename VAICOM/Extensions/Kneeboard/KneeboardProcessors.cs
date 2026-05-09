@@ -169,7 +169,7 @@ namespace VAICOM
                     string returntext = text;
                     try
                     {
-                        returntext = text.Replace("(" + sendercallsign + "):", "").Replace("\nuse ", "pref ").Replace("\nrequest ", "pref ").Replace("Final attack heading:", "in ").Replace("make your attack heading:", "in ").Replace("meters per second", "m/s").Replace(" at ", " @").Replace(" and ", " + ").Replace("nautical", "NM").Replace("south", "S").Replace("north", "N").Replace("east", "E").Replace("west", "W").Replace("wind", "wnd").Replace(":", "");
+                        returntext = text.Replace("(" + sendercallsign + "):", "").Replace("\nuse ", "pref ").Replace("\nrequest ", "pref ").Replace("Final attack heading:", "in ").Replace("make your attack heading:", "in ").Replace("meters per second", "kts").Replace("m/s", "kts").Replace(" at ", " @").Replace(" and ", " + ").Replace("nautical", "NM").Replace("south", "S").Replace("north", "N").Replace("east", "E").Replace("west", "W").Replace("wind", "wnd").Replace(":", "");
                     }
                     catch
                     {
@@ -215,7 +215,7 @@ namespace VAICOM
                     try
                     {
                         returntext = returntext.Replace(reconstructplayercallsign() + ",", "").Replace(sendercallsign + ",", sendercallsign.Substring(0, 3).ToUpper() + " ").Replace("(" + sendercallsign + "):", "").Replace("Ship-ADF,", "");
-                        returntext = returntext.Replace(", your heading", " @hdg").Replace("at QFE", "QFE").Replace("climb ", "+").Replace("you are cleared for takeoff when ready,", "TO").Replace("cleared for startup,", "gnd clr").Replace("wind ", "wnd ").Replace("at ", "@").Replace("meters per second", "m/s");
+                        returntext = returntext.Replace(", your heading", " @hdg").Replace("at QFE", "QFE").Replace("climb ", "+").Replace("you are cleared for takeoff when ready,", "TO").Replace("cleared for startup,", "gnd clr").Replace("wind ", "wnd ").Replace("at ", "@").Replace("meters per second", "kts").Replace("m/s", "kts");
                         returntext = returntext.Replace("fly heading", "hdg").Replace(" for ", " / ").Replace("runway ", "L").Replace("to pattern altitude", "");
                         returntext = returntext.Replace("check landing gear", "");
                         returntext = returntext.Replace("cleared to taxi to", "clr taxi");

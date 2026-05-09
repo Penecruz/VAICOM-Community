@@ -109,8 +109,13 @@ set_unitsdata = function(cat, content)
 		unitsdata[cat] = unitsdata[cat].."N/A"
 	else
 		for i= 1, #content do
-			if i <= 4 then
-				unitsdata[cat] = unitsdata[cat].."#"..i.."/"..tostring(#content).." "..content[i].."\n"
+          if i <= 10 then
+             local line = content[i] or ""
+				if line == "" then
+					unitsdata[cat] = unitsdata[cat].."\n"
+				else
+                   unitsdata[cat] = unitsdata[cat]..line.."\n"
+				end
 			end
 		end
 	end
@@ -163,7 +168,7 @@ end
 set_unitsdetails = function(cat, content)
 	unitsdetails[cat] = ""
 	for i= 1, #content do
-		if i<= 4 then
+       if i<= 10 then
 			unitsdetails[cat] = content[i]
 			messagelog[cat] = mergelog(messagelog[cat],content[i])	
 		end
