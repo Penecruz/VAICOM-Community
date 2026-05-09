@@ -70,7 +70,7 @@ function collectNavCacheEntries(menu, path, entries, all = false) {
 	const allowedActions = [
 		"divert_tgt1_lat_lon", "hold_flightplan_1", "hold_flightplan_2",
 		"resume_flightplan_1", "resume_flightplan_2", "radio_tune_atc",
-		"nav_tacan_tr"
+		"nav_tacan_tr", "designate_wpt"
 	];
 
 	for (let i = 0; i < menu.items.length; i++) {

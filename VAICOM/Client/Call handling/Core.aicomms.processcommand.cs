@@ -1138,7 +1138,9 @@ namespace VAICOM
                             string action = commandDetails.action;
                             string value = commandDetails.value;
 
-                            if ((commandId.Equals("wMsgWSO_Navigation_Divert_Airfield") || commandId.Equals("wMsgWSO_Radio_TuneATC"))
+                            if ((commandId.Equals("wMsgWSO_Radio_TuneATC")
+                                || commandId.Equals("wMsgWSO_Navigation_Divert_Airfield")
+                                || commandId.Equals("wMsgWSO_Navigation_TACAN_TuneAsset"))
                                 && !TryResolveValueForAirfield(action, out value))
                             {
                                 return;

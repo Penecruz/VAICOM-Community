@@ -543,6 +543,38 @@ namespace VAICOM
                         }
                         break;
 
+                    case "wso.navigation.designate.waypoint":
+                        if (!IsWSO()) break;
+
+                        string designateWaypointCommandKey = "wMsgWSO_Navigation_Designate_Waypoint";
+
+                        int designationTypeIndex = GetLastSegmentIndex(6);
+                        string designationType = GetWaypointDesignationType(GetSegment(designationTypeIndex));
+                        if (string.IsNullOrEmpty(designationType))
+                        {
+                            vaProxy.WriteToLog($"Unknown waypoint designation type for '{designationType}'", Colors.Warning);
+                            break;
+                        }
+                        if (!GetNumberFromSegment(designationTypeIndex - 2, out string designatationWaypoint))
+                        {
+                            vaProxy.WriteToLog($"Invalid waypoint for designating flightplan and waypoint", Colors.Warning);
+                            break;
+                        }
+
+                        string designationFlightPlanValue = GetSegment(designationTypeIndex - 4);
+                        int designationFlightPlan;
+                        if (!String.IsNullOrEmpty(designationFlightPlanValue) && IsSecondaryFlightPlan(designationFlightPlanValue))
+                        {
+                            designationFlightPlan = 2;
+                        }
+                        else
+                        {
+                            designationFlightPlan = 1;
+                        }
+                        string designationWaypointValue = $"{designationFlightPlan};{designatationWaypoint};{designationType}";
+                        HbSendProxyCommand.SendWsoCommand(State.WebSocketClient, designateWaypointCommandKey, designationWaypointValue);
+                        break;
+
                     case "wso.navigation.tacan.channel":
                         if (!IsWSO()) break;
 
@@ -735,6 +767,56 @@ namespace VAICOM
             private static bool IsSecondaryFlightPlan(string flightPlan)
             {
                 return flightPlan.Contains("2") || flightPlan.Contains("second");
+            }
+
+            private static string GetWaypointDesignationType(string designation)
+            {
+                string designationType = "";
+
+                switch (designation)
+                {
+                    case "turn point":
+                        designationType = "DEFAULT";
+                        break;
+                    case "nav fix":
+                    case "navigation fix":
+                        designationType = "VIP";
+                        break;
+                    case "cap":
+                    case "c a p":
+                    case "combat air patrol":
+                        designationType = "CAP";
+                        break;
+                    case "ip":
+                    case "i p":
+                    case "inbound point":
+                        designationType = "IP";
+                        break;
+                    case "tgt":
+                    case "t g t":
+                    case "target":
+                        designationType = "TARGET";
+                        break;
+                    case "fence in":
+                        designationType = "FENCE_IN";
+                        break;
+                    case "fence out":
+                        designationType = "FENCE_OUT";
+                        break;
+                    case "alternate":
+                    case "alternate airfield":
+                    case "alternative":
+                        designationType = "ALTERNATE";
+                        break;
+                    case "homebase":
+                        designationType = "HOMEBASE";
+                        break;
+                    default:
+                        designationType = "DEFAULT";
+                        break;
+                }
+
+                return designationType;
             }
         }
     }
