@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using VAICOM.Database;
+using VAICOM.Extensions.AIWSO;
 using VAICOM.Extensions.Kneeboard;
 using VAICOM.Extensions.WorldAudio;
 using VAICOM.Interfaces;
@@ -834,49 +835,43 @@ namespace VAICOM
 
                     if (TryExtractIndexFromCommandAlias(out string aliasIndex))
                     {
-                        lock (State.WsoNavCacheLock)
+                        if (action.Equals("divert_tgt1_lat_lon", StringComparison.OrdinalIgnoreCase)
+                            && AliasRequestsSecondaryFlightPlan()
+                            && WSOActionCache.TryGetByActionAndIndex($"{action}|fp2|{aliasIndex}", out string secondaryAliasIndexedValue)
+                            && !string.IsNullOrWhiteSpace(secondaryAliasIndexedValue))
                         {
-                            if (action.Equals("divert_tgt1_lat_lon", StringComparison.OrdinalIgnoreCase)
-                                && AliasRequestsSecondaryFlightPlan()
-                                && State.WsoNavCacheByActionAndIndex.TryGetValue($"{action}|fp2|{aliasIndex}", out string secondaryAliasIndexedValue)
-                                && !string.IsNullOrWhiteSpace(secondaryAliasIndexedValue))
-                            {
-                                resolvedValue = secondaryAliasIndexedValue;
-                                cacheKey = $"fp2-alias-idx={aliasIndex}";
-                                return true;
-                            }
+                            resolvedValue = secondaryAliasIndexedValue;
+                            cacheKey = $"fp2-alias-idx={aliasIndex}";
+                            return true;
+                        }
 
-                            if (State.WsoNavCacheByActionAndIndex.TryGetValue($"{action}|{aliasIndex}", out string aliasIndexedValue)
-                                && !string.IsNullOrWhiteSpace(aliasIndexedValue))
-                            {
-                                resolvedValue = aliasIndexedValue;
-                                cacheKey = $"alias-idx={aliasIndex}";
-                                return true;
-                            }
+                        if (WSOActionCache.TryGetByActionAndIndex($"{action}|{aliasIndex}", out string aliasIndexedValue)
+                            && !string.IsNullOrWhiteSpace(aliasIndexedValue))
+                        {
+                            resolvedValue = aliasIndexedValue;
+                            cacheKey = $"alias-idx={aliasIndex}";
+                            return true;
                         }
                     }
 
                     if (TryExtractIndexFromSentence(sentence, out string index))
                     {
-                        lock (State.WsoNavCacheLock)
+                        if (action.Equals("divert_tgt1_lat_lon", StringComparison.OrdinalIgnoreCase)
+                            && AliasRequestsSecondaryFlightPlan()
+                            && WSOActionCache.TryGetByActionAndIndex($"{action}|fp2|{index}", out string secondaryIndexedValue)
+                            && !string.IsNullOrWhiteSpace(secondaryIndexedValue))
                         {
-                            if (action.Equals("divert_tgt1_lat_lon", StringComparison.OrdinalIgnoreCase)
-                                && AliasRequestsSecondaryFlightPlan()
-                                && State.WsoNavCacheByActionAndIndex.TryGetValue($"{action}|fp2|{index}", out string secondaryIndexedValue)
-                                && !string.IsNullOrWhiteSpace(secondaryIndexedValue))
-                            {
-                                resolvedValue = secondaryIndexedValue;
-                                cacheKey = $"fp2-idx={index}";
-                                return true;
-                            }
+                            resolvedValue = secondaryIndexedValue;
+                            cacheKey = $"fp2-idx={index}";
+                            return true;
+                        }
 
-                            if (State.WsoNavCacheByActionAndIndex.TryGetValue($"{action}|{index}", out string indexedValue)
-                                && !string.IsNullOrWhiteSpace(indexedValue))
-                            {
-                                resolvedValue = indexedValue;
-                                cacheKey = $"idx={index}";
-                                return true;
-                            }
+                        if (WSOActionCache.TryGetByActionAndIndex($"{action}|{index}", out string indexedValue)
+                            && !string.IsNullOrWhiteSpace(indexedValue))
+                        {
+                            resolvedValue = indexedValue;
+                            cacheKey = $"idx={index}";
+                            return true;
                         }
                     }
 
@@ -887,9 +882,9 @@ namespace VAICOM
                         string bestName = "";
                         int bestMatchLength = -1;
 
-                        lock (State.WsoNavCacheLock)
+                        lock (WSOActionCache.GetActionCacheLock())
                         {
-                            foreach (KeyValuePair<string, string> entry in State.WsoNavCacheByActionAndName)
+                            foreach (KeyValuePair<string, string> entry in WSOActionCache.GetActionByNameCacheEntries())
                             {
                                 if (!entry.Key.StartsWith(action + "|", StringComparison.OrdinalIgnoreCase))
                                 {
@@ -922,11 +917,11 @@ namespace VAICOM
                         }
                     }
 
-                    lock (State.WsoNavCacheLock)
+
+                    lock (WSOActionCache.GetActionCacheLock())
                     {
                         HashSet<string> actionValues = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-
-                        foreach (KeyValuePair<string, string> entry in State.WsoNavCacheByActionAndName)
+                        foreach (KeyValuePair<string, string> entry in WSOActionCache.GetActionByNameCacheEntries())
                         {
                             if (entry.Key.StartsWith(action + "|", StringComparison.OrdinalIgnoreCase)
                                 && !string.IsNullOrWhiteSpace(entry.Value))
@@ -935,7 +930,7 @@ namespace VAICOM
                             }
                         }
 
-                        foreach (KeyValuePair<string, string> entry in State.WsoNavCacheByActionAndIndex)
+                        foreach (KeyValuePair<string, string> entry in WSOActionCache.GetActionByIndexCacheEntries())
                         {
                             if (entry.Key.StartsWith(action + "|", StringComparison.OrdinalIgnoreCase)
                                 && !string.IsNullOrWhiteSpace(entry.Value))
@@ -951,6 +946,7 @@ namespace VAICOM
                             return true;
                         }
                     }
+
 
                     return false;
                 }
@@ -1095,20 +1091,17 @@ namespace VAICOM
 
                     string airfield = commandRecipient.displayname;
 
-                    lock (State.WsoNavCacheLock)
+                    if (WSOActionCache.TryGetByActionAndName($"{action}|{airfield}", out string resolvedValue)
+                        && !string.IsNullOrWhiteSpace(resolvedValue))
                     {
-                        if (State.WsoNavCacheByActionAndName.TryGetValue($"{action}|{airfield}", out string resolvedValue)
-                            && !string.IsNullOrWhiteSpace(resolvedValue))
-                        {
-                            value = resolvedValue;
-                            return true;
-                        }
-                        else
-                        {
-                            Log.Write($"Cache value not resolved for action {action} and airfield '{airfield}'", Colors.Warning);
-                            value = "";
-                            return false;
-                        }
+                        value = resolvedValue;
+                        return true;
+                    }
+                    else
+                    {
+                        Log.Write($"Cache value not resolved for action {action} and airfield '{airfield}'", Colors.Warning);
+                        value = "";
+                        return false;
                     }
                 }
 

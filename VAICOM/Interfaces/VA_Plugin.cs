@@ -1,13 +1,11 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using VAICOM.Client;
+using VAICOM.Extensions.AIWSO;
 using VAICOM.Extensions.WorldAudio;
 using VAICOM.FileManager;
 using VAICOM.PushToTalk;
 using VAICOM.Static;
-using VAICOM.WSO;
 
 namespace VAICOM
 {
@@ -403,248 +401,72 @@ namespace VAICOM
 
                     // F-4E WSO commands
                     case "wso.navigation.waypoint":
-                        if (!IsWSO()) break;
-
-                        // Although the issued action will be resume_flightplan_X we look up the cache entry using
-                        // divert_tgt1_lat_lon. This is due to when adding new points to the flight plan they are not
-                        // automatically given a cache key of resume_flightplan_X so will not be found in the cache.
-                        // They are however given a cache key of divert_tgt1_lat_lon.
-                        List<string> waypointCacheKeys = new List<string> { "divert_tgt1_lat_lon" };
-
-                        string waypointCommandKey = "";
-                        int waypointIndex = GetLastSegmentIndex(4);
-                        if (!GetNumberFromSegment(waypointIndex, out string flightPlanWaypoint))
+                        if (WSOCommandHandler.IsWSO())
                         {
-                            vaProxy.WriteToLog($"Invalid waypoint for go to flightplan and waypoint", Colors.Warning);
-                            break;
-                        }
-
-                        string waypointFlightPlan = State.Proxy.Command.Segment(waypointIndex - 2);
-                        // Check if a flight plan was included in the command, and whether or not it was flight plan 2.
-                        if (!String.IsNullOrEmpty(waypointFlightPlan) && IsSecondaryFlightPlan(waypointFlightPlan))
-                        {
-                            waypointCommandKey = "wMsgWSO_Navigation_ResumeFlightPlan2Waypoint";
-                            waypointCacheKeys.Add("fp2");
-                        }
-                        else
-                        {
-                            waypointCommandKey = "wMsgWSO_Navigation_ResumeFlightPlan1Waypoint";
-                            waypointCacheKeys.Add("fp1"); ;
-                        }
-                        waypointCacheKeys.Add(flightPlanWaypoint);
-
-                        string waypointCacheKey = String.Join("|", waypointCacheKeys);
-                        if (State.WsoNavCacheByActionAndIndex.TryGetValue(waypointCacheKey, out string resolvedWaypoint)
-                                && !string.IsNullOrWhiteSpace(resolvedWaypoint))
-                        {
-                            // Append the waypoint number, after a semi-colon; to the lat long when sending the command as this is required
-                            HbSendProxyCommand.SendWsoCommand(State.WebSocketClient, waypointCommandKey, $"{resolvedWaypoint};{flightPlanWaypoint}");
-                        }
-                        else
-                        {
-                            vaProxy.WriteToLog($"Waypoint not found for flight plan {waypointFlightPlan} waypoint {flightPlanWaypoint}", Colors.Warning);
+                            WSOCommandHandler.NavigationResumeWaypoint();
                         }
                         break;
 
                     case "wso.navigation.holdpoint":
-                        if (!IsWSO()) break;
-
-                        string deactivate = GetSegment(1);
-                        // We work backwards as the command may have been edited with additional segments added.
-                        int holdpointIndex = GetLastSegmentIndex(5);
-                        if (!GetNumberFromSegment(holdpointIndex, out string flightPlanHoldpoint))
+                        if (WSOCommandHandler.IsWSO())
                         {
-                            vaProxy.WriteToLog($"Invalid waypoint for holding to flightplan and waypoint", Colors.Warning);
-                            break;
-                        }
-
-                        string holdpointFlightPlan = GetSegment(holdpointIndex - 2);
-                        List<string> holdpointCacheKeys = new List<string>();
-                        string holdpointCommandKey = "";
-
-                        // Check if a flight plan was included in the command, and whether or not it was flight plan 2
-                        if (IsSecondaryFlightPlan(holdpointFlightPlan))
-                        {
-                            // Check if we are activating or deactivating the hold point.
-                            if (String.IsNullOrEmpty(deactivate))
-                            {
-                                holdpointCommandKey = "wMsgWSO_Navigation_Holding_ActivateFlightPlan2TurnPoint";
-                            }
-                            else
-                            {
-                                holdpointCommandKey = "wMsgWSO_Navigation_Holding_DeactivateFlightPlan2TurnPoint";
-                            }
-                            // There is no cache key for deactivate so we lookup based on the hold_flightplan_x key
-                            holdpointCacheKeys.Add("hold_flightplan_2");
-                            holdpointCacheKeys.Add("fp2");
-                        }
-                        else
-                        {
-                            if (String.IsNullOrEmpty(deactivate))
-                            {
-                                holdpointCommandKey = "wMsgWSO_Navigation_Holding_ActivateFlightPlan1TurnPoint";
-                            }
-                            else
-                            {
-                                holdpointCommandKey = "wMsgWSO_Navigation_Holding_DeactivateFlightPlan1TurnPoint";
-                            }
-                            holdpointCacheKeys.Add("hold_flightplan_1");
-                            holdpointCacheKeys.Add("fp1");
-                        }
-                        holdpointCacheKeys.Add(flightPlanHoldpoint);
-
-                        string holdpointCacheKey = String.Join("|", holdpointCacheKeys);
-                        if (State.WsoNavCacheByActionAndIndex.TryGetValue(holdpointCacheKey, out string resolvedHoldpoint)
-                                && !string.IsNullOrWhiteSpace(resolvedHoldpoint))
-                        {
-                            HbSendProxyCommand.SendWsoCommand(State.WebSocketClient, holdpointCommandKey, resolvedHoldpoint);
-                        }
-                        else
-                        {
-                            vaProxy.WriteToLog($"Holdpoint not found for flight plan {holdpointFlightPlan} waypoint {flightPlanHoldpoint}", Colors.Warning);
+                            WSOCommandHandler.NavigationHoldTurnPoint();
                         }
                         break;
 
                     case "wso.navigation.divert":
-                        if (!IsWSO()) break;
-
-                        List<string> divertCacheKeys = new List<string> { "divert_tgt1_lat_lon" };
-
-                        string divertCommandKey = "wMsgWSO_Navigation_Divert_LatLong";
-
-                        // We work backwards as the command may have been edited with additional segments added.
-                        int divertWaypointIndex = GetLastSegmentIndex(4);
-                        if (!GetNumberFromSegment(divertWaypointIndex, out string divertWaypoint))
+                        if (WSOCommandHandler.IsWSO())
                         {
-                            vaProxy.WriteToLog($"Invalid waypoint for divert to flightplan and waypoint", Colors.Warning);
-                            break;
-                        }
-                        string divertFlightPlan = GetSegment(divertWaypointIndex - 2);
-
-                        if (!String.IsNullOrEmpty(divertFlightPlan) && IsSecondaryFlightPlan(divertFlightPlan))
-                        {
-                            divertCacheKeys.Add("fp2");
-                        }
-                        else
-                        {
-                            divertCacheKeys.Add("fp1");
-                        }
-                        divertCacheKeys.Add(divertWaypoint);
-
-                        string divertCacheKey = String.Join("|", divertCacheKeys);
-                        if (State.WsoNavCacheByActionAndIndex.TryGetValue(divertCacheKey, out string resolvedLatLong)
-                                && !string.IsNullOrWhiteSpace(resolvedLatLong))
-                        {
-                            HbSendProxyCommand.SendWsoCommand(State.WebSocketClient, divertCommandKey, resolvedLatLong);
-                        }
-                        else
-                        {
-                            vaProxy.WriteToLog($"Divert lat/long not found for flight plan {divertFlightPlan} waypoint {divertWaypoint}", Colors.Warning);
+                            WSOCommandHandler.NavigationDivertToWaypoint();
                         }
                         break;
 
                     case "wso.navigation.designate.waypoint":
-                        if (!IsWSO()) break;
-
-                        string designateWaypointCommandKey = "wMsgWSO_Navigation_Designate_Waypoint";
-
-                        int designationTypeIndex = GetLastSegmentIndex(6);
-                        string designationType = GetWaypointDesignationType(GetSegment(designationTypeIndex));
-                        if (string.IsNullOrEmpty(designationType))
+                        if (WSOCommandHandler.IsWSO())
                         {
-                            vaProxy.WriteToLog($"Unknown waypoint designation type for '{designationType}'", Colors.Warning);
-                            break;
+                            WSOCommandHandler.NavigationDesignateWaypoint();
                         }
-                        if (!GetNumberFromSegment(designationTypeIndex - 2, out string designatationWaypoint))
-                        {
-                            vaProxy.WriteToLog($"Invalid waypoint for designating flightplan and waypoint", Colors.Warning);
-                            break;
-                        }
-
-                        string designationFlightPlanValue = GetSegment(designationTypeIndex - 4);
-                        int designationFlightPlan;
-                        if (!String.IsNullOrEmpty(designationFlightPlanValue) && IsSecondaryFlightPlan(designationFlightPlanValue))
-                        {
-                            designationFlightPlan = 2;
-                        }
-                        else
-                        {
-                            designationFlightPlan = 1;
-                        }
-                        string designationWaypointValue = $"{designationFlightPlan};{designatationWaypoint};{designationType}";
-                        HbSendProxyCommand.SendWsoCommand(State.WebSocketClient, designateWaypointCommandKey, designationWaypointValue);
                         break;
 
                     case "wso.navigation.tacan.channel":
-                        if (!IsWSO()) break;
-
-                        // We work backwards as the command may have been edited with additional segments added.
-                        int bandIndex = GetLastSegmentIndex(5);
-                        string digit1 = GetSegment(bandIndex - 3);
-                        string digit2 = GetSegment(bandIndex - 2);
-                        string digit3 = GetSegment(bandIndex - 1);
-                        // Use the first character for the band so we can support the NATO alphabet.
-                        string tacanBand = GetSegment(bandIndex).Substring(0, 1);
-
-                        // If the command uses zero at the beginning then is in text and the TXTUM
-                        // function does not convert it so we need to do manually.
-                        if (digit1.Equals("zero"))
+                        if (WSOCommandHandler.IsWSO())
                         {
-                            digit1 = "0";
+                            WSOCommandHandler.NavigationTuneTACANChannel();
                         }
-                        HbSendProxyCommand.SendWsoCommand(State.WebSocketClient, "wMsgWSO_Navigation_TACAN_SelectChannel", $"{digit1}{digit2}{digit3}{tacanBand}");
                         break;
 
                     case "wso.navigation.tacan.station":
-                        if (!IsWSO()) break;
-
-                        int stationIndex = GetLastSegmentIndex(4);
-                        string alpha1 = GetSegment(stationIndex - 2).Substring(0, 1);
-                        string alpha2 = GetSegment(stationIndex - 1).Substring(0, 1);
-                        string alpha3 = GetSegment(stationIndex).Substring(0, 1);
-
-                        string tacanCacheKey = $"nav_tacan_tr|{alpha1}{alpha2}{alpha3}";
-                        if (State.WsoNavCacheByActionAndName.TryGetValue(tacanCacheKey, out string resolvedTacanStation)
-                                && !string.IsNullOrWhiteSpace(resolvedTacanStation))
+                        if (WSOCommandHandler.IsWSO())
                         {
-                            HbSendProxyCommand.SendWsoCommand(State.WebSocketClient, "wMsgWSO_Navigation_TACAN_TuneStation", resolvedTacanStation);
-                        }
-                        else
-                        {
-                            vaProxy.WriteToLog($"TACAN station '{alpha1}{alpha2}{alpha3}' not found", Colors.Warning);
+                            WSOCommandHandler.NavigationTuneTACANStation();
                         }
                         break;
 
                     case "wso.radio.setchn":
-                        if (!IsWSO()) break;
-
-                        HbSendProxyCommand.SendWsoCommand(State.WebSocketClient, "wMsgWSO_Radio_SelectCommChannel", GetNumberFromCommand());
+                        if (WSOCommandHandler.IsWSO())
+                        {
+                            WSOCommandHandler.RadioSetCommChannel();
+                        }
                         break;
 
                     case "wso.radio.setauxchn":
-                        if (!IsWSO()) break;
-
-                        HbSendProxyCommand.SendWsoCommand(State.WebSocketClient, "wMsgWSO_Radio_SelectAuxChannel", GetNumberFromCommand());
+                        if (WSOCommandHandler.IsWSO())
+                        {
+                            WSOCommandHandler.RadioSetAuxChannel();
+                        }
                         break;
 
                     case "wso.radio.tunefreq":
-                        if (!IsWSO()) break;
-
-                        string radioFrequency = GetNumberFromCommand();
-                        string fullRadioFrequency = radioFrequency.PadRight(6, '0');
-                        HbSendProxyCommand.SendWsoCommand(State.WebSocketClient, "wMsgWSO_Radio_SetManualFrequency", fullRadioFrequency);
+                        if (WSOCommandHandler.IsWSO())
+                        {
+                            WSOCommandHandler.RadioTuneFrequency();
+                        }
                         break;
 
                     case "wso.pavespike.laser":
-                        string laserCode = GetNumberFromCommand();
-                        // If a code was provided then use it, otherwise this was a command to silence it
-                        if (String.IsNullOrEmpty(laserCode))
+                        if (WSOCommandHandler.IsWSO())
                         {
-                            HbSendProxyCommand.SendWsoCommand(State.WebSocketClient, "wMsgWSO_A2G_PaveSpike_LaserCode_Silent");
-                        }
-                        else
-                        {
-                            HbSendProxyCommand.SendWsoCommand(State.WebSocketClient, "wMsgWSO_A2G_PaveSpike_LaserCode", laserCode);
+                            WSOCommandHandler.PaveSpikeSetLaserCode();
                         }
                         break;
 

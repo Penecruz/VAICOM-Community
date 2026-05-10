@@ -19,7 +19,7 @@ function openSocketConnection() {
 		socket.send("WSO Jester 2.0: Connected");
 		
 		setTimeout(function () {
-			sendNavCacheSnapshot("socket_open");
+			sendActionCacheSnapshot("socket_open");
 		}, 200);
 	});
 
@@ -61,7 +61,7 @@ function sendSocketMessage(data) {
 	}
 }
 
-function collectNavCacheEntries(menu, path, entries, all = false) {
+function collectActionCacheEntries(menu, path, entries, all = true) {
 	if (!menu || !menu.items || !entries) {
 		return;
 	}
@@ -94,16 +94,16 @@ function collectNavCacheEntries(menu, path, entries, all = false) {
 		}
 
 		if (item.menu) {
-			collectNavCacheEntries(item.menu, itemPath, entries, all);
+			collectActionCacheEntries(item.menu, itemPath, entries, all);
 		}
 
 		if (item.outer_menu) {
-			collectNavCacheEntries(item.outer_menu, itemPath, entries, all);
+			collectActionCacheEntries(item.outer_menu, itemPath, entries, all);
 		}
 	}
 }
 
-function sendNavCacheSnapshot(reason) {
+function sendActionCacheSnapshot(reason) {
 	try {
 		if (!isSocketOpen()) {
 			return;
@@ -114,10 +114,10 @@ function sendNavCacheSnapshot(reason) {
 		}
 
 		const entries = [];
-		collectNavCacheEntries(main_menu, ["Main Menu"], entries);
+		collectActionCacheEntries(main_menu, ["Main Menu"], entries);
 
 		sendSocketMessage(JSON.stringify({
-			type: "nav_cache_bulk",
+			type: "action_cache_bulk",
 			reason: reason || "menu_update",
 			items: entries
 		}));
@@ -145,7 +145,7 @@ function hb_send_proxy(category, action, value = "") {
         
 
 		setTimeout(function () {
-			sendNavCacheSnapshot("command");
+			sendActionCacheSnapshot("command");
 		}, 50);
 	} else {
 		console.log(category + ":" + action + ":" + value);
@@ -153,11 +153,11 @@ function hb_send_proxy(category, action, value = "") {
 }
 
 const vaicomOriginalUpdateMenus = window.updateMenus;
-window.updateMenus = function updateMenusWithNavCache() {
+window.updateMenus = function updateMenusWithActionCache() {
 	if (typeof vaicomOriginalUpdateMenus === "function") {
 		vaicomOriginalUpdateMenus();
 	}
-	sendNavCacheSnapshot("updateMenus");
+	sendActionCacheSnapshot("updateMenus");
 };
 
 // Connect to VAICOM during initialisation
