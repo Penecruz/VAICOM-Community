@@ -140,6 +140,11 @@ namespace VAICOM
                                 }
                             }
 
+                            if (category.Equals("wsocmdrecipient") && finalresult.Equals("WSO"))
+                            {
+                                return false;
+                            }
+
                             // other cats
                             State.currentkey[category] = finalresult;
                             State.usedalias[category] = usedalias;

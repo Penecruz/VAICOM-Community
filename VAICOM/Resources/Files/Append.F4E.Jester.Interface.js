@@ -61,7 +61,7 @@ function sendSocketMessage(data) {
 	}
 }
 
-function collectActionCacheEntries(menu, path, entries, all = true) {
+function collectActionCacheEntries(menu, path, entries, all = false) {
 	if (!menu || !menu.items || !entries) {
 		return;
 	}
