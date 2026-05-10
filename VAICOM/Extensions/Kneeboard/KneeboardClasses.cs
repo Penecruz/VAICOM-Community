@@ -118,6 +118,7 @@ namespace VAICOM
                 public string alt;
                 public string frq; // Primary frequency
                 public string frq2; // Secondary frequency
+                public string tacan;
                 public string istuned;
                 public string humanname;
                 public List<string> altfreq;
@@ -150,6 +151,81 @@ namespace VAICOM
 
             public class KneeboardUnitsData
             {
+                private static string WrapForKneeboard(string text, int maxLineLength)
+                {
+                    if (string.IsNullOrWhiteSpace(text) || maxLineLength < 8)
+                    {
+                        return text;
+                    }
+
+                    var words = text.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+                    if (words.Length == 0)
+                    {
+                        return text;
+                    }
+
+                    var lines = new List<string>();
+                    var current = "";
+
+                    foreach (var word in words)
+                    {
+                        var candidate = string.IsNullOrEmpty(current) ? word : current + " " + word;
+                        if (candidate.Length <= maxLineLength)
+                        {
+                            current = candidate;
+                            continue;
+                        }
+
+                        if (!string.IsNullOrEmpty(current))
+                        {
+                            lines.Add(current);
+                        }
+
+                        current = word;
+                    }
+
+                    if (!string.IsNullOrEmpty(current))
+                    {
+                        lines.Add(current);
+                    }
+
+                    return string.Join("\n", lines);
+                }
+
+                private static string ResolveTankerAircraftType(Server.DcsUnit unit)
+                {
+                    if (unit == null)
+                    {
+                        return "";
+                    }
+
+                    string source = ((unit.fullname ?? "") + " " + (unit.callsign ?? "")).ToUpperInvariant();
+                    if (string.IsNullOrWhiteSpace(source))
+                    {
+                        return "";
+                    }
+
+                    if (source.Contains("KC-135MPRS") || source.Contains("KC135MPRS")) return "KC-135MPRS";
+                    if (source.Contains("KC-135") || source.Contains("KC135")) return "KC-135";
+                    if (source.Contains("KC-130") || source.Contains("KC130")) return "KC-130";
+                    if (source.Contains("IL-78") || source.Contains("IL78")) return "IL-78";
+                    if (source.Contains("S-3B") || source.Contains("S3B")) return "S-3B";
+
+                    Match kcMatch = Regex.Match(source, @"\b(KC)[-\s]?(\d{2,3}[A-Z]*)\b");
+                    if (kcMatch.Success)
+                    {
+                        return kcMatch.Groups[1].Value + "-" + kcMatch.Groups[2].Value;
+                    }
+
+                    Match ilMatch = Regex.Match(source, @"\b(IL)[-\s]?(\d{2,3}[A-Z]*)\b");
+                    if (ilMatch.Success)
+                    {
+                        return ilMatch.Groups[1].Value + "-" + ilMatch.Groups[2].Value;
+                    }
+
+                    return "";
+                }
+
                 public string category;
                 public List<string> unitslist;
                 public int timer;
@@ -186,6 +262,7 @@ namespace VAICOM
                             descr.cat = cat;
                             descr.code = "XXX";
                             descr.callsign = unit.callsign;
+                            descr.tacan = unit.tacan;
 
                             string searchcallsign = Regex.Replace(unit.callsign.Replace("-", ""), "[0-9]", "");
 
@@ -291,11 +368,12 @@ namespace VAICOM
                                 descr.frq2 = null;
                             }
 
+                            descr.bearing = unit.getbearingstr();
+                            descr.range = unit.getrangestr();
+                            descr.alt = unit.getaltstr();
+
                             if (AOCS)
                             {
-                                descr.bearing = unit.getbearingstr();
-                                descr.range = unit.getrangestr();
-                                descr.alt = unit.getaltstr();
                                 descr.humanname = unit.gethumanname();
                                 descr.altfreq = unit.altfreq;
 
@@ -307,10 +385,38 @@ namespace VAICOM
 
                             units.Add(descr);
 
+                            string tacanInfo = "";
+                            if (!string.IsNullOrWhiteSpace(descr.tacan)
+                                && (cat.Equals("Tanker", StringComparison.OrdinalIgnoreCase)
+                                || cat.Equals("AWACS", StringComparison.OrdinalIgnoreCase)
+                                || cat.Equals("Flight", StringComparison.OrdinalIgnoreCase)))
+                            {
+                                tacanInfo = " TACAN " + descr.tacan;
+                            }
+
+                            string tankerTypeInfo = "";
+                            if (cat.Equals("Tanker", StringComparison.OrdinalIgnoreCase))
+                            {
+                                string tankerType = ResolveTankerAircraftType(unit);
+                                if (!string.IsNullOrWhiteSpace(tankerType))
+                                {
+                                    tankerTypeInfo = " " + tankerType;
+                                }
+                            }
+
                             string lineitem = descr.frq + (descr.frq2 != null ? " / " + descr.frq2 : "") + " " +
                                               "[" + descr.alias + "]" + descr.istuned + " " +
-                                              descr.callsign + " " + descr.bearing + " " +
-                                              descr.range + " " + descr.alt + " " + altfreqs;
+                                              descr.callsign + tankerTypeInfo + " " + descr.bearing + " " +
+                                               descr.range + " " + descr.alt + " " + altfreqs + tacanInfo;
+
+                            if (cat.Equals("ATC", StringComparison.OrdinalIgnoreCase)
+                                && !string.IsNullOrWhiteSpace(State.currentstate.metar)
+                                && unitslist.Count == 0)
+                            {
+                                unitslist.Add("METAR");
+                                unitslist.Add(WrapForKneeboard(State.currentstate.metar, 48));
+                                unitslist.Add("");
+                            }
 
                             unitslist.Add(lineitem);
                         }

@@ -36,6 +36,21 @@ namespace VAICOM
 
         public static void Write(string writestring, string color)
         {
+            try
+            {
+                if (color == Colors.Warning)
+                {
+                    Extensions.Kneeboard.OpenKneeboardBridge.UpdateStatus(writestring, "warning");
+                }
+                else if (color == Colors.Critical)
+                {
+                    Extensions.Kneeboard.OpenKneeboardBridge.UpdateStatus(writestring, "error");
+                }
+            }
+            catch
+            {
+            }
+
             if (State.startup || (!State.activeconfig.Debugmode & !State.trainerrunning))
             {
                 if (State.startup && State.deepdebugmode)

@@ -243,6 +243,8 @@ namespace VAICOM
                     public bool debug;
                     public string client;
                     public string mode;
+                    public string type;
+                    public int command;
                     public string exec;
                     public string dspmsg;
                     public int msgdur;
@@ -254,7 +256,10 @@ namespace VAICOM
                     public DebugMsg()
                     {
                         debug = true;
+                        client = State.client;
                         mode = ClientModes.Debug;
+                        type = Messagetypes.Undefined;
+                        command = 4000;
                         exec = "";
                         dictmode = State.Proxy.Dictation.IsOn();
                     }
@@ -340,6 +345,7 @@ namespace VAICOM
                     string formatmessage = JsonConvert.SerializeObject(State.currentmessage);
                     byte[] sendbuffer = Encoding.UTF8.GetBytes(formatmessage);
                     State.SendSocket.SendTo(sendbuffer, State.SendIpEndPoint);
+                    Extensions.Kneeboard.OpenKneeboardBridge.UpdateStatus("Command sent.", "sent");
 
                     // Log WSO-specific commands
                     if (State.currentmessage.type == "WSOCommand")

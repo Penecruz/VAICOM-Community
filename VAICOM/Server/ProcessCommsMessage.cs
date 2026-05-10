@@ -124,6 +124,7 @@ namespace VAICOM
                 catch (Exception e)
                 {
                     Log.Write("JSON eror: server comms message decoding failed: " + e.Message, Colors.Inline);
+                    Extensions.Kneeboard.OpenKneeboardBridge.UpdateStatus("Error: comms message decode failed.", "error");
                     success = false;
                 }
 

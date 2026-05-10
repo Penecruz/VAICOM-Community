@@ -94,6 +94,9 @@ namespace VAICOM
                 public string freq;
                 public List<string> altfreq;
                 public string mod;
+                public string tacan;
+                public string unitdiagnostics;
+                public string tacanprobe;
                 public string status;
                 public bool ishuman;
                 public bool allowtuning;
@@ -299,6 +302,9 @@ namespace VAICOM
 
                 public object mission;
                 public object missioncmds;
+                public string metar;
+                public Dictionary<string, string> atcmetars;
+                public object diagnostics;
 
                 public int intercom;
                 public string selectedradio;
@@ -332,6 +338,7 @@ namespace VAICOM
                     menuaux = null;
                     menucargo = null;
                     mission = null;
+                    atcmetars = new Dictionary<string, string>();
                     bpos = new Vector(); // added
                     cpos = new campos();
                     options = new DcsOptions();
@@ -384,6 +391,9 @@ namespace VAICOM
 
                 public object mission;
                 public object missioncmds;
+                public string metar;
+                public Dictionary<string, string> atcmetars;
+                public object diagnostics;
 
                 public Dictionary<string, List<DcsUnit>> availablerecipients;
 
