@@ -1725,7 +1725,8 @@ base.vaicom.list = {
 		if coalition then
 			Listing = base.vaicom.helper.mergetables(Listing, base.vaicom.objects.localAWACSs(coalition))
 		end
-		if not selectstr or selectstr == "radio" then
+      local isMultiplayerNow = data.initialized and base.DCS.isMultiplayer() or false
+		if (not isMultiplayerNow) and (not selectstr or selectstr == "radio") then
 			Listing = base.vaicom.filter.hasradio(Listing)
 		end
 		return Listing
@@ -1736,7 +1737,8 @@ base.vaicom.list = {
 		if coalition then
 			Listing = base.vaicom.helper.mergetables(Listing, base.vaicom.objects.localTankers(coalition))
 		end
-		if not selectstr or selectstr == "radio" then
+      local isMultiplayerNow = data.initialized and base.DCS.isMultiplayer() or false
+		if (not isMultiplayerNow) and (not selectstr or selectstr == "radio") then
 			Listing = base.vaicom.filter.hasradio(Listing)
 		end
 		return Listing
@@ -2134,12 +2136,30 @@ base.vaicom.state = {
 						return ""
 					end
 
-					local windDir = weather.wind and weather.wind.atGround and weather.wind.atGround.dir or nil
-					local windSpd = weather.wind and weather.wind.atGround and weather.wind.atGround.speed or nil
-					local vis = weather.visibility and weather.visibility.distance or nil
-                   local temp = weather.season and weather.season.temperature or nil
                  local atcInfo = atcInfoOverride or getClosestAtcInfo()
 					local stationElevationFt = base.tonumber(atcInfo and atcInfo.elevationFt or 0) or 0
+					local groundWindDir = weather.wind and weather.wind.atGround and weather.wind.atGround.dir or nil
+					local groundWindSpd = base.tonumber(weather.wind and weather.wind.atGround and weather.wind.atGround.speed)
+					local upperWindDir = weather.wind and weather.wind.at2000 and weather.wind.at2000.dir or nil
+					local upperWindSpd = base.tonumber(weather.wind and weather.wind.at2000 and weather.wind.at2000.speed)
+					local elevatedWind = stationElevationFt >= 1600 and upperWindSpd ~= nil
+					local windDir = groundWindDir
+					local windSpd = groundWindSpd
+					if elevatedWind then
+						windDir = upperWindDir or groundWindDir
+                        local upperAdjustedSpd = upperWindSpd - (5 / 1.94384)
+						if upperAdjustedSpd < 0 then upperAdjustedSpd = 0 end
+						if groundWindSpd ~= nil then
+							local t = (stationElevationFt - 1599) / 1600
+							if t < 0 then t = 0 end
+							if t > 1 then t = 1 end
+                          windSpd = groundWindSpd + ((upperAdjustedSpd - groundWindSpd) * t)
+						else
+                          windSpd = upperAdjustedSpd
+						end
+					end
+                   local vis = weather.visibility and weather.visibility.distance or nil
+				   local temp = weather.season and weather.season.temperature or nil
 					local stationTemp = base.tonumber(temp)
 					if stationTemp ~= nil then
 						stationTemp = stationTemp - (stationElevationFt / 1000) * 2
@@ -2175,7 +2195,7 @@ base.vaicom.state = {
                      dirFrom = (base.math.floor((dirFrom + 5) / 10) * 10) % 360
 					end
 
-					local spdKt = toInt((base.tonumber(windSpd) or 0) * 1.94384) or 0
+                   local spdKt = toInt((base.tonumber(windSpd) or 0) * 1.94384) or 0
 					local visM = toInt(vis) or 9999
 
 					local function minPositive(a, b)

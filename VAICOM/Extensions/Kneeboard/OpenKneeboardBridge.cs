@@ -82,6 +82,7 @@ namespace VAICOM
       text-transform: uppercase;
       letter-spacing: 0.5px;
     }
+    #tabTitle, #keywordTitle { font-size: 23px; }
     .panel .content { padding: 10px; white-space: pre-wrap; word-break: break-word; overflow: auto; }
     .panel h4.clickable { cursor: pointer; user-select: none; }
     .session { margin-bottom: 8px; }
@@ -155,8 +156,8 @@ namespace VAICOM
     body.notes-tab .tabPanel { flex: 0 0 55%; }
     body.notes-tab .keywordsPanel { flex: 1 1 auto; min-height: 110px; }
     body.notes-tab .keywordsContent { max-height: 140px; }
-    .mainContent { font-size: 22px; line-height: 1.34; }
-    .keywordsContent { font-size: 21px; line-height: 1.32; }
+    .mainContent { font-size: 24px; line-height: 1.32; }
+    .keywordsContent { font-size: 24px; line-height: 1.32; }
     .kwCols { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
     .kwCol { white-space: pre-wrap; word-break: break-word; }
     .controls { margin: 8px 0; color: #222; font-size: 19px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
@@ -221,8 +222,18 @@ namespace VAICOM
     let showServerMessages = false;
     let metarPressureInHg = false;
     let selectedAtcMetarKey = '';
+    let okbExperimentalEnabled = false;
+    let okbCursorMode = '';
+    let okbDoodlesOnlyForced = false;
 
     function safe(v){ return (v === null || v === undefined || v === '') ? '-' : String(v); }
+
+    function formatUtcToSeconds(v){
+      if (v === null || v === undefined || v === '') return '-';
+      const d = new Date(v);
+      if (!isFinite(d.getTime())) return String(v);
+      return d.toISOString().replace(/\.\d{3}Z$/, 'Z');
+    }
 
     function normalizeCategory(cat){
       var c = String(cat || '').toUpperCase();
@@ -257,6 +268,52 @@ namespace VAICOM
 
     function tabLabel(tab){
       return tab === 'ATC' ? 'WX/ATC' : tab;
+    }
+
+    async function updateCursorModeForTab(){
+      try{
+        const okb = (typeof OpenKneeboard !== 'undefined') ? OpenKneeboard : window.OpenKneeboard;
+        if (!okb) return;
+
+        const isNotes = selectedTab === 'NOTES';
+      if (okbDoodlesOnlyForced && !isNotes) {
+            return;
+        }
+        if (okbDoodlesOnlyForced && isNotes) {
+            okbCursorMode = 'DoodlesOnly';
+            return;
+        }
+        const targetMode = isNotes ? 'DoodlesOnly' : 'MouseEmulation';
+        if (okbCursorMode === targetMode) return;
+
+        if (!okbExperimentalEnabled && okb.EnableExperimentalFeatures){
+          await okb.EnableExperimentalFeatures([
+            { name: 'DoodlesOnly', version: 2024071802 },
+            { name: 'SetCursorEventsMode', version: 2024071801 },
+          ]);
+          okbExperimentalEnabled = true;
+        }
+
+        if (!okb.SetCursorEventsMode) return;
+
+        if (isNotes){
+          await okb.SetCursorEventsMode('DoodlesOnly');
+          okbCursorMode = 'DoodlesOnly';
+          return;
+        }
+
+        const restoreModes = ['MouseEmulation', 'Mouse', 'Normal', 'Default'];
+        for (let i = 0; i < restoreModes.length; i++){
+          const mode = restoreModes[i];
+          try{
+            await okb.SetCursorEventsMode(mode);
+            okbCursorMode = mode;
+            return;
+          }catch(_){
+          }
+        }
+      }catch(_){
+      }
     }
 
     function setStatus(text, level){
@@ -589,13 +646,20 @@ namespace VAICOM
       }
 
       if (tab === 'ATC' && metarPressureInHg) {
-        text = text.replace(/(METAR:\s+[^\n]*?)\b(\d{4})\b(\s+.*?\s+)Q(\d{4})\b/g, function(_, prefix, vism, middle, qhpa){
+        text = text.replace(/(METAR:\s+[^\n]*?)\b(\d{4}|9999)\b(\s+.*?\s+)Q(\d{4})\b/g, function(_, prefix, vism, middle, qhpa){
           const visSm = metersToSmToken(vism);
           const hpa = parseInt(qhpa, 10);
           if (!isFinite(hpa)) return _;
           const inhg = (hpa * 0.0295299830714).toFixed(2);
           const visToken = visSm || vism;
           return prefix + visToken + middle + 'A' + inhg;
+        });
+
+        text = text.replace(/(METAR:\s+[^\n]*?\bCAVOK\b[^\n]*?\s+)Q(\d{4})\b/g, function(_, prefix, qhpa){
+          const hpa = parseInt(qhpa, 10);
+          if (!isFinite(hpa)) return _;
+          const inhg = (hpa * 0.0295299830714).toFixed(2);
+          return prefix + 'A' + inhg;
         });
       }
 
@@ -715,7 +779,7 @@ namespace VAICOM
 
       document.getElementById('session').textContent = [
         'Active Category : ' + safe(normalizeActiveCategory(data.ActiveCategory, data)),
-        'Updated (UTC)   : ' + safe(data.UpdatedUtc),
+        'Updated (UTC)   : ' + formatUtcToSeconds(data.UpdatedUtc),
         '',
         'Theater         : ' + safe(server.Theater),
         'DCS Location    : ' + safe(server.DcsLocation || server.DcsVersion),
@@ -729,6 +793,7 @@ namespace VAICOM
       document.body.classList.toggle('notes-tab', selectedTab === 'NOTES');
       document.getElementById('tabTitle').textContent = 'Tab: ' + tabLabel(selectedTab);
       document.getElementById('tabBody').textContent = formatTabContent(data, selectedTab);
+      updateCursorModeForTab();
       const tabBodyEl = document.getElementById('tabBody');
       if (selectedTab === 'ATC' && tabBodyEl.textContent.indexOf('METAR:') >= 0) {
         tabBodyEl.style.cursor = 'pointer';
@@ -787,6 +852,24 @@ namespace VAICOM
           setTimeout(function(){ okb.SetPreferredPixelSize(1050, 1480); }, 300);
           setTimeout(function(){ okb.SetPreferredPixelSize(1050, 1480); }, 1200);
         }
+
+        const q = (window.location && window.location.search) ? window.location.search : '';
+        if (q.indexOf('doodles=1') >= 0 || q.indexOf('ink=1') >= 0) {
+          if (okb && okb.EnableExperimentalFeatures) {
+            await okb.EnableExperimentalFeatures([
+              { name: 'DoodlesOnly', version: 2024071802 },
+              { name: 'SetCursorEventsMode', version: 2024071801 },
+            ]);
+            okbExperimentalEnabled = true;
+          }
+          if (okb && okb.SetCursorEventsMode) {
+            await okb.SetCursorEventsMode('DoodlesOnly');
+            okbCursorMode = 'DoodlesOnly';
+            okbDoodlesOnlyForced = true;
+          }
+        }
+        setTimeout(function(){ updateCursorModeForTab(); }, 50);
+        setTimeout(function(){ updateCursorModeForTab(); }, 500);
       } catch (e) {
       }
     }
@@ -819,6 +902,8 @@ namespace VAICOM
       const clickedLine = getClickedLineFromEvent(ev, this);
       const clickedUpper = String(clickedLine || '').toUpperCase();
       const selectedUpper = String(selectedText || '').toUpperCase();
+
+      if (okbCursorMode === 'DoodlesOnly' || okbDoodlesOnlyForced) return;
 
       const clickedMetarArea = clickedUpper.indexOf('METAR:') >= 0
         || clickedUpper.indexOf('WEATHER:') === 0

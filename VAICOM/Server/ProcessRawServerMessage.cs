@@ -16,6 +16,12 @@ namespace VAICOM
             {
                 try
                 {
+                    string trimmed = (receivedString ?? "").Trim();
+                    if (trimmed == "4000")
+                    {
+                        return;
+                    }
+
                     Extensions.Kneeboard.OpenKneeboardBridge.AppendRawServerMessage(receivedString);
 
                     if (DetectAH64WeaponState(receivedString))
