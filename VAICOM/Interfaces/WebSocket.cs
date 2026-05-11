@@ -101,7 +101,7 @@ namespace VAICOM
                         }
 
                         string receivedMessage = messageBuilder.ToString();
-                        if (!WSOActionCache.TryHandleActionCacheMessage(receivedMessage) && !WSOActionCache.TryHandleJesterMenuCacheLine(receivedMessage))
+                        if (!WSOActionCache.TryHandleActionCacheMessage(receivedMessage) && !WSOActionCache.TryHandleJesterMenuActionLine(receivedMessage))
                         {
                             Log.Write($"Received: {receivedMessage}", Colors.Text);
                         }

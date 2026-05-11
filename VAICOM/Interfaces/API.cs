@@ -13,54 +13,6 @@ namespace VAICOM
     {
         public class API
         {
-            /// <summary>
-            /// Executes a Vaicom command by looking it up in the WSOCommands dictionary.
-            /// </summary>
-            public static void ExecuteVaicomCommand(string vaicomCommand, dynamic vaProxy)
-            {
-                if (Commands.Table.TryGetValue(vaicomCommand, out Command command))
-                {
-                    try
-                    {
-                        if (command.category == CommandCategories.WSO || (command.uniqueid >= 24000 && command.uniqueid <= 24999))
-                        {
-                            // Handle WSO command
-                            HbSendProxyCommand.SendWsoCommand(State.WebSocketClient, command.name);
-                            vaProxy.WriteToLog($"Executed WSO command: {command.name}", Colors.Text);
-                        }
-                        else
-                        {
-                            // Handle other commands
-                            HbSendProxyCommand.SendCommand(State.WebSocketClient, command.category.ToString(), command.name, "");
-                            vaProxy.WriteToLog($"Executed command: {command.name}", Colors.Text);
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        vaProxy.WriteToLog($"Failed to execute command: {command.name}. Error: {ex.Message}", Colors.Warning);
-                    }
-                }
-                else
-                {
-                    vaProxy.WriteToLog($"Unknown Vaicom command: {vaicomCommand}", Colors.Warning);
-                }
-            }
-
-            /// <summary>
-            /// Sends a command to the WSO backend via HbSendProxyCommand.
-            /// </summary>
-            public static void SendWsoCommand(string commandName)
-            {
-                try
-                {
-                    HbSendProxyCommand.SendWsoCommand(State.WebSocketClient, commandName);
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"Error sending WSO command '{commandName}': {ex.Message}");
-                }
-            }
-
             public static void PTT_Mode_Page_Up(dynamic vaProxy)
             {
                 if (State.configwindowopen && (State.configurationwindow != null))

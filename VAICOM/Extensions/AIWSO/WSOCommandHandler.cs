@@ -205,9 +205,9 @@ namespace VAICOM
                     string alpha1 = GetSegment(stationIndex - 2).Substring(0, 1);
                     string alpha2 = GetSegment(stationIndex - 1).Substring(0, 1);
                     string alpha3 = GetSegment(stationIndex).Substring(0, 1);
+                    string tacanStation = $"{alpha1}{alpha2}{alpha3}";
 
-                    string tacanCacheKey = $"nav_tacan_tr|{alpha1}{alpha2}{alpha3}";
-                    if (WSOActionCache.TryGetByActionAndName(tacanCacheKey, out string resolvedTacanStation)
+                    if (WSOActionCache.TryGetByActionAndName("nav_tacan_tr", tacanStation, out string resolvedTacanStation)
                             && !string.IsNullOrWhiteSpace(resolvedTacanStation))
                     {
                         HbSendProxyCommand.SendWsoCommand(State.WebSocketClient, "wMsgWSO_Navigation_TACAN_TuneStation", resolvedTacanStation);

@@ -837,7 +837,7 @@ namespace VAICOM
                     {
                         if (action.Equals("divert_tgt1_lat_lon", StringComparison.OrdinalIgnoreCase)
                             && AliasRequestsSecondaryFlightPlan()
-                            && WSOActionCache.TryGetByActionAndIndex($"{action}|fp2|{aliasIndex}", out string secondaryAliasIndexedValue)
+                            && WSOActionCache.TryGetByActionAndIndex(action, $"fp2|{aliasIndex}", out string secondaryAliasIndexedValue)
                             && !string.IsNullOrWhiteSpace(secondaryAliasIndexedValue))
                         {
                             resolvedValue = secondaryAliasIndexedValue;
@@ -845,7 +845,7 @@ namespace VAICOM
                             return true;
                         }
 
-                        if (WSOActionCache.TryGetByActionAndIndex($"{action}|{aliasIndex}", out string aliasIndexedValue)
+                        if (WSOActionCache.TryGetByActionAndIndex(action, aliasIndex, out string aliasIndexedValue)
                             && !string.IsNullOrWhiteSpace(aliasIndexedValue))
                         {
                             resolvedValue = aliasIndexedValue;
@@ -858,7 +858,7 @@ namespace VAICOM
                     {
                         if (action.Equals("divert_tgt1_lat_lon", StringComparison.OrdinalIgnoreCase)
                             && AliasRequestsSecondaryFlightPlan()
-                            && WSOActionCache.TryGetByActionAndIndex($"{action}|fp2|{index}", out string secondaryIndexedValue)
+                            && WSOActionCache.TryGetByActionAndIndex(action, $"fp2|{index}", out string secondaryIndexedValue)
                             && !string.IsNullOrWhiteSpace(secondaryIndexedValue))
                         {
                             resolvedValue = secondaryIndexedValue;
@@ -866,7 +866,7 @@ namespace VAICOM
                             return true;
                         }
 
-                        if (WSOActionCache.TryGetByActionAndIndex($"{action}|{index}", out string indexedValue)
+                        if (WSOActionCache.TryGetByActionAndIndex(action, index, out string indexedValue)
                             && !string.IsNullOrWhiteSpace(indexedValue))
                         {
                             resolvedValue = indexedValue;
@@ -1073,7 +1073,7 @@ namespace VAICOM
                     }
                 }
 
-                private static bool TryResolveValueForAirfield(string action, out string value)
+                private static bool TryResolveValueForATCAsset(string action, out string value)
                 {
                     if (!State.usedalias.ContainsKey("command"))
                     {
@@ -1089,9 +1089,9 @@ namespace VAICOM
                         return false;
                     }
 
-                    string airfield = commandRecipient.displayname;
+                    string name = commandRecipient.displayname;
 
-                    if (WSOActionCache.TryGetByActionAndName($"{action}|{airfield}", out string resolvedValue)
+                    if (WSOActionCache.TryGetByActionAndName(action, name, out string resolvedValue)
                         && !string.IsNullOrWhiteSpace(resolvedValue))
                     {
                         value = resolvedValue;
@@ -1099,7 +1099,7 @@ namespace VAICOM
                     }
                     else
                     {
-                        Log.Write($"Cache value not resolved for action {action} and airfield '{airfield}'", Colors.Warning);
+                        Log.Write($"Jester menu item not found for '{name}'", Colors.Warning);
                         value = "";
                         return false;
                     }
@@ -1134,7 +1134,7 @@ namespace VAICOM
                             if ((commandId.Equals("wMsgWSO_Radio_TuneATC")
                                 || commandId.Equals("wMsgWSO_Navigation_Divert_Airfield")
                                 || commandId.Equals("wMsgWSO_Navigation_TACAN_TuneAsset"))
-                                && !TryResolveValueForAirfield(action, out value))
+                                && !TryResolveValueForATCAsset(action, out value))
                             {
                                 return;
                             }

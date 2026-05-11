@@ -22,51 +22,23 @@ namespace VAICOM
 
                 private static string LastSignature = "";
 
-                public static bool TryHandleJesterMenuCacheLine(string receivedMessage)
+                public static bool TryHandleJesterMenuActionLine(string receivedMessage)
                 {
                     if (string.IsNullOrWhiteSpace(receivedMessage))
                     {
                         return false;
                     }
 
-                    const string prefix = "Jester Menu:";
+                    const string prefix = "Jester 2.0 Menu:";
                     if (!receivedMessage.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
                     {
                         return false;
                     }
 
                     string payload = receivedMessage.Substring(prefix.Length).Trim();
-                    string[] parts = payload.Split('|');
-                    if (parts.Length < 3)
-                    {
-                        return false;
-                    }
+                    Log.Write($"Received Jester 2.0 action: {payload}", Colors.Text);
 
-                    string category = parts[0].Trim();
-                    string action = parts[1].Trim();
-                    string value = string.Join("|", parts, 2, parts.Length - 2).Trim();
-
-                    if (!category.Equals("select", StringComparison.OrdinalIgnoreCase)
-                        || string.IsNullOrWhiteSpace(action)
-                        || string.IsNullOrWhiteSpace(value)
-                        || !value.Contains(";"))
-                    {
-                        return false;
-                    }
-
-                    JObject entry = new JObject
-                    {
-                        ["action"] = action,
-                        ["value"] = value
-                    };
-
-                    string index = TryExtractIndexFromValue(value);
-                    if (!string.IsNullOrWhiteSpace(index))
-                    {
-                        entry["idx"] = index;
-                    }
-
-                    return TryCacheEntry(entry);
+                    return true;
                 }
 
                 public static bool TryHandleActionCacheMessage(string receivedMessage)
@@ -147,6 +119,14 @@ namespace VAICOM
                     }
                 }
 
+                public static bool TryGetByActionAndIndex(string action, string index, out string value)
+                {
+                    bool hasEntry = TryGetByActionAndIndex($"{action}|{index}", out string entry);
+                    value = entry;
+
+                    return hasEntry;
+                }
+
                 public static bool TryGetByActionAndIndex(string cacheKey, out string value)
                 {
                     lock (CacheLock)
@@ -164,11 +144,11 @@ namespace VAICOM
                     return false;
                 }
 
-                public static bool TryGetByActionAndName(string cacheKey, out string value)
+                public static bool TryGetByActionAndName(string action, string name, out string value)
                 {
                     lock (CacheLock)
                     {
-                        bool hasEntry = CacheByActionAndName.TryGetValue(cacheKey, out string entry);
+                        bool hasEntry = CacheByActionAndName.TryGetValue($"{action}|{name}", out string entry);
 
                         if (hasEntry)
                         {
