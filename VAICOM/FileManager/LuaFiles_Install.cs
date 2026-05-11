@@ -14,6 +14,49 @@ namespace VAICOM
             public static partial class Lua
             {
 
+                private static void EnsureIcaoOverridesFile(string savedGamesRoot, string dcsVersionFolder, bool forcequiet)
+                {
+                    try
+                    {
+                        string targetFolder = Path.Combine(savedGamesRoot, dcsVersionFolder, "Scripts", "VAICOMPRO");
+                        if (!Directory.Exists(targetFolder))
+                        {
+                            Directory.CreateDirectory(targetFolder);
+                        }
+
+                        string targetPath = Path.Combine(targetFolder, "ICAOOverrides.lua");
+                        if (File.Exists(targetPath))
+                        {
+                            if (!forcequiet)
+                            {
+                                Log.Write("   Unchanged: ICAOOverrides.lua", Colors.Recognition);
+                            }
+                            return;
+                        }
+
+                        string content = Properties.Resources.ResourceManager.GetString("ICAOOverrides_lua");
+                        if (string.IsNullOrWhiteSpace(content))
+                        {
+                            Log.Write("ICAOOverrides.lua resource missing, skipping ICAO override file install.", Colors.Warning);
+                            return;
+                        }
+
+                        File.WriteAllText(targetPath, content);
+
+                        if (!forcequiet)
+                        {
+                            Log.Write("   Reset: ICAOOverrides.lua", Colors.Recognition);
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        if (!forcequiet)
+                        {
+                            Log.Write("Could not install ICAOOverrides.lua: " + e.Message, Colors.Warning);
+                        }
+                    }
+                }
+
                 public static void LuaFiles_Install(bool restore, bool forcequiet)
                 {
                     // --- finds all DCS install locations and manipulates lua files
@@ -187,6 +230,11 @@ namespace VAICOM
                                     if (!forcequiet)
                                     {
                                         Log.Write("   Saved Games folder = " + UserSavedGamesFolder + "\\" + Server.dcsversion[set.Key], Colors.Text);
+                                    }
+
+                                    if (!restore)
+                                    {
+                                        EnsureIcaoOverridesFile(UserSavedGamesFolder, Server.dcsversion[set.Key], forcequiet);
                                     }
 
                                     // ----- do LUA files -------------------

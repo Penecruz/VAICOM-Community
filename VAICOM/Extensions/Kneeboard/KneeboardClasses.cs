@@ -226,6 +226,98 @@ namespace VAICOM
                     return "";
                 }
 
+                private static bool IsOppositionAircraftThreat(Server.DcsUnit unit)
+                {
+                    if (unit == null)
+                    {
+                        return false;
+                    }
+
+                    string typeSource = (unit.typename ?? unit.fullname ?? "").ToUpperInvariant();
+                    if (string.IsNullOrWhiteSpace(typeSource))
+                    {
+                        return false;
+                    }
+
+                    if (typeSource.Contains("FARP")
+                        || typeSource.Contains("AIRBASE")
+                        || typeSource.Contains("FOB")
+                        || typeSource.Contains("CAMP"))
+                    {
+                        return false;
+                    }
+
+                    return typeSource.Any(char.IsDigit) || typeSource.Contains("-") || typeSource.Contains("_");
+                }
+
+                private static string ExtractIcaoFromMetar(string metar)
+                {
+                    if (string.IsNullOrWhiteSpace(metar))
+                    {
+                        return null;
+                    }
+
+                    Match m = Regex.Match(metar, @"\bMETAR\s+([A-Z]{4})\b", RegexOptions.IgnoreCase);
+                    if (m.Success)
+                    {
+                        return m.Groups[1].Value.ToUpperInvariant();
+                    }
+
+                    return null;
+                }
+
+                private static string ResolveAtcDisplayCallsign(Server.DcsUnit unit)
+                {
+                    if (unit == null || State.currentstate == null || State.currentstate.atcmetars == null)
+                    {
+                        return unit != null ? unit.callsign : string.Empty;
+                    }
+
+                    string[] keys =
+                    {
+                        unit.callsign,
+                        unit.fullname,
+                        unit.callsign != null ? unit.callsign.ToUpperInvariant() : null,
+                        unit.fullname != null ? unit.fullname.ToUpperInvariant() : null,
+                    };
+
+                    foreach (string key in keys)
+                    {
+                        if (string.IsNullOrWhiteSpace(key))
+                        {
+                            continue;
+                        }
+
+                        if (State.currentstate.atcmetars.TryGetValue(key, out string metar))
+                        {
+                            string icao = ExtractIcaoFromMetar(metar);
+                            if (!string.IsNullOrWhiteSpace(icao))
+                            {
+                                return icao;
+                            }
+                        }
+                    }
+
+                    return unit.callsign;
+                }
+
+                private static string GetOppositionTypeKey(Server.DcsUnit unit)
+                {
+                    return ((unit?.typename ?? unit?.fullname ?? "unknown").Trim()).ToUpperInvariant();
+                }
+
+                private static double GetSurfaceDistanceMeters(Server.DcsUnit a, Server.DcsUnit b)
+                {
+                    if (a?.pos == null || b?.pos == null)
+                    {
+                        return double.MaxValue;
+                    }
+
+                    double dx = a.pos.x - b.pos.x;
+                    double dz = a.pos.z - b.pos.z;
+                    return Math.Sqrt((dx * dx) + (dz * dz));
+                }
+
                 public string category;
                 public List<string> unitslist;
                 public int timer;
@@ -247,6 +339,91 @@ namespace VAICOM
 
                     unitslist = new List<string>();
                     List<KneeboardUnitSummary> units = new List<KneeboardUnitSummary>();
+
+                    if (cat.Equals("AWACS", StringComparison.OrdinalIgnoreCase))
+                    {
+                        bool awacsAvailable = State.currentstate.availablerecipients.ContainsKey("AWACS")
+                            && State.currentstate.availablerecipients["AWACS"] != null
+                            && State.currentstate.availablerecipients["AWACS"].Count > 0;
+
+                        unitslist.Add("AWACS:");
+
+                        if (awacsAvailable)
+                        {
+                            foreach (Server.DcsUnit awacs in State.currentstate.availablerecipients["AWACS"].OrderBy(u => u.range))
+                            {
+                                string awacsLine = awacs.getfreqstr() + " " + awacs.callsign + " " + awacs.getbearingstr() + "/" + awacs.getrangestr() + "/" + awacs.getaltstr();
+                                if (!string.IsNullOrWhiteSpace(awacs.tacan))
+                                {
+                                    awacsLine += " TACAN " + awacs.tacan;
+                                }
+                                unitslist.Add(awacsLine);
+                            }
+                        }
+                        else
+                        {
+                            unitslist.Add("No AWACS available.");
+                        }
+
+                        unitslist.Add("");
+                        unitslist.Add("Datalink Threats:");
+
+                        if (!awacsAvailable)
+                        {
+                            unitslist.Add("No Datalink threats are displayed.");
+                            return;
+                        }
+
+                        List<Server.DcsUnit> opposition = new List<Server.DcsUnit>();
+                        if (State.currentstate.availablerecipients.ContainsKey("Opposition")
+                            && State.currentstate.availablerecipients["Opposition"] != null)
+                        {
+                            opposition = State.currentstate.availablerecipients["Opposition"];
+                        }
+
+                        const double contactMergeDistanceMeters = 5d * 1852d;
+                        List<List<Server.DcsUnit>> groupedThreats = new List<List<Server.DcsUnit>>();
+
+                        foreach (Server.DcsUnit threat in opposition
+                            .Where(IsOppositionAircraftThreat)
+                            .Where(u => !State.currentstate.multiplayer || !u.ishuman)
+                            .OrderBy(u => u.range))
+                        {
+                            string typeKey = GetOppositionTypeKey(threat);
+                            List<Server.DcsUnit> targetGroup = groupedThreats.FirstOrDefault(g =>
+                                g.Count > 0
+                                && GetOppositionTypeKey(g[0]).Equals(typeKey, StringComparison.OrdinalIgnoreCase)
+                                && GetSurfaceDistanceMeters(g[0], threat) <= contactMergeDistanceMeters);
+
+                            if (targetGroup == null)
+                            {
+                                groupedThreats.Add(new List<Server.DcsUnit> { threat });
+                            }
+                            else
+                            {
+                                targetGroup.Add(threat);
+                            }
+                        }
+
+                        foreach (List<Server.DcsUnit> group in groupedThreats.OrderBy(g => g.Min(u => u.range)))
+                        {
+                            Server.DcsUnit threat = group.OrderBy(u => u.range).First();
+                            string fullName = !string.IsNullOrWhiteSpace(threat.fullname) ? threat.fullname : (threat.typename ?? "unknown");
+                            string line = fullName + " " + threat.getbearingstr() + "/" + threat.getrangestr() + "/" + threat.getaltstr();
+                            if (group.Count > 1)
+                            {
+                                line += " " + group.Count + " Contacts";
+                            }
+                            unitslist.Add(line);
+                        }
+
+                        if (unitslist.Count == 3)
+                        {
+                            unitslist.Add("No Datalink threats are displayed.");
+                        }
+
+                        return;
+                    }
 
                     //Log.Write($"Processing {State.currentstate.availablerecipients[cat].Count} {cat} units for kneeboard.", Colors.Text);
                     //Log.Write($"Current Theater: {State.currentstate.theatre}", Colors.Text);
@@ -406,8 +583,8 @@ namespace VAICOM
 
                             string lineitem = descr.frq + (descr.frq2 != null ? " / " + descr.frq2 : "") + " " +
                                               "[" + descr.alias + "]" + descr.istuned + " " +
-                                              descr.callsign + tankerTypeInfo + " " + descr.bearing + " " +
-                                               descr.range + " " + descr.alt + " " + altfreqs + tacanInfo;
+                                              (cat.Equals("ATC", StringComparison.OrdinalIgnoreCase) ? ResolveAtcDisplayCallsign(unit) : descr.callsign) + tankerTypeInfo + " " + descr.bearing + "/" +
+                                               descr.range + "/" + descr.alt + " " + altfreqs + tacanInfo;
 
                             if (cat.Equals("ATC", StringComparison.OrdinalIgnoreCase)
                                 && !string.IsNullOrWhiteSpace(State.currentstate.metar)

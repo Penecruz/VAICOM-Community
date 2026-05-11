@@ -223,8 +223,7 @@ namespace VAICOM.Properties {
         ///    self.window = Window.new(0, 0, 1280, 30)
         ///    self.window:setHasCursor(false)
         ///    self.window:setVisible(false)
-        ///
-        /// [rest of string was truncated]&quot;;.
+        ///        /// [rest of string was truncated]&quot;;.
         /// </summary>
         public static string Append_Core_TabSheetBar {
             get {
@@ -318,29 +317,25 @@ namespace VAICOM.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to // VAICOM PRO server-side script
+        ///   Looks up a localized string similar to // VAICOM server-side script
         ///// Jester 2.0 interface.js
-        ///// www.vaicompro.com
         ///
-        ///function isSocketOpen() {
-        ///	return socket &amp;&amp; socket.readyState === WebSocket.OPEN;
-        ///}
+        ///// WebSocket connection to VAICOM
+        ///let socket;
         ///
-        ///function collectNavCacheEntries(menu, path, entries) {
-        ///	if (!menu || !menu.items || !entries) {
+        ///// Create WebSocket connection and event listeners.
+        ///function openSocketConnection() {
+        ///	// Don&apos;t reconnect if we already have an open connection, or are
+        ///	// already attempting to open a new one.
+        ///	if (isSocketOpen() || isSocketConnecting()) {
         ///		return;
         ///	}
         ///
-        ///	for (let i = 0; i &lt; menu.items.length; i++) {
-        ///		const item = menu.items[i];
-        ///		if (!item) {
-        ///			continue;
-        ///		}
+        ///	socket = new WebSocket(&quot;ws://127.0.0.1:33495/vaicom/wso/&quot;);
         ///
-        ///		const itemName = item.name || &quot;&quot;;
-        ///		const itemPath = path.concat([itemName]);
-        ///
-        ///		if (item.action &amp;&amp; t [rest of string was truncated]&quot;;.
+        ///	// Connection opened
+        ///	socket.addEventListener(&quot;open&quot;, (event) =&gt; {
+        ///		soc [rest of string was truncated]&quot;;.
         /// </summary>
         public static string Append_F4E_Jester_Interface {
             get {
@@ -986,6 +981,31 @@ namespace VAICOM.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to -- VAICOM ICAO override table
+        ///--
+        ///-- Purpose:
+        ///--   Provide per-terrain ATC name/callsign -&gt; ICAO designator mappings for ATC unit and METAR output.
+        ///--
+        ///-- Runtime location expected by DCS Lua:
+        ///--   Saved Games\DCS\Scripts\VAICOMPRO\ICAOOverrides.lua
+        ///--   (or Saved Games\DCS.openbeta\Scripts\VAICOMPRO\ICAOOverrides.lua)
+        ///--
+        ///-- Key normalization in runtime lookup:
+        ///--   - Uppercase
+        ///--   - &apos;_&apos; &apos;-&apos; &apos;/&apos; &apos;.&apos; &apos;,&apos; &apos;(&apos; &apos;)&apos; =&gt; spaces
+        ///--   - repeated spaces collapsed
+        ///--
+        ///-- Example:
+        ///--   [&quot;caucasus&quot;] = {
+        ///-- [rest of string was truncated]&quot;;.
+        /// </summary>
+        public static string ICAOOverrides_lua {
+            get {
+                return ResourceManager.GetString("ICAOOverrides_lua", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized resource of type System.Byte[].
         /// </summary>
         public static byte[] icon {
@@ -1176,8 +1196,7 @@ namespace VAICOM.Properties {
         ///				[&quot;text&quot;] = {
         ///					[&quot;fontSize&quot;] = 10,
         ///					[&quot;horzAlign&quot;] = {
-        ///						[&quot;type&quot;] = &quot;min&quot;
-        /// [rest of string was truncated]&quot;;.
+        ///						[&quot;type&quot;] = &quot;min&quot;        /// [rest of string was truncated]&quot;;.
         /// </summary>
         public static string options {
             get {
@@ -1190,7 +1209,6 @@ namespace VAICOM.Properties {
         ///{
         ///	VAICOM_TITLE		= &apos;$HEADER$&apos;,
         ///	VAICOM_VERSION		= &apos;$VERSION$&apos;,
-        ///	VAICOM_LICENSE		= &apos;$LICENSE$&apos;,
         ///
         ///	VAICOM_DLLPLUGIN	= &apos;$DLLPLUGIN$&apos;,
         ///	VAICOM_DLLCHATTER	= &apos;$DLLCHATTER$&apos;,

@@ -222,6 +222,7 @@ namespace VAICOM
 
             public static bool tunedforAOCS;
 
+
             public static void ProcessServerData()
             {
                 State.deepdebugmode = State.clientmode.Equals(ClientModes.Debug) || State.currentstate.playerusername.Equals(State.debuguser);

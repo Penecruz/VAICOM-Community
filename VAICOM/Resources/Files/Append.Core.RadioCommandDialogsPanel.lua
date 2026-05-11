@@ -1617,6 +1617,71 @@ base.vaicom.objects = {
 			Collection = base.coalition.getPlayers and base.coalition.getPlayers(getside)
 		return Collection
 	end,	
+   localOpposition = function(getside)
+		local Collection = {}
+		local opposite = nil
+		if getside == base.coalition.side.BLUE then opposite = base.coalition.side.RED end
+		if getside == base.coalition.side.RED then opposite = base.coalition.side.BLUE end
+
+		local function addUniqueUnit(unit)
+			if unit == nil then return end
+			local uid = unit.id_
+			if uid == nil then
+				base.table.insert(Collection, unit)
+				return
+			end
+			for _, existing in base.pairs(Collection) do
+				if existing ~= nil and existing.id_ == uid then
+					return
+				end
+			end
+			base.table.insert(Collection, unit)
+		end
+
+		local function addUnits(units)
+			if units ~= nil and base.type(units) == "table" then
+				for _, u in base.pairs(units) do
+					addUniqueUnit(u)
+				end
+			end
+		end
+
+		local function addGroupAircraft(group)
+			if group == nil then return end
+			local okUnits, units = base.pcall(function() return group:getUnits() end)
+			if okUnits and units ~= nil and base.type(units) == "table" then
+				for _, u in base.pairs(units) do
+					addUniqueUnit(u)
+				end
+			end
+		end
+		if opposite then
+           addUnits(base.vaicom.objects.localJTACs(opposite))
+			addUnits(base.vaicom.objects.localAWACSs(opposite))
+			addUnits(base.vaicom.objects.localTankers(opposite))
+			addUnits(base.vaicom.objects.localATCs(opposite))
+			addUnits(base.vaicom.objects.localAllies(opposite))
+
+			local okPlaneGroups, planeGroups = base.pcall(function()
+				return base.coalition.getGroups and base.coalition.getGroups(opposite, base.Group.Category.AIRPLANE)
+			end)
+			if okPlaneGroups and planeGroups ~= nil and base.type(planeGroups) == "table" then
+				for _, g in base.pairs(planeGroups) do
+					addGroupAircraft(g)
+				end
+			end
+
+			local okHeliGroups, heliGroups = base.pcall(function()
+				return base.coalition.getGroups and base.coalition.getGroups(opposite, base.Group.Category.HELICOPTER)
+			end)
+			if okHeliGroups and heliGroups ~= nil and base.type(heliGroups) == "table" then
+				for _, g in base.pairs(heliGroups) do
+					addGroupAircraft(g)
+				end
+			end
+		end
+		return Collection
+	end,
 }
 base.vaicom.list = {
 	localRadios = function()
@@ -1771,6 +1836,17 @@ base.vaicom.list = {
 		end
 		return Listing
 	end,
+   localOpposition = function(selectstr)
+		local Listing = {}
+		local coalition = data.pUnit and data.pUnit:getCoalition()
+		if coalition then
+			Listing = base.vaicom.helper.mergetables(Listing, base.vaicom.objects.localOpposition(coalition))
+		end
+		if Listing ~= nil and #Listing > 1 then
+			base.table.sort(Listing, base.vaicom.helper.sortby.distance)
+		end
+		return Listing
+	end,
 }
 base.vaicom.get = { 
 	serverdata  ={	
@@ -1835,6 +1911,10 @@ base.vaicom.get = {
 				end,
 				Allies  = function(sortfunction, radio)
 					local Stack = base.vaicom.list.localAllies(radio)
+					return Stack	
+				end,
+              Opposition  = function(sortfunction, radio)
+					local Stack = base.vaicom.list.localOpposition(radio)
 					return Stack	
 				end,
 				},
@@ -1903,6 +1983,7 @@ base.vaicom.state = {
 									ATC				= {},
 									AWACS			= {}, 
 									Tanker			= {},
+                                   Opposition		= {},
 									Crew			= {},
 									Aux				= {},
 									Moose		    = {}, -- Add moose
@@ -1916,6 +1997,7 @@ base.vaicom.state = {
 									ATC				= 0, 
 									AWACS			= 0, 
 									Tanker			= 0,
+                                    Opposition		= 0,
 									Crew			= 0,
 									Aux				= 0,
 									Moose			= 0, -- Add Moose
@@ -1989,6 +2071,7 @@ base.vaicom.state = {
 				base.vaicom.state.availablerecipients.ATC			= data.initialized and base.vaicom.get.missiondata.listby.ATC(base.vaicom.helper.sortby.distance, 	"radio")
 				base.vaicom.state.availablerecipients.AWACS			= data.initialized and base.vaicom.get.missiondata.listby.AWACS(base.vaicom.helper.sortby.distance, "radio")
 				base.vaicom.state.availablerecipients.Tanker		= data.initialized and base.vaicom.get.missiondata.listby.Tanker(base.vaicom.helper.sortby.distance,"radio") 
+               base.vaicom.state.availablerecipients.Opposition	= data.initialized and base.vaicom.get.missiondata.listby.Opposition(base.vaicom.helper.sortby.distance, "radio")
 				base.vaicom.state.availablerecipients.Crew			= data.initialized and base.vaicom.get.missiondata.listby.Crew(base.vaicom.helper.sortby.distance, 	"radio") 
 				base.vaicom.state.availablerecipients.Aux			= data.initialized and base.vaicom.get.missiondata.listby.Aux(base.vaicom.helper.sortby.distance, 	"radio")
 				base.vaicom.state.availablerecipients.Moose			= data.initialized and base.vaicom.get.missiondata.listby.Moose(base.vaicom.helper.sortby.distance, "radio") -- Add moose
@@ -2030,15 +2113,98 @@ base.vaicom.state = {
 					return missionObj
 				end
 
+				local function extractIcaoToken(text)
+					local s = base.string.upper(base.tostring(text or ""))
+					return base.string.match(s, "%u%u%u%u")
+				end
+
+				local function normalizeIcaoKey(text)
+					local s = base.string.upper(base.tostring(text or ""))
+					s = base.string.gsub(s, "[_%-/%.%,%(%)]", " ")
+					s = base.string.gsub(s, "%s+", " ")
+					s = base.string.gsub(s, "^%s+", "")
+					s = base.string.gsub(s, "%s+$", "")
+					return s
+				end
+
+				local function loadIcaoOverrides()
+					base.vaicom.state.icaooverrides = base.vaicom.state.icaooverrides or {}
+					local now = base.Export.LoGetModelTime and base.Export.LoGetModelTime() or 0
+					if base.vaicom.state.icaooverrides.lastload and (now - base.vaicom.state.icaooverrides.lastload) < 30 then
+						return base.vaicom.state.icaooverrides.table or {}
+					end
+
+                 local overrides = {}
+					local runtimeLoad = base.loadfile or loadfile
+					local candidatePaths = {}
+					if base.lfs and base.lfs.writedir then
+						base.table.insert(candidatePaths, base.lfs.writedir() .. "Scripts\\VAICOMPRO\\ICAOOverrides.lua")
+						base.table.insert(candidatePaths, base.lfs.writedir() .. "Scripts\\Aircrafts\\_Common\\Cockpit\\VAICOMPRO\\device\\ICAOOverrides.lua")
+					end
+
+					for _, path in base.pairs(candidatePaths) do
+						if runtimeLoad then
+							local okLoad, chunk = base.pcall(function()
+								return runtimeLoad(path)
+							end)
+							if okLoad and chunk ~= nil then
+								local okExec, result = base.pcall(chunk)
+								if okExec and base.type(result) == "table" then
+									overrides = result
+									break
+								end
+							end
+						end
+					end
+
+					base.vaicom.state.icaooverrides.table = overrides
+					base.vaicom.state.icaooverrides.lastload = now
+					return overrides
+				end
+
+				local function resolveIcaoForAtc(callsign, atcName)
+					local overrides = loadIcaoOverrides()
+					local theatre = base.string.lower(base.tostring(base.vaicom.state and base.vaicom.state.theatre or ""))
+					local keyCallsign = normalizeIcaoKey(callsign)
+					local keyName = normalizeIcaoKey(atcName)
+
+					local function readCode(scope, key)
+						if base.type(scope) ~= "table" or key == "" then
+							return nil
+						end
+						local value = scope[key]
+						if value == nil then
+							return nil
+						end
+						local code = base.string.upper(base.tostring(value))
+						if base.string.match(code, "^%u%u%u%u$") then
+							return code
+						end
+						return nil
+					end
+
+					local theatreTable = overrides[theatre]
+					local fallbackTable = overrides.default
+					local mapped = readCode(theatreTable, keyCallsign)
+						or readCode(theatreTable, keyName)
+						or readCode(fallbackTable, keyCallsign)
+						or readCode(fallbackTable, keyName)
+                 if mapped ~= nil then
+						return mapped
+					end
+
+					local direct = extractIcaoToken(callsign)
+					if direct ~= nil then
+						return direct
+					end
+
+					return nil
+				end
+
               local function buildMetarForAtcInfo(atcInfoOverride)
 					local missionObj = getMissionObject()
 					if base.type(missionObj) ~= "table" then
 						return ""
-					end
-
-					local function extractIcao(text)
-						local s = base.string.upper(base.tostring(text or ""))
-						return base.string.match(s, "%u%u%u%u")
 					end
 
 					local function isRotorModule()
@@ -2111,7 +2277,13 @@ base.vaicom.state = {
 										callsign = base.tostring(valueCallsign)
 									end
 
-                                  local icao = extractIcao(callsign)
+									local atcName = ""
+									local okDescName, atcDesc = base.pcall(function() return atc:getDesc() end)
+									if okDescName and atcDesc ~= nil then
+										atcName = base.tostring(atcDesc.displayName or atcDesc.typeName or "")
+									end
+
+									local icao = resolveIcaoForAtc(callsign, atcName)
 									local rotor = isRotorModule()
 									local heliport = isHeliportAtc(atc)
 									if (rotor and icao ~= nil) or ((not rotor) and icao ~= nil and (not heliport)) then
@@ -2135,6 +2307,17 @@ base.vaicom.state = {
 					if base.type(weather) ~= "table" then
 						return ""
 					end
+
+                 local missionDate = missionObj.date or {}
+					local reportDay = base.tonumber(missionDate.Day or missionDate.day) or 1
+					if reportDay < 1 then reportDay = 1 end
+					if reportDay > 31 then reportDay = 31 end
+					local missionStartSec = base.tonumber(base.vaicom.state and base.vaicom.state.tod or 0) or 0
+					local elapsedSec = base.tonumber(base.vaicom.state and base.vaicom.state.timer or 0) or 0
+					local reportSec = (missionStartSec + elapsedSec) % 86400
+					if reportSec < 0 then reportSec = reportSec + 86400 end
+					local reportHour = base.math.floor(reportSec / 3600)
+					local reportMin = base.math.floor((reportSec - (reportHour * 3600)) / 60)
 
                  local atcInfo = atcInfoOverride or getClosestAtcInfo()
 					local stationElevationFt = base.tonumber(atcInfo and atcInfo.elevationFt or 0) or 0
@@ -2189,14 +2372,27 @@ base.vaicom.state = {
 						return base.string.format("%02d", n)
 					end
 
+					local function angularDiff(a, b)
+						if a == nil or b == nil then return 0 end
+						local d = base.math.abs(a - b) % 360
+						if d > 180 then d = 360 - d end
+						return d
+					end
+
 					local dirFrom = toInt(windDir)
 					if dirFrom ~= nil then
 						dirFrom = (dirFrom + 180) % 360
                      dirFrom = (base.math.floor((dirFrom + 5) / 10) * 10) % 360
 					end
 
+                    local groundFrom = toInt(groundWindDir)
+					if groundFrom ~= nil then groundFrom = (groundFrom + 180) % 360 end
+					local upperFrom = toInt(upperWindDir)
+					if upperFrom ~= nil then upperFrom = (upperFrom + 180) % 360 end
+
                    local spdKt = toInt((base.tonumber(windSpd) or 0) * 1.94384) or 0
 					local visM = toInt(vis) or 9999
+					local turbulence = base.tonumber(weather.groundTurbulence)
 
 					local function minPositive(a, b)
 						local an = base.tonumber(a)
@@ -2367,6 +2563,10 @@ base.vaicom.state = {
 						base.table.insert(wx, precipCode)
 					end
 
+					if precipCode ~= nil and base.string.find(precipCode, "TS", 1, true) and cloudPart ~= "SKC" and base.string.find(cloudPart, "CB", 1, true) == nil then
+						cloudPart = cloudPart .. "CB"
+					end
+
 					local wxPart = ""
 					if #wx > 0 then
 						wxPart = base.table.concat(wx, " ") .. " "
@@ -2382,9 +2582,29 @@ base.vaicom.state = {
 						end
 					end
 
-                  local windPart = "00000KT"
-					if spdKt > 0 and dirFrom ~= nil then
-						windPart = pad3(dirFrom) .. pad2(spdKt) .. "KT"
+                    local windPart = "00000KT"
+					local gustKt = nil
+					if turbulence ~= nil and spdKt > 0 then
+						gustKt = toInt(spdKt + base.math.max(0, ((turbulence - 20) / 4)))
+						if gustKt ~= nil and gustKt > (spdKt + 35) then gustKt = spdKt + 35 end
+					end
+					if dirFrom ~= nil then
+						if spdKt <= 2 then
+							windPart = "VRB" .. pad2(spdKt) .. "KT"
+						else
+							windPart = pad3(dirFrom) .. pad2(spdKt)
+							if gustKt ~= nil and gustKt >= (spdKt + 4) then
+								windPart = windPart .. "G" .. pad2(gustKt)
+							end
+							windPart = windPart .. "KT"
+						end
+					end
+
+					local windVarPart = ""
+					if spdKt > 3 and groundFrom ~= nil and upperFrom ~= nil and angularDiff(groundFrom, upperFrom) >= 60 then
+						local low = base.math.min(groundFrom, upperFrom)
+						local high = base.math.max(groundFrom, upperFrom)
+						windVarPart = " " .. pad3(low) .. "V" .. pad3(high)
 					end
 
                    local useCavok = false
@@ -2402,11 +2622,17 @@ base.vaicom.state = {
 					if useCavok then
 						skyPart = "CAVOK"
 					else
-						skyPart = base.string.format("%04d", visM) .. " " .. wxPart .. cloudPart
+                        local useVV = cloudAtGround and ((base.tonumber(fogVis) or 0) > 0 or visM < 1000)
+						if useVV then
+							local vvHundreds = toInt((cloudBaseAglFt or 0) / 100)
+							if vvHundreds == nil or vvHundreds < 1 then vvHundreds = 1 end
+							skyPart = base.string.format("%04d", visM) .. " " .. wxPart .. "VV" .. pad3(vvHundreds)
+						else
+							skyPart = base.string.format("%04d", visM) .. " " .. wxPart .. cloudPart
+						end
 					end
 
 					local rmkPart = ""
-					local turbulence = base.tonumber(weather.groundTurbulence)
                    if turbulence ~= nil then
 						if turbulence > 40 then
 							rmkPart = " RMK SEV TURB B050"
@@ -2416,7 +2642,8 @@ base.vaicom.state = {
 					end
 
                   local station = atcInfo and atcInfo.icao or "DCS"
-					return station .. " " .. windPart .. " " .. skyPart .. " " .. tempPart .. " Q" .. base.string.format("%04d", qnhHpa) .. rmkPart
+                 local metarTime = pad2(reportDay) .. pad2(reportHour) .. pad2(reportMin) .. "Z"
+					return "METAR " .. station .. " " .. metarTime .. " " .. windPart .. windVarPart .. " " .. skyPart .. " " .. tempPart .. " Q" .. base.string.format("%04d", qnhHpa) .. rmkPart
 				end
 
 				local function buildAtcMetar()
@@ -2428,11 +2655,6 @@ base.vaicom.state = {
 					local atcs = base.vaicom.state and base.vaicom.state.availablerecipients and base.vaicom.state.availablerecipients.ATC
 					if base.type(atcs) ~= "table" then
 						return result
-					end
-
-					local function extractIcao(text)
-						local s = base.string.upper(base.tostring(text or ""))
-						return base.string.match(s, "%u%u%u%u")
 					end
 
 					for _, atc in base.pairs(atcs) do
@@ -2447,7 +2669,13 @@ base.vaicom.state = {
 									callsign = base.tostring(valueCallsign)
 								end
 
-								local icao = extractIcao(callsign)
+                              local atcName = ""
+								local okDescName, atcDesc = base.pcall(function() return atc:getDesc() end)
+								if okDescName and atcDesc ~= nil then
+									atcName = base.tostring(atcDesc.displayName or atcDesc.typeName or "")
+								end
+
+								local icao = resolveIcaoForAtc(callsign, atcName)
 								local stationInfo = {
 									icao = icao or "DCS",
 									elevationFt = (base.tonumber(atcPoint.y) or 0) * 3.28084
@@ -2835,6 +3063,7 @@ base.vaicom.state = {
 																JTAC 		= {},
 																AWACS		= {},
 																Tanker		= {},
+                                   Opposition	= {},
 																Crew		= {},
 																Aux			= {},		
 																Cargo		= {},
@@ -2918,6 +3147,7 @@ base.vaicom.state = {
 										index = n,
 										id_ = base.vaicom.properties.id(k),
 										callsign = base.tostring(base.vaicom.properties.missioncallsign(k)),
+                                    typename = base.tostring(base.vaicom.properties.typename(k)),
 										range = base.vaicom.properties.range(k),
 										pos = base.vaicom.properties.pos(k),
 										fullname = base.tostring(base.vaicom.properties.displayname(k)),

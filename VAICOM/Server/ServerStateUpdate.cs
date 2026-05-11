@@ -172,7 +172,7 @@ namespace VAICOM
                 processingchunks = true;
                 try
                 {
-                    List<string> cats = new List<string>() { "Player", "Flight", "JTAC", "AWACS", "Tanker", "Crew", "Aux", "Cargo" };
+                    List<string> cats = new List<string>() { "Player", "Flight", "JTAC", "AWACS", "Tanker", "Opposition", "Crew", "Aux", "Cargo" };
                     foreach (string catstr in cats)
                     {
                         try
@@ -180,7 +180,14 @@ namespace VAICOM
                             foreach (DcsUnit a in serverMessage.availablerecipients[catstr])
                             {
                                 a.reccat = catstr;
-                                a.descr = catdescriptions[catstr];
+                                if (catstr.Equals("Opposition", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    a.descr = "OPPOSITION";
+                                }
+                                else
+                                {
+                                    a.descr = catdescriptions[catstr];
+                                }
                                 State.currentstate.availablerecipients[catstr].Add(a);
                             }
                         }
