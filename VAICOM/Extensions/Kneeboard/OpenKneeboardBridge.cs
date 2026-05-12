@@ -600,17 +600,19 @@ namespace VAICOM
               unitLines.splice(metarIdx, 1);
             }
 
-            metarLine = 'METAR: ' + (metarParts.length ? metarParts.join(' ') : '-');
+            metarLine = metarParts.length ? metarParts.join(' ') : '-';
           } else {
             metarLine = metarLine.replace(/\s*\n\s*/g, ' ').trim();
           }
+
+          metarLine = metarLine.replace(/^METAR:\s*/i, '').trim();
 
           parts.push('Weather:\n  ' + metarLine);
 
           if (selectedAtcMetarKey) {
             const selectedMetar = atcMetars[selectedAtcMetarKey] || '';
             if (selectedMetar) {
-              parts.push('Selected Airfield Weather:\n  METAR: ' + String(selectedMetar));
+              parts.push('Selected Airfield Weather:\n  ' + String(selectedMetar).replace(/^METAR:\s*/i, '').trim());
             }
           }
         }
@@ -646,7 +648,7 @@ namespace VAICOM
       }
 
       if (tab === 'ATC' && metarPressureInHg) {
-        text = text.replace(/(METAR:\s+[^\n]*?)\b(\d{4}|9999)\b(\s+.*?\s+)Q(\d{4})\b/g, function(_, prefix, vism, middle, qhpa){
+        text = text.replace(/((?:METAR:\s+|METAR\s+)[^\n]*?)\b(\d{4}|9999)\b(\s+.*?\s+)Q(\d{4})\b/g, function(_, prefix, vism, middle, qhpa){
           const visSm = metersToSmToken(vism);
           const hpa = parseInt(qhpa, 10);
           if (!isFinite(hpa)) return _;
@@ -655,7 +657,7 @@ namespace VAICOM
           return prefix + visToken + middle + 'A' + inhg;
         });
 
-        text = text.replace(/(METAR:\s+[^\n]*?\bCAVOK\b[^\n]*?\s+)Q(\d{4})\b/g, function(_, prefix, qhpa){
+        text = text.replace(/((?:METAR:\s+|METAR\s+)[^\n]*?\bCAVOK\b[^\n]*?\s+)Q(\d{4})\b/g, function(_, prefix, qhpa){
           const hpa = parseInt(qhpa, 10);
           if (!isFinite(hpa)) return _;
           const inhg = (hpa * 0.0295299830714).toFixed(2);

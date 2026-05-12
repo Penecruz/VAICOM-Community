@@ -85,6 +85,7 @@ namespace VAICOM
                 public int index;
                 public int id_;
                 public string callsign;
+                public string typename;
                 public int range;
                 public Vector pos;
                 public string reccat;
@@ -326,6 +327,7 @@ namespace VAICOM
                         {"ATC",     new List<DcsUnit>()},
                         {"AWACS",   new List<DcsUnit>()},
                         {"Tanker",  new List<DcsUnit>()},
+                        {"Opposition", new List<DcsUnit>()},
                         {"Crew",    new List<DcsUnit>()},
                         {"Aux",     new List<DcsUnit>()},
                         {"Cargo",   new List<DcsUnit>()},
