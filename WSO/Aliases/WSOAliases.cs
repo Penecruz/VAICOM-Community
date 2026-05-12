@@ -54,6 +54,7 @@ namespace VAICOM.Extensions.WSO
             { "TV Weapons", "wMsgWSO_A2G_TVWeapons" },
             { "TV Pave Spike", "wMsgWSO_A2G_TVPaveSpike" },
             { "Divert To Airfield", "wMsgWSO_Navigation_Divert_Airfield" },
+            { "Divert To Asset", "wMsgWSO_Navigation_Divert_Asset" },
             { "Hold Current Turn Point", "wMsgWSO_Navigation_Holding_ActivateCurrentTurnPoint" },
             { "Hold Waypoint", "wMsgWSO_Navigation_Holding_ActivateCurrentTurnPoint" },
             { "Deactivate Current Turn Point", "wMsgWSO_Navigation_Holding_DeactivateCurrentTurnPoint" },

@@ -813,17 +813,17 @@ namespace VAICOM
                         return true;
                     }
 
-                    if (TryResolveValueFromNavCache(action, State.currentfullsentence, out string cachedValue, out string cacheKey))
+                    if (TryResolveValueFromActionCache(action, State.currentfullsentence, out string cachedValue, out string cacheKey))
                     {
                         resolvedValue = cachedValue;
-                        Log.Write($"WSO command '{commandId}' resolved from NAV cache [{cacheKey}] => {cachedValue}", Colors.Text);
+                        Log.Write($"WSO command '{commandId}' resolved from action cache [{cacheKey}] => {cachedValue}", Colors.Text);
                         return true;
                     }
 
                     return true;
                 }
 
-                private static bool TryResolveValueFromNavCache(string action, string sentence, out string resolvedValue, out string cacheKey)
+                private static bool TryResolveValueFromActionCache(string action, string sentence, out string resolvedValue, out string cacheKey)
                 {
                     resolvedValue = "";
                     cacheKey = "";
@@ -875,7 +875,7 @@ namespace VAICOM
                         }
                     }
 
-                    string normalizedSentence = NormalizeNavLookupText(sentence);
+                    string normalizedSentence = NormalizeActionLookupText(sentence);
                     if (!string.IsNullOrWhiteSpace(normalizedSentence))
                     {
                         string bestValue = "";
@@ -892,7 +892,7 @@ namespace VAICOM
                                 }
 
                                 string candidateName = entry.Key.Substring(action.Length + 1);
-                                string normalizedCandidate = NormalizeNavLookupText(candidateName);
+                                string normalizedCandidate = NormalizeActionLookupText(candidateName);
                                 if (string.IsNullOrWhiteSpace(normalizedCandidate))
                                 {
                                     continue;
@@ -1105,7 +1105,7 @@ namespace VAICOM
                     }
                 }
 
-                private static string NormalizeNavLookupText(string input)
+                private static string NormalizeActionLookupText(string input)
                 {
                     if (string.IsNullOrWhiteSpace(input))
                     {
@@ -1133,6 +1133,7 @@ namespace VAICOM
 
                             if ((commandId.Equals("wMsgWSO_Radio_TuneATC")
                                 || commandId.Equals("wMsgWSO_Navigation_Divert_Airfield")
+                                || commandId.Equals("wMsgWSO_Navigation_Divert_Asset")
                                 || commandId.Equals("wMsgWSO_Navigation_TACAN_TuneAsset"))
                                 && !TryResolveValueForATCAsset(action, out value))
                             {

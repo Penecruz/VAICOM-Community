@@ -57,6 +57,7 @@ namespace VAICOM.WSO
             { "wMsgWSO_Navigation_Holding_ActivateFlightPlan2TurnPoint", ("select", "hold_flightplan_2", "", true) },
             { "wMsgWSO_Navigation_Holding_DeactivateFlightPlan2TurnPoint", ("select", "deactivate_hold_fp2", "", true) },
             { "wMsgWSO_Navigation_Divert_Airfield", ("select", "divert_tgt1_lat_lon", "", true) },
+            { "wMsgWSO_Navigation_Divert_Asset", ("select", "divert_tgt1_lat_lon", "", true) },
             { "wMsgWSO_Navigation_Divert_LatLong", ("select", "divert_tgt1_lat_lon", "", true) },
             { "wMsgWSO_Navigation_Designate_Waypoint", ("select", "designate_wpt", "", true) },
             { "wMsgWSO_Navigation_TACAN_SelectMode_Off", ("select", "nav_tacan_mode", "off", true) },
