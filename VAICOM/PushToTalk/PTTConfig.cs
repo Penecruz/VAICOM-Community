@@ -28,6 +28,7 @@ namespace VAICOM
             public static void PTT_ApplyNewConfig()
             {
 
+                
                 if (IsPTTModeSingle())
                 {
                     PTT_SetConfigSingle();
@@ -41,7 +42,6 @@ namespace VAICOM
                     Update_PTT_GUI();
                     return;
                 }
-
             }
         }
     }

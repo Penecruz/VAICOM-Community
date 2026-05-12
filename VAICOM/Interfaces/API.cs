@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Windows.Forms;
+using VAICOM.Database;
 using VAICOM.Extensions.Kneeboard;
 using VAICOM.PushToTalk;
 using VAICOM.Static;
+using VAICOM.WSO;
 
 namespace VAICOM
 {
@@ -19,8 +21,7 @@ namespace VAICOM
                     {
                         State.configurationwindow.Page_Up();
                         vaProxy.WriteToLog("PTT: TX node SNGL set to " + State.activeconfig.SingleHotkey, Colors.Warning);
-                    }
-                   );
+                    });
                 }
                 else
                 {
@@ -53,8 +54,7 @@ namespace VAICOM
                     {
                         State.configurationwindow.Page_Dn();
                         vaProxy.WriteToLog("PTT: TX node SNGL set to " + State.activeconfig.SingleHotkey, Colors.Warning);
-                    }
-                   );
+                    });
                 }
                 else
                 {
@@ -444,10 +444,9 @@ namespace VAICOM
                     vaProxy.WriteToLog("API: test failed " + e.Message, Colors.Warning);
                 }
 
-                vaProxy.WriteToLog("API: test excuted.", Colors.Warning);
+                vaProxy.WriteToLog("API: test executed.", Colors.Warning);
                 UI.Playsound.Commandcomplete();
             }
-
         }
     }
 }

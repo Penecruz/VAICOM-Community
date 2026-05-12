@@ -252,6 +252,32 @@ namespace VAICOM
                   kneeboard = false,
                 } },
 
+                // ---- F-4E WSO interface.js
+                 {"2.9 WSO Interface.js",new Server.LuaFile
+                { fileid = "2D8D5F9E-7721-4FCD-ADCB-C04F1294F986",
+                  filename = "interface.js",
+                  installfolder = "Mods\\aircraft\\F-4E\\UI\\JesterWheel\\js",
+                  installfolder_legacy = "Mods\\aircraft\\F-4E\\UI\\JesterWheel\\js",
+                  append = true,
+                  root = true,
+                  hardreset = true,
+                  orig = Properties.Resources.Orig_F4E_Jester_Interface,
+                  source = Properties.Resources.Append_F4E_Jester_Interface,
+                  stringreplace = false,
+                  stringorig    = Properties.Resources.Orig_F4E_Jester_Interface,
+                  stringsource  = Properties.Resources.Append_F4E_Jester_Interface,
+                  version ="2.9",
+                  canremove = true,
+                  reset = false,
+                  //ACTIVE:
+                  install = true,
+                  export = true,
+                  autoremove  = false,
+                  quiet  = false,
+                  AIRIO = true,
+                  kneeboard = false,
+                } },
+
                 // kneeboard page
                 {"1.lua",new Server.LuaFile
                 { fileid = "5B148082-1834-4E8E-8010-D0ED6AD22A80",
@@ -576,30 +602,32 @@ namespace VAICOM
                   kneeboard = false,
                 } },
 
-                {"2.8 Kola_radio.lua",new Server.LuaFile
-                {
-                  filename = "radio.lua",
-                  installfolder = "Mods\\terrains\\Kola",
-                  installfolder_legacy = "Mods\\terrains\\Kola",
-                  append = false, // <--- Do Not append must replace,
-                  root = true,
-                  hardreset = true,
-                  orig = Properties.Resources.Orig_Terrain_Kola_radio,
-                  source = Properties.Resources.Append_Terrain_Kola_radio,
-                  stringreplace = false,
-                  stringorig = Properties.Resources.Orig_Terrain_Kola_radio,
-                  stringsource = Properties.Resources.Append_Terrain_Kola_radio,
-                  version ="2.8",
-                  canremove = true,
-                  reset = false,
-                  //ACTIVE:
-                  install = true,
-                  export = false,
-                  autoremove  = true,
-                  quiet  = false,
-                  AIRIO = true,
-                  kneeboard = false,
-                } },
+                // Currently unused.
+                // Template to be used for future releases of terrains needing radio.lua replacement.
+                // {"2.8 Kola_radio.lua",new Server.LuaFile
+                // {
+                //   filename = "radio.lua",
+                //   installfolder = "Mods\\terrains\\Kola",
+                //   installfolder_legacy = "Mods\\terrains\\Kola",
+                //   append = false, // <--- Do Not append must replace,
+                //   root = true,
+                //   hardreset = true,
+                //   orig = Properties.Resources.Orig_Terrain_Kola_radio,
+                //   source = Properties.Resources.Append_Terrain_Kola_radio,
+                //   stringreplace = false,
+                //   stringorig = Properties.Resources.Orig_Terrain_Kola_radio,
+                //   stringsource = Properties.Resources.Append_Terrain_Kola_radio,
+                //   version ="2.8",
+                //   canremove = true,
+                //   reset = false,
+                //   //ACTIVE:
+                //   install = true,
+                //   export = false,
+                //   autoremove  = true,
+                //   quiet  = false,
+                //   AIRIO = true,
+                //   kneeboard = false,
+                // } },
                 };
 
             }

@@ -241,6 +241,9 @@
   <data name="Exportmatch" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\Files\Exportmatch.lua;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-8</value>
   </data>
+  <data name="ICAOOverrides_lua" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Files\ICAOOverrides.lua;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-8</value>
+  </data>
   <data name="Button_TX1_IN" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\resources\images\button_tx1_in.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
@@ -517,6 +520,12 @@
   <data name="Orig_F14_JesterInit" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\resources\files\orig.f14.jesterinit.lua;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;Windows-1252</value>
   </data>
+  <data name="Append_F4E_Jester_Interface" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\resources\files\append.f4e.jester.interface.js;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;Windows-1252</value>
+  </data>
+  <data name="Orig_F4E_Jester_Interface" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\resources\files\orig.f4e.jester.interface.js;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;Windows-1252</value>
+  </data>
   <data name="VAICOMPRO" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\resources\files\vaicompro.exe;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
@@ -606,5 +615,8 @@
   </data>
   <data name="LegacyExportmatch" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\Files\LegacyExportmatch.lua;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-8</value>
+  </data>
+  <data name="VAICOM_F-4E_WSO" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Files\VAICOM F-4E WSO.vap;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
 </root>

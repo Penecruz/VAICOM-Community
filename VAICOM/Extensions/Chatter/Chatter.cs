@@ -44,6 +44,7 @@ namespace VAICOM
                         ChatterCollection.Add("RedFlag", Themepack.RedFlag.ResourceManager);
                         ChatterCollection.Add("Fallon", Themepack.Fallon.ResourceManager);
                         ChatterCollection.Add("Afghan", Themepack.Afghanistan.ResourceManager);
+                        ChatterCollection.Add("Andersen", Themepack.Andersen.ResourceManager);
                         ChatterCollection.Add("WWII", Themepack.WWII.ResourceManager);
                         State.chatterthemes = new List<string>();
                         foreach (KeyValuePair<string, ResourceManager> theme in ChatterCollection)
@@ -70,10 +71,24 @@ namespace VAICOM
                             currenttheme = State.activeconfig.ChatterFolder;
                         }
 
-                        if (State.chatterthemesactivated)
+                        switch (currenttheme) // Set chatter interval ranges based on theme (to give a different "feel" to the different themes based on real activity levels, while still random within each theme)
                         {
-                            Log.Write("Chatter theme set to " + currenttheme, Colors.Text);
+                            case "Afghan":
+                            case "Andersen":
+                                State.chatterintervalmin = 4000;
+                                State.chatterintervalmax = 90000;
+                                break;
+                            case "Fallon":
+                                State.chatterintervalmin = 4000;
+                                State.chatterintervalmax = 60000;
+                                break;
+                            default:
+                                State.chatterintervalmin = 4000;
+                                State.chatterintervalmax = 24000;
+                                break;
                         }
+
+                        Log.Write("Chatter theme set to " + currenttheme, Colors.Text);
 
                         // Create list of resource names
                         Log.Write("Adding chatter resources.. " + currenttheme, Colors.Text);
@@ -150,13 +165,20 @@ namespace VAICOM
                 {
                     try
                     {
+                        if (CurrentPlayStatus)
+                        {
+                            return;
+                        }
+
                         if (!Created)
                         {
                             PlaybackTimer = new System.Timers.Timer(1000);
+                            Created = true;
                         }
 
-                        PlaybackTimer.Start();
+                        PlaybackTimer.Elapsed -= Chatter_Timer_Elapsed_Handler;
                         PlaybackTimer.Elapsed += Chatter_Timer_Elapsed_Handler;
+                        PlaybackTimer.Start();
                         CurrentPlayStatus = true;
                         State.chatteractive = true;
 
@@ -241,13 +263,23 @@ private static void Chatter_Timer_Elapsed_Handler(object sender, ElapsedEventArg
             }
 
             Stream fragment = (Stream)playbackfile;
-            currentduration = (fragment.Length / 8); // for 8 bit 8khz mono
 
             fragment.Seek(0, SeekOrigin.Begin);
             WaveFileReader reader = new WaveFileReader(fragment);
-            var upsampler = new WaveFormatConversionStream(new WaveFormat(22050, 16, 1), reader); // was 8000
+            currentduration = reader.TotalTime.TotalMilliseconds;
 
-            var volumeSampleProvider = new NAudio.Wave.SampleProviders.VolumeSampleProvider(upsampler.ToSampleProvider());
+            var sampleProvider = reader.ToSampleProvider(); // Add new sample provider offer greater flexibility for processing (resampling, panning, volume, etc)
+                            if (sampleProvider.WaveFormat.Channels > 1)
+            {
+                sampleProvider = new NAudio.Wave.SampleProviders.StereoToMonoSampleProvider(sampleProvider);
+            }
+
+            if (sampleProvider.WaveFormat.SampleRate != 22050)
+            {
+                sampleProvider = new NAudio.Wave.SampleProviders.WdlResamplingSampleProvider(sampleProvider, 22050);
+            }
+
+            var volumeSampleProvider = new NAudio.Wave.SampleProviders.VolumeSampleProvider(sampleProvider);
             volumeSampleProvider.Volume = 3 * State.activeconfig.ChatterVolume;
 
             var panningSampleProvider = new NAudio.Wave.SampleProviders.PanningSampleProvider(volumeSampleProvider);

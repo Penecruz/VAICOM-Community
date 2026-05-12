@@ -459,6 +459,176 @@ namespace VAICOM
                 { "Select",                 "select"                },
                 { "Options",                "options"               },
                 { "View Loadout",           "loadout"               },
+                //George AI - Button Control
+                { "George Menu",                                 "georgeshowhide"                },
+                { "George Show",                                 "georgeshowhide"                },
+                { "George Hide",                                 "georgeshowhide"                },
+                { "George Up",                                   "georgeup"                      },
+                { "George Down",                                 "georgedown"                    },
+                { "George Left",                                 "georgeleft"                    },
+                { "George Right",                                "georgeright"                   },
+                { "George Center",                               "georgecenter"                  },
+                { "George Up Long",                              "georgeuplong"                  },
+                { "George Down Long",                            "georgedownlong"                },
+                { "George Left Long",                            "georgeleftlong"                },
+                { "George Right Long",                           "georgerightlong"               },
+                { "George Center Long",                          "georgecenterlong"              },
+                { "George Request Control",                      "georgecontrolrequest"          },
+                { "George Start Up",                             "georgestartup"                 },
+                { "George start your runup",                     "georgestartup"                 },
+                { "George let's get going",                      "georgestartup"                 },
+                { "George run-'er-up",                           "georgestartup"                 },
+                { "George Shutdown",                             "georgeshutdown"                },
+                { "George start your shutdown",                  "georgeshutdown"                },
+                { "George shut-'er down",                        "georgeshutdown"                },
+                { "George normal shutdown",                      "georgeshutdown"                },
+
+                //George AI - Search and Sensor Management
+                { "George TADS Sensor",                          "georgetadssensor"              },
+                { "George TADS FLIR",                            "georgetadssensor"              },
+                { "George TADS TV",                              "georgetadssensor"              },
+                { "George swap sensors",                         "georgetadssensor"              },
+                { "George cycle your sensor",                    "georgetadssensor"              },
+                { "George next sensor",                          "georgetadssensor"              },
+                { "George TADS F O V",                           "georgetadsfov"                 },
+                { "George TADS Field Of View",                   "georgetadsfov"                 },
+                { "George TADS Zoom In",                         "georgetadszoomin"              },
+                { "George step in",                              "georgetadszoomin"              },
+                { "George step in one field-of-view",            "georgetadszoomin"              },
+                { "George step in a field-of-view",              "georgetadszoomin"              },
+                { "George TADS Zoom Out",                        "georgetadszoomout"             },
+                { "George step back out",                        "georgetadszoomout"             },
+                { "George back out one field-of-view",           "georgetadszoomout"             },
+                { "George step out one field-of-view",           "georgetadszoomout"             },
+                { "George step out a field-of-view",             "georgetadszoomout"             },
+                { "George Target List Filter",                   "georgetargetlistfilter"        },
+                { "George Filter List",                          "georgetargetlistfilter"        },
+                { "George Point List Filter Mode",               "georgepointlistfiltermode"     },
+                { "George change waypoints and control measures", "georgepointlistfiltermode"    },
+                { "George cycle waypoints and control measures",  "georgepointlistfiltermode"    },
+                { "George Area Select",                          "georgeareaselect"              },
+                { "George Point Select",                         "georgepointselect"             },
+                { "George Point List Filter Threat",             "georgepointlistfilterthreat"   },
+                { "George target points only",                   "georgepointlistfilterthreat"   },
+                { "George target threats only",                  "georgepointlistfilterthreat"   },
+                { "George focus on threats",                     "georgepointlistfilterthreat"   },
+                { "George focus on threats only",                "georgepointlistfilterthreat"   },
+                { "George Search Area",                          "georgeareasearch"              },
+                { "George search your area",                     "georgeareasearch"              },
+                { "George start searching for targets",          "georgeareasearch"              },
+                { "George start scanning for targets in the area", "georgeareasearch"            },
+                { "George scan for targets in the area",         "georgeareasearch"              },
+                { "George watch your lane",                      "georgeareasearch"              },
+                { "George Search Point",                         "georgepointsearch"             },
+                { "George search for targets around that point", "georgepointsearch"             },
+                { "George search for targets near that point",   "georgepointsearch"             },
+                { "George scan for targets at the selected point", "georgepointsearch"           },
+                { "George Next Search",                          "georgemacronextsearch"         },
+                { "George Search Next",                          "georgemacronextsearch"         },
+                { "George Previous Search",                      "georgemacroprevioussearch"     },
+                { "George Search Previous",                      "georgemacroprevioussearch"     },
+                { "George Next Point",                           "georgemacronextpoint"          },
+                { "George Point Next",                           "georgemacronextpoint"          },
+                { "George Previous Point",                       "georgemacropreviouspoint"      },
+                { "George Point Previous",                       "georgemacropreviouspoint"      },
+                { "George P H S",                                "georgemacrophssearch"          },
+                { "George target pilot helmet sight",            "georgemacrophssearch"          },
+                { "George target pilot H M D",                   "georgemacrophssearch"          },
+                { "George Pilot Helmet Search",                  "georgemacrophssearch"          },
+                { "George My Line Of Sight",                     "georgemacrophssearch"          },
+                { "George TADS L O S",                           "georgemacrotadslos"            },
+                { "George TADS Line Of Sight",                   "georgemacrotadslos"            },
+                { "George what do you see there",                "georgemacrotadslos"            },
+                { "George any targets there",                    "georgemacrotadslos"            },
+                { "George what's in your line-of-sight",         "georgemacrotadslos"            },
+                { "George what's that",                          "georgemacrotadslos"            },
+
+                //George AI - Weapons and Targeting
+                { "George Next Weapon",                          "georgenextweapon"              },
+                { "George Select Gun",                           "georgemacroselectgun"          },
+                { "George Select Missiles",                      "georgemacroselectmissiles"     },
+                { "George Select Rockets",                       "georgemacroselectrockets"      },
+                { "George Select No Weapon",                     "georgemacroselectnoweapon"     },
+                { "George Wahz the Gun",                         "georgemacroselectgun"          },
+                { "George Wahz Missiles",                        "georgemacroselectmissiles"     },
+                { "George Wahz Rockets",                         "georgemacroselectrockets"      },
+                { "George De Wahz",                              "georgemacroselectnoweapon"     },
+                { "George lase target",                          "georgelasetarget"              },
+                { "George laser On",                             "georgelaseron"                 },
+                { "George clear to lase",                        "georgelaseron"                 },
+                { "George start lasing",                         "georgelaseron"                 },
+                { "George designate the target",                 "georgelaseron"                 },
+                { "George laser Off",                            "georgelaseroff"                },
+                { "George cease lasing",                         "georgelaseroff"                },
+                { "George stop lasing",                          "georgelaseroff"                },
+                { "George stop designating the target",          "georgelaseroff"                },
+                { "George Burst Limit",                          "georgeburstlimit"              },
+                { "George next burst limit",                     "georgeburstlimit"              },
+                { "George cycle burst limit",                    "georgeburstlimit"              },
+                { "George Rocket Quantity",                      "georgerocketquantity"          },
+                { "George next quantity",                        "georgerocketquantity"          },
+                { "George cycle quantity",                       "georgerocketquantity"          },
+                { "George Next Rocket",                          "georgenextrkt"                 },
+                { "George Switch Rocket Type",                   "georgenextrkt"                 },
+                { "George next rocket zone",                     "georgenextrkt"                 },
+                { "George select next zone",                     "georgenextrkt"                 },
+                { "George Change trajectory",                    "georgemsltraj"                 },
+                { "George Next Trajectory",                      "georgemsltraj"                 },
+                { "George Previous Missile",                     "georgenextmsl"                 },
+                { "George Next Missile",                         "georgenextmsl"                 },
+                { "George go SAL",                               "georgenextmsl"                 },
+                { "George go R F",                               "georgenextmsl"                 },
+                { "George L O B L",                              "georgelobl"                    },
+                { "George, go low-ball",                         "georgelobl"                    },
+                { "George Low ball",                             "georgeloal"                    },
+                { "George L O A L",                              "georgelobl"                    },
+                { "George Low Al",                               "georgeloal"                    },
+                { "George, go low-al",                           "georgeloal"                    },
+                { "George Target Zoom In",                       "georgetargetlistzoomin"        },
+                { "George Target Zoom Out",                      "georgetargetlistzoomout"       },
+                { "George Previous Item",                        "georgepreviousitem"            },
+                { "George Previous List Area",                   "georgepreviousitem"            },
+                { "George Previous List Point",                  "georgepreviousitem"            },
+                { "George Next Item",                            "georgenextitem"                },
+                { "George Next List Area",                       "georgenextitem"                },
+                { "George Next List Point",                      "georgenextitem"                },
+                { "George Previous Target",                      "georgepreviuoustarget"         },
+                { "George Next Target",                          "georgenexttarget"              },
+                { "George List Item Select",                     "georgelistitemselect"          },
+                { "George Select That Area",                     "georgelistitemselect"          },
+                { "George Select That Point",                    "georgelistitemselect"          },                    
+                { "George Add and Track Your Top Two",           "georgemacroaddtwotargetstrack" },
+                { "George Add and Track Your Top Three",         "georgemacroaddthreetargetstrack" },
+                { "George Add and Track Your Top Four",          "georgemacroaddfourtargetstrack" },
+                { "George Track Your Top Two",                   "georgemacroaddtwotargetstrack" },
+                { "George Track Your Top Three",                 "georgemacroaddthreetargetstrack" },
+                { "George Track Your Top Four",                  "georgemacroaddfourtargetstrack" },
+                { "George Track and Engage",                     "georgemacrotrackengage"        },
+                { "George Select Target",                        "georgeselecttarget"            },
+                { "George Add Target",                           "georgeselecttarget"            },
+                { "George Track Target",                         "georgetracktarget"             },
+                { "George Store Target",                         "georgestoretarget"             },
+                { "George store that target",                    "georgestoretarget"             },
+                { "George Last Stored Target",                   "georgelaststoredtarget"        },
+                { "George Go To Last Target",                    "georgelastfoundtarget"         },
+                { "George Exit Target List",                     "georgeexitlist"                },
+                { "George disregard those targets",              "georgeexitlist"                },
+                { "George ignore those",                         "georgeexitlist"                },
+                { "George ignore those targets",                 "georgeexitlist"                },
+                { "George Adjust Aim",                           "georgeadjustaim"               },
+                { "George Adjust your Aim",                      "georgeadjustaim"               },
+                { "George center your aimpoint",                 "georgeadjustaim"               },
+                { "George center on target",                     "georgeadjustaim"               },
+                { "George put the Line-of-sight on the target",  "georgeadjustaim"               },
+                { "George Clear to Fire",                        "georgeclearedfire"             },
+                { "George Hit Them Again",                       "georgeclearedfire"             },
+                { "George Clear to Engage",                      "georgeclearedfire"             },
+                { "George Weapons Free",                         "georgeweaponsfree"             },
+                { "George Engage at Will",                       "georgeweaponsfree"             },
+                { "George Fire at Will",                         "georgeweaponsfree"             },
+                { "George Hold Fire",                            "georgeholdfire"                },
+                { "George Hold Your Fire",                       "georgeholdfire"                },
+                { "George Cease Fire",                           "georgeholdfire"                },
 
                 // aocs
                 { "Interrogate",            "state"                 },
@@ -473,6 +643,8 @@ namespace VAICOM
                 { "Correction",            "wMsgKneeboardCorrection"      },
                 { "Show Log",              "wMsgKneeboardShowLog"         },
                 { "Show Tasking Order",    "wMsgKneeboardShowLog"         },
+                { "Show Next Tab",         "wMsgKneeboardNextTab"         },
+                { "Show Previous Tab",     "wMsgKneeboardPreviousTab"     },
 
                 { "Page",                  "wMsgShowKneeboardTab"         },
 
@@ -529,7 +701,7 @@ namespace VAICOM
                 { "I'll be marking white",           "Action White Smoke"                              },
                 { "Range Weather",                   "Action Weather Report"                           },
                     
-                    // Moose AWACS TODO
+                    // Moose AWACS
                 { "Chalice Checking In",             "Action Check In"                                 }, // difficult due to conflicts with DCS aliases.
                 { "Chalice Say Bogey Dope",          "Action Bogey Dope"                               }, 
                 { "Chalice Say Picture",             "Action Picture"                                  }, 
@@ -547,11 +719,73 @@ namespace VAICOM
                 //{ "Place Holder",                    "Place Holder"                                  }, //Hound is tricky due to the number of dynamic commands what is important?
                 //{ "Place Holder",                    "Place Holder"                                  },
 
-                // Foothold Mission set
-                //{ "Place Holder",                    "Place Holder"                                  }, //used in Imported script Dynamic F10 menu Commands for the Foothold Script
-                //{ "Place Holder",                    "Place Holder"                                  }, //These aliases must be unique and different from the standard DCS aliases!!
-                //{ "Place Holder",                    "Place Holder"                                  }, 
-                //{ "Place Holder",                    "Place Holder"                                  },
+                // Campaign Pacific Sentry 25 WIP
+                //M01 Fly to Gyam by Viper
+                { "I can find parking",                  "Action I can find parking"                     }, //used in Imported script Dynamic F10 menu Commands for the Sentry Pacific Campaign
+                { "Request assistance",                  "Action Request assistance"                     }, //These aliases must be unique and different from the standard DCS aliases!!
+                //M02 A Red Horizon
+                { "I don't see any cruise missiles",     "Action I dont see any cruise missiles"         }, //used in Imported script Dynamic F10 menu Commands for the Sentry Pacific Campaign
+                { "Yes I see cruise missiles",           "Action Yes I see cruise missiles"              }, //These aliases must be unique and different from the standard DCS aliases!!
+                { "Captured Bogey Bull 045 120",         "Action Captured Bogey Bull 045/120"            },
+                { "Captured Bogey Bull 055 180",         "Action Captured Bogey Bull 055/180"            },
+                { "Venom is Bingo Fuel and need to RTB", "Action Venon is Bingo Fuel and need to RTB"    },
+                { "Venom is emergency fuel",             "Action Venom is emergency fuel"                },
+                { "Venom min fuel we can hold",          "Action Venom min fuel we can hold"             },
+                //M03 A Red Horizon
+                { "Send It",                             "Action Send it"                                },
+                { "Say again nine line",                 "Action Say again nine line"                    },
+                { "Sorry no gas",                        "Action Sorry no gas"                           },
+                { "Sure thing",                          "Action Sure thing"                             },
+                //M04 Sprung A Leak
+                { "Review Mission",                      "Action Review Mission"                         },
+                { "Skip It",                             "Action Skip It"                                },
+                //M10 Laying It All Out There
+                { "Tiny go to Alpha",                    "Action Tiny go to Alpha"                       },
+                { "Tiny rejoin",                         "Action Tiny rejoin"                            },
+                //M11 Work Hard,Play hard
+                { "Incentive Ride Over Testing Only",    "Action INCENTIVE RIDE OVER TESTING ONLY"       }, 
+                
+                // Campaign Pacific Sentry 26 WIP
+
+                //M03 Vote for Pedro
+                { "Talon Bravo authenticates good",      "Action Talon Bravo authenticates good"           },
+                { "Talon Bravo authenticates bad",       "Action Talon Bravo authenticates bad"            },
+                { "Talon Alpha authenticates good",      "Action Talon Alpha authenticates good"           },
+                { "Talon Alpha authenticates bad",       "Action Talon Alpha authenticates bad"            },
+
+                //M05 Hog Litening Viper Thunder
+                { "I will sink ship",                   "Action I will sink ship"                         },
+                { "You sink ship",                      "Action You sink ship"                            },
+                { "Explode ship",                       "Action Explode ship"                             },
+
+                //M06 Contested Waters
+                { "I will hit fast boat",               "Action I will hit fast boat"                     },
+                { "You hit fast boat",                  "Action You hit fast boat"                        },
+
+                //M07 The Show Must Go On
+                { "Recommend weather cancel",           "Action Recommend weather cancel"                 },
+                { "Recommend low war",                  "Action Recommend low war"                        },
+                { "Recommend high war",                 "Action Recommend high war"                       },
+                { "Call in Bone One",                   "Action Call in Bone One"                         },
+                { "Call in Devil Dog",                  "Action Call in Devil Dog"                        },
+                { "I will hit trucks",                  "Action I will hit trucks"                        },
+                { "Dozer hit trucks",                   "Action Dozer hit trucks"                         },
+
+                //M08 Sails Calls, Wrong Number
+                { "Fast boat moving south",             "Action Fast boat moving south"                   },
+                { "Both boats moving north",            "Action Both boats moving north"                  },
+
+                //M09 Hot Start, Hotter DZ
+                { "Give tower excuse",                  "Action Give tower excuse"                        },
+                { "Tell tower the truth",               "Action Tell tower the truth"                     },
+
+                //M10 Snake Eaters in Paradise
+                { "Return south",                       "Action Return south"                             },
+                { "Stay here",                          "Action Stay here"                                },
+
+                //M11 Check Out before Checking Out
+                { "Tally wingloon drone",               "Action Tally wingloon drone"                     },
+                { "Tally lost caravan",                 "Action Tally lost caravan"                       },
 
                 // AI_ATC
                         // Transition Repeat Last
@@ -573,12 +807,14 @@ namespace VAICOM
                 { "Request a fighter Seven",        "Action FYTTR 7"                                  },
                 { "Request I F R fighter Seven",    "Action FYTTR 7"                                  },
                 { "Request a Mesa Eight",           "Action MORMON MESA 8"                            },
-                { "Request I F R Mesa Eight",       "Action MORMON MESA 8"                            },
+                { "Request I F R Mesa Eight",       "Action MORMON MESA 8"                            }, 
+                { "Request Clearance I F R",        "Action IFR"                                      }, //Andersen
                         //VFR Sub Menu
                 { "Request V F R for GASS PEAK",    "Action GASS_PEAK"                                },
                 { "Request V F R for DRY LAKE",     "Action DRY_LAKE"                                 },
                 { "Request V F R for RED HORSE",    "Action RED_HORSE"                                },
                 { "Request V F R for SUNRISE",      "Action SUNRISE"                                  },
+                { "Request Clearance V F R",        "Action VFR"                                      }, //Andersen
 
                         //Clearance Readback
                 { "Squawk One Zero Zero One",       "Action Squawk 1001"                              },
@@ -593,26 +829,37 @@ namespace VAICOM
                 { "Request To Start Engines",       "Action Request Engine Start"                     },
                 { "Engine Start",                   "Action Request Engine Start"                     },
                 { "Requesting Start",               "Action Request Engine Start"                     },
+                { "Request Engine Start",           "Action Request Engine Start"                     },
                 { "Requesting Taxi Clearance",      "Action Request Taxi Clearance"                   } ,
+                { "Request Taxi clearance",          "Action Request Taxi Clearance"                   },
                 { "Requesting Taxi to Active",      "Action Request Taxi Clearance"                   },
                 { "Taxi to Active",                 "Action Request Taxi Clearance"                   },
                 { "Clear of Runway",                "Action Taxi to Parking"                          },
                 { "Ground with you",                "Action Taxi to Parking"                          },                
+                { "Taxi to Parking",                "Action Taxi to Parking"                          },                    
 
                     //Tower
-                      //Runway Crossing
+                      //Runway Crossing Nellis
                 { "Clearance to Cross three Right", "Action Request clearance to cross 03R"           }, //Nellis
                 { "Clearance to Cross three Left",  "Action Request clearance to cross 03L"           }, //Nellis
                 { "Clearance to Cross Two One Left","Action Request clearance to cross 21L"           }, //Nellis
                 { "Clearance to Cross Two One Right","Action Request clearance to cross 21R"          }, //Nellis
+
+                     //Runway Crossing Andersen
                 { "Clearance to Cross Six Left",    "Action Request clearance to cross 06L"           }, //Andersen
                 { "Clearance to Cross Six Right",   "Action Request clearance to cross 06R"           }, //Andersen
                 { "Clearance to Cross Two Four Left", "Action Request clearance to cross 24L"         }, //Andersen
                 { "Clearance to Cross Two Four Right","Action Request clearance to cross 24R"         }, //Andersen
+
+                    //Rotary Specific
+                { "Request Hover check",            "Action Request Hover check"                      },
+                { "Request Takeoff from parking",   "Action Request Takeoff from parking"             },
+
                     //Takeoff
                 { "Requesting Takeoff Clearance",   "Action Request Takeoff"                          },
                 { "Ready in turn",                  "Action Request Takeoff"                          },
                 { "Ready at the Hold",              "Action Request Takeoff"                          },
+                
                     //Request Unrestricted climb
                 { "Requesting Unrestricted Climb 5000",                               "Action 5000"   },
                 { "Requesting Unrestricted Climb 6000",                               "Action 6000"   },
@@ -649,12 +896,13 @@ namespace VAICOM
                 { "Request Overhead",               "Action Overhead"                                 },
                 { "Simulated Flame Out",            "Action SFO"                                      },// Simulated Flameout 
                 { "P A R Rollout",                  "Action PAR"                                      },// Precision Approach Radar
-                { "I L S Final",                  "Action ILS"                                      },
+                { "I L S Final",                    "Action ILS"                                      },
                     //Tower Options Sub Menu
                 { "Request Low Approach",           "Action Low Approach"                             },
                 { "Request back to departure",      "Action Request Departure"                        },
                 { "Request Back to Radar",          "Action Request Back to Radar"                    },
                 { "Request Instrument Final",       "Action Instrument Straight In"                   },
+                
                     //Tower Report responses
                 { "Five Miles To land",             "Action Full Stop"                                },
                 { "Five Miles Touch and Go",        "Action Touch and Go"                             },
@@ -670,6 +918,15 @@ namespace VAICOM
                 { "Passing FLEX",                   "Action Report FLEX"                              },
                 { "High Key",                       "Action Report High Key"                          },//use with Simulated Flameout
                 { "Low Key",                        "Action Report Low Key"                           },//use with Simulated Flameout
+
+                    //Andersen                
+                { "Requesting the Option",          "Action Option"                                   }, //Andersen
+                { "Established initial",            "Action Report initial"                           }, //Andersen                
+                { "On base",                        "Action Report base"                              }, //Andersen
+                { "Passing Three miles",            "Action Report 3 miles"                           }, //Andersen                
+                { "Full stop",                      "Action Full Stop"                                }, //Andersen
+                { "Passing SOUTH POINT",            "Action Report SOUTH POINT"                       }, //Andersen
+
                     //Tower Ancillary
                 { "Traffic in sight",               "Action Traffic in sight"                         },
                 { "Nothing Seen",                   "Action No Joy"                                   },
@@ -687,17 +944,31 @@ namespace VAICOM
                 { "Checking In V F R",                 "Action VFR"                                   },
                 { "Checking In I F R",                 "Action IFR"                                   },
                 { "Checking In Again",                 "Action Check In"                              },//Back to radar after tower
+                
                        //IFR Sub Menu
                 { "Request Hi TACAN Zulu",          "Action HI-TAC Z"                                 },
                 { "Request TACAN Two One left",     "Action TAC21L"                                   },
                 { "Request I L S Approach",         "Action ILS\\LOC"                                 },
                 { "Request Localizer Approach",     "Action ILS\\LOC"                                 },
                 { "Request Hi TACAN Yankee",        "Action HI-TAC Y"                                 },
-                { "Cancel I F R",                   "Action Cancel IFR"                               },
-                { "Request G C A",                  "Action Request GCA"                              },// for PAR
+
+                //Andersen
+                { "Request HI TACAN Xray",               "Action HI-TAC X"                                 }, //Andersen
+                { "Request HI-ILS Y",                    "Action HI-ILS Y"                                 }, //Andersen
+                { "Request TACAN Six Left",              "Action TAC06L"                                   }, //Andersen
+                { "Request TACAN Six Left Final",        "Action TAC06L Final"                             }, //Andersen
+                { "Request TACAN Six Right",             "Action TAC06R"                                   }, //Andersen
+                { "Request TACAN Six Right Final",       "Action TAC06R Final"                             }, //Andersen
+                { "Request TACAN Two Four Left",         "Action TAC24L"                                   }, //Andersen
+                { "Request TACAN Two Four Left Final",   "Action TAC24L Final"                             }, //Andersen
+                { "Request I L S Approach Final",        "Action ILS\\LOC Final"                           }, //Andersen
+                { "Request Localizer Approach Final",    "Action ILS\\LOC Final"                           }, //Andersen
+
+                { "Request Cancel I F R",                "Action Cancel IFR"                               },
+                { "Request G C A",                       "Action Request GCA"                              },// for PAR
     
                     //Approach NAV Assist
-                     // VFR Nav points
+                     // Nellis
                 { "Vector for NIXON",                "Action Vector for NIXON"                         },
                 { "Vector for APEX",                 "Action Vector for APEX"                          },
                 { "Vector for PHINN",                "Action Vector for PHINN"                         },
@@ -716,7 +987,24 @@ namespace VAICOM
                 { "Vector for DREAM",                "Action Vector for DREAM"                         },
                 { "Vector for MMM",                  "Action Vector for MMM"                           },
 
-                    // VFR Report points
+                    //Andersen
+                { "Vectors for Point Alpha",         "Action Vectors for Point Alpha"                  }, //Andersen
+                { "Vectors for Point Bravo",         "Action Vectors for Point Bravo"                  }, //Andersen
+                { "Vectors for Point Charlie",       "Action Vectors for Point Charlie"                }, //Andersen
+                { "Vectors for Point Delta",         "Action Vectors for Point Delta"                  }, //Andersen
+                { "Vectors for Point Echo",          "Action Vectors for Point Echo"                   }, //Andersen
+                { "Vectors for Point Foxtrot",       "Action Vectors for Point Foxtrot"                }, //Andersen
+                { "Vectors for Point Golf",          "Action Vectors for Point Golf"                   }, //Andersen
+                { "Vectors for Point Hotel",         "Action Vectors for Point Hotel"                  }, //Andersen
+                { "Vectors for NORTH POINT",         "Action Vectors for NORTH_POINT"                  }, //Andersen
+                { "Vectors for SOUTH POINT",         "Action Vectors for SOUTH_POINT"                  }, //Andersen
+                { "Vectors for RITIDIAN POINT",      "Action Vectors for RITIDIAN_POINT"               }, //Andersen
+                { "Vectors for POTTS JUNCTION",      "Action Vectors for POTTS_JUNCTION"               }, //Andersen
+                { "Vectors for PATI POINT",          "Action Vectors for PATI_POINT"                   }, //Andersen
+                { "Vectors for TWO LOVERS POINT",    "Action Vectors for TWO_LOVERS_POINT"             }, //Andersen
+                { "Vectors for MT SANTA ROSA",       "Action Vectors for MT_SANTA_ROSA"                }, //Andersen
+
+                    // VNellis VFR Report points
                 { "Passing STRYK",                  "Action Report STRYK"                             },
                 { "Passing ACTON",                  "Action Report ACTON"                             },
                 { "Passing ARCOE",                  "Action Report ARCOE"                             },
@@ -732,7 +1020,42 @@ namespace VAICOM
                 { "Passing Three Mike",             "Action Report MMM"                               },
                 { "Passing SAND DUNES",             "Action Report SAND_DUNES"                        },
 
-                    // IFR Nav points
+                    //Andersen VFR Report points
+                { "Request IFR Pickup",             "Action Request IFR Pickup"                       }, //Andersen
+                { "Report Established",             "Action Report Established"                       }, //Andersen
+                { "Report FOVEM",                   "Action Report FOVEM"                             }, //Andersen
+                { "Report WELKU",                   "Action Report WELKU"                             }, //Andersen
+                
+                    //Andersen IFR Nav points
+                { "Vectors for FOVEM",              "Action Vectors for FOVEM"                        }, //Andersen
+                { "Vectors for ARKEE",              "Action Vectors for ARKEE"                        }, //Andersen
+                { "Vectors for HURUG",              "Action Vectors for HURUG"                        }, //Andersen
+                { "Vectors for FOMOD",              "Action Vectors for FOMOD"                        }, //Andersen
+                { "Vectors for ITUME",              "Action Vectors for ITUME"                        }, //Andersen
+                { "Vectors for LOGLE",              "Action Vectors for LOGLE"                        }, //Andersen
+                { "Vectors for JORUN",              "Action Vectors for JORUN"                        }, //Andersen
+                { "Vectors for KATNE",              "Action Vectors for KATNE"                        }, //Andersen
+                { "Vectors for ADTIN",              "Action Vectors for ADTIN"                        }, //Andersen
+                { "Vectors for COLMA",              "Action Vectors for COLMA"                        }, //Andersen
+                { "Vectors for FAXEL",              "Action Vectors for FAXEL"                        }, //Andersen
+                { "Vectors for HILRI",              "Action Vectors for HILRI"                        }, //Andersen
+                { "Vectors for ANIKA",              "Action Vectors for ANIKA"                        }, //Andersen
+                { "Vectors for SULUE",              "Action Vectors for SULUE"                        }, //Andersen
+                { "Vectors for WELKU",              "Action Vectors for WELKU"                        }, //Andersen
+                { "Vectors for OKIBE",              "Action Vectors for OKIBE"                        }, //Andersen
+                { "Vectors for BAVAC",              "Action Vectors for BAVAC"                        }, //Andersen
+                { "Vectors for PANNS",              "Action Vectors for PANNS"                        }, //Andersen
+                { "Vectors for WESOK",              "Action Vectors for WESOK"                        }, //Andersen
+                { "Vectors for ACUYU",              "Action Vectors for ACUYU"                        }, //Andersen
+                { "Vectors for EVEBE",              "Action Vectors for EVEBE"                        }, //Andersen
+                { "Vectors for JIPRO",              "Action Vectors for JIPRO"                        }, //Andersen
+                { "Vectors for FABED",              "Action Vectors for FABED"                        }, //Andersen
+                { "Vectors for HASRA",              "Action Vectors for HASRA"                        }, //Andersen
+                { "Vectors for INIME",              "Action Vectors for INIME"                        }, //Andersen
+                { "Request Radar Downwind",         "Action Radar Downwind"                           }, //Andersen
+                { "Request Radar Base",             "Action Radar Base"                               }, //Andersen
+
+                    // Nellis IFR Nav points
                 { "Vectors for ACTON",               "Action Vectors for ACTON"                        },
                 { "Vectors for DUDBE",               "Action Vectors for DUDBE"                        },
                 { "Vectors for SECRT",               "Action Vectors for SECRT"                        },
@@ -778,8 +1101,18 @@ namespace VAICOM
                 { "Request Vectors for Tonopah",             "Action Tonopah"                         },
                 { "Request Vectors for Tonopah Test Range",  "Action Tonopah Test Range"              },
 
+                    //Vextors to Airports Marianas
+                { "Request Vectors for Andersen",            "Action Andersen AFB"                     }, //Andersen
+                { "Request Vectors for Aganga",              "Action Antonio B. Won Pat Intl"          }, //Andersen
+                { "Request Vectors for North West Field",     "Action North West Field"                }, //Andersen
+                { "Request Vectors for Olf Orote",            "Action Olf Orote"                       }, //Andersen
+                { "Request Vectors for Pagan Airstrip",       "Action Pagan Airstrip"                  }, //Andersen
+                { "Request Vectors for Rota",                 "Action Rota Intl"                       }, //Andersen
+                { "Request Vectors for Saipan",               "Action Saipan Intl"                     }, //Andersen
+                { "Request Vectors for Tinian",               "Action Tinian Intl"                     }, //Andersen
+
                     //Range Control
-                      //Blackjack Entry/Exit
+                      //Blackjack Nellis
                 { "Blackjack entry gate one",       "Action Check in Gate 1"                          },
                 { "Blackjack entry gate two",       "Action Check in Gate 2"                          },
                 { "Blackjack entry gate three",     "Action Check in Gate 3"                          },
@@ -792,13 +1125,31 @@ namespace VAICOM
                 { "Blackjack exit gate four",       "Action Check Out Gate 4"                         },
                 { "Blackjack exit NIXON",           "Action Check Out NIXON"                          },
                 { "Blackjack exit SARAH",           "Action Check Out SARAH"                          },
-                   // Request vectors from Blackjack
                 { "Blackjack vector to gate one",   "Action Vector to Gate 1"                         },
                 { "Blackjack vector to gate two",   "Action Vector to Gate 2"                         },
                 { "Blackjack vector to NIXON",      "Action Vector to NIXON"                          },
                 { "Blackjack vector to SARAH",      "Action Vector to SARAH"                          },
                 { "Blackjack vector to gate three", "Action Vector to Gate 3"                         },
                 { "Blackjack vector to gate four",  "Action Vector to Gate 4"                         },
+
+                    //Hammerhead Andersen
+                { "Hammerhead Point Alpha",                   "Action Check in Alpha"                 }, //Andersen
+                { "Hammerhead Point Charlie",                 "Action Check in Charlie"               }, //Andersen
+                { "Hammerhead Point Echo",                    "Action Check in Echo"                  }, //Andersen
+                { "Hammerhead Point Golf",                    "Action Check in Golf"                  }, //Andersen
+                { "Hammerhead Vector to Point Alpha",         "Action Vector to Alpha"                }, //Andersen
+                { "Hammerhead Vector to Point Bravo",         "Action Vector to Bravo"                }, //Andersen
+                { "Hammerhead Vector to Point Charlie",       "Action Vector to Charlie"              }, //Andersen
+                { "Hammerhead Vector to Point Delta",         "Action Vector to Delta"                }, //Andersen
+                { "Hammerhead Vector to Point Echo",          "Action Vector to Echo"                 }, //Andersen
+                { "Hammerhead Vector to Point Foxtrot",       "Action Vector to Foxtrot"              }, //Andersen
+                { "Hammerhead Vector to Point Golf",          "Action Vector to Golf"                 }, //Andersen
+                { "Hammerhead Vector to Point Hotel",         "Action Vector to Hotel"                }, //Andersen
+                { "Hammerhead Vector to Tanker",              "Action Vector to Tanker"               }, //Andersen
+                { "Hammerhead Check Out Point Bravo",         "Action Check Out Bravo"                }, //Andersen
+                { "Hammerhead Check Out Point Delta",         "Action Check Out Delta"                }, //Andersen
+                { "Hammerhead Check Out Point Foxtrot",       "Action Check Out Foxtrot"              }, //Andersen
+                { "Hammerhead Check Out Point Hotel",         "Action Check Out Hotel"                }, //Andersen
 
 
                    //NATCF

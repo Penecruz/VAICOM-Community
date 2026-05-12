@@ -49,6 +49,10 @@ namespace VAICOM
                     {
                         State.activeconfig.KneeboardlinkPTT = false;
                     }
+                    if (State.activeconfig.OpenKneeboard_Out.Equals(null))
+                    {
+                        State.activeconfig.OpenKneeboard_Out = false;
+                    }
 
                     // added 2.5.19
                     if (State.activeconfig.Custom_Path_Setting1.Equals(null))

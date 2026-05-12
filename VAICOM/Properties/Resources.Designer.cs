@@ -19,7 +19,7 @@ namespace VAICOM.Properties {
     // class via a tool like ResGen or Visual Studio.
     // To add or remove a member, edit your .ResX file then rerun ResGen
     // with the /str option, or rebuild your VS project.
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "17.0.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "18.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     public class Resources {
@@ -236,10 +236,11 @@ namespace VAICOM.Properties {
         ///-- Original: VAICOMPRO.export.lua
         ///-- Vaicom Discord at https://discord.gg/7c22BHNSCS 
         ///
-        ///package.path  = package.path..&quot;;.\LuaSocket\?.lua;&quot;
-        ///package.cpath = package.cpath..&quot;;.\LuaSocket\?.dll;&quot;
+        ///package.path  = package.path..&quot;;.\\LuaSocket\\?.lua;&quot; -- use windows path format for LuaSocket due to some picky systems
+        ///package.cpath = package.cpath..&quot;;.\\LuaSocket\\?.dll;&quot;
         ///
         ///local socket = require(&quot;socket&quot;)
+        ///local base = _G
         ///
         ///-- Debugging
         ///local DEBUG = false
@@ -249,8 +250,7 @@ namespace VAICOM.Properties {
         ///    end
         ///end
         ///
-        ///-- Socket utility function
-        ///local function create_udp_socket(address, port, timeout, is_ [rest of string was truncated]&quot;;.
+        /// [rest of string was truncated]&quot;;.
         /// </summary>
         public static string Append_Core_VAICOMPRO_export {
             get {
@@ -313,6 +313,33 @@ namespace VAICOM.Properties {
         public static string Append_F14_JesterInit {
             get {
                 return ResourceManager.GetString("Append_F14_JesterInit", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to // VAICOM server-side script
+        ///// Jester 2.0 interface.js
+        ///
+        ///// WebSocket connection to VAICOM
+        ///let socket;
+        ///
+        ///// Create WebSocket connection and event listeners.
+        ///function openSocketConnection() {
+        ///	// Don&apos;t reconnect if we already have an open connection, or are
+        ///	// already attempting to open a new one.
+        ///	if (isSocketOpen() || isSocketConnecting()) {
+        ///		return;
+        ///	}
+        ///
+        ///	socket = new WebSocket(&quot;ws://127.0.0.1:33495/vaicom/wso/&quot;);
+        ///
+        ///	// Connection opened
+        ///	socket.addEventListener(&quot;open&quot;, (event) =&gt; {
+        ///		soc [rest of string was truncated]&quot;;.
+        /// </summary>
+        public static string Append_F4E_Jester_Interface {
+            get {
+                return ResourceManager.GetString("Append_F4E_Jester_Interface", resourceCulture);
             }
         }
         
@@ -487,20 +514,16 @@ namespace VAICOM.Properties {
         ///local gettext = require(&quot;i_18n&quot;)
         ///local       _ = gettext.translate
         ///
-        ///--WORLD RADIO -- Appended by VAICOM
+        ///--WORLD RADIO Appended by VAICOM
         ///
         ///radioTableFormat = 3
         ///radio = {
         ///	{
+        ///		-- BAS100
         ///		radioId = &apos;airfield4_0&apos;;
         ///		role = {&quot;ground&quot;, &quot;tower&quot;, &quot;approach&quot;};
         ///		callsign = {{[&quot;common&quot;] = {_(&quot;BAS100&quot;), &quot;BAS100&quot;}}};
-        ///		frequency = {[UHF] = {MODULATIONTYPE_AM, 257100000.000000}};
-        ///		sceneObjects = {&apos;t:5988355&apos;};
-        ///	};
-        ///	{
-        ///		radioId = &apos;airfield26_0&apos;;
-        ///		role = {&quot;ground&quot;, [rest of string was truncated]&quot;;.
+        ///		frequency = {[HF] = {MODULATIONTYPE_AM, 4300000.000000}, [UHF] = {MODULATIONTYPE_AM, 257100000.000000}, [VHF_HI] = {MODULAT [rest of string was truncated]&quot;;.
         /// </summary>
         public static string Append_Terrain_Kola_radio {
             get {
@@ -524,7 +547,7 @@ namespace VAICOM.Properties {
         ///		role = {&quot;ground&quot;, &quot;tower&quot;, &quot;approach&quot;};
         ///		callsign = {{[&quot;common&quot;] = {_(&quot;Boulderñity&quot;), &quot;Boulderñity&quot;}}};
         ///		frequency = {[UHF] = {MODULATIONTYPE_AM, 250100000.000000}, [VHF_HI] = {MODULATIONTYPE_AM, 118050000.000000}};
-        ///		sceneObjects = {&apos;t:48169 [rest of string was truncated]&quot;;.
+        ///		sceneObje [rest of string was truncated]&quot;;.
         /// </summary>
         public static string Append_Terrain_Nevada_Radio {
             get {
@@ -552,8 +575,7 @@ namespace VAICOM.Properties {
         ///	};
         ///	{
         ///		radioId = &apos;airfield1_0&apos;;
-        ///		role = {&quot;ground&quot;, &quot;tower&quot;, &quot;approach&quot;};
-        ///		callsi [rest of string was truncated]&quot;;.
+        ///		role = {&quot;ground&quot;, &quot;tower&quot;, &quot;a [rest of string was truncated]&quot;;.
         /// </summary>
         public static string Append_Terrain_Siani_radio {
             get {
@@ -959,6 +981,31 @@ namespace VAICOM.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to -- VAICOM ICAO override table
+        ///--
+        ///-- Purpose:
+        ///--   Provide per-terrain ATC name/callsign -&gt; ICAO designator mappings for ATC unit and METAR output.
+        ///--
+        ///-- Runtime location expected by DCS Lua:
+        ///--   Saved Games\DCS\Scripts\VAICOMPRO\ICAOOverrides.lua
+        ///--   (or Saved Games\DCS.openbeta\Scripts\VAICOMPRO\ICAOOverrides.lua)
+        ///--
+        ///-- Key normalization in runtime lookup:
+        ///--   - Uppercase
+        ///--   - &apos;_&apos; &apos;-&apos; &apos;/&apos; &apos;.&apos; &apos;,&apos; &apos;(&apos; &apos;)&apos; =&gt; spaces
+        ///--   - repeated spaces collapsed
+        ///--
+        ///-- Example:
+        ///--   [&quot;caucasus&quot;] = {
+        ///-- [rest of string was truncated]&quot;;.
+        /// </summary>
+        public static string ICAOOverrides_lua {
+            get {
+                return ResourceManager.GetString("ICAOOverrides_lua", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized resource of type System.Byte[].
         /// </summary>
         public static byte[] icon {
@@ -1162,7 +1209,6 @@ namespace VAICOM.Properties {
         ///{
         ///	VAICOM_TITLE		= &apos;$HEADER$&apos;,
         ///	VAICOM_VERSION		= &apos;$VERSION$&apos;,
-        ///	VAICOM_LICENSE		= &apos;$LICENSE$&apos;,
         ///
         ///	VAICOM_DLLPLUGIN	= &apos;$DLLPLUGIN$&apos;,
         ///	VAICOM_DLLCHATTER	= &apos;$DLLCHATTER$&apos;,
@@ -1416,6 +1462,35 @@ namespace VAICOM.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to /*
+        /// * Copyright 2023 Heatblur Simulations. All rights reserved.
+        /// *
+        /// */
+        ///
+        ///function hb_send_proxy(category, action, value = &quot;&quot;) {
+        ///	if (value === undefined || value === null) {
+        ///		value = &quot;&quot;;
+        ///	}
+        ///
+        ///	if (typeof window.edQuery === &quot;function&quot;) {
+        ///		window.edQuery({
+        ///			request: `${category}|${action}|${value}`,
+        ///			persistent: false,
+        ///			onSuccess: function (response) {
+        ///			},
+        ///			onFailure: function (error_code, error_message) {
+        ///			}
+        ///		});
+        ///	} else {
+        ///		console.log(category + &quot;:&quot; + action + &quot;:&quot; + value); [rest of string was truncated]&quot;;.
+        /// </summary>
+        public static string Orig_F4E_Jester_Interface {
+            get {
+                return ResourceManager.GetString("Orig_F4E_Jester_Interface", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to dofile(LockOn_Options.common_script_path..&quot;devices_defs.lua&quot;)
         ///dofile(LockOn_Options.common_script_path..&quot;ViewportHandling.lua&quot;)
         ///
@@ -1455,15 +1530,11 @@ namespace VAICOM.Properties {
         ///radioTableFormat = 3
         ///radio = {
         ///	{
+        ///		-- BAS100
         ///		radioId = &apos;airfield4_0&apos;;
         ///		role = {&quot;ground&quot;, &quot;tower&quot;, &quot;approach&quot;};
         ///		callsign = {{[&quot;common&quot;] = {_(&quot;BAS100&quot;), &quot;BAS100&quot;}}};
-        ///		frequency = {[UHF] = {MODULATIONTYPE_AM, 257100000.000000}};
-        ///		sceneObjects = {&apos;t:5988355&apos;};
-        ///	};
-        ///	{
-        ///		radioId = &apos;airfield26_0&apos;;
-        ///		role = {&quot;ground&quot;, &quot;tower&quot;, &quot;approach&quot;}; [rest of string was truncated]&quot;;.
+        ///		frequency = {[HF] = {MODULATIONTYPE_AM, 4300000.000000}, [UHF] = {MODULATIONTYPE_AM, 257100000.000000}, [VHF_HI] = {MODULATIONTYPE_AM, 1184000 [rest of string was truncated]&quot;;.
         /// </summary>
         public static string Orig_Terrain_Kola_radio {
             get {
@@ -1492,7 +1563,7 @@ namespace VAICOM.Properties {
         ///	{
         ///		radioId = &apos;airfield1_0&apos;;
         ///		role = {&quot;ground&quot;, &quot;tower&quot;, &quot;approach&quot;};
-        ///		callsign = {{[&quot;common&quot;] = {_(&quot;Ind [rest of string was truncated]&quot;;.
+        ///		callsign = {{ [rest of string was truncated]&quot;;.
         /// </summary>
         public static string Orig_Terrain_Nevada_Radio {
             get {
@@ -1521,7 +1592,7 @@ namespace VAICOM.Properties {
         ///	{
         ///		radioId = &apos;airfield1_0&apos;;
         ///		role = {&quot;ground&quot;, &quot;tower&quot;, &quot;approach&quot;};
-        ///		callsign = {{[&quot;common&quot;] = {_(&quot;AbuSultan&quot;), &quot;Ab [rest of string was truncated]&quot;;.
+        ///		callsign = {{[&quot;common&quot;] =  [rest of string was truncated]&quot;;.
         /// </summary>
         public static string Orig_Terrain_Siani_radio {
             get {
@@ -2148,19 +2219,18 @@ namespace VAICOM.Properties {
         
         /// <summary>
         ///   Looks up a localized string similar to @ECHO OFF
-        ///ECHO VAICOM PRO 2.9
+        ///ECHO VAICOM PRO 3.0 Plugin Updater
         ///ECHO Plugin Updater running...
         ///ECHO Closing VoiceAttack...
         ///TASKKILL /F /IM VoiceAttack.exe
+        ///TASKKILL /F /IM VAICOMPRO.exe
         ///TIMEOUT /T 2
         ///ECHO Updating files...
         ///COPY /Y &quot;Updates\Package\VAICOMPRO\Documentation\VAICOM Pro Community User Manual.pdf&quot; &quot;Documentation\VAICOM Pro Community User Manual.pdf&quot; 
         ///COPY /Y &quot;Updates\Package\VAICOMPRO\EULA.txt&quot; &quot;EULA.txt&quot; 
         ///COPY /Y &quot;Updates\Package\VAICOMPRO\VAICOMPRO.dll&quot; &quot;VAICOMPRO.dll&quot; 
         ///RMDIR /S /Q &quot;Updates&quot;
-        ///DEL /Q VAICOMPRO.exe
-        ///ECHO Restarting VoiceAttack...
-        ///STA [rest of string was truncated]&quot;;.
+        ///DEL /Q VAIC [rest of string was truncated]&quot;;.
         /// </summary>
         public static string Updater_Plugin {
             get {
@@ -2187,6 +2257,16 @@ namespace VAICOM.Properties {
         public static string Updater_RIO {
             get {
                 return ResourceManager.GetString("Updater_RIO", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        public static byte[] VAICOM_F_4E_WSO {
+            get {
+                object obj = ResourceManager.GetObject("VAICOM_F-4E_WSO", resourceCulture);
+                return ((byte[])(obj));
             }
         }
         

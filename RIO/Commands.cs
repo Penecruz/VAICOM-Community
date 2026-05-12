@@ -412,6 +412,7 @@ namespace VAICOM.Extensions.RIO
             { "wMsgJ_RAD_DL_HOST_TRUM" ,        new CommandInfo { uniqueid = 23540, name = "wMsgJ_RAD_DL_HOST_TRUM",        displayname = Labels.aicommands["wMsgJ_RAD_DL_HOST_TRUM"], enabled = true            } },
             { "wMsgJ_RAD_DL_HOST_TICO" ,        new CommandInfo { uniqueid = 23541, name = "wMsgJ_RAD_DL_HOST_TICO",        displayname = Labels.aicommands["wMsgJ_RAD_DL_HOST_TICO"], enabled = true            } },
             { "wMsgJ_RAD_DL_HOST_FORE" ,        new CommandInfo { uniqueid = 23541, name = "wMsgJ_RAD_DL_HOST_FORE",        displayname = Labels.aicommands["wMsgJ_RAD_DL_HOST_FORE"], enabled = true            } }, // Add Forrestal
+            { "wMsgJ_RAD_DL_HOST_BURK" ,        new CommandInfo { uniqueid = 23583, name = "wMsgJ_RAD_DL_HOST_BURK",        displayname = Labels.aicommands["wMsgJ_RAD_DL_HOST_BURK"], enabled = true            } }, // Add Arleigh Burke
 
             { "wMsgJESTER_Steerpoint_SP1" ,     new CommandInfo { uniqueid = 23542, name = "wMsgJESTER_Steerpoint_SP1",     displayname = Labels.aicommands["wMsgJESTER_Steerpoint_SP1"], enabled = true             } },//
             { "wMsgJESTER_Steerpoint_SP2" ,     new CommandInfo { uniqueid = 23543, name = "wMsgJESTER_Steerpoint_SP2",     displayname = Labels.aicommands["wMsgJESTER_Steerpoint_SP2"], enabled = true             } },//

@@ -21,6 +21,7 @@ namespace VAICOM
                     {"Truman",     null }, //DeviceActionsLibrary.RIO.Atom_J_VOID  },
                     {"Forrestal",  null }, //DeviceActionsLibrary.RIO.Atom_J_VOID  },
                     {"Ticonderoga",null }, //DeviceActionsLibrary.RIO.Atom_J_VOID  },
+                    {"ArleighBurke",null }, //DeviceActionsLibrary.RIO.Atom_J_VOID  },
                     {"Darkstar",   null }, //DeviceActionsLibrary.RIO.Atom_J_VOID  },
                     {"Focus",      null }, //DeviceActionsLibrary.RIO.Atom_J_VOID  },
                     {"Magic",      null }, //DeviceActionsLibrary.RIO.Atom_J_VOID  },
@@ -40,6 +41,7 @@ namespace VAICOM
                     DLstate["Truman"] = DeviceActionsLibrary.RIO.Atom_J_VOID;
                     DLstate["Forrestal"] = DeviceActionsLibrary.RIO.Atom_J_VOID;
                     DLstate["Ticonderoga"] = DeviceActionsLibrary.RIO.Atom_J_VOID;
+                    DLstate["ArleighBurke"] = DeviceActionsLibrary.RIO.Atom_J_VOID;
                     DLstate["Darkstar"] = DeviceActionsLibrary.RIO.Atom_J_VOID;
                     DLstate["Focus"] = DeviceActionsLibrary.RIO.Atom_J_VOID;
                     DLstate["Magic"] = DeviceActionsLibrary.RIO.Atom_J_VOID;
@@ -51,18 +53,23 @@ namespace VAICOM
                 {
                     string result = "";
 
-                    if (unitcallsign.Contains("Stennis") || fullname.Contains("Stennis")) { return "Stennis"; } //Pene validate?
-                    if (unitcallsign.Contains("Washington") || fullname.Contains("Washington")) { return "Washington"; }
-                    if (unitcallsign.Contains("Roosevelt") || fullname.Contains("Roosevelt")) { return "Roosevelt"; }
-                    if (unitcallsign.Contains("Lincoln") || fullname.Contains("Lincoln")) { return "Lincoln"; }
-                    if (unitcallsign.Contains("Truman") || fullname.Contains("Truman")) { return "Truman"; }
-                    if (unitcallsign.Contains("Forrestal") || fullname.Contains("Forrestal")) { return "Forrestal"; } //Add USS Forrestal
-                    if (unitcallsign.Contains("Ticonderoga") || fullname.Contains("Ticonderoga")) { return "Ticonderoga"; }
-                    if (unitcallsign.Contains("Darkstar") || fullname.Contains("Darkstar")) { return "Darkstar"; }
-                    if (unitcallsign.Contains("Focus") || fullname.Contains("Focus")) { return "Focus"; }
-                    if (unitcallsign.Contains("Magic") || fullname.Contains("Magic")) { return "Magic"; }
-                    if (unitcallsign.Contains("Overlord") || fullname.Contains("Overlord")) { return "Overlord"; }
-                    if (unitcallsign.Contains("Wizard") || fullname.Contains("Wizard")) { return "Wizard"; }
+                    string callsign = unitcallsign ?? string.Empty;
+                    string name = fullname ?? string.Empty;
+                    string unitName = callsign + " " + name;
+
+                    if (unitName.IndexOf("Stennis", StringComparison.OrdinalIgnoreCase) >= 0) { return "Stennis"; } //Pene validate?
+                    if (unitName.IndexOf("Washington", StringComparison.OrdinalIgnoreCase) >= 0) { return "Washington"; }
+                    if (unitName.IndexOf("Roosevelt", StringComparison.OrdinalIgnoreCase) >= 0) { return "Roosevelt"; }
+                    if (unitName.IndexOf("Lincoln", StringComparison.OrdinalIgnoreCase) >= 0) { return "Lincoln"; }
+                    if (unitName.IndexOf("Truman", StringComparison.OrdinalIgnoreCase) >= 0) { return "Truman"; }
+                    if (unitName.IndexOf("Forrestal", StringComparison.OrdinalIgnoreCase) >= 0) { return "Forrestal"; } //Add USS Forrestal
+                    if (unitName.IndexOf("Ticonderoga", StringComparison.OrdinalIgnoreCase) >= 0) { return "Ticonderoga"; }
+                    if (unitName.IndexOf("Arleigh Burke", StringComparison.OrdinalIgnoreCase) >= 0) { return "ArleighBurke"; }
+                    if (unitName.IndexOf("Darkstar", StringComparison.OrdinalIgnoreCase) >= 0) { return "Darkstar"; }
+                    if (unitName.IndexOf("Focus", StringComparison.OrdinalIgnoreCase) >= 0) { return "Focus"; }
+                    if (unitName.IndexOf("Magic", StringComparison.OrdinalIgnoreCase) >= 0) { return "Magic"; }
+                    if (unitName.IndexOf("Overlord", StringComparison.OrdinalIgnoreCase) >= 0) { return "Overlord"; }
+                    if (unitName.IndexOf("Wizard", StringComparison.OrdinalIgnoreCase) >= 0) { return "Wizard"; }
 
                     return result;
                 }
@@ -77,6 +84,27 @@ namespace VAICOM
                         foreach (Servers.Server.DcsUnit unit in State.currentstate.DLunits)
                         {
                             string callsign = extractDLunit(unit.callsign, unit.fullname);
+
+                            if (string.IsNullOrEmpty(callsign))
+                            {
+                                continue;
+                            }
+
+                            if (!DLstate.ContainsKey(callsign))
+                            {
+                                continue;
+                            }
+
+                            if (!DLstate[callsign].Equals(DeviceActionsLibrary.RIO.Atom_J_VOID))
+                            {
+                                continue;
+                            }
+
+                            if (counter >= 8)
+                            {
+                                break;
+                            }
+
                             try
                             {
                                 counter += 1;

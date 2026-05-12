@@ -1,7 +1,10 @@
-﻿using Newtonsoft.Json;
-using System;
+﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
+using System.Net.WebSockets;
 using System.Text;
+using System.Threading;
+using Newtonsoft.Json;
 using VAICOM.Extensions.Kneeboard;
 using VAICOM.Static;
 
@@ -116,7 +119,7 @@ namespace VAICOM
                     public UpdateRequest()
                     {
                         debug = State.activeconfig.Debugmode;
-                        client = State.currentlicense;
+                        client = State.client;
                         mode = State.clientmode;
                         type = Messagetypes.RequestUpdate;
                         command = 4000;
@@ -161,7 +164,7 @@ namespace VAICOM
                     public SettingsChange()
                     {
                         debug = State.activeconfig.Debugmode;
-                        client = State.currentlicense;
+                        client = State.client;
                         mode = State.clientmode;
                         type = Messagetypes.SettingsChange;
                         command = 4000;
@@ -193,7 +196,7 @@ namespace VAICOM
                     {
                         debug = State.activeconfig.Debugmode;
                         showmenu = true;
-                        client = State.currentlicense;
+                        client = State.client;
                         mode = State.clientmode;
                         type = Messagetypes.iCommandSequence;
                         tgtdevname = State.currentradiodevicename.Replace(":", " ");
@@ -225,7 +228,7 @@ namespace VAICOM
                     public ActionIndexSequence()
                     {
                         debug = State.activeconfig.Debugmode;
-                        client = State.currentlicense;
+                        client = State.client;
                         mode = State.clientmode;
                         type = Messagetypes.ActionIndexSequence;
                         command = 4000;
@@ -240,6 +243,8 @@ namespace VAICOM
                     public bool debug;
                     public string client;
                     public string mode;
+                    public string type;
+                    public int command;
                     public string exec;
                     public string dspmsg;
                     public int msgdur;
@@ -251,8 +256,10 @@ namespace VAICOM
                     public DebugMsg()
                     {
                         debug = true;
-                        client = State.currentlicense;
+                        client = State.client;
                         mode = ClientModes.Debug;
+                        type = Messagetypes.Undefined;
+                        command = 4000;
                         exec = "";
                         dictmode = State.Proxy.Dictation.IsOn();
                     }
@@ -288,7 +295,7 @@ namespace VAICOM
                     public RadioTuneMessage()
                     {
                         debug = State.activeconfig.Debugmode;
-                        client = State.currentlicense;
+                        client = State.client;
                         mode = State.clientmode;
                         type = Messagetypes.SettingsChange;
                         command = 4000;
@@ -312,7 +319,7 @@ namespace VAICOM
                 try
                 {
 
-                    if (!State.kneeboardactivated && State.activeconfig.Kneeboard_Enabled)
+                    if (!State.activeconfig.Kneeboard_Enabled && !State.activeconfig.OpenKneeboard_Out)
                     {
                         msg = new KneeboardMessage();
                         msg.logdata = new LogData("", "Please enable kneeboard extension to use this page.");
@@ -338,12 +345,19 @@ namespace VAICOM
                     string formatmessage = JsonConvert.SerializeObject(State.currentmessage);
                     byte[] sendbuffer = Encoding.UTF8.GetBytes(formatmessage);
                     State.SendSocket.SendTo(sendbuffer, State.SendIpEndPoint);
-                    //Log.Write("Message sent: " + formatmessage, Colors.Inline); 
+                    Extensions.Kneeboard.OpenKneeboardBridge.UpdateStatus("Command sent.", "sent");
+
+                    // Log WSO-specific commands
+                    if (State.currentmessage.type == "WSOCommand")
+                    {
+                        Log.Write($"WSO Command sent: {formatmessage}", Colors.Inline);
+                    }
+
                     return formatmessage;
                 }
                 catch (Exception e)
                 {
-                    Log.Write("there was a problem sending the client message:" + e.Message + e.ToString(), Colors.Inline);
+                    Log.Write("There was a problem sending the client message: " + e.Message + e.ToString(), Colors.Inline);
                     return "";
                 }
             }

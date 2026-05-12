@@ -108,8 +108,6 @@ namespace VAICOM
             public static void ResetProcessValues(dynamic vaProxy)
             {
                 State.dcsrunning = false;
-                State.tempblockedcommands = false;
-                State.blockedmodule = false;
                 State.blockallcommands = false;
             }
 
@@ -132,6 +130,8 @@ namespace VAICOM
                 State.currentstate.easycomms = true;
                 State.currentmodule = DCSmodules.LookupTable["----"];
                 State.currentrecipientclass = Recipientclasses.Undefined;
+                State.AH64GeorgeWowFromExport = false;
+                State.AH64GeorgeWowFromServerState = false;
                 State.oneradioactive = true;
                 State.currentradiodevicename = "";
                 State.lastupdaterequesttimer = 0;
@@ -237,7 +237,7 @@ namespace VAICOM
                     try
                     {
                         // KNEEBOARD ADDITION
-                        if (State.kneeboardactivated && State.activeconfig.Kneeboard_Enabled && State.installkneeboard)
+                        if (State.activeconfig.Kneeboard_Enabled)
                         {
                             FileHandler.Lua.LuaFiles_Install_Kneeboard(false, State.clientmode.Equals(ClientModes.Normal)); // quiet if not debug
                         }
@@ -263,16 +263,11 @@ namespace VAICOM
 
                 try
                 {
-
-                    if (State.jesteractivated)
+                    int updates = Extensions.RIO.ExtImport.MergeRIO();
+                    if (updates > 0)
                     {
-                        int updates = Extensions.RIO.ExtImport.MergeRIO();
-                        if (updates > 0)
-                        {
-                            RIOmerged = true;
-                        }
+                        RIOmerged = true;
                     }
-
                 }
                 catch
                 {
@@ -282,6 +277,30 @@ namespace VAICOM
 
                 return RIOmerged;
 
+            }
+
+            public static bool MergeWSO(dynamic vaProxy)
+            {
+                bool WSOmerged = false;
+
+                try
+                {
+                    if (State.wsoactivated) // Ensure WSO is activated
+                    {
+                        int updates = Extensions.WSO.ExtImport.MergeWSO();
+                        if (updates > 0)
+                        {
+                            WSOmerged = true;
+                        }
+                    }
+                }
+                catch(Exception e)
+                {
+                    Log.Write($"WARNING: Could not load the WSO plugin extension: {e.Message}, {e.StackTrace}", Colors.Warning);
+                    WSOmerged = false;
+                }
+
+                return WSOmerged;
             }
 
             public static void CreateDatabase(dynamic vaProxy)
@@ -335,6 +354,8 @@ namespace VAICOM
                 {
                     Interfaces.Network.UDPsetup();
                     Interfaces.Network.UDPstart();
+                    Interfaces.Network.WebSocketSetup();
+                    Interfaces.Network.WebSocketStart();
                     Log.Write("Network setup completed successfully.", Colors.Message);
                 }
                 catch (Exception e)
@@ -418,7 +439,6 @@ namespace VAICOM
 
             public static void Initialize(dynamic vaProxy)
             {
-
                 State.startup = true;
 
                 try
@@ -426,8 +446,6 @@ namespace VAICOM
 
                     State.SetEnvironment(vaProxy);
                     ResetProcessValues(vaProxy);
-
-                    Products.Products.CheckActiveLicenses();
 
                     FileHandler.Root.CheckSubFolders();
                     FileHandler.Root.ExtractCompagnionApp();
@@ -443,7 +461,6 @@ namespace VAICOM
 
                     CheckVAVersion(vaProxy);
                     GetAssemblies(vaProxy);
-
                 }
                 catch
                 {
@@ -463,9 +480,20 @@ namespace VAICOM
                     ResetPTTConfig(vaProxy);
                     InstallLuaFiles(vaProxy);
                     FileHandler.Root.CheckProfile(false);
+                    FileHandler.Root.CheckWSOProfile(false);  // WSO
+
+                    // Call MergeRIO
                     MergeRIO(vaProxy);
+
+                    // Call MergeWSO
+                    MergeWSO(vaProxy);
+
                     CreateDatabase(vaProxy);
                     StartNetwork(vaProxy);
+                    if (State.activeconfig.OpenKneeboard_Out)
+                    {
+                        OpenKneeboardBridge.Initialize();
+                    }
                     StartTimers(vaProxy);
                     StartSpeechSynth(vaProxy);
                     InitListeningState(vaProxy);
@@ -477,9 +505,8 @@ namespace VAICOM
 
                     if (State.clientmode.Equals(ClientModes.Debug))
                     {
-                        State.realatcactivated = true;
+                        
                     }
-
                 }
                 catch (Exception e)
                 {

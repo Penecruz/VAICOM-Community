@@ -86,9 +86,7 @@ namespace VAICOM
                             newrecipient.uniqueid = entry.Value.uniqueid;
                             newrecipient.name = entry.Value.name;
                             newrecipient.displayname = entry.Value.displayname;
-                            newrecipient.requiresJester = entry.Value.requiresJester;
                             newrecipient.enabled = entry.Value.enabled;
-                            newrecipient.blockedforFree = entry.Value.blockedforFree;
 
                             if (newrecipient.enabled)
                             {
@@ -115,9 +113,7 @@ namespace VAICOM
                             newcommand.dcsid = entry.Value.name;
                             newcommand.displayname = entry.Value.displayname;
                             newcommand.eventnumber = entry.Value.eventnumber;
-                            newcommand.requiresJester = entry.Value.requiresJester;
                             newcommand.enabled = entry.Value.enabled;
-                            newcommand.blockedforFree = entry.Value.blockedforFree;
 
                             if (newcommand.enabled)
                             {

@@ -126,7 +126,16 @@ namespace VAICOM
                     State.currentstate.airborne = serverMessage.airborne;
                     State.currentstate.intercom = serverMessage.intercom;
                     State.currentstate.fsmstate = serverMessage.fsmstate;
+                    State.currentstate.selectedradio = serverMessage.selectedradio;
                     State.currentstate.radios = serverMessage.radios;
+
+                    if (!State.currentstate.airborne)
+                    {
+                        if (State.AH64GeorgeSelectedWeapon != State.AH64GeorgeWeaponMode.NoWeapon)
+                        {
+                            State.AH64GeorgeSelectedWeapon = State.AH64GeorgeWeaponMode.NoWeapon;
+                        }
+                    }
                 }
                 catch (Exception e)
                 {
@@ -134,6 +143,7 @@ namespace VAICOM
                 }
                 receivedupdatecomplete = false;
             }
+
             public static void ExtractChunk3(ServerMessage serverMessage)
             {
 
@@ -162,7 +172,7 @@ namespace VAICOM
                 processingchunks = true;
                 try
                 {
-                    List<string> cats = new List<string>() { "Player", "Flight", "JTAC", "AWACS", "Tanker", "Crew", "Aux", "Cargo" };
+                    List<string> cats = new List<string>() { "Player", "Flight", "JTAC", "AWACS", "Tanker", "Opposition", "Crew", "Aux", "Cargo" };
                     foreach (string catstr in cats)
                     {
                         try
@@ -170,7 +180,14 @@ namespace VAICOM
                             foreach (DcsUnit a in serverMessage.availablerecipients[catstr])
                             {
                                 a.reccat = catstr;
-                                a.descr = catdescriptions[catstr];
+                                if (catstr.Equals("Opposition", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    a.descr = "OPPOSITION";
+                                }
+                                else
+                                {
+                                    a.descr = catdescriptions[catstr];
+                                }
                                 State.currentstate.availablerecipients[catstr].Add(a);
                             }
                         }
@@ -332,7 +349,8 @@ namespace VAICOM
             {
                 try
                 {
-
+                    State.currentstate.metar = serverMessage.metar;
+                    State.currentstate.atcmetars = serverMessage.atcmetars ?? new Dictionary<string, string>();
                 }
                 catch (Exception e)
                 {
@@ -348,4 +366,3 @@ namespace VAICOM
         }
     }
 }
-

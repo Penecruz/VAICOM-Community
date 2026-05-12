@@ -1,15 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using VAICOM.Static;
+
 namespace VAICOM
 {
-
     namespace Database
     {
-
         public static partial class Aliases
         {
-
             public static Dictionary<string, string> importedmenus = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
             public static Dictionary<string, string> importedatcs = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
             public static Dictionary<string, string> cockpitcontrol = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
@@ -30,11 +28,11 @@ namespace VAICOM
                     { "importedatcs",       Aliases.importedatcs        },
                     { "importedmenus",      Aliases.importedmenus       },
                     { "playercallsigns",    Aliases.playercallsigns     },
-                    { "simcontrol",         Aliases.simcontrol          },
+                    { "simcontrol",         Aliases.simcontrol          },                    
                 };
             }
 
-            public static void ResetImported() // resets only the imported F10 menu Items and Imported Thearter ATC encrypted database files
+            public static void ResetImported() // resets only the imported F10 menu Items and Imported Theater ATC encrypted database files
             {
                 categories = new Dictionary<string, Dictionary<string, string>>(StringComparer.OrdinalIgnoreCase)
                 {
@@ -54,7 +52,7 @@ namespace VAICOM
                 { "importedatcs",       Aliases.importedatcs        },
                 { "importedmenus",      Aliases.importedmenus       },
                 { "playercallsigns",    Aliases.playercallsigns     },
-                { "simcontrol",         Aliases.simcontrol          },
+                { "simcontrol",         Aliases.simcontrol          },                
             };
 
             public static Dictionary<string, string> displaynames = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
@@ -68,7 +66,7 @@ namespace VAICOM
                 { "importedatcs",       "Imported ATC names"                    },
                 { "importedmenus",      "Imported F10 menu commands"            },
                 { "playercallsigns",    "Flight Callsigns"                      },
-                { "simcontrol",         "Sim Control"                           },
+                { "simcontrol",         "Sim Control"                           },                
             };
 
             public static Dictionary<string, string> scrambleddbfilenames = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
@@ -85,7 +83,7 @@ namespace VAICOM
                 { "importedatcs",       "wdjdw7w8s42ha90f"            },
                 { "importedmenus",      "vie728f3j839jxcn"            },
                 { "playercallsigns",    "4289248wui8cb8w5"            },
-                { "simcontrol",         "accu4264e0a7anv2"            },
+                { "simcontrol",         "accu4264e0a7anv2"            },                
             };
 
             public static Dictionary<string, Dictionary<string, string>> inputscancats = new Dictionary<string, Dictionary<string, string>>(StringComparer.OrdinalIgnoreCase)
@@ -99,6 +97,7 @@ namespace VAICOM
                 { "command",            Aliases.aicommands          },
                 { "apxwpn",             Aliases.appendiceswpn       },
                 { "apxdir",             Aliases.appendicesdir       },
+                { "wsocmdrecipient",    Aliases.airecipients        },
             };
 
             public static void UpdateScanCats()
@@ -111,8 +110,9 @@ namespace VAICOM
                     { "sender",             Aliases.playercallsigns     },
                     { "cue",                Aliases.aicues              },
                     { "command",            Aliases.aicommands          },
-                    { "apxwpn",             Aliases.appendiceswpn     },
-                    { "apxdir",             Aliases.appendicesdir     },
+                    { "apxwpn",             Aliases.appendiceswpn       },
+                    { "apxdir",             Aliases.appendicesdir       },
+                    { "wsocmdrecipient",    Aliases.airecipients        },
                 };
             }
 
@@ -404,7 +404,14 @@ namespace VAICOM
                         {
                             counter = counter + 1;
                             string subcatcatstr = "";
-                            if (set.Key.Equals("aicommands") & Commands.Table.ContainsKey(entry.Value)) { subcatcatstr = Commands.Table[entry.Value].RecipientClass().Name.ToString(); }
+                            if (set.Key.Equals("aicommands") & Commands.Table.ContainsKey(entry.Value))
+                            {
+                                subcatcatstr = Commands.Table[entry.Value].RecipientClass().Name.ToString();
+                                if (Commands.Table[entry.Value].dcsid.StartsWith("wMsgGeorge", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    subcatcatstr = "CPG";
+                                }
+                            }
                             if (set.Key.Equals("airecipients") & Recipients.Table.ContainsKey(entry.Value)) { subcatcatstr = Recipients.Table[entry.Value].RecipientClass().Name.ToString(); }
                             try
                             {

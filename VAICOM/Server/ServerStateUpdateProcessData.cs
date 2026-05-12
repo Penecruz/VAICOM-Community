@@ -132,40 +132,45 @@ namespace VAICOM
             {
                 try
                 {
-                    List<DcsUnit> DLunits = new List<DcsUnit>();
+                    List<DcsUnit> awacsUnits = new List<DcsUnit>();
+                    List<DcsUnit> supercarrierUnits = new List<DcsUnit>();
+                    List<DcsUnit> escortShipUnits = new List<DcsUnit>();
 
                     foreach (DcsUnit unit in State.currentstate.availablerecipients["AWACS"])
                     {
-                        if (unit.callsign.Contains("Darkstar") || unit.fullname.Contains("Darkstar"))
+                        string unitName = (unit.callsign ?? string.Empty) + " " + (unit.fullname ?? string.Empty);
+
+                        if (unitName.IndexOf("Darkstar", StringComparison.OrdinalIgnoreCase) >= 0
+                            || unitName.IndexOf("Focus", StringComparison.OrdinalIgnoreCase) >= 0
+                            || unitName.IndexOf("Magic", StringComparison.OrdinalIgnoreCase) >= 0
+                            || unitName.IndexOf("Overlord", StringComparison.OrdinalIgnoreCase) >= 0
+                            || unitName.IndexOf("Wizard", StringComparison.OrdinalIgnoreCase) >= 0)
                         {
-                            DLunits.Add(unit);
-                        }
-                        if (unit.callsign.Contains("Focus") || unit.fullname.Contains("Focus"))
-                        {
-                            DLunits.Add(unit);
-                        }
-                        if (unit.callsign.Contains("Magic") || unit.fullname.Contains("Magic"))
-                        {
-                            DLunits.Add(unit);
-                        }
-                        if (unit.callsign.Contains("Overlord") || unit.fullname.Contains("Overlord"))
-                        {
-                            DLunits.Add(unit);
-                        }
-                        if (unit.callsign.Contains("Wizard") || unit.fullname.Contains("Wizard"))
-                        {
-                            DLunits.Add(unit);
+                            awacsUnits.Add(unit);
                         }
                     }
+
                     foreach (DcsUnit unit in State.currentstate.availablerecipients["ATC"])
                     {
-                        if (unit.fullname.ToLower().Contains("ticonderoga") || unit.callsign.ToLower().Contains("ticonderoga") || unit.fullname.ToLower().Contains("arleigh burke") || unit.callsign.ToLower().Contains("arleigh burke") || (CheckSuperCarrier(unit.callsign + unit.fullname) && !(unit.callsign + unit.fullname).ToLower().Contains("kuznetsov") && !(unit.callsign + unit.fullname).ToLower().Contains("vinson")))
+                        string unitName = (unit.callsign ?? string.Empty) + " " + (unit.fullname ?? string.Empty);
+                        string lowerName = unitName.ToLower();
+
+                        if (CheckSuperCarrier(unitName) && !lowerName.Contains("kuznetsov") && !lowerName.Contains("vinson"))
                         {
-                            DLunits.Add(unit);
+                            supercarrierUnits.Add(unit);
+                        }
+                        else if (lowerName.Contains("ticonderoga") || lowerName.Contains("arleigh burke"))
+                        {
+                            escortShipUnits.Add(unit);
                         }
 
                     }
-                    State.currentstate.DLunits = DLunits.OrderBy(o => o.range).ToList(); //Closest DLink units add Arleigh Burke class destroyers
+
+                    State.currentstate.DLunits = awacsUnits.OrderBy(o => o.range)
+                        .Concat(supercarrierUnits.OrderBy(o => o.range))
+                        .Concat(escortShipUnits.OrderBy(o => o.range))
+                        .ToList();
+
                     helper.getDLstate();
                 }
                 catch
@@ -178,7 +183,6 @@ namespace VAICOM
             {
                 if (!State.activeconfig.ImportOtherMenu)
                 {
-                    Log.Write("Skipping F10 menu processing due to Import F10 Menu setting being disabled in Preferences.", Colors.Text);
                     return;
                 }
 
@@ -188,22 +192,14 @@ namespace VAICOM
                     return;
                 }
 
-                if (State.menuauximported)
-                {
-                    Log.Write("F10 menu items already imported. Skipping processing.", Colors.Text);
-                    return;
-                }
-
                 try
                 {
                     Log.Write("Processing F10 menu items...", Colors.Text);
-                    ImportAuxMenu();
-                    State.menuauximported = true; // Mark as imported
+                    ImportAuxMenu(); // Always process the menu
                 }
                 catch (Exception ex)
                 {
                     Log.Write($"There was a problem importing F10 menu items: {ex.Message}", Colors.Text);
-                    State.menuauximported = false;
                 }
             }
 
@@ -226,10 +222,9 @@ namespace VAICOM
 
             public static bool tunedforAOCS;
 
+
             public static void ProcessServerData()
             {
-                Log.Write("Processing server data...", Colors.Text);
-
                 State.deepdebugmode = State.clientmode.Equals(ClientModes.Debug) || State.currentstate.playerusername.Equals(State.debuguser);
 
                 if (State.currentstate.playerusername.Equals(State.debuguser))
@@ -262,10 +257,11 @@ namespace VAICOM
                     return; // Exit early if module validation fails
                 }
 
+                ForceAH64GeorgeNoWeaponWhenOnGround();
+
                 // PTT configuration and activate AIRIO if conditions are met
                 PTT.PTT_ApplyNewConfig();
-                State.AIRIOactive = State.jesteractivated && 
-                                    State.dll_installed_rio && 
+                State.AIRIOactive = State.dll_installed_rio && 
                                     State.activeconfig.RIO_Enabled && 
                                     State.currentmodule.Equals(Products.DCSmodules.LookupTable[State.riomod]);
 
@@ -288,6 +284,35 @@ namespace VAICOM
                     catch (Exception ex)
                     {
                         Log.Write($"Failed to update AIRIO state: {ex.Message}", Colors.Warning);
+                    }
+                }
+
+                if (!State.AIRIOactive
+                    && State.currentmodule != null
+                    && (State.currentmodule.Id.Equals("F-4E-45MC", StringComparison.OrdinalIgnoreCase)
+                        || State.currentmodule.Id.Equals("AH-64D", StringComparison.OrdinalIgnoreCase))
+                    && State.activeconfig.ICShotmic_useswitch)
+                {
+                    bool hotmic = State.IsF4EIntercomSelected();
+                    bool previous = State.activeconfig.ICShotmic;
+                    State.activeconfig.ICShotmic = hotmic;
+
+                    if (previous != hotmic)
+                    {
+                        double pilotIcsArg = State.currentstate.riostate != null ? State.currentstate.riostate.f4ePilotIcs : 0;
+                        Log.Write($"{State.currentmodule.Id} ICS switch: hotmic={hotmic}, releaseHot={State.activeconfig.ReleaseHot}, intercomDevice={State.currentstate.intercom}, pilotIcsArg={pilotIcsArg:0.000}", Colors.Inline);
+                        PushToTalk.PTT.PTT_Manage_Listen_VA(State.activeconfig.ReleaseHot || hotmic);
+                        PushToTalk.PTT.PTT_Manage_Listen_VAICOM(!State.activeconfig.ReleaseHot || hotmic);
+                    }
+
+                    if (State.configwindowopen
+                        && (State.configurationwindow != null))
+                    {
+                        State.configurationwindow.Dispatcher.BeginInvoke((MethodInvoker)delegate
+                        {
+                            State.configurationwindow.CheckBoxHotMic();
+                            State.configurationwindow.Dictate_set_relhot_Light(State.activeconfig.ICShotmic);
+                        });
                     }
                 }
 
@@ -316,15 +341,45 @@ namespace VAICOM
                 VAICOM.Interfaces.VA_Plugin.VA_ExposeVariables(State.Proxy);
 
                 State.Stopwatch.Stop();
+            }
 
-                Log.Write("Server update processed successfully.", Colors.Text);
+            private static void ForceAH64GeorgeNoWeaponWhenOnGround()
+            {
+                try
+                {
+                    string moduleId = State.currentmodule != null ? (State.currentmodule.Id ?? string.Empty) : string.Empty;
+                    string stateId = State.currentstate != null ? (State.currentstate.id ?? string.Empty) : string.Empty;
+                    bool isAH64 = moduleId.IndexOf("AH-64D", StringComparison.OrdinalIgnoreCase) >= 0
+                                  || stateId.IndexOf("AH-64D", StringComparison.OrdinalIgnoreCase) >= 0;
+
+                    if (!isAH64 || State.currentstate == null || State.currentstate.airborne)
+                    {
+                        if (isAH64)
+                        {
+                            State.AH64GeorgeWowFromServerState = false;
+                        }
+                        return;
+                    }
+
+                    State.AH64GeorgeWowFromServerState = true;
+
+                    if (State.AH64GeorgeSelectedWeapon != State.AH64GeorgeWeaponMode.NoWeapon)
+                    {
+                        var previous = State.AH64GeorgeSelectedWeapon;
+                        State.AH64GeorgeSelectedWeapon = State.AH64GeorgeWeaponMode.NoWeapon;
+                        Log.Write("AH-64D ground sync: forced local George state " + previous + " -> NoWeapon (WOW).", Colors.Warning);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Log.Write("AH-64D ground sync check failed: " + ex.Message, Colors.Warning);
+                }
             }
 
             private static void EnsureModuleConnectedAndProcessF10Menu()
             {
                 if (State.moduleConnected)
                 {
-                    Log.Write("Module connected. Processing F10 menu data...", Colors.Text);
                     GetAuxMenu();
                 }
                 else

@@ -60,6 +60,11 @@
       <AutoGen>True</AutoGen>
       <DependentUpon>Afghanistan.resx</DependentUpon>
     </Compile>
+    <Compile Update="Andersen.Designer.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Andersen.resx</DependentUpon>
+    </Compile>
     <Compile Update="Russia.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
@@ -98,6 +103,10 @@
     <EmbeddedResource Update="Afghanistan.resx">
       <Generator>PublicResXFileCodeGenerator</Generator>
       <LastGenOutput>Afghanistan.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+    <EmbeddedResource Update="Andersen.resx">
+      <Generator>PublicResXFileCodeGenerator</Generator>
+      <LastGenOutput>Andersen.Designer.cs</LastGenOutput>
     </EmbeddedResource>
     <EmbeddedResource Update="Russia.resx">
       <Generator>PublicResXFileCodeGenerator</Generator>

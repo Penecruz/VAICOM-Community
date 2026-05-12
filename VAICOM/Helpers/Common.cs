@@ -72,7 +72,7 @@ namespace VAICOM
 
             public static string RemoveIllegalCharsForDB(string inputstr)
             {
-                string outputstr = inputstr.Replace("{", "").Replace("}", "").Replace("[", "").Replace("]", "").Replace("@", "").Replace("$", "").Replace("#", "").Replace(";", "").Replace(":", "").Replace("\"", "").Replace("\'", "");
+                string outputstr = inputstr.Replace("{", "").Replace("}", "").Replace("[", "").Replace("]", "").Replace("@", "").Replace("$", "").Replace("#", "").Replace(";", "").Replace(":", "").Replace("\"", "").Replace("\'", "").Replace("!", "").Replace(".", "");
 
                 if (!outputstr.Contains("*"))
                 {

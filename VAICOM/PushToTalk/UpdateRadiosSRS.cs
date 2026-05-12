@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using VAICOM.Products;
 using VAICOM.Servers;
 using VAICOM.Static;
@@ -87,14 +88,16 @@ namespace VAICOM
                     {"A-29B" ,              new radioslotdevicelist() { Slot_map_INT = {0,0,0}, Slot_map_SRS = {0,0,0}, Slot_map_CUS = {0,0,0} } },
                     {"UH-60L" ,             new radioslotdevicelist() { Slot_map_INT = {0,0,0}, Slot_map_SRS = {0,0,0}, Slot_map_CUS = {0,0,0} } },
                     {"OH-6A" ,              new radioslotdevicelist() { Slot_map_INT = {0,0,0}, Slot_map_SRS = {0,0,0}, Slot_map_CUS = {0,0,0} } },
+                    {"AH-6J" ,              new radioslotdevicelist() { Slot_map_INT = {0,0,0}, Slot_map_SRS = {0,0,0}, Slot_map_CUS = {0,0,0} } },
+                    {"MH-6J" ,              new radioslotdevicelist() { Slot_map_INT = {0,0,0}, Slot_map_SRS = {0,0,0}, Slot_map_CUS = {0,0,0} } },
                     {"Hercules" ,           new radioslotdevicelist() { Slot_map_INT = {0,0,0}, Slot_map_SRS = {0,0,0}, Slot_map_CUS = {0,0,0} } },
                     {"T-45" ,               new radioslotdevicelist() { Slot_map_INT = {0,0,0}, Slot_map_SRS = {0,0,0}, Slot_map_CUS = {0,0,0} } },
                     {"F-4E-45MC" ,          new radioslotdevicelist() { Slot_map_INT = {0,0,0}, Slot_map_SRS = {0,0,0}, Slot_map_CUS = {0,0,0} } },
                     {"OH58D" ,              new radioslotdevicelist() { Slot_map_INT = {0,0,0}, Slot_map_SRS = {0,0,0}, Slot_map_CUS = {0,0,0} } },
-                    {"CH-47F" ,             new radioslotdevicelist() { Slot_map_INT = {0,0,0}, Slot_map_SRS = {0,0,0}, Slot_map_CUS = {0,0,0} } },
+                    {"CH-47Fbl1" ,          new radioslotdevicelist() { Slot_map_INT = {0,0,0}, Slot_map_SRS = {0,0,0}, Slot_map_CUS = {0,0,0} } },
                     {"F4U-1D" ,             new radioslotdevicelist() { Slot_map_INT = {0,0,0}, Slot_map_SRS = {0,0,0}, Slot_map_CUS = {0,0,0} } },
                     {"MiG-29 Fulcrum" ,     new radioslotdevicelist() { Slot_map_INT = {0,0,0}, Slot_map_SRS = {0,0,0}, Slot_map_CUS = {0,0,0} } },
-                    {"C-130J" ,             new radioslotdevicelist() { Slot_map_INT = {0,0,0}, Slot_map_SRS = {0,0,0}, Slot_map_CUS = {0,0,0} } },
+                    {"C-130J-30" ,          new radioslotdevicelist() { Slot_map_INT = {0,0,0}, Slot_map_SRS = {0,0,0}, Slot_map_CUS = {0,0,0} } },
                     {"F-22A" ,              new radioslotdevicelist() { Slot_map_INT = {0,0,0}, Slot_map_SRS = {0,0,0}, Slot_map_CUS = {0,0,0} } },
 
                 };
@@ -110,7 +113,7 @@ namespace VAICOM
                     {"F-86F Sabre" ,new radioslotlist() { Slot_map = { "AN/ARC-27", "", "" } } },
                     {"Ka-50" ,      new radioslotlist() { Slot_map = { "R-800", "R-828", "" } } },
                     {"Mi-8MT" ,     new radioslotlist() { Slot_map = { "R-863", "JADRO-1A", "R-828" } } },
-                    {"UH-1H" ,      new radioslotlist() { Slot_map = { "VHF FM", "UHF", "VHF AM"  } } },
+                    {"UH-1H" ,      new radioslotlist() { Slot_map = { "Interphone", "VHF FM", "CB UHF", "VHF AM"  } } },
                     {"A-10C" ,      new radioslotlist() { Slot_map = { "VHF AM (ARC-210)", "UHF AM (ARC-164)", "VHF FM (ARC-186)" } } },
                     {"TF-51D" ,     new radioslotlist() { Slot_map = { "SCR522A", "", "" } } },
                     {"MiG-15Bis" ,  new radioslotlist() { Slot_map = { "RSI-6K", "", "" } } },
@@ -143,8 +146,8 @@ namespace VAICOM
                     {"F-16C_50" ,   new radioslotlist() { Slot_map = { "UHF Radio AN/ARC-164", "VHF Radio AN/ARC-222", "" } } },
                     {"Yak-52" ,     new radioslotlist() { Slot_map = { "Baklan-5", "", "" } } },
 
-                    {"Mi-24P" ,     new radioslotlist() { Slot_map = { "R_852", "Jadro-1A", "R-828" } } },
-                    {"AH-64D" ,     new radioslotlist() { Slot_map = { "VHF AM", "CB UHF", "FM:1 ARC-201D" } } },
+                    {"Mi-24P" ,     new radioslotlist() { Slot_map = { "R-863", "R-828", "Jadro-1A", "R_852" } } },
+                    {"AH-64D" ,     new radioslotlist() { Slot_map = { "VHF AM", "CB UHF", "FM1: ARC-201D" } } },
                     {"MiG-19P" ,    new radioslotlist() { Slot_map = { "RSIU-4V", "", "" } } },
                     {"JF-17" ,      new radioslotlist() { Slot_map = { "COMM1 VHF Radio", "COMM2 UHF Radio", "" } } },
                     {"I-16" ,       new radioslotlist() { Slot_map = { "Baklan 5", "", "" } } },
@@ -160,11 +163,13 @@ namespace VAICOM
                     {"A-29B" ,      new radioslotlist() { Slot_map = { "V/UHF XT-6013", "V/UHF XT-6013", "V/UHF XT-6013" } } }, //Pene
                     {"UH-60L" ,     new radioslotlist() { Slot_map = { "VHF-FM Radio AN/ARC-201 (1)", "Direction Finder Set AN/ARN-149", "VHF Radio AN/ARC-186" } } }, //Pene
                     {"OH-6A" ,      new radioslotlist() { Slot_map = { "VHF Radio KX 155", "FM Radio", "" } } },
+                    {"AH-6J" ,      new radioslotlist() { Slot_map = { "AnArc186 Radio", "AnArc210 FM Radio", "AnArc186 FM Radio" } } },
+                    {"MH-6J" ,      new radioslotlist() { Slot_map = { "AnArc186 Radio", "AnArc210 FM Radio", "AnArc186 FM Radio" } } },
                     {"Hercules" ,   new radioslotlist() { Slot_map = { "", "CB UHF", ""} } }, //Pene
                     {"T-45" ,       new radioslotlist() { Slot_map = { "RADIO2", "RADIO1", ""} } }, //Pene
                     {"F-4E-45MC" ,  new radioslotlist() { Slot_map = { "UHF ARC-164", "", ""} } }, //Pene
                     {"OH58D" ,      new radioslotlist() { Slot_map = { "UHF AM", "VHF AM", "VHF FM2" } } }, //Pene
-                    {"CH-47F" ,     new radioslotlist() { Slot_map = { "VHF AM", "VHF ARC-186", "VHF FM" } } }, //Pene CB .9.9.2280
+                    {"CH-47Fbl1" ,  new radioslotlist() { Slot_map = { "VHF ARC-186", "CB UHF", "FM1: ARC-201D" } } }, //Pene updated to refect Chunk2
                     {"F-16I" ,      new radioslotlist() { Slot_map = { "UHF Radio AN/ARC-164", "VHF Radio AN/ARC-222", "" } } },
                     {"F-16D_50" ,   new radioslotlist() { Slot_map = { "UHF Radio AN/ARC-164", "VHF Radio AN/ARC-222", "" } } },
                     {"F-16D_50_NS", new radioslotlist() { Slot_map = { "UHF Radio AN/ARC-164", "VHF Radio AN/ARC-222", "" } } },
@@ -177,7 +182,7 @@ namespace VAICOM
                     {"EA-18G",      new radioslotlist() { Slot_map = { "COMM1: ARC-210", "COMM2: ARC-210", ""} } },
                     {"F4U-1D" ,     new radioslotlist() { Slot_map = { "R-ARC5", "", ""} } },
                     {"MiG-29 Fulcrum" ,     new radioslotlist() { Slot_map = { "VHF/UHF R-862", "VHF R-855UM", "" } } },
-                    {"C-130J" ,     new radioslotlist() { Slot_map = { "VHF-1", "UHF-1", "VHF-2" } } },
+                    {"C-130J-30" ,  new radioslotlist() { Slot_map = { "INTERCOM", "UHF-1", "UHF-2", "VHF-1", "VHF-2", "HF-1", "HF-2", "VHF AM(ARC-210)", "PVT" } } },
                     {"F-22A" ,      new radioslotlist() { Slot_map = { "VHF AM", "UHF", "VHF FM" } } }, //Pene WIP
 
                 };
@@ -193,7 +198,7 @@ namespace VAICOM
                     {"F-86F Sabre" ,new radioslotlist() { Slot_map = { "AN/ARC-27", "", "" } } },
                     {"Ka-50" ,      new radioslotlist() { Slot_map = { "R-800L14 VHF/UHF", "R-828", "[SPU-9 SW]" } } },
                     {"Mi-8MT" ,     new radioslotlist() { Slot_map = { "R-863", "JADRO-1A", "R-828" } } },
-                    {"UH-1H" ,      new radioslotlist() { Slot_map = { "AN/ARC-131", "AN/ARC-51BX - UHF", "AN/ARC-134",  } } },
+                    {"UH-1H" ,      new radioslotlist() { Slot_map = { "Interphone", "AN/ARC-131", "AN/ARC-51BX - UHF", "AN/ARC-134",  } } },
                     {"A-10C" ,      new radioslotlist() { Slot_map = { "AN/ARC-210(G5)", "AN/ARC-164", "AN/ARC-186(V)" } } },
                     {"TF-51D" ,     new radioslotlist() { Slot_map = { "SCR522A", "", "" } } },
                     {"MiG-15Bis" ,  new radioslotlist() { Slot_map = { "RSI-6K", "", "" } } },
@@ -226,7 +231,7 @@ namespace VAICOM
                     {"F-16C_50" ,   new radioslotlist() { Slot_map = { "AN/ARC-164 UHF", "AN/ARC-222 VHF", "" } } },
                     {"Yak-52" ,     new radioslotlist() { Slot_map = {"Baklan 5", "", "" } } },
 
-                    {"Mi-24P" ,     new radioslotlist() { Slot_map = { "R_852", "Jadro-1A", "R-828" } } },
+                    {"Mi-24P" ,     new radioslotlist() { Slot_map = { "R-863", "R-828", "Jadro-1A", "R_852" } } },
                     {"AH-64D" ,     new radioslotlist() { Slot_map = { "ARC-186(V) VHF", "ARC-164(V) UHF", "ARC-210D V/UHF" } } },
                     {"MiG-19P" ,    new radioslotlist() { Slot_map = { "RSIU-4V", "", "" } } },
                     {"JF-17" ,      new radioslotlist() { Slot_map = { " R&S M3AR (VHF)", " R&S M3AR (UHF/DL)", "" } } },
@@ -243,11 +248,13 @@ namespace VAICOM
                     {"A-29B" ,      new radioslotlist() { Slot_map = { "AN/ARC-150V", "SRT-651/N", ""} } },
                     {"UH-60L" ,     new radioslotlist() { Slot_map = { "[AN/ARC-201]", "AN/ARN-149 DF", "AN/ARC-186" } } },
                     {"OH-6A" ,      new radioslotlist() { Slot_map = { "AN/ARC-51", "AN/ARC-54", "" } } },
+                    {"AH-6J" ,      new radioslotlist() { Slot_map = { "AN/ARC-186", "AN/ARC-182", "AN/ARC-210" } } },
+                    {"MH-6J" ,      new radioslotlist() { Slot_map = { "AN/ARC-186", "AN/ARC-182", "AN/ARC-210" } } },
                     {"Hercules" ,   new radioslotlist() { Slot_map = { "", "AN/ARC-164", ""} } },
                     {"T-45" ,       new radioslotlist() { Slot_map = { "AN/ARC-182 1", "AN/ARC-182 2", ""} } }, //Pene WIP
                     {"F-4E-45MC" ,  new radioslotlist() { Slot_map = { "UHF ARC-164", "", ""} } }, //Pene
                     {"OH58D" ,      new radioslotlist() { Slot_map = { "AN/ARC-231(U)", "AN/ARC-231(V)", "AN/ARC-231(FM)" } } },
-                    {"CH-47F" ,     new radioslotlist() { Slot_map = { "AN/ARC-186(V)", "AN/ARC-186(U)", "AN/ARC-186(FM)" } } }, 
+                    {"CH-47Fbl1" ,  new radioslotlist() { Slot_map = { "AN/ARC-186(V)", "AN/ARC-164(U)", "AN/ARC-210D(FM)" } } }, 
                     {"F-16I" ,      new radioslotlist() { Slot_map = { "AN/ARC-164 UHF", "AN/ARC-222 VHF", "" } } },
                     {"F-16D_50" ,   new radioslotlist() { Slot_map = { "AN/ARC-164 UHF", "AN/ARC-222 VHF", "" } } },
                     {"F-16D_50_NS", new radioslotlist() { Slot_map = { "AN/ARC-164 UHF", "AN/ARC-222 VHF", "" } } },
@@ -260,7 +267,7 @@ namespace VAICOM
                     {"EA-18G",      new radioslotlist() { Slot_map = { "AN/ARC-210 G5 V/UHF", "AN/ARC-210 V/UHF G5", "" } } },
                     {"F4U-1D" ,     new radioslotlist() { Slot_map = { "ARC-5", "", ""} } },
                     {"MiG-29 Fulcrum" ,     new radioslotlist() { Slot_map = { "VHF/UHF R-862", "", "" } } },
-                    {"C-130J" ,     new radioslotlist() { Slot_map = { "ARC-210 V-1", "ARC-210 U-1", "ARC-210 V-2" } } },
+                    {"C-130J-30" ,  new radioslotlist() { Slot_map = { "Intercom", "AN/ARC-164 UHF1", "AN/ARC-164 UHF2", "AN/ARC-222 VHF1", "AN/ARC-222 VHF2", "AN/ARC-190  HF1", "AN/ARC-190 HF2", "AN/ARC-210 SAT", "PVT" } } },
                     {"F-22A" ,      new radioslotlist() { Slot_map = { "AN/ARC-210 G5 V/UHF", "AN/ARC-210 V/UHF G5", "VHF FM" } } }, //Pene WIP
                 };
             }
@@ -538,6 +545,12 @@ namespace VAICOM
             public static void PTT_SetConfigSingle_SRS()
             {
 
+                if (PTT.IsPTTUseSingleRadioSelection())
+                {
+                    PTT_SetConfigMultiSingle_SRS();
+                    return;
+                }
+
                 PTT_SetConfigMulti_SRS();
 
                 TXNodes.TX1.enabled = false;
@@ -571,6 +584,159 @@ namespace VAICOM
                         TXNodes.TX1 = new TXNode() { name = "TX1", enabled = true, radios = TXConfigs.ALL_RADIOS_SEL };
                         break;
                 }
+            }
+
+            public static void PTT_SetConfigMultiSingle_SRS()
+            {
+                TXNodes.TX1.enabled = false;
+                TXNodes.TX2.enabled = false;
+                TXNodes.TX3.enabled = false;
+                TXNodes.TX4.enabled = false;
+                TXNodes.TX5.enabled = false;
+                TXNodes.TX6.enabled = false;
+
+                Server.RadioDevice selectedRadio = State.currentstate.radios
+                    .FirstOrDefault(radio => radio.isselected)
+                    ?? State.currentstate.radios.FirstOrDefault(radio => !radio.intercom)
+                    ?? State.currentstate.radios.FirstOrDefault();
+
+                if (selectedRadio == null)
+                {
+                    return;
+                }
+
+                DCSmodule module = null;
+
+                if (!State.currentstate.id.Equals(null))
+                {
+                    module = DCSmodules.findmodulebyid(State.currentstate.id);
+                }
+
+                if (module.Equals(null))
+                {
+                    module = DCSmodules.LookupTable["----"];
+                }
+
+                radioslotlist radiolist_Ref = maps.mapping_Ref[module.Id];
+                radioslotlist radiolist_SRS = maps.mapping_SRS[module.Id];
+
+                string selectedName = selectedRadio.displayName;
+                string normalizedSelectedName = NormalizeRadioName(selectedName);
+                int selectedIndex = radiolist_Ref.Slot_map.FindIndex(slot => NormalizeRadioName(slot).Equals(normalizedSelectedName, StringComparison.OrdinalIgnoreCase));
+                if (selectedIndex >= 0 && selectedIndex < radiolist_SRS.Slot_map.Count)
+                {
+                    selectedName = radiolist_SRS.Slot_map[selectedIndex];
+                }
+
+                if (selectedName.Length > 16)
+                {
+                    selectedName = selectedName.Substring(selectedName.Length - 16, 16);
+                }
+
+                RadioDevices.SEL.deviceid = selectedRadio.deviceid;
+                RadioDevices.SEL.isavailable = selectedRadio.isavailable;
+                RadioDevices.SEL.intercom = selectedRadio.intercom;
+                RadioDevices.SEL.AM = selectedRadio.AM;
+                RadioDevices.SEL.FM = selectedRadio.FM;
+                RadioDevices.SEL.on = selectedRadio.on;
+                RadioDevices.SEL.frequency = selectedRadio.frequency.ToString();
+                RadioDevices.SEL.modulation = selectedRadio.modulation;
+                RadioDevices.SEL.name = selectedName;
+                RadioDevices.SEL.isSRSserver = false;
+
+                if (RadioDevices.SEL.name.Contains("[") && RadioDevices.SEL.name.Contains("]"))
+                {
+                    RadioDevices.SEL.name = RadioDevices.SEL.name.TrimStart('[').TrimEnd(']');
+                    RadioDevices.SEL.isSRSserver = true;
+                }
+
+                Server.RadioDevice intercomRadio = State.currentstate.radios.FirstOrDefault(radio => radio.intercom);
+                bool hasIntercom = intercomRadio != null;
+
+                TXNodes.TX5.enabled = true;
+                TXNodes.TX5.radios = TXConfigs.SNGL_RADIO_INT;
+
+                RadioDevices.INT.isavailable = hasIntercom ? intercomRadio.isavailable : true;
+                RadioDevices.INT.deviceid = hasIntercom ? intercomRadio.deviceid : 0;
+                RadioDevices.INT.name = "INT";
+                RadioDevices.INT.intercom = true;
+                RadioDevices.INT.AM = false;
+                RadioDevices.INT.FM = false;
+                RadioDevices.INT.on = hasIntercom ? intercomRadio.on : true;
+                RadioDevices.INT.frequency = "";
+                RadioDevices.INT.modulation = "";
+                RadioDevices.INT.isSRSserver = false;
+                TXNodes.TX5.number = RadioDevices.INT.deviceid;
+
+                List<RadioDevice> radios = new List<RadioDevice>() { RadioDevices.SEL };
+                State.radiocount = State.currentstate.radios.Count - 1;
+
+                bool preserveCurrentTX = State.transmitting && State.currentTXnode != null && State.currentTXnode.Equals(TXNodes.TX5);
+
+                switch (State.activeconfig.SingleHotkey)
+                {
+                    case "TX1":
+                        TXNodes.TX1 = new TXNode() { name = "TX1", enabled = true, radios = radios };
+                        if (!preserveCurrentTX)
+                        {
+                            State.currentTXnode = TXNodes.TX1;
+                        }
+                        break;
+                    case "TX2":
+                        TXNodes.TX2 = new TXNode() { name = "TX2", enabled = true, radios = radios };
+                        if (!preserveCurrentTX)
+                        {
+                            State.currentTXnode = TXNodes.TX2;
+                        }
+                        break;
+                    case "TX3":
+                        TXNodes.TX3 = new TXNode() { name = "TX3", enabled = true, radios = radios };
+                        if (!preserveCurrentTX)
+                        {
+                            State.currentTXnode = TXNodes.TX3;
+                        }
+                        break;
+                    case "TX4":
+                        TXNodes.TX4 = new TXNode() { name = "TX4", enabled = true, radios = radios };
+                        if (!preserveCurrentTX)
+                        {
+                            State.currentTXnode = TXNodes.TX4;
+                        }
+                        break;
+                    case "TX5":
+                        if (!preserveCurrentTX)
+                        {
+                            State.currentTXnode = TXNodes.TX5;
+                        }
+                        break;
+                    case "TX6":
+                        TXNodes.TX6 = new TXNode() { name = "TX6", enabled = true, radios = radios };
+                        if (!preserveCurrentTX)
+                        {
+                            State.currentTXnode = TXNodes.TX6;
+                        }
+                        break;
+                    default:
+                        TXNodes.TX1 = new TXNode() { name = "TX1", enabled = true, radios = radios };
+                        if (!preserveCurrentTX)
+                        {
+                            State.currentTXnode = TXNodes.TX1;
+                        }
+                        break;
+                }
+            }
+
+            private static string NormalizeRadioName(string name)
+            {
+                if (string.IsNullOrWhiteSpace(name))
+                {
+                    return string.Empty;
+                }
+
+                return new string(name
+                    .Where(character => char.IsLetterOrDigit(character))
+                    .Select(character => char.ToLowerInvariant(character))
+                    .ToArray());
             }
 
         }
