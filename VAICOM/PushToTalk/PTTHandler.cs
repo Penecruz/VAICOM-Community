@@ -18,6 +18,8 @@ namespace VAICOM
             public static bool TXLinkApply;
             public static bool TXLinkToggle;
             private static readonly object ListenStateLock = new object();
+            private static bool? LastVAICOMSessionsEnabled;
+            private static bool? LastChatterSessionEnabled;
 
             public static bool IsPTTModeSingle()
             {
@@ -95,7 +97,17 @@ namespace VAICOM
             {
 
                 bool _isVOIP = TXLinkApply && longpress;
-                TXLinkToggle = !_isVOIP ? !TXLinkToggle : false;
+                if (!_isVOIP)
+                {
+                    if (!(keypress && State.transmitting && TXLinkToggle))
+                    {
+                        TXLinkToggle = !TXLinkToggle;
+                    }
+                }
+                else
+                {
+                    TXLinkToggle = false;
+                }
                 bool press = !_isVOIP ? TXLinkToggle : keypress;
 
                 Log.Write("press = " + press, Colors.Inline);
@@ -348,12 +360,20 @@ namespace VAICOM
                 {
                     try
                     {
-                        State.Proxy.Command.SetSessionEnabledByCategory("Keyword Collections", on);
-                        State.Proxy.Command.SetSessionEnabledByCategory("Extension packs", on);
+                        if (!LastVAICOMSessionsEnabled.HasValue || LastVAICOMSessionsEnabled.Value != on)
+                        {
+                            State.Proxy.Command.SetSessionEnabledByCategory("Keyword Collections", on);
+                            State.Proxy.Command.SetSessionEnabledByCategory("Extension packs", on);
+                            LastVAICOMSessionsEnabled = on;
+                        }
 
                         if (State.Proxy.GetProfileName().ToLower().Contains(State.defProfileName.ToLower()))
                         {
-                            State.Proxy.Command.SetSessionEnabled("Chatter", true);
+                            if (!LastChatterSessionEnabled.HasValue || !LastChatterSessionEnabled.Value)
+                            {
+                                State.Proxy.Command.SetSessionEnabled("Chatter", true);
+                                LastChatterSessionEnabled = true;
+                            }
                         }
                     }
                     catch

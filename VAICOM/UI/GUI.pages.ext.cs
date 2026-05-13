@@ -151,13 +151,17 @@ namespace VAICOM
 
             public void CheckBoxHotMic()
             {
-                RIO_ICShotmic.IsChecked = State.activeconfig.ICShotmic;
+                if (RIO_ICShotmic != null)
+                {
+                    RIO_ICShotmic.IsChecked = State.activeconfig.ICShotmic;
+                }
             }
 
             private void SetConfigEnableRIO_ICShotmic_useswitch(object sender, RoutedEventArgs e)
             {
                 State.activeconfig.ICShotmic_useswitch = true;
-                if (State.currentstate.riostate != null && State.currentstate.riostate.ics)
+
+                if (State.currentstate != null && State.IsF4EIntercomSelected())
                 {
                     State.activeconfig.ICShotmic = true;
                     CheckBoxHotMic();

@@ -368,13 +368,38 @@ namespace VAICOM
                     ConstructMessage();
                     SendNewMessage();
 
+                    bool sentRioCloseMacro = State.currentcommand.isRIO()
+                        && State.currentmessage != null
+                        && State.currentmessage.extsequence != null
+                        && State.currentmessage.extsequence.Any(action => action != null && action.device == 62 && action.command == 3725);
+
+                    if (sentRioCloseMacro)
+                    {
+                        Extensions.RIO.helper.showingjestermenu = false;
+
+                        if (!State.transmitting && State.IsCrewHotMicActive())
+                        {
+                            var previousTXNode = State.currentTXnode;
+                            try
+                            {
+                                State.currentTXnode = PTT.TXNodes.TX5;
+                                PTT.PTT_Manage_Listen_States_OnPressRelease(true, false);
+                                PTT.PTT_Manage_Listen_States_OnPressRelease(false, false);
+                            }
+                            finally
+                            {
+                                State.currentTXnode = previousTXNode;
+                            }
+                        }
+                    }
+
                     State.previousmessageunit = State.currentmessageunit;
                     State.previousrecipientclass = State.currentrecipientclass;
 
                     Log.Write("Message sent successfully for recipient class " + State.currentrecipientclass.Name + ".", Colors.Inline);
 
                     // for ics hotmic:
-                    if (State.AIRIOactive && State.activeconfig.ICShotmic)
+                    if (State.AIRIOactive && State.IsCrewHotMicActive())
                     {
                         if (!State.valistening)
                         {
@@ -765,6 +790,16 @@ namespace VAICOM
                             else
                             {
                                 havedelayedmessage = true;
+                            }
+                        }
+
+                        if (riocommand && menucommand && !State.transmitting && State.IsCrewHotMicActive())
+                        {
+                            PTT.PTT_Manage_Listen_States_OnPressRelease(false, false);
+
+                            if (Extensions.RIO.helper.showingjestermenu)
+                            {
+                                Extensions.RIO.helper.showingjestermenu = false;
                             }
                         }
 

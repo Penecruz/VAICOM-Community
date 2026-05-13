@@ -1133,7 +1133,27 @@ base.vaicom.properties = {
 		local Modulation = nil
 		local Modulationstr = "XX"
 		if Locator ~= nil then
-			Modulation  = Locator:getCommunicator():getModulation()
+         UnitCommunicator = Locator:getCommunicator()
+		end
+		if UnitCommunicator then
+			local okMod, mod = base.pcall(function()
+				return UnitCommunicator:getModulation()
+			end)
+			if okMod and mod ~= nil then
+				Modulation = mod
+			else
+				local okCount, count = base.pcall(function()
+					return UnitCommunicator:countTransivers()
+				end)
+				if okCount and count and count > 0 then
+					local okMod0, mod0 = base.pcall(function()
+						return UnitCommunicator:getModulation(0)
+					end)
+					if okMod0 and mod0 ~= nil then
+						Modulation = mod0
+					end
+				end
+			end
 		end
 		if Modulation == base.Communicator.MODULATION_AM then Modulationstr = "AM" end
 		if Modulation == base.Communicator.MODULATION_FM then Modulationstr = "FM" end
@@ -1146,7 +1166,24 @@ base.vaicom.properties = {
 			UnitCommunicator = Locator:getCommunicator()
 		end
 		if UnitCommunicator then
-			Frequency = UnitCommunicator:getFrequency() or "0"		
+            local okFreq, freq = base.pcall(function()
+				return UnitCommunicator:getFrequency()
+			end)
+			if okFreq and freq ~= nil then
+				Frequency = freq
+			else
+				local okCount, count = base.pcall(function()
+					return UnitCommunicator:countTransivers()
+				end)
+				if okCount and count and count > 0 then
+					local okFreq0, freq0 = base.pcall(function()
+						return UnitCommunicator:getFrequency(0)
+					end)
+					if okFreq0 and freq0 ~= nil then
+						Frequency = freq0
+					end
+				end
+			end
 		else 
 			Frequency = "0"
 		end
@@ -1160,10 +1197,20 @@ base.vaicom.properties = {
 			UnitCommunicator = Locator:getCommunicator()
 		end
 		if UnitCommunicator then
-			counter = UnitCommunicator:countTransivers()
+            local okCount, count = base.pcall(function()
+				return UnitCommunicator:countTransivers()
+			end)
+			if okCount and count then
+				counter = count
+			end
 		end
 		for i = 0, counter-1 do
-			FreqTbl[i] = UnitCommunicator:getFrequency(i) or nil 	
+            local okFreq, freq = base.pcall(function()
+				return UnitCommunicator:getFrequency(i)
+			end)
+			if okFreq and freq ~= nil then
+				FreqTbl[i] = freq
+			end
 		end
 		return FreqTbl
 	end,

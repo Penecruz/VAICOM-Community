@@ -1012,6 +1012,8 @@ namespace VAICOM
                             Log.Write("Identified as options command", Colors.Inline);
                             if (State.currentkey["recipient"].Equals("RIO") || State.currentkey["recipient"].Equals("Iceman"))
                             {
+                                // Force a fresh wheel-open request even if local state flag got stale.
+                                VAICOM.Extensions.RIO.helper.showingjestermenu = false;
                                 VAICOM.Extensions.RIO.helper.ShowWheel(true);
                             }
                             else
