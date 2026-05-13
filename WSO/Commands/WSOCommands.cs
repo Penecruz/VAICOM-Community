@@ -129,8 +129,17 @@ namespace VAICOM.Extensions.WSO
             { "wMsgWSO_Context_Short", new CommandInfo { uniqueid = 24445, category = CommandCategories.WSO, name = "wMsgWSO_Context_Short", displayname = Labels.aicommands["wMsgWSO_Context_Short"], enabled = true } },
             { "wMsgWSO_Context_Long", new CommandInfo { uniqueid = 24446, category = CommandCategories.WSO, name = "wMsgWSO_Context_Long", displayname = Labels.aicommands["wMsgWSO_Context_Long"], enabled = true } },
             { "wMsgWSO_Context_Double", new CommandInfo { uniqueid = 24447, category = CommandCategories.WSO, name = "wMsgWSO_Context_Double", displayname = Labels.aicommands["wMsgWSO_Context_Double"], enabled = true } },
-                        
-         };
+
+        };
+
+        // Commands that require a mandatory recipient suffix, e.g. diverting to airfields and assets, tuning TACAN assets.
+        public static List<string> recipientCommands = new List<string>
+        {
+            "wMsgWSO_Navigation_Divert_Airfield",
+            "wMsgWSO_Navigation_Divert_Asset",
+            "wMsgWSO_Navigation_TACAN_TuneAsset",
+            "wMsgWSO_Radio_TuneATC"
+        };
 
     }    
 }

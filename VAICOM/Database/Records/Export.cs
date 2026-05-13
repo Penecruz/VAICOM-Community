@@ -35,7 +35,10 @@ namespace VAICOM
             {
                 int counter = 0;
                 string outputstring = "";
+                // WSO commands that do not require a recipient suffix.
                 string wsoOutputCommandString = "";
+                // WSO commands that do require a recipient suffix.
+                string wsoOutputRecipientCommandString = "";
                 string wsoOutputRecipientString = "";
 
                 //----------------------------------------------------------
@@ -76,7 +79,6 @@ namespace VAICOM
                                     {
                                         if ((alias.Value).Equals(dbentry.Key))
                                         {
-
                                             // LOG ADDED
                                             //Log.Write("Alias " + alias.Key + " found for " + alias.Value, Colors.Warning);
                                             if (cat.StartsWith("WSO"))
@@ -134,12 +136,14 @@ namespace VAICOM
 
                 Dictionary<string, string> commandstrings = new Dictionary<string, string>();
                 Dictionary<string, string> wsoCommandStrings = new Dictionary<string, string>();
+                Dictionary<string, string> wsoRecipientCommandStrings = new Dictionary<string, string>();
                 foreach (string cat in CommandCategories.GetNames(typeof(CommandCategories)))
                 {
                     // WSO commands are handled separately
                     if (cat.StartsWith("WSO"))
                     {
                         wsoCommandStrings.Add(cat, "");
+                        wsoRecipientCommandStrings.Add(cat, "");
                     }
                     else
                     {
@@ -162,9 +166,20 @@ namespace VAICOM
                                         // WSO aliases are handled seperately
                                         if (cat.StartsWith("WSO"))
                                         {
-                                            string commandstring = wsoCommandStrings[cat];
-                                            AppendAliasWithGunnerVariant(ref commandstring, alias.Key, ref counter);
-                                            wsoCommandStrings[cat] = commandstring;
+                                            if (Extensions.WSO.Commands.recipientCommands.Contains(alias.Value))
+                                            {
+                                                string commandstring = wsoRecipientCommandStrings[cat];
+                                                commandstring += alias.Key + "; ";
+                                                wsoRecipientCommandStrings[cat] = commandstring;
+                                            }
+                                            else
+                                            {
+                                                string commandstring = wsoCommandStrings[cat];
+                                                commandstring += alias.Key + "; ";
+                                                wsoCommandStrings[cat] = commandstring;
+                                            }
+
+                                            counter = counter + 1;
                                         }
                                         else
                                         {
@@ -183,6 +198,7 @@ namespace VAICOM
 
                 //----------------------------------------------------------
                 // 5) merge for each recipient category
+                string wsoCommandRecipients = "";
                 foreach (string recipientcat in RecipientCategories.GetNames(typeof(RecipientCategories)))
                 {
                     if (!recipientcat.Equals("aifarp") && !recipientcat.Equals("aiship"))
@@ -262,6 +278,7 @@ namespace VAICOM
                             if (cat.Equals("WSO") && commandcat.Contains("WSO"))
                             {
                                 wsoOutputCommandString = wsoOutputCommandString + wsoCommandStrings[commandcat];
+                                wsoOutputRecipientCommandString = wsoOutputRecipientCommandString + wsoRecipientCommandStrings[commandcat];
                             }
 
                             //kneeboard commands
@@ -270,7 +287,14 @@ namespace VAICOM
                                 outputcommandstring = outputcommandstring + commandstrings[commandcat];
                             }
                         }
-                        // set commandblock
+
+                        // Skip the WSO recipient category as this is handled seperately
+                        if (cat.StartsWith("WSO"))
+                        {
+                            continue;
+                        }
+
+                        // Set commandblock
                         if (outputcommandstring.Length > 0)
                         {
                             outputcommandstring = "[" + outputcommandstring;
@@ -278,44 +302,40 @@ namespace VAICOM
                             outputcommandstring += "]"; // no ; here 
                         }
 
-                        // set recipient block
+                        // Set recipient block
                         string outputrecipientstring = "";
-                        // Skip the WSO recipient category as this is handled seperately
-                        if (!cat.StartsWith("WSO"))
+
+                        outputrecipientstring = recipientstrings[cat];
+                        outputrecipientstring = "[" + outputrecipientstring;
+                        outputrecipientstring = outputrecipientstring.TrimEnd("; ".ToCharArray());
+                        outputrecipientstring += ";]"; // recipient block is optional
+
+                        Log.Write($"outputrecipientstring: {outputrecipientstring}", Colors.Warning);
+
+                        if (cat.Equals("aiatc") || cat.Equals("aiawacs") || cat.Equals("aitanker") || cat.Equals("aiship"))
                         {
-                            outputrecipientstring = recipientstrings[cat];
-                            outputrecipientstring = "[" + outputrecipientstring;
-                            outputrecipientstring = outputrecipientstring.TrimEnd("; ".ToCharArray());
-                            outputrecipientstring += ";]"; // recipient block is optional
+                            // WSO only uses subset of receipients for tuning radios and TACAN, and diverting to airfields and assets.
+                            wsoCommandRecipients += recipientstrings[cat];
+                        }
 
-                            if (cat.Equals("aiatc"))
+                        if (recipientstrings[cat].Length > 0 && outputcommandstring.Length > 0) // have aliases for recipient and commands
+                        {
+                            // construct:
+                            string blockstring = "";
+
+                            blockstring += outputrecipientstring;
+                            if (cat.StartsWith("WSO") || cat.Equals("aijtac") || cat.Equals("aiatc") || cat.Equals("aifarp") || cat.Equals("aiship") || cat.Equals("aitanker") || cat.Equals("aiawacs") || cat.Equals("aocs")) //,
                             {
-                                // WSO only uses AI ATC receipients for tuning radio and diverting to airfields.
-                                wsoOutputRecipientString = recipientstrings[cat];
-                                wsoOutputRecipientString = "[" + wsoOutputRecipientString;
-                                wsoOutputRecipientString = wsoOutputRecipientString.TrimEnd("; ".ToCharArray());
-                                wsoOutputRecipientString += ";]"; // recipient block is optional
+                                //blockstring += outputsenderstring;
                             }
-
-                            if (recipientstrings[cat].Length > 0 && outputcommandstring.Length > 0) // have aliases for recipient and commands
+                            if (cat.Equals("aiflight"))
                             {
-                                // construct:
-                                string blockstring = "";
-
-                                blockstring += outputrecipientstring;
-                                if (cat.StartsWith("WSO") || cat.Equals("aijtac") || cat.Equals("aiatc") || cat.Equals("aifarp") || cat.Equals("aiship") || cat.Equals("aitanker") || cat.Equals("aiawacs") || cat.Equals("aocs")) //,
-                                {
-                                    //blockstring += outputsenderstring;
-                                }
-                                if (cat.Equals("aiflight"))
-                                {
-                                    blockstring += outputcuestring;
-                                }
-                                blockstring += outputcommandstring;
-                                blockstring += ";";
-
-                                outputstring += blockstring;
+                                blockstring += outputcuestring;
                             }
+                            blockstring += outputcommandstring;
+                            blockstring += ";";
+
+                            outputstring += blockstring;
                         }
                     }
                 }
@@ -326,6 +346,17 @@ namespace VAICOM
                     wsoOutputCommandString = "[" + wsoOutputCommandString;
                     wsoOutputCommandString = wsoOutputCommandString.TrimEnd("; ".ToCharArray());
                     wsoOutputCommandString += "]"; // no ; here 
+                }
+                // Set WSO recipient commands
+                if (wsoOutputRecipientCommandString.Length > 0)
+                {
+                    wsoOutputRecipientCommandString = "[" + wsoOutputRecipientCommandString.TrimEnd("; ".ToCharArray()) + "]";
+                }
+                // Set WSO command recipients
+                string wsoOutputCommandRecipientsString = "";
+                if (wsoCommandRecipients.Length > 0)
+                {
+                    wsoOutputCommandRecipientsString = "[" + wsoCommandRecipients.TrimEnd("; ".ToCharArray()) + "]";
                 }
 
                 string outputappendixwpnstring = "";
@@ -460,7 +491,10 @@ namespace VAICOM
                 }
 
                 string wsoAliases = "[" + String.Join("; ", wsoRecipientStrings.Values) + "]";
-                string wsoOutputString = wsoAliases + wsoOutputCommandString + wsoOutputRecipientString + ";";   // ; required here to start all others as new commands.
+                // WSO commands that do not need a recipient suffix
+                string wsoOutputString = wsoAliases + wsoOutputCommandString + ";"; // ; required here to start all others as new commands.
+                // WSO commands that require a recipient suffix
+                wsoOutputString += wsoAliases + wsoOutputRecipientCommandString + wsoOutputCommandRecipientsString + ";";
 
                 Log.Write("Exported aliases to keywords.txt, keyword count = " + counter.ToString(), Colors.Text);
 

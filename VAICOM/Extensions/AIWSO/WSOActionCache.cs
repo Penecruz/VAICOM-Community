@@ -446,7 +446,7 @@ namespace VAICOM
                         }
                     }
 
-                    Log.Write($"No recipient found for asset '{asset}'", Colors.Warning);
+                    Log.Write($"No recipient found for asset '{asset}'", Colors.Text);
                     return false;
                 }
 
