@@ -106,7 +106,11 @@ namespace VAICOM
                             {
                                 if (!State.have["wsocmdrecipient"])
                                 {
-                                    Log.Write($"This WSO command requires an additional recipient but was not present", Colors.Warning);
+                                    if (State.activeconfig.UIaddhints)
+                                    {
+                                        UI.Playsound.Proceed();
+                                    }
+                                    Log.Write("(awaiting additional airfield or asset for WSO command)", Colors.Message);
                                     return false;
                                 }
                                 else

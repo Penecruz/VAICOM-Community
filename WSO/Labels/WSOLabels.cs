@@ -21,7 +21,7 @@ namespace VAICOM.Extensions.WSO
             { "wMsgWSO_Lantirn_Undesignate", "WSO Undesignate" },
             { "wMsgWSO_Radar_GoSilent", "WSO Go Silent" },
             { "wMsgWSO_Radar_GoActive", "WSO Go Active" },
-            { "wMsgWSO_Radio_TuneATC", "WSO Tune ATC" },
+            { "wMsgWSO_Radio_TuneATC", "WSO Tune Radio" },
             { "wMsgWSO_Radio_SelectMode", "WSO Select Mode" },
             { "wMsgWSO_Radar_Operation_Active", "WSO Radar Active" },
             { "wMsgWSO_Radar_Operation_Standby", "WSO Radar Standby" },
