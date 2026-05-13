@@ -62,9 +62,9 @@ namespace VAICOM
 
                         foreach (KeyValuePair<string, string> set in localresults)
                         {
-                            // Add bias for WSO and Two recipients in calls
+                            // Add bias for WSO and Two recipients in calls, ensuring that "two" is at the start of the sentence.
                             if (category.Equals("recipient")
-                                && (set.Value.Equals("WSO") || set.Key.ToLower().Equals("two")))
+                                && (set.Value.Equals("WSO") || (set.Key.ToLower().Equals("two") && searchinput.StartsWith(set.Key.ToLower()))))
                             {
                                 usedalias = set.Key;
                                 finalresult = set.Value;

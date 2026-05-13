@@ -110,7 +110,7 @@ namespace VAICOM
                                     {
                                         UI.Playsound.Proceed();
                                     }
-                                    Log.Write("(awaiting additional airfield or asset for WSO command)", Colors.Message);
+                                    Log.Write("(awaiting additional ATC, tanker, or asset for WSO command)", Colors.Message);
                                     return false;
                                 }
                                 else
