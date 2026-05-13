@@ -310,8 +310,6 @@ namespace VAICOM
                         outputrecipientstring = outputrecipientstring.TrimEnd("; ".ToCharArray());
                         outputrecipientstring += ";]"; // recipient block is optional
 
-                        Log.Write($"outputrecipientstring: {outputrecipientstring}", Colors.Warning);
-
                         if (cat.Equals("aiatc") || cat.Equals("aiawacs") || cat.Equals("aitanker") || cat.Equals("aiship"))
                         {
                             // WSO only uses subset of receipients for tuning radios and TACAN, and diverting to airfields and assets.
