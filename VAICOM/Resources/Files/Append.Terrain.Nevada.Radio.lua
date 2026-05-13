@@ -11,7 +11,7 @@ radio = {
 	{
 		radioId = 'airfield6_0';
 		role = {"ground", "tower", "approach"};
-		callsign = {{["common"] = {_("Boulderñity"), "Boulderñity"}}};
+		callsign = {{["common"] = {_("BoulderCity"), "BoulderCity"}}};
 		frequency = {[UHF] = {MODULATIONTYPE_AM, 250100000.000000}, [VHF_HI] = {MODULATIONTYPE_AM, 118050000.000000}};
 		sceneObjects = {'t:4816956'};
 	};

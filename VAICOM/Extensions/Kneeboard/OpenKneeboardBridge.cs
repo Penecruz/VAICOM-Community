@@ -797,7 +797,8 @@ namespace VAICOM
       document.getElementById('tabBody').textContent = formatTabContent(data, selectedTab);
       updateCursorModeForTab();
       const tabBodyEl = document.getElementById('tabBody');
-      if (selectedTab === 'ATC' && tabBodyEl.textContent.indexOf('METAR:') >= 0) {
+      const hasMetar = selectedTab === 'ATC' && /\bMETAR\s+[A-Z]{4}\b/i.test(tabBodyEl.textContent || '');
+      if (hasMetar) {
         tabBodyEl.style.cursor = 'pointer';
         tabBodyEl.title = 'Click METAR to toggle pressure units (hPa/inHg)';
       } else {
@@ -904,16 +905,18 @@ namespace VAICOM
       const clickedLine = getClickedLineFromEvent(ev, this);
       const clickedUpper = String(clickedLine || '').toUpperCase();
       const selectedUpper = String(selectedText || '').toUpperCase();
+      const hasMetar = /\bMETAR\s+[A-Z]{4}\b/i.test(text);
 
       if (okbCursorMode === 'DoodlesOnly' || okbDoodlesOnlyForced) return;
 
       const clickedMetarArea = clickedUpper.indexOf('METAR:') >= 0
+        || clickedUpper.indexOf('METAR ') >= 0
         || clickedUpper.indexOf('WEATHER:') === 0
         || clickedUpper.indexOf('SELECTED AIRFIELD WEATHER:') === 0;
-      const selectedMetarArea = selectedUpper.indexOf('METAR:') >= 0;
+      const selectedMetarArea = selectedUpper.indexOf('METAR:') >= 0 || selectedUpper.indexOf('METAR ') >= 0;
 
       if (clickedMetarArea || selectedMetarArea) {
-        if (text.indexOf('METAR:') < 0) return;
+        if (!hasMetar) return;
         metarPressureInHg = !metarPressureInHg;
         render(latestData);
         return;
@@ -936,7 +939,7 @@ namespace VAICOM
         return;
       }
 
-      if (text.indexOf('METAR:') < 0) return;
+      if (!hasMetar) return;
       metarPressureInHg = !metarPressureInHg;
       render(latestData);
     });

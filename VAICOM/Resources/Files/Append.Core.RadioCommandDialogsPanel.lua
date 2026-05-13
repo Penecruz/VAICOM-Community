@@ -2390,8 +2390,11 @@ base.vaicom.state = {
 					local upperFrom = toInt(upperWindDir)
 					if upperFrom ~= nil then upperFrom = (upperFrom + 180) % 360 end
 
-                   local spdKt = toInt((base.tonumber(windSpd) or 0) * 1.94384) or 0
-					local visM = toInt(vis) or 9999
+                    local spdKt = toInt((base.tonumber(windSpd) or 0) * 1.94384) or 0
+					local visM = toInt(vis)
+					if visM == nil or visM <= 0 then
+						visM = 9999
+					end
 					local turbulence = base.tonumber(weather.groundTurbulence)
 
 					local function minPositive(a, b)
@@ -2561,6 +2564,10 @@ base.vaicom.state = {
 					end
 					if precipCode ~= nil then
 						base.table.insert(wx, precipCode)
+					end
+
+					if visM <= 100 and #wx == 0 and (base.tonumber(cloudBaseAglFt) == nil or cloudBaseAglFt > 0) then
+						visM = 9999
 					end
 
 					if precipCode ~= nil and base.string.find(precipCode, "TS", 1, true) and cloudPart ~= "SKC" and base.string.find(cloudPart, "CB", 1, true) == nil then

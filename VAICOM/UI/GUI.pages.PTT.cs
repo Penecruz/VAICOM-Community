@@ -5,6 +5,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using VAICOM.Client;
+using VAICOM.Helpers;
 using VAICOM.Products;
 using VAICOM.PushToTalk;
 using VAICOM.Servers;
@@ -592,17 +593,7 @@ namespace VAICOM
 
             private void setModuleInfotext(object sender, EventArgs e)
             {
-                string modulename;
-                if (State.currentmodule.Name.Equals("----"))
-                {
-                    modulename = "";
-                }
-                else
-                {
-                    modulename = State.currentmodule.Name;
-                }
-
-                string info = "" + modulename + " " + State.currentmodule.Alias;
+                string info = Common.GetCurrentModuleDisplayText();
                 ModuleInfo.Text = info;
             }
 
@@ -703,17 +694,7 @@ namespace VAICOM
                     string info2 = "Easy Communication: " + easycomms;
                     EasyCommsInfo.Text = info2;
 
-                    string modulename;
-                    if (State.currentmodule.Name.Equals("----"))
-                    {
-                        modulename = "";
-                    }
-                    else
-                    {
-                        modulename = State.currentmodule.Name;
-                    }
-
-                    string info3 = "" + modulename + " " + State.currentmodule.Alias;
+                    string info3 = Common.GetCurrentModuleDisplayText();
                     ModuleInfo.Text = info3;
 
                     string keyname = "TX1";
