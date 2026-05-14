@@ -325,6 +325,15 @@ namespace VAICOM
             return activeconfig.ICShotmic;
         }
 
+        public static bool IsCrewHotMicActiveOnIntercomTX()
+        {
+            return IsCrewHotMicActive()
+                && currentTXnode != null
+                && currentTXnode.Equals(PushToTalk.PTT.TXNodes.TX5);
+        }
+
+        public static bool IntercomHotMicLatched;
+
         public static Server.ServerState previousstate;
         public static Server.ServerState currentstate;
         public static int radiocount;

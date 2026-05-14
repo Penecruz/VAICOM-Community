@@ -1635,7 +1635,89 @@ base.vaicom.objects = {
 	end,
 	localAWACSs = function(getside)
 		local Collection = {}
-			Collection = base.coalition.getServiceProviders(getside, base.coalition.service.AWACS)
+          Collection = base.coalition.getServiceProviders(getside, base.coalition.service.AWACS)
+
+		local function addUniqueUnit(unit)
+			if unit == nil then return end
+			local uid = unit.id_
+			if uid == nil then
+				base.table.insert(Collection, unit)
+				return
+			end
+			for _, existing in base.pairs(Collection) do
+				if existing ~= nil and existing.id_ == uid then
+					return
+				end
+			end
+			base.table.insert(Collection, unit)
+		end
+
+		local function isAwacsLikeUnit(unit)
+			if unit == nil then return false end
+
+			local desc = nil
+			local okDesc, valueDesc = base.pcall(function() return unit:getDesc() end)
+			if okDesc then
+				desc = valueDesc
+			end
+
+			if desc and desc.attributes and desc.attributes.AWACS then
+				return true
+			end
+
+			local typeName = ""
+			if desc ~= nil then
+				typeName = base.string.upper(base.tostring(desc.typeName or desc.displayName or ""))
+			end
+
+			if base.string.find(typeName, "E-2", 1, true)
+				or base.string.find(typeName, "E2", 1, true)
+				or base.string.find(typeName, "HAWKEYE", 1, true)
+				or base.string.find(typeName, "E-3", 1, true)
+				or base.string.find(typeName, "E3", 1, true)
+				or base.string.find(typeName, "SENTRY", 1, true)
+				or base.string.find(typeName, "E-7", 1, true)
+				or base.string.find(typeName, "E7", 1, true)
+				or base.string.find(typeName, "WEDGETAIL", 1, true)
+			then
+				return true
+			end
+
+			local callsign = ""
+			local okCallsign, valueCallsign = base.pcall(function()
+				return base.vaicom.properties and base.vaicom.properties.missioncallsign and base.vaicom.properties.missioncallsign(unit) or ""
+			end)
+			if okCallsign and valueCallsign ~= nil then
+				callsign = base.string.upper(base.tostring(valueCallsign))
+			end
+
+			if base.string.find(callsign, "DARKSTAR", 1, true)
+				or base.string.find(callsign, "FOCUS", 1, true)
+				or base.string.find(callsign, "MAGIC", 1, true)
+				or base.string.find(callsign, "OVERLORD", 1, true)
+				or base.string.find(callsign, "WIZARD", 1, true)
+			then
+				return true
+			end
+
+			return false
+		end
+
+		local okGroups, planeGroups = base.pcall(function()
+			return base.coalition.getGroups and base.coalition.getGroups(getside, base.Group.Category.AIRPLANE)
+		end)
+		if okGroups and planeGroups ~= nil and base.type(planeGroups) == "table" then
+			for _, g in base.pairs(planeGroups) do
+				local okUnits, units = base.pcall(function() return g:getUnits() end)
+				if okUnits and units ~= nil and base.type(units) == "table" then
+					for _, u in base.pairs(units) do
+						if isAwacsLikeUnit(u) then
+							addUniqueUnit(u)
+						end
+					end
+				end
+			end
+		end
 		return Collection
 	end,	
 	localTankers = function(getside)
