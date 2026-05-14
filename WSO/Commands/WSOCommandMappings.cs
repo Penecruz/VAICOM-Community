@@ -68,6 +68,7 @@ namespace VAICOM.WSO
             { "wMsgWSO_Navigation_TACAN_SelectChannel", ("select", "nav_tacan_chan_band", "", true) },
             { "wMsgWSO_Navigation_TACAN_TuneAsset", ("select", "nav_tacan_tr", "", true) },
             { "wMsgWSO_Navigation_TACAN_TuneStation", ("select", "nav_tacan_tr", "", true) },
+            { "wMsgWSO_Navigation_RestartAlignment", ("select", "jester_realign_quick", "restart", true) },
             { "wMsgWSO_Systems_ChaffMode_Off", ("select", "systems_chaff", "off", true) },
             { "wMsgWSO_Systems_ChaffMode_Single", ("select", "systems_chaff", "single", true) },
             { "wMsgWSO_Systems_ChaffMode_Multiple", ("select", "systems_chaff", "multiple", true) },
@@ -123,7 +124,16 @@ namespace VAICOM.WSO
             { "wMsgWSO_Ground_AriCheck", ("select", "ari_check", "", false) },
             { "wMsgWSO_Ground_StabAugCheck", ("select", "stab_aug_check", "", false) },
             { "wMsgWSO_Ground_TrimCheck", ("select", "trim_check", "", false) },
+            { "wMsgWSO_Ground_Cancel", ("select", "cancel", "", false) },
 
+            // Jester startup INS alignment
+            { "wMsgWSO_INSAlignment_StartAlignment", ("select", "jester_start_alignment", "start", true) },
+            { "wMsgWSO_INSAlignment_FullAlignment", ("select", "full_alignment", "", false) },
+            { "wMsgWSO_INSAlignment_BathAlignment", ("select", "bath_alignment", "", false) },
+            { "wMsgWSO_INSAlignment_StoredAlignment", ("select", "stored_alignment", "", false) },
+            { "wMsgWSO_INSAlignment_Yes", ("select", "yes", "", false) },
+            { "wMsgWSO_INSAlignment_No", ("select", "no", "", false) },
+            { "wMsgWSO_INSAlignment_LetYouKnow", ("select", "let_you_know", "", false) },
             
 
             // Jester Contextual Menu response commands

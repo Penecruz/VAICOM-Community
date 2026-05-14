@@ -61,6 +61,7 @@ namespace VAICOM.Extensions.WSO
             { "wMsgWSO_Navigation_TACAN_SelectMode_AAR", "WSO TACAN Mode AAR" },
             { "wMsgWSO_Navigation_TACAN_SelectMode_AATR", "WSO TACAN Mode AATR" },
             { "wMsgWSO_Navigation_TACAN_TuneAsset", "WSO Tune TACAN" },
+            { "wMsgWSO_Navigation_RestartAlignment", "WSO Restart Alignment" },
             { "wMsgWSO_Systems_ChaffMode_Off", "WSO Chaff Mode Off" },
             { "wMsgWSO_Systems_ChaffMode_Single", "WSO Chaff Mode Single" },
             { "wMsgWSO_Systems_ChaffMode_Multiple", "WSO Chaff Mode Multiple" },
@@ -106,6 +107,16 @@ namespace VAICOM.Extensions.WSO
             { "wMsgWSO_Ground_AriCheck", "WSO Ground ARI Check" },
             { "wMsgWSO_Ground_StabAugCheck", "WSO Ground Stab Aug Check" },
             { "wMsgWSO_Ground_TrimCheck", "WSO Ground Trim Check" },
+            { "wMsgWSO_Ground_Cancel", "WSO Ground Cancel" },
+
+            // Jester startup INS alignment
+            { "wMsgWSO_INSAlignment_StartAlignment", "WSO Start Alignment Now" },
+            { "wMsgWSO_INSAlignment_FullAlignment", "WSO Start Full Alignment" },
+            { "wMsgWSO_INSAlignment_BathAlignment", "WSO Start BATH Alignment" },
+            { "wMsgWSO_INSAlignment_StoredAlignment", "WSO Start Stored Alignment" },
+            { "wMsgWSO_INSAlignment_Yes", "WSO Yes Start Alignment" },
+            { "wMsgWSO_INSAlignment_No", "WSO Negative On Alignment" },
+            { "wMsgWSO_INSAlignment_LetYouKnow", "WSO Will Let You Know" },
 
             // Phase 2 commands
             { "wMsgWSO_Systems_FlaresJettison", "WSO Flares Jettison" },

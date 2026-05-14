@@ -68,6 +68,7 @@ namespace VAICOM.Extensions.WSO
             { "wMsgWSO_Navigation_TACAN_SelectMode_AATR", new CommandInfo { uniqueid = 24048, category = CommandCategories.WSO, name = "wMsgWSO_Navigation_TACAN_SelectMode_AATR", displayname = Labels.aicommands["wMsgWSO_Navigation_TACAN_SelectMode_AATR"], enabled = true } },
             { "wMsgWSO_Navigation_TACAN_TuneAsset", new CommandInfo { uniqueid = 24049, category = CommandCategories.WSO, name = "wMsgWSO_Navigation_TACAN_TuneAsset", displayname = Labels.aicommands["wMsgWSO_Navigation_TACAN_TuneAsset"], enabled = true } },
             { "wMsgWSO_Navigation_ResumeNextWaypoint", new CommandInfo { uniqueid = 24050, category = CommandCategories.WSO, name = "wMsgWSO_Navigation_ResumeNextWaypoint", displayname = Labels.aicommands["wMsgWSO_Navigation_ResumeNextWaypoint"], enabled = true } },
+            { "wMsgWSO_Navigation_RestartAlignment", new CommandInfo { uniqueid = 24667, category = CommandCategories.WSO, name = "wMsgWSO_Navigation_RestartAlignment", displayname = Labels.aicommands["wMsgWSO_Navigation_RestartAlignment"], enabled = true } },
             { "wMsgWSO_Systems_ChaffMode_Off", new CommandInfo { uniqueid = 24501, category = CommandCategories.WSO, name = "wMsgWSO_Systems_ChaffMode_Off", displayname = Labels.aicommands["wMsgWSO_Systems_ChaffMode_Off"], enabled = true } },
             { "wMsgWSO_Systems_ChaffMode_Single", new CommandInfo { uniqueid = 24502, category = CommandCategories.WSO, name = "wMsgWSO_Systems_ChaffMode_Single", displayname = Labels.aicommands["wMsgWSO_Systems_ChaffMode_Single"], enabled = true } },
             { "wMsgWSO_Systems_ChaffMode_Multiple", new CommandInfo { uniqueid = 24503, category = CommandCategories.WSO, name = "wMsgWSO_Systems_ChaffMode_Multiple", displayname = Labels.aicommands["wMsgWSO_Systems_ChaffMode_Multiple"], enabled = true } },
@@ -123,7 +124,17 @@ namespace VAICOM.Extensions.WSO
             { "wMsgWSO_Ground_AriCheck", new CommandInfo { uniqueid = 24452, category = CommandCategories.WSO, name = "wMsgWSO_Ground_AriCheck", displayname = Labels.aicommands["wMsgWSO_Ground_AriCheck"], enabled = true } },
             { "wMsgWSO_Ground_StabAugCheck", new CommandInfo { uniqueid = 24453, category = CommandCategories.WSO, name = "wMsgWSO_Ground_StabAugCheck", displayname = Labels.aicommands["wMsgWSO_Ground_StabAugCheck"], enabled = true } },
             { "wMsgWSO_Ground_TrimCheck", new CommandInfo { uniqueid = 24454, category = CommandCategories.WSO, name = "wMsgWSO_Ground_TrimCheck", displayname = Labels.aicommands["wMsgWSO_Ground_TrimCheck"], enabled = true } },
+            { "wMsgWSO_Ground_Cancel", new CommandInfo { uniqueid = 24455, category = CommandCategories.WSO, name = "wMsgWSO_Ground_Cancel", displayname = Labels.aicommands["wMsgWSO_Ground_Cancel"], enabled = true } },
 
+
+            // Jester startup alignment
+            { "wMsgWSO_INSAlignment_StartAlignment", new CommandInfo { uniqueid = 24670, category = CommandCategories.WSO, name = "wMsgWSO_INSAlignment_StartAlignment", displayname = Labels.aicommands["wMsgWSO_INSAlignment_StartAlignment"], enabled = true } },
+            { "wMsgWSO_INSAlignment_FullAlignment", new CommandInfo { uniqueid = 24671, category = CommandCategories.WSO, name = "wMsgWSO_INSAlignment_FullAlignment", displayname = Labels.aicommands["wMsgWSO_INSAlignment_FullAlignment"], enabled = true } },
+            { "wMsgWSO_INSAlignment_BathAlignment", new CommandInfo { uniqueid = 24672, category = CommandCategories.WSO, name = "wMsgWSO_INSAlignment_BathAlignment", displayname = Labels.aicommands["wMsgWSO_INSAlignment_BathAlignment"], enabled = true } },
+            { "wMsgWSO_INSAlignment_StoredAlignment", new CommandInfo { uniqueid = 24673, category = CommandCategories.WSO, name = "wMsgWSO_INSAlignment_StoredAlignment", displayname = Labels.aicommands["wMsgWSO_INSAlignment_StoredAlignment"], enabled = true } },
+            { "wMsgWSO_INSAlignment_Yes", new CommandInfo { uniqueid = 24674, category = CommandCategories.WSO, name = "wMsgWSO_INSAlignment_Yes", displayname = Labels.aicommands["wMsgWSO_INSAlignment_Yes"], enabled = true } },
+            { "wMsgWSO_INSAlignment_No", new CommandInfo { uniqueid = 24675, category = CommandCategories.WSO, name = "wMsgWSO_INSAlignment_No", displayname = Labels.aicommands["wMsgWSO_INSAlignment_No"], enabled = true } },
+            { "wMsgWSO_INSAlignment_LetYouKnow", new CommandInfo { uniqueid = 24676, category = CommandCategories.WSO, name = "wMsgWSO_INSAlignment_LetYouKnow", displayname = Labels.aicommands["wMsgWSO_INSAlignment_LetYouKnow"], enabled = true } },
             
             // Context response commands
             { "wMsgWSO_Context_Short", new CommandInfo { uniqueid = 24445, category = CommandCategories.WSO, name = "wMsgWSO_Context_Short", displayname = Labels.aicommands["wMsgWSO_Context_Short"], enabled = true } },

@@ -61,6 +61,7 @@ namespace VAICOM.Extensions.WSO
             { "Deactivate Waypoint", "wMsgWSO_Navigation_Holding_DeactivateCurrentTurnPoint" },
             { "Resume Waypoint", "wMsgWSO_Navigation_ResumeNextWaypoint" },
             { "Resume At Waypoint", "wMsgWSO_Navigation_ResumeNextWaypoint" },
+            { "Restart Alignment", "wMsgWSO_Navigation_RestartAlignment" },
             { "TACAN Off", "wMsgWSO_Navigation_TACAN_SelectMode_Off" },
             { "TACAN Receive", "wMsgWSO_Navigation_TACAN_SelectMode_R" },
             { "TACAN Transmit and Receive", "wMsgWSO_Navigation_TACAN_SelectMode_TR" },
@@ -121,7 +122,17 @@ namespace VAICOM.Extensions.WSO
             { "Ground Flight Controls Check", "wMsgWSO_Ground_FlightControlsCheck" },
             { "Ground A R I Check", "wMsgWSO_Ground_AriCheck" },
             { "Ground Stab Aug Check", "wMsgWSO_Ground_StabAugCheck" },
-            { "Ground Trim Check", "wMsgWSO_Ground_TrimCheck" },           
+            { "Ground Trim Check", "wMsgWSO_Ground_TrimCheck" },
+            { "Ground Cancel", "wMsgWSO_Ground_Cancel" },
+            
+            // Jester startup INS alignment
+            { "Start Alignment Now", "wMsgWSO_INSAlignment_StartAlignment" },
+            { "Start Full Alignment", "wMsgWSO_INSAlignment_FullAlignment" },
+            { "Start BATH Alignment", "wMsgWSO_INSAlignment_BathAlignment" },
+            { "Start Stored Alignment", "wMsgWSO_INSAlignment_StoredAlignment" },
+            { "Yes Start Alignment", "wMsgWSO_INSAlignment_Yes" },
+            { "Negative On Alignment", "wMsgWSO_INSAlignment_No" },
+            { "Will Let You Know", "wMsgWSO_INSAlignment_LetYouKnow" },
 
             // Context response aliases
             { "Context Select", "wMsgWSO_Context_Short" },
