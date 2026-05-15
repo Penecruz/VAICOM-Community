@@ -780,7 +780,7 @@ namespace VAICOM
                         }
                         else
                         {
-                            bool immediateHotMicSend = !State.transmitting && State.IsCrewHotMicActive();
+                            bool immediateHotMicSend = !State.transmitting && State.IsCrewHotMicActiveOnIntercomTX();
 
                             if (riocommand || selectcommand || optionscommand || menucommand || immediateHotMicSend ||
                                 !((State.activeconfig.MP_VoIPUseSwitch || State.activeconfig.MP_VoIPParallel) && State.activeconfig.MP_DelayTransmit)) //  || !State.currentTXnode.tunedforhuman 
@@ -793,7 +793,7 @@ namespace VAICOM
                             }
                         }
 
-                        if (riocommand && menucommand && !State.transmitting && State.IsCrewHotMicActive())
+                        if (riocommand && menucommand && !State.transmitting && State.IsCrewHotMicActiveOnIntercomTX())
                         {
                             PTT.PTT_Manage_Listen_States_OnPressRelease(false, false);
 

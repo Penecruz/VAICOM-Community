@@ -252,6 +252,11 @@ namespace VAICOM
 
                 if (keypress)
                 {
+                        if (State.currentTXnode != null && State.currentTXnode.Equals(TXNodes.TX5))
+                        {
+                            State.IntercomHotMicLatched = State.IsCrewHotMicActiveOnIntercomTX();
+                        }
+
                     if (isVOIP)
                     {
                         Log.Write("PTT: PRESS - VOIP.", Colors.Inline);
@@ -283,11 +288,17 @@ namespace VAICOM
                 else //release
                 {
                     Log.Write("PTT: RELEASE.", Colors.Inline);
-                    PTT.PTT_Manage_Listen_VA(State.activeconfig.ReleaseHot || State.IsCrewHotMicActive());
-                    PTT.PTT_Manage_Listen_VAICOM(!State.activeconfig.ReleaseHot || State.IsCrewHotMicActive());
+                    bool crewHotMicOnIntercom = State.IsCrewHotMicActiveOnIntercomTX() || State.IntercomHotMicLatched;
+                    PTT.PTT_Manage_Listen_VA(State.activeconfig.ReleaseHot || crewHotMicOnIntercom);
+                    PTT.PTT_Manage_Listen_VAICOM(!State.activeconfig.ReleaseHot || crewHotMicOnIntercom);
                     PTT.PTT_Manage_Listen_VC(State.activeconfig.MP_VCHotMic);
                     PTT.PTT_Manage_Listen_SRS(true);
                     State.elapsedsincelastpttrelease = 0;
+
+                    if (State.currentTXnode != null && State.currentTXnode.Equals(TXNodes.TX5) && !State.IsCrewHotMicActiveOnIntercomTX())
+                    {
+                        State.IntercomHotMicLatched = false;
+                    }
                 }
 
             }

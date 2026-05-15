@@ -115,7 +115,7 @@ namespace VAICOM
                     }
                     else // command not rio
                     {
-                        if (State.IsCrewHotMicActive() && 
+                        if (State.IsCrewHotMicActiveOnIntercomTX() && 
                             !(State.activeconfig.MP_VoIPUseSwitch && State.activeconfig.MP_DelayTransmit))
                         {
                             // hotmic is active, RIO not called
