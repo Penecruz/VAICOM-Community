@@ -98,7 +98,6 @@ namespace VAICOM.Extensions.WSO
             { "Pave Spike On", "wMsgWSO_A2G_PaveSpike_Ready" },
             { "Pave Spike Standby", "wMsgWSO_A2G_PaveSpike_Standby" },
             { "Pave Spike Lock Target Ahead", "wMsgWSO_A2G_PaveSpike_LockUnlockTargetAhead" },
-            { "Pave Spike Laser Code Silent", "wMsgWSO_A2G_PaveSpike_LaserCode_Silent" },
 
             // F-4E Ground Crew aliases
             { "Ground Chocks Place", "wMsgWSO_Ground_WheelChocks_Place" },
@@ -140,6 +139,9 @@ namespace VAICOM.Extensions.WSO
             { "Going Below 100 Feet", "wMsgWSO_Altitude_GoingBelow100" },
             { "Going Below 150 Feet", "wMsgWSO_Altitude_GoingBelow150" },
             { "Going Below 200 Feet", "wMsgWSO_Altitude_GoingBelow200" },
+
+            // Jester fuel responses
+            { "Fuel Is Looking Good", "wMsgWSO_Fuel_FuelIsGood" },
 
             // Context response aliases
             { "Context Select", "wMsgWSO_Context_Short" },

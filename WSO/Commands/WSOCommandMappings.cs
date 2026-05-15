@@ -99,7 +99,6 @@ namespace VAICOM.WSO
             { "wMsgWSO_A2G_PaveSpike_Standby", ("select", "pave_spike_op", "standby", true) },
             { "wMsgWSO_A2G_PaveSpike_LockUnlockTargetAhead", ("select", "pave_spike_lock_unlock_tgt_ahead", "", false) },
             { "wMsgWSO_A2G_PaveSpike_LaserCode", ("select", "pave_spike_laser_code", "", true) },
-            { "wMsgWSO_A2G_PaveSpike_LaserCode_Silent", ("select", "pave_spike_laser_code_silent", "", false) },
 
             // Ground Crew commands
             { "wMsgWSO_Ground_WheelChocks_Place", ("select", "wheel_chocks_place", "", false) },
@@ -142,6 +141,8 @@ namespace VAICOM.WSO
             { "wMsgWSO_Altitude_GoingBelow150", ("select", "dlg_below_150", "", false) },
             { "wMsgWSO_Altitude_GoingBelow200", ("select", "dlg_below_200", "", false) },
             
+            // Jester fuel responses
+            { "wMsgWSO_Fuel_FuelIsGood", ("select", "fuel_good", "", false) },
 
             // Jester Contextual Menu response commands
             { "wMsgWSO_Context_Short", ("select", "context_action_short", "", false) },

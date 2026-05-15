@@ -98,8 +98,6 @@ namespace VAICOM.Extensions.WSO
             { "wMsgWSO_A2G_PaveSpike_Ready", new CommandInfo { uniqueid = 24441, category = CommandCategories.WSO, name = "wMsgWSO_A2G_PaveSpike_Ready", displayname = Labels.aicommands["wMsgWSO_A2G_PaveSpike_Ready"], enabled = true } },
             { "wMsgWSO_A2G_PaveSpike_Standby", new CommandInfo { uniqueid = 24442, category = CommandCategories.WSO, name = "wMsgWSO_A2G_PaveSpike_Standby", displayname = Labels.aicommands["wMsgWSO_A2G_PaveSpike_Standby"], enabled = true } },
             { "wMsgWSO_A2G_PaveSpike_LockUnlockTargetAhead", new CommandInfo { uniqueid = 24443, category = CommandCategories.WSO, name = "wMsgWSO_A2G_PaveSpike_LockUnlockTargetAhead", displayname = Labels.aicommands["wMsgWSO_A2G_PaveSpike_LockUnlockTargetAhead"], enabled = true } },
-            { "wMsgWSO_A2G_PaveSpike_LaserCode_Silent", new CommandInfo { uniqueid = 24444, category = CommandCategories.WSO, name = "wMsgWSO_A2G_PaveSpike_LaserCode_Silent", displayname = Labels.aicommands["wMsgWSO_A2G_PaveSpike_LaserCode_Silent"], enabled = true } },
-            // Additional WSO commands can be added here within the reserved range (24000 - 24998)
 
             // Ground Crew commands
             { "wMsgWSO_Ground_WheelChocks_Place", new CommandInfo { uniqueid = 24420, category = CommandCategories.WSO, name = "wMsgWSO_Ground_WheelChocks_Place", displayname = Labels.aicommands["wMsgWSO_Ground_WheelChocks_Place"], enabled = true } },
@@ -143,6 +141,8 @@ namespace VAICOM.Extensions.WSO
             { "wMsgWSO_Altitude_GoingBelow150", new CommandInfo { uniqueid = 24683, category = CommandCategories.WSO, name = "wMsgWSO_Altitude_GoingBelow150", displayname = Labels.aicommands["wMsgWSO_Altitude_GoingBelow150"], enabled = true } },
             { "wMsgWSO_Altitude_GoingBelow200", new CommandInfo { uniqueid = 24684, category = CommandCategories.WSO, name = "wMsgWSO_Altitude_GoingBelow200", displayname = Labels.aicommands["wMsgWSO_Altitude_GoingBelow200"], enabled = true } },
 
+            // Jester fuel responses
+            { "wMsgWSO_Fuel_FuelIsGood", new CommandInfo { uniqueid = 24690, category = CommandCategories.WSO, name = "wMsgWSO_Fuel_FuelIsGood", displayname = Labels.aicommands["wMsgWSO_Fuel_FuelIsGood"], enabled = true } },
 
             // Context response commands
             { "wMsgWSO_Context_Short", new CommandInfo { uniqueid = 24445, category = CommandCategories.WSO, name = "wMsgWSO_Context_Short", displayname = Labels.aicommands["wMsgWSO_Context_Short"], enabled = true } },

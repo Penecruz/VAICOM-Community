@@ -268,18 +268,9 @@ namespace VAICOM
                 public static void PaveSpikeSetLaserCode()
                 {
                     string laserCode = GetNumberFromCommand();
-                    // If a code was provided then use it, otherwise this was a command to silence it
-                    if (String.IsNullOrEmpty(laserCode))
-                    {
-                        HbSendProxyCommand.SendWsoCommand(State.WebSocketClient, "wMsgWSO_A2G_PaveSpike_LaserCode_Silent");
-                    }
-                    else
-                    {
-                        CommandCompleted("Pave Spike Laser Code", new List<string> { laserCode });
+                    CommandCompleted("Pave Spike Laser Code", new List<string> { laserCode });
                         
-                        HbSendProxyCommand.SendWsoCommand(State.WebSocketClient, "wMsgWSO_A2G_PaveSpike_LaserCode", laserCode);
-                    }
-
+                    HbSendProxyCommand.SendWsoCommand(State.WebSocketClient, "wMsgWSO_A2G_PaveSpike_LaserCode", laserCode);
                 }
 
                 public static bool IsWSO()

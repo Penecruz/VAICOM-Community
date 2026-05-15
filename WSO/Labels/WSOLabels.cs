@@ -125,6 +125,9 @@ namespace VAICOM.Extensions.WSO
             { "wMsgWSO_Altitude_GoingBelow150", "WSO Going Below 150 Feet" },
             { "wMsgWSO_Altitude_GoingBelow200", "WSO Going Below 200 Feet" },
 
+            // Jester fuel responses
+            { "wMsgWSO_Fuel_FuelIsGood", "WSO Fuel Is Looking Good" },
+
             { "wMsgWSO_Systems_FlaresJettison", "WSO Flares Jettison" },
             { "wMsgWSO_Systems_Countermeasures_Quantity", "WSO Countermeasures Quantity" },
             { "wMsgWSO_Radar_FocusTarget_Direct", "WSO Focus Target Direct" },
@@ -133,7 +136,6 @@ namespace VAICOM.Extensions.WSO
             { "wMsgWSO_A2G_PaveSpike_Ready", "WSO Pave Spike Ready" },
             { "wMsgWSO_A2G_PaveSpike_Standby", "WSO Pave Spike Standby" },
             { "wMsgWSO_A2G_PaveSpike_LockUnlockTargetAhead", "WSO Pave Spike Lock Target Ahead" },
-            { "wMsgWSO_A2G_PaveSpike_LaserCode_Silent", "WSO Pave Spike Laser Code Silent" },
 
             // Context response commands
             { "wMsgWSO_Context_Short", "WSO Context Action Short" },
