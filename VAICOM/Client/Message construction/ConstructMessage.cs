@@ -744,8 +744,7 @@ namespace VAICOM
                     {
                         if (State.wsoactivated && State.IsF4E)
                         {
-                            ConstructWSOMessage();
-                            return true;
+                            return ConstructWSOMessage();
                         }
                         else
                         {
@@ -759,7 +758,7 @@ namespace VAICOM
                     }
                 }
 
-                public static void ConstructWSOMessage()
+                public static bool ConstructWSOMessage()
                 {
                     State.currentmessage.type = Messagetypes.DeviceControl;
 
@@ -791,7 +790,10 @@ namespace VAICOM
                     else
                     {
                         Log.Write($"Failed to construct WSO message. Command not found: {commandKey ?? State.currentcommand?.dcsid}", Colors.Warning);
+                        return false;
                     }
+
+                    return true;
                 }
 
                 public static void F14Salute()

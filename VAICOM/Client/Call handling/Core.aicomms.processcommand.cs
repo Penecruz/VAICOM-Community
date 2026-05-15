@@ -773,7 +773,7 @@ namespace VAICOM
                                 return false; // WSO command processing failed
                             }
 
-                            Log.Write("WSO command processing succeeded. Sending command to Jester 2.0 API...", Colors.Text);
+                            Log.Write("WSO command processing succeeded.", Colors.Text);
 
                             // Send the WSO command to the Jester 2.0 API
                             SendCommandToJesterAPI(State.currentcommand.dcsid);
@@ -1119,8 +1119,9 @@ namespace VAICOM
                     Recipient commandRecipient = State.currentWSOCommandRecipient;
                     if (commandRecipient == null)
                     {
-                        Log.Write($"Required WSO command recipient is missing", Colors.Warning);
                         value = "";
+                        Log.Write($"Required WSO command recipient is missing", Colors.Warning);
+                        UI.Playsound.Recipientna();
                         return false;
                     }
 
@@ -1134,8 +1135,9 @@ namespace VAICOM
                     }
                     else
                     {
-                        Log.Write($"Jester menu item not found for '{name}'", Colors.Warning);
                         value = "";
+                        Log.Write($"Airfield or asset '{name}' not found", Colors.Warning);
+                        UI.Playsound.Recipientna();
                         return false;
                     }
                 }
@@ -1154,7 +1156,7 @@ namespace VAICOM
                     return Regex.Replace(normalized, @"\s+", " ").Trim();
                 }
 
-                //Jester 2.0 API WSO command sender
+                // Jester 2.0 API WSO command sender
                 private static void SendCommandToJesterAPI(string commandId)
                 {
                     try
@@ -1182,6 +1184,7 @@ namespace VAICOM
                             if (commandDetails.valueRequired && string.IsNullOrEmpty(value))
                             {
                                 Log.Write($"Command '{commandId}' missing required value.", Colors.Warning);
+                                UI.Playsound.Error();
                                 return;
                             }
 
@@ -1199,16 +1202,18 @@ namespace VAICOM
 
                             // Send the command to the Jester 2.0 API using hb_send_proxy fields
                             HbSendProxyCommand.SendCommand(State.WebSocketClient, category, action, value);
-                            Log.Write($"Command ID '{commandId}' sent using hb_send_proxy payload.", Colors.Text);
+                            Log.Write($"Sending command '{commandId}' to Jester 2.0 API...", Colors.Text);
                         }
                         else
                         {
                             Log.Write($"Command ID '{commandId}' not found in WSOCommandMappings.", Colors.Warning);
+                            UI.Playsound.Error();
                         }
                     }
                     catch (Exception ex)
                     {
                         Log.Write($"Error sending command to Jester 2.0 API: {ex.Message}", Colors.Critical);
+                        UI.Playsound.Error();
                     }
                 }
             }
