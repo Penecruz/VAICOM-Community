@@ -125,7 +125,7 @@ namespace VAICOM.Extensions.WSO
             { "Ground Trim Check", "wMsgWSO_Ground_TrimCheck" },
             { "Ground Cancel", "wMsgWSO_Ground_Cancel" },
             
-            // Jester startup INS alignment
+            // Jester startup INS alignment responses
             { "Start Alignment Now", "wMsgWSO_INSAlignment_StartAlignment" },
             { "Start Full Alignment", "wMsgWSO_INSAlignment_FullAlignment" },
             { "Start BATH Alignment", "wMsgWSO_INSAlignment_BathAlignment" },
@@ -133,6 +133,13 @@ namespace VAICOM.Extensions.WSO
             { "Yes Start Alignment", "wMsgWSO_INSAlignment_Yes" },
             { "Negative On Alignment", "wMsgWSO_INSAlignment_No" },
             { "Will Let You Know", "wMsgWSO_INSAlignment_LetYouKnow" },
+
+            // Jester mission altitude responses
+            { "Negative Not Going Low", "wMsgWSO_Altitude_Negative" },
+            { "Going Below 50 Feet", "wMsgWSO_Altitude_GoingBelow50" },
+            { "Going Below 100 Feet", "wMsgWSO_Altitude_GoingBelow100" },
+            { "Going Below 150 Feet", "wMsgWSO_Altitude_GoingBelow150" },
+            { "Going Below 200 Feet", "wMsgWSO_Altitude_GoingBelow200" },
 
             // Context response aliases
             { "Context Select", "wMsgWSO_Context_Short" },

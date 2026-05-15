@@ -126,7 +126,7 @@ namespace VAICOM.WSO
             { "wMsgWSO_Ground_TrimCheck", ("select", "trim_check", "", false) },
             { "wMsgWSO_Ground_Cancel", ("select", "cancel", "", false) },
 
-            // Jester startup INS alignment
+            // Jester startup INS alignment responses
             { "wMsgWSO_INSAlignment_StartAlignment", ("select", "jester_start_alignment", "start", true) },
             { "wMsgWSO_INSAlignment_FullAlignment", ("select", "full_alignment", "", false) },
             { "wMsgWSO_INSAlignment_BathAlignment", ("select", "bath_alignment", "", false) },
@@ -134,6 +134,13 @@ namespace VAICOM.WSO
             { "wMsgWSO_INSAlignment_Yes", ("select", "yes", "", false) },
             { "wMsgWSO_INSAlignment_No", ("select", "no", "", false) },
             { "wMsgWSO_INSAlignment_LetYouKnow", ("select", "let_you_know", "", false) },
+
+            // Jester mission altitude responses
+            { "wMsgWSO_Altitude_Negative", ("select", "say_roger", "", false) },
+            { "wMsgWSO_Altitude_GoingBelow50", ("select", "dlg_below_50", "", false) },
+            { "wMsgWSO_Altitude_GoingBelow100", ("select", "dlg_below_100", "", false) },
+            { "wMsgWSO_Altitude_GoingBelow150", ("select", "dlg_below_150", "", false) },
+            { "wMsgWSO_Altitude_GoingBelow200", ("select", "dlg_below_200", "", false) },
             
 
             // Jester Contextual Menu response commands

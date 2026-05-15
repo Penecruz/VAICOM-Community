@@ -127,7 +127,7 @@ namespace VAICOM.Extensions.WSO
             { "wMsgWSO_Ground_Cancel", new CommandInfo { uniqueid = 24455, category = CommandCategories.WSO, name = "wMsgWSO_Ground_Cancel", displayname = Labels.aicommands["wMsgWSO_Ground_Cancel"], enabled = true } },
 
 
-            // Jester startup alignment
+            // Jester startup alignment responses
             { "wMsgWSO_INSAlignment_StartAlignment", new CommandInfo { uniqueid = 24670, category = CommandCategories.WSO, name = "wMsgWSO_INSAlignment_StartAlignment", displayname = Labels.aicommands["wMsgWSO_INSAlignment_StartAlignment"], enabled = true } },
             { "wMsgWSO_INSAlignment_FullAlignment", new CommandInfo { uniqueid = 24671, category = CommandCategories.WSO, name = "wMsgWSO_INSAlignment_FullAlignment", displayname = Labels.aicommands["wMsgWSO_INSAlignment_FullAlignment"], enabled = true } },
             { "wMsgWSO_INSAlignment_BathAlignment", new CommandInfo { uniqueid = 24672, category = CommandCategories.WSO, name = "wMsgWSO_INSAlignment_BathAlignment", displayname = Labels.aicommands["wMsgWSO_INSAlignment_BathAlignment"], enabled = true } },
@@ -136,6 +136,14 @@ namespace VAICOM.Extensions.WSO
             { "wMsgWSO_INSAlignment_No", new CommandInfo { uniqueid = 24675, category = CommandCategories.WSO, name = "wMsgWSO_INSAlignment_No", displayname = Labels.aicommands["wMsgWSO_INSAlignment_No"], enabled = true } },
             { "wMsgWSO_INSAlignment_LetYouKnow", new CommandInfo { uniqueid = 24676, category = CommandCategories.WSO, name = "wMsgWSO_INSAlignment_LetYouKnow", displayname = Labels.aicommands["wMsgWSO_INSAlignment_LetYouKnow"], enabled = true } },
             
+            // Jester mission altitude responses
+            { "wMsgWSO_Altitude_Negative", new CommandInfo { uniqueid = 24680, category = CommandCategories.WSO, name = "wMsgWSO_Altitude_Negative", displayname = Labels.aicommands["wMsgWSO_Altitude_Negative"], enabled = true } },
+            { "wMsgWSO_Altitude_GoingBelow50", new CommandInfo { uniqueid = 24681, category = CommandCategories.WSO, name = "wMsgWSO_Altitude_GoingBelow50", displayname = Labels.aicommands["wMsgWSO_Altitude_GoingBelow50"], enabled = true } },
+            { "wMsgWSO_Altitude_GoingBelow100", new CommandInfo { uniqueid = 24682, category = CommandCategories.WSO, name = "wMsgWSO_Altitude_GoingBelow100", displayname = Labels.aicommands["wMsgWSO_Altitude_GoingBelow100"], enabled = true } },
+            { "wMsgWSO_Altitude_GoingBelow150", new CommandInfo { uniqueid = 24683, category = CommandCategories.WSO, name = "wMsgWSO_Altitude_GoingBelow150", displayname = Labels.aicommands["wMsgWSO_Altitude_GoingBelow150"], enabled = true } },
+            { "wMsgWSO_Altitude_GoingBelow200", new CommandInfo { uniqueid = 24684, category = CommandCategories.WSO, name = "wMsgWSO_Altitude_GoingBelow200", displayname = Labels.aicommands["wMsgWSO_Altitude_GoingBelow200"], enabled = true } },
+
+
             // Context response commands
             { "wMsgWSO_Context_Short", new CommandInfo { uniqueid = 24445, category = CommandCategories.WSO, name = "wMsgWSO_Context_Short", displayname = Labels.aicommands["wMsgWSO_Context_Short"], enabled = true } },
             { "wMsgWSO_Context_Long", new CommandInfo { uniqueid = 24446, category = CommandCategories.WSO, name = "wMsgWSO_Context_Long", displayname = Labels.aicommands["wMsgWSO_Context_Long"], enabled = true } },

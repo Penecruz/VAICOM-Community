@@ -109,7 +109,7 @@ namespace VAICOM.Extensions.WSO
             { "wMsgWSO_Ground_TrimCheck", "WSO Ground Trim Check" },
             { "wMsgWSO_Ground_Cancel", "WSO Ground Cancel" },
 
-            // Jester startup INS alignment
+            // Jester startup INS alignment responses
             { "wMsgWSO_INSAlignment_StartAlignment", "WSO Start Alignment Now" },
             { "wMsgWSO_INSAlignment_FullAlignment", "WSO Start Full Alignment" },
             { "wMsgWSO_INSAlignment_BathAlignment", "WSO Start BATH Alignment" },
@@ -118,7 +118,13 @@ namespace VAICOM.Extensions.WSO
             { "wMsgWSO_INSAlignment_No", "WSO Negative On Alignment" },
             { "wMsgWSO_INSAlignment_LetYouKnow", "WSO Will Let You Know" },
 
-            // Phase 2 commands
+            // Jester mission altitude responses
+            { "wMsgWSO_Altitude_Negative", "WSO Negative Not Going Low" },
+            { "wMsgWSO_Altitude_GoingBelow50", "WSO Going Below 50 Feet" },
+            { "wMsgWSO_Altitude_GoingBelow100", "WSO Going Below 100 Feet" },
+            { "wMsgWSO_Altitude_GoingBelow150", "WSO Going Below 150 Feet" },
+            { "wMsgWSO_Altitude_GoingBelow200", "WSO Going Below 200 Feet" },
+
             { "wMsgWSO_Systems_FlaresJettison", "WSO Flares Jettison" },
             { "wMsgWSO_Systems_Countermeasures_Quantity", "WSO Countermeasures Quantity" },
             { "wMsgWSO_Radar_FocusTarget_Direct", "WSO Focus Target Direct" },
