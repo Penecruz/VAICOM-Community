@@ -663,8 +663,9 @@ namespace VAICOM
                             || State.currentrecipientclass.Equals(Recipientclasses.RIO)
                             || State.currentrecipientclass.Equals(Recipientclasses.AI_pilot)
                             || State.currentrecipientclass.Equals(Recipientclasses.WSO);
+                        bool isHotMicAllowedCommand = isIntercomRecipientClass || State.currentcommand.isKneeboard();
 
-                        if (intercomOnlyHotMic && !isIntercomRecipientClass)
+                        if (intercomOnlyHotMic && !isHotMicAllowedCommand)
                         {
                             Log.Write("ICS HOT MIC: non-intercom command ignored. Use TX1-TX4 for radio recipients.", Colors.Warning);
                             State.MessageReset();

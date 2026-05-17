@@ -288,14 +288,15 @@ namespace VAICOM
                 else //release
                 {
                     Log.Write("PTT: RELEASE.", Colors.Inline);
-                    bool crewHotMicOnIntercom = State.IsCrewHotMicActiveOnIntercomTX() || State.IntercomHotMicLatched;
+                    bool isIntercomTXNode = State.currentTXnode != null && State.currentTXnode.Equals(TXNodes.TX5);
+                    bool crewHotMicOnIntercom = State.IsCrewHotMicActive();
                     PTT.PTT_Manage_Listen_VA(State.activeconfig.ReleaseHot || crewHotMicOnIntercom);
                     PTT.PTT_Manage_Listen_VAICOM(!State.activeconfig.ReleaseHot || crewHotMicOnIntercom);
                     PTT.PTT_Manage_Listen_VC(State.activeconfig.MP_VCHotMic);
                     PTT.PTT_Manage_Listen_SRS(true);
                     State.elapsedsincelastpttrelease = 0;
 
-                    if (State.currentTXnode != null && State.currentTXnode.Equals(TXNodes.TX5) && !State.IsCrewHotMicActiveOnIntercomTX())
+                    if (!isIntercomTXNode || !State.IsCrewHotMicActiveOnIntercomTX())
                     {
                         State.IntercomHotMicLatched = false;
                     }
