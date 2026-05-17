@@ -1183,6 +1183,33 @@ namespace VAICOM
                             string action = commandDetails.action;
                             string value = commandDetails.value;
 
+                            if (commandId.Equals("wMsgWSO_INSAlignment_StartAlignment")
+                                || commandId.Equals("wMsgWSO_INSAlignment_FullAlignment")
+                                || commandId.Equals("wMsgWSO_INSAlignment_BathAlignment")
+                                || commandId.Equals("wMsgWSO_INSAlignment_StoredAlignment")
+                                || commandId.Equals("wMsgWSO_INSAlignment_Yes")
+                                || commandId.Equals("wMsgWSO_INSAlignment_No")
+                                || commandId.Equals("wMsgWSO_INSAlignment_LetYouKnow"))
+                            {
+                                // Construct the command string in the format "category|action|value"
+                                string dialogCommandString = $"{category}|{action}|{value}";
+
+                                // Create a new CommsMessage for the Jester API command
+                                State.currentmessage = new Message.CommsMessage
+                                {
+                                    type = "WSOCommand", // Indicate this is a WSO command
+                                    dcsid = dialogCommandString, // Pass the constructed command string
+                                    dspmsg = $"Sending WSO dialog command: {dialogCommandString}",
+                                    msgdur = 5
+                                };
+
+                                // Send the command to the Jester 2.0 API using hb_send_proxy fields
+                                HbSendProxyCommand.SendDialogCommand(State.WebSocketClient, action, value);
+                                Log.Write($"Sending command '{commandId}' to Jester 2.0 dialog API...", Colors.Text);
+
+                                return;
+                            }
+
                             if ((commandId.Equals("wMsgWSO_Radio_TuneATC")
                                 || commandId.Equals("wMsgWSO_Navigation_Divert_Airfield")
                                 || commandId.Equals("wMsgWSO_Navigation_Divert_Asset")
@@ -1211,13 +1238,13 @@ namespace VAICOM
                             {                                
                                 type = "WSOCommand", // Indicate this is a WSO command
                                 dcsid = commandString, // Pass the constructed command string
-                                dspmsg = $"Sending WSO command: {commandString}",
+                                dspmsg = $"Sending WSO wheel command: {commandString}",
                                 msgdur = 5
                             };
 
                             // Send the command to the Jester 2.0 API using hb_send_proxy fields
                             HbSendProxyCommand.SendCommand(State.WebSocketClient, category, action, value);
-                            Log.Write($"Sending command '{commandId}' to Jester 2.0 API...", Colors.Text);
+                            Log.Write($"Sending command '{commandId}' to Jester 2.0 wheel API...", Colors.Text);
                         }
                         else
                         {

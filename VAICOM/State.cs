@@ -104,6 +104,7 @@ namespace VAICOM
 
         // WebSocket Server
         public static WebSocket WebSocketClient;
+        public static WebSocket WebSocketClientDialog;
 
         // for world Messages receive
 

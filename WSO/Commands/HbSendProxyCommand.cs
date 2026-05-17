@@ -20,6 +20,18 @@ namespace VAICOM.WSO
         }
     }
 
+    public class WsoDialogMessage
+    {
+        public string action;
+        public string command;
+
+        public WsoDialogMessage(string action, string command)
+        {
+            this.action = action;
+            this.command = command;
+        }
+    }
+
     public static class HbSendProxyCommand
     {
         /// <summary>
@@ -86,7 +98,7 @@ namespace VAICOM.WSO
                 WsoMessage wsoMessage = new WsoMessage(category, action, value);
                 string message = JsonConvert.SerializeObject(wsoMessage);
                 byte[] messageBuffer = Encoding.UTF8.GetBytes(message);
-                Console.WriteLine($"Sending message to web socket client: {message}");
+                Console.WriteLine($"Sending wheel message to web socket client: {message}");
                 await webSocket.SendAsync(
                     new ArraySegment<byte>(messageBuffer),
                     WebSocketMessageType.Text,
@@ -95,7 +107,38 @@ namespace VAICOM.WSO
             }
             else
             {
-                Console.WriteLine("websocket was null or closed");
+                Console.WriteLine("Jester wheel websocket was null or closed");
+            }
+        }
+
+        /// <summary>
+        /// Sends a command directly to the backend using the hb_send_proxy function.
+        /// </summary>
+        /// <param name="webSocket">The WebSocket to send the command to.</param>
+        /// <param name="category">The category of the command.</param>
+        /// <param name="action">The specific action to perform.</param>
+        /// <param name="value">Optional value to pass with the action.</param>
+        public static async void SendDialogCommand(WebSocket webSocket, string action, string command)
+        {
+            // Ensure value is not null or undefined
+            command = command ?? "";
+
+            if (webSocket != null && webSocket.State == WebSocketState.Open)
+            {
+                //WsoDialogMessage wsoMessage = new WsoDialogMessage(action, command);
+                WsoDialogMessage wsoMessage = new WsoDialogMessage("action", action);
+                string message = JsonConvert.SerializeObject(wsoMessage);
+                byte[] messageBuffer = Encoding.UTF8.GetBytes(message);
+                Console.WriteLine($"Sending dialog message to web socket client: {message}");
+                await webSocket.SendAsync(
+                    new ArraySegment<byte>(messageBuffer),
+                    WebSocketMessageType.Text,
+                    true,
+                    CancellationToken.None);
+            }
+            else
+            {
+                Console.WriteLine("Jester dialog websocket was null or closed");
             }
         }
     }
