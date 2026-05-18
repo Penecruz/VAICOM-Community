@@ -60,6 +60,7 @@ namespace VAICOM
             public bool RIO_Hints_Only;
             public bool ICShotmic;
             public bool ICShotmic_useswitch;
+            public bool HideF4EDialog;
 
             // World
 
@@ -241,6 +242,7 @@ namespace VAICOM
                 RIO_Hints_Only = false,
                 ICShotmic = false,
                 ICShotmic_useswitch = false,
+                HideF4EDialog = false,
 
                 // World
 

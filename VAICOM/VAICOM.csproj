@@ -264,6 +264,7 @@ TASKKILL /FI "STATUS eq RUNNING" /F /IM XDesProc.exe</PreBuildEvent>
     <None Include="Resources\Files\Orig.Core.VAICOMPRO.export.lua" />
     <None Include="Resources\Files\Orig.F14.JesterAI_Page.lua" />
     <None Include="Resources\Files\Orig.F14.JesterInit.lua" />
+    <None Include="Resources\Files\Orig.F4E.Jester.Renderer.js" />
     <None Include="Resources\Files\Orig.ReplaceString.F14.JesterAI_Page.lua" />
     <None Include="Resources\Files\Tabs_ALL_png" />
     <None Include="Resources\Files\Tabs_AOCS_png" />

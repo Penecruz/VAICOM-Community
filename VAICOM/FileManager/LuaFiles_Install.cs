@@ -14,6 +14,30 @@ namespace VAICOM
             public static partial class Lua
             {
 
+                private static void ApplyDynamicLuaFileSettings()
+                {
+                    if (!LuaFiles.ContainsKey("2.9 WSO Renderer.js"))
+                    {
+                        return;
+                    }
+
+                    var rendererFile = LuaFiles["2.9 WSO Renderer.js"];
+                    bool hideDialog = State.activeconfig != null && State.activeconfig.HideF4EDialog;
+
+                    if (hideDialog)
+                    {
+                        rendererFile.source = Properties.Resources.Append_F4E_Jester_Renderer;
+                        rendererFile.source_legacy = Properties.Resources.Append_F4E_Jester_Renderer;
+                        rendererFile.stringsource = Properties.Resources.Append_F4E_Jester_Renderer;
+                    }
+                    else
+                    {
+                        rendererFile.source = "";
+                        rendererFile.source_legacy = "";
+                        rendererFile.stringsource = "";
+                    }
+                }
+
                 private static void EnsureIcaoOverridesFile(string savedGamesRoot, string dcsVersionFolder, bool forcequiet)
                 {
                     try
@@ -63,6 +87,8 @@ namespace VAICOM
 
                     try
                     {
+                        ApplyDynamicLuaFileSettings();
+
                         State.dcsinstalled = false;
                         int installcounter = 0;
 

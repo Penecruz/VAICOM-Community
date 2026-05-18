@@ -29,6 +29,11 @@ namespace VAICOM
                         State.activeconfig.Chatter_Enabled = true;
                     }
 
+                    if (State.activeconfig.HideF4EDialog.Equals(null))
+                    {
+                        State.activeconfig.HideF4EDialog = false;
+                    }
+
                     // added 2.5.25
                     if (State.activeconfig.MP_UseTXLink.Equals(null))
                     {
