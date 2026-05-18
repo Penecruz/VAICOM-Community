@@ -50,7 +50,7 @@ namespace VAICOM
                             && !string.IsNullOrWhiteSpace(resolvedWaypoint))
                     {
                         // Append the waypoint number, after a semi-colon; to the lat long when sending the command as this is required
-                        HbSendProxyCommand.SendWsoCommand(State.WebSocketClient, waypointCommandKey, $"{resolvedWaypoint};{flightPlanWaypoint}");
+                        HbSendProxyCommand.SendWsoCommand(State.WsoWheelClient, waypointCommandKey, $"{resolvedWaypoint};{flightPlanWaypoint}");
                     }
                     else
                     {
@@ -111,7 +111,7 @@ namespace VAICOM
                     if (WSOActionCache.TryGetByActionAndIndex(holdpointCacheKey, out string resolvedHoldpoint)
                             && !string.IsNullOrWhiteSpace(resolvedHoldpoint))
                     {
-                        HbSendProxyCommand.SendWsoCommand(State.WebSocketClient, holdpointCommandKey, resolvedHoldpoint);
+                        HbSendProxyCommand.SendWsoCommand(State.WsoWheelClient, holdpointCommandKey, resolvedHoldpoint);
                     }
                     else
                     {
@@ -151,7 +151,7 @@ namespace VAICOM
                     if (WSOActionCache.TryGetByActionAndIndex(divertCacheKey, out string resolvedLatLong)
                             && !string.IsNullOrWhiteSpace(resolvedLatLong))
                     {
-                        HbSendProxyCommand.SendWsoCommand(State.WebSocketClient, divertCommandKey, resolvedLatLong);
+                        HbSendProxyCommand.SendWsoCommand(State.WsoWheelClient, divertCommandKey, resolvedLatLong);
                     }
                     else
                     {
@@ -192,7 +192,7 @@ namespace VAICOM
                     
                     CommandCompleted("Designate Waypoint", new List<string> { $"Flight Plan {designationFlightPlan}", $"Waypoint {designatationWaypoint}", designationType });
 
-                    HbSendProxyCommand.SendWsoCommand(State.WebSocketClient, designateWaypointCommandKey, designationWaypointValue);
+                    HbSendProxyCommand.SendWsoCommand(State.WsoWheelClient, designateWaypointCommandKey, designationWaypointValue);
                 }
 
                 public static void NavigationTuneTACANChannel()
@@ -214,7 +214,7 @@ namespace VAICOM
                     
                     CommandCompleted($"Tune TACAN Channel", new List<string> { $"{digit1}{digit2}{digit3}{tacanBand.ToUpper()}" });
 
-                    HbSendProxyCommand.SendWsoCommand(State.WebSocketClient, "wMsgWSO_Navigation_TACAN_SelectChannel", $"{digit1}{digit2}{digit3}{tacanBand}");
+                    HbSendProxyCommand.SendWsoCommand(State.WsoWheelClient, "wMsgWSO_Navigation_TACAN_SelectChannel", $"{digit1}{digit2}{digit3}{tacanBand}");
                 }
 
                 public static void NavigationTuneTACANStation()
@@ -231,7 +231,7 @@ namespace VAICOM
                     if (WSOActionCache.TryGetByActionAndName("nav_tacan_tr", tacanStation, out string resolvedTacanStation)
                             && !string.IsNullOrWhiteSpace(resolvedTacanStation))
                     {
-                        HbSendProxyCommand.SendWsoCommand(State.WebSocketClient, "wMsgWSO_Navigation_TACAN_TuneStation", resolvedTacanStation);
+                        HbSendProxyCommand.SendWsoCommand(State.WsoWheelClient, "wMsgWSO_Navigation_TACAN_TuneStation", resolvedTacanStation);
                     }
                     else
                     {
@@ -245,7 +245,7 @@ namespace VAICOM
                     string commsChannel = GetNumberFromCommand();
                     CommandCompleted("Set Comm Channel", new List<string> { commsChannel });
                     
-                    HbSendProxyCommand.SendWsoCommand(State.WebSocketClient, "wMsgWSO_Radio_SelectCommChannel", commsChannel);
+                    HbSendProxyCommand.SendWsoCommand(State.WsoWheelClient, "wMsgWSO_Radio_SelectCommChannel", commsChannel);
                 }
 
                 public static void RadioSetAuxChannel()
@@ -253,7 +253,7 @@ namespace VAICOM
                     string auxChannel = GetNumberFromCommand();
                     CommandCompleted("Set AUX Channel", new List<string> { auxChannel });
                     
-                    HbSendProxyCommand.SendWsoCommand(State.WebSocketClient, "wMsgWSO_Radio_SelectAuxChannel", auxChannel);
+                    HbSendProxyCommand.SendWsoCommand(State.WsoWheelClient, "wMsgWSO_Radio_SelectAuxChannel", auxChannel);
                 }
 
                 public static void RadioTuneFrequency()
@@ -262,7 +262,7 @@ namespace VAICOM
                     string fullRadioFrequency = radioFrequency.PadRight(6, '0');
                     CommandCompleted("Tune Radio Freqency", new List<string> { fullRadioFrequency });
                     
-                    HbSendProxyCommand.SendWsoCommand(State.WebSocketClient, "wMsgWSO_Radio_SetManualFrequency", fullRadioFrequency);
+                    HbSendProxyCommand.SendWsoCommand(State.WsoWheelClient, "wMsgWSO_Radio_SetManualFrequency", fullRadioFrequency);
                 }
 
                 public static void PaveSpikeSetLaserCode()
@@ -270,7 +270,7 @@ namespace VAICOM
                     string laserCode = GetNumberFromCommand();
                     CommandCompleted("Pave Spike Laser Code", new List<string> { laserCode });
                         
-                    HbSendProxyCommand.SendWsoCommand(State.WebSocketClient, "wMsgWSO_A2G_PaveSpike_LaserCode", laserCode);
+                    HbSendProxyCommand.SendWsoCommand(State.WsoWheelClient, "wMsgWSO_A2G_PaveSpike_LaserCode", laserCode);
                 }
 
                 public static bool IsWSO()

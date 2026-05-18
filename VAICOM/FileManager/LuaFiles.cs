@@ -253,7 +253,7 @@ namespace VAICOM
                 } },
 
                 // ---- F-4E WSO interface.js
-                 {"2.9 WSO Interface.js",new Server.LuaFile
+                 {"2.9 WSO Wheel Interface.js",new Server.LuaFile
                 { fileid = "2D8D5F9E-7721-4FCD-ADCB-C04F1294F986",
                   filename = "interface.js",
                   installfolder = "Mods\\aircraft\\F-4E\\UI\\JesterWheel\\js",
@@ -268,6 +268,33 @@ namespace VAICOM
                   stringreplace = false,
                   stringorig    = Properties.Resources.Orig_F4E_Jester_Interface,
                   stringsource  = Properties.Resources.Append_F4E_Jester_Interface,
+                  version ="2.9",
+                  canremove = true,
+                  reset = false,
+                  //ACTIVE:
+                  install = true,
+                  export = true,
+                  autoremove  = false,
+                  quiet  = false,
+                  AIRIO = false,
+                  kneeboard = false,
+                } },
+
+                {"2.9 WSO Dialog Interface.js",new Server.LuaFile
+                { fileid = "2AAF2E79-5422-4714-98F4-488A1095A092",
+                  filename = "interface.js",
+                  installfolder = "Mods\\aircraft\\F-4E\\UI\\JesterDialog\\js",
+                  installfolder_legacy = "Mods\\aircraft\\F-4E\\UI\\JesterDialog\\js",
+                  append = true,
+                  root = true,
+                  hardreset = true,
+                  orig = Properties.Resources.Orig_F4E_Jester_Dialog_Interface,
+                  orig_legacy = Properties.Resources.Orig_F4E_Jester_Dialog_Interface,
+                  source = Properties.Resources.Append_F4E_Jester_Dialog_Interface,
+                  source_legacy = Properties.Resources.Append_F4E_Jester_Dialog_Interface,
+                  stringreplace = false,
+                  stringorig    = Properties.Resources.Orig_F4E_Jester_Dialog_Interface,
+                  stringsource  = Properties.Resources.Append_F4E_Jester_Dialog_Interface,
                   version ="2.9",
                   canremove = true,
                   reset = false,

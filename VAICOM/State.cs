@@ -103,8 +103,8 @@ namespace VAICOM
         public static IPEndPoint ReceiveIpEndPoint;
 
         // WebSocket Server
-        public static WebSocket WebSocketClient;
-        public static WebSocket WebSocketClientDialog;
+        public static WebSocket WsoWheelClient;
+        public static WebSocket WsoDialogClient;
 
         // for world Messages receive
 

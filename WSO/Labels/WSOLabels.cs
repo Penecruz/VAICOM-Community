@@ -83,6 +83,7 @@ namespace VAICOM.Extensions.WSO
             { "wMsgWSO_Crew_Ejection_Both", "WSO Eject Both" },
             { "wMsgWSO_Crew_Countermeasures_Manual", "WSO Countermeasures Manual" },
             { "wMsgWSO_Crew_Countermeasures_Jester", "WSO Countermeasures Jester" },
+            { "wMsgWSO_Crew_StartAlignment", "WSO Start Alignment Now" },
 
             // Ground Crew commands
             { "wMsgWSO_Ground_WheelChocks_Place", "WSO Ground Place Chocks" },
@@ -110,7 +111,6 @@ namespace VAICOM.Extensions.WSO
             { "wMsgWSO_Ground_Cancel", "WSO Ground Cancel" },
 
             // Jester startup INS alignment responses
-            { "wMsgWSO_INSAlignment_StartAlignment", "WSO Start Alignment Now" },
             { "wMsgWSO_INSAlignment_FullAlignment", "WSO Start Full Alignment" },
             { "wMsgWSO_INSAlignment_BathAlignment", "WSO Start BATH Alignment" },
             { "wMsgWSO_INSAlignment_StoredAlignment", "WSO Start Stored Alignment" },

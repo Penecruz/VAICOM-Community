@@ -107,6 +107,7 @@ namespace VAICOM.Extensions.WSO
             { "wMsgWSO_Crew_Ejection_Both", new CommandInfo { uniqueid = 24507, category = CommandCategories.WSO, name = "wMsgWSO_Crew_Ejection_Both", displayname = Labels.aicommands["wMsgWSO_Crew_Ejection_Both"], enabled = true } },
             { "wMsgWSO_Crew_Countermeasures_Manual", new CommandInfo { uniqueid = 24508, category = CommandCategories.WSO, name = "wMsgWSO_Crew_Countermeasures_Manual", displayname = Labels.aicommands["wMsgWSO_Crew_Countermeasures_Manual"], enabled = true } },
             { "wMsgWSO_Crew_Countermeasures_Jester", new CommandInfo { uniqueid = 24509, category = CommandCategories.WSO, name = "wMsgWSO_Crew_Countermeasures_Jester", displayname = Labels.aicommands["wMsgWSO_Crew_Countermeasures_Jester"], enabled = true } },
+            { "wMsgWSO_Crew_StartAlignment", new CommandInfo { uniqueid = 24510, category = CommandCategories.WSO, name = "wMsgWSO_Crew_StartAlignment", displayname = Labels.aicommands["wMsgWSO_Crew_StartAlignment"], enabled = true } },
             
             // Ground Crew commands
             { "wMsgWSO_Ground_WheelChocks_Place", new CommandInfo { uniqueid = 24600, category = CommandCategories.WSO, name = "wMsgWSO_Ground_WheelChocks_Place", displayname = Labels.aicommands["wMsgWSO_Ground_WheelChocks_Place"], enabled = true } },
@@ -139,7 +140,6 @@ namespace VAICOM.Extensions.WSO
             { "wMsgWSO_Systems_AVTR_Off", new CommandInfo { uniqueid = 24702, category = CommandCategories.WSO, name = "wMsgWSO_Systems_AVTR_Off", displayname = Labels.aicommands["wMsgWSO_Systems_AVTR_Off"], enabled = true } },
             
             // Jester startup alignment responses
-            { "wMsgWSO_INSAlignment_StartAlignment", new CommandInfo { uniqueid = 24750, category = CommandCategories.WSO, name = "wMsgWSO_INSAlignment_StartAlignment", displayname = Labels.aicommands["wMsgWSO_INSAlignment_StartAlignment"], enabled = true } },
             { "wMsgWSO_INSAlignment_FullAlignment", new CommandInfo { uniqueid = 24751, category = CommandCategories.WSO, name = "wMsgWSO_INSAlignment_FullAlignment", displayname = Labels.aicommands["wMsgWSO_INSAlignment_FullAlignment"], enabled = true } },
             { "wMsgWSO_INSAlignment_BathAlignment", new CommandInfo { uniqueid = 24752, category = CommandCategories.WSO, name = "wMsgWSO_INSAlignment_BathAlignment", displayname = Labels.aicommands["wMsgWSO_INSAlignment_BathAlignment"], enabled = true } },
             { "wMsgWSO_INSAlignment_StoredAlignment", new CommandInfo { uniqueid = 24753, category = CommandCategories.WSO, name = "wMsgWSO_INSAlignment_StoredAlignment", displayname = Labels.aicommands["wMsgWSO_INSAlignment_StoredAlignment"], enabled = true } },

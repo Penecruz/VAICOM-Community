@@ -6,13 +6,13 @@ using Newtonsoft.Json;
 
 namespace VAICOM.WSO
 {
-    public class WsoMessage
+    public class WsoWheelMessage
     {
         public string category;
         public string action;
         public string value;
 
-        public WsoMessage(string category, string action, string value)
+        public WsoWheelMessage(string category, string action, string value)
         {
             this.category = category;
             this.action = action;
@@ -48,7 +48,7 @@ namespace VAICOM.WSO
                 }
                 else
                 {
-                    SendCommand(webSocket, command.category, command.action, command.value);
+                    SendWheelCommand(webSocket, command.category, command.action, command.value);
                 }
             }
             else
@@ -72,7 +72,7 @@ namespace VAICOM.WSO
                 }
                 else
                 {
-                    SendCommand(webSocket, command.category, command.action, value);
+                    SendWheelCommand(webSocket, command.category, command.action, value);
                 }
             }
             else
@@ -82,20 +82,20 @@ namespace VAICOM.WSO
         }
 
         /// <summary>
-        /// Sends a command directly to the backend using the hb_send_proxy function.
+        /// Sends a command for the wheel directly to the backend using the hb_send_proxy function.
         /// </summary>
         /// <param name="webSocket">The WebSocket to send the command to.</param>
         /// <param name="category">The category of the command.</param>
         /// <param name="action">The specific action to perform.</param>
         /// <param name="value">Optional value to pass with the action.</param>
-        public static async void SendCommand(WebSocket webSocket, string category, string action, string value)
+        public static async void SendWheelCommand(WebSocket webSocket, string category, string action, string value)
         {
             // Ensure value is not null or undefined
             value = value ?? "";
 
             if (webSocket != null && webSocket.State == WebSocketState.Open)
             {
-                WsoMessage wsoMessage = new WsoMessage(category, action, value);
+                WsoWheelMessage wsoMessage = new WsoWheelMessage(category, action, value);
                 string message = JsonConvert.SerializeObject(wsoMessage);
                 byte[] messageBuffer = Encoding.UTF8.GetBytes(message);
                 Console.WriteLine($"Sending wheel message to web socket client: {message}");
@@ -112,21 +112,16 @@ namespace VAICOM.WSO
         }
 
         /// <summary>
-        /// Sends a command directly to the backend using the hb_send_proxy function.
+        /// Sends a command for the dialog directly to the backend using the hb_send_proxy function.
         /// </summary>
         /// <param name="webSocket">The WebSocket to send the command to.</param>
-        /// <param name="category">The category of the command.</param>
-        /// <param name="action">The specific action to perform.</param>
-        /// <param name="value">Optional value to pass with the action.</param>
+        /// <param name="action">The action, will generally be hardcoded to "action".</param>
+        /// <param name="command">The command for the selected dialog option.</param>
         public static async void SendDialogCommand(WebSocket webSocket, string action, string command)
         {
-            // Ensure value is not null or undefined
-            command = command ?? "";
-
             if (webSocket != null && webSocket.State == WebSocketState.Open)
             {
-                //WsoDialogMessage wsoMessage = new WsoDialogMessage(action, command);
-                WsoDialogMessage wsoMessage = new WsoDialogMessage("action", action);
+                WsoDialogMessage wsoMessage = new WsoDialogMessage(action, command);
                 string message = JsonConvert.SerializeObject(wsoMessage);
                 byte[] messageBuffer = Encoding.UTF8.GetBytes(message);
                 Console.WriteLine($"Sending dialog message to web socket client: {message}");

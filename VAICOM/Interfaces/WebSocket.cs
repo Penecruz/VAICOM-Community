@@ -71,7 +71,7 @@ namespace VAICOM
                     HttpListenerWebSocketContext wsContext = await context.AcceptWebSocketAsync(null);
                     webSocket = wsContext.WebSocket;
                     Log.Write("Jester wheel client connected.", Colors.Text);
-                    State.WebSocketClient = webSocket;
+                    State.WsoWheelClient = webSocket;
 
                     byte[] buffer = new byte[1024 * 4];
 
@@ -118,7 +118,7 @@ namespace VAICOM
                 finally
                 {
                     webSocket?.Dispose();
-                    State.WebSocketClient = null;
+                    State.WsoWheelClient = null;
                 }
             }
 
@@ -162,7 +162,7 @@ namespace VAICOM
                     HttpListenerWebSocketContext wsContext = await context.AcceptWebSocketAsync(null);
                     webSocket = wsContext.WebSocket;
                     Log.Write("Jester dialog client connected.", Colors.Text);
-                    State.WebSocketClientDialog = webSocket;
+                    State.WsoDialogClient = webSocket;
 
                     byte[] buffer = new byte[1024 * 4];
 
@@ -195,10 +195,7 @@ namespace VAICOM
                         }
 
                         string receivedMessage = messageBuilder.ToString();
-                        //if (!WSOActionCache.TryHandleActionCacheMessage(receivedMessage) && !WSOActionCache.TryHandleJesterMenuActionLine(receivedMessage))
-                        //{
-                            Log.Write($"Received Jester dialog message: {receivedMessage}", Colors.Text);
-                        //}
+                        Log.Write($"Received Jester dialog message: {receivedMessage}", Colors.Text);
                     }
                 }
 
@@ -209,7 +206,7 @@ namespace VAICOM
                 finally
                 {
                     webSocket?.Dispose();
-                    State.WebSocketClientDialog = null;
+                    State.WsoDialogClient = null;
                 }
             }
         }

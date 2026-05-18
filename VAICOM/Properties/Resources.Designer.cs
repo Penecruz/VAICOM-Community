@@ -342,7 +342,36 @@ namespace VAICOM.Properties {
                 return ResourceManager.GetString("Append_F4E_Jester_Interface", resourceCulture);
             }
         }
-        
+
+        /// <summary>
+        ///   Looks up a localized string similar to // VAICOM server-side script
+        ///// Jester 2.0 Dialog interface.js
+        ///
+        ///// WebSocket connection to VAICOM
+        ///let socket;
+        ///
+        ///// Create WebSocket connection and event listeners.
+        ///function openSocketConnection() {
+        ///	// Don&apos;t reconnect if we already have an open connection, or are
+        ///	// already attempting to open a new one.
+        ///	if (isSocketOpen() || isSocketConnecting()) {
+        ///		return;
+        ///	}
+        ///
+        ///	socket = new WebSocket(&quot;ws://127.0.0.1:33496/vaicom/wso/&quot;);
+        ///
+        ///	// Connection opened
+        ///	socket.addEventListener(&quot;open&quot;, (event) =&gt; {
+        ///		soc [rest of string was truncated]&quot;;.
+        /// </summary>
+        public static string Append_F4E_Jester_Dialog_Interface
+        {
+            get
+            {
+                return ResourceManager.GetString("Append_F4E_Jester_Dialog_Interface", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to /*
         /// * Copyright 2023 Heatblur Simulations. All rights reserved.
@@ -1516,7 +1545,34 @@ namespace VAICOM.Properties {
                 return ResourceManager.GetString("Orig_F4E_Jester_Interface", resourceCulture);
             }
         }
-        
+
+        /// <summary>
+        ///   Looks up a localized string similar to /*
+        /// * Copyright 2023 Heatblur Simulations. All rights reserved.
+        /// *
+        /// */
+        ///
+        ///function hb_send_proxy(action, command) {
+        ///	if (typeof window.edQuery === &quot;function&quot;) {
+        ///		window.edQuery({
+        ///			request: `${action}|${command}`,
+        ///			persistent: false,
+        ///			onSuccess: function (response) {
+        ///			},
+        ///			onFailure: function (error_code, error_message) {
+        ///			}
+        ///		});
+        ///	} else {
+        ///		console.log(action + &quot;:&quot; + command); [rest of string was truncated]&quot;;.
+        /// </summary>
+        public static string Orig_F4E_Jester_Dialog_Interface
+        {
+            get
+            {
+                return ResourceManager.GetString("Orig_F4E_Jester_Dialog_Interface", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to /*
         /// * Copyright 2023 Heatblur Simulations. All rights reserved.

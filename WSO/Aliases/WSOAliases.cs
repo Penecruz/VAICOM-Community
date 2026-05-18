@@ -87,6 +87,7 @@ namespace VAICOM.Extensions.WSO
             { "Some Silence ", "wMsgWSO_Crew_Talking_Silence" },
             { "Eject WSO", "wMsgWSO_Crew_Ejection_WSO" },
             { "Eject Both", "wMsgWSO_Crew_Ejection_Both" },
+            { "Start Alignment Now", "wMsgWSO_Crew_StartAlignment" },
             { "Countermeasures Mine", "wMsgWSO_Crew_Countermeasures_Manual" },
             { "Countermeasures Yours", "wMsgWSO_Crew_Countermeasures_Jester" },
             { "Systems Jettison Flares", "wMsgWSO_Systems_FlaresJettison" },
@@ -125,7 +126,6 @@ namespace VAICOM.Extensions.WSO
             { "Ground Cancel", "wMsgWSO_Ground_Cancel" },
             
             // Jester startup INS alignment responses
-            { "Start Alignment Now", "wMsgWSO_INSAlignment_StartAlignment" },
             { "Start Full Alignment", "wMsgWSO_INSAlignment_FullAlignment" },
             { "Start BATH Alignment", "wMsgWSO_INSAlignment_BathAlignment" },
             { "Start Stored Alignment", "wMsgWSO_INSAlignment_StoredAlignment" },
