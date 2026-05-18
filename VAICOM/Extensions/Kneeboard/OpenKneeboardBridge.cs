@@ -1,4 +1,5 @@
 using Newtonsoft.Json;
+using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -968,16 +969,22 @@ namespace VAICOM
                 private static bool isRunning;
 
                 private const string Prefix = "http://127.0.0.1:7779/okb/";
+                private const string OpenKneeboardPluginsRegistryKey = @"SOFTWARE\Fred Emmott\OpenKneeboard\Plugins\v1";
+                private const string OpenKneeboardPluginId = "github.com/Penecruz/VAICOM-Community";
+                private const string OpenKneeboardPluginTabId = OpenKneeboardPluginId + ";okb-out";
 
                 public static void Initialize()
                 {
                     ResetSnapshot();
+                    SetPluginRegistration(State.activeconfig != null && State.activeconfig.OpenKneeboard_Out);
                     StartWebHost();
                 }
 
                 public static void SetEnabled(bool enabled)
                 {
-                    if (State.activeconfig.OpenKneeboard_Out)
+                    SetPluginRegistration(enabled);
+
+                    if (enabled)
                     {
                         StartWebHost();
                     }
@@ -1009,6 +1016,122 @@ namespace VAICOM
                 public static void Shutdown()
                 {
                     StopWebHost();
+                }
+
+                private static void SetPluginRegistration(bool enabled)
+                {
+                    string manifestPath = GetPluginManifestPath();
+                    if (string.IsNullOrWhiteSpace(manifestPath))
+                    {
+                        return;
+                    }
+
+                    if (enabled)
+                    {
+                        WritePluginManifest(manifestPath);
+                    }
+
+                    try
+                    {
+                        using (RegistryKey key = Registry.CurrentUser.CreateSubKey(OpenKneeboardPluginsRegistryKey))
+                        {
+                            if (key == null)
+                            {
+                                return;
+                            }
+
+                            key.SetValue(manifestPath, enabled ? 1 : 0, RegistryValueKind.DWord);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Log.Write("OpenKneeboard plugin registration failed: " + ex.Message, Colors.Warning);
+                    }
+                }
+
+                private static string GetPluginManifestPath()
+                {
+                    try
+                    {
+                        string appsRoot = string.IsNullOrWhiteSpace(State.VA_APPS)
+                            ? (State.Proxy == null ? "" : Convert.ToString(State.Proxy.SessionState["VA_APPS"]))
+                            : State.VA_APPS;
+
+                        if (string.IsNullOrWhiteSpace(appsRoot))
+                        {
+                            return "";
+                        }
+
+                        string pluginRoot = Path.Combine(appsRoot, Products.Products.Families.Vaicom.VaicomProPlugin.rootfoldername);
+                        string configFolder = AppData.SubFolders.ContainsKey("config")
+                            ? AppData.SubFolders["config"]
+                            : "config";
+                        string outputFolder = Path.Combine(pluginRoot, configFolder);
+
+                        return Path.Combine(outputFolder, "OpenKneeboard.v1.json");
+                    }
+                    catch
+                    {
+                        return "";
+                    }
+                }
+
+                private static void WritePluginManifest(string manifestPath)
+                {
+                    try
+                    {
+                        string folder = Path.GetDirectoryName(manifestPath);
+                        if (!string.IsNullOrWhiteSpace(folder))
+                        {
+                            Directory.CreateDirectory(folder);
+                        }
+
+                        string readableVersion = string.IsNullOrWhiteSpace(State.versionstring)
+                            ? State.pluginversionnumber
+                            : State.versionstring;
+                        string semanticVersion = string.IsNullOrWhiteSpace(State.pluginversionnumber)
+                            ? "3.1.0"
+                            : State.pluginversionnumber;
+
+                        var manifest = new
+                        {
+                            ID = OpenKneeboardPluginId,
+                            Metadata = new
+                            {
+                                PluginName = "VAICOM OpenKneeboard Out",
+                                PluginReadableVersion = readableVersion,
+                                PluginSemanticVersion = semanticVersion,
+                                OKBMinimumVersion = "1.9",
+                                Author = "VAICOM Community",
+                                Website = "https://github.com/Penecruz/VAICOM-Community",
+                            },
+                            TabTypes = new[]
+                            {
+                                new
+                                {
+                                    ID = OpenKneeboardPluginTabId,
+                                    Name = "VAICOM OpenKneeboard Out",
+                                    Implementation = "WebBrowser",
+                                    ImplementationArgs = new
+                                    {
+                                        URI = Prefix,
+                                        InitialSize = new
+                                        {
+                                            Width = 1050,
+                                            Height = 1480,
+                                        },
+                                    },
+                                },
+                            },
+                        };
+
+                        string json = JsonConvert.SerializeObject(manifest, Formatting.Indented);
+                        File.WriteAllText(manifestPath, json, Encoding.UTF8);
+                    }
+                    catch (Exception ex)
+                    {
+                        Log.Write("OpenKneeboard plugin manifest update failed: " + ex.Message, Colors.Warning);
+                    }
                 }
 
                 public static void ResetSnapshot()
