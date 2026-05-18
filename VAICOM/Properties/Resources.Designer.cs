@@ -344,6 +344,33 @@ namespace VAICOM.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to /*
+        /// * Copyright 2023 Heatblur Simulations. All rights reserved.
+        /// * Apended by Vaicom
+        /// */
+        ///
+        ///const font = new FontFaceObserver(&quot;Coda&quot;, {})
+        ///font.load().then(function () {
+        ///    document.documentElement.className += &quot; fonts-loaded&quot;
+        ///
+        ///    const circles = render_objects.action_circles.circles
+        ///    for (const i in circles) {
+        ///        circles[i].symbol.updateText()
+        ///    }
+        ///})
+        ///
+        ///const action_circle_ring_border = 4
+        ///const action_circle_ring_radius = 32
+        ///const dialog_wheel_ring_border = 2
+        ///const dialog_wheel_rin [rest of string was truncated]&quot;;.
+        /// </summary>
+        public static string Append_F4E_Jester_Renderer {
+            get {
+                return ResourceManager.GetString("Append_F4E_Jester_Renderer", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to -- VAICOM PRO server-side script
         ///-- 1.lua
         ///-- www.vaicompro.com
@@ -545,7 +572,7 @@ namespace VAICOM.Properties {
         ///	{
         ///		radioId = &apos;airfield6_0&apos;;
         ///		role = {&quot;ground&quot;, &quot;tower&quot;, &quot;approach&quot;};
-        ///		callsign = {{[&quot;common&quot;] = {_(&quot;Boulderñity&quot;), &quot;Boulderñity&quot;}}};
+        ///		callsign = {{[&quot;common&quot;] = {_(&quot;BoulderCity&quot;), &quot;BoulderCity&quot;}}};
         ///		frequency = {[UHF] = {MODULATIONTYPE_AM, 250100000.000000}, [VHF_HI] = {MODULATIONTYPE_AM, 118050000.000000}};
         ///		sceneObje [rest of string was truncated]&quot;;.
         /// </summary>
@@ -1487,6 +1514,34 @@ namespace VAICOM.Properties {
         public static string Orig_F4E_Jester_Interface {
             get {
                 return ResourceManager.GetString("Orig_F4E_Jester_Interface", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to /*
+        /// * Copyright 2023 Heatblur Simulations. All rights reserved.
+        /// *
+        /// */
+        ///
+        ///const font = new FontFaceObserver(&quot;Coda&quot;, {})
+        ///font.load().then(function () {
+        ///    document.documentElement.className += &quot; fonts-loaded&quot;
+        ///
+        ///    const circles = render_objects.action_circles.circles
+        ///    for (const i in circles) {
+        ///        circles[i].symbol.updateText()
+        ///    }
+        ///})
+        ///
+        ///const action_circle_ring_border = 4
+        ///const action_circle_ring_radius = 32
+        ///const dialog_wheel_ring_border = 2
+        ///const dialog_wheel_ring_radius = 61
+        ///con [rest of string was truncated]&quot;;.
+        /// </summary>
+        public static string Orig_F4E_Jester_Renderer {
+            get {
+                return ResourceManager.GetString("Orig_F4E_Jester_Renderer", resourceCulture);
             }
         }
         
