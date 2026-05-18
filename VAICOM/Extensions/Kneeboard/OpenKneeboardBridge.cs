@@ -152,6 +152,24 @@ namespace VAICOM
     }
     .tabPanel { flex: 0 0 36%; min-height: 250px; display: flex; flex-direction: column; }
     .tabPanel .content { flex: 1 1 auto; min-height: 0; }
+    .tabKeywordDivider {
+      height: 8px;
+      border: 1px solid #7e8fa1;
+      background: linear-gradient(to bottom, #d9dde2, #c6ccd2);
+      cursor: row-resize;
+      flex: 0 0 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      user-select: none;
+    }
+    .tabKeywordDivider::before {
+      content: '';
+      width: 40px;
+      height: 2px;
+      background: #667788;
+      box-shadow: 0 -2px 0 #92a1af, 0 2px 0 #92a1af;
+    }
     .keywordsPanel { flex: 1 1 auto; min-height: 180px; display: flex; flex-direction: column; }
     .keywordsPanel .content { flex: 1 1 auto; min-height: 0; }
     body.notes-tab .tabPanel { flex: 0 0 55%; }
@@ -163,6 +181,31 @@ namespace VAICOM
     .kwCol { white-space: pre-wrap; word-break: break-word; }
     .controls { margin: 8px 0; color: #222; font-size: 19px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
     .controls label { white-space: nowrap; }
+    .controls button {
+      font-family: inherit;
+      font-size: 18px;
+      padding: 3px 8px;
+      border: 1px solid #7c8692;
+      background: #ffffff;
+      color: #111;
+      cursor: pointer;
+    }
+    .controls button.draw-on {
+      background: #2e8b57;
+      border-color: #1c5c39;
+      color: #ffffff;
+      font-weight: 700;
+    }
+    .controls button:disabled {
+      opacity: 0.6;
+      cursor: default;
+    }
+    .drawTimer {
+      min-width: 62px;
+      font-size: 17px;
+      color: #2e8b57;
+      font-weight: 700;
+    }
     pre { background: #ffffff; border: 1px solid #b7b7b7; padding: 10px; white-space: pre-wrap; word-break: break-word; font-size: 18px; color:#111; max-height: 190px; overflow: auto; }
     body.raw-mode .keywordsPanel { flex: 0 0 280px; }
     .hidden { display: none; }
@@ -193,6 +236,8 @@ namespace VAICOM
           <div id='tabBody' class='content mainContent'></div>
         </div>
 
+        <div id='tabKeywordDivider' class='tabKeywordDivider' title='Drag to resize Tab and Keywords'></div>
+
         <div id='keywordPanel' class='panel keywordsPanel'>
           <h4 id='keywordTitle'>Keywords</h4>
           <div id='keywordBody' class='content keywordsContent'></div>
@@ -206,6 +251,8 @@ namespace VAICOM
 
     <div class='controls'>
       <label><input id='autoBrowse' type='checkbox' checked> Auto Browse</label>
+      <button id='drawModeToggle' type='button'>Draw OFF</button>
+      <span id='drawTimer' class='drawTimer hidden'>30s</span>
       <label id='showRawWrap'><input id='showRaw' type='checkbox'> Show raw JSON</label>
       <label id='showServerWrap'><input id='showServer' type='checkbox'> Show server messages</label>
     </div>
@@ -226,6 +273,20 @@ namespace VAICOM
     let okbExperimentalEnabled = false;
     let okbCursorMode = '';
     let okbDoodlesOnlyForced = false;
+    let drawModeEnabled = false;
+    let drawInteractionInNotes = false;
+    let drawModeDisableTimer = null;
+    let drawModeDeadlineUtcMs = 0;
+    let drawModeCountdownTimer = null;
+    const sessionCollapsedStorageKey = 'vaicom.okb.sessionCollapsed';
+    const tabKeywordsSplitStorageKey = 'vaicom.okb.tabKeywordsSplitByTab';
+    const drawModeStorageKey = 'vaicom.okb.notesDrawMode';
+    const drawModeTimeoutMs = 30000;
+    let tabKeywordsSplitByTab = {};
+
+    function clamp(v, min, max){
+      return Math.max(min, Math.min(max, v));
+    }
 
     function safe(v){ return (v === null || v === undefined || v === '') ? '-' : String(v); }
 
@@ -284,7 +345,7 @@ namespace VAICOM
             okbCursorMode = 'DoodlesOnly';
             return;
         }
-        const targetMode = isNotes ? 'DoodlesOnly' : 'MouseEmulation';
+        const targetMode = (isNotes && drawModeEnabled && drawInteractionInNotes) ? 'DoodlesOnly' : 'MouseEmulation';
         if (okbCursorMode === targetMode) return;
 
         if (!okbExperimentalEnabled && okb.EnableExperimentalFeatures){
@@ -297,7 +358,7 @@ namespace VAICOM
 
         if (!okb.SetCursorEventsMode) return;
 
-        if (isNotes){
+        if (targetMode === 'DoodlesOnly'){
           await okb.SetCursorEventsMode('DoodlesOnly');
           okbCursorMode = 'DoodlesOnly';
           return;
@@ -326,6 +387,290 @@ namespace VAICOM
       if (level === 'error') statusEl.classList.add('status-error');
       if (level === 'warning') statusEl.classList.add('status-warning');
       if (level === 'sent') statusEl.classList.add('status-sent');
+    }
+
+    function applySessionCollapsedState(collapsed){
+      sessionCollapsed = !!collapsed;
+      document.getElementById('session').style.display = sessionCollapsed ? 'none' : 'block';
+      document.getElementById('sessionHeader').textContent = sessionCollapsed ? 'Session ► (click to expand)' : 'Session ▼';
+    }
+
+    function readInitialSessionCollapsed(){
+      try{
+        return window.localStorage && window.localStorage.getItem(sessionCollapsedStorageKey) === '1';
+      }catch(_){
+        return false;
+      }
+    }
+
+    function persistSessionCollapsedState(){
+      try{
+        if (window.localStorage){
+          window.localStorage.setItem(sessionCollapsedStorageKey, sessionCollapsed ? '1' : '0');
+        }
+      }catch(_){
+      }
+    }
+
+    function readDrawModePreference(){
+      try{
+        return window.localStorage && window.localStorage.getItem(drawModeStorageKey) === '1';
+      }catch(_){
+        return false;
+      }
+    }
+
+    function persistDrawModePreference(){
+      try{
+        if (window.localStorage){
+          window.localStorage.setItem(drawModeStorageKey, drawModeEnabled ? '1' : '0');
+        }
+      }catch(_){
+      }
+    }
+
+    function updateDrawModeToggleUi(){
+      const button = document.getElementById('drawModeToggle');
+      if (!button) return;
+      button.classList.toggle('draw-on', drawModeEnabled);
+
+      if (okbDoodlesOnlyForced){
+        button.disabled = true;
+        button.textContent = 'Draw FORCED';
+        button.title = 'Draw mode forced by URL parameter';
+        return;
+      }
+
+      const notesActive = selectedTab === 'NOTES';
+      button.disabled = !notesActive;
+      button.textContent = drawModeEnabled ? 'Draw ON' : 'Draw OFF';
+      button.title = notesActive
+        ? 'Toggle Notes drawing mode'
+        : 'Switch to NOTES tab to toggle drawing';
+    }
+
+    function setDrawInteractionInNotes(active){
+      const next = !!active;
+      if (drawInteractionInNotes === next) return;
+      drawInteractionInNotes = next;
+      updateCursorModeForTab();
+
+      if (drawInteractionInNotes){
+        scheduleDrawModeAutoOff();
+      }
+    }
+
+    function clearDrawModeDisableTimer(){
+      if (drawModeDisableTimer){
+        clearTimeout(drawModeDisableTimer);
+        drawModeDisableTimer = null;
+      }
+      drawModeDeadlineUtcMs = 0;
+      updateDrawTimerUi();
+    }
+
+    function updateDrawTimerUi(){
+      const timerEl = document.getElementById('drawTimer');
+      if (!timerEl) return;
+
+      const shouldShow = drawModeEnabled && drawModeDeadlineUtcMs > 0;
+      timerEl.className = shouldShow ? 'drawTimer' : 'drawTimer hidden';
+      if (!shouldShow){
+        timerEl.textContent = '30s';
+        return;
+      }
+
+      const remainingMs = Math.max(0, drawModeDeadlineUtcMs - Date.now());
+      const remainingSeconds = Math.ceil(remainingMs / 1000);
+      timerEl.textContent = String(remainingSeconds) + 's';
+    }
+
+    function ensureDrawCountdownTicking(){
+      if (drawModeCountdownTimer) return;
+      drawModeCountdownTimer = setInterval(function(){
+        updateDrawTimerUi();
+      }, 200);
+    }
+
+    function stopDrawCountdownTicking(){
+      if (!drawModeCountdownTimer) return;
+      clearInterval(drawModeCountdownTimer);
+      drawModeCountdownTimer = null;
+    }
+
+    function scheduleDrawModeAutoOff(){
+      if (!drawModeEnabled || okbDoodlesOnlyForced || selectedTab !== 'NOTES'){
+        clearDrawModeDisableTimer();
+        return;
+      }
+
+      clearDrawModeDisableTimer();
+      drawModeDeadlineUtcMs = Date.now() + drawModeTimeoutMs;
+      ensureDrawCountdownTicking();
+      updateDrawTimerUi();
+      drawModeDisableTimer = setTimeout(function(){
+        disableDrawMode();
+      }, drawModeTimeoutMs);
+    }
+
+    function notifyDrawActivity(){
+      if (!drawModeEnabled || okbDoodlesOnlyForced || selectedTab !== 'NOTES') return;
+      scheduleDrawModeAutoOff();
+    }
+
+    function disableDrawMode(){
+      if (!drawModeEnabled) return;
+      drawModeEnabled = false;
+      setDrawInteractionInNotes(false);
+      clearDrawModeDisableTimer();
+      stopDrawCountdownTicking();
+      persistDrawModePreference();
+      updateDrawModeToggleUi();
+      updateCursorModeForTab();
+    }
+
+    function getTabKeywordsMetrics(){
+      const tabPanel = document.querySelector('.tabPanel');
+      const keywordPanel = document.getElementById('keywordPanel');
+      if (!tabPanel || !keywordPanel) return null;
+
+      const topHeight = tabPanel.offsetHeight;
+      const bottomHeight = keywordPanel.offsetHeight;
+      const total = topHeight + bottomHeight;
+      if (total <= 0) return null;
+
+      const tabMin = parseFloat(window.getComputedStyle(tabPanel).minHeight) || 120;
+      const keywordMin = parseFloat(window.getComputedStyle(keywordPanel).minHeight) || 100;
+
+      return {
+        tabPanel: tabPanel,
+        keywordPanel: keywordPanel,
+        total: total,
+        topHeight: topHeight,
+        minTop: tabMin,
+        minBottom: keywordMin,
+      };
+    }
+
+    function getTabSplitStorageKey(tab){
+      return String(tab || 'LOG')
+        .toUpperCase()
+        .replace(/\s+/g, '_')
+        .replace(/[^A-Z0-9_]/g, '');
+    }
+
+    function resetTabKeywordsSplitToDefault(){
+      const metrics = getTabKeywordsMetrics();
+      if (!metrics) return;
+      metrics.tabPanel.style.flex = '';
+      metrics.keywordPanel.style.flex = '';
+    }
+
+    function getCurrentTabKeywordsSplitRatio(){
+      const key = getTabSplitStorageKey(selectedTab);
+      const value = tabKeywordsSplitByTab[key];
+      return isFinite(value) ? value : NaN;
+    }
+
+    function setCurrentTabKeywordsSplitRatio(ratio){
+      if (!isFinite(ratio)) return;
+      const key = getTabSplitStorageKey(selectedTab);
+      tabKeywordsSplitByTab[key] = ratio;
+      try{
+        if (window.localStorage){
+          window.localStorage.setItem(tabKeywordsSplitStorageKey, JSON.stringify(tabKeywordsSplitByTab));
+        }
+      }catch(_){
+      }
+    }
+
+    function applyTabKeywordsSplitRatio(ratio, persist){
+      const metrics = getTabKeywordsMetrics();
+      if (!metrics) return;
+
+      const safeRatio = isFinite(ratio) ? ratio : (metrics.topHeight / metrics.total);
+      let targetTop = metrics.total * clamp(safeRatio, 0.15, 0.85);
+      const maxTop = Math.max(metrics.minTop, metrics.total - metrics.minBottom);
+      targetTop = clamp(targetTop, metrics.minTop, maxTop);
+
+      metrics.tabPanel.style.flex = '0 0 ' + Math.round(targetTop) + 'px';
+      metrics.keywordPanel.style.flex = '1 1 auto';
+
+      if (persist){
+        setCurrentTabKeywordsSplitRatio(targetTop / metrics.total);
+      }
+    }
+
+    function readTabKeywordsSplitRatioByTab(){
+      try{
+        if (!window.localStorage) return {};
+        const raw = window.localStorage.getItem(tabKeywordsSplitStorageKey);
+        if (!raw) return {};
+        const parsed = JSON.parse(raw);
+        if (!parsed || typeof parsed !== 'object') return {};
+
+        const cleaned = {};
+        Object.keys(parsed).forEach(function(k){
+          const value = parseFloat(parsed[k]);
+          if (isFinite(value)){
+            cleaned[String(k)] = value;
+          }
+        });
+
+        return cleaned;
+      }catch(_){
+        return {};
+      }
+    }
+
+    function applyCurrentTabKeywordsSplit(){
+      const ratio = getCurrentTabKeywordsSplitRatio();
+      if (isFinite(ratio)){
+        applyTabKeywordsSplitRatio(ratio, false);
+        return;
+      }
+
+      resetTabKeywordsSplitToDefault();
+    }
+
+    function initTabKeywordsDivider(){
+      const divider = document.getElementById('tabKeywordDivider');
+      if (!divider) return;
+
+      let drag = null;
+
+      divider.addEventListener('mousedown', function(ev){
+        const metrics = getTabKeywordsMetrics();
+        if (!metrics) return;
+
+        const maxTop = Math.max(metrics.minTop, metrics.total - metrics.minBottom);
+        drag = {
+          startY: ev.clientY,
+          startTop: metrics.topHeight,
+          minTop: metrics.minTop,
+          maxTop: maxTop,
+          total: metrics.total,
+        };
+
+        ev.preventDefault();
+      });
+
+      document.addEventListener('mousemove', function(ev){
+        if (!drag) return;
+        const targetTop = clamp(drag.startTop + (ev.clientY - drag.startY), drag.minTop, drag.maxTop);
+        const ratio = targetTop / drag.total;
+        applyTabKeywordsSplitRatio(ratio, false);
+      });
+
+      document.addEventListener('mouseup', function(){
+        if (!drag) return;
+        const metrics = getTabKeywordsMetrics();
+        if (metrics){
+          const ratio = metrics.topHeight / metrics.total;
+          applyTabKeywordsSplitRatio(ratio, true);
+        }
+        drag = null;
+      });
     }
 
     function getMergedLog(map, tab){
@@ -793,7 +1138,13 @@ namespace VAICOM
       ].join('\n');
 
       renderTabs(data);
+      applyCurrentTabKeywordsSplit();
       document.body.classList.toggle('notes-tab', selectedTab === 'NOTES');
+      if (selectedTab !== 'NOTES' || !drawModeEnabled){
+        setDrawInteractionInNotes(false);
+        clearDrawModeDisableTimer();
+      }
+      updateDrawModeToggleUi();
       document.getElementById('tabTitle').textContent = 'Tab: ' + tabLabel(selectedTab);
       document.getElementById('tabBody').textContent = formatTabContent(data, selectedTab);
       updateCursorModeForTab();
@@ -898,6 +1249,52 @@ namespace VAICOM
       if (latestData) render(latestData);
     });
 
+    document.getElementById('drawModeToggle').addEventListener('click', function(){
+      if (okbDoodlesOnlyForced || selectedTab !== 'NOTES') return;
+      if (drawModeEnabled){
+        disableDrawMode();
+        return;
+      }
+
+      drawModeEnabled = true;
+      setDrawInteractionInNotes(true);
+      scheduleDrawModeAutoOff();
+      persistDrawModePreference();
+      updateDrawModeToggleUi();
+      updateCursorModeForTab();
+    });
+
+    document.getElementById('tabBody').addEventListener('dblclick', function(){
+      if (okbDoodlesOnlyForced || selectedTab !== 'NOTES') return;
+      disableDrawMode();
+    });
+
+    document.getElementById('tabBody').addEventListener('mouseenter', function(){
+      if (okbDoodlesOnlyForced || selectedTab !== 'NOTES' || !drawModeEnabled) return;
+      setDrawInteractionInNotes(true);
+      notifyDrawActivity();
+    });
+
+    document.getElementById('tabBody').addEventListener('mouseleave', function(){
+      if (okbDoodlesOnlyForced) return;
+      setDrawInteractionInNotes(false);
+    });
+
+    document.getElementById('tabBody').addEventListener('pointerdown', notifyDrawActivity);
+    document.getElementById('tabBody').addEventListener('pointermove', notifyDrawActivity);
+    document.getElementById('tabBody').addEventListener('touchstart', notifyDrawActivity);
+    document.getElementById('tabBody').addEventListener('touchmove', notifyDrawActivity);
+
+    document.querySelector('.controls').addEventListener('mouseenter', function(){
+      if (okbDoodlesOnlyForced) return;
+      setDrawInteractionInNotes(false);
+    });
+
+    document.querySelector('.tabRail').addEventListener('mouseenter', function(){
+      if (okbDoodlesOnlyForced) return;
+      setDrawInteractionInNotes(false);
+    });
+
     document.getElementById('tabBody').addEventListener('click', function(ev){
       if (selectedTab !== 'ATC' || !latestData) return;
       const text = this.textContent || '';
@@ -952,11 +1349,19 @@ namespace VAICOM
     });
 
     document.getElementById('sessionHeader').addEventListener('click', function(){
-      sessionCollapsed = !sessionCollapsed;
-      document.getElementById('session').style.display = sessionCollapsed ? 'none' : 'block';
-      document.getElementById('sessionHeader').textContent = sessionCollapsed ? 'Session ►' : 'Session ▼';
+      applySessionCollapsedState(!sessionCollapsed);
+      persistSessionCollapsedState();
     });
 
+    applySessionCollapsedState(readInitialSessionCollapsed());
+    drawModeEnabled = readDrawModePreference();
+    updateDrawModeToggleUi();
+    tabKeywordsSplitByTab = readTabKeywordsSplitRatioByTab();
+    initTabKeywordsDivider();
+    applyCurrentTabKeywordsSplit();
+    window.addEventListener('resize', function(){
+      applyCurrentTabKeywordsSplit();
+    });
     configureOpenKneeboard();
     tick();
     setInterval(tick, 1000);
