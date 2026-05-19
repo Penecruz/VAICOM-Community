@@ -1765,7 +1765,7 @@ namespace VAICOM
                         listenerThread = new Thread(ListenLoop) { IsBackground = true, Name = "OpenKneeboardWebHost" };
                         listenerThread.Start();
 
-                        Log.Write("OpenKneeboard dashboard host started at " + Prefix, Colors.Inline);
+                        Log.Write("OpenKneeboard dashboard host started at " + Prefix, Colors.Text);
                     }
                     catch (Exception ex)
                     {
