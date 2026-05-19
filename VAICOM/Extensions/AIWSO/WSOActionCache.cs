@@ -436,7 +436,18 @@ namespace VAICOM
 
                     // Search the recipients for one which matches the asset name. This allows us to use
                     // aliases in commands and still map them back to the actual cache entry.
+                    // Search through the standard set of AI recipients
                     foreach (KeyValuePair<string, string> set in Aliases.airecipients)
+                    {
+                        // Check for recipients value, or if there are other aliased values.
+                        if (asset.StartsWith(set.Value, StringComparison.OrdinalIgnoreCase) || asset.StartsWith(set.Key, StringComparison.OrdinalIgnoreCase))
+                        {
+                            recipient = set.Value;
+                            return true;
+                        }
+                    }
+                    // Search through any imported ATCs
+                    foreach (KeyValuePair<string, string> set in Aliases.importedatcs)
                     {
                         // Check for recipients value, or if there are other aliased values.
                         if (asset.StartsWith(set.Value, StringComparison.OrdinalIgnoreCase) || asset.StartsWith(set.Key, StringComparison.OrdinalIgnoreCase))

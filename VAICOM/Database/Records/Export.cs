@@ -350,11 +350,23 @@ namespace VAICOM
                 {
                     wsoOutputRecipientCommandString = "[" + wsoOutputRecipientCommandString.TrimEnd("; ".ToCharArray()) + "]";
                 }
+                // Add the imported ATCs to the WSO command recipients as these are not part of the
+                // standard AI recipients, but are required as they are present within the Jester wheel.
+                string wsoCommandImportedAtcRecipients = "";
+                foreach (KeyValuePair<string, string> alias in Aliases.importedatcs)
+                {
+                    if (!string.IsNullOrEmpty(alias.Key))
+                    {
+                        wsoCommandImportedAtcRecipients += alias.Key + "; ";
+                        counter = counter + 1;
+                    }
+                }
                 // Set WSO command recipients
                 string wsoOutputCommandRecipientsString = "";
+                string allWsoCommandRecipientsString = wsoCommandImportedAtcRecipients + wsoCommandRecipients;
                 if (wsoCommandRecipients.Length > 0)
                 {
-                    wsoOutputCommandRecipientsString = "[" + wsoCommandRecipients.TrimEnd("; ".ToCharArray()) + "]";
+                    wsoOutputCommandRecipientsString = "[" + allWsoCommandRecipientsString.TrimEnd("; ".ToCharArray()) + "]";
                 }
 
                 string outputappendixwpnstring = "";

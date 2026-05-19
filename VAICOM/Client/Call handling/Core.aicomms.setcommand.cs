@@ -104,7 +104,15 @@ namespace VAICOM
                             // when diverting to an airfield or tuning radio.
                             if (State.currentcommand.RequiresWSOCommandRecipient() && State.currentWSOCommandRecipient == null)
                             {
-                                if (!State.have["wsocmdrecipient"])
+                                if (State.have["wsocmdrecipient"])
+                                {
+                                    State.currentWSOCommandRecipient = Recipients.Table[State.currentkey["wsocmdrecipient"]];
+                                }
+                                else if (State.have["importedatcs"])
+                                {
+                                    State.currentWSOCommandRecipient = Recipients.Table[State.currentkey["importedatcs"]];
+                                }
+                                else
                                 {
                                     if (State.activeconfig.UIaddhints)
                                     {
@@ -112,10 +120,6 @@ namespace VAICOM
                                     }
                                     Log.Write("(awaiting additional ATC, tanker, or asset for WSO command)", Colors.Message);
                                     return false;
-                                }
-                                else
-                                {
-                                    State.currentWSOCommandRecipient = Recipients.Table[State.currentkey["wsocmdrecipient"]];
                                 }
                             }
 
