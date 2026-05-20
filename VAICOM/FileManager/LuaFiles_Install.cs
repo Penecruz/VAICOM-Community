@@ -349,7 +349,14 @@ namespace VAICOM
 
                                             // -----  write the new file -----------------------------------------
 
-                                            string writestring = "";
+                                                string writestring = "";
+
+                                                string effectiveOrig = uselegacy && !string.IsNullOrEmpty(thisfile.orig_legacy)
+                                                    ? thisfile.orig_legacy
+                                                    : thisfile.orig;
+                                                string effectiveSource = uselegacy && !string.IsNullOrEmpty(thisfile.source_legacy)
+                                                    ? thisfile.source_legacy
+                                                    : thisfile.source;
 
                                             if (thisfile.AIRIO) // 
                                             {
@@ -376,29 +383,29 @@ namespace VAICOM
                                                     if (!(State.dll_installed_rio && State.activeconfig.RIO_Enabled) || restore)
                                                     {
                                                         // AIRIO disabled: reset functions to original
-                                                        writestring = thisfile.orig; // <-- this is used when RIO not enabled
+                                                        writestring = effectiveOrig; // <-- this is used when RIO not enabled
                                                     }
                                                     else // normal, RIO is enabled
                                                     {
 
                                                         if (thisfile.append)
                                                         {
-                                                            writestring = thisfile.orig;
+                                                            writestring = effectiveOrig;
 
                                                             if (!restore)
                                                             {
-                                                                writestring += "\n" + thisfile.source;
+                                                                writestring += "\n" + effectiveSource;
                                                             }
                                                         }
                                                         else // replace type
                                                         {
                                                             if (thisfile.reset || restore)
                                                             {
-                                                                writestring = thisfile.orig;
+                                                                writestring = effectiveOrig;
                                                             }
                                                             else
                                                             {
-                                                                writestring = thisfile.source;
+                                                                writestring = effectiveSource;
                                                             }
                                                         }
                                                     }

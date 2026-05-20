@@ -121,7 +121,9 @@ namespace VAICOM
                             // hotmic is active, RIO not called
                             if (!State.valistening) // hotmic was used
                             {
-                                if (!State.currentrecipientclass.Equals(Recipientclasses.Crew))
+                                if (!State.currentrecipientclass.Equals(Recipientclasses.Crew)
+                                    && !State.currentcommand.isMenu()
+                                    && !State.currentcommand.isOptions())
                                 {
                                     Log.Write("ICS HOT MIC: Use Push-To-Talk TX nodes to transmit radio messages.", Colors.Warning);
                                     if (State.activeconfig.UIaddhints)

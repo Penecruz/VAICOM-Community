@@ -1725,6 +1725,11 @@ namespace VAICOM
                             {
                                 keywords.Add(key);
                             }
+
+                            foreach (string key in GetF4EManualAiCrewKeywords())
+                            {
+                                keywords.Add(key);
+                            }
                         }
                         else if (moduleId.StartsWith("AH-64D", StringComparison.OrdinalIgnoreCase))
                         {
@@ -1746,6 +1751,28 @@ namespace VAICOM
                     {
                         return new List<string>();
                     }
+                }
+
+                private static IEnumerable<string> GetF4EManualAiCrewKeywords()
+                {
+                    return new[]
+                    {
+                        "Hold at [Flight plan 1; Primary flight plan; Flight plan 2; Secondary flight plan] waypoint [1..9]",
+                        "Go to [Flight Plan; Flight plan 1; Primary flight plan; Flight plan 2; Secondary flight plan] [at] waypoint [1..9]",
+                        "Resume [Flight Plan; Flight plan 1; Primary flight plan; Flight plan 2; Secondary flight plan] [at] waypoint [1..9]",
+                        "Resume At Waypoint [1..9]",
+                        "Hold at current Waypoint",
+                        "Designate [Flight plan 1; Primary flight plan; Flight plan 2; Secondary flight plan] waypoint [1..9] as [Turn point; Nav fix; Navigation fix; Target; CAP; I P; Inbound point; Fence in; Fence out; Alternate; Homebase]",
+                        "Divert to Airfield <Airfield>",
+                        "Divert to Asset <Asset>",
+                        "Tune Radio [to] <Airfield;Asset>",
+                        "Tune/Set Radio [Frequency] [2..3] [0..9] [0..9] decimal [0..9] [0;25;50;75]",
+                        "Push/Select [Comm;Radio] [Button;Channel] [1..18]",
+                        "Push/Select [Aux] [Button;Channel] [1..20]",
+                        "Tune TACAN <asset name>",
+                        "Tune TACAN station [Alpha-Zulu] [Alpha-Zulu] [Alpha-Zulu]",
+                        "Set/Select TACAN [channel] [zero;0;1] [0..9] [0..9] [X-ray;Yankee]"
+                    };
                 }
 
                 private static void StartWebHost()

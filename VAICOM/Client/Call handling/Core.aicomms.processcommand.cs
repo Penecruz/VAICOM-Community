@@ -663,7 +663,10 @@ namespace VAICOM
                             || State.currentrecipientclass.Equals(Recipientclasses.RIO)
                             || State.currentrecipientclass.Equals(Recipientclasses.AI_pilot)
                             || State.currentrecipientclass.Equals(Recipientclasses.WSO);
-                        bool isHotMicAllowedCommand = isIntercomRecipientClass || State.currentcommand.isKneeboard();
+                        bool isHotMicAllowedCommand = isIntercomRecipientClass
+                            || State.currentcommand.isKneeboard()
+                            || State.currentcommand.isOptions()
+                            || State.currentcommand.isMenu();
 
                         if (intercomOnlyHotMic && !isHotMicAllowedCommand)
                         {
