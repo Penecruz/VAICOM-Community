@@ -98,6 +98,7 @@ namespace VAICOM
                     {"F4U-1D" ,             new radioslotdevicelist() { Slot_map_INT = {0,0,0}, Slot_map_SRS = {0,0,0}, Slot_map_CUS = {0,0,0} } },
                     {"MiG-29 Fulcrum" ,     new radioslotdevicelist() { Slot_map_INT = {0,0,0}, Slot_map_SRS = {0,0,0}, Slot_map_CUS = {0,0,0} } },
                     {"C-130J-30" ,          new radioslotdevicelist() { Slot_map_INT = {0,0,0}, Slot_map_SRS = {0,0,0}, Slot_map_CUS = {0,0,0} } },
+                    {"F-100D" ,             new radioslotdevicelist() { Slot_map_INT = {0,0,0}, Slot_map_SRS = {0,0,0}, Slot_map_CUS = {0,0,0} } },
                     {"F-22A" ,              new radioslotdevicelist() { Slot_map_INT = {0,0,0}, Slot_map_SRS = {0,0,0}, Slot_map_CUS = {0,0,0} } },
 
                 };
@@ -183,6 +184,7 @@ namespace VAICOM
                     {"F4U-1D" ,     new radioslotlist() { Slot_map = { "R-ARC5", "", ""} } },
                     {"MiG-29 Fulcrum" ,     new radioslotlist() { Slot_map = { "VHF/UHF R-862", "VHF R-855UM", "" } } },
                     {"C-130J-30" ,  new radioslotlist() { Slot_map = { "INTERCOM", "UHF-1", "UHF-2", "VHF-1", "VHF-2", "HF-1", "HF-2", "VHF AM(ARC-210)", "PVT" } } },
+                    {"F-100D" ,     new radioslotlist() { Slot_map = { "Radio AN/ARC-34", "", ""} } },
                     {"F-22A" ,      new radioslotlist() { Slot_map = { "VHF AM", "UHF", "VHF FM" } } }, //Pene WIP
 
                 };
@@ -266,8 +268,9 @@ namespace VAICOM
                     {"FA-18F",      new radioslotlist() { Slot_map = { "AN/ARC-210 G5 V/UHF", "AN/ARC-210 V/UHF G5", "" } } },
                     {"EA-18G",      new radioslotlist() { Slot_map = { "AN/ARC-210 G5 V/UHF", "AN/ARC-210 V/UHF G5", "" } } },
                     {"F4U-1D" ,     new radioslotlist() { Slot_map = { "ARC-5", "", ""} } },
-                    {"MiG-29 Fulcrum" ,     new radioslotlist() { Slot_map = { "VHF/UHF R-862", "", "" } } },
+                    {"MiG-29 Fulcrum" ,     new radioslotlist() { Slot_map = { "VHF/UHF R-862", "", "" } } },           
                     {"C-130J-30" ,  new radioslotlist() { Slot_map = { "Intercom", "AN/ARC-164 UHF1", "AN/ARC-164 UHF2", "AN/ARC-222 VHF1", "AN/ARC-222 VHF2", "AN/ARC-190  HF1", "AN/ARC-190 HF2", "AN/ARC-210 SAT", "PVT" } } },
+                    {"F-100D" ,     new radioslotlist() { Slot_map = { "AN/ARC-34", "", ""} } },
                     {"F-22A" ,      new radioslotlist() { Slot_map = { "AN/ARC-210 G5 V/UHF", "AN/ARC-210 V/UHF G5", "VHF FM" } } }, //Pene WIP
                 };
             }
@@ -622,7 +625,7 @@ namespace VAICOM
 
                 string selectedName = selectedRadio.displayName;
                 string normalizedSelectedName = NormalizeRadioName(selectedName);
-                int selectedIndex = radiolist_Ref.Slot_map.FindIndex(slot => NormalizeRadioName(slot).Equals(normalizedSelectedName, StringComparison.OrdinalIgnoreCase));
+                int selectedIndex = radiolist_Ref.Slot_map.FindIndex(slot => IsRadioNameMatch(NormalizeRadioName(slot), normalizedSelectedName));
                 if (selectedIndex >= 0 && selectedIndex < radiolist_SRS.Slot_map.Count)
                 {
                     selectedName = radiolist_SRS.Slot_map[selectedIndex];
@@ -737,6 +740,18 @@ namespace VAICOM
                     .Where(character => char.IsLetterOrDigit(character))
                     .Select(character => char.ToLowerInvariant(character))
                     .ToArray());
+            }
+
+            private static bool IsRadioNameMatch(string normalizedA, string normalizedB)
+            {
+                if (string.IsNullOrEmpty(normalizedA) || string.IsNullOrEmpty(normalizedB))
+                {
+                    return false;
+                }
+
+                return normalizedA.Equals(normalizedB, StringComparison.OrdinalIgnoreCase)
+                    || normalizedA.Contains(normalizedB)
+                    || normalizedB.Contains(normalizedA);
             }
 
         }

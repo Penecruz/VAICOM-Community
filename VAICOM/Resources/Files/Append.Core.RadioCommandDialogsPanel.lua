@@ -475,8 +475,26 @@ function getSelectedRadio(dcsId)
 				selectedRadio = findRadioDisplayName("AN/ARC-134", "ARC-134", "VHF AM") or selectedRadio
 			end
 		end
+ elseif dcsId == "F-100D" then
+		selectedRadio = findRadioDisplayName("UHF Radio AN/ARC-34", "Radio AN/ARC-34", "AN/ARC-34") or selectedRadio
 	end
 	return selectedRadio
+end
+
+local function radioNamesMatch(nameA, nameB)
+	if nameA == nil or nameB == nil then
+		return false
+	end
+
+	local normalizedA = normalizeRadioName(nameA)
+	local normalizedB = normalizeRadioName(nameB)
+
+	if normalizedA == normalizedB then
+		return true
+	end
+
+	return base.string.find(normalizedA, normalizedB, 1, true) ~= nil
+		or base.string.find(normalizedB, normalizedA, 1, true) ~= nil
 end
 
 function updateMainCaption()
@@ -3255,7 +3273,7 @@ base.vaicom.state = {
 									AM = k.AM,
 									FM = k.FM,
 									isavailable = ICS_set,
-									isselected = k.displayName == selectedRadio,
+                                    isselected = radioNamesMatch(k.displayName, selectedRadio),
 									intercom = ICS,
 									on =  ICS or ((ICS_set and (( base.GetDevice(n) and base.GetDevice(n).is_on and base.GetDevice(n):is_on() ))) or false),
 									frequency = ( ICS_set and (( (not ICS) and base.GetDevice(n) and base.GetDevice(n).get_frequency and base.GetDevice(n):get_frequency() ) or 0)) or 0,
