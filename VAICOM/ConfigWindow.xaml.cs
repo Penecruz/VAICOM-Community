@@ -1083,9 +1083,12 @@ namespace VAICOM
                     string exportFolderPath = Path.Combine(State.VA_APPS, AppData.RootFolder, AppData.SubFolders["export"]);
                     string keywordsHtmlPath = Path.Combine(exportFolderPath, "keywords.html");
 
+                    Log.Write("Generating keywords HTML reference...", Static.Colors.Message);
+                    VAICOM.FileManager.FileHandler.Database.ExportKeywordsAsHTML();
+
                     if (!File.Exists(keywordsHtmlPath))
                     {
-                        Log.Write("Keywords HTML reference not found. Generating export...", Static.Colors.Message);
+                        Log.Write("Keywords HTML reference not found after HTML export. Running full keyword export...", Static.Colors.Warning);
                         VAICOM.FileManager.FileHandler.Database.ExportMasterKeywordString();
                     }
 

@@ -722,7 +722,7 @@ namespace VAICOM
                 html.Append("<!DOCTYPE html><html><head><meta charset=\"utf-8\" />");
                 html.Append("<title>VAICOM Keywords</title>");
                 html.Append("<style>");
-                html.Append("body{font-family:Segoe UI,Arial,sans-serif;margin:12px auto !important;max-width:190mm !important;color:#1f2937;background:#ffffff;}");
+                html.Append("html{margin:0 !important;padding:0 !important;background:#ffffff;} body{font-family:Segoe UI,Arial,sans-serif;margin:0 auto !important;max-width:190mm !important;width:100% !important;box-sizing:border-box !important;padding:0 10px 10px 10px !important;color:#1f2937;background:#ffffff;}");
                 html.Append(".header{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:4px;} .header h1{margin:0;} .logo{width:34px;height:34px;object-fit:contain;}");
                 html.Append("h1{font-size:22px;margin:0 0 4px 0;}h2{font-size:18px;margin:24px 0 8px 0;}");
                 html.Append("p.meta{margin:0 0 14px 0;color:#6b7280;font-size:12px;}");
@@ -732,9 +732,11 @@ namespace VAICOM
                 html.Append("td.aliases,td.group,td.action{white-space:normal !important;word-break:break-word !important;overflow-wrap:anywhere !important;}");
                 html.Append("h3{font-size:15px;margin:12px 0 6px 0;color:#111827;}");
                 html.Append(".toc{background:#f9fafb;border:1px solid #e5e7eb;padding:10px 12px;margin:8px 0 16px 0;} .toc h2{margin:0 0 6px 0;font-size:16px;} .toc ul{margin:0;padding-left:18px;} .toc li{margin:3px 0;} .toc a{text-decoration:none;color:#1d4ed8;} .toc a:hover{text-decoration:underline;}");
+                html.Append(".okb-nav{display:none;margin:0 0 8px 0;gap:8px;position:sticky;top:0;z-index:20;background:#ffffff;padding:4px 0;} .okb-nav button{font-family:Segoe UI,Arial,sans-serif;font-size:12px;padding:4px 10px;border:1px solid #9ca3af;background:#f3f4f6;color:#111827;cursor:pointer;} .okb-nav button:hover{background:#e5e7eb;} .okb-nav button:disabled{opacity:.5;cursor:default;} body.okb-mode .okb-nav{display:flex;}");
                 html.Append("td.group .group-detail{color:#4b5563;}");
                 html.Append("td.aliases .alias-item{display:block;margin:0 0 2px 0;}");
-                html.Append("@media print{body{max-width:none !important;margin:8mm auto !important;color:#000 !important;} .toc{display:none !important;} h2,h3{page-break-after:avoid;} table{page-break-inside:auto;} tr{page-break-inside:avoid;page-break-after:auto;} a{color:#000 !important;text-decoration:none !important;}}");
+                html.Append("@media screen{html,body{margin-top:0 !important;padding-top:0 !important;} body{max-width:190mm !important;margin:0 auto !important;} .header{margin-bottom:6px;} p.meta{margin:0 0 10px 0;} .toc{margin:6px 0 12px 0;} h2{margin:18px 0 6px 0;} h3{margin:10px 0 5px 0;} table{margin-bottom:10px !important;}}");
+                html.Append("@media print{body{max-width:190mm !important;width:auto !important;padding:0 !important;margin:8mm auto !important;color:#000 !important;} .okb-nav{display:none !important;} .toc{display:none !important;} h2,h3{page-break-after:avoid;} table{page-break-inside:auto;} tr{page-break-inside:avoid;page-break-after:auto;} a{color:#000 !important;text-decoration:none !important;}}");
                 html.Append("</style></head><body>");
 
                 html.Append("<div class=\"header\"><h1>VAICOM KEYWORDS</h1>");
@@ -748,6 +750,7 @@ namespace VAICOM
                 html.Append("<p class=\"meta\">Generated: ");
                 html.Append(WebUtility.HtmlEncode(DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")));
                 html.Append("</p>");
+                html.Append("<div class=\"okb-nav\"><button type=\"button\" id=\"okb-back\">◀ Back</button><button type=\"button\" id=\"okb-forward\">Forward ▶</button></div>");
 
                 var content = new StringBuilder();
                 var index = new StringBuilder();
@@ -996,6 +999,7 @@ namespace VAICOM
 
                 html.Append(contentHtml);
 
+                html.Append("<script>(function(){try{var p=new URLSearchParams(window.location.search||'');if(p.get('okb')==='1'){document.body.className=(document.body.className?document.body.className+' ':'')+'okb-mode';var b=document.getElementById('okb-back');var f=document.getElementById('okb-forward');var stack=[];var idx=-1;var moving=false;function now(){return window.location.hash||'#';}function update(){if(b){b.disabled=idx<=0;}if(f){f.disabled=idx<0||idx>=stack.length-1;}}function push(h){if(idx>=0&&stack[idx]===h){update();return;}stack=stack.slice(0,idx+1);stack.push(h);idx=stack.length-1;update();}function jump(i){if(i<0||i>=stack.length||i===idx){update();return;}idx=i;moving=true;var h=stack[idx];if(h==='#'||h===''){window.scrollTo(0,0);}else{var el=document.getElementById(h.substring(1));if(el){el.scrollIntoView();}window.location.hash=h;}setTimeout(function(){moving=false;},0);update();}window.addEventListener('hashchange',function(){if(!moving){push(now());}});push(now());if(b){b.addEventListener('click',function(){if(idx>0){jump(idx-1);}else if(window.history.length>1){window.history.back();}});}if(f){f.addEventListener('click',function(){if(idx<stack.length-1){jump(idx+1);}else{window.history.forward();}});}}}catch(e){}})();</script>");
                 html.Append("</body></html>");
                 return html.ToString();
             }

@@ -1377,6 +1377,8 @@ namespace VAICOM
                 private const string OpenKneeboardPluginsRegistryKey = @"SOFTWARE\Fred Emmott\OpenKneeboard\Plugins\v1";
                 private const string OpenKneeboardPluginId = "github.com/Penecruz/VAICOM-Community";
                 private const string OpenKneeboardPluginTabId = OpenKneeboardPluginId + ";okb-out";
+                private const string OpenKneeboardKeywordsPluginId = "github.com/Penecruz/VAICOM-Community/keywords";
+                private const string OpenKneeboardKeywordsPluginTabId = OpenKneeboardKeywordsPluginId + ";keywords";
 
                 public static void Initialize()
                 {
@@ -1396,6 +1398,34 @@ namespace VAICOM
                     else
                     {
                         StopWebHost();
+                    }
+                }
+
+                public static void RegisterKeywordsHtmlPlugin(string keywordsHtmlPath)
+                {
+                    try
+                    {
+                        string manifestPath = GetKeywordsPluginManifestPath();
+                        if (string.IsNullOrWhiteSpace(manifestPath))
+                        {
+                            return;
+                        }
+
+                        WriteKeywordsPluginManifest(manifestPath, keywordsHtmlPath);
+
+                        using (RegistryKey key = Registry.CurrentUser.CreateSubKey(OpenKneeboardPluginsRegistryKey))
+                        {
+                            if (key == null)
+                            {
+                                return;
+                            }
+
+                            key.SetValue(manifestPath, 1, RegistryValueKind.DWord);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Log.Write("OpenKneeboard keywords plugin registration failed: " + ex.Message, Colors.Warning);
                     }
                 }
 
@@ -1481,6 +1511,33 @@ namespace VAICOM
                     }
                 }
 
+                private static string GetKeywordsPluginManifestPath()
+                {
+                    try
+                    {
+                        string appsRoot = string.IsNullOrWhiteSpace(State.VA_APPS)
+                            ? (State.Proxy == null ? "" : Convert.ToString(State.Proxy.SessionState["VA_APPS"]))
+                            : State.VA_APPS;
+
+                        if (string.IsNullOrWhiteSpace(appsRoot))
+                        {
+                            return "";
+                        }
+
+                        string pluginRoot = Path.Combine(appsRoot, Products.Products.Families.Vaicom.VaicomProPlugin.rootfoldername);
+                        string configFolder = AppData.SubFolders.ContainsKey("config")
+                            ? AppData.SubFolders["config"]
+                            : "config";
+                        string outputFolder = Path.Combine(pluginRoot, configFolder);
+
+                        return Path.Combine(outputFolder, "OpenKneeboard.Keywords.v1.json");
+                    }
+                    catch
+                    {
+                        return "";
+                    }
+                }
+
                 private static void WritePluginManifest(string manifestPath)
                 {
                     try
@@ -1536,6 +1593,83 @@ namespace VAICOM
                     catch (Exception ex)
                     {
                         Log.Write("OpenKneeboard plugin manifest update failed: " + ex.Message, Colors.Warning);
+                    }
+                }
+
+                private static void WriteKeywordsPluginManifest(string manifestPath, string keywordsHtmlPath)
+                {
+                    try
+                    {
+                        string folder = Path.GetDirectoryName(manifestPath);
+                        if (!string.IsNullOrWhiteSpace(folder))
+                        {
+                            Directory.CreateDirectory(folder);
+                        }
+
+                        string readableVersion = string.IsNullOrWhiteSpace(State.versionstring)
+                            ? State.pluginversionnumber
+                            : State.versionstring;
+                        string semanticVersion = string.IsNullOrWhiteSpace(State.pluginversionnumber)
+                            ? "3.1.0"
+                            : State.pluginversionnumber;
+
+                        string targetHtmlPath = keywordsHtmlPath;
+                        if (string.IsNullOrWhiteSpace(targetHtmlPath))
+                        {
+                            string appsRoot = string.IsNullOrWhiteSpace(State.VA_APPS)
+                                ? (State.Proxy == null ? "" : Convert.ToString(State.Proxy.SessionState["VA_APPS"]))
+                                : State.VA_APPS;
+                            if (!string.IsNullOrWhiteSpace(appsRoot))
+                            {
+                                targetHtmlPath = Path.Combine(appsRoot, Products.Products.Families.Vaicom.VaicomProPlugin.rootfoldername, AppData.SubFolders["export"], "keywords.html");
+                            }
+                        }
+
+                        string uri = "";
+                        if (!string.IsNullOrWhiteSpace(targetHtmlPath))
+                        {
+                            uri = new Uri(targetHtmlPath).AbsoluteUri;
+                            uri = uri + (uri.IndexOf("?", StringComparison.Ordinal) >= 0 ? "&" : "?") + "okb=1";
+                        }
+
+                        var manifest = new
+                        {
+                            ID = OpenKneeboardKeywordsPluginId,
+                            Metadata = new
+                            {
+                                PluginName = "VAICOM Keywords",
+                                PluginReadableVersion = readableVersion,
+                                PluginSemanticVersion = semanticVersion,
+                                OKBMinimumVersion = "1.9",
+                                Author = "VAICOM Community",
+                                Website = "https://github.com/Penecruz/VAICOM-Community",
+                            },
+                            TabTypes = new[]
+                            {
+                                new
+                                {
+                                    ID = OpenKneeboardKeywordsPluginTabId,
+                                    Name = "VAICOM Keywords",
+                                    Implementation = "WebBrowser",
+                                    ImplementationArgs = new
+                                    {
+                                        URI = uri,
+                                        InitialSize = new
+                                        {
+                                            Width = 1050,
+                                            Height = 1480,
+                                        },
+                                    },
+                                },
+                            },
+                        };
+
+                        string json = JsonConvert.SerializeObject(manifest, Formatting.Indented);
+                        File.WriteAllText(manifestPath, json, Encoding.UTF8);
+                    }
+                    catch (Exception ex)
+                    {
+                        Log.Write("OpenKneeboard keywords plugin manifest update failed: " + ex.Message, Colors.Warning);
                     }
                 }
 

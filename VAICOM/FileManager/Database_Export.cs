@@ -80,6 +80,7 @@ namespace VAICOM
                         string filename = "keywords.html";
                         string path = State.VA_APPS + "\\" + AppData.RootFolder + "\\" + AppData.SubFolders["export"] + "\\" + filename;
                         File.WriteAllText(path, writestring);
+                        Extensions.Kneeboard.OpenKneeboardBridge.RegisterKeywordsHtmlPlugin(path);
                         Log.Write("HTML keywords export success.", Colors.Text);
                         return true;
                     }

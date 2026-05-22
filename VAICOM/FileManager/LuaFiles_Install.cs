@@ -463,13 +463,27 @@ namespace VAICOM
                                                     }
                                                     else // not restore
                                                     {
-                                                        if (uselegacy)
+                                                        if (thisfile.filename.Equals("JesterAI_Page.lua", StringComparison.OrdinalIgnoreCase))
                                                         {
-                                                            writestring = thisfile.orig_legacy + "\n" + thisfile.source_legacy;
+                                                            if (uselegacy)
+                                                            {
+                                                                writestring = thisfile.source_legacy;
+                                                            }
+                                                            else
+                                                            {
+                                                                writestring = thisfile.source;
+                                                            }
                                                         }
                                                         else
                                                         {
-                                                            writestring = thisfile.orig + "\n" + thisfile.source;
+                                                            if (uselegacy)
+                                                            {
+                                                                writestring = thisfile.orig_legacy + "\n" + thisfile.source_legacy;
+                                                            }
+                                                            else
+                                                            {
+                                                                writestring = thisfile.orig + "\n" + thisfile.source;
+                                                            }
                                                         }
                                                     }
                                                 }

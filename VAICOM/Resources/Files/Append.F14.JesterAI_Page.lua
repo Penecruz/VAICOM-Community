@@ -6,6 +6,7 @@ dofile(LockOn_Options.common_script_path.."devices_defs.lua")
 dofile(LockOn_Options.common_script_path.."ViewportHandling.lua")
 
 scale = 1.0 
+local jester_viewport_scale_factor = 0.70
 local cx = 0 
 local cy = 0 
 local aspect = 1
@@ -21,6 +22,17 @@ if GetSelf():is_VR() == false then
 		height = LockOn_Options.screen.height;
 		}
 	end
+
+	if jester_viewport_scale_factor < 0.9999 then
+		local scaled_width = viewJester.width * jester_viewport_scale_factor
+		local scaled_height = viewJester.height * jester_viewport_scale_factor
+		viewJester = {
+			x = viewJester.x + (viewJester.width - scaled_width) * 0.5;
+			y = viewJester.y + (viewJester.height - scaled_height) * 0.5;
+			width = scaled_width;
+			height = scaled_height;
+		}
+	end
 	
 	cx = ( ( ( viewJester.x + viewJester.width * 0.5 ) / LockOn_Options.screen.width ) - 0.5 ) * 2.0
 	cy = ( ( ( viewJester.y + viewJester.height* 0.5 ) / LockOn_Options.screen.height ) - 0.5 ) * 2.0
@@ -32,7 +44,6 @@ if GetSelf():is_VR() == false then
 	end
 	
 end
-
 SetCustomScale(scale)
 
 dofile(LockOn_Options.common_script_path.."elements_defs.lua")
