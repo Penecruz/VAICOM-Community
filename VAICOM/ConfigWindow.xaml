@@ -630,6 +630,9 @@
                         <Image x:Name="YouTube_Button" HorizontalAlignment="Left" Height="20" Margin="295,168,0,0" VerticalAlignment="Top" Width="22" Source="/VAICOMPRO;component/Resources/Images/SRS_Up.png" MouseDown="OpenYouTubeTutorials" Cursor="Hand" Panel.ZIndex="2" ToolTip="View the Video Tutorials"/>
                         <TextBlock x:Name="Diag_Manual" Foreground="#D0D0D0" FontSize="10" HorizontalAlignment="Left" Margin="327,137,0,0" VerticalAlignment="Top" TextAlignment="Center" Text="Press for PDF Manual" Grid.ColumnSpan="3" />
                         <TextBlock x:Name="Diag_Tutorials" Foreground="#D0D0D0" FontSize="10" HorizontalAlignment="Left" Margin="327,172,0,0" VerticalAlignment="Top" TextAlignment="Center" Text="Press for YouTube Tutorials" Grid.ColumnSpan="3" />
+                        <TextBlock x:Name="KeywordsReferenceText" Foreground="#D0D0D0" FontSize="10" HorizontalAlignment="Left" Margin="327,205,0,0" VerticalAlignment="Top" TextAlignment="Center" Grid.ColumnSpan="3" Text="Press for Keywords"/>
+                        <Image x:Name="KeywordsReferenceButton" HorizontalAlignment="Left" Height="20" Margin="295,202,0,0" VerticalAlignment="Top" Width="22" Source="/VAICOMPRO;component/Resources/Images/SRS_Up.png" MouseDown="OpenKeywordsReference" Cursor="Hand" Panel.ZIndex="2" ToolTip="Open generated keywords HTML reference"/>
+                        <Image x:Name="KeywordsReferenceButtonBackground" HorizontalAlignment="Left" Height="38" Margin="288,195,0,0" VerticalAlignment="Top" Width="38" Source="/VAICOMPRO;component/Resources/Images/Tacan-Test-Light-On.png" Stretch="None" RenderTransformOrigin="0.5,0.5" Panel.ZIndex="1"/>
 
                     </Grid>
                 </TabItem>
