@@ -53,8 +53,7 @@ namespace VAICOM.Extensions.WSO
             { "Lock Target", "wMsgWSO_Radar_LockTarget" },
             { "TV Weapons", "wMsgWSO_A2G_TVWeapons" },
             { "TV Pave Spike", "wMsgWSO_A2G_TVPaveSpike" },
-            { "Divert To Airfield", "wMsgWSO_Navigation_Divert_Airfield" },
-            { "Divert To Asset", "wMsgWSO_Navigation_Divert_Asset" },
+            { "Divert To", "wMsgWSO_Navigation_Divert_LatLong" },
             { "Hold Current Turn Point", "wMsgWSO_Navigation_Holding_ActivateCurrentTurnPoint" },
             { "Hold Waypoint", "wMsgWSO_Navigation_Holding_ActivateCurrentTurnPoint" },
             { "Deactivate Current Turn Point", "wMsgWSO_Navigation_Holding_DeactivateCurrentTurnPoint" },
@@ -142,6 +141,8 @@ namespace VAICOM.Extensions.WSO
 
             // Jester fuel responses
             { "Fuel Is Looking Good", "wMsgWSO_Fuel_FuelIsGood" },
+            { "Remain On Mission", "wMsgWSO_Fuel_RemainOnMission" },
+            { "Navigate To Homebase", "wMsgWSO_Fuel_NavigateToHomebase" },
 
             // Context response aliases
             { "Context Select", "wMsgWSO_Context_Short" },

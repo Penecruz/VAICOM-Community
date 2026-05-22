@@ -74,8 +74,7 @@ namespace VAICOM
 
             public bool RequiresWSOCommandRecipient()
             {
-                return dcsid.Equals("wMsgWSO_Navigation_Divert_Airfield")
-                    || dcsid.Equals("wMsgWSO_Navigation_Divert_Asset")
+                return dcsid.Equals("wMsgWSO_Navigation_Divert_LatLong")
                     || dcsid.Equals("wMsgWSO_Navigation_TACAN_TuneAsset")
                     || dcsid.Equals("wMsgWSO_Radio_TuneATC");
             }

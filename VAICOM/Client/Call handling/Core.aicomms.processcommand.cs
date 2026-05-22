@@ -1209,8 +1209,7 @@ namespace VAICOM
                             }
 
                             if ((commandId.Equals("wMsgWSO_Radio_TuneATC")
-                                || commandId.Equals("wMsgWSO_Navigation_Divert_Airfield")
-                                || commandId.Equals("wMsgWSO_Navigation_Divert_Asset")
+                                || commandId.Equals("wMsgWSO_Navigation_Divert_LatLong")
                                 || commandId.Equals("wMsgWSO_Navigation_TACAN_TuneAsset"))
                                 && !TryResolveValueForATCAsset(action, out value))
                             {

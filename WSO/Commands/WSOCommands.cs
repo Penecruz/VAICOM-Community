@@ -23,8 +23,7 @@ namespace VAICOM.Extensions.WSO
         public static Dictionary<string, CommandInfo> all = new Dictionary<string, CommandInfo>(StringComparer.OrdinalIgnoreCase)
         {
             // Navigation
-            { "wMsgWSO_Navigation_Divert_Airfield", new CommandInfo { uniqueid = 24000, category = CommandCategories.WSO, name = "wMsgWSO_Navigation_Divert_Airfield", displayname = Labels.aicommands["wMsgWSO_Navigation_Divert_Airfield"], enabled = true } },
-            { "wMsgWSO_Navigation_Divert_Asset", new CommandInfo { uniqueid = 24001, category = CommandCategories.WSO, name = "wMsgWSO_Navigation_Divert_Asset", displayname = Labels.aicommands["wMsgWSO_Navigation_Divert_Asset"], enabled = true } },
+            { "wMsgWSO_Navigation_Divert_LatLong", new CommandInfo { uniqueid = 24000, category = CommandCategories.WSO, name = "wMsgWSO_Navigation_Divert_LatLong", displayname = Labels.aicommands["wMsgWSO_Navigation_Divert_LatLong"], enabled = true } },
             { "wMsgWSO_Navigation_Holding_ActivateCurrentTurnPoint", new CommandInfo { uniqueid = 24002, category = CommandCategories.WSO, name = "wMsgWSO_Navigation_Holding_ActivateCurrentTurnPoint", displayname = Labels.aicommands["wMsgWSO_Navigation_Holding_ActivateCurrentTurnPoint"], enabled = true } },
             { "wMsgWSO_Navigation_Holding_DeactivateCurrentTurnPoint", new CommandInfo { uniqueid = 24003, category = CommandCategories.WSO, name = "wMsgWSO_Navigation_Holding_DeactivateCurrentTurnPoint", displayname = Labels.aicommands["wMsgWSO_Navigation_Holding_DeactivateCurrentTurnPoint"], enabled = true } },
             { "wMsgWSO_Navigation_TACAN_SelectMode_Off", new CommandInfo { uniqueid = 24004, category = CommandCategories.WSO, name = "wMsgWSO_Navigation_TACAN_SelectMode_Off", displayname = Labels.aicommands["wMsgWSO_Navigation_TACAN_SelectMode_Off"], enabled = true } },
@@ -156,6 +155,8 @@ namespace VAICOM.Extensions.WSO
 
             // Jester fuel responses
             { "wMsgWSO_Fuel_FuelIsGood", new CommandInfo { uniqueid = 24770, category = CommandCategories.WSO, name = "wMsgWSO_Fuel_FuelIsGood", displayname = Labels.aicommands["wMsgWSO_Fuel_FuelIsGood"], enabled = true } },
+            { "wMsgWSO_Fuel_RemainOnMission", new CommandInfo { uniqueid = 24772, category = CommandCategories.WSO, name = "wMsgWSO_Fuel_RemainOnMission", displayname = Labels.aicommands["wMsgWSO_Fuel_RemainOnMission"], enabled = true } },
+            { "wMsgWSO_Fuel_NavigateToHomebase", new CommandInfo { uniqueid = 24773, category = CommandCategories.WSO, name = "wMsgWSO_Fuel_NavigateToHomebase", displayname = Labels.aicommands["wMsgWSO_Fuel_NavigateToHomebase"], enabled = true } },
 
             // Context response commands
             { "wMsgWSO_Context_Short", new CommandInfo { uniqueid = 24800, category = CommandCategories.WSO, name = "wMsgWSO_Context_Short", displayname = Labels.aicommands["wMsgWSO_Context_Short"], enabled = true } },
@@ -166,8 +167,7 @@ namespace VAICOM.Extensions.WSO
         // Commands that require a mandatory recipient suffix, e.g. diverting to airfields and assets, tuning TACAN assets.
         public static List<string> recipientCommands = new List<string>
         {
-            "wMsgWSO_Navigation_Divert_Airfield",
-            "wMsgWSO_Navigation_Divert_Asset",
+            "wMsgWSO_Navigation_Divert_LatLong",
             "wMsgWSO_Navigation_TACAN_TuneAsset",
             "wMsgWSO_Radio_TuneATC"
         };

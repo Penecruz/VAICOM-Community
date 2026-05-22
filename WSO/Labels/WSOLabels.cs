@@ -50,8 +50,7 @@ namespace VAICOM.Extensions.WSO
             { "wMsgWSO_Radar_LockTarget", "WSO Lock Target" },
             { "wMsgWSO_A2G_TVWeapons", "WSO TV Weapons" },
             { "wMsgWSO_A2G_TVPaveSpike", "WSO TV Pave Spike" },
-            { "wMsgWSO_Navigation_Divert_Airfield", "WSO Divert To Airfield" },
-            { "wMsgWSO_Navigation_Divert_Asset", "WSO Divert To Asset" },
+            { "wMsgWSO_Navigation_Divert_LatLong", "WSO Divert To" },
             { "wMsgWSO_Navigation_Holding_ActivateCurrentTurnPoint", "WSO Hold Current Turn Point" },
             { "wMsgWSO_Navigation_Holding_DeactivateCurrentTurnPoint", "WSO Deactivate Current Turn Point" },
             { "wMsgWSO_Navigation_ResumeNextWaypoint", "WSO Resume Waypoint" },
@@ -127,6 +126,8 @@ namespace VAICOM.Extensions.WSO
 
             // Jester fuel responses
             { "wMsgWSO_Fuel_FuelIsGood", "WSO Fuel Is Looking Good" },
+            { "wMsgWSO_Fuel_RemainOnMission", "WSO Remain On Mission" },
+            { "wMsgWSO_Fuel_NavigateToHomebase", "WSO Navigate To Homebase" },
 
             { "wMsgWSO_Systems_FlaresJettison", "WSO Flares Jettison" },
             { "wMsgWSO_Systems_Countermeasures_Quantity", "WSO Countermeasures Quantity" },

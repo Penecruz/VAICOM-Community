@@ -63,8 +63,6 @@ namespace VAICOM.WSO
             { "wMsgWSO_Navigation_Holding_DeactivateFlightPlan1TurnPoint",      (InterfaceType.Wheel, "select", "deactivate_hold_fp1", "", true) },
             { "wMsgWSO_Navigation_Holding_ActivateFlightPlan2TurnPoint",        (InterfaceType.Wheel, "select", "hold_flightplan_2", "", true) },
             { "wMsgWSO_Navigation_Holding_DeactivateFlightPlan2TurnPoint",      (InterfaceType.Wheel, "select", "deactivate_hold_fp2", "", true) },
-            { "wMsgWSO_Navigation_Divert_Airfield",                             (InterfaceType.Wheel, "select", "divert_tgt1_lat_lon", "", true) },
-            { "wMsgWSO_Navigation_Divert_Asset",                                (InterfaceType.Wheel, "select", "divert_tgt1_lat_lon", "", true) },
             { "wMsgWSO_Navigation_Divert_LatLong",                              (InterfaceType.Wheel, "select", "divert_tgt1_lat_lon", "", true) },
             { "wMsgWSO_Navigation_Designate_Waypoint",                          (InterfaceType.Wheel, "select", "designate_wpt", "", true) },
             { "wMsgWSO_Navigation_TACAN_SelectMode_Off",                        (InterfaceType.Wheel, "select", "nav_tacan_mode", "off", true) },
@@ -148,8 +146,10 @@ namespace VAICOM.WSO
             { "wMsgWSO_Altitude_GoingBelow150",                                 (InterfaceType.Dialog, "action", "dlg_below_150", "", false) },
             { "wMsgWSO_Altitude_GoingBelow200",                                 (InterfaceType.Dialog, "action", "dlg_below_200", "", false) },
             
-            // Jester fuel dialog responses
+            // Jester fuel dialog responses.
             { "wMsgWSO_Fuel_FuelIsGood",                                        (InterfaceType.Dialog, "action", "fuel_good", "", false) },
+            { "wMsgWSO_Fuel_RemainOnMission",                                   (InterfaceType.Dialog, "action", "fuel_remain_on_mission", "", false) },
+            { "wMsgWSO_Fuel_NavigateToHomebase",                                (InterfaceType.Dialog, "action", "divert_homebase", "", false) },
 
             // Jester Contextual Menu response commands
             { "wMsgWSO_Context_Short",                                          (InterfaceType.Context, "select", "context_action_short", "", false) },
