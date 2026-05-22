@@ -30,22 +30,22 @@ namespace VAICOM
         // general
 
 
-        public static bool versionbeta = true; //set if Beta version
+        public static bool versionbeta = false; //set if Beta version
         public static bool versiondev = false; //set if Dev version
         public static bool usenewselectmethod = false;
         public static string debuguser = "VAICOM_Tester";
         public static string client = "VAICOM";
-        public static string clientmode = ClientModes.Debug; //set to Normal for release, Debug for development
+        public static string clientmode = ClientModes.Normal; //set to Normal for release, Debug for development
 
         public static string versionstring = "";
-        public static string pluginversionnumber = "3.1.0"; // used by Theme (Special page)
+        public static string pluginversionnumber = "3.1.3"; // used by Theme (Special page)
         public static string vaminversion = "1.16";
         public static string defProfileName = "VAICOM for DCS World";
         // Add a new property to control Voice Access priority
         public static bool UseVoiceAccessPriority { get; set; } = false; // Default to unchecked
 
-        public static bool deepdebugmode = true; //set to deepdebug mode
-        public static bool databaseencrypted = false; //set to true if database is encrypted, false if not
+        public static bool deepdebugmode = false; //set to deepdebug mode
+        public static bool databaseencrypted = true; //set to true if database is encrypted, false if not
         public static bool luahardreset = true;
         public static bool exitapp = false;
         public static bool datawasreset = false;
