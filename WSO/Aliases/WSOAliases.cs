@@ -99,7 +99,6 @@ namespace VAICOM.Extensions.WSO
             { "Pave Spike Ready", "wMsgWSO_A2G_PaveSpike_Ready" },
             { "Pave Spike On", "wMsgWSO_A2G_PaveSpike_Ready" },
             { "Pave Spike Standby", "wMsgWSO_A2G_PaveSpike_Standby" },
-            { "Pave Spike Lock Target Ahead", "wMsgWSO_A2G_PaveSpike_LockUnlockTargetAhead" },
 
             // F-4E Ground Crew aliases
             { "Ground Chocks Place", "wMsgWSO_Ground_WheelChocks_Place" },
@@ -147,6 +146,8 @@ namespace VAICOM.Extensions.WSO
             // Context response aliases
             { "Context Select", "wMsgWSO_Context_Short" },
             { "Select Next Target", "wMsgWSO_Context_Short" },
+            { "Pave Spike Lock Target", "wMsgWSO_Context_Short" },
+            { "Pave Spike Unlock Target", "wMsgWSO_Context_Short" },
             { "We Sure Are", "wMsgWSO_Context_Short" },
             { "Context Hold", "wMsgWSO_Context_Long" },
             { "Lock That Target", "wMsgWSO_Context_Long" },

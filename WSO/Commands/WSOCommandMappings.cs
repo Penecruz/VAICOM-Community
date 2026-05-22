@@ -103,7 +103,6 @@ namespace VAICOM.WSO
             { "wMsgWSO_Radar_UnlockTarget",                                     (InterfaceType.Wheel, "select", "radar_unlock_tgt", "", false) },
             { "wMsgWSO_A2G_PaveSpike_Ready",                                    (InterfaceType.Wheel, "select", "pave_spike_op", "ready", true) },
             { "wMsgWSO_A2G_PaveSpike_Standby",                                  (InterfaceType.Wheel, "select", "pave_spike_op", "standby", true) },
-            { "wMsgWSO_A2G_PaveSpike_LockUnlockTargetAhead",                    (InterfaceType.Wheel, "select", "pave_spike_lock_unlock_tgt_ahead", "", false) },
             { "wMsgWSO_A2G_PaveSpike_LaserCode",                                (InterfaceType.Wheel, "select", "pave_spike_laser_code", "", true) },
 
             // Ground Crew commands

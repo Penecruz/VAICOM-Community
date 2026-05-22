@@ -134,7 +134,6 @@ namespace VAICOM.Extensions.WSO
             { "wMsgWSO_Radar_UnlockTarget", "WSO Unlock Target" },
             { "wMsgWSO_A2G_PaveSpike_Ready", "WSO Pave Spike Ready" },
             { "wMsgWSO_A2G_PaveSpike_Standby", "WSO Pave Spike Standby" },
-            { "wMsgWSO_A2G_PaveSpike_LockUnlockTargetAhead", "WSO Pave Spike Lock Target Ahead" },
 
             // Context response commands
             { "wMsgWSO_Context_Short", "WSO Context Action Short" },

@@ -77,7 +77,6 @@ namespace VAICOM.Extensions.WSO
             { "wMsgWSO_A2G_TVPaveSpike", new CommandInfo { uniqueid = 24301, category = CommandCategories.WSO, name = "wMsgWSO_A2G_TVPaveSpike", displayname = Labels.aicommands["wMsgWSO_A2G_TVPaveSpike"], enabled = true } },
             { "wMsgWSO_A2G_PaveSpike_Ready", new CommandInfo { uniqueid = 24302, category = CommandCategories.WSO, name = "wMsgWSO_A2G_PaveSpike_Ready", displayname = Labels.aicommands["wMsgWSO_A2G_PaveSpike_Ready"], enabled = true } },
             { "wMsgWSO_A2G_PaveSpike_Standby", new CommandInfo { uniqueid = 24303, category = CommandCategories.WSO, name = "wMsgWSO_A2G_PaveSpike_Standby", displayname = Labels.aicommands["wMsgWSO_A2G_PaveSpike_Standby"], enabled = true } },
-            { "wMsgWSO_A2G_PaveSpike_LockUnlockTargetAhead", new CommandInfo { uniqueid = 24304, category = CommandCategories.WSO, name = "wMsgWSO_A2G_PaveSpike_LockUnlockTargetAhead", displayname = Labels.aicommands["wMsgWSO_A2G_PaveSpike_LockUnlockTargetAhead"], enabled = true } },
             { "wMsgWSO_Lantirn_Designate", new CommandInfo { uniqueid = 24305, category = CommandCategories.WSO, name = "wMsgWSO_Lantirn_Designate", displayname = Labels.aicommands["wMsgWSO_Lantirn_Designate"], enabled = true } },
             { "wMsgWSO_Lantirn_Undesignate", new CommandInfo { uniqueid = 24306, category = CommandCategories.WSO, name = "wMsgWSO_Lantirn_Undesignate", displayname = Labels.aicommands["wMsgWSO_Lantirn_Undesignate"], enabled = true } },
             
