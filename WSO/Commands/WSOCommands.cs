@@ -155,8 +155,6 @@ namespace VAICOM.Extensions.WSO
 
             // Jester fuel responses
             { "wMsgWSO_Fuel_FuelIsGood", new CommandInfo { uniqueid = 24770, category = CommandCategories.WSO, name = "wMsgWSO_Fuel_FuelIsGood", displayname = Labels.aicommands["wMsgWSO_Fuel_FuelIsGood"], enabled = true } },
-            { "wMsgWSO_Fuel_RemainOnMission", new CommandInfo { uniqueid = 24772, category = CommandCategories.WSO, name = "wMsgWSO_Fuel_RemainOnMission", displayname = Labels.aicommands["wMsgWSO_Fuel_RemainOnMission"], enabled = true } },
-            { "wMsgWSO_Fuel_NavigateToHomebase", new CommandInfo { uniqueid = 24773, category = CommandCategories.WSO, name = "wMsgWSO_Fuel_NavigateToHomebase", displayname = Labels.aicommands["wMsgWSO_Fuel_NavigateToHomebase"], enabled = true } },
 
             // Context response commands
             { "wMsgWSO_Context_Short", new CommandInfo { uniqueid = 24800, category = CommandCategories.WSO, name = "wMsgWSO_Context_Short", displayname = Labels.aicommands["wMsgWSO_Context_Short"], enabled = true } },

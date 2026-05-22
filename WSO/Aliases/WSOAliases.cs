@@ -141,8 +141,6 @@ namespace VAICOM.Extensions.WSO
 
             // Jester fuel responses
             { "Fuel Is Looking Good", "wMsgWSO_Fuel_FuelIsGood" },
-            { "Remain On Mission", "wMsgWSO_Fuel_RemainOnMission" },
-            { "Navigate To Homebase", "wMsgWSO_Fuel_NavigateToHomebase" },
 
             // Context response aliases
             { "Context Select", "wMsgWSO_Context_Short" },

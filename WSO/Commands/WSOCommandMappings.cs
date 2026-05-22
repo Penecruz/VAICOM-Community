@@ -148,8 +148,6 @@ namespace VAICOM.WSO
             
             // Jester fuel dialog responses.
             { "wMsgWSO_Fuel_FuelIsGood",                                        (InterfaceType.Dialog, "action", "fuel_good", "", false) },
-            { "wMsgWSO_Fuel_RemainOnMission",                                   (InterfaceType.Dialog, "action", "fuel_remain_on_mission", "", false) },
-            { "wMsgWSO_Fuel_NavigateToHomebase",                                (InterfaceType.Dialog, "action", "divert_homebase", "", false) },
 
             // Jester Contextual Menu response commands
             { "wMsgWSO_Context_Short",                                          (InterfaceType.Context, "select", "context_action_short", "", false) },

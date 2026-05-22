@@ -126,8 +126,6 @@ namespace VAICOM.Extensions.WSO
 
             // Jester fuel responses
             { "wMsgWSO_Fuel_FuelIsGood", "WSO Fuel Is Looking Good" },
-            { "wMsgWSO_Fuel_RemainOnMission", "WSO Remain On Mission" },
-            { "wMsgWSO_Fuel_NavigateToHomebase", "WSO Navigate To Homebase" },
 
             { "wMsgWSO_Systems_FlaresJettison", "WSO Flares Jettison" },
             { "wMsgWSO_Systems_Countermeasures_Quantity", "WSO Countermeasures Quantity" },
