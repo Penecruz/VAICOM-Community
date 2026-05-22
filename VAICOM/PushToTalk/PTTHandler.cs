@@ -457,20 +457,26 @@ namespace VAICOM
             {
                 try
                 {
+                    bool txLinkActive = State.activeconfig.MP_UseTXLink
+                        && !(State.activeconfig.MP_TXLink_MPOnly && !State.currentstate.multiplayer);
+
                     if (keypress)
                     {
-                        State.showingoptions = false;
+                        if (!txLinkActive)
+                        {
+                            State.showingoptions = false;
+                        }
                     }
                     else
                     {
-                        if (State.showingoptions)
+                        if (State.showingoptions && !txLinkActive)
                         {
 
                             DcsClient.SendCmdSequence(DcsClient.iCommandsequences.closemenu, false);
                             State.showingoptions = false;
                         }
 
-                        if (Extensions.RIO.helper.showingjestermenu)
+                        if (Extensions.RIO.helper.showingjestermenu && !txLinkActive)
                         {
                             Extensions.RIO.helper.ShowWheel(false);
                             Extensions.RIO.helper.showingjestermenu = false;
