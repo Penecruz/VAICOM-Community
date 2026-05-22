@@ -1016,12 +1016,14 @@ namespace VAICOM
                             Log.Write("Identified as options command", Colors.Inline);
                             if (State.currentkey["recipient"].Equals("RIO") || State.currentkey["recipient"].Equals("Iceman"))
                             {
+                                State.showingoptions = false;
                                 // Force a fresh wheel-open request even if local state flag got stale.
                                 VAICOM.Extensions.RIO.helper.showingjestermenu = false;
                                 VAICOM.Extensions.RIO.helper.ShowWheel(true);
                             }
                             else
                             {
+                                VAICOM.Extensions.RIO.helper.showingjestermenu = false;
                                 State.currentmessage.type = Messagetypes.iCommandSequence;
                                 Message.setoptionscmdsequence();
                                 State.showingoptions = true;
@@ -1033,7 +1035,9 @@ namespace VAICOM
                         {
                             Log.Write("Identified as menu command unique id " + State.currentcommand.uniqueid, Colors.Inline);
 
-                            if (Extensions.RIO.helper.showingjestermenu)
+                            bool useJesterMenu = Extensions.RIO.helper.showingjestermenu && !State.showingoptions;
+
+                            if (useJesterMenu)
                             {
                                 try
                                 {
@@ -1042,8 +1046,9 @@ namespace VAICOM
                                     State.currentmessage.type = Messagetypes.DeviceControl;
                                     State.currentmessage.extsequence = new List<Extensions.RIO.DeviceAction>();
 
-                                    int command = 3550;
+                                    int command = 3725;
                                     int value = -1;
+                                    bool jesterCloseSelection = false;
 
                                     switch (State.currentcommand.uniqueid)
                                     {
@@ -1055,6 +1060,14 @@ namespace VAICOM
                                         case 22506: command = 3556; break; // Diagonal 45 down
                                         case 22507: command = 3557; break; // Horizontal
                                         case 22508: command = 3558; break; // Diagonal 135
+                                        case 22509:
+                                        case 22510:
+                                        case 22511:
+                                        case 22512:
+                                            command = 3725;
+                                            value = 1;
+                                            jesterCloseSelection = true;
+                                            break;
                                         default: break;
                                     }
 
@@ -1069,6 +1082,11 @@ namespace VAICOM
                                     };
 
                                     State.currentmessage.extsequence.AddRange(menu);
+
+                                    if (jesterCloseSelection)
+                                    {
+                                        Extensions.RIO.helper.showingjestermenu = false;
+                                    }
                                 }
                                 catch (Exception e)
                                 {
