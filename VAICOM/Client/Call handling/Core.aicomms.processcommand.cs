@@ -663,7 +663,11 @@ namespace VAICOM
                             || State.currentrecipientclass.Equals(Recipientclasses.RIO)
                             || State.currentrecipientclass.Equals(Recipientclasses.AI_pilot)
                             || State.currentrecipientclass.Equals(Recipientclasses.WSO);
+                        bool isGeorgeCommand = State.currentcommand != null
+                            && !string.IsNullOrEmpty(State.currentcommand.dcsid)
+                            && State.currentcommand.dcsid.StartsWith("wMsgGeorge", StringComparison.OrdinalIgnoreCase);
                         bool isHotMicAllowedCommand = isIntercomRecipientClass
+                            || isGeorgeCommand
                             || State.currentcommand.isKneeboard()
                             || State.currentcommand.isOptions()
                             || State.currentcommand.isMenu();
