@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+using VAICOM.Extensions.RIO;
 using VAICOM.Products;
 using VAICOM.Static;
 
@@ -15,6 +16,70 @@ namespace VAICOM
 
         public partial class Common
         {
+
+            public static bool IsF14RioSeatActive()
+            {
+                if (State.currentmodule == null || !State.currentmodule.Id.Equals("F-14", StringComparison.OrdinalIgnoreCase))
+                {
+                    return false;
+                }
+
+                try
+                {
+                    return tables.menustate[tables.menucats.PLAYERSEAT].Equals(tables.menustates.RIO);
+                }
+                catch
+                {
+                    return false;
+                }
+            }
+
+            public static bool IsF4EWsoSeatActive()
+            {
+                if (State.currentmodule == null || !State.currentmodule.Id.Equals("F-4E-45MC", StringComparison.OrdinalIgnoreCase))
+                {
+                    return false;
+                }
+
+                try
+                {
+                    if (State.currentstate != null && State.currentstate.riostate != null)
+                    {
+                        double seatValue = State.currentstate.riostate.f4eSeat;
+                        if (seatValue < 0)
+                        {
+                            return false;
+                        }
+
+                        return seatValue < 0.5;
+                    }
+                }
+                catch
+                {
+                }
+
+                return false;
+            }
+
+            public static string GetCurrentModuleDisplayText() //change to module name + alias, and if F-14, add RIO or Pilot as appropriate.
+            {
+                if (State.currentmodule == null || State.currentmodule.Name.Equals("----"))
+                {
+                    return "";
+                }
+
+                if (State.currentmodule.Id.Equals("F-14", StringComparison.OrdinalIgnoreCase))
+                {
+                    return IsF14RioSeatActive() ? "F-14 Tomcat RIO" : "F-14 Tomcat Pilot";
+                }
+
+                if (State.currentmodule.Id.Equals("F-4E-45MC", StringComparison.OrdinalIgnoreCase))
+                {
+                    return IsF4EWsoSeatActive() ? "F-4E Phantom II WSO" : "F-4E Phantom II Pilot";
+                }
+
+                return State.currentmodule.Name + " " + State.currentmodule.Alias;
+            }
 
             public static string RemoveDigits(string q)
             {

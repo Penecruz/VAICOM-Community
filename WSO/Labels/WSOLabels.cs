@@ -21,7 +21,7 @@ namespace VAICOM.Extensions.WSO
             { "wMsgWSO_Lantirn_Undesignate", "WSO Undesignate" },
             { "wMsgWSO_Radar_GoSilent", "WSO Go Silent" },
             { "wMsgWSO_Radar_GoActive", "WSO Go Active" },
-            { "wMsgWSO_Radio_TuneATC", "WSO Tune ATC" },
+            { "wMsgWSO_Radio_TuneATC", "WSO Tune Radio" },
             { "wMsgWSO_Radio_SelectMode", "WSO Select Mode" },
             { "wMsgWSO_Radar_Operation_Active", "WSO Radar Active" },
             { "wMsgWSO_Radar_Operation_Standby", "WSO Radar Standby" },
@@ -50,7 +50,7 @@ namespace VAICOM.Extensions.WSO
             { "wMsgWSO_Radar_LockTarget", "WSO Lock Target" },
             { "wMsgWSO_A2G_TVWeapons", "WSO TV Weapons" },
             { "wMsgWSO_A2G_TVPaveSpike", "WSO TV Pave Spike" },
-            { "wMsgWSO_Navigation_Divert_Airfield", "WSO Divert To Airfield" },
+            { "wMsgWSO_Navigation_Divert_LatLong", "WSO Divert To" },
             { "wMsgWSO_Navigation_Holding_ActivateCurrentTurnPoint", "WSO Hold Current Turn Point" },
             { "wMsgWSO_Navigation_Holding_DeactivateCurrentTurnPoint", "WSO Deactivate Current Turn Point" },
             { "wMsgWSO_Navigation_ResumeNextWaypoint", "WSO Resume Waypoint" },
@@ -60,6 +60,7 @@ namespace VAICOM.Extensions.WSO
             { "wMsgWSO_Navigation_TACAN_SelectMode_AAR", "WSO TACAN Mode AAR" },
             { "wMsgWSO_Navigation_TACAN_SelectMode_AATR", "WSO TACAN Mode AATR" },
             { "wMsgWSO_Navigation_TACAN_TuneAsset", "WSO Tune TACAN" },
+            { "wMsgWSO_Navigation_RestartAlignment", "WSO Restart Alignment" },
             { "wMsgWSO_Systems_ChaffMode_Off", "WSO Chaff Mode Off" },
             { "wMsgWSO_Systems_ChaffMode_Single", "WSO Chaff Mode Single" },
             { "wMsgWSO_Systems_ChaffMode_Multiple", "WSO Chaff Mode Multiple" },
@@ -81,6 +82,7 @@ namespace VAICOM.Extensions.WSO
             { "wMsgWSO_Crew_Ejection_Both", "WSO Eject Both" },
             { "wMsgWSO_Crew_Countermeasures_Manual", "WSO Countermeasures Manual" },
             { "wMsgWSO_Crew_Countermeasures_Jester", "WSO Countermeasures Jester" },
+            { "wMsgWSO_Crew_StartAlignment", "WSO Start Alignment Now" },
 
             // Ground Crew commands
             { "wMsgWSO_Ground_WheelChocks_Place", "WSO Ground Place Chocks" },
@@ -105,8 +107,26 @@ namespace VAICOM.Extensions.WSO
             { "wMsgWSO_Ground_AriCheck", "WSO Ground ARI Check" },
             { "wMsgWSO_Ground_StabAugCheck", "WSO Ground Stab Aug Check" },
             { "wMsgWSO_Ground_TrimCheck", "WSO Ground Trim Check" },
+            { "wMsgWSO_Ground_Cancel", "WSO Ground Cancel" },
 
-            // Phase 2 commands
+            // Jester startup INS alignment responses
+            { "wMsgWSO_INSAlignment_FullAlignment", "WSO Start Full Alignment" },
+            { "wMsgWSO_INSAlignment_BathAlignment", "WSO Start BATH Alignment" },
+            { "wMsgWSO_INSAlignment_StoredAlignment", "WSO Start Stored Alignment" },
+            { "wMsgWSO_INSAlignment_Yes", "WSO Yes Start Alignment" },
+            { "wMsgWSO_INSAlignment_No", "WSO Negative On Alignment" },
+            { "wMsgWSO_INSAlignment_LetYouKnow", "WSO Will Let You Know" },
+
+            // Jester mission altitude responses
+            { "wMsgWSO_Altitude_Negative", "WSO Negative Not Going Low" },
+            { "wMsgWSO_Altitude_GoingBelow50", "WSO Going Below 50 Feet" },
+            { "wMsgWSO_Altitude_GoingBelow100", "WSO Going Below 100 Feet" },
+            { "wMsgWSO_Altitude_GoingBelow150", "WSO Going Below 150 Feet" },
+            { "wMsgWSO_Altitude_GoingBelow200", "WSO Going Below 200 Feet" },
+
+            // Jester fuel responses
+            { "wMsgWSO_Fuel_FuelIsGood", "WSO Fuel Is Looking Good" },
+
             { "wMsgWSO_Systems_FlaresJettison", "WSO Flares Jettison" },
             { "wMsgWSO_Systems_Countermeasures_Quantity", "WSO Countermeasures Quantity" },
             { "wMsgWSO_Radar_FocusTarget_Direct", "WSO Focus Target Direct" },
@@ -114,8 +134,6 @@ namespace VAICOM.Extensions.WSO
             { "wMsgWSO_Radar_UnlockTarget", "WSO Unlock Target" },
             { "wMsgWSO_A2G_PaveSpike_Ready", "WSO Pave Spike Ready" },
             { "wMsgWSO_A2G_PaveSpike_Standby", "WSO Pave Spike Standby" },
-            { "wMsgWSO_A2G_PaveSpike_LockUnlockTargetAhead", "WSO Pave Spike Lock Target Ahead" },
-            { "wMsgWSO_A2G_PaveSpike_LaserCode_Silent", "WSO Pave Spike Laser Code Silent" },
 
             // Context response commands
             { "wMsgWSO_Context_Short", "WSO Context Action Short" },

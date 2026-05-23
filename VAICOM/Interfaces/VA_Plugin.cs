@@ -120,7 +120,7 @@ namespace VAICOM
                             if (PTT.TXLinkApply && _complete)
                             {
                                 Thread.Sleep(200);
-                                PTT.PTT_Handler(State.Proxy, State.currentTXnode, true, false);
+                                PTT.PTT_Handler(State.Proxy, State.currentTXnode, false, false);
                             }
                         }
                         catch (Exception)

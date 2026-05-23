@@ -18,6 +18,8 @@ namespace VAICOM
             public static bool TXLinkApply;
             public static bool TXLinkToggle;
             private static readonly object ListenStateLock = new object();
+            private static bool? LastVAICOMSessionsEnabled;
+            private static bool? LastChatterSessionEnabled;
 
             public static bool IsPTTModeSingle()
             {
@@ -95,7 +97,17 @@ namespace VAICOM
             {
 
                 bool _isVOIP = TXLinkApply && longpress;
-                TXLinkToggle = !_isVOIP ? !TXLinkToggle : false;
+                if (!_isVOIP)
+                {
+                    if (!(keypress && State.transmitting && TXLinkToggle))
+                    {
+                        TXLinkToggle = !TXLinkToggle;
+                    }
+                }
+                else
+                {
+                    TXLinkToggle = false;
+                }
                 bool press = !_isVOIP ? TXLinkToggle : keypress;
 
                 Log.Write("press = " + press, Colors.Inline);
@@ -240,6 +252,11 @@ namespace VAICOM
 
                 if (keypress)
                 {
+                        if (State.currentTXnode != null && State.currentTXnode.Equals(TXNodes.TX5))
+                        {
+                            State.IntercomHotMicLatched = State.IsCrewHotMicActiveOnIntercomTX();
+                        }
+
                     if (isVOIP)
                     {
                         Log.Write("PTT: PRESS - VOIP.", Colors.Inline);
@@ -271,11 +288,18 @@ namespace VAICOM
                 else //release
                 {
                     Log.Write("PTT: RELEASE.", Colors.Inline);
-                    PTT.PTT_Manage_Listen_VA(State.activeconfig.ReleaseHot || State.IsCrewHotMicActive());
-                    PTT.PTT_Manage_Listen_VAICOM(!State.activeconfig.ReleaseHot || State.IsCrewHotMicActive());
+                    bool isIntercomTXNode = State.currentTXnode != null && State.currentTXnode.Equals(TXNodes.TX5);
+                    bool crewHotMicOnIntercom = State.IsCrewHotMicActive();
+                    PTT.PTT_Manage_Listen_VA(State.activeconfig.ReleaseHot || crewHotMicOnIntercom);
+                    PTT.PTT_Manage_Listen_VAICOM(!State.activeconfig.ReleaseHot || crewHotMicOnIntercom);
                     PTT.PTT_Manage_Listen_VC(State.activeconfig.MP_VCHotMic);
                     PTT.PTT_Manage_Listen_SRS(true);
                     State.elapsedsincelastpttrelease = 0;
+
+                    if (!isIntercomTXNode || !State.IsCrewHotMicActiveOnIntercomTX())
+                    {
+                        State.IntercomHotMicLatched = false;
+                    }
                 }
 
             }
@@ -348,12 +372,20 @@ namespace VAICOM
                 {
                     try
                     {
-                        State.Proxy.Command.SetSessionEnabledByCategory("Keyword Collections", on);
-                        State.Proxy.Command.SetSessionEnabledByCategory("Extension packs", on);
+                        if (!LastVAICOMSessionsEnabled.HasValue || LastVAICOMSessionsEnabled.Value != on)
+                        {
+                            State.Proxy.Command.SetSessionEnabledByCategory("Keyword Collections", on);
+                            State.Proxy.Command.SetSessionEnabledByCategory("Extension packs", on);
+                            LastVAICOMSessionsEnabled = on;
+                        }
 
                         if (State.Proxy.GetProfileName().ToLower().Contains(State.defProfileName.ToLower()))
                         {
-                            State.Proxy.Command.SetSessionEnabled("Chatter", true);
+                            if (!LastChatterSessionEnabled.HasValue || !LastChatterSessionEnabled.Value)
+                            {
+                                State.Proxy.Command.SetSessionEnabled("Chatter", true);
+                                LastChatterSessionEnabled = true;
+                            }
                         }
                     }
                     catch
@@ -425,20 +457,26 @@ namespace VAICOM
             {
                 try
                 {
+                    bool txLinkActive = State.activeconfig.MP_UseTXLink
+                        && !(State.activeconfig.MP_TXLink_MPOnly && !State.currentstate.multiplayer);
+
                     if (keypress)
                     {
-                        State.showingoptions = false;
+                        if (!txLinkActive)
+                        {
+                            State.showingoptions = false;
+                        }
                     }
                     else
                     {
-                        if (State.showingoptions)
+                        if (State.showingoptions && !txLinkActive)
                         {
 
                             DcsClient.SendCmdSequence(DcsClient.iCommandsequences.closemenu, false);
                             State.showingoptions = false;
                         }
 
-                        if (Extensions.RIO.helper.showingjestermenu)
+                        if (Extensions.RIO.helper.showingjestermenu && !txLinkActive)
                         {
                             Extensions.RIO.helper.ShowWheel(false);
                             Extensions.RIO.helper.showingjestermenu = false;

@@ -29,29 +29,33 @@ namespace VAICOM
 
                     if (id >= 24000 && id <= 24099)
                     {
-                        return CommandCategories.WSO_menu;
+                        return CommandCategories.WSO_navigation;
                     }
                     if (id >= 24100 && id <= 24199)
                     {
-                        return CommandCategories.WSO_radar;
+                        return CommandCategories.WSO_radio;
                     }
                     if (id >= 24200 && id <= 24299)
                     {
-                        return CommandCategories.WSO_weapons;
+                        return CommandCategories.WSO_radar;
                     }
                     if (id >= 24300 && id <= 24399)
                     {
-                        return CommandCategories.WSO_radio;
+                        return CommandCategories.WSO_weapons;
                     }
                     if (id >= 24400 && id <= 24499)
                     {
-                        return CommandCategories.WSO_utility;
+                        return CommandCategories.WSO_defensive;
                     }
                     if (id >= 24500 && id <= 24599)
                     {
-                        return CommandCategories.WSO_defensive;
+                        return CommandCategories.WSO_crew;
                     }
-                    if (id >= 24600 && id <= 24999)
+                    if (id >= 24600 && id <= 24699)
+                    {
+                        return CommandCategories.WSO_groundcrew;
+                    }
+                    if (id >= 24700 && id <= 24999)
                     {
                         return CommandCategories.WSO_misc;
                     }

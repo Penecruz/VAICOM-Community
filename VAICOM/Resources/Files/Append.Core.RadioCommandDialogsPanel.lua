@@ -475,8 +475,26 @@ function getSelectedRadio(dcsId)
 				selectedRadio = findRadioDisplayName("AN/ARC-134", "ARC-134", "VHF AM") or selectedRadio
 			end
 		end
+ elseif dcsId == "F-100D" then
+		selectedRadio = findRadioDisplayName("UHF Radio AN/ARC-34", "Radio AN/ARC-34", "AN/ARC-34") or selectedRadio
 	end
 	return selectedRadio
+end
+
+local function radioNamesMatch(nameA, nameB)
+	if nameA == nil or nameB == nil then
+		return false
+	end
+
+	local normalizedA = normalizeRadioName(nameA)
+	local normalizedB = normalizeRadioName(nameB)
+
+	if normalizedA == normalizedB then
+		return true
+	end
+
+	return base.string.find(normalizedA, normalizedB, 1, true) ~= nil
+		or base.string.find(normalizedB, normalizedA, 1, true) ~= nil
 end
 
 function updateMainCaption()
@@ -1133,7 +1151,27 @@ base.vaicom.properties = {
 		local Modulation = nil
 		local Modulationstr = "XX"
 		if Locator ~= nil then
-			Modulation  = Locator:getCommunicator():getModulation()
+         UnitCommunicator = Locator:getCommunicator()
+		end
+		if UnitCommunicator then
+			local okMod, mod = base.pcall(function()
+				return UnitCommunicator:getModulation()
+			end)
+			if okMod and mod ~= nil then
+				Modulation = mod
+			else
+				local okCount, count = base.pcall(function()
+					return UnitCommunicator:countTransivers()
+				end)
+				if okCount and count and count > 0 then
+					local okMod0, mod0 = base.pcall(function()
+						return UnitCommunicator:getModulation(0)
+					end)
+					if okMod0 and mod0 ~= nil then
+						Modulation = mod0
+					end
+				end
+			end
 		end
 		if Modulation == base.Communicator.MODULATION_AM then Modulationstr = "AM" end
 		if Modulation == base.Communicator.MODULATION_FM then Modulationstr = "FM" end
@@ -1146,7 +1184,24 @@ base.vaicom.properties = {
 			UnitCommunicator = Locator:getCommunicator()
 		end
 		if UnitCommunicator then
-			Frequency = UnitCommunicator:getFrequency() or "0"		
+            local okFreq, freq = base.pcall(function()
+				return UnitCommunicator:getFrequency()
+			end)
+			if okFreq and freq ~= nil then
+				Frequency = freq
+			else
+				local okCount, count = base.pcall(function()
+					return UnitCommunicator:countTransivers()
+				end)
+				if okCount and count and count > 0 then
+					local okFreq0, freq0 = base.pcall(function()
+						return UnitCommunicator:getFrequency(0)
+					end)
+					if okFreq0 and freq0 ~= nil then
+						Frequency = freq0
+					end
+				end
+			end
 		else 
 			Frequency = "0"
 		end
@@ -1160,10 +1215,20 @@ base.vaicom.properties = {
 			UnitCommunicator = Locator:getCommunicator()
 		end
 		if UnitCommunicator then
-			counter = UnitCommunicator:countTransivers()
+            local okCount, count = base.pcall(function()
+				return UnitCommunicator:countTransivers()
+			end)
+			if okCount and count then
+				counter = count
+			end
 		end
 		for i = 0, counter-1 do
-			FreqTbl[i] = UnitCommunicator:getFrequency(i) or nil 	
+            local okFreq, freq = base.pcall(function()
+				return UnitCommunicator:getFrequency(i)
+			end)
+			if okFreq and freq ~= nil then
+				FreqTbl[i] = freq
+			end
 		end
 		return FreqTbl
 	end,
@@ -1588,7 +1653,89 @@ base.vaicom.objects = {
 	end,
 	localAWACSs = function(getside)
 		local Collection = {}
-			Collection = base.coalition.getServiceProviders(getside, base.coalition.service.AWACS)
+          Collection = base.coalition.getServiceProviders(getside, base.coalition.service.AWACS)
+
+		local function addUniqueUnit(unit)
+			if unit == nil then return end
+			local uid = unit.id_
+			if uid == nil then
+				base.table.insert(Collection, unit)
+				return
+			end
+			for _, existing in base.pairs(Collection) do
+				if existing ~= nil and existing.id_ == uid then
+					return
+				end
+			end
+			base.table.insert(Collection, unit)
+		end
+
+		local function isAwacsLikeUnit(unit)
+			if unit == nil then return false end
+
+			local desc = nil
+			local okDesc, valueDesc = base.pcall(function() return unit:getDesc() end)
+			if okDesc then
+				desc = valueDesc
+			end
+
+			if desc and desc.attributes and desc.attributes.AWACS then
+				return true
+			end
+
+			local typeName = ""
+			if desc ~= nil then
+				typeName = base.string.upper(base.tostring(desc.typeName or desc.displayName or ""))
+			end
+
+			if base.string.find(typeName, "E-2", 1, true)
+				or base.string.find(typeName, "E2", 1, true)
+				or base.string.find(typeName, "HAWKEYE", 1, true)
+				or base.string.find(typeName, "E-3", 1, true)
+				or base.string.find(typeName, "E3", 1, true)
+				or base.string.find(typeName, "SENTRY", 1, true)
+				or base.string.find(typeName, "E-7", 1, true)
+				or base.string.find(typeName, "E7", 1, true)
+				or base.string.find(typeName, "WEDGETAIL", 1, true)
+			then
+				return true
+			end
+
+			local callsign = ""
+			local okCallsign, valueCallsign = base.pcall(function()
+				return base.vaicom.properties and base.vaicom.properties.missioncallsign and base.vaicom.properties.missioncallsign(unit) or ""
+			end)
+			if okCallsign and valueCallsign ~= nil then
+				callsign = base.string.upper(base.tostring(valueCallsign))
+			end
+
+			if base.string.find(callsign, "DARKSTAR", 1, true)
+				or base.string.find(callsign, "FOCUS", 1, true)
+				or base.string.find(callsign, "MAGIC", 1, true)
+				or base.string.find(callsign, "OVERLORD", 1, true)
+				or base.string.find(callsign, "WIZARD", 1, true)
+			then
+				return true
+			end
+
+			return false
+		end
+
+		local okGroups, planeGroups = base.pcall(function()
+			return base.coalition.getGroups and base.coalition.getGroups(getside, base.Group.Category.AIRPLANE)
+		end)
+		if okGroups and planeGroups ~= nil and base.type(planeGroups) == "table" then
+			for _, g in base.pairs(planeGroups) do
+				local okUnits, units = base.pcall(function() return g:getUnits() end)
+				if okUnits and units ~= nil and base.type(units) == "table" then
+					for _, u in base.pairs(units) do
+						if isAwacsLikeUnit(u) then
+							addUniqueUnit(u)
+						end
+					end
+				end
+			end
+		end
 		return Collection
 	end,	
 	localTankers = function(getside)
@@ -2033,18 +2180,26 @@ base.vaicom.state = {
 				base.vaicom.state.riostate.pstt						= base.vaicom.state.activemessage.AIRIO and (data.initialized and base.GetDevice(0).get_argument_value and (base.GetDevice(0):get_argument_value(11504) >0)) or false
 				base.vaicom.state.riostate.amt						= base.vaicom.state.activemessage.AIRIO and (data.initialized and base.GetDevice(0).get_argument_value and (base.GetDevice(0):get_argument_value(2022) == 0)) or false
 				base.vaicom.state.riostate.tcn						= base.vaicom.state.activemessage.AIRIO and (data.initialized and base.GetDevice(0).get_argument_value and (base.GetDevice(0):get_argument_value(374))) or 0
-              local f4eICSHot = false
+               local f4eICSHot = false
 				local ah64ICSHot = false
-				if data.initialized and base.vaicom.state.dcsid == "F-4E-45MC" and base.GetDevice(0) and base.GetDevice(0).get_argument_value then
+				local dcsId = base.vaicom.state.dcsid or ""
+				local isF4E = base.string.find(dcsId, "F-4E", 1, true) ~= nil
+				if data.initialized and isF4E and base.GetDevice(0) and base.GetDevice(0).get_argument_value then
 					local pilotIcs = base.GetDevice(0):get_argument_value(1378)
-                   base.vaicom.state.riostate.f4ePilotIcs = pilotIcs or 0
+                 local seatProxyLod = base.GetDevice(0):get_argument_value(3060)
+					if seatProxyLod == nil then
+						seatProxyLod = base.GetDevice(0):get_argument_value(3048)
+					end
+				   base.vaicom.state.riostate.f4ePilotIcs = pilotIcs or 0
+                   base.vaicom.state.riostate.f4eSeat = seatProxyLod or -1
                  -- F-4E ICS selector: cold mic is negative, hot mic is centered, radio override is positive.
 					-- Treat HOT MIC and radio override as active intercom states. (Off is inactive)
                    f4eICSHot = (pilotIcs ~= nil and pilotIcs > -0.1)
 				else
 					base.vaicom.state.riostate.f4ePilotIcs = 0
+                 base.vaicom.state.riostate.f4eSeat = -1
 				end
-             local dcsId = base.vaicom.state.dcsid or ""
+
 				if data.initialized and base.GetDevice(0) and base.GetDevice(0).get_argument_value and base.string.find(dcsId, "AH-64D", 1, true) ~= nil then
                     local seat = base.get_param_handle("SEAT"):get() -- Determine pilot or CPG seat
 					local pltIcsMode = base.GetDevice(0):get_argument_value(346)
@@ -2390,8 +2545,11 @@ base.vaicom.state = {
 					local upperFrom = toInt(upperWindDir)
 					if upperFrom ~= nil then upperFrom = (upperFrom + 180) % 360 end
 
-                   local spdKt = toInt((base.tonumber(windSpd) or 0) * 1.94384) or 0
-					local visM = toInt(vis) or 9999
+                    local spdKt = toInt((base.tonumber(windSpd) or 0) * 1.94384) or 0
+					local visM = toInt(vis)
+					if visM == nil or visM <= 0 then
+						visM = 9999
+					end
 					local turbulence = base.tonumber(weather.groundTurbulence)
 
 					local function minPositive(a, b)
@@ -2561,6 +2719,10 @@ base.vaicom.state = {
 					end
 					if precipCode ~= nil then
 						base.table.insert(wx, precipCode)
+					end
+
+					if visM <= 100 and #wx == 0 and (base.tonumber(cloudBaseAglFt) == nil or cloudBaseAglFt > 0) then
+						visM = 9999
 					end
 
 					if precipCode ~= nil and base.string.find(precipCode, "TS", 1, true) and cloudPart ~= "SKC" and base.string.find(cloudPart, "CB", 1, true) == nil then
@@ -3119,7 +3281,7 @@ base.vaicom.state = {
 									AM = k.AM,
 									FM = k.FM,
 									isavailable = ICS_set,
-									isselected = k.displayName == selectedRadio,
+                                    isselected = radioNamesMatch(k.displayName, selectedRadio),
 									intercom = ICS,
 									on =  ICS or ((ICS_set and (( base.GetDevice(n) and base.GetDevice(n).is_on and base.GetDevice(n):is_on() ))) or false),
 									frequency = ( ICS_set and (( (not ICS) and base.GetDevice(n) and base.GetDevice(n).get_frequency and base.GetDevice(n):get_frequency() ) or 0)) or 0,

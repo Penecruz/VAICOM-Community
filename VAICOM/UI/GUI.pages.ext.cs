@@ -151,13 +151,17 @@ namespace VAICOM
 
             public void CheckBoxHotMic()
             {
-                RIO_ICShotmic.IsChecked = State.activeconfig.ICShotmic;
+                if (RIO_ICShotmic != null)
+                {
+                    RIO_ICShotmic.IsChecked = State.activeconfig.ICShotmic;
+                }
             }
 
             private void SetConfigEnableRIO_ICShotmic_useswitch(object sender, RoutedEventArgs e)
             {
                 State.activeconfig.ICShotmic_useswitch = true;
-                if (State.currentstate.riostate != null && State.currentstate.riostate.ics)
+
+                if (State.currentstate != null && State.IsF4EIntercomSelected())
                 {
                     State.activeconfig.ICShotmic = true;
                     CheckBoxHotMic();
@@ -183,6 +187,30 @@ namespace VAICOM
                 }
                 RIO_ICShotmic_useswitch.IsEnabled = true;
                 RIO_ICShotmic_useswitch.IsChecked = State.activeconfig.ICShotmic_useswitch;
+            }
+
+            private void SetConfigEnableHideF4EDialog(object sender, RoutedEventArgs e)
+            {
+                State.activeconfig.HideF4EDialog = true;
+                FileHandler.Lua.LuaFiles["2.9 WSO Renderer.js"].source = Properties.Resources.Append_F4E_Jester_Renderer;
+                FileHandler.Lua.LuaFiles["2.9 WSO Renderer.js"].source_legacy = Properties.Resources.Append_F4E_Jester_Renderer;
+                FileHandler.Lua.LuaFiles["2.9 WSO Renderer.js"].stringsource = Properties.Resources.Append_F4E_Jester_Renderer;
+                FileHandler.Lua.LuaFiles_Install(false, true);
+            }
+
+            private void SetConfigDisableHideF4EDialog(object sender, RoutedEventArgs e)
+            {
+                State.activeconfig.HideF4EDialog = false;
+                FileHandler.Lua.LuaFiles["2.9 WSO Renderer.js"].source = "";
+                FileHandler.Lua.LuaFiles["2.9 WSO Renderer.js"].source_legacy = "";
+                FileHandler.Lua.LuaFiles["2.9 WSO Renderer.js"].stringsource = "";
+                FileHandler.Lua.LuaFiles_Install(false, true);
+            }
+
+            private void SetCurrentValueHideF4EDialog(object sender, EventArgs e)
+            {
+                HideF4EDialog.IsEnabled = true;
+                HideF4EDialog.IsChecked = State.activeconfig.HideF4EDialog;
             }
 
             private void InitRIODllWarning(object sender, EventArgs e)

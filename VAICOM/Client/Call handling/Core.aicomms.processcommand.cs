@@ -368,13 +368,38 @@ namespace VAICOM
                     ConstructMessage();
                     SendNewMessage();
 
+                    bool sentRioCloseMacro = State.currentcommand.isRIO()
+                        && State.currentmessage != null
+                        && State.currentmessage.extsequence != null
+                        && State.currentmessage.extsequence.Any(action => action != null && action.device == 62 && action.command == 3725);
+
+                    if (sentRioCloseMacro)
+                    {
+                        Extensions.RIO.helper.showingjestermenu = false;
+
+                        if (!State.transmitting && State.IsCrewHotMicActive())
+                        {
+                            var previousTXNode = State.currentTXnode;
+                            try
+                            {
+                                State.currentTXnode = PTT.TXNodes.TX5;
+                                PTT.PTT_Manage_Listen_States_OnPressRelease(true, false);
+                                PTT.PTT_Manage_Listen_States_OnPressRelease(false, false);
+                            }
+                            finally
+                            {
+                                State.currentTXnode = previousTXNode;
+                            }
+                        }
+                    }
+
                     State.previousmessageunit = State.currentmessageunit;
                     State.previousrecipientclass = State.currentrecipientclass;
 
                     Log.Write("Message sent successfully for recipient class " + State.currentrecipientclass.Name + ".", Colors.Inline);
 
                     // for ics hotmic:
-                    if (State.AIRIOactive && State.activeconfig.ICShotmic)
+                    if (State.AIRIOactive && State.IsCrewHotMicActive())
                     {
                         if (!State.valistening)
                         {
@@ -633,6 +658,28 @@ namespace VAICOM
 
                         State.currentrecipientclass = getrecipientclass();
 
+                        bool intercomOnlyHotMic = !State.transmitting && State.IsCrewHotMicActive();
+                        bool isIntercomRecipientClass = State.currentrecipientclass.Equals(Recipientclasses.Crew)
+                            || State.currentrecipientclass.Equals(Recipientclasses.RIO)
+                            || State.currentrecipientclass.Equals(Recipientclasses.AI_pilot)
+                            || State.currentrecipientclass.Equals(Recipientclasses.WSO);
+                        bool isGeorgeCommand = State.currentcommand != null
+                            && !string.IsNullOrEmpty(State.currentcommand.dcsid)
+                            && State.currentcommand.dcsid.StartsWith("wMsgGeorge", StringComparison.OrdinalIgnoreCase);
+                        bool isHotMicAllowedCommand = isIntercomRecipientClass
+                            || isGeorgeCommand
+                            || State.currentcommand.isKneeboard()
+                            || State.currentcommand.isOptions()
+                            || State.currentcommand.isMenu();
+
+                        if (intercomOnlyHotMic && !isHotMicAllowedCommand)
+                        {
+                            Log.Write("ICS HOT MIC: non-intercom command ignored. Use TX1-TX4 for radio recipients.", Colors.Warning);
+                            State.MessageReset();
+                            State.processlocked = false;
+                            return false;
+                        }
+
                         if (noTX())
                         {
                             State.processlocked = false;
@@ -748,14 +795,14 @@ namespace VAICOM
                                 return false; // WSO command processing failed
                             }
 
-                            Log.Write("WSO command processing succeeded. Sending command to Jester 2.0 API...", Colors.Text);
+                            Log.Write("WSO command processing succeeded.", Colors.Text);
 
                             // Send the WSO command to the Jester 2.0 API
                             SendCommandToJesterAPI(State.currentcommand.dcsid);
                         }
                         else
                         {
-                            bool immediateHotMicSend = !State.transmitting && State.IsCrewHotMicActive();
+                            bool immediateHotMicSend = !State.transmitting && State.IsCrewHotMicActiveOnIntercomTX();
 
                             if (riocommand || selectcommand || optionscommand || menucommand || immediateHotMicSend ||
                                 !((State.activeconfig.MP_VoIPUseSwitch || State.activeconfig.MP_VoIPParallel) && State.activeconfig.MP_DelayTransmit)) //  || !State.currentTXnode.tunedforhuman 
@@ -765,6 +812,16 @@ namespace VAICOM
                             else
                             {
                                 havedelayedmessage = true;
+                            }
+                        }
+
+                        if (riocommand && menucommand && !State.transmitting && State.IsCrewHotMicActiveOnIntercomTX())
+                        {
+                            PTT.PTT_Manage_Listen_States_OnPressRelease(false, false);
+
+                            if (Extensions.RIO.helper.showingjestermenu)
+                            {
+                                Extensions.RIO.helper.showingjestermenu = false;
                             }
                         }
 
@@ -813,17 +870,17 @@ namespace VAICOM
                         return true;
                     }
 
-                    if (TryResolveValueFromNavCache(action, State.currentfullsentence, out string cachedValue, out string cacheKey))
+                    if (TryResolveValueFromActionCache(action, State.currentfullsentence, out string cachedValue, out string cacheKey))
                     {
                         resolvedValue = cachedValue;
-                        Log.Write($"WSO command '{commandId}' resolved from NAV cache [{cacheKey}] => {cachedValue}", Colors.Text);
+                        Log.Write($"WSO command '{commandId}' resolved from action cache [{cacheKey}] => {cachedValue}", Colors.Text);
                         return true;
                     }
 
                     return true;
                 }
 
-                private static bool TryResolveValueFromNavCache(string action, string sentence, out string resolvedValue, out string cacheKey)
+                private static bool TryResolveValueFromActionCache(string action, string sentence, out string resolvedValue, out string cacheKey)
                 {
                     resolvedValue = "";
                     cacheKey = "";
@@ -875,7 +932,7 @@ namespace VAICOM
                         }
                     }
 
-                    string normalizedSentence = NormalizeNavLookupText(sentence);
+                    string normalizedSentence = NormalizeActionLookupText(sentence);
                     if (!string.IsNullOrWhiteSpace(normalizedSentence))
                     {
                         string bestValue = "";
@@ -892,7 +949,7 @@ namespace VAICOM
                                 }
 
                                 string candidateName = entry.Key.Substring(action.Length + 1);
-                                string normalizedCandidate = NormalizeNavLookupText(candidateName);
+                                string normalizedCandidate = NormalizeActionLookupText(candidateName);
                                 if (string.IsNullOrWhiteSpace(normalizedCandidate))
                                 {
                                     continue;
@@ -1084,8 +1141,9 @@ namespace VAICOM
                     Recipient commandRecipient = State.currentWSOCommandRecipient;
                     if (commandRecipient == null)
                     {
-                        Log.Write($"Required WSO command recipient is missing", Colors.Warning);
                         value = "";
+                        Log.Write($"Required WSO command recipient is missing", Colors.Warning);
+                        UI.Playsound.Recipientna();
                         return false;
                     }
 
@@ -1099,13 +1157,14 @@ namespace VAICOM
                     }
                     else
                     {
-                        Log.Write($"Jester menu item not found for '{name}'", Colors.Warning);
                         value = "";
+                        Log.Write($"Airfield or asset '{name}' not found", Colors.Warning);
+                        UI.Playsound.Recipientna();
                         return false;
                     }
                 }
 
-                private static string NormalizeNavLookupText(string input)
+                private static string NormalizeActionLookupText(string input)
                 {
                     if (string.IsNullOrWhiteSpace(input))
                     {
@@ -1119,7 +1178,7 @@ namespace VAICOM
                     return Regex.Replace(normalized, @"\s+", " ").Trim();
                 }
 
-                //Jester 2.0 API WSO command sender
+                // Jester 2.0 API WSO command sender
                 private static void SendCommandToJesterAPI(string commandId)
                 {
                     try
@@ -1127,12 +1186,34 @@ namespace VAICOM
                         // Check if the command exists in the WSOCommandMappings
                         if (WSOCommandMappings.CommandMap.TryGetValue(commandId, out var commandDetails))
                         {
+                            WSOCommandMappings.InterfaceType type = commandDetails.type;
                             string category = commandDetails.category;
                             string action = commandDetails.action;
                             string value = commandDetails.value;
 
+                            if (type == WSOCommandMappings.InterfaceType.Dialog)
+                            {
+                                // Construct the command string in the format "category|action"
+                                string dialogCommandString = $"{category}|{action}";
+
+                                // Create a new CommsMessage for the Jester API command
+                                State.currentmessage = new Message.CommsMessage
+                                {
+                                    type = "WSOCommand", // Indicate this is a WSO command
+                                    dcsid = dialogCommandString, // Pass the constructed command string
+                                    dspmsg = $"Sending WSO dialog command: {dialogCommandString}",
+                                    msgdur = 5
+                                };
+
+                                // Send the command to the Jester 2.0 API using hb_send_proxy fields
+                                HbSendProxyCommand.SendDialogCommand(State.WsoDialogClient, category, action);
+                                Log.Write($"Sending command '{commandId}' to Jester 2.0 dialog API...", Colors.Text);
+
+                                return;
+                            }
+
                             if ((commandId.Equals("wMsgWSO_Radio_TuneATC")
-                                || commandId.Equals("wMsgWSO_Navigation_Divert_Airfield")
+                                || commandId.Equals("wMsgWSO_Navigation_Divert_LatLong")
                                 || commandId.Equals("wMsgWSO_Navigation_TACAN_TuneAsset"))
                                 && !TryResolveValueForATCAsset(action, out value))
                             {
@@ -1146,6 +1227,7 @@ namespace VAICOM
                             if (commandDetails.valueRequired && string.IsNullOrEmpty(value))
                             {
                                 Log.Write($"Command '{commandId}' missing required value.", Colors.Warning);
+                                UI.Playsound.Error();
                                 return;
                             }
 
@@ -1157,22 +1239,24 @@ namespace VAICOM
                             {                                
                                 type = "WSOCommand", // Indicate this is a WSO command
                                 dcsid = commandString, // Pass the constructed command string
-                                dspmsg = $"Sending WSO command: {commandString}",
+                                dspmsg = $"Sending WSO wheel command: {commandString}",
                                 msgdur = 5
                             };
 
                             // Send the command to the Jester 2.0 API using hb_send_proxy fields
-                            HbSendProxyCommand.SendCommand(State.WebSocketClient, category, action, value);
-                            Log.Write($"Command ID '{commandId}' sent using hb_send_proxy payload.", Colors.Text);
+                            HbSendProxyCommand.SendWheelCommand(State.WsoWheelClient, category, action, value);
+                            Log.Write($"Sending command '{commandId}' to Jester 2.0 wheel API...", Colors.Text);
                         }
                         else
                         {
                             Log.Write($"Command ID '{commandId}' not found in WSOCommandMappings.", Colors.Warning);
+                            UI.Playsound.Error();
                         }
                     }
                     catch (Exception ex)
                     {
                         Log.Write($"Error sending command to Jester 2.0 API: {ex.Message}", Colors.Critical);
+                        UI.Playsound.Error();
                     }
                 }
             }

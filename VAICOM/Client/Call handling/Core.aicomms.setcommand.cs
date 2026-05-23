@@ -104,14 +104,22 @@ namespace VAICOM
                             // when diverting to an airfield or tuning radio.
                             if (State.currentcommand.RequiresWSOCommandRecipient() && State.currentWSOCommandRecipient == null)
                             {
-                                if (!State.have["wsocmdrecipient"])
+                                if (State.have["wsocmdrecipient"])
                                 {
-                                    Log.Write($"This WSO command requires an additional recipient but was not present", Colors.Warning);
-                                    return false;
+                                    State.currentWSOCommandRecipient = Recipients.Table[State.currentkey["wsocmdrecipient"]];
+                                }
+                                else if (State.have["importedatcs"])
+                                {
+                                    State.currentWSOCommandRecipient = Recipients.Table[State.currentkey["importedatcs"]];
                                 }
                                 else
                                 {
-                                    State.currentWSOCommandRecipient = Recipients.Table[State.currentkey["wsocmdrecipient"]];
+                                    if (State.activeconfig.UIaddhints)
+                                    {
+                                        UI.Playsound.Proceed();
+                                    }
+                                    Log.Write("(awaiting additional ATC, tanker, or asset for WSO command)", Colors.Message);
+                                    return false;
                                 }
                             }
 

@@ -526,6 +526,18 @@
   <data name="Orig_F4E_Jester_Interface" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\resources\files\orig.f4e.jester.interface.js;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;Windows-1252</value>
   </data>
+  <data name="Append_F4E_Jester_Dialog_Interface" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\resources\files\append.f4e.jester.dialog.interface.js;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;Windows-1252</value>
+  </data>
+  <data name="Orig_F4E_Jester_Dialog_Interface" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\resources\files\orig.f4e.jester.dialog.interface.js;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;Windows-1252</value>
+  </data>
+  <data name="Append_F4E_Jester_Renderer" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\resources\files\append.f4e.jester.renderer.js;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;Windows-1252</value>
+  </data>
+  <data name="Orig_F4E_Jester_Renderer" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\resources\files\orig.f4e.jester.renderer.js;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;Windows-1252</value>
+  </data>
   <data name="VAICOMPRO" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\resources\files\vaicompro.exe;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>

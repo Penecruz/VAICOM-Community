@@ -14,6 +14,30 @@ namespace VAICOM
             public static partial class Lua
             {
 
+                private static void ApplyDynamicLuaFileSettings()
+                {
+                    if (!LuaFiles.ContainsKey("2.9 WSO Renderer.js"))
+                    {
+                        return;
+                    }
+
+                    var rendererFile = LuaFiles["2.9 WSO Renderer.js"];
+                    bool hideDialog = State.activeconfig != null && State.activeconfig.HideF4EDialog;
+
+                    if (hideDialog)
+                    {
+                        rendererFile.source = Properties.Resources.Append_F4E_Jester_Renderer;
+                        rendererFile.source_legacy = Properties.Resources.Append_F4E_Jester_Renderer;
+                        rendererFile.stringsource = Properties.Resources.Append_F4E_Jester_Renderer;
+                    }
+                    else
+                    {
+                        rendererFile.source = "";
+                        rendererFile.source_legacy = "";
+                        rendererFile.stringsource = "";
+                    }
+                }
+
                 private static void EnsureIcaoOverridesFile(string savedGamesRoot, string dcsVersionFolder, bool forcequiet)
                 {
                     try
@@ -63,6 +87,8 @@ namespace VAICOM
 
                     try
                     {
+                        ApplyDynamicLuaFileSettings();
+
                         State.dcsinstalled = false;
                         int installcounter = 0;
 
@@ -323,7 +349,14 @@ namespace VAICOM
 
                                             // -----  write the new file -----------------------------------------
 
-                                            string writestring = "";
+                                                string writestring = "";
+
+                                                string effectiveOrig = uselegacy && !string.IsNullOrEmpty(thisfile.orig_legacy)
+                                                    ? thisfile.orig_legacy
+                                                    : thisfile.orig;
+                                                string effectiveSource = uselegacy && !string.IsNullOrEmpty(thisfile.source_legacy)
+                                                    ? thisfile.source_legacy
+                                                    : thisfile.source;
 
                                             if (thisfile.AIRIO) // 
                                             {
@@ -350,29 +383,29 @@ namespace VAICOM
                                                     if (!(State.dll_installed_rio && State.activeconfig.RIO_Enabled) || restore)
                                                     {
                                                         // AIRIO disabled: reset functions to original
-                                                        writestring = thisfile.orig; // <-- this is used when RIO not enabled
+                                                        writestring = effectiveOrig; // <-- this is used when RIO not enabled
                                                     }
                                                     else // normal, RIO is enabled
                                                     {
 
                                                         if (thisfile.append)
                                                         {
-                                                            writestring = thisfile.orig;
+                                                            writestring = effectiveOrig;
 
                                                             if (!restore)
                                                             {
-                                                                writestring += "\n" + thisfile.source;
+                                                                writestring += "\n" + effectiveSource;
                                                             }
                                                         }
                                                         else // replace type
                                                         {
                                                             if (thisfile.reset || restore)
                                                             {
-                                                                writestring = thisfile.orig;
+                                                                writestring = effectiveOrig;
                                                             }
                                                             else
                                                             {
-                                                                writestring = thisfile.source;
+                                                                writestring = effectiveSource;
                                                             }
                                                         }
                                                     }
@@ -430,13 +463,27 @@ namespace VAICOM
                                                     }
                                                     else // not restore
                                                     {
-                                                        if (uselegacy)
+                                                        if (thisfile.filename.Equals("JesterAI_Page.lua", StringComparison.OrdinalIgnoreCase))
                                                         {
-                                                            writestring = thisfile.orig_legacy + "\n" + thisfile.source_legacy;
+                                                            if (uselegacy)
+                                                            {
+                                                                writestring = thisfile.source_legacy;
+                                                            }
+                                                            else
+                                                            {
+                                                                writestring = thisfile.source;
+                                                            }
                                                         }
                                                         else
                                                         {
-                                                            writestring = thisfile.orig + "\n" + thisfile.source;
+                                                            if (uselegacy)
+                                                            {
+                                                                writestring = thisfile.orig_legacy + "\n" + thisfile.source_legacy;
+                                                            }
+                                                            else
+                                                            {
+                                                                writestring = thisfile.orig + "\n" + thisfile.source;
+                                                            }
                                                         }
                                                     }
                                                 }

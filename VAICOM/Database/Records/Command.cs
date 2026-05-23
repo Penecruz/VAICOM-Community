@@ -74,7 +74,7 @@ namespace VAICOM
 
             public bool RequiresWSOCommandRecipient()
             {
-                return dcsid.Equals("wMsgWSO_Navigation_Divert_Airfield")
+                return dcsid.Equals("wMsgWSO_Navigation_Divert_LatLong")
                     || dcsid.Equals("wMsgWSO_Navigation_TACAN_TuneAsset")
                     || dcsid.Equals("wMsgWSO_Radio_TuneATC");
             }
@@ -288,12 +288,13 @@ namespace VAICOM
             AH64D_GeorgeAI,
             kneeboard,
             WSO,
-            WSO_menu,
+            WSO_navigation,
             WSO_radar,
-            WSO_weapons,
             WSO_radio,
-            WSO_utility,
+            WSO_weapons,
             WSO_defensive,
+            WSO_crew,
+            WSO_groundcrew,
             WSO_misc,
         }
 

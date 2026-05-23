@@ -15,6 +15,19 @@ namespace VAICOM
             {
                 ExtractAll(serverMessage);
 
+                // Some MP environments may not deliver all legacy chunks (11/12).
+                // If core state is present by chunk 10, allow processing to continue.
+                if (!receivedupdatecomplete
+                    && serverMessage != null
+                    && serverMessage.cid >= 10
+                    && State.currentstate != null
+                    && !string.IsNullOrEmpty(State.currentstate.id)
+                    && !State.currentstate.id.Equals("----"))
+                {
+                    receivedupdatecomplete = true;
+                    processingchunks = false;
+                }
+
                 if (receivedupdatecomplete)
                 {
                     if (!processingchunks)
@@ -347,6 +360,7 @@ namespace VAICOM
 
             public static void ExtractChunk12(ServerMessage serverMessage)
             {
+                processingchunks = true;
                 try
                 {
                     State.currentstate.metar = serverMessage.metar;
@@ -356,6 +370,8 @@ namespace VAICOM
                 {
                     Log.Write("ERROR 12/" + chunkcount + " :" + e.StackTrace, Colors.Inline);
                 }
+                receivedupdatecomplete = true;
+                processingchunks = false;
             }
 
             public static void LogFlightUnits(ServerMessage serverMessage)

@@ -115,13 +115,20 @@ namespace VAICOM
                     }
                     else // command not rio
                     {
-                        if (State.IsCrewHotMicActive() && 
+                        if (State.IsCrewHotMicActiveOnIntercomTX() && 
                             !(State.activeconfig.MP_VoIPUseSwitch && State.activeconfig.MP_DelayTransmit))
                         {
                             // hotmic is active, RIO not called
                             if (!State.valistening) // hotmic was used
                             {
-                                if (!State.currentrecipientclass.Equals(Recipientclasses.Crew))
+                                bool isGeorgeCommand = State.currentcommand != null
+                                    && !string.IsNullOrEmpty(State.currentcommand.dcsid)
+                                    && State.currentcommand.dcsid.StartsWith("wMsgGeorge", StringComparison.OrdinalIgnoreCase);
+
+                                if (!State.currentrecipientclass.Equals(Recipientclasses.Crew)
+                                    && !State.currentcommand.isMenu()
+                                    && !State.currentcommand.isOptions()
+                                    && !isGeorgeCommand)
                                 {
                                     Log.Write("ICS HOT MIC: Use Push-To-Talk TX nodes to transmit radio messages.", Colors.Warning);
                                     if (State.activeconfig.UIaddhints)
@@ -744,8 +751,7 @@ namespace VAICOM
                     {
                         if (State.wsoactivated && State.IsF4E)
                         {
-                            ConstructWSOMessage();
-                            return true;
+                            return ConstructWSOMessage();
                         }
                         else
                         {
@@ -759,7 +765,7 @@ namespace VAICOM
                     }
                 }
 
-                public static void ConstructWSOMessage()
+                public static bool ConstructWSOMessage()
                 {
                     State.currentmessage.type = Messagetypes.DeviceControl;
 
@@ -791,7 +797,10 @@ namespace VAICOM
                     else
                     {
                         Log.Write($"Failed to construct WSO message. Command not found: {commandKey ?? State.currentcommand?.dcsid}", Colors.Warning);
+                        return false;
                     }
+
+                    return true;
                 }
 
                 public static void F14Salute()
@@ -1012,10 +1021,14 @@ namespace VAICOM
                             Log.Write("Identified as options command", Colors.Inline);
                             if (State.currentkey["recipient"].Equals("RIO") || State.currentkey["recipient"].Equals("Iceman"))
                             {
+                                State.showingoptions = false;
+                                // Force a fresh wheel-open request even if local state flag got stale.
+                                VAICOM.Extensions.RIO.helper.showingjestermenu = false;
                                 VAICOM.Extensions.RIO.helper.ShowWheel(true);
                             }
                             else
                             {
+                                VAICOM.Extensions.RIO.helper.showingjestermenu = false;
                                 State.currentmessage.type = Messagetypes.iCommandSequence;
                                 Message.setoptionscmdsequence();
                                 State.showingoptions = true;
@@ -1027,7 +1040,9 @@ namespace VAICOM
                         {
                             Log.Write("Identified as menu command unique id " + State.currentcommand.uniqueid, Colors.Inline);
 
-                            if (Extensions.RIO.helper.showingjestermenu)
+                            bool useJesterMenu = Extensions.RIO.helper.showingjestermenu && !State.showingoptions;
+
+                            if (useJesterMenu)
                             {
                                 try
                                 {
@@ -1036,8 +1051,9 @@ namespace VAICOM
                                     State.currentmessage.type = Messagetypes.DeviceControl;
                                     State.currentmessage.extsequence = new List<Extensions.RIO.DeviceAction>();
 
-                                    int command = 3550;
+                                    int command = 3725;
                                     int value = -1;
+                                    bool jesterCloseSelection = false;
 
                                     switch (State.currentcommand.uniqueid)
                                     {
@@ -1049,6 +1065,14 @@ namespace VAICOM
                                         case 22506: command = 3556; break; // Diagonal 45 down
                                         case 22507: command = 3557; break; // Horizontal
                                         case 22508: command = 3558; break; // Diagonal 135
+                                        case 22509:
+                                        case 22510:
+                                        case 22511:
+                                        case 22512:
+                                            command = 3725;
+                                            value = 1;
+                                            jesterCloseSelection = true;
+                                            break;
                                         default: break;
                                     }
 
@@ -1063,6 +1087,11 @@ namespace VAICOM
                                     };
 
                                     State.currentmessage.extsequence.AddRange(menu);
+
+                                    if (jesterCloseSelection)
+                                    {
+                                        Extensions.RIO.helper.showingjestermenu = false;
+                                    }
                                 }
                                 catch (Exception e)
                                 {

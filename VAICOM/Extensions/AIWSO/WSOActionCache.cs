@@ -219,14 +219,6 @@ namespace VAICOM
                         string path = entry["path"]?.ToString() ?? "";
                         string index = entry["idx"]?.ToString() ?? "";
 
-                        // Exclude any entries for diverting to assets as those
-                        // can have constantly changing lat long coordinates which
-                        // break the signature causing continuous cache rebuilds.
-                        if (path.Contains("Divert To > Assets"))
-                        {
-                            continue;
-                        }
-
                         if (string.IsNullOrWhiteSpace(index))
                         {
                             index = TryExtractIndexFromValue(value);
@@ -305,6 +297,21 @@ namespace VAICOM
                                 // the letters for looking up the freqency.
                                 string station = name.Substring(0, 3);
                                 CacheByActionAndName[$"{action}|{station.ToLowerInvariant()}"] = value;
+                            }
+                        }
+                    }
+                    else if (string.Equals(action, "divert_tgt1_lat_lon") && (path.Contains("Divert To > Airfields") || path.Contains("Divert To > Assets")))
+                    {
+                        lock (CacheLock)
+                        {
+                            // Diverting to airfields, or assets such as tankers, e.g. Arco 1-1 KC-135
+                            if (TryGetRecipientByAsset(name.ToLowerInvariant(), out string recipient))
+                            {
+                                CacheByActionAndName[$"{action}|{recipient.ToLowerInvariant()}"] = value;
+                            }
+                            else
+                            {
+                                return false;
                             }
                         }
                     }
@@ -429,6 +436,7 @@ namespace VAICOM
 
                     // Search the recipients for one which matches the asset name. This allows us to use
                     // aliases in commands and still map them back to the actual cache entry.
+                    // Search through the standard set of AI recipients
                     foreach (KeyValuePair<string, string> set in Aliases.airecipients)
                     {
                         // Check for recipients value, or if there are other aliased values.
@@ -438,8 +446,18 @@ namespace VAICOM
                             return true;
                         }
                     }
+                    // Search through any imported ATCs
+                    foreach (KeyValuePair<string, string> set in Aliases.importedatcs)
+                    {
+                        // Check for recipients value, or if there are other aliased values.
+                        if (asset.StartsWith(set.Value, StringComparison.OrdinalIgnoreCase) || asset.StartsWith(set.Key, StringComparison.OrdinalIgnoreCase))
+                        {
+                            recipient = set.Value;
+                            return true;
+                        }
+                    }
 
-                    Log.Write($"No recipient found for asset '{asset}'", Colors.Warning);
+                    Log.Write($"No recipient found for asset '{asset}'", Colors.Text);
                     return false;
                 }
 

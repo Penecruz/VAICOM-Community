@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using VAICOM.Extensions.Kneeboard;
+using VAICOM.PushToTalk;
 using VAICOM.Static;
 using VAICOM.WSO;
 
@@ -40,17 +42,20 @@ namespace VAICOM
                         waypointCacheKeys.Add("fp1"); ;
                     }
                     waypointCacheKeys.Add(flightPlanWaypoint);
-
                     string waypointCacheKey = String.Join("|", waypointCacheKeys);
+
+                    CommandCompleted("Resume At Waypoint", new List<string> { $"Flight Plan {waypointFlightPlan}", $"Waypoint {flightPlanWaypoint}" });
+                    
                     if (WSOActionCache.TryGetByActionAndIndex(waypointCacheKey, out string resolvedWaypoint)
                             && !string.IsNullOrWhiteSpace(resolvedWaypoint))
                     {
                         // Append the waypoint number, after a semi-colon; to the lat long when sending the command as this is required
-                        HbSendProxyCommand.SendWsoCommand(State.WebSocketClient, waypointCommandKey, $"{resolvedWaypoint};{flightPlanWaypoint}");
+                        HbSendProxyCommand.SendWsoCommand(State.WsoWheelClient, waypointCommandKey, $"{resolvedWaypoint};{flightPlanWaypoint}");
                     }
                     else
                     {
                         Log.Write($"Waypoint not found for flight plan {waypointFlightPlan} waypoint {flightPlanWaypoint}", Colors.Warning);
+                        UI.Playsound.Recipientna();
                     }
                 }
 
@@ -99,16 +104,19 @@ namespace VAICOM
                         holdpointCacheKeys.Add("fp1");
                     }
                     holdpointCacheKeys.Add(flightPlanHoldpoint);
-
                     string holdpointCacheKey = String.Join("|", holdpointCacheKeys);
+
+                    CommandCompleted("Hold At Waypoint", new List<string> { $"Flight Plan {holdpointFlightPlan}", $"Waypoint {flightPlanHoldpoint}" });
+                    
                     if (WSOActionCache.TryGetByActionAndIndex(holdpointCacheKey, out string resolvedHoldpoint)
                             && !string.IsNullOrWhiteSpace(resolvedHoldpoint))
                     {
-                        HbSendProxyCommand.SendWsoCommand(State.WebSocketClient, holdpointCommandKey, resolvedHoldpoint);
+                        HbSendProxyCommand.SendWsoCommand(State.WsoWheelClient, holdpointCommandKey, resolvedHoldpoint);
                     }
                     else
                     {
                         Log.Write($"Holdpoint not found for flight plan {holdpointFlightPlan} waypoint {flightPlanHoldpoint}", Colors.Warning);
+                        UI.Playsound.Recipientna();
                     }
                 }
 
@@ -136,16 +144,19 @@ namespace VAICOM
                         divertCacheKeys.Add("fp1");
                     }
                     divertCacheKeys.Add(divertWaypoint);
-
                     string divertCacheKey = String.Join("|", divertCacheKeys);
+
+                    CommandCompleted("Divert To Waypoint", new List<string> { $"Flight Plan {divertFlightPlan}", $"Waypoint {divertWaypoint}" });
+
                     if (WSOActionCache.TryGetByActionAndIndex(divertCacheKey, out string resolvedLatLong)
                             && !string.IsNullOrWhiteSpace(resolvedLatLong))
                     {
-                        HbSendProxyCommand.SendWsoCommand(State.WebSocketClient, divertCommandKey, resolvedLatLong);
+                        HbSendProxyCommand.SendWsoCommand(State.WsoWheelClient, divertCommandKey, resolvedLatLong);
                     }
                     else
                     {
-                        Log.Write($"Divert lat/long not found for flight plan {divertFlightPlan} waypoint {divertWaypoint}", Colors.Warning);
+                        Log.Write($"Waypoint not found for flight plan {divertFlightPlan} waypoint {divertWaypoint}", Colors.Warning);
+                        UI.Playsound.Recipientna();
                     }
                 }
 
@@ -158,6 +169,7 @@ namespace VAICOM
                     if (string.IsNullOrEmpty(designationType))
                     {
                         Log.Write($"Unknown waypoint designation type for '{designationType}'", Colors.Warning);
+                        UI.Playsound.Error();
                         return;
                     }
                     if (!GetNumberFromSegment(designationTypeIndex - 2, out string designatationWaypoint))
@@ -177,7 +189,10 @@ namespace VAICOM
                         designationFlightPlan = 1;
                     }
                     string designationWaypointValue = $"{designationFlightPlan};{designatationWaypoint};{designationType}";
-                    HbSendProxyCommand.SendWsoCommand(State.WebSocketClient, designateWaypointCommandKey, designationWaypointValue);
+                    
+                    CommandCompleted("Designate Waypoint", new List<string> { $"Flight Plan {designationFlightPlan}", $"Waypoint {designatationWaypoint}", designationType });
+
+                    HbSendProxyCommand.SendWsoCommand(State.WsoWheelClient, designateWaypointCommandKey, designationWaypointValue);
                 }
 
                 public static void NavigationTuneTACANChannel()
@@ -196,7 +211,10 @@ namespace VAICOM
                     {
                         digit1 = "0";
                     }
-                    HbSendProxyCommand.SendWsoCommand(State.WebSocketClient, "wMsgWSO_Navigation_TACAN_SelectChannel", $"{digit1}{digit2}{digit3}{tacanBand}");
+                    
+                    CommandCompleted($"Tune TACAN Channel", new List<string> { $"{digit1}{digit2}{digit3}{tacanBand.ToUpper()}" });
+
+                    HbSendProxyCommand.SendWsoCommand(State.WsoWheelClient, "wMsgWSO_Navigation_TACAN_SelectChannel", $"{digit1}{digit2}{digit3}{tacanBand}");
                 }
 
                 public static void NavigationTuneTACANStation()
@@ -206,47 +224,53 @@ namespace VAICOM
                     string alpha2 = GetSegment(stationIndex - 1).Substring(0, 1);
                     string alpha3 = GetSegment(stationIndex).Substring(0, 1);
                     string tacanStation = $"{alpha1}{alpha2}{alpha3}";
+                    string tacanStationUpper = tacanStation.ToUpper();
 
+                    CommandCompleted("Tune TACAN Station", new List<string> { tacanStationUpper });
+                    
                     if (WSOActionCache.TryGetByActionAndName("nav_tacan_tr", tacanStation, out string resolvedTacanStation)
                             && !string.IsNullOrWhiteSpace(resolvedTacanStation))
                     {
-                        HbSendProxyCommand.SendWsoCommand(State.WebSocketClient, "wMsgWSO_Navigation_TACAN_TuneStation", resolvedTacanStation);
+                        HbSendProxyCommand.SendWsoCommand(State.WsoWheelClient, "wMsgWSO_Navigation_TACAN_TuneStation", resolvedTacanStation);
                     }
                     else
                     {
-                        Log.Write($"TACAN station '{alpha1}{alpha2}{alpha3}' not found", Colors.Warning);
+                        Log.Write($"TACAN station '{tacanStationUpper}' not found", Colors.Warning);
+                        UI.Playsound.Recipientna();
                     }
                 }
 
                 public static void RadioSetCommChannel()
                 {
-                    HbSendProxyCommand.SendWsoCommand(State.WebSocketClient, "wMsgWSO_Radio_SelectCommChannel", GetNumberFromCommand());
+                    string commsChannel = GetNumberFromCommand();
+                    CommandCompleted("Set Comm Channel", new List<string> { commsChannel });
+                    
+                    HbSendProxyCommand.SendWsoCommand(State.WsoWheelClient, "wMsgWSO_Radio_SelectCommChannel", commsChannel);
                 }
 
                 public static void RadioSetAuxChannel()
                 {
-                    HbSendProxyCommand.SendWsoCommand(State.WebSocketClient, "wMsgWSO_Radio_SelectAuxChannel", GetNumberFromCommand());
+                    string auxChannel = GetNumberFromCommand();
+                    CommandCompleted("Set AUX Channel", new List<string> { auxChannel });
+                    
+                    HbSendProxyCommand.SendWsoCommand(State.WsoWheelClient, "wMsgWSO_Radio_SelectAuxChannel", auxChannel);
                 }
 
                 public static void RadioTuneFrequency()
                 {
                     string radioFrequency = GetNumberFromCommand();
                     string fullRadioFrequency = radioFrequency.PadRight(6, '0');
-                    HbSendProxyCommand.SendWsoCommand(State.WebSocketClient, "wMsgWSO_Radio_SetManualFrequency", fullRadioFrequency);
+                    CommandCompleted("Tune Radio Freqency", new List<string> { fullRadioFrequency });
+                    
+                    HbSendProxyCommand.SendWsoCommand(State.WsoWheelClient, "wMsgWSO_Radio_SetManualFrequency", fullRadioFrequency);
                 }
 
                 public static void PaveSpikeSetLaserCode()
                 {
                     string laserCode = GetNumberFromCommand();
-                    // If a code was provided then use it, otherwise this was a command to silence it
-                    if (String.IsNullOrEmpty(laserCode))
-                    {
-                        HbSendProxyCommand.SendWsoCommand(State.WebSocketClient, "wMsgWSO_A2G_PaveSpike_LaserCode_Silent");
-                    }
-                    else
-                    {
-                        HbSendProxyCommand.SendWsoCommand(State.WebSocketClient, "wMsgWSO_A2G_PaveSpike_LaserCode", laserCode);
-                    }
+                    CommandCompleted("Pave Spike Laser Code", new List<string> { laserCode });
+                        
+                    HbSendProxyCommand.SendWsoCommand(State.WsoWheelClient, "wMsgWSO_A2G_PaveSpike_LaserCode", laserCode);
                 }
 
                 public static bool IsWSO()
@@ -254,10 +278,37 @@ namespace VAICOM
                     if (!State.currentmodule.Id.Equals("F-4E-45MC", StringComparison.OrdinalIgnoreCase))
                     {
                         Log.Write("WSO commands are only available for the F-4E-45MC module.", Colors.Warning);
+                        UI.Playsound.Sorry();
                         return false;
                     }
 
                     return true;
+                }
+
+                private static void CommandCompleted(string message, List<string> args)
+                {
+                    UI.Playsound.Commandcomplete();
+
+                    string messageArgs = "[ " + string.Join(" ] [ ", args) + " ]";
+
+                    if ((State.currentmodule.Singlehotkey & !State.activeconfig.ForceMultiHotkey) || (!State.currentmodule.Singlehotkey & State.activeconfig.ForceSingleHotkey)) // for single mode
+                    {
+                        Log.Write(State.currentTXnode.name + " | " + PTT.RadioDevices.SEL.name + ": [ F-4E AI WSO ], [ " + message + " ] " + messageArgs, Colors.Message);
+                    }
+                    else
+                    {
+                        Log.Write(State.currentTXnode.name + " | " + State.currentTXnode.radios[0].name + ": [ F-4E AI WSO ], [ " + message + " ] " + messageArgs , Colors.Message);
+                    }
+
+                    try
+                    {
+                        string wsoLog = "WSO | " + message;
+                        OpenKneeboardBridge.UpdateLog("AI CREW", wsoLog);
+                        OpenKneeboardBridge.SetLastAiCrewCommand(wsoLog);
+                    }
+                    catch
+                    {
+                    }
                 }
 
                 private static string GetSegment(int index)

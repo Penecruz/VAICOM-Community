@@ -12,7 +12,7 @@ function openSocketConnection() {
 		return;
 	}
 
-	socket = new WebSocket("ws://127.0.0.1:33495/vaicom/wso/");
+	socket = new WebSocket("ws://127.0.0.1:33495/vaicom/wso/wheel");
 
 	// Connection opened
 	socket.addEventListener("open", (event) => {

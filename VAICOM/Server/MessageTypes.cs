@@ -210,6 +210,7 @@ namespace VAICOM
                 public double tcn;
                 public bool ics;
                 public double f4ePilotIcs;
+                public double f4eSeat;
                 public bool sngl;
                 public bool jmr;
                 public bool AM182;

@@ -37,12 +37,13 @@ namespace VAICOM.Shared
         AI_pilot,
         kneeboard,
         WSO,
-        WSO_menu,
+        WSO_navigation,
         WSO_radar,
-        WSO_weapons,
         WSO_radio,
-        WSO_utility,
+        WSO_weapons,
         WSO_defensive,
+        WSO_crew,
+        WSO_groundcrew,
         WSO_misc,
     }
 }

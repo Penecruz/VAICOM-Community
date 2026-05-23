@@ -6,11 +6,11 @@
       "isbeta": false,
       "isdev": false,
       "productid": 1,
-      "releasedate": 20260405,
-      "version": 3104,
-      "versionstring": "3.1.0.4",
-      "downloadurl": "https://github.com/Penecruz/VAICOM-Community/releases/download/v3.1.0.4/VAICOMPRO.zip",
-      "releasenotes": "Release 3.1.0.4\n- Add George AI support for the AH-64D (phase 1 CPG).\n- Add combined AI CREW controls on the VAICOM UI Extensions tab.\n- Adds dynamic keyword support for AI_ATC Andersen 2.0.\n- Adds dynamic keyword support for the updated Sentry Pacific 25 Campaign F-16C.\n- Adds dynamic keyword support for the upcoming Sentry Pacific 26 Campaign A-10C II.\n- Adds new Single PTT logic for UH-1H Huey.\n- Fixes radio tuning on the UH-1H Huey UHF radio.\n- Adds new Single PTT logic for Mi-24P Hind.\n- Fixes radio tuning on the Mi-24P Hind radio with channel change.\n- Adds commands for Kneeboard tab browsing (Show Next Tab / Show Previous Tab).\n- Fixes Kneeboard \"Clear Notes\" command; now clears notes regardless of dictate state.\n- Fixes Jester AI link host commands; Jester now selects the correct DL host.\n- Adds DDG Arleigh Burke as selectable DL host for F-14A/B Jester AI.\n- Fixes nav grid handling for F-14A/B Jester AI.\n- Fixes an issue where rapid PTT presses caused a race condition in listening state and state desync.\n- Fixes minor graphical errors with Dark Mode."
+      "releasedate": 20260523,
+      "version": 3130,
+      "versionstring": "3.1.3.0",
+      "downloadurl": "https://github.com/Penecruz/VAICOM-Community/releases/download/v3.1.3.0/VAICOMPRO.zip",
+      "releasenotes": "Release 3.1.3.0\n- Add ‘Boots’ AIWSO for the F-4E Phantom II our jester 2.0 implementation.\n- Add OpenKneeboard OUT a vaicom Web Console for the amazing OpenKneeboard application.\n- Add new Vaicom HTML Keywords reference system, with plugin for OpenKneeboard.\n- Add F-100D Super Sabre as supported module.\n- Add new F10 menu handling to eliminate connection issues on servers with large logistic menu systems e.g. Foothold missions.\n- Remove all Pro licencing code from Vaicom and any graphical reference in the UI.\n- Add ICS Hot Mic logic for AH-64D Apache and F-4E Phantom II.\n- Add new Hot Mic listening state handler for all supported AI CREW modules.\n- Add common AI CREW UI interfaces and adopt shared code.\n- Fixes F-14 Tomcat “Jester Options” mini wheel not exiting cleanly after message sent.\n- Adds F-14 Tomcat Pilot/RIO monitoring on Vaicom UI to reflect connection.\n- Adds F-4E Phantom II Pilot/WSO monitoring on Vaicom UI to reflect connection.\n- Adds E-7A as supported AWACS recipient and Kneeboard unit.\n- Adds BRA to Kneeboard units and airfields.\n- Adds TACAN information to Kneeboard Tankers and AWACS.\n- Many small bug fixes and enhancements"
     }
   ]
 }

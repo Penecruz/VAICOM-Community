@@ -238,7 +238,7 @@ return {
     ["TONOPAH TEST RANGE"] = "KTNX",
     ["GROOM LAKE"] = "KXTA",
     ["NELLIS"] = "KLSV",
-    ["BOULDER CITY"] = "KBLD",
+    ["BOULDER CITY"] = "KBVU",
   },
   marianas = {
     ["ANDERSEN AFB"] = "PGUA",
