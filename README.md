@@ -74,31 +74,32 @@ Flashing Comms Menu after DCS World update is a known issue and can be resolved 
 ## Patch Notes
 
 
-This is a major update, George AI for the AH-64D, Andersen AI_ATC 2.0 support, our first collaboration with a DCS campaign creator, SOB Simulations, which adds dynamic keyword support for his Sentry Pacific 25 Campaign and upcoming Sentry Pacific 26 Campaign, If you haven’t played them you are missing out. Some more single radio PTT fixes from Sleighzy with the UH-1H and Mi-24 getting the treatment, Kneeboard QOL changes and bug fixes to a couple of long-term bugs with the F-14 A/B Jester AI link Host and Navgrid. And some other minor bug fixes we found along the way.
+This is a major milestone for Vaicom. It brings Jester 2.0 integration for the F-4E, adds a new method of communication with DCS that allows for future opportunities and adds an export path for the Vaicom kneeboard that gives greater flexibility if design, better data and no longer changes core DCS files. OpenKneeboard OUT unlocks the full potential of Vaicom’s real time access to the live DCS lua environment.
+Below the waterline there are many bug fixes and enhancements across the entire software package.
 
--	Add George AI support for the AH-64D (phase 1 CPG),
--	Add new combine AI CREW controls on Vaicom UI Extensions Tab.
--	Adds dynamic keyword support for AI_ATC Andersen 2.0.
--	Adds dynamic keyword support for the updated Sentry Pacific 25 Campaign F-16C.
--	Adds dynamic keyword support for the upcoming Sentry Pacific 26 Campaign A-10CII.
--	Adds new Single PTT logic for UH-1H Huey.
--	Fixes radio tuning on the UH-1H Huey UHF radio.
--	Adds new Single PTT logic for Mi-24P Hind.
--	Fixes radio tuning on the Mi-24P Hind radio with channel change.
--	Adds commands for Kneeboard tab browsing Show Next Tab/Show Previous Tab.
--	Fix Kneeboard “Clear Notes” command, now clears notes regardless of dictate state.
--	Fix jester AI link Host commands, Jester will now select the correct DL Host.
--	Add DDG Arleigh Burke as selectable DL Host for F-14A/B Jester AI.
--	Fixes to nav Grid handling for F-14A/B Jester AI
--	Fix an issue where rapid PTT presses resulted in a race condition in listening state and state desync.
--	Fix minor graphical errors with Dark Mode.
+-	Add ‘Boots’ AIWSO for the F-4E Phantom II our jester 2.0 implementation.
+-	Add OpenKneeboard OUT a vaicom Web Console for the amazing OpenKneeboard application.
+-	Add new Vaicom HTML Keywords reference system, with plugin for OpenKneeboard.
+-	Add F-100D Super Sabre as supported module.
+-	Add new F10 menu handling to eliminate connection issues on servers with large logistic menu systems e.g. Foothold missions.
+-	Remove all Pro licencing code from Vaicom and any graphical reference in the UI.
+-	Add ICS Hot Mic logic for AH-64D Apache and F-4E Phantom II.
+-	Add new Hot Mic listening state handler for all supported AI CREW modules.
+-	Add common AI CREW UI interfaces and adopt shared code.
+-	Fixes F-14 Tomcat “Jester Options” mini wheel not exiting cleanly after message sent.
+-	Adds F-14 Tomcat Pilot/RIO monitoring on Vaicom UI to reflect connection.
+-	Adds F-4E Phantom II Pilot/WSO monitoring on Vaicom UI to reflect connection.
+-	Adds E-7A as supported AWACS recipient and Kneeboard unit.
+-	Adds BRA to Kneeboard units and airfields.
+-	Adds TACAN information to Kneeboard Tankers and AWACS.
+-	Many small bug fixes and enhancements
 
 
 Known Issues
 
 -	C-130J Select Tunes radio command will tune radio but not change AMU or CNI-MU display.
 -	George AI the AH-64D M299_EMPTY racks if loaded with other missiles break direct weapon selection (still working a fix for this).
--	George AI user must key the TX button or wait for the next server side update after landing with a weapon selected for Vaicom to sync with Georges automatic selection of No WPN with Weight on Wheels.
+
 
 ## Community Team
 
