@@ -16,6 +16,14 @@ namespace VAICOM
             {
                 try
                 {
+                    string trimmed = (receivedString ?? "").Trim();
+                    if (trimmed == "4000")
+                    {
+                        return;
+                    }
+
+                    Extensions.Kneeboard.OpenKneeboardBridge.AppendRawServerMessage(receivedString);
+
                     if (DetectAH64WeaponState(receivedString))
                     {
                         return;
@@ -24,6 +32,7 @@ namespace VAICOM
                     if (!ValidateRaw(receivedString))
                     {
                         Log.Write("VOID SERVER MESSAGE: " + receivedString, Static.Colors.Inline);
+                        Extensions.Kneeboard.OpenKneeboardBridge.UpdateStatus("Warning: waiting for mission data...", "warning");
                         return;
                     }
 
@@ -36,15 +45,18 @@ namespace VAICOM
                     if (decodedMessage == null)
                     {
                         Log.Write("NOT DECODED: " + receivedString, Static.Colors.Inline);
+                        Extensions.Kneeboard.OpenKneeboardBridge.UpdateStatus("Error: server message decode failed.", "error");
                         return;
                     }
 
                     UpdateServerState(decodedMessage);
+                    Extensions.Kneeboard.OpenKneeboardBridge.UpdateStatus("Command sent successfully.", "sent");
 
                 }
                 catch (Exception e)
                 {
                     Log.Write("There was a problem processing server message: " + e.StackTrace, Static.Colors.Inline);
+                    Extensions.Kneeboard.OpenKneeboardBridge.UpdateStatus("Error: problem processing server message.", "error");
                 }
             }
 

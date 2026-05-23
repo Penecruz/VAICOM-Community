@@ -29,6 +29,11 @@ namespace VAICOM
                         State.activeconfig.Chatter_Enabled = true;
                     }
 
+                    if (State.activeconfig.HideF4EDialog.Equals(null))
+                    {
+                        State.activeconfig.HideF4EDialog = false;
+                    }
+
                     // added 2.5.25
                     if (State.activeconfig.MP_UseTXLink.Equals(null))
                     {
@@ -48,6 +53,10 @@ namespace VAICOM
                     if (State.activeconfig.KneeboardlinkPTT.Equals(null))
                     {
                         State.activeconfig.KneeboardlinkPTT = false;
+                    }
+                    if (State.activeconfig.OpenKneeboard_Out.Equals(null))
+                    {
+                        State.activeconfig.OpenKneeboard_Out = false;
                     }
 
                     // added 2.5.19

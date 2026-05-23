@@ -14,12 +14,81 @@ namespace VAICOM
             public static partial class Lua
             {
 
+                private static void ApplyDynamicLuaFileSettings()
+                {
+                    if (!LuaFiles.ContainsKey("2.9 WSO Renderer.js"))
+                    {
+                        return;
+                    }
+
+                    var rendererFile = LuaFiles["2.9 WSO Renderer.js"];
+                    bool hideDialog = State.activeconfig != null && State.activeconfig.HideF4EDialog;
+
+                    if (hideDialog)
+                    {
+                        rendererFile.source = Properties.Resources.Append_F4E_Jester_Renderer;
+                        rendererFile.source_legacy = Properties.Resources.Append_F4E_Jester_Renderer;
+                        rendererFile.stringsource = Properties.Resources.Append_F4E_Jester_Renderer;
+                    }
+                    else
+                    {
+                        rendererFile.source = "";
+                        rendererFile.source_legacy = "";
+                        rendererFile.stringsource = "";
+                    }
+                }
+
+                private static void EnsureIcaoOverridesFile(string savedGamesRoot, string dcsVersionFolder, bool forcequiet)
+                {
+                    try
+                    {
+                        string targetFolder = Path.Combine(savedGamesRoot, dcsVersionFolder, "Scripts", "VAICOMPRO");
+                        if (!Directory.Exists(targetFolder))
+                        {
+                            Directory.CreateDirectory(targetFolder);
+                        }
+
+                        string targetPath = Path.Combine(targetFolder, "ICAOOverrides.lua");
+                        if (File.Exists(targetPath))
+                        {
+                            if (!forcequiet)
+                            {
+                                Log.Write("   Unchanged: ICAOOverrides.lua", Colors.Recognition);
+                            }
+                            return;
+                        }
+
+                        string content = Properties.Resources.ResourceManager.GetString("ICAOOverrides_lua");
+                        if (string.IsNullOrWhiteSpace(content))
+                        {
+                            Log.Write("ICAOOverrides.lua resource missing, skipping ICAO override file install.", Colors.Warning);
+                            return;
+                        }
+
+                        File.WriteAllText(targetPath, content);
+
+                        if (!forcequiet)
+                        {
+                            Log.Write("   Reset: ICAOOverrides.lua", Colors.Recognition);
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        if (!forcequiet)
+                        {
+                            Log.Write("Could not install ICAOOverrides.lua: " + e.Message, Colors.Warning);
+                        }
+                    }
+                }
+
                 public static void LuaFiles_Install(bool restore, bool forcequiet)
                 {
                     // --- finds all DCS install locations and manipulates lua files
 
                     try
                     {
+                        ApplyDynamicLuaFileSettings();
+
                         State.dcsinstalled = false;
                         int installcounter = 0;
 
@@ -189,6 +258,11 @@ namespace VAICOM
                                         Log.Write("   Saved Games folder = " + UserSavedGamesFolder + "\\" + Server.dcsversion[set.Key], Colors.Text);
                                     }
 
+                                    if (!restore)
+                                    {
+                                        EnsureIcaoOverridesFile(UserSavedGamesFolder, Server.dcsversion[set.Key], forcequiet);
+                                    }
+
                                     // ----- do LUA files -------------------
                                     // install/reset the lua files for this DCS version
 
@@ -263,97 +337,89 @@ namespace VAICOM
 
                                             if (State.luahardreset && thisfile.hardreset && !thisfile.stringreplace)
                                             {
-                                                if (!thisfile.AIRIO || (thisfile.AIRIO && State.jesteractivated))
+                                                if (File.Exists(path))
                                                 {
-                                                    if (File.Exists(path))
-                                                    {
-                                                        File.Delete(path);
-                                                    }
-                                                    if (File.Exists(path + ".old"))
-                                                    {
-                                                        File.Delete(path + ".old");
-                                                    }
+                                                    File.Delete(path);
+                                                }
+                                                if (File.Exists(path + ".old"))
+                                                {
+                                                    File.Delete(path + ".old");
                                                 }
                                             }
 
                                             // -----  write the new file -----------------------------------------
 
-                                            string writestring = "";
+                                                string writestring = "";
+
+                                                string effectiveOrig = uselegacy && !string.IsNullOrEmpty(thisfile.orig_legacy)
+                                                    ? thisfile.orig_legacy
+                                                    : thisfile.orig;
+                                                string effectiveSource = uselegacy && !string.IsNullOrEmpty(thisfile.source_legacy)
+                                                    ? thisfile.source_legacy
+                                                    : thisfile.source;
 
                                             if (thisfile.AIRIO) // 
                                             {
-
-                                                if (State.jesteractivated)
+                                                if (thisfile.stringreplace)
                                                 {
-                                                    if (thisfile.stringreplace)
+                                                    // repair if left in legacy state
+                                                    string searchstr = thisfile.stringsource;
+                                                    string replacestr = thisfile.stringorig;
+
+                                                    // write the file
+                                                    try
                                                     {
-
-                                                        // repair if left in legacy state
-
-                                                        string searchstr = thisfile.stringsource;
-                                                        string replacestr = thisfile.stringorig;
-
-
-                                                        // write the file
-                                                        try
-                                                        {
-                                                            writestring = File.ReadAllText(path);
-                                                            writestring = writestring.Replace(searchstr, replacestr);
-                                                            File.WriteAllText(path, writestring);
-                                                        }
-                                                        catch
-                                                        {
-                                                        }
-
-
+                                                        writestring = File.ReadAllText(path);
+                                                        writestring = writestring.Replace(searchstr, replacestr);
+                                                        File.WriteAllText(path, writestring);
                                                     }
-                                                    else // normal i.e. not string findreplace: Jester page
+                                                    catch
                                                     {
-
-                                                        if (!(State.dll_installed_rio && State.activeconfig.RIO_Enabled) || restore)
-                                                        {
-                                                            // AIRIO disabled: reset functions to original
-                                                            writestring = thisfile.orig; // <-- this is used when RIO not enabled
-                                                        }
-                                                        else // normal, RIO is enabled
-                                                        {
-
-                                                            if (thisfile.append)
-                                                            {
-                                                                writestring = thisfile.orig;
-
-                                                                if (!restore)
-                                                                {
-                                                                    writestring += "\n" + thisfile.source;
-                                                                }
-                                                            }
-                                                            else // replace type
-                                                            {
-                                                                if (thisfile.reset || restore)
-                                                                {
-                                                                    writestring = thisfile.orig;
-                                                                }
-                                                                else
-                                                                {
-                                                                    writestring = thisfile.source;
-                                                                }
-                                                            }
-                                                        }
-
-                                                        try
-                                                        {
-                                                            using (StreamWriter writer = new StreamWriter(path, true))
-                                                            {
-                                                                writer.Write(writestring);
-                                                            }
-                                                        }
-                                                        catch
-                                                        {
-                                                        }
                                                     }
                                                 }
-                                                else // Jester not activated, no action
+                                                else // normal i.e. not string findreplace: Jester page
                                                 {
+
+                                                    if (!(State.dll_installed_rio && State.activeconfig.RIO_Enabled) || restore)
+                                                    {
+                                                        // AIRIO disabled: reset functions to original
+                                                        writestring = effectiveOrig; // <-- this is used when RIO not enabled
+                                                    }
+                                                    else // normal, RIO is enabled
+                                                    {
+
+                                                        if (thisfile.append)
+                                                        {
+                                                            writestring = effectiveOrig;
+
+                                                            if (!restore)
+                                                            {
+                                                                writestring += "\n" + effectiveSource;
+                                                            }
+                                                        }
+                                                        else // replace type
+                                                        {
+                                                            if (thisfile.reset || restore)
+                                                            {
+                                                                writestring = effectiveOrig;
+                                                            }
+                                                            else
+                                                            {
+                                                                writestring = effectiveSource;
+                                                            }
+                                                        }
+                                                    }
+
+                                                    try
+                                                    {
+                                                        using (StreamWriter writer = new StreamWriter(path, true))
+                                                        {
+                                                            writer.Write(writestring);
+                                                        }
+                                                    }
+                                                    catch
+                                                    {
+                                                    }
                                                 }
                                             }
                                             else //not AIRIO i.e. for regular lua files
@@ -397,13 +463,27 @@ namespace VAICOM
                                                     }
                                                     else // not restore
                                                     {
-                                                        if (uselegacy)
+                                                        if (thisfile.filename.Equals("JesterAI_Page.lua", StringComparison.OrdinalIgnoreCase))
                                                         {
-                                                            writestring = thisfile.orig_legacy + "\n" + thisfile.source_legacy;
+                                                            if (uselegacy)
+                                                            {
+                                                                writestring = thisfile.source_legacy;
+                                                            }
+                                                            else
+                                                            {
+                                                                writestring = thisfile.source;
+                                                            }
                                                         }
                                                         else
                                                         {
-                                                            writestring = thisfile.orig + "\n" + thisfile.source;
+                                                            if (uselegacy)
+                                                            {
+                                                                writestring = thisfile.orig_legacy + "\n" + thisfile.source_legacy;
+                                                            }
+                                                            else
+                                                            {
+                                                                writestring = thisfile.orig + "\n" + thisfile.source;
+                                                            }
                                                         }
                                                     }
                                                 }

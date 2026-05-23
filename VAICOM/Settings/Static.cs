@@ -92,6 +92,7 @@ namespace VAICOM
                 {RecipientCategories.cargo,          "Cargo Menu"                            },
                 {RecipientCategories.RIO,            "RIO"                                   },
                 {RecipientCategories.AI_pilot,       "AI Pilot"                              },
+                {RecipientCategories.WSO,            "WSO"                                   },
                 {RecipientCategories.kneeboard,      "Interactive Kneeboard extension"       },
             };
 
@@ -131,6 +132,15 @@ namespace VAICOM
                 {CommandCategories.RIO_misc,               "F-14 AI RIO | Misc"            },
                 {CommandCategories.AI_pilot,               "F-14 AI Pilot"                 },
                 {CommandCategories.AH64D_GeorgeAI,         "AH-64D | George AI"            },
+                {CommandCategories.WSO,                    "F-4E AI WSO"                   },
+                {CommandCategories.WSO_navigation,         "F-4E AI WSO | Navigation"      },
+                {CommandCategories.WSO_radio,              "F-4E AI WSO | Radio"           },
+                {CommandCategories.WSO_radar,              "F-4E AI WSO | Radar"           },
+                {CommandCategories.WSO_weapons,            "F-4E AI WSO | Weapons"         },
+                {CommandCategories.WSO_defensive,          "F-4E AI WSO | Defensive"       },
+                {CommandCategories.WSO_crew,               "F-4E AI WSO | Crew Control"    },
+                {CommandCategories.WSO_groundcrew,         "F-4E AI WSO | Ground Crew"     },
+                {CommandCategories.WSO_misc,               "F-4E AI WSO | Misc"            },                
                 {CommandCategories.kneeboard,              "Interactive Kneeboard extension"},
             };
         }
@@ -146,7 +156,6 @@ namespace VAICOM
                 { "database",   "Database"  },
                 { "profiles",   "Profiles"  },
                 { "export",     "Export"    },
-                //{ "extensions", "Extensions"}, //Extensions folder no longer required
             };
 
         }

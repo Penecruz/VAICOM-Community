@@ -14,7 +14,7 @@ namespace VAICOM
             public static partial class Message
             {
 
-                // scans for keywords from category database in current sentence
+                // Scans for keywords from category database in current sentence.
                 public static bool scanfor(string category)
                 {
                     if (!State.have[category])
@@ -62,7 +62,9 @@ namespace VAICOM
 
                         foreach (KeyValuePair<string, string> set in localresults)
                         {
-                            if (set.Key.ToLower().Equals("two")) // added bias for Two in calls
+                            // Add bias for WSO and Two recipients in calls, ensuring that "two" is at the start of the sentence.
+                            if (category.Equals("recipient")
+                                && (set.Value.Equals("WSO") || (set.Key.ToLower().Equals("two") && searchinput.StartsWith(set.Key.ToLower()))))
                             {
                                 usedalias = set.Key;
                                 finalresult = set.Value;
@@ -77,9 +79,20 @@ namespace VAICOM
                                     longest = set.Key.Length;
                                 }
                             }
-                        }
 
-                        //
+                            // Skip the WSO recipient, this category is for the case where we are
+                            // issuing a command that requires a WSO command recipient, but the
+                            // WSO alias is also present in the sentence.
+                            if (category.Equals("wsocmdrecipient"))
+                            {
+                                if (!set.Value.Equals("WSO") && set.Key.Length > longest)
+                                {
+                                    usedalias = set.Key;
+                                    finalresult = set.Value;
+                                    longest = set.Key.Length;
+                                }
+                            }
+                        }
 
                         // evaluate final result in this category, exit false if moot:
 
@@ -114,29 +127,29 @@ namespace VAICOM
 
                             if (category.Equals("recipient"))
                             {
-
                                 if (callsignmatch)
                                 {
                                     return false;
                                 }
                                 else
                                 {
-
-                                    Log.Write("Have result, identified as " + category + ": " + usedalias, Colors.Text);
+                                    Log.Write("Have result, identified as " + category + ": alias: '" + usedalias + "', key: '" + finalresult + "'", Colors.Text);
                                     State.currentkey[category] = finalresult;
                                     State.usedalias[category] = usedalias;
                                     return true;
-
                                 }
                             }
 
-                            // other cats
+                            if (category.Equals("wsocmdrecipient") && finalresult.Equals("WSO"))
+                            {
+                                return false;
+                            }
 
+                            // other cats
                             State.currentkey[category] = finalresult;
                             State.usedalias[category] = usedalias;
 
                             Log.Write("Have result, identified as " + category + ": " + usedalias, Colors.Text);
-
                         }
 
                         return haveresult;

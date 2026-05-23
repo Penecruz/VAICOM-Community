@@ -132,8 +132,6 @@ namespace VAICOM
                         resourcestring = resourcestring.Replace("$HEADER$", insert);
                         insert = "Version: " + State.pluginversionnumber;
                         resourcestring = resourcestring.Replace("$VERSION$", insert);
-                        insert = "License: " + State.currentlicense;
-                        resourcestring = resourcestring.Replace("$LICENSE$", insert);
 
                         insert = "VAICOMPRO.dll " + State.dll_version_plugin;
                         resourcestring = resourcestring.Replace("$DLLPLUGIN$", insert);

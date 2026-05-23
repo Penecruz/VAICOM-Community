@@ -1075,6 +1075,42 @@ namespace VAICOM
                     Log.Write($"Error while opening YouTube tutorials: {ex.Message}", Static.Colors.Warning);
                 }
             }
+
+            private void OpenKeywordsReference(object sender, MouseButtonEventArgs e)
+            {
+                try
+                {
+                    string exportFolderPath = Path.Combine(State.VA_APPS, AppData.RootFolder, AppData.SubFolders["export"]);
+                    string keywordsHtmlPath = Path.Combine(exportFolderPath, "keywords.html");
+
+                    Log.Write("Generating keywords HTML reference...", Static.Colors.Message);
+                    VAICOM.FileManager.FileHandler.Database.ExportKeywordsAsHTML();
+
+                    if (!File.Exists(keywordsHtmlPath))
+                    {
+                        Log.Write("Keywords HTML reference not found after HTML export. Running full keyword export...", Static.Colors.Warning);
+                        VAICOM.FileManager.FileHandler.Database.ExportMasterKeywordString();
+                    }
+
+                    if (File.Exists(keywordsHtmlPath))
+                    {
+                        Log.Write("Opening keywords HTML reference.", Static.Colors.Message);
+                        Process.Start(new ProcessStartInfo
+                        {
+                            FileName = keywordsHtmlPath,
+                            UseShellExecute = true
+                        });
+                    }
+                    else
+                    {
+                        Log.Write("Unable to open keywords HTML reference; file was not created.", Static.Colors.Warning);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Log.Write($"Error while opening keywords reference: {ex.Message}", Static.Colors.Warning);
+                }
+            }
         }
 
     }

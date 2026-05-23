@@ -55,43 +55,27 @@ namespace VAICOM
                 // restores/writes all keyword (alias) database files
                 public static void WriteAllCategoriesToFile(bool overwrite)
                 {
-                    Dictionary<string, string> WriteObject = new Dictionary<string, string>();
                     try
                     {
-                        //Log.Write("Updating keywords database...", Colors.Text);
+                        // Existing logic for writing other categories
                         foreach (KeyValuePair<string, Dictionary<string, string>> entry in Aliases.categories)
                         {
-
-                            string filename;
-
-                            if (State.databaseencrypted)
-                            { filename = Aliases.scrambleddbfilenames[entry.Key]; }
-                            else
-                            { filename = entry.Key + ".json"; }
-
-                            WriteObject = entry.Value;
-
+                            string filename = State.databaseencrypted ? Aliases.scrambleddbfilenames[entry.Key] : entry.Key + ".json";
                             string path = State.VA_APPS + "\\" + AppData.RootFolder + "\\" + AppData.SubFolders["database"] + "\\" + filename;
-                            string jsonstring;
-                            if (State.databaseencrypted)
-                            {
-                                jsonstring = Helpers.Crypto.Encrypt(JsonConvert.SerializeObject(WriteObject, Formatting.Indented));
-                            }
-                            else
-                            {
-                                jsonstring = JsonConvert.SerializeObject(WriteObject, Formatting.Indented);
-                            }
+
+                            string jsonstring = State.databaseencrypted
+                                ? Helpers.Crypto.Encrypt(JsonConvert.SerializeObject(entry.Value, Formatting.Indented))
+                                : JsonConvert.SerializeObject(entry.Value, Formatting.Indented);
 
                             if (overwrite || !File.Exists(path))
                             {
                                 File.WriteAllText(path, jsonstring);
                             }
-                        }
-                        //Log.Write("Success.", Colors.Text);
+                        }                        
                     }
-                    catch (Exception)
+                    catch (Exception e)
                     {
-                        //Log.Write("Exception: " + e.ToString(), colors.Text);
+                        Log.Write("Exception while writing all categories: " + e.ToString(), Colors.Text);
                     }
 
                 }
@@ -101,53 +85,38 @@ namespace VAICOM
                 {
                     Log.Write("Loading keywords database...", Colors.Text);
 
-                    // read database into Reference tables 
+                    // Read database into reference tables
                     foreach (KeyValuePair<string, Dictionary<string, string>> entry in Aliases.categories)
                     {
-                        string filename;
-                        if (State.databaseencrypted)
-                        { filename = Aliases.scrambleddbfilenames[entry.Key]; }
-                        else
-                        { filename = entry.Key + ".json"; }
+                        string filename = State.databaseencrypted ? Aliases.scrambleddbfilenames[entry.Key] : entry.Key + ".json";
                         try
                         {
-                            Dictionary<string, string> ReturnObject = new Dictionary<string, string>();
                             string path = State.VA_APPS + "\\" + AppData.RootFolder + "\\" + AppData.SubFolders["database"] + "\\" + filename;
-                            if (State.databaseencrypted)
-                            { ReturnObject = JsonConvert.DeserializeObject<Dictionary<string, string>>(Helpers.Crypto.Decrypt(File.ReadAllText(path))); }
-                            else { ReturnObject = JsonConvert.DeserializeObject<Dictionary<string, string>>(File.ReadAllText(path)); }
-                            Dictionary<string, string> newvalue = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-                            newvalue = ReturnObject;
-                            Aliases.reference[entry.Key] = newvalue;
-                            //Log.Write("  " + entry.Key, colors.Text);
-                        }
-                        catch (Exception)
-                        {
-                            //Log.Write("Exception: " + e.Message, colors.Text);
-                        }
+                            Dictionary<string, string> ReturnObject = State.databaseencrypted
+                                ? JsonConvert.DeserializeObject<Dictionary<string, string>>(Helpers.Crypto.Decrypt(File.ReadAllText(path)))
+                                : JsonConvert.DeserializeObject<Dictionary<string, string>>(File.ReadAllText(path));
 
+                            Aliases.reference[entry.Key] = new Dictionary<string, string>(ReturnObject, StringComparer.OrdinalIgnoreCase);
+                        }
+                        catch (Exception e)
+                        {
+                            Log.Write("Exception while reading category: " + e.Message, Colors.Text);
+                        }
                     }
 
                     int warncounter = 0;
 
                     foreach (KeyValuePair<string, Dictionary<string, string>> entry in Aliases.categories)
                     {
-                        //Log.Write("Reading reference from database: " + entry.Key, colors.Text);          
-
                         foreach (KeyValuePair<string, string> alias in entry.Value)
                         {
                             try
                             {
-                                //Log.Write(" db value: " + Aliases.database[entry.Key][alias.Key], colors.Text);
-
-                                // add aliases for keywords that don't have any yet 
                                 string keyword = alias.Value;
                                 bool diskhasaliasforkeyword = Aliases.reference[entry.Key].ContainsValue(keyword);
                                 if (!diskhasaliasforkeyword)
                                 {
-                                    warncounter = warncounter + 1;
-                                    //Log.Write("  Adding new aliases to reference table for " + keyword + " :", Colors.Text);
-
+                                    warncounter++;
                                     foreach (KeyValuePair<string, string> newalias in entry.Value)
                                     {
                                         if (newalias.Value.Equals(keyword))
@@ -157,13 +126,13 @@ namespace VAICOM
                                         }
                                     }
                                 }
-                                // for VSPX: fix aliases that should have asterisk in the new model (but not on disk yet) 
+
                                 if (State.activeconfig.UseNewRecognitionModel)
                                 {
                                     bool diskhasaliaswithoutasterisk = alias.Key.Contains("*") && Aliases.reference[entry.Key].ContainsKey(alias.Key.Replace("*", ""));
                                     if (diskhasaliaswithoutasterisk)
                                     {
-                                        string keywordstr = Aliases.reference[entry.Key][alias.Key.Replace("*", "")]; // get its value
+                                        string keywordstr = Aliases.reference[entry.Key][alias.Key.Replace("*", "")];
                                         Aliases.reference[entry.Key].Remove(alias.Key.Replace("*", ""));
                                         Aliases.reference[entry.Key].Add(alias.Key, keywordstr);
                                     }
@@ -171,13 +140,10 @@ namespace VAICOM
                             }
                             catch (Exception e)
                             {
-                                //Log.Write("There was a problem adding references for " + alias.Key + ": " + e.Message, Colors.Text);
+                                Log.Write("There was a problem adding references for " + alias.Key + ": " + e.Message, Colors.Text);
                             }
                         }
-
                     }
-
-                    //Log.Write(" warning counter: " + warncounter, colors.Warning);
 
                     Aliases.appendiceswpn = Aliases.reference["aiappendiceswpn"];
                     Aliases.appendicesdir = Aliases.reference["aiappendicesdir"];
@@ -214,10 +180,9 @@ namespace VAICOM
                     {
                         Log.Write("Writing updates.", Colors.Text);
                         FileHandler.Database.WriteAllCategoriesToFile(true);
-                    }
+                    }                 
 
-                    Log.Write("Success.", Colors.Text);
-
+                    Log.Write("Keywords database loaded successfully.", Colors.Text);
                 }
             }
         }

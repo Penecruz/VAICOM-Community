@@ -38,20 +38,10 @@ namespace VAICOM
                             return true;
                         }
 
-                        // Catch exceptional cases:
-                        if (State.currentcommand.blockedforFree)
+                        if (!State.activeconfig.AllowAddCommands)
                         {
-                            if (!State.PRO)
-                            {
-                                Log.Write("(this command is available only with PRO license)", Colors.Warning);
-                                UI.Playsound.Sorry();
-                                return false;
-                            }
-                            if (!State.activeconfig.AllowAddCommands)
-                            {
-                                Log.Write("Extended command set is currently disabled in preferences.", Colors.Warning);
-                                return false;
-                            }
+                            Log.Write("Extended command set is currently disabled in preferences.", Colors.Warning);
+                            return false;
                         }
 
                         // Options
@@ -62,45 +52,12 @@ namespace VAICOM
                             return false;
                         }
 
-                        // RIO LICENSE CHECK:
-                        if (State.currentcommand.requiresJester & !State.jesteractivated)
-                        {
-                            Log.Write("Activate your RIO Dialog extension license to use RIO commands.", Colors.Warning);
-                            UI.Playsound.Sorry();
-                            return false;
-                        }
-
                         // Reject if AIRIO but not in F14.
                         if (State.currentcommand.isRIO() && !State.AIRIOactive)
                         {
                             Log.Write("AIRIO commands are not available.", Colors.Warning);
                             UI.Playsound.Recipientna();
                             return false;
-                        }
-
-                        // CARRIER COMMS CHECK:
-                        if (State.currentcommand.requiresrealatc & !State.realatcactivated)
-                        {
-                            Log.Write("To use this command, activate your Realistic ATC extension license.", Colors.Warning);
-                            UI.Playsound.Sorry();
-                            return false;
-                        }
-
-                        // FC3
-                        if (State.currentcommand.blockedforFCnonPro & State.currentmodule.IsFC)
-                        {
-                            if (!State.PRO)
-                            {
-                                Log.Write("(for " + State.currentmodule.Name + " module this command is available only with PRO license)", Colors.Warning);
-                                UI.Playsound.Sorry();
-                                return false;
-                            }
-                            if (!State.activeconfig.AllowAddCommands)
-                            {
-                                Log.Write("Extended command set is currently disabled in preferences.", Colors.Warning);
-                                UI.Playsound.Sorry();
-                                return false;
-                            }
                         }
 
                         // FC3
@@ -139,10 +96,45 @@ namespace VAICOM
                                 return false;
                             }
                         }
+
+                        // F-4E WSO
+                        if (State.currentcommand.isWSO())
+                        {
+                            // Check if this command requires a recipient to have been provided, e.g. an ATC
+                            // when diverting to an airfield or tuning radio.
+                            if (State.currentcommand.RequiresWSOCommandRecipient() && State.currentWSOCommandRecipient == null)
+                            {
+                                if (State.have["wsocmdrecipient"])
+                                {
+                                    State.currentWSOCommandRecipient = Recipients.Table[State.currentkey["wsocmdrecipient"]];
+                                }
+                                else if (State.have["importedatcs"])
+                                {
+                                    State.currentWSOCommandRecipient = Recipients.Table[State.currentkey["importedatcs"]];
+                                }
+                                else
+                                {
+                                    if (State.activeconfig.UIaddhints)
+                                    {
+                                        UI.Playsound.Proceed();
+                                    }
+                                    Log.Write("(awaiting additional ATC, tanker, or asset for WSO command)", Colors.Message);
+                                    return false;
+                                }
+                            }
+
+                            // Explicitely set the WSO recipient to override any other that may have been in the spoken command,
+                            // e.g. when diverting to an airfield the airfield name gets set as the recipient.
+                            // This means that logging and output will corectly reflect that this was a WSO command.
+                            State.currentkey["recipient"] = "WSO";
+                            State.usedalias["recipient"] = "WSO";
+                            State.have["recipient"] = true;
+
+                            return true;
+                        }
                     }
 
                     return result;
-
                 }
             }
         }

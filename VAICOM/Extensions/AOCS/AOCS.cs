@@ -284,24 +284,15 @@ namespace VAICOM
                         // briefing command
                         if (State.currentkey["command"].Equals("readbriefing"))
                         {
-                            if (State.PRO)
-                            {
                                 //UI.Playsound.Commandcomplete();
-
-                                if (State.currentstate.multiplayer && !State.activeconfig.MP_AOCS)
-                                {
-                                    UI.Playsound.Sorry();
-                                    Log.Write("AOCS is deactivated for Multiplayer in Preferences.", Colors.Warning);
-                                }
-                                else
-                                {
-                                    AOCS_ReadBriefing(false);
-                                }
+                            if (State.currentstate.multiplayer && !State.activeconfig.MP_AOCS)
+                            {
+                                UI.Playsound.Sorry();
+                                Log.Write("AOCS is deactivated for Multiplayer in Preferences.", Colors.Warning);
                             }
                             else
                             {
-                                UI.Playsound.Sorry();
-                                Log.Write("This command requires a PRO license.", Colors.Text);
+                                AOCS_ReadBriefing(false);
                             }
                         }
 
@@ -310,8 +301,55 @@ namespace VAICOM
                         {
                             if (State.have["recipient"]) // for specific unit or cat
                             {
-                                if (State.PRO)
+                                if (State.activeconfig.DeepInterrogate)
                                 {
+                                    if (State.currentstate.multiplayer && !State.activeconfig.MP_AOCS)
+                                    {
+                                        UI.Playsound.Sorry();
+                                        Log.Write("AOCS is deactivated for Multiplayer in Preferences.", Colors.Warning);
+                                    }
+                                    else
+                                    {
+                                        //UI.Playsound.Commandcomplete();
+                                        string classstr = State.currentrecipientclass.Name;
+                                        List<Server.DcsUnit> unitlist = new List<Server.DcsUnit>();
+
+                                        bool singleunit;
+
+                                        if (!State.currentkey["recipient"].Equals("aocs") & !State.currentkey["recipient"].Equals("aux") & !State.currentkey["recipient"].Equals("cargo") & !State.currentkey["recipient"].Equals("crew"))
+                                        {
+
+                                            if (!State.calledisclass) // called for just a single unit
+                                            {
+                                                unitlist.Add(State.currentmessageunit);
+                                                singleunit = true;
+                                            }
+                                            else // called for an entire recipient class
+                                            {
+                                                unitlist = State.currentstate.availablerecipients[classstr];
+                                                singleunit = false;
+                                            }
+
+                                            AOCS_ReadUnits(unitlist, classstr, singleunit);
+                                        }
+                                        else // aocs was called: do general mission status
+                                        {
+                                            AOCS_ReadMissionOverview();
+                                        }
+                                    }
+                                }
+                                else
+                                {
+                                    Log.Write("Deep Interrogate is disabled in preferences.", Colors.Warning);
+                                    UI.Playsound.Sorry();
+                                }
+                            }
+                            else
+                            {
+                                if (State.genericstaterequest)
+                                {
+                                    Log.Write("Generic state requested.", Colors.Inline);
+
                                     if (State.activeconfig.DeepInterrogate)
                                     {
                                         if (State.currentstate.multiplayer && !State.activeconfig.MP_AOCS)
@@ -321,66 +359,13 @@ namespace VAICOM
                                         }
                                         else
                                         {
-                                            //UI.Playsound.Commandcomplete();
-                                            string classstr = State.currentrecipientclass.Name;
-                                            List<Server.DcsUnit> unitlist = new List<Server.DcsUnit>();
-
-                                            bool singleunit;
-
-                                            if (!State.currentkey["recipient"].Equals("aocs") & !State.currentkey["recipient"].Equals("aux") & !State.currentkey["recipient"].Equals("cargo") & !State.currentkey["recipient"].Equals("crew"))
-                                            {
-
-                                                if (!State.calledisclass) // called for just a single unit
-                                                {
-                                                    unitlist.Add(State.currentmessageunit);
-                                                    singleunit = true;
-                                                }
-                                                else // called for an entire recipient class
-                                                {
-                                                    unitlist = State.currentstate.availablerecipients[classstr];
-                                                    singleunit = false;
-                                                }
-
-                                                AOCS_ReadUnits(unitlist, classstr, singleunit);
-                                            }
-                                            else // aocs was called: do general mission status
-                                            {
-                                                AOCS_ReadMissionOverview();
-                                            }
+                                            AOCS_ReadMissionOverview();
                                         }
                                     }
                                     else
                                     {
-                                        Log.Write("Deep Interrogate is disabled in preferences.", Colors.Warning);
                                         UI.Playsound.Sorry();
-                                    }
-                                }
-                            }
-                            else
-                            {
-                                if (State.genericstaterequest)
-                                {
-                                    Log.Write("Generic state requested.", Colors.Inline);
-
-                                    if (State.PRO)
-                                    {
-                                        if (State.activeconfig.DeepInterrogate)
-                                        {
-                                            if (State.currentstate.multiplayer && !State.activeconfig.MP_AOCS)
-                                            {
-                                                UI.Playsound.Sorry();
-                                                Log.Write("AOCS is deactivated for Multiplayer in Preferences.", Colors.Warning);
-                                            }
-                                            else
-                                            {
-                                                AOCS_ReadMissionOverview();
-                                            }
-                                        }
-                                        else
-                                        {
-                                            UI.Playsound.Sorry();
-                                            Log.Write("Deep Interrogate is disabled in preferences.", Colors.Warning);
-                                        }
+                                        Log.Write("Deep Interrogate is disabled in preferences.", Colors.Warning);
                                     }
                                 }
                             }

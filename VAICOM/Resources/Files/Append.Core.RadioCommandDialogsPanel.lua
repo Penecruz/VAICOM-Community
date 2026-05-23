@@ -145,6 +145,22 @@ function selectCommunicatorDeviceId(targetCommunicator)
 	if data.intercomId == nil or data.communicators == nil then	
 		return nil
 	end
+
+			local function callMethod(obj, methodName)
+				if obj == nil then
+					return nil
+				end
+				local okCall, result = base.pcall(function()
+					if obj[methodName] then
+						return obj[methodName](obj)
+					end
+					return nil
+				end)
+				if okCall and result ~= nil then
+					return result
+				end
+				return nil
+			end
 	if targetCommunicator == nil then
 		return data.intercomId
 	end
@@ -459,8 +475,26 @@ function getSelectedRadio(dcsId)
 				selectedRadio = findRadioDisplayName("AN/ARC-134", "ARC-134", "VHF AM") or selectedRadio
 			end
 		end
+ elseif dcsId == "F-100D" then
+		selectedRadio = findRadioDisplayName("UHF Radio AN/ARC-34", "Radio AN/ARC-34", "AN/ARC-34") or selectedRadio
 	end
 	return selectedRadio
+end
+
+local function radioNamesMatch(nameA, nameB)
+	if nameA == nil or nameB == nil then
+		return false
+	end
+
+	local normalizedA = normalizeRadioName(nameA)
+	local normalizedB = normalizeRadioName(nameB)
+
+	if normalizedA == normalizedB then
+		return true
+	end
+
+	return base.string.find(normalizedA, normalizedB, 1, true) ~= nil
+		or base.string.find(normalizedB, normalizedA, 1, true) ~= nil
 end
 
 function updateMainCaption()
@@ -526,8 +560,7 @@ function DecodeMessage(rawdata)
 		return nil
 	end
 	base.vaicom.state.activemessage = msg		
-	returnclient = msg.client or false
-	return returnclient
+  return true
 end		
 function ProcessRemoteCommand()
 
@@ -1118,7 +1151,27 @@ base.vaicom.properties = {
 		local Modulation = nil
 		local Modulationstr = "XX"
 		if Locator ~= nil then
-			Modulation  = Locator:getCommunicator():getModulation()
+         UnitCommunicator = Locator:getCommunicator()
+		end
+		if UnitCommunicator then
+			local okMod, mod = base.pcall(function()
+				return UnitCommunicator:getModulation()
+			end)
+			if okMod and mod ~= nil then
+				Modulation = mod
+			else
+				local okCount, count = base.pcall(function()
+					return UnitCommunicator:countTransivers()
+				end)
+				if okCount and count and count > 0 then
+					local okMod0, mod0 = base.pcall(function()
+						return UnitCommunicator:getModulation(0)
+					end)
+					if okMod0 and mod0 ~= nil then
+						Modulation = mod0
+					end
+				end
+			end
 		end
 		if Modulation == base.Communicator.MODULATION_AM then Modulationstr = "AM" end
 		if Modulation == base.Communicator.MODULATION_FM then Modulationstr = "FM" end
@@ -1131,7 +1184,24 @@ base.vaicom.properties = {
 			UnitCommunicator = Locator:getCommunicator()
 		end
 		if UnitCommunicator then
-			Frequency = UnitCommunicator:getFrequency() or "0"		
+            local okFreq, freq = base.pcall(function()
+				return UnitCommunicator:getFrequency()
+			end)
+			if okFreq and freq ~= nil then
+				Frequency = freq
+			else
+				local okCount, count = base.pcall(function()
+					return UnitCommunicator:countTransivers()
+				end)
+				if okCount and count and count > 0 then
+					local okFreq0, freq0 = base.pcall(function()
+						return UnitCommunicator:getFrequency(0)
+					end)
+					if okFreq0 and freq0 ~= nil then
+						Frequency = freq0
+					end
+				end
+			end
 		else 
 			Frequency = "0"
 		end
@@ -1145,12 +1215,242 @@ base.vaicom.properties = {
 			UnitCommunicator = Locator:getCommunicator()
 		end
 		if UnitCommunicator then
-			counter = UnitCommunicator:countTransivers()
+            local okCount, count = base.pcall(function()
+				return UnitCommunicator:countTransivers()
+			end)
+			if okCount and count then
+				counter = count
+			end
 		end
 		for i = 0, counter-1 do
-			FreqTbl[i] = UnitCommunicator:getFrequency(i) or nil 	
+            local okFreq, freq = base.pcall(function()
+				return UnitCommunicator:getFrequency(i)
+			end)
+			if okFreq and freq ~= nil then
+				FreqTbl[i] = freq
+			end
 		end
 		return FreqTbl
+	end,
+    tacan = function(Locator)
+		local tacan = ""
+		local okTacan, result = base.pcall(function()
+			if Locator == nil then
+				return ""
+			end
+
+			local function readAnyValue(obj, keys)
+				if obj == nil then
+					return nil
+				end
+				for _, key in base.pairs(keys) do
+					local okValue, value = base.pcall(function() return obj[key] end)
+					if okValue and value ~= nil and base.type(value) ~= "function" then
+						return value
+					end
+					if okValue and base.type(value) == "function" then
+						local okCall, callResult = base.pcall(function() return value(obj) end)
+						if okCall and callResult ~= nil then
+							return callResult
+						end
+					end
+				end
+				return nil
+			end
+
+			local function normalizeBand(v)
+				if v == nil then
+					return ""
+				end
+				local s = base.tostring(v)
+				if s == "" then
+					return ""
+				end
+				local u = base.string.upper(s)
+				if u == "X" or u == "Y" then
+					return u
+				end
+				local n = base.tonumber(s)
+				if n == 0 then return "X" end
+				if n == 1 then return "Y" end
+				return s
+			end
+
+			local function composeTacan(beaconObj)
+				if beaconObj == nil then
+					return ""
+				end
+
+				local channel = readAnyValue(beaconObj, {
+					"channel", "Channel", "channelNumber", "tacanChannel", "TACANChannel",
+					"getChannel", "get_channel", "getChannelNumber", "getTacanChannel", "getTACANChannel"
+				})
+              if channel == nil then
+					channel = callMethod(beaconObj, "getChannel") or callMethod(beaconObj, "get_channel") or callMethod(beaconObj, "getChannelNumber") or callMethod(beaconObj, "getTacanChannel") or callMethod(beaconObj, "getTACANChannel")
+				end
+				if channel == nil then
+					return ""
+				end
+
+				local band = readAnyValue(beaconObj, {
+					"modeChannel", "modechannel", "band", "mode", "tacanBand", "TACANBand",
+					"getModeChannel", "get_modechannel", "getBand", "getMode", "getTacanBand", "getTACANBand"
+				})
+				if band == nil then
+					band = callMethod(beaconObj, "getModeChannel") or callMethod(beaconObj, "get_modechannel") or callMethod(beaconObj, "getBand") or callMethod(beaconObj, "getMode") or callMethod(beaconObj, "getTacanBand") or callMethod(beaconObj, "getTACANBand")
+				end
+
+				local channelnum = base.tonumber(channel)
+				local c = channelnum ~= nil and base.tostring(base.math.floor(channelnum + 0.5)) or base.tostring(channel)
+				local b = normalizeBand(band)
+				return c .. b
+			end
+
+			local beacon = nil
+			local okBeacon = false
+			okBeacon, beacon = base.pcall(function() return Locator:getBeacon() end)
+         if not okBeacon then
+				beacon = nil
+			end
+			if (not okBeacon) or beacon == nil then
+				local okComm, comm = base.pcall(function() return Locator:getCommunicator() end)
+				if okComm and comm ~= nil then
+					local okCommBeacon, commBeacon = base.pcall(function() return comm:getBeacon() end)
+                  if not okCommBeacon then
+						commBeacon = nil
+					end
+					if okCommBeacon and commBeacon ~= nil then
+						beacon = commBeacon
+					end
+				end
+			end
+
+			if beacon == nil then
+				return ""
+			end
+
+			local tacanValue = composeTacan(beacon)
+			if tacanValue ~= "" then
+				return tacanValue
+			end
+
+			if base.type(beacon) == "table" then
+				for _, b in base.pairs(beacon) do
+					tacanValue = composeTacan(b)
+					if tacanValue ~= "" then
+						return tacanValue
+					end
+				end
+			end
+
+			return ""
+		end)
+
+		if okTacan and result ~= nil then
+			tacan = result
+		end
+
+		return tacan
+	end,
+  unitdiagnostics = function(Locator)
+		local probe = ""
+		local okProbe, result = base.pcall(function()
+			if Locator == nil then
+				return "LOC=nil"
+			end
+
+			local parts = {}
+			local function addPart(v)
+				if v == nil then return end
+				if #parts >= 12 then return end
+				parts[#parts + 1] = base.tostring(v)
+			end
+
+			local function readMethod(obj, methodName)
+				if obj == nil then return nil end
+				local okCall, value = base.pcall(function()
+					if obj[methodName] then
+						return obj[methodName](obj)
+					end
+					return nil
+				end)
+				if okCall then
+					return value
+				end
+				return nil
+			end
+
+			local function readField(obj, fieldName)
+				if obj == nil then return nil end
+				local okRead, value = base.pcall(function() return obj[fieldName] end)
+				if okRead then
+					return value
+				end
+				return nil
+			end
+
+			local okBeacon, beacon = base.pcall(function() return Locator:getBeacon() end)
+            if not okBeacon then
+				beacon = nil
+			end
+			addPart("L:getBeacon=" .. (okBeacon and (beacon ~= nil and "ok" or "nil") or "err"))
+
+			local comm = nil
+			local okComm = false
+			okComm, comm = base.pcall(function() return Locator:getCommunicator() end)
+			addPart("L:getComm=" .. (okComm and (comm ~= nil and "ok" or "nil") or "err"))
+
+			if (beacon == nil) and okComm and comm ~= nil then
+				local okCommBeacon, commBeacon = base.pcall(function() return comm:getBeacon() end)
+                if not okCommBeacon then
+					commBeacon = nil
+				end
+				addPart("C:getBeacon=" .. (okCommBeacon and (commBeacon ~= nil and "ok" or "nil") or "err"))
+				if okCommBeacon and commBeacon ~= nil then
+					beacon = commBeacon
+				end
+			end
+
+			local channel = readField(beacon, "channel")
+			if channel == nil then channel = readField(beacon, "Channel") end
+			if channel == nil then channel = readField(beacon, "channelNumber") end
+			if channel == nil then channel = readField(beacon, "tacanChannel") end
+			if channel == nil then channel = readMethod(beacon, "getChannel") end
+			if channel == nil then channel = readMethod(beacon, "get_channel") end
+			if channel == nil then channel = readMethod(beacon, "getChannelNumber") end
+			if channel == nil then channel = readMethod(beacon, "getTacanChannel") end
+
+			local band = readField(beacon, "modeChannel")
+			if band == nil then band = readField(beacon, "modechannel") end
+			if band == nil then band = readField(beacon, "band") end
+			if band == nil then band = readField(beacon, "mode") end
+			if band == nil then band = readField(beacon, "tacanBand") end
+			if band == nil then band = readMethod(beacon, "getModeChannel") end
+			if band == nil then band = readMethod(beacon, "get_modechannel") end
+			if band == nil then band = readMethod(beacon, "getBand") end
+			if band == nil then band = readMethod(beacon, "getMode") end
+			if band == nil then band = readMethod(beacon, "getTacanBand") end
+
+			addPart("ch=" .. base.tostring(channel))
+			addPart("band=" .. base.tostring(band))
+
+			if beacon ~= nil and base.type(beacon) == "table" then
+				local i = 0
+				for k,_ in base.pairs(beacon) do
+					i = i + 1
+					if i > 4 then break end
+					addPart("bk." .. base.tostring(k))
+				end
+			end
+
+			return base.table.concat(parts, ";")
+		end)
+
+		if okProbe and result ~= nil then
+			probe = result
+		end
+
+		return probe
 	end,
 	freqmods = function(Locator)
 		local UnitCommunicator = nil
@@ -1353,7 +1653,89 @@ base.vaicom.objects = {
 	end,
 	localAWACSs = function(getside)
 		local Collection = {}
-			Collection = base.coalition.getServiceProviders(getside, base.coalition.service.AWACS)
+          Collection = base.coalition.getServiceProviders(getside, base.coalition.service.AWACS)
+
+		local function addUniqueUnit(unit)
+			if unit == nil then return end
+			local uid = unit.id_
+			if uid == nil then
+				base.table.insert(Collection, unit)
+				return
+			end
+			for _, existing in base.pairs(Collection) do
+				if existing ~= nil and existing.id_ == uid then
+					return
+				end
+			end
+			base.table.insert(Collection, unit)
+		end
+
+		local function isAwacsLikeUnit(unit)
+			if unit == nil then return false end
+
+			local desc = nil
+			local okDesc, valueDesc = base.pcall(function() return unit:getDesc() end)
+			if okDesc then
+				desc = valueDesc
+			end
+
+			if desc and desc.attributes and desc.attributes.AWACS then
+				return true
+			end
+
+			local typeName = ""
+			if desc ~= nil then
+				typeName = base.string.upper(base.tostring(desc.typeName or desc.displayName or ""))
+			end
+
+			if base.string.find(typeName, "E-2", 1, true)
+				or base.string.find(typeName, "E2", 1, true)
+				or base.string.find(typeName, "HAWKEYE", 1, true)
+				or base.string.find(typeName, "E-3", 1, true)
+				or base.string.find(typeName, "E3", 1, true)
+				or base.string.find(typeName, "SENTRY", 1, true)
+				or base.string.find(typeName, "E-7", 1, true)
+				or base.string.find(typeName, "E7", 1, true)
+				or base.string.find(typeName, "WEDGETAIL", 1, true)
+			then
+				return true
+			end
+
+			local callsign = ""
+			local okCallsign, valueCallsign = base.pcall(function()
+				return base.vaicom.properties and base.vaicom.properties.missioncallsign and base.vaicom.properties.missioncallsign(unit) or ""
+			end)
+			if okCallsign and valueCallsign ~= nil then
+				callsign = base.string.upper(base.tostring(valueCallsign))
+			end
+
+			if base.string.find(callsign, "DARKSTAR", 1, true)
+				or base.string.find(callsign, "FOCUS", 1, true)
+				or base.string.find(callsign, "MAGIC", 1, true)
+				or base.string.find(callsign, "OVERLORD", 1, true)
+				or base.string.find(callsign, "WIZARD", 1, true)
+			then
+				return true
+			end
+
+			return false
+		end
+
+		local okGroups, planeGroups = base.pcall(function()
+			return base.coalition.getGroups and base.coalition.getGroups(getside, base.Group.Category.AIRPLANE)
+		end)
+		if okGroups and planeGroups ~= nil and base.type(planeGroups) == "table" then
+			for _, g in base.pairs(planeGroups) do
+				local okUnits, units = base.pcall(function() return g:getUnits() end)
+				if okUnits and units ~= nil and base.type(units) == "table" then
+					for _, u in base.pairs(units) do
+						if isAwacsLikeUnit(u) then
+							addUniqueUnit(u)
+						end
+					end
+				end
+			end
+		end
 		return Collection
 	end,	
 	localTankers = function(getside)
@@ -1382,6 +1764,71 @@ base.vaicom.objects = {
 			Collection = base.coalition.getPlayers and base.coalition.getPlayers(getside)
 		return Collection
 	end,	
+   localOpposition = function(getside)
+		local Collection = {}
+		local opposite = nil
+		if getside == base.coalition.side.BLUE then opposite = base.coalition.side.RED end
+		if getside == base.coalition.side.RED then opposite = base.coalition.side.BLUE end
+
+		local function addUniqueUnit(unit)
+			if unit == nil then return end
+			local uid = unit.id_
+			if uid == nil then
+				base.table.insert(Collection, unit)
+				return
+			end
+			for _, existing in base.pairs(Collection) do
+				if existing ~= nil and existing.id_ == uid then
+					return
+				end
+			end
+			base.table.insert(Collection, unit)
+		end
+
+		local function addUnits(units)
+			if units ~= nil and base.type(units) == "table" then
+				for _, u in base.pairs(units) do
+					addUniqueUnit(u)
+				end
+			end
+		end
+
+		local function addGroupAircraft(group)
+			if group == nil then return end
+			local okUnits, units = base.pcall(function() return group:getUnits() end)
+			if okUnits and units ~= nil and base.type(units) == "table" then
+				for _, u in base.pairs(units) do
+					addUniqueUnit(u)
+				end
+			end
+		end
+		if opposite then
+           addUnits(base.vaicom.objects.localJTACs(opposite))
+			addUnits(base.vaicom.objects.localAWACSs(opposite))
+			addUnits(base.vaicom.objects.localTankers(opposite))
+			addUnits(base.vaicom.objects.localATCs(opposite))
+			addUnits(base.vaicom.objects.localAllies(opposite))
+
+			local okPlaneGroups, planeGroups = base.pcall(function()
+				return base.coalition.getGroups and base.coalition.getGroups(opposite, base.Group.Category.AIRPLANE)
+			end)
+			if okPlaneGroups and planeGroups ~= nil and base.type(planeGroups) == "table" then
+				for _, g in base.pairs(planeGroups) do
+					addGroupAircraft(g)
+				end
+			end
+
+			local okHeliGroups, heliGroups = base.pcall(function()
+				return base.coalition.getGroups and base.coalition.getGroups(opposite, base.Group.Category.HELICOPTER)
+			end)
+			if okHeliGroups and heliGroups ~= nil and base.type(heliGroups) == "table" then
+				for _, g in base.pairs(heliGroups) do
+					addGroupAircraft(g)
+				end
+			end
+		end
+		return Collection
+	end,
 }
 base.vaicom.list = {
 	localRadios = function()
@@ -1423,6 +1870,65 @@ base.vaicom.list = {
 		if not selectstr or selectstr == "radio" then
 			Listing = base.vaicom.filter.hasradio(Listing)
 		end
+
+		local function isRotorModule()
+			local moduleCat = base.string.upper(base.tostring(base.vaicom.state and base.vaicom.state.dcsmodulecat or ""))
+			if moduleCat == "HELICOPTERS" then
+				return true
+			end
+			local dcsid = base.string.upper(base.tostring(base.vaicom.state and base.vaicom.state.dcsid or ""))
+			if base.string.find(dcsid, "UH-", 1, true)
+				or base.string.find(dcsid, "AH-", 1, true)
+				or base.string.find(dcsid, "MI-", 1, true)
+				or base.string.find(dcsid, "KA-", 1, true)
+				or base.string.find(dcsid, "SA342", 1, true)
+				or base.string.find(dcsid, "CH-47", 1, true)
+			then
+				return true
+			end
+			return false
+		end
+
+		local function isHeliportAtc(locator)
+			if locator == nil then return false end
+			local descName = ""
+			local okDesc, desc = base.pcall(function() return locator:getDesc() end)
+			if okDesc and desc ~= nil then
+				descName = base.string.upper(base.tostring(desc.displayName or desc.typeName or ""))
+			end
+			local cs = ""
+			local okCs, vCs = base.pcall(function()
+				return base.vaicom.properties and base.vaicom.properties.missioncallsign and base.vaicom.properties.missioncallsign(locator) or ""
+			end)
+			if okCs and vCs ~= nil then
+				cs = base.string.upper(base.tostring(vCs))
+			end
+			local full = descName .. " " .. cs
+			return base.string.find(full, "HELI", 1, true) ~= nil
+				or base.string.find(full, "HELIPAD", 1, true) ~= nil
+				or base.string.find(full, "HELIPORT", 1, true) ~= nil
+				or base.string.find(full, "FARP", 1, true) ~= nil
+		end
+
+		local rotor = isRotorModule()
+		local filtered = {}
+		local heliOnly = {}
+		local nonHeliOnly = {}
+		for _, atc in base.pairs(Listing) do
+			if isHeliportAtc(atc) then
+				heliOnly[#heliOnly + 1] = atc
+			else
+				nonHeliOnly[#nonHeliOnly + 1] = atc
+			end
+		end
+
+		if rotor then
+			for _, atc in base.pairs(heliOnly) do filtered[#filtered + 1] = atc end
+			for _, atc in base.pairs(nonHeliOnly) do filtered[#filtered + 1] = atc end
+		else
+			for _, atc in base.pairs(nonHeliOnly) do filtered[#filtered + 1] = atc end
+		end
+		Listing = filtered
 		return Listing
 	end,
 	localAWACSs = function(selectstr)
@@ -1431,7 +1937,8 @@ base.vaicom.list = {
 		if coalition then
 			Listing = base.vaicom.helper.mergetables(Listing, base.vaicom.objects.localAWACSs(coalition))
 		end
-		if not selectstr or selectstr == "radio" then
+      local isMultiplayerNow = data.initialized and base.DCS.isMultiplayer() or false
+		if (not isMultiplayerNow) and (not selectstr or selectstr == "radio") then
 			Listing = base.vaicom.filter.hasradio(Listing)
 		end
 		return Listing
@@ -1442,7 +1949,8 @@ base.vaicom.list = {
 		if coalition then
 			Listing = base.vaicom.helper.mergetables(Listing, base.vaicom.objects.localTankers(coalition))
 		end
-		if not selectstr or selectstr == "radio" then
+      local isMultiplayerNow = data.initialized and base.DCS.isMultiplayer() or false
+		if (not isMultiplayerNow) and (not selectstr or selectstr == "radio") then
 			Listing = base.vaicom.filter.hasradio(Listing)
 		end
 		return Listing
@@ -1472,6 +1980,17 @@ base.vaicom.list = {
 		local coalition = data.pUnit and data.pUnit:getCoalition()
 		if coalition then
 			Listing = base.vaicom.helper.mergetables(Listing, base.vaicom.objects.localAllies(coalition))
+		end
+		return Listing
+	end,
+   localOpposition = function(selectstr)
+		local Listing = {}
+		local coalition = data.pUnit and data.pUnit:getCoalition()
+		if coalition then
+			Listing = base.vaicom.helper.mergetables(Listing, base.vaicom.objects.localOpposition(coalition))
+		end
+		if Listing ~= nil and #Listing > 1 then
+			base.table.sort(Listing, base.vaicom.helper.sortby.distance)
 		end
 		return Listing
 	end,
@@ -1541,6 +2060,10 @@ base.vaicom.get = {
 					local Stack = base.vaicom.list.localAllies(radio)
 					return Stack	
 				end,
+              Opposition  = function(sortfunction, radio)
+					local Stack = base.vaicom.list.localOpposition(radio)
+					return Stack	
+				end,
 				},
 				markers = function()
 					local count = 0
@@ -1607,6 +2130,7 @@ base.vaicom.state = {
 									ATC				= {},
 									AWACS			= {}, 
 									Tanker			= {},
+                                   Opposition		= {},
 									Crew			= {},
 									Aux				= {},
 									Moose		    = {}, -- Add moose
@@ -1620,6 +2144,7 @@ base.vaicom.state = {
 									ATC				= 0, 
 									AWACS			= 0, 
 									Tanker			= 0,
+                                    Opposition		= 0,
 									Crew			= 0,
 									Aux				= 0,
 									Moose			= 0, -- Add Moose
@@ -1655,7 +2180,41 @@ base.vaicom.state = {
 				base.vaicom.state.riostate.pstt						= base.vaicom.state.activemessage.AIRIO and (data.initialized and base.GetDevice(0).get_argument_value and (base.GetDevice(0):get_argument_value(11504) >0)) or false
 				base.vaicom.state.riostate.amt						= base.vaicom.state.activemessage.AIRIO and (data.initialized and base.GetDevice(0).get_argument_value and (base.GetDevice(0):get_argument_value(2022) == 0)) or false
 				base.vaicom.state.riostate.tcn						= base.vaicom.state.activemessage.AIRIO and (data.initialized and base.GetDevice(0).get_argument_value and (base.GetDevice(0):get_argument_value(374))) or 0
-				base.vaicom.state.riostate.ics						= base.vaicom.state.activemessage.AIRIO and (data.initialized and base.GetDevice(0).get_argument_value and (base.GetDevice(0):get_argument_value(2044) > -1)) or false
+               local f4eICSHot = false
+				local ah64ICSHot = false
+				local dcsId = base.vaicom.state.dcsid or ""
+				local isF4E = base.string.find(dcsId, "F-4E", 1, true) ~= nil
+				if data.initialized and isF4E and base.GetDevice(0) and base.GetDevice(0).get_argument_value then
+					local pilotIcs = base.GetDevice(0):get_argument_value(1378)
+                 local seatProxyLod = base.GetDevice(0):get_argument_value(3060)
+					if seatProxyLod == nil then
+						seatProxyLod = base.GetDevice(0):get_argument_value(3048)
+					end
+				   base.vaicom.state.riostate.f4ePilotIcs = pilotIcs or 0
+                   base.vaicom.state.riostate.f4eSeat = seatProxyLod or -1
+                 -- F-4E ICS selector: cold mic is negative, hot mic is centered, radio override is positive.
+					-- Treat HOT MIC and radio override as active intercom states. (Off is inactive)
+                   f4eICSHot = (pilotIcs ~= nil and pilotIcs > -0.1)
+				else
+					base.vaicom.state.riostate.f4ePilotIcs = 0
+                 base.vaicom.state.riostate.f4eSeat = -1
+				end
+
+				if data.initialized and base.GetDevice(0) and base.GetDevice(0).get_argument_value and base.string.find(dcsId, "AH-64D", 1, true) ~= nil then
+                    local seat = base.get_param_handle("SEAT"):get() -- Determine pilot or CPG seat
+					local pltIcsMode = base.GetDevice(0):get_argument_value(346)
+					local cpgIcsMode = base.GetDevice(0):get_argument_value(387) -- Added CPG controls for George Pilot expansion
+                   -- AH-64 ICS mode switch labels are HOT MIC/VOX/PTT.
+					-- Treat HOT MIC and VOX as active intercom states (PTT only is inactive).
+                   if seat == 0 then
+						ah64ICSHot = (pltIcsMode ~= nil and pltIcsMode < 0.5)
+					elseif seat == 1 then
+						ah64ICSHot = (cpgIcsMode ~= nil and cpgIcsMode < 0.5)
+					else
+						ah64ICSHot = (pltIcsMode ~= nil and pltIcsMode < 0.5) or (cpgIcsMode ~= nil and cpgIcsMode < 0.5)
+					end
+				end
+			   base.vaicom.state.riostate.ics						= (base.vaicom.state.activemessage.AIRIO and (data.initialized and base.GetDevice(0).get_argument_value and (base.GetDevice(0):get_argument_value(2044) > -1))) or f4eICSHot or ah64ICSHot -- Check for F-14 ICS state, F-4E pilot ICS hot mic position, or AH-64 ICS hot mic position
 				base.vaicom.state.riostate.sngl						= base.vaicom.state.activemessage.AIRIO and (data.initialized and base.GetDevice(0).get_argument_value and (base.GetDevice(0):get_argument_value(60) >0)) or false
 				base.vaicom.state.riostate.jmr						= base.vaicom.state.activemessage.AIRIO and (data.initialized and base.GetDevice(0).get_argument_value and (base.GetDevice(0):get_argument_value(151) ==1)) or false
 				base.vaicom.state.riostate.AM182					= base.vaicom.state.activemessage.AIRIO and (data.initialized and base.GetDevice(0).get_argument_value and (base.GetDevice(0):get_argument_value(359) ==1)) or false
@@ -1667,6 +2226,7 @@ base.vaicom.state = {
 				base.vaicom.state.availablerecipients.ATC			= data.initialized and base.vaicom.get.missiondata.listby.ATC(base.vaicom.helper.sortby.distance, 	"radio")
 				base.vaicom.state.availablerecipients.AWACS			= data.initialized and base.vaicom.get.missiondata.listby.AWACS(base.vaicom.helper.sortby.distance, "radio")
 				base.vaicom.state.availablerecipients.Tanker		= data.initialized and base.vaicom.get.missiondata.listby.Tanker(base.vaicom.helper.sortby.distance,"radio") 
+               base.vaicom.state.availablerecipients.Opposition	= data.initialized and base.vaicom.get.missiondata.listby.Opposition(base.vaicom.helper.sortby.distance, "radio")
 				base.vaicom.state.availablerecipients.Crew			= data.initialized and base.vaicom.get.missiondata.listby.Crew(base.vaicom.helper.sortby.distance, 	"radio") 
 				base.vaicom.state.availablerecipients.Aux			= data.initialized and base.vaicom.get.missiondata.listby.Aux(base.vaicom.helper.sortby.distance, 	"radio")
 				base.vaicom.state.availablerecipients.Moose			= data.initialized and base.vaicom.get.missiondata.listby.Moose(base.vaicom.helper.sortby.distance, "radio") -- Add moose
@@ -1695,7 +2255,935 @@ base.vaicom.state = {
 			end,
 									},								
 			sendupdateall = function()
+               local function getMissionObject()
+					local function tryget(fn)
+						local ok, value = base.pcall(fn)
+						if ok then return value end
+						return nil
+					end
+
+					local missionObj = tryget(function() return mission end)
+					if missionObj == nil then missionObj = tryget(function() return base.env and base.env.mission end) end
+					if missionObj == nil then missionObj = tryget(function() return _G and _G.mission end) end
+					return missionObj
+				end
+
+				local function extractIcaoToken(text)
+					local s = base.string.upper(base.tostring(text or ""))
+					return base.string.match(s, "%u%u%u%u")
+				end
+
+				local function normalizeIcaoKey(text)
+					local s = base.string.upper(base.tostring(text or ""))
+					s = base.string.gsub(s, "[_%-/%.%,%(%)]", " ")
+					s = base.string.gsub(s, "%s+", " ")
+					s = base.string.gsub(s, "^%s+", "")
+					s = base.string.gsub(s, "%s+$", "")
+					return s
+				end
+
+				local function loadIcaoOverrides()
+					base.vaicom.state.icaooverrides = base.vaicom.state.icaooverrides or {}
+					local now = base.Export.LoGetModelTime and base.Export.LoGetModelTime() or 0
+					if base.vaicom.state.icaooverrides.lastload and (now - base.vaicom.state.icaooverrides.lastload) < 30 then
+						return base.vaicom.state.icaooverrides.table or {}
+					end
+
+                 local overrides = {}
+					local runtimeLoad = base.loadfile or loadfile
+					local candidatePaths = {}
+					if base.lfs and base.lfs.writedir then
+						base.table.insert(candidatePaths, base.lfs.writedir() .. "Scripts\\VAICOMPRO\\ICAOOverrides.lua")
+						base.table.insert(candidatePaths, base.lfs.writedir() .. "Scripts\\Aircrafts\\_Common\\Cockpit\\VAICOMPRO\\device\\ICAOOverrides.lua")
+					end
+
+					for _, path in base.pairs(candidatePaths) do
+						if runtimeLoad then
+							local okLoad, chunk = base.pcall(function()
+								return runtimeLoad(path)
+							end)
+							if okLoad and chunk ~= nil then
+								local okExec, result = base.pcall(chunk)
+								if okExec and base.type(result) == "table" then
+									overrides = result
+									break
+								end
+							end
+						end
+					end
+
+					base.vaicom.state.icaooverrides.table = overrides
+					base.vaicom.state.icaooverrides.lastload = now
+					return overrides
+				end
+
+				local function resolveIcaoForAtc(callsign, atcName)
+					local overrides = loadIcaoOverrides()
+					local theatre = base.string.lower(base.tostring(base.vaicom.state and base.vaicom.state.theatre or ""))
+					local keyCallsign = normalizeIcaoKey(callsign)
+					local keyName = normalizeIcaoKey(atcName)
+
+					local function readCode(scope, key)
+						if base.type(scope) ~= "table" or key == "" then
+							return nil
+						end
+						local value = scope[key]
+						if value == nil then
+							return nil
+						end
+						local code = base.string.upper(base.tostring(value))
+						if base.string.match(code, "^%u%u%u%u$") then
+							return code
+						end
+						return nil
+					end
+
+					local theatreTable = overrides[theatre]
+					local fallbackTable = overrides.default
+					local mapped = readCode(theatreTable, keyCallsign)
+						or readCode(theatreTable, keyName)
+						or readCode(fallbackTable, keyCallsign)
+						or readCode(fallbackTable, keyName)
+                 if mapped ~= nil then
+						return mapped
+					end
+
+					local direct = extractIcaoToken(callsign)
+					if direct ~= nil then
+						return direct
+					end
+
+					return nil
+				end
+
+              local function buildMetarForAtcInfo(atcInfoOverride)
+					local missionObj = getMissionObject()
+					if base.type(missionObj) ~= "table" then
+						return ""
+					end
+
+					local function isRotorModule()
+						local moduleCat = base.string.upper(base.tostring(base.vaicom.state and base.vaicom.state.dcsmodulecat or ""))
+						if moduleCat == "HELICOPTERS" then
+							return true
+						end
+						local dcsid = base.string.upper(base.tostring(base.vaicom.state and base.vaicom.state.dcsid or ""))
+						if base.string.find(dcsid, "UH-", 1, true)
+							or base.string.find(dcsid, "AH-", 1, true)
+							or base.string.find(dcsid, "MI-", 1, true)
+							or base.string.find(dcsid, "KA-", 1, true)
+							or base.string.find(dcsid, "SA342", 1, true)
+							or base.string.find(dcsid, "CH-47", 1, true)
+						then
+							return true
+						end
+						return false
+					end
+
+					local function isHeliportAtc(locator)
+						if locator == nil then return false end
+						local descName = ""
+						local okDesc, desc = base.pcall(function() return locator:getDesc() end)
+						if okDesc and desc ~= nil then
+							descName = base.string.upper(base.tostring(desc.displayName or desc.typeName or ""))
+						end
+						local cs = ""
+						local okCs, vCs = base.pcall(function()
+							return base.vaicom.properties and base.vaicom.properties.missioncallsign and base.vaicom.properties.missioncallsign(locator) or ""
+						end)
+						if okCs and vCs ~= nil then
+							cs = base.string.upper(base.tostring(vCs))
+						end
+						local full = descName .. " " .. cs
+						return base.string.find(full, "HELI", 1, true) ~= nil
+							or base.string.find(full, "HELIPAD", 1, true) ~= nil
+							or base.string.find(full, "HELIPORT", 1, true) ~= nil
+							or base.string.find(full, "FARP", 1, true) ~= nil
+					end
+
+                  local function getClosestAtcInfo()
+						if not (data and data.pUnit and data.pUnit.getPoint) then
+                            return { icao = "DCS", elevationFt = 0 }
+						end
+
+						local playerPoint = data.pUnit:getPoint()
+						local atcs = base.vaicom.state and base.vaicom.state.availablerecipients and base.vaicom.state.availablerecipients.ATC
+						if base.type(atcs) ~= "table" then
+                        return { icao = "DCS", elevationFt = 0 }
+						end
+
+                     local closestIcao = nil
+						local closestElevationFt = 0
+						local closestDist = nil
+
+						for _, atc in base.pairs(atcs) do
+							if atc and atc.getPoint then
+								local atcPoint = atc:getPoint()
+								if atcPoint then
+									local dx = (atcPoint.x or 0) - (playerPoint.x or 0)
+									local dz = (atcPoint.z or 0) - (playerPoint.z or 0)
+									local distSq = (dx * dx) + (dz * dz)
+
+									local callsign = ""
+									local okCallsign, valueCallsign = base.pcall(function()
+										return base.vaicom.properties and base.vaicom.properties.missioncallsign and base.vaicom.properties.missioncallsign(atc) or ""
+									end)
+									if okCallsign and valueCallsign ~= nil then
+										callsign = base.tostring(valueCallsign)
+									end
+
+									local atcName = ""
+									local okDescName, atcDesc = base.pcall(function() return atc:getDesc() end)
+									if okDescName and atcDesc ~= nil then
+										atcName = base.tostring(atcDesc.displayName or atcDesc.typeName or "")
+									end
+
+									local icao = resolveIcaoForAtc(callsign, atcName)
+									local rotor = isRotorModule()
+									local heliport = isHeliportAtc(atc)
+									if (rotor and icao ~= nil) or ((not rotor) and icao ~= nil and (not heliport)) then
+										if closestDist == nil or distSq < closestDist then
+											closestDist = distSq
+											closestIcao = icao
+                                         closestElevationFt = (base.tonumber(atcPoint.y) or 0) * 3.28084
+										end
+									end
+								end
+							end
+						end
+
+                     return {
+							icao = closestIcao or "DCS",
+							elevationFt = closestElevationFt or 0
+						}
+					end
+
+					local weather = missionObj.weather
+					if base.type(weather) ~= "table" then
+						return ""
+					end
+
+                 local missionDate = missionObj.date or {}
+					local reportDay = base.tonumber(missionDate.Day or missionDate.day) or 1
+					if reportDay < 1 then reportDay = 1 end
+					if reportDay > 31 then reportDay = 31 end
+					local missionStartSec = base.tonumber(base.vaicom.state and base.vaicom.state.tod or 0) or 0
+					local elapsedSec = base.tonumber(base.vaicom.state and base.vaicom.state.timer or 0) or 0
+					local reportSec = (missionStartSec + elapsedSec) % 86400
+					if reportSec < 0 then reportSec = reportSec + 86400 end
+					local reportHour = base.math.floor(reportSec / 3600)
+					local reportMin = base.math.floor((reportSec - (reportHour * 3600)) / 60)
+
+                 local atcInfo = atcInfoOverride or getClosestAtcInfo()
+					local stationElevationFt = base.tonumber(atcInfo and atcInfo.elevationFt or 0) or 0
+					local groundWindDir = weather.wind and weather.wind.atGround and weather.wind.atGround.dir or nil
+					local groundWindSpd = base.tonumber(weather.wind and weather.wind.atGround and weather.wind.atGround.speed)
+					local upperWindDir = weather.wind and weather.wind.at2000 and weather.wind.at2000.dir or nil
+					local upperWindSpd = base.tonumber(weather.wind and weather.wind.at2000 and weather.wind.at2000.speed)
+					local elevatedWind = stationElevationFt >= 1600 and upperWindSpd ~= nil
+					local windDir = groundWindDir
+					local windSpd = groundWindSpd
+					if elevatedWind then
+						windDir = upperWindDir or groundWindDir
+                        local upperAdjustedSpd = upperWindSpd - (5 / 1.94384)
+						if upperAdjustedSpd < 0 then upperAdjustedSpd = 0 end
+						if groundWindSpd ~= nil then
+							local t = (stationElevationFt - 1599) / 1600
+							if t < 0 then t = 0 end
+							if t > 1 then t = 1 end
+                          windSpd = groundWindSpd + ((upperAdjustedSpd - groundWindSpd) * t)
+						else
+                          windSpd = upperAdjustedSpd
+						end
+					end
+                   local vis = weather.visibility and weather.visibility.distance or nil
+				   local temp = weather.season and weather.season.temperature or nil
+					local stationTemp = base.tonumber(temp)
+					if stationTemp ~= nil then
+						stationTemp = stationTemp - (stationElevationFt / 1000) * 2
+					end
+					local qnhRaw = weather.qnh
+                    local clouds = weather.clouds or {}
+					local cloudsDensity = clouds.density or clouds.cover or clouds.coverage or 0
+					local cloudsBase = clouds.base or nil
+
+					local function toInt(v)
+						local n = base.tonumber(v)
+						if n == nil then return nil end
+						return base.math.floor(n + 0.5)
+					end
+
+					local function pad3(v)
+						local n = toInt(v) or 0
+						if n < 0 then n = 0 end
+						if n > 999 then n = 999 end
+						return base.string.format("%03d", n)
+					end
+
+					local function pad2(v)
+						local n = toInt(v) or 0
+						if n < 0 then n = 0 end
+						if n > 99 then n = 99 end
+						return base.string.format("%02d", n)
+					end
+
+					local function angularDiff(a, b)
+						if a == nil or b == nil then return 0 end
+						local d = base.math.abs(a - b) % 360
+						if d > 180 then d = 360 - d end
+						return d
+					end
+
+					local dirFrom = toInt(windDir)
+					if dirFrom ~= nil then
+						dirFrom = (dirFrom + 180) % 360
+                     dirFrom = (base.math.floor((dirFrom + 5) / 10) * 10) % 360
+					end
+
+                    local groundFrom = toInt(groundWindDir)
+					if groundFrom ~= nil then groundFrom = (groundFrom + 180) % 360 end
+					local upperFrom = toInt(upperWindDir)
+					if upperFrom ~= nil then upperFrom = (upperFrom + 180) % 360 end
+
+                    local spdKt = toInt((base.tonumber(windSpd) or 0) * 1.94384) or 0
+					local visM = toInt(vis)
+					if visM == nil or visM <= 0 then
+						visM = 9999
+					end
+					local turbulence = base.tonumber(weather.groundTurbulence)
+
+					local function minPositive(a, b)
+						local an = base.tonumber(a)
+						local bn = base.tonumber(b)
+						if an == nil or an <= 0 then return bn end
+						if bn == nil or bn <= 0 then return an end
+						return (an < bn) and an or bn
+					end
+
+					local function findFog2Visibility(obj, depth)
+						if base.type(obj) ~= "table" or depth > 5 then return nil end
+						local found = nil
+						for k,v in base.pairs(obj) do
+							if base.type(v) == "table" then
+								found = minPositive(found, findFog2Visibility(v, depth + 1))
+							else
+								local ks = base.string.lower(base.tostring(k))
+								if (base.string.find(ks, "vis", 1, true) or base.string.find(ks, "distance", 1, true)) and base.tonumber(v) ~= nil then
+									found = minPositive(found, base.tonumber(v))
+								end
+							end
+						end
+						return found
+					end
+
+					local fogVis = nil
+					if weather.fog and base.type(weather.fog) == "table" then
+						fogVis = minPositive(fogVis, weather.fog.visibility or weather.fog.distance)
+					end
+					if weather.fog2 and base.type(weather.fog2) == "table" then
+						fogVis = minPositive(fogVis, weather.fog2.visibility or weather.fog2.distance)
+						fogVis = minPositive(fogVis, findFog2Visibility(weather.fog2, 0))
+					end
+                 local dustVis = nil
+					if weather.enable_dust and (base.tonumber(weather.dust_density) or 0) > 0 then
+						dustVis = base.tonumber(weather.dust_density)
+					end
+
+					visM = toInt(minPositive(minPositive(visM, fogVis), dustVis)) or visM
+					if visM > 9999 then visM = 9999 end
+
+					local qnhHpa = toInt(qnhRaw)
+					if qnhHpa ~= nil and qnhHpa < 900 then
+						qnhHpa = toInt((base.tonumber(qnhRaw) or 760) * 1.33322)
+					end
+					if qnhHpa == nil then qnhHpa = 1013 end
+
+                 local presetName = base.string.upper(base.tostring(clouds.preset or clouds.name or ""))
+					if (base.tonumber(cloudsDensity) or 0) <= 0 and presetName ~= "" then
+						if base.string.find(presetName, "OVC", 1, true) or base.string.find(presetName, "OVERCAST", 1, true) then
+							cloudsDensity = 8
+						elseif base.string.find(presetName, "BKN", 1, true) or base.string.find(presetName, "BROKEN", 1, true) then
+							cloudsDensity = 6
+						elseif base.string.find(presetName, "SCT", 1, true) then
+							cloudsDensity = 4
+						elseif base.string.find(presetName, "FEW", 1, true) then
+							cloudsDensity = 2
+						elseif base.string.find(presetName, "CLR", 1, true) or base.string.find(presetName, "CLEAR", 1, true) then
+							cloudsDensity = 0
+						else
+							cloudsDensity = 6
+						end
+					end
+
+					local cloudCode = "SKC"
+					if cloudsDensity >= 1 and cloudsDensity <= 2 then cloudCode = "FEW" end
+					if cloudsDensity >= 3 and cloudsDensity <= 5 then cloudCode = "SCT" end
+					if cloudsDensity >= 6 and cloudsDensity <= 7 then cloudCode = "BKN" end
+					if cloudsDensity >= 8 then cloudCode = "OVC" end
+
+                 local cloudPart = cloudCode
+					local cloudAtGround = false
+					local cloudBaseMslFt = nil
+					local cloudBaseAglFt = nil
+					if cloudsBase ~= nil then
+                     cloudBaseMslFt = base.tonumber(cloudsBase)
+						if cloudBaseMslFt ~= nil then
+							cloudBaseMslFt = cloudBaseMslFt * 3.28084
+							cloudBaseAglFt = cloudBaseMslFt - stationElevationFt
+						end
+					end
+					if cloudCode ~= "SKC" and cloudsBase ~= nil then
+                      local baseHundredsFt = toInt((cloudBaseAglFt or 0) / 100)
+						if baseHundredsFt ~= nil and baseHundredsFt < 0 then baseHundredsFt = 0 end
+                      if (cloudBaseAglFt or 0) <= 0 then cloudAtGround = true end
+						if (baseHundredsFt or 0) < 1 then baseHundredsFt = 1 end
+						cloudPart = cloudCode .. pad3(baseHundredsFt)
+					end
+
+					local wx = {}
+					if weather.enable_dust and (base.tonumber(weather.dust_density) or 0) > 0 then
+						base.table.insert(wx, "DU")
+					end
+                 local fog2Active = weather.fog2 and base.type(weather.fog2) == "table" and ((base.tonumber(weather.fog2.mode) or 0) > 0)
+					if (weather.enable_fog and weather.fog and (base.tonumber(weather.fog.visibility) or 0) > 0)
+						or (fog2Active and (base.tonumber(fogVis) or 0) > 0)
+					then
+						base.table.insert(wx, "FG")
+					end
+					if cloudAtGround then
+						local lowCloudWx = "BCFG"
+						if cloudCode == "OVC" then lowCloudWx = "FG" end
+						local alreadyPresent = false
+						for _, w in base.pairs(wx) do
+							if w == lowCloudWx then
+								alreadyPresent = true
+								break
+							end
+						end
+						if not alreadyPresent then
+							base.table.insert(wx, lowCloudWx)
+						end
+                     local lowCloudVis = base.math.random(500, 2999)
+						if visM == nil then
+							visM = lowCloudVis
+						elseif visM > lowCloudVis then
+							visM = lowCloudVis
+						end
+					end
+
+					if visM ~= nil then
+						if visM >= 10000 then
+							visM = 9999
+						else
+							visM = toInt((visM + 50) / 100) * 100
+							if visM < 0 then visM = 0 end
+							if visM >= 10000 then visM = 9999 end
+						end
+					end
+
+					local precip = weather.clouds and (weather.clouds.iprecptns or weather.clouds.precipitation) or nil
+					local precipCode = nil
+					if precip ~= nil then
+						local p = toInt(precip) or 0
+                        if p == 1 then
+							local t = stationTemp
+							if t ~= nil then
+								if t < 0 then
+									precipCode = "SN"
+								elseif t >= 0 and t <= 1 then
+									precipCode = "RA SNSH"
+								else
+									precipCode = "RA"
+								end
+							else
+								precipCode = "RA"
+							end
+						end
+						if p >= 2 then precipCode = "TSRA" end
+					end
+                   if precipCode == nil then
+						if presetName ~= "" and base.string.find(presetName, "RAIN", 1, true) then
+                           local t = stationTemp
+							if t ~= nil then
+								if t < 0 then
+									precipCode = "SN"
+								elseif t >= 0 and t <= 1 then
+									precipCode = "RA SNSH"
+								else
+									precipCode = "RA"
+								end
+							else
+								precipCode = "RA"
+							end
+						end
+					end
+					if precipCode ~= nil then
+						base.table.insert(wx, precipCode)
+					end
+
+					if visM <= 100 and #wx == 0 and (base.tonumber(cloudBaseAglFt) == nil or cloudBaseAglFt > 0) then
+						visM = 9999
+					end
+
+					if precipCode ~= nil and base.string.find(precipCode, "TS", 1, true) and cloudPart ~= "SKC" and base.string.find(cloudPart, "CB", 1, true) == nil then
+						cloudPart = cloudPart .. "CB"
+					end
+
+					local wxPart = ""
+					if #wx > 0 then
+						wxPart = base.table.concat(wx, " ") .. " "
+					end
+
+					local tempPart = "--"
+                 local tempInt = toInt(stationTemp)
+					if tempInt ~= nil then
+						if tempInt < 0 then
+							tempPart = "M" .. pad2(-tempInt)
+						else
+							tempPart = pad2(tempInt)
+						end
+					end
+
+                    local windPart = "00000KT"
+					local gustKt = nil
+					if turbulence ~= nil and spdKt > 0 then
+						gustKt = toInt(spdKt + base.math.max(0, ((turbulence - 20) / 4)))
+						if gustKt ~= nil and gustKt > (spdKt + 35) then gustKt = spdKt + 35 end
+					end
+					if dirFrom ~= nil then
+						if spdKt <= 2 then
+							windPart = "VRB" .. pad2(spdKt) .. "KT"
+						else
+							windPart = pad3(dirFrom) .. pad2(spdKt)
+							if gustKt ~= nil and gustKt >= (spdKt + 4) then
+								windPart = windPart .. "G" .. pad2(gustKt)
+							end
+							windPart = windPart .. "KT"
+						end
+					end
+
+					local windVarPart = ""
+					if spdKt > 3 and groundFrom ~= nil and upperFrom ~= nil and angularDiff(groundFrom, upperFrom) >= 60 then
+						local low = base.math.min(groundFrom, upperFrom)
+						local high = base.math.max(groundFrom, upperFrom)
+						windVarPart = " " .. pad3(low) .. "V" .. pad3(high)
+					end
+
+                   local useCavok = false
+					local noCloudBelow5000 = false
+					if cloudCode == "SKC" then
+						noCloudBelow5000 = true
+                  elseif cloudBaseAglFt ~= nil and cloudBaseAglFt >= 5000 then
+						noCloudBelow5000 = true
+					end
+					if visM >= 9999 and noCloudBelow5000 then
+						useCavok = true
+					end
+
+					local skyPart = ""
+					if useCavok then
+						skyPart = "CAVOK"
+					else
+                        local useVV = cloudAtGround and ((base.tonumber(fogVis) or 0) > 0 or visM < 1000)
+						if useVV then
+							local vvHundreds = toInt((cloudBaseAglFt or 0) / 100)
+							if vvHundreds == nil or vvHundreds < 1 then vvHundreds = 1 end
+							skyPart = base.string.format("%04d", visM) .. " " .. wxPart .. "VV" .. pad3(vvHundreds)
+						else
+							skyPart = base.string.format("%04d", visM) .. " " .. wxPart .. cloudPart
+						end
+					end
+
+					local rmkPart = ""
+                   if turbulence ~= nil then
+						if turbulence > 40 then
+							rmkPart = " RMK SEV TURB B050"
+                     elseif turbulence > 27 and turbulence <= 40 then
+							rmkPart = " RMK MOD TURB B050"
+						end
+					end
+
+                  local station = atcInfo and atcInfo.icao or "DCS"
+                 local metarTime = pad2(reportDay) .. pad2(reportHour) .. pad2(reportMin) .. "Z"
+					return "METAR " .. station .. " " .. metarTime .. " " .. windPart .. windVarPart .. " " .. skyPart .. " " .. tempPart .. " Q" .. base.string.format("%04d", qnhHpa) .. rmkPart
+				end
+
+				local function buildAtcMetar()
+					return buildMetarForAtcInfo(nil)
+				end
+
+				local function buildAllAtcMetars()
+					local result = {}
+					local atcs = base.vaicom.state and base.vaicom.state.availablerecipients and base.vaicom.state.availablerecipients.ATC
+					if base.type(atcs) ~= "table" then
+						return result
+					end
+
+					for _, atc in base.pairs(atcs) do
+						if atc and atc.getPoint then
+							local atcPoint = atc:getPoint()
+							if atcPoint then
+								local callsign = ""
+								local okCallsign, valueCallsign = base.pcall(function()
+									return base.vaicom.properties and base.vaicom.properties.missioncallsign and base.vaicom.properties.missioncallsign(atc) or ""
+								end)
+								if okCallsign and valueCallsign ~= nil then
+									callsign = base.tostring(valueCallsign)
+								end
+
+                              local atcName = ""
+								local okDescName, atcDesc = base.pcall(function() return atc:getDesc() end)
+								if okDescName and atcDesc ~= nil then
+									atcName = base.tostring(atcDesc.displayName or atcDesc.typeName or "")
+								end
+
+								local icao = resolveIcaoForAtc(callsign, atcName)
+								local stationInfo = {
+									icao = icao or "DCS",
+									elevationFt = (base.tonumber(atcPoint.y) or 0) * 3.28084
+								}
+								local metar = buildMetarForAtcInfo(stationInfo)
+
+								if icao ~= nil and icao ~= "" then
+									result[icao] = metar
+								end
+
+								local upperCallsign = base.string.upper(base.tostring(callsign or ""))
+								if upperCallsign ~= "" then
+									result[upperCallsign] = metar
+								end
+
+								local shortCallsign = ""
+								local okShort, valueShort = base.pcall(function()
+									return base.vaicom.properties and base.vaicom.properties.callsign and base.vaicom.properties.callsign(atc) or ""
+								end)
+								if okShort and valueShort ~= nil then
+									shortCallsign = base.string.upper(base.tostring(valueShort))
+								end
+								if shortCallsign ~= "" then
+									result[shortCallsign] = metar
+								end
+							end
+						end
+					end
+
+					return result
+				end
+
+				local function buildMissionGroupTacanMap()
+					local result = {}
+					local missionObj = getMissionObject()
+					if base.type(missionObj) ~= "table" then
+						return result
+					end
+
+					local function normalizeBand(v)
+						if v == nil then return "" end
+						local s = base.tostring(v)
+						if s == "" then return "" end
+						local u = base.string.upper(s)
+						if u == "X" or u == "Y" then return u end
+						local n = base.tonumber(s)
+						if n == 0 then return "X" end
+						if n == 1 then return "Y" end
+						return s
+					end
+
+					local function extractTaskTacan(taskObj)
+						if base.type(taskObj) ~= "table" then return "" end
+						local id = taskObj.id
+						local params = taskObj.params or {}
+
+						if id == "WrappedAction" and params.action and base.type(params.action) == "table" then
+							id = params.action.id
+							params = params.action.params or {}
+						elseif taskObj.action and base.type(taskObj.action) == "table" then
+							id = taskObj.action.id or id
+							params = taskObj.action.params or params
+						end
+
+						if id ~= "ActivateBeacon" then
+							return ""
+						end
+
+						local channel = params.channel or params.Channel or params.channelNumber
+						if channel == nil then return "" end
+
+						local chNum = base.tonumber(channel)
+						local ch = chNum ~= nil and base.tostring(base.math.floor(chNum + 0.5)) or base.tostring(channel)
+						return ch .. normalizeBand(params.modeChannel or params.band or params.mode)
+					end
+
+					local coal = missionObj.coalition
+					if base.type(coal) ~= "table" then
+						return result
+					end
+
+					for _, coalData in base.pairs(coal) do
+						if base.type(coalData) == "table" and base.type(coalData.country) == "table" then
+							for _, country in base.pairs(coalData.country) do
+								for _, catName in base.pairs({"plane", "helicopter", "ship"}) do
+									local cat = country and country[catName]
+									if base.type(cat) == "table" and base.type(cat.group) == "table" then
+										for _, group in base.pairs(cat.group) do
+											if base.type(group) == "table" and base.type(group.route) == "table" and base.type(group.route.points) == "table" then
+												local gname = base.tostring(group.name or "")
+												if gname ~= "" and result[gname] == nil then
+													for _, p in base.pairs(group.route.points) do
+														local tasks = p and p.task and p.task.params and p.task.params.tasks
+														if base.type(tasks) == "table" then
+															for _, t in base.pairs(tasks) do
+																local tac = extractTaskTacan(t)
+																if tac ~= "" then
+																	result[gname] = tac
+																	break
+																end
+															end
+														end
+														if result[gname] ~= nil then break end
+													end
+												end
+											end
+										end
+									end
+								end
+							end
+						end
+					end
+
+					return result
+				end
+
+               local function getChunk12Diagnostics()
+					local probe = {
+						missionType = "nil",
+						missionCmdsType = "nil",
+                       missionKeys = {},
+						missionCmdsKeys = {},
+						beaconEntries = {},
+                       keyHits = {},
+                     tankerTaskEntries = {},
+                       weatherType = "nil",
+						weatherKeys = {},
+						weatherSummary = {},
+					}
+
+					if not base.vaicom.state.debugmode then
+						return probe
+					end
+
+					local function tryget(fn)
+						local ok, value = base.pcall(fn)
+						if ok then return value end
+						return nil
+					end
+
+                    local missionObj = getMissionObject()
+
+                    local missionCmdsObj = tryget(function() return base.vaicom.state and base.vaicom.state.missioncmds end)
+					if missionCmdsObj == nil then missionCmdsObj = tryget(function() return base.vaicom.state and base.vaicom.state.mission end) end
+					if missionCmdsObj == nil then missionCmdsObj = tryget(function() return base.missionCommands end) end
+
+					probe.missionType = base.type(missionObj)
+					probe.missionCmdsType = base.type(missionCmdsObj)
+
+					if base.type(missionCmdsObj) == "table" then
+						local keyCount = 0
+						for k,_ in base.pairs(missionCmdsObj) do
+							keyCount = keyCount + 1
+							if keyCount > 10 then break end
+							base.table.insert(probe.missionCmdsKeys, base.tostring(k))
+						end
+					end
+
+                    if base.type(missionObj) == "table" then
+                       local missionKeyCount = 0
+						for k,_ in base.pairs(missionObj) do
+							missionKeyCount = missionKeyCount + 1
+							if missionKeyCount > 20 then break end
+							base.table.insert(probe.missionKeys, base.tostring(k))
+						end
+
+						local function scan(obj, path, depth)
+                            if base.type(obj) ~= "table" or depth > 12 or #probe.beaconEntries >= 40 then
+								return
+							end
+
+							for k,v in base.pairs(obj) do
+                                if #probe.beaconEntries >= 40 then break end
+								if base.type(v) == "table" then
+                                   local id = v.id
+									local params = v.params or {}
+
+									if id == "WrappedAction" and params.action and base.type(params.action) == "table" then
+										id = params.action.id
+										params = params.action.params or {}
+									elseif v.action and base.type(v.action) == "table" then
+										id = v.action.id or id
+										if id ~= nil then
+											params = v.action.params or params
+										end
+									end
+
+									local ch = params.channel or params.Channel or params.channelNumber
+									local band = params.modeChannel or params.band or params.mode
+									if id == "ActivateBeacon" or ch ~= nil then
+										base.table.insert(probe.beaconEntries,
+											path.."."..base.tostring(k).."|id="..base.tostring(id).."|ch="..base.tostring(ch).."|band="..base.tostring(band).."|name="..base.tostring(params.callsign or params.name))
+									end
+									scan(v, path.."."..base.tostring(k), depth + 1)
+								end
+							end
+						end
+
+						local function scanKeys(obj, path, depth)
+                          if base.type(obj) ~= "table" or depth > 12 or #probe.keyHits >= 80 then
+								return
+							end
+							for k,v in base.pairs(obj) do
+                              if #probe.keyHits >= 80 then break end
+								local ks = base.string.lower(base.tostring(k))
+								if base.string.find(ks, "beacon", 1, true) or base.string.find(ks, "tacan", 1, true) or base.string.find(ks, "channel", 1, true) or base.string.find(ks, "mode", 1, true) then
+									local vt = base.type(v)
+									if vt == "string" or vt == "number" or vt == "boolean" then
+										base.table.insert(probe.keyHits, path.."."..base.tostring(k).."="..base.tostring(v))
+									else
+										base.table.insert(probe.keyHits, path.."."..base.tostring(k).."("..vt..")")
+									end
+								end
+								if base.type(v) == "table" then
+									scanKeys(v, path.."."..base.tostring(k), depth + 1)
+								end
+							end
+						end
+
+						local function collectTankerTasks(root)
+							local coal = root and root.coalition
+							if base.type(coal) ~= "table" then return end
+
+							local function looksLikeTankerGroup(group)
+								if base.type(group) ~= "table" then return false end
+								if group.task == "Refueling" then return true end
+								local gname = base.string.lower(base.tostring(group.name or ""))
+								if base.string.find(gname, "texaco", 1, true) or base.string.find(gname, "arco", 1, true) or base.string.find(gname, "shell", 1, true) then
+									return true
+								end
+								local units = group.units
+								if base.type(units) == "table" then
+									for _,u in base.pairs(units) do
+										local utype = base.string.lower(base.tostring(u and u.type or ""))
+										if base.string.find(utype, "kc-135", 1, true) or base.string.find(utype, "il-78", 1, true) or base.string.find(utype, "s-3b", 1, true) then
+											return true
+										end
+									end
+								end
+								return false
+							end
+
+							local function pushTask(groupLabel, pointIdx, taskObj)
+								if #probe.tankerTaskEntries >= 60 then return end
+								local id = taskObj and taskObj.id
+								local params = taskObj and taskObj.params or {}
+								if id == "WrappedAction" and params and base.type(params.action) == "table" then
+									id = params.action.id
+									params = params.action.params or {}
+								elseif taskObj and taskObj.action and base.type(taskObj.action) == "table" then
+									id = taskObj.action.id or id
+									params = taskObj.action.params or params
+								end
+
+								local ch = params and (params.channel or params.Channel or params.channelNumber) or nil
+								local band = params and (params.modeChannel or params.band or params.mode) or nil
+								local name = params and (params.callsign or params.name) or nil
+								base.table.insert(probe.tankerTaskEntries,
+									groupLabel.."|pt="..base.tostring(pointIdx).."|id="..base.tostring(id).."|ch="..base.tostring(ch).."|band="..base.tostring(band).."|name="..base.tostring(name))
+							end
+
+							for coalName, coalData in base.pairs(coal) do
+								if #probe.tankerTaskEntries >= 60 then break end
+								if base.type(coalData) == "table" and base.type(coalData.country) == "table" then
+									for _, country in base.pairs(coalData.country) do
+										if #probe.tankerTaskEntries >= 60 then break end
+										for _, catName in base.pairs({"plane", "helicopter"}) do
+											local cat = country and country[catName]
+											if base.type(cat) == "table" and base.type(cat.group) == "table" then
+												for _, group in base.pairs(cat.group) do
+													if #probe.tankerTaskEntries >= 60 then break end
+													if looksLikeTankerGroup(group) then
+														local label = "coal="..base.tostring(coalName).."|group="..base.tostring(group.name or "?")
+														local points = group.route and group.route.points
+														if base.type(points) == "table" then
+															for pidx, p in base.pairs(points) do
+																if #probe.tankerTaskEntries >= 60 then break end
+																local tasks = p and p.task and p.task.params and p.task.params.tasks
+																if base.type(tasks) == "table" then
+																	for _, t in base.pairs(tasks) do
+																		pushTask(label, pidx, t)
+																	end
+																end
+															end
+														end
+													end
+												end
+											end
+										end
+									end
+								end
+							end
+						end
+
+						scan(missionObj, "mission", 0)
+                     scanKeys(missionObj, "mission", 0)
+						collectTankerTasks(missionObj)
+
+						local weather = missionObj.weather
+						probe.weatherType = base.type(weather)
+						if base.type(weather) == "table" then
+							local wk = 0
+							for k,_ in base.pairs(weather) do
+								wk = wk + 1
+								if wk > 20 then break end
+								base.table.insert(probe.weatherKeys, base.tostring(k))
+							end
+
+							local function addWeather(path, v)
+								if #probe.weatherSummary >= 40 then return end
+								local vt = base.type(v)
+								if vt == "string" or vt == "number" or vt == "boolean" then
+									base.table.insert(probe.weatherSummary, path.."="..base.tostring(v))
+								elseif vt == "table" then
+									base.table.insert(probe.weatherSummary, path.."(table)")
+								else
+									base.table.insert(probe.weatherSummary, path.."("..vt..")")
+								end
+							end
+
+							addWeather("mission.weather.atmosphere_type", weather.atmosphere_type)
+							addWeather("mission.weather.qnh", weather.qnh)
+							addWeather("mission.weather.season.temperature", weather.season and weather.season.temperature)
+							addWeather("mission.weather.visibility.distance", weather.visibility and weather.visibility.distance)
+							addWeather("mission.weather.wind.atGround.speed", weather.wind and weather.wind.atGround and weather.wind.atGround.speed)
+							addWeather("mission.weather.wind.atGround.dir", weather.wind and weather.wind.atGround and weather.wind.atGround.dir)
+							addWeather("mission.weather.wind.at2000.speed", weather.wind and weather.wind.at2000 and weather.wind.at2000.speed)
+							addWeather("mission.weather.wind.at2000.dir", weather.wind and weather.wind.at2000 and weather.wind.at2000.dir)
+							addWeather("mission.weather.wind.at8000.speed", weather.wind and weather.wind.at8000 and weather.wind.at8000.speed)
+							addWeather("mission.weather.wind.at8000.dir", weather.wind and weather.wind.at8000 and weather.wind.at8000.dir)
+							addWeather("mission.weather.clouds.base", weather.clouds and weather.clouds.base)
+							addWeather("mission.weather.clouds.density", weather.clouds and weather.clouds.density)
+							addWeather("mission.weather.clouds.thickness", weather.clouds and weather.clouds.thickness)
+							addWeather("mission.weather.fog.visibility", weather.fog and weather.fog.visibility)
+							addWeather("mission.weather.enable_fog", weather.enable_fog)
+							addWeather("mission.weather.enable_dust", weather.enable_dust)
+							addWeather("mission.weather.dust_density", weather.dust_density)
+							addWeather("mission.weather.groundTurbulence", weather.groundTurbulence)
+						end
+					end
+
+					return probe
+				end
+
 				local chunk = {}	
+             local missionGroupTacanMap = buildMissionGroupTacanMap()
 				chunk[1] 		= {
 									dcsversion			= base.vaicom.state.dcsversion,
 									root				= base.vaicom.state.root,
@@ -1737,6 +3225,7 @@ base.vaicom.state = {
 																JTAC 		= {},
 																AWACS		= {},
 																Tanker		= {},
+                                   Opposition	= {},
 																Crew		= {},
 																Aux			= {},		
 																Cargo		= {},
@@ -1775,7 +3264,10 @@ base.vaicom.state = {
 				chunk[11] 		= {
 									payload	 = base.vaicom.state.payload or nil,
 								  }
-				chunk[12] 		= {
+             chunk[12] 		= {
+									metar = buildAtcMetar(),
+									atcmetars = buildAllAtcMetars(),
+									diagnostics = getChunk12Diagnostics(),
 								  }
 				local selectedRadio = getSelectedRadio(base.vaicom.state.dcsid)
 				for n,k in base.pairs(data.communicators) do
@@ -1789,7 +3281,7 @@ base.vaicom.state = {
 									AM = k.AM,
 									FM = k.FM,
 									isavailable = ICS_set,
-									isselected = k.displayName == selectedRadio,
+                                    isselected = radioNamesMatch(k.displayName, selectedRadio),
 									intercom = ICS,
 									on =  ICS or ((ICS_set and (( base.GetDevice(n) and base.GetDevice(n).is_on and base.GetDevice(n):is_on() ))) or false),
 									frequency = ( ICS_set and (( (not ICS) and base.GetDevice(n) and base.GetDevice(n).get_frequency and base.GetDevice(n):get_frequency() ) or 0)) or 0,
@@ -1798,16 +3290,33 @@ base.vaicom.state = {
 					base.table.insert(chunk[2].radios, radio)
 				end					
 				for recipientclass,_ in base.pairs(base.vaicom.state.availablerecipients) do
-					for n,k in base.pairs(base.vaicom.state.availablerecipients[recipientclass]) do
+                 for n,k in base.pairs(base.vaicom.state.availablerecipients[recipientclass]) do
+					   local unitDiagnostics = ""
+						if base.vaicom.state.debugmode and (recipientclass == "Tanker" or recipientclass == "ATC" or recipientclass == "AWACS" or recipientclass == "Flight") then
+                            unitDiagnostics = base.tostring(base.vaicom.properties.unitdiagnostics(k))
+						end
+                       local tacanValue = base.tostring(base.vaicom.properties.tacan(k))
+						if tacanValue == "" and (recipientclass == "Tanker" or recipientclass == "ATC" or recipientclass == "AWACS" or recipientclass == "Flight") then
+							local okGroup, groupObj = base.pcall(function() return k:getGroup() end)
+							if okGroup and groupObj and groupObj.getName then
+								local okName, groupName = base.pcall(function() return groupObj:getName() end)
+								if okName and groupName ~= nil then
+									tacanValue = missionGroupTacanMap[base.tostring(groupName)] or ""
+								end
+							end
+						end
 						local dcsunit = {
 										index = n,
 										id_ = base.vaicom.properties.id(k),
 										callsign = base.tostring(base.vaicom.properties.missioncallsign(k)),
+                                    typename = base.tostring(base.vaicom.properties.typename(k)),
 										range = base.vaicom.properties.range(k),
 										pos = base.vaicom.properties.pos(k),
 										fullname = base.tostring(base.vaicom.properties.displayname(k)),
 										coalition = base.tostring(base.vaicom.properties.coalition(k)),
 										altfreq = base.vaicom.properties.altfreq(k),
+                                      tacan = tacanValue,
+                                      unitdiagnostics = unitDiagnostics,
 										freq = base.tostring(base.vaicom.properties.frequency(k)),
 										mod = base.tostring(base.vaicom.properties.modulation(k)),
 										ishuman = base.vaicom.properties.human(k),
@@ -1829,14 +3338,15 @@ base.vaicom.state = {
 								
 					end
 				end
-				local function sendChunk(tbl, label)
+				local function sendChunk(payload, chunkId)
 					local ok, err = base.pcall(function()
-						socket.try(base.vaicom.sender:send(JSON:encode(tbl)))
+						socket.try(base.vaicom.sender:send(payload))
 					end)
 					if not ok then
-						base.env.error("VAICOM error sending "..label..", error: "..base.tostring(err))
+						for _, value in base.pairs(err) do
+							base.env.error("VAICOM error sending chunk "..chunkId..", error: "..base.tostring(value))
+						end
 					end
-					return ok
 				end
 				local function addChunkHeader(tbl, cid)
 					tbl.cid    = cid
@@ -1845,33 +3355,20 @@ base.vaicom.state = {
 					tbl.type   = "missiondata.update"
 					return tbl
 				end
-				for chunkNum = 1, 11 do
-					if chunkNum == 9 then
-						-- Send chunk 9 (aux menus) separately, splitting into multiple
-						-- packets if the payload exceeds the maximum UDP packet size.
-						local encoded = JSON:encode(chunk[chunkNum])
-						local maxSize = 60000
-						if #encoded <= maxSize then
-							chunk[chunkNum].parts = 1
-							chunk[chunkNum].part  = 1
-							sendChunk(addChunkHeader(chunk[chunkNum], chunkNum), "chunk "..chunkNum)
-						else
-							local totalParts = base.math.ceil(#encoded / maxSize)
-							for partNum = 1, totalParts do
-								local startPos = (partNum - 1) * maxSize + 1
-								local segment = base.string.sub(encoded, startPos, startPos + maxSize - 1)
-								local partMsg = addChunkHeader({
-									parts		= totalParts,
-									part		= partNum,
-									segment		= segment,
-								}, chunkNum)
-								if not sendChunk(partMsg, "chunk "..chunkNum.." part "..partNum.."/"..totalParts) then
-									break
-								end
-							end
+				-- Maximum udp packet size for localhost
+				-- (64K - 20 IP header - 8 UDP header)
+				local maxSize = (64 * 1024) - 20 - 8
+              for chunkId = 1, 12 do
+					local chunkPayload = addChunkHeader(chunk[chunkId], chunkId)
+					local payload = JSON:encode(chunkPayload)
+					if chunkId == 9 then
+						-- Large menus that exceed the maximum payload cause errors
+						-- during sending and prevent sending all chunks to VAICOM.
+						if #payload < maxSize then
+							sendChunk(payload, chunkId)
 						end
 					else
-						sendChunk(addChunkHeader(chunk[chunkNum], chunkNum), "chunk "..chunkNum)
+						sendChunk(payload, chunkId)
 					end
 				end
 			end,

@@ -60,6 +60,7 @@ namespace VAICOM
             public bool RIO_Hints_Only;
             public bool ICShotmic;
             public bool ICShotmic_useswitch;
+            public bool HideF4EDialog;
 
             // World
 
@@ -85,6 +86,7 @@ namespace VAICOM
             public double KneeboardOpacity;
             public bool KneeboardlinkPTT;
             public bool Kneeboard_Enabled;
+            public bool OpenKneeboard_Out;
 
             // multiplayer page
 
@@ -240,6 +242,7 @@ namespace VAICOM
                 RIO_Hints_Only = false,
                 ICShotmic = false,
                 ICShotmic_useswitch = false,
+                HideF4EDialog = false,
 
                 // World
 
@@ -282,6 +285,7 @@ namespace VAICOM
 
                 KneeboardOpacity = 128,
                 Kneeboard_Enabled = true,
+                OpenKneeboard_Out = false,
 
                 // multiplayer page
 

@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
+using System.Net.WebSockets;
 using System.Reflection;
 using System.Resources;
 using System.Speech.Recognition;
@@ -29,23 +30,22 @@ namespace VAICOM
         // general
 
 
-        public static bool versionbeta = true; //set if Beta version
+        public static bool versionbeta = false; //set if Beta version
         public static bool versiondev = false; //set if Dev version
         public static bool usenewselectmethod = false;
         public static string debuguser = "VAICOM_Tester";
-        public static string clientmode = ClientModes.Debug; //set to Normal for release, Debug for development
+        public static string client = "VAICOM";
+        public static string clientmode = ClientModes.Normal; //set to Normal for release, Debug for development
 
         public static string versionstring = "";
-        public static string pluginversionnumber = "3.1.0"; // used by Theme (Special page)
+        public static string pluginversionnumber = "3.1.3"; // used by Theme (Special page)
         public static string vaminversion = "1.16";
         public static string defProfileName = "VAICOM for DCS World";
-        public static bool requirecarrierregkey = false;
-        public static bool installkneeboard = true;
         // Add a new property to control Voice Access priority
         public static bool UseVoiceAccessPriority { get; set; } = false; // Default to unchecked
 
-        public static bool deepdebugmode = true; //set to deepdebug mode
-        public static bool databaseencrypted = false; //set to true if database is encrypted, false if not
+        public static bool deepdebugmode = false; //set to deepdebug mode
+        public static bool databaseencrypted = true; //set to true if database is encrypted, false if not
         public static bool luahardreset = true;
         public static bool exitapp = false;
         public static bool datawasreset = false;
@@ -102,6 +102,10 @@ namespace VAICOM
         public static UdpClient ReceivingUdpClient;
         public static IPEndPoint ReceiveIpEndPoint;
 
+        // WebSocket Server
+        public static WebSocket WsoWheelClient;
+        public static WebSocket WsoDialogClient;
+
         // for world Messages receive
 
         public static UdpClient ReceivingUdpClientMessages;
@@ -137,8 +141,6 @@ namespace VAICOM
         // call handling control flags
 
         public static string currentfullsentence;
-        public static bool blockedmodule;
-        public static bool tempblockedcommands;
         public static bool blockallcommands;
         public static bool showingoptions;
         public static bool processlocked;
@@ -268,22 +270,71 @@ namespace VAICOM
         public static string logfile;
 
         // -----------------------------------------------------------------------------------------------------------
-        // licence handling
-
-        public static Dictionary<string, Product> activelicenses;
-        public static string currentlicense;
-        public static bool PRO;
-        public static bool chatterthemesactivated;
-        public static bool jesteractivated;
-        public static bool kneeboardactivated;
-        public static bool icshotmicactive;
-        public static bool realatcactivated;
-
-        // -----------------------------------------------------------------------------------------------------------
         // server state handling
 
         public static bool dcsrunning;
         public static bool AIRIOactive;
+
+        public static bool IsCrewHotMicModuleActive()
+        {
+            if (AIRIOactive)
+            {
+                return true;
+            }
+
+            return currentmodule != null
+                && (currentmodule.Id.Equals("F-4E-45MC", StringComparison.OrdinalIgnoreCase)
+                    || currentmodule.Id.Equals("AH-64D", StringComparison.OrdinalIgnoreCase));
+        }
+
+        public static bool IsF4EIntercomSelected()
+        {
+            if (currentstate == null)
+            {
+                return false;
+            }
+
+            if (currentstate.riostate != null)
+            {
+                return currentstate.riostate.ics;
+            }
+
+            return false;
+        }
+
+        public static bool IsCrewHotMicActive()
+        {
+            if (activeconfig == null || !IsCrewHotMicModuleActive())
+            {
+                return false;
+            }
+
+            if (currentmodule != null
+                && currentmodule.Id.Equals("F-4E-45MC", StringComparison.OrdinalIgnoreCase)
+                && activeconfig.ICShotmic_useswitch)
+            {
+                return IsF4EIntercomSelected();
+            }
+
+            if (currentmodule != null
+                && currentmodule.Id.Equals("AH-64D", StringComparison.OrdinalIgnoreCase)
+                && activeconfig.ICShotmic_useswitch)
+            {
+                return activeconfig.ICShotmic;
+            }
+
+            return activeconfig.ICShotmic;
+        }
+
+        public static bool IsCrewHotMicActiveOnIntercomTX()
+        {
+            return IsCrewHotMicActive()
+                && currentTXnode != null
+                && currentTXnode.Equals(PushToTalk.PTT.TXNodes.TX5);
+        }
+
+        public static bool IntercomHotMicLatched;
+
         public static Server.ServerState previousstate;
         public static Server.ServerState currentstate;
         public static int radiocount;
@@ -316,26 +367,28 @@ namespace VAICOM
 
         public static Dictionary<string, string> currentkey = new Dictionary<string, string>()
         {
-            {"recipient",""     },
-            {"importedatcs",""  },
-            {"importedmenus","" },
-            {"sender",""        },
-            {"cue",""           },
-            {"command",""       },
-            {"apxwpn",""        },
-            {"apxdir",""        },
+            {"recipient",""         },
+            {"importedatcs",""      },
+            {"importedmenus",""     },
+            {"sender",""            },
+            {"cue",""               },
+            {"command",""           },
+            {"apxwpn",""            },
+            {"apxdir",""            },
+            {"wsocmdrecipient",""   },
         };
 
         public static Dictionary<string, string> usedalias = new Dictionary<string, string>()
         {
-            {"recipient",""     },
-            {"importedatcs",""  },
-            {"importedmenus","" },
-            {"sender",""        },
-            {"cue",""           },
-            {"command",""       },
-            {"apxwpn",""        },
-            {"apxdir",""        },
+            {"recipient",""         },
+            {"importedatcs",""      },
+            {"importedmenus",""     },
+            {"sender",""            },
+            {"cue",""               },
+            {"command",""           },
+            {"apxwpn",""            },
+            {"apxdir",""            },
+            {"wsocmdrecipient",""   },
         };
 
         public static Dictionary<string, bool> have = new Dictionary<string, bool>()
@@ -348,6 +401,7 @@ namespace VAICOM
             {"command",         false       },
             {"apxwpn",          false       },
             {"apxdir",          false       },
+            {"wsocmdrecipient", false       },
         };
 
         public static void MessageReset()
@@ -361,6 +415,7 @@ namespace VAICOM
             have["command"] = false;
             have["apxwpn"] = false;
             have["apxdir"] = false;
+            have["wsocmdrecipient"] = false;
             haveinputscomplete = false;
 
             currentkey["recipient"] = "";
@@ -371,6 +426,7 @@ namespace VAICOM
             currentkey["command"] = "";
             currentkey["apxwpn"] = "";
             currentkey["apxdir"] = "";
+            currentkey["wsocmdrecipient"] = "";
 
             currentmessage = new DcsClient.Message.CommsMessage();
             currentrecipient = new Recipient();
@@ -378,6 +434,10 @@ namespace VAICOM
             currentrecipientclass = Recipientclasses.Undefined;
             currentmessageunit = new Server.DcsUnit();
 
+            WSOState["currentCommand"] = null;
+            WSOState["currentRecipient"] = null;
+            WSOState["currentCategory"] = null;
+            currentWSOCommandRecipient = null;
         }
 
         // -----------------------------------------------------------------------------------------------------------
@@ -458,6 +518,43 @@ namespace VAICOM
             }
             catch
             {
+            }
+        }
+
+        // WSO extension state tracking
+        // Add a flag to track if WSO is active
+        public static bool WSOActive { get; set; } = false;
+
+        // Add a flag to track if WSO commands are enabled
+        public static bool WSOCommandsEnabled { get; set; } = true;
+
+        // Add a dictionary to store WSO-related state
+        public static Dictionary<string, object> WSOState = new Dictionary<string, object>();
+
+        // Recipient for WSO commands, e.g. diverting to airfields.
+        public static Recipient currentWSOCommandRecipient = null;
+
+        // Add a method to initialize WSO state
+        public static void InitializeWSOState()
+        {
+            WSOActive = true;
+            WSOCommandsEnabled = true;
+
+            currentWSOCommandRecipient = null;
+
+            // Initialize WSOState with default values
+            WSOState["currentCommand"] = null;
+            WSOState["currentRecipient"] = null;
+            WSOState["currentCategory"] = null;
+        }
+
+        public static bool wsoactivated = true; // Set to true if WSO extension is to be enabled
+
+        public static bool IsF4E
+        {
+            get
+            {
+                return currentmodule != null && currentmodule.Id.Equals("F-4E-45MC", StringComparison.OrdinalIgnoreCase);
             }
         }
     }

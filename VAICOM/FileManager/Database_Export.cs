@@ -35,6 +35,7 @@ namespace VAICOM
                         string filename = "keywords.txt";
                         string path = State.VA_APPS + "\\" + AppData.RootFolder + "\\" + AppData.SubFolders["export"] + "\\" + filename;
                         File.WriteAllText(path, writestring);
+                        ExportKeywordsAsHTML();
                         System.Windows.Clipboard.SetDataObject(writestring);
                         Log.Write("File export success.", Colors.Text);
 
@@ -56,6 +57,7 @@ namespace VAICOM
                         string filename = "keywords.csv";
                         string path = State.VA_APPS + "\\" + AppData.RootFolder + "\\" + AppData.SubFolders["export"] + "\\" + filename;
                         File.WriteAllText(path, writestring);
+                        ExportKeywordsAsHTML();
                         Log.Write("File export success.", Colors.Text);
                         UI.Playsound.Commandcomplete();
                         ExportMasterKeywordString();
@@ -66,6 +68,25 @@ namespace VAICOM
                     {
                         Log.Write("There was a problem during file export.", Colors.Text);
                         UI.Playsound.Error();
+                        return false;
+                    }
+                }
+
+                public static bool ExportKeywordsAsHTML()
+                {
+                    try
+                    {
+                        string writestring = Aliases.CreateHTMLFile();
+                        string filename = "keywords.html";
+                        string path = State.VA_APPS + "\\" + AppData.RootFolder + "\\" + AppData.SubFolders["export"] + "\\" + filename;
+                        File.WriteAllText(path, writestring);
+                        Extensions.Kneeboard.OpenKneeboardBridge.RegisterKeywordsHtmlPlugin(path);
+                        Log.Write("HTML keywords export success.", Colors.Text);
+                        return true;
+                    }
+                    catch
+                    {
+                        Log.Write("There was a problem during HTML keywords export.", Colors.Text);
                         return false;
                     }
                 }

@@ -136,17 +136,73 @@ namespace VAICOM
                     List<DcsUnit> supercarrierUnits = new List<DcsUnit>();
                     List<DcsUnit> escortShipUnits = new List<DcsUnit>();
 
-                    foreach (DcsUnit unit in State.currentstate.availablerecipients["AWACS"])
+                    Func<DcsUnit, bool> isAwacsLikeUnit = unit =>
                     {
-                        string unitName = (unit.callsign ?? string.Empty) + " " + (unit.fullname ?? string.Empty);
+                        if (unit == null)
+                        {
+                            return false;
+                        }
 
-                        if (unitName.IndexOf("Darkstar", StringComparison.OrdinalIgnoreCase) >= 0
+                        string unitName = (unit.callsign ?? string.Empty) + " " + (unit.fullname ?? string.Empty);
+                        string typeName = unit.typename ?? string.Empty;
+
+                        bool isKnownAwacsCallsign = unitName.IndexOf("Darkstar", StringComparison.OrdinalIgnoreCase) >= 0
                             || unitName.IndexOf("Focus", StringComparison.OrdinalIgnoreCase) >= 0
                             || unitName.IndexOf("Magic", StringComparison.OrdinalIgnoreCase) >= 0
                             || unitName.IndexOf("Overlord", StringComparison.OrdinalIgnoreCase) >= 0
-                            || unitName.IndexOf("Wizard", StringComparison.OrdinalIgnoreCase) >= 0)
+                            || unitName.IndexOf("Wizard", StringComparison.OrdinalIgnoreCase) >= 0;
+
+                        bool isHawkeyeType = typeName.IndexOf("E-2D", StringComparison.OrdinalIgnoreCase) >= 0
+                            || typeName.IndexOf("E-2C", StringComparison.OrdinalIgnoreCase) >= 0
+                            || typeName.IndexOf("Hawkeye", StringComparison.OrdinalIgnoreCase) >= 0;
+
+                        bool isSentryType = typeName.IndexOf("E-3A", StringComparison.OrdinalIgnoreCase) >= 0
+                            || typeName.IndexOf("E-3", StringComparison.OrdinalIgnoreCase) >= 0
+                            || typeName.IndexOf("Sentry", StringComparison.OrdinalIgnoreCase) >= 0;
+
+                        bool isWedgetailType = typeName.IndexOf("E-7A", StringComparison.OrdinalIgnoreCase) >= 0
+                            || typeName.IndexOf("E-7", StringComparison.OrdinalIgnoreCase) >= 0
+                            || typeName.IndexOf("Wedgetail", StringComparison.OrdinalIgnoreCase) >= 0;
+
+                        return isKnownAwacsCallsign || isHawkeyeType || isSentryType || isWedgetailType;
+                    };
+
+                    Action<DcsUnit> addUniqueAwacs = unit =>
+                    {
+                        if (unit == null)
+                        {
+                            return;
+                        }
+
+                        bool exists = awacsUnits.Any(u => u.id_ == unit.id_);
+                        if (!exists)
                         {
                             awacsUnits.Add(unit);
+                        }
+                    };
+
+                    foreach (DcsUnit unit in State.currentstate.availablerecipients["AWACS"])
+                    {
+                        if (isAwacsLikeUnit(unit))
+                        {
+                            addUniqueAwacs(unit);
+                        }
+                    }
+
+                    foreach (KeyValuePair<string, List<DcsUnit>> recipientCategory in State.currentstate.availablerecipients)
+                    {
+                        if (recipientCategory.Key.Equals("AWACS", StringComparison.OrdinalIgnoreCase)
+                            || recipientCategory.Key.Equals("Opposition", StringComparison.OrdinalIgnoreCase))
+                        {
+                            continue;
+                        }
+
+                        foreach (DcsUnit unit in recipientCategory.Value)
+                        {
+                            if (isAwacsLikeUnit(unit))
+                            {
+                                addUniqueAwacs(unit);
+                            }
                         }
                     }
 
@@ -222,6 +278,7 @@ namespace VAICOM
 
             public static bool tunedforAOCS;
 
+
             public static void ProcessServerData()
             {
                 State.deepdebugmode = State.clientmode.Equals(ClientModes.Debug) || State.currentstate.playerusername.Equals(State.debuguser);
@@ -260,8 +317,7 @@ namespace VAICOM
 
                 // PTT configuration and activate AIRIO if conditions are met
                 PTT.PTT_ApplyNewConfig();
-                State.AIRIOactive = State.jesteractivated && 
-                                    State.dll_installed_rio && 
+                State.AIRIOactive = State.dll_installed_rio && 
                                     State.activeconfig.RIO_Enabled && 
                                     State.currentmodule.Equals(Products.DCSmodules.LookupTable[State.riomod]);
 
@@ -284,6 +340,35 @@ namespace VAICOM
                     catch (Exception ex)
                     {
                         Log.Write($"Failed to update AIRIO state: {ex.Message}", Colors.Warning);
+                    }
+                }
+
+                if (!State.AIRIOactive
+                    && State.currentmodule != null
+                    && (State.currentmodule.Id.Equals("F-4E-45MC", StringComparison.OrdinalIgnoreCase)
+                        || State.currentmodule.Id.Equals("AH-64D", StringComparison.OrdinalIgnoreCase))
+                    && State.activeconfig.ICShotmic_useswitch)
+                {
+                    bool hotmic = State.IsF4EIntercomSelected();
+                    bool previous = State.activeconfig.ICShotmic;
+                    State.activeconfig.ICShotmic = hotmic;
+
+                    if (previous != hotmic)
+                    {
+                        double pilotIcsArg = State.currentstate.riostate != null ? State.currentstate.riostate.f4ePilotIcs : 0;
+                        Log.Write($"{State.currentmodule.Id} ICS switch: hotmic={hotmic}, releaseHot={State.activeconfig.ReleaseHot}, intercomDevice={State.currentstate.intercom}, pilotIcsArg={pilotIcsArg:0.000}", Colors.Inline);
+                        PushToTalk.PTT.PTT_Manage_Listen_VA(State.activeconfig.ReleaseHot || hotmic);
+                        PushToTalk.PTT.PTT_Manage_Listen_VAICOM(!State.activeconfig.ReleaseHot || hotmic);
+                    }
+
+                    if (State.configwindowopen
+                        && (State.configurationwindow != null))
+                    {
+                        State.configurationwindow.Dispatcher.BeginInvoke((MethodInvoker)delegate
+                        {
+                            State.configurationwindow.CheckBoxHotMic();
+                            State.configurationwindow.Dictate_set_relhot_Light(State.activeconfig.ICShotmic);
+                        });
                     }
                 }
 

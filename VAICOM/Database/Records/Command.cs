@@ -4,10 +4,8 @@ using VAICOM.Static;
 
 namespace VAICOM
 {
-
     namespace Database
     {
-
         public class Command
         {
             public int uniqueid;
@@ -46,10 +44,6 @@ namespace VAICOM
             public double direction;
 
             public bool blockedforFC;
-            public bool blockedforFCnonPro;
-            public bool blockedforFree;
-            public bool requiresJester;
-            public bool requiresrealatc;
 
             public string servername;
             public string menuitemname;
@@ -62,11 +56,27 @@ namespace VAICOM
                 dcsid = "";
             }
 
+            public string name => displayname; // Add name property to return the display name of the command
+
+            public bool isWSO()
+            {
+                // Ensure the active module is "F-4E-45MC" and the command falls within the WSO range
+                return State.currentmodule.Id.Equals("F-4E-45MC", StringComparison.OrdinalIgnoreCase) &&
+                       (category == CommandCategories.WSO || (uniqueid >= 24000 && uniqueid <= 24999));
+            }
+
             public bool RequiresFlightNumInsert()
             {
                 bool value = false;
                 if (this.RecipientClass().Equals(Recipientclasses.Flight)) { value = true; }
                 return value;
+            }
+
+            public bool RequiresWSOCommandRecipient()
+            {
+                return dcsid.Equals("wMsgWSO_Navigation_Divert_LatLong")
+                    || dcsid.Equals("wMsgWSO_Navigation_TACAN_TuneAsset")
+                    || dcsid.Equals("wMsgWSO_Radio_TuneATC");
             }
 
             public bool isReply()
@@ -75,7 +85,6 @@ namespace VAICOM
                 if ((this.uniqueid >= Commands.Table["wMsgReplyNull"].uniqueid) & (this.uniqueid <= Commands.Table["wMsgReplyMaximum"].uniqueid)) { value = true; }
                 return value;
             }
-
 
             public bool isState()
             {
@@ -121,7 +130,6 @@ namespace VAICOM
                 if ((this.uniqueid >= Commands.Table["groundtarget"].uniqueid) & (this.uniqueid <= Commands.Table["ship"].uniqueid)) { value = true; }
                 return value;
             }
-
 
             public bool isInputcommand()
             {
@@ -179,6 +187,9 @@ namespace VAICOM
                 // George AI extension
                 if (this.dcsid != null && this.dcsid.StartsWith("wMsgGeorge", StringComparison.OrdinalIgnoreCase)) { value = Recipientclasses.Crew; }
 
+                // WSO extension
+                if ((this.uniqueid >= Commands.Table["wMsgWSOCmndsNull"].uniqueid) & (this.uniqueid <= Commands.Table["wMsgWSOCmndsMaximum"].uniqueid)) { value = Recipientclasses.WSO; }
+
                 // Kneeboard
                 if ((this.uniqueid >= Commands.Table["wMsgKneeboardCmndsNull"].uniqueid) & (this.uniqueid <= Commands.Table["wMsgKneeboardCmndsMaximum"].uniqueid)) { value = Recipientclasses.Kneeboard; }
 
@@ -193,6 +204,8 @@ namespace VAICOM
                 if ((this.uniqueid >= Commands.Table["iCommandNull"].uniqueid) & (this.uniqueid < Commands.Table["iCommandMaximum"].uniqueid)) { value = Messagetypes.DeviceControl; }
                 if ((this.uniqueid >= Commands.Table["wMsgNull"].uniqueid) & (this.uniqueid < Commands.Table["wMsgMaximum"].uniqueid)) { value = Messagetypes.CommsMessage; }
                 if ((this.uniqueid == Commands.Table["select"].uniqueid)) { value = Messagetypes.CommsMessage; }
+                // Imported F10 aux menu commands fallback if Aux menu commands are not defined in the database
+                if ((this.uniqueid >= Commands.Table["wMsgLeaderToAuxNull"].uniqueid) & (this.uniqueid <= Commands.Table["wMsgLeaderToAuxMaximum"].uniqueid)) { value = Messagetypes.CommsMessage; }
 
                 return value;
             }
@@ -213,7 +226,7 @@ namespace VAICOM
             public bool isVoid()
             {
 
-                return (this.isSpecial() & !this.isOptions() & !this.isSelect() & !this.isMenu() & !this.isState() & !this.isRIO() & !this.isGeorge());
+                return (this.isSpecial() & !this.isOptions() & !this.isSelect() & !this.isMenu() & !this.isState() & !this.isRIO() & !this.isWSO() & !this.isGeorge());
 
             }
 
@@ -274,6 +287,15 @@ namespace VAICOM
             AI_pilot,
             AH64D_GeorgeAI,
             kneeboard,
+            WSO,
+            WSO_navigation,
+            WSO_radar,
+            WSO_radio,
+            WSO_weapons,
+            WSO_defensive,
+            WSO_crew,
+            WSO_groundcrew,
+            WSO_misc,
         }
 
     }

@@ -15,6 +15,19 @@ namespace VAICOM
             {
                 ExtractAll(serverMessage);
 
+                // Some MP environments may not deliver all legacy chunks (11/12).
+                // If core state is present by chunk 10, allow processing to continue.
+                if (!receivedupdatecomplete
+                    && serverMessage != null
+                    && serverMessage.cid >= 10
+                    && State.currentstate != null
+                    && !string.IsNullOrEmpty(State.currentstate.id)
+                    && !State.currentstate.id.Equals("----"))
+                {
+                    receivedupdatecomplete = true;
+                    processingchunks = false;
+                }
+
                 if (receivedupdatecomplete)
                 {
                     if (!processingchunks)
@@ -172,7 +185,7 @@ namespace VAICOM
                 processingchunks = true;
                 try
                 {
-                    List<string> cats = new List<string>() { "Player", "Flight", "JTAC", "AWACS", "Tanker", "Crew", "Aux", "Cargo" };
+                    List<string> cats = new List<string>() { "Player", "Flight", "JTAC", "AWACS", "Tanker", "Opposition", "Crew", "Aux", "Cargo" };
                     foreach (string catstr in cats)
                     {
                         try
@@ -180,7 +193,14 @@ namespace VAICOM
                             foreach (DcsUnit a in serverMessage.availablerecipients[catstr])
                             {
                                 a.reccat = catstr;
-                                a.descr = catdescriptions[catstr];
+                                if (catstr.Equals("Opposition", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    a.descr = "OPPOSITION";
+                                }
+                                else
+                                {
+                                    a.descr = catdescriptions[catstr];
+                                }
                                 State.currentstate.availablerecipients[catstr].Add(a);
                             }
                         }
@@ -287,67 +307,20 @@ namespace VAICOM
                 }
                 receivedupdatecomplete = false;
             }
-
-            private static int totalParts = 0;
-            private static int receivedParts = 0;
-            private static string[] chunkSegments = null;
-
             public static void ExtractChunk9(ServerMessage serverMessage)
             {
                 processingchunks = true;
                 try
                 {
-                    if (serverMessage.parts <= 1)
+                    if (serverMessage.menuaux != null)
                     {
-                        // Single part chunk
-                        if (serverMessage.menuaux != null)
-                        {
-                            State.currentstate.menuaux = serverMessage.menuaux;
-                            State.currentstate.menucargo = serverMessage.menucargo;
-                        }
-                    }
-                    else
-                    {
-                        // Multi-part: segments may arrive out of order via UDP.
-                        // Use an array indexed by part number to store each segment
-                        // and reassemble in correct order once all parts have arrived.
-                        if (serverMessage.parts != totalParts)
-                        {
-                            totalParts = serverMessage.parts;
-                            receivedParts = 0;
-                            chunkSegments = new string[totalParts];
-                        }
-
-                        int index = serverMessage.part - 1;
-                        if (index >= 0 && index < totalParts)
-                        {
-                            chunkSegments[index] = serverMessage.segment;
-                            receivedParts++;
-                        }
-
-                        // Check if all segments have been received
-                        if (receivedParts == totalParts)
-                        {
-                            // Reassemble segments in order and deserialize
-                            var assembled = string.Concat(chunkSegments);
-                            var chunk = JsonConvert.DeserializeObject<ServerMessage>(assembled);
-                            if (chunk?.menuaux != null)
-                            {
-                                State.currentstate.menuaux = chunk.menuaux;
-                                State.currentstate.menucargo = chunk.menucargo;
-                            }
-                            chunkSegments = null;
-                            totalParts = 0;
-                            receivedParts = 0;
-                        }
+                        State.currentstate.menuaux = serverMessage.menuaux;
+                        State.currentstate.menucargo = serverMessage.menucargo;
                     }
                 }
                 catch (Exception e)
                 {
                     Log.Write("ERROR 9/" + chunkcount + " :" + e.StackTrace, Colors.Inline);
-                    chunkSegments = null;
-                    totalParts = 0;
-                    receivedParts = 0;
                 }
                 receivedupdatecomplete = false;
             }
@@ -387,14 +360,18 @@ namespace VAICOM
 
             public static void ExtractChunk12(ServerMessage serverMessage)
             {
+                processingchunks = true;
                 try
                 {
-
+                    State.currentstate.metar = serverMessage.metar;
+                    State.currentstate.atcmetars = serverMessage.atcmetars ?? new Dictionary<string, string>();
                 }
                 catch (Exception e)
                 {
                     Log.Write("ERROR 12/" + chunkcount + " :" + e.StackTrace, Colors.Inline);
                 }
+                receivedupdatecomplete = true;
+                processingchunks = false;
             }
 
             public static void LogFlightUnits(ServerMessage serverMessage)
@@ -405,4 +382,3 @@ namespace VAICOM
         }
     }
 }
-

@@ -36,7 +36,30 @@ namespace VAICOM
                     {
                     }
                 }
+                // check if VAICOM F-4E WSO.vap profile file exist and if not creates it:
+                public static void CheckWSOProfile(bool overwrite)
+                {
+                    Log.Write("Checking WSO profile.", Colors.Text);
 
+                    try
+                    {
+                        string rootpath = State.Proxy.SessionState["VA_APPS"] + "\\" + Products.Products.Families.Vaicom.VaicomProPlugin.rootfoldername;
+                        string path;
+                        string filename = "VAICOM F-4E WSO.vap";
+                        byte[] sourcefile = Properties.Resources.VAICOM_F_4E_WSO;
+
+                        path = rootpath + "\\" + AppData.SubFolders["profiles"] + "\\" + filename;
+
+                        if (!File.Exists(path) || (File.Exists(path) & overwrite))
+                        {
+                            File.WriteAllBytes(path, sourcefile);
+                        }
+
+                    }
+                    catch
+                    {
+                    }
+                }
                 public static string CheckProfileContent(bool silent)
                 {
                     string profileid = State.Proxy.GetProfileName();

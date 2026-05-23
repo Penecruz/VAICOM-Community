@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading;
 using VAICOM.Client;
+using VAICOM.Extensions.AIWSO;
 using VAICOM.Extensions.WorldAudio;
 using VAICOM.FileManager;
 using VAICOM.PushToTalk;
@@ -119,7 +120,7 @@ namespace VAICOM
                             if (PTT.TXLinkApply && _complete)
                             {
                                 Thread.Sleep(200);
-                                PTT.PTT_Handler(State.Proxy, State.currentTXnode, true, false);
+                                PTT.PTT_Handler(State.Proxy, State.currentTXnode, false, false);
                             }
                         }
                         catch (Exception)
@@ -142,7 +143,7 @@ namespace VAICOM
                     // Chatter on/off
 
                     case "chatter":
-                        if (State.chatterthemesactivated && State.activeconfig.Chatter_Enabled)
+                        if (State.activeconfig.Chatter_Enabled)
                         {
                             UI.Playsound.Commandcomplete();
                             Extensions.Chatter.AudioTimer.Chatter_TimerPlayToggle();
@@ -157,7 +158,7 @@ namespace VAICOM
                     // AIRIO profile cmds
 
                     case "airio.showwheel":
-                        if (State.jesteractivated && State.dll_installed_rio)
+                        if (State.dll_installed_rio)
                         {
                             Extensions.RIO.helper.ShowWheel(true);
                         }
@@ -169,7 +170,7 @@ namespace VAICOM
                         break;
 
                     case "airio.dev.radio.tune":
-                        if (State.jesteractivated && State.dll_installed_rio)
+                        if (State.dll_installed_rio)
                         {
                             Client.DcsClient.Message.SetRioDeviceSequence_Radio_Tuning();
                         }
@@ -181,7 +182,7 @@ namespace VAICOM
                         break;
 
                     case "airio.dev.tacan.tune":
-                        if (State.jesteractivated && State.dll_installed_rio)
+                        if (State.dll_installed_rio)
                         {
                             Client.DcsClient.Message.SetRioDeviceSequence_TACAN_Tuning();
                         }
@@ -193,7 +194,7 @@ namespace VAICOM
                         break;
 
                     case "airio.dev.dl.tune":
-                        if (State.jesteractivated && State.dll_installed_rio)
+                        if (State.dll_installed_rio)
                         {
                             Client.DcsClient.Message.SetRioDeviceSequence_Datalink_Tuning();
                         }
@@ -205,7 +206,7 @@ namespace VAICOM
                         break;
 
                     case "airio.dev.radar.sector":
-                        if (State.jesteractivated && State.dll_installed_rio)
+                        if (State.dll_installed_rio)
                         {
                             Client.DcsClient.Message.SetRioDeviceSequence_Radar_Sector();
                         }
@@ -217,7 +218,7 @@ namespace VAICOM
                         break;
 
                     case "airio.map.markers":
-                        if (State.jesteractivated && State.dll_installed_rio)
+                        if (State.dll_installed_rio)
                         {
                             Client.DcsClient.Message.SetRioDeviceSequence_Map_Steerpoints();
                         }
@@ -229,7 +230,7 @@ namespace VAICOM
                         break;
 
                     case "airio.map.markers.track":
-                        if (State.jesteractivated && State.dll_installed_rio)
+                        if (State.dll_installed_rio)
                         {
                             Client.DcsClient.Message.SetRioDeviceSequence_TrackMapMarker();
                         }
@@ -241,7 +242,7 @@ namespace VAICOM
                         break;
 
                     case "airio.map.markers.navigate":
-                        if (State.jesteractivated && State.dll_installed_rio)
+                        if (State.dll_installed_rio)
                         {
                             Client.DcsClient.Message.SetRioDeviceSequence_FlyMapMarker();
                         }
@@ -253,7 +254,7 @@ namespace VAICOM
                         break;
 
                     case "airio.map.navgrid":
-                        if (State.jesteractivated && State.dll_installed_rio)
+                        if (State.dll_installed_rio)
                         {
                             Client.DcsClient.Message.SetRioDeviceSequence_GridMapMarker();
                         }
@@ -265,7 +266,7 @@ namespace VAICOM
                         break;
 
                     case "airio.dev.laser.code":
-                        if (State.jesteractivated && State.dll_installed_rio)
+                        if (State.dll_installed_rio)
                         {
                             Client.DcsClient.Message.SetRioDeviceSequence_LaserCode();
                         }
@@ -278,222 +279,196 @@ namespace VAICOM
 
                     // Manual tune radios
                     case "dev.radio.setchn":
-                        if (State.PRO)
-                        {
-                            Client.DcsClient.Message.RadioControl_TuneChan();
-                        }
-                        else
-                        {
-                            vaProxy.WriteToLog("This command requires PRO license.", Colors.Critical);
-                        }
+                        Client.DcsClient.Message.RadioControl_TuneChan();
                         break;
 
                     case "dev.radio.setfrq":
-                        if (State.PRO)
-                        {
-                            Client.DcsClient.Message.RadioControl_TuneFreq();
-                        }
-                        else
-                        {
-                            vaProxy.WriteToLog("This command requires PRO license.", Colors.Critical);
-                        }
+                        Client.DcsClient.Message.RadioControl_TuneFreq();
                         break;
 
                     // API calls PTT
 
                     case "ptt.mode.release":
-                        if (State.PRO)
-                        {
-                            API.PTT_Release_Hot(vaProxy);
-                        }
+                        API.PTT_Release_Hot(vaProxy);
                         break;
 
                     case "ptt.mode.page.up":
-                        if (State.PRO)
-                        {
-                            API.PTT_Mode_Page_Up(vaProxy);
-                        }
+                        API.PTT_Mode_Page_Up(vaProxy);
                         break;
 
                     case "ptt.mode.page.dn":
-                        if (State.PRO)
-                        {
-                            API.PTT_Mode_Page_Dn(vaProxy);
-                        }
+                        API.PTT_Mode_Page_Dn(vaProxy);
                         break;
 
                     case "chatter.vol.up":
-                        if (State.PRO)
-                        {
-                            API.Chatter_Vol_Up(vaProxy);
-                        }
+                        API.Chatter_Vol_Up(vaProxy);
                         break;
 
                     case "chatter.vol.dn":
-                        if (State.PRO)
-                        {
-                            API.Chatter_Vol_Dn(vaProxy);
-                        }
+                        API.Chatter_Vol_Dn(vaProxy);
                         break;
 
                     case "ptt.mode.dial":
-                        if (State.PRO)
-                        {
-                            API.Operate_Dial(vaProxy);
-                        }
+                        API.Operate_Dial(vaProxy);
                         break;
 
                     case "ptt.mode.map.srs":
-                        if (State.PRO)
-                        {
-                            API.SRS_Mapping(vaProxy);
-                        }
+                        API.SRS_Mapping(vaProxy);
                         break;
 
                     case "ptt.mode.prv":
-                        if (State.PRO)
-                        {
-                            API.PTT_Mode_Prv(vaProxy);
-                        }
+                        API.PTT_Mode_Prv(vaProxy);
                         break;
 
                     case "ptt.mode.nxt":
-                        if (State.PRO)
-                        {
-                            API.PTT_Mode_Nxt(vaProxy);
-                        }
+                        API.PTT_Mode_Nxt(vaProxy);
                         break;
 
                     case "ptt.mode.inv":
-                        if (State.PRO)
-                        {
-                            API.PTT_Mode_Inv(vaProxy);
-                        }
+                        API.PTT_Mode_Inv(vaProxy);
                         break;
 
                     case "ptt.mode.norm":
-                        if (State.PRO)
-                        {
-                            API.PTT_Mode_Norm(vaProxy);
-                        }
+                        API.PTT_Mode_Norm(vaProxy);
                         break;
 
                     case "ptt.mode.multi":
-                        if (State.PRO)
-                        {
-                            API.PTT_Mode_Multi(vaProxy);
-                        }
+                        API.PTT_Mode_Multi(vaProxy);
                         break;
 
                     case "ptt.mode.sngl":
-                        if (State.PRO)
-                        {
-                            API.PTT_Mode_Single(vaProxy);
-                        }
+                        API.PTT_Mode_Single(vaProxy);
                         break;
 
                     // --------------------------------------------------------------------------
                     // kneeboard control
 
                     case "kneeboard.tab.log":
-                        if (State.PRO)
-                        {
-                            API.ControlKneeboard(vaProxy, contextinput);
-                        }
+                        API.ControlKneeboard(vaProxy, contextinput);
                         break;
 
                     case "kneeboard.tab.awacs":
-                        if (State.PRO)
-                        {
-                            API.ControlKneeboard(vaProxy, contextinput);
-                        }
+                        API.ControlKneeboard(vaProxy, contextinput);
                         break;
 
                     case "kneeboard.tab.jtac":
-                        if (State.PRO)
-                        {
-                            API.ControlKneeboard(vaProxy, contextinput);
-                        }
+                        API.ControlKneeboard(vaProxy, contextinput);
                         break;
 
                     case "kneeboard.tab.atc":
-                        if (State.PRO)
-                        {
-                            API.ControlKneeboard(vaProxy, contextinput);
-                        }
+                        API.ControlKneeboard(vaProxy, contextinput);
                         break;
 
                     case "kneeboard.tab.tanker":
-                        if (State.PRO)
-                        {
-                            API.ControlKneeboard(vaProxy, contextinput);
-                        }
+                        API.ControlKneeboard(vaProxy, contextinput);
                         break;
 
                     case "kneeboard.tab.aocs":
-                        if (State.PRO)
-                        {
-                            API.ControlKneeboard(vaProxy, contextinput);
-                        }
+                        API.ControlKneeboard(vaProxy, contextinput);
                         break;
 
                     case "kneeboard.tab.flight":
-                        if (State.PRO)
-                        {
-                            API.ControlKneeboard(vaProxy, contextinput);
-                        }
+                        API.ControlKneeboard(vaProxy, contextinput);
                         break;
 
                     case "kneeboard.tab.notes":
-                        if (State.PRO)
-                        {
-                            API.ControlKneeboard(vaProxy, contextinput);
-                        }
+                        API.ControlKneeboard(vaProxy, contextinput);
                         break;
 
                     case "kneeboard.tab.ref":
-                        if (State.PRO)
-                        {
-                            API.ControlKneeboard(vaProxy, contextinput);
-                        }
+                        API.ControlKneeboard(vaProxy, contextinput);
                         break;
 
                     case "kneeboard.tab.all":
-                        if (State.PRO)
-                        {
-                            API.ControlKneeboard(vaProxy, contextinput);
-                        }
+                        API.ControlKneeboard(vaProxy, contextinput);
                         break;
 
                     case "kneeboard.tab.prv":
-                        if (State.PRO)
-                        {
-                            API.ControlKneeboard(vaProxy, contextinput);
-                        }
+                        API.ControlKneeboard(vaProxy, contextinput);
                         break;
 
                     case "kneeboard.tab.nxt":
-                        if (State.PRO)
-                        {
-                            API.ControlKneeboard(vaProxy, contextinput);
-                        }
+                        API.ControlKneeboard(vaProxy, contextinput);
                         break;
 
                     case "kneeboard.opac.up":
-                        if (State.PRO)
-                        {
-                            API.ControlKneeboard(vaProxy, contextinput);
-                        }
+                        API.ControlKneeboard(vaProxy, contextinput);
                         break;
 
                     case "kneeboard.opac.dn":
-                        if (State.PRO)
+                        API.ControlKneeboard(vaProxy, contextinput);
+                        break;
+
+                    // F-4E WSO commands
+                    case "wso.navigation.waypoint":
+                        if (WSOCommandHandler.IsWSO())
                         {
-                            API.ControlKneeboard(vaProxy, contextinput);
+                            WSOCommandHandler.NavigationResumeWaypoint();
                         }
                         break;
 
-                    // --------------------------------------------------------------------------
+                    case "wso.navigation.holdpoint":
+                        if (WSOCommandHandler.IsWSO())
+                        {
+                            WSOCommandHandler.NavigationHoldTurnPoint();
+                        }
+                        break;
+
+                    case "wso.navigation.divert":
+                        if (WSOCommandHandler.IsWSO())
+                        {
+                            WSOCommandHandler.NavigationDivertToWaypoint();
+                        }
+                        break;
+
+                    case "wso.navigation.designate.waypoint":
+                        if (WSOCommandHandler.IsWSO())
+                        {
+                            WSOCommandHandler.NavigationDesignateWaypoint();
+                        }
+                        break;
+
+                    case "wso.navigation.tacan.channel":
+                        if (WSOCommandHandler.IsWSO())
+                        {
+                            WSOCommandHandler.NavigationTuneTACANChannel();
+                        }
+                        break;
+
+                    case "wso.navigation.tacan.station":
+                        if (WSOCommandHandler.IsWSO())
+                        {
+                            WSOCommandHandler.NavigationTuneTACANStation();
+                        }
+                        break;
+
+                    case "wso.radio.setchn":
+                        if (WSOCommandHandler.IsWSO())
+                        {
+                            WSOCommandHandler.RadioSetCommChannel();
+                        }
+                        break;
+
+                    case "wso.radio.setauxchn":
+                        if (WSOCommandHandler.IsWSO())
+                        {
+                            WSOCommandHandler.RadioSetAuxChannel();
+                        }
+                        break;
+
+                    case "wso.radio.tunefreq":
+                        if (WSOCommandHandler.IsWSO())
+                        {
+                            WSOCommandHandler.RadioTuneFrequency();
+                        }
+                        break;
+
+                    case "wso.pavespike.laser":
+                        if (WSOCommandHandler.IsWSO())
+                        {
+                            WSOCommandHandler.PaveSpikeSetLaserCode();
+                        }
+                        break;
 
                     case "test":
                         API.API_Test(vaProxy);
@@ -527,6 +502,7 @@ namespace VAICOM
                     Beacon.Beacon_TimerStop();
                     Extensions.Chatter.AudioTimer.Chatter_TimerStop();
                     Processor.CloseTTSPlaybackStream();
+                    Extensions.Kneeboard.OpenKneeboardBridge.Shutdown();
 
                     AppDomain.CurrentDomain.AssemblyResolve -= Framework.Assemblies.AssemblyResolve;
                     State.Proxy = null;
@@ -538,29 +514,132 @@ namespace VAICOM
 
             public static void VA_ExposeVariables(dynamic vaProxy)
             {
-                if (State.PRO)
+                try
                 {
-                    try
-                    {
-                        vaProxy.SetText("vaicompro.serverdata.currentserver.dcsversion", State.currentstate.dcsversion);
-                        vaProxy.SetText("vaicompro.serverdata.currentserver.theater", State.currentstate.theatre);
+                    vaProxy.SetText("vaicompro.serverdata.currentserver.dcsversion", State.currentstate.dcsversion);
+                    vaProxy.SetText("vaicompro.serverdata.currentserver.theater", State.currentstate.theatre);
 
-                        vaProxy.SetBoolean("vaicompro.serverdata.currentserver.multiplayer", State.currentstate.multiplayer);
-                        vaProxy.SetBoolean("vaicompro.serverdata.currentserver.easycomms", State.currentstate.easycomms);
-                        vaProxy.SetBoolean("vaicompro.serverdata.currentserver.vrmode", State.currentstate.vrmode);
+                    vaProxy.SetBoolean("vaicompro.serverdata.currentserver.multiplayer", State.currentstate.multiplayer);
+                    vaProxy.SetBoolean("vaicompro.serverdata.currentserver.easycomms", State.currentstate.easycomms);
+                    vaProxy.SetBoolean("vaicompro.serverdata.currentserver.vrmode", State.currentstate.vrmode);
 
-                        vaProxy.SetText("vaicompro.playerdata.currentmodule.name", State.currentmodule.Name);
-                        vaProxy.SetText("vaicompro.playerdata.currentmodule.cat", State.currentstate.playerunitcat);
+                    vaProxy.SetText("vaicompro.playerdata.currentmodule.name", State.currentmodule.Name);
+                    vaProxy.SetText("vaicompro.playerdata.currentmodule.cat", State.currentstate.playerunitcat);
 
-                        vaProxy.SetBoolean("vaicompro.serverdata.currentserver.mission", State.currentstate.missiontitle.Substring(0, 100).Length > 100 ? State.currentstate.missiontitle.Substring(0, 100) : State.currentstate.missiontitle);
+                    vaProxy.SetBoolean("vaicompro.serverdata.currentserver.mission", State.currentstate.missiontitle.Substring(0, 100).Length > 100 ? State.currentstate.missiontitle.Substring(0, 100) : State.currentstate.missiontitle);
 
-                    }
-                    catch
-                    {
-                    }
+                }
+                catch
+                {
                 }
             }
 
+            private static bool IsWSO()
+            {
+                if (!State.currentmodule.Id.Equals("F-4E-45MC", StringComparison.OrdinalIgnoreCase))
+                {
+                    State.Proxy.WriteToLog("WSO commands are only available for the F-4E-45MC module.", Colors.Warning);
+                    return false;
+                }
+
+                return true;
+            }
+
+            private static string GetSegment(int index)
+            {
+                return State.Proxy.Command.Segment(index);
+            }
+
+            private static int GetLastSegmentIndex(int start)
+            {
+                // Walk forwards till we hit "Not set" which is the VoiceAttack value
+                // if there are no further segments in the configured command.
+                int end = start;
+                while (!string.Equals(GetSegment(end), "Not set"))
+                {
+                    end++;
+                }
+
+                return end - 1;
+            }
+
+            private static string GetNumberFromCommand()
+            {
+                return State.Proxy.Utility.ParseTokens("{TXTNUM:\"{CMD}\"}");
+            }
+
+            private static bool GetNumberFromSegment(int index, out string number)
+            {
+                string segment = GetSegment(index);
+                if (segment.Equals("zero"))
+                {
+                    number = "0";
+                    return true;
+                }
+               
+                number = State.Proxy.Utility.ParseTokens("{TXTNUM:\"" + segment + "\"}");
+                if (string.IsNullOrEmpty(number))
+                {
+                    return false;
+                }
+
+                return true;
+            }
+
+            private static bool IsSecondaryFlightPlan(string flightPlan)
+            {
+                return flightPlan.Contains("2") || flightPlan.Contains("second");
+            }
+
+            private static string GetWaypointDesignationType(string designation)
+            {
+                string designationType = "";
+
+                switch (designation)
+                {
+                    case "turn point":
+                        designationType = "DEFAULT";
+                        break;
+                    case "nav fix":
+                    case "navigation fix":
+                        designationType = "VIP";
+                        break;
+                    case "cap":
+                    case "c a p":
+                    case "combat air patrol":
+                        designationType = "CAP";
+                        break;
+                    case "ip":
+                    case "i p":
+                    case "inbound point":
+                        designationType = "IP";
+                        break;
+                    case "tgt":
+                    case "t g t":
+                    case "target":
+                        designationType = "TARGET";
+                        break;
+                    case "fence in":
+                        designationType = "FENCE_IN";
+                        break;
+                    case "fence out":
+                        designationType = "FENCE_OUT";
+                        break;
+                    case "alternate":
+                    case "alternate airfield":
+                    case "alternative":
+                        designationType = "ALTERNATE";
+                        break;
+                    case "homebase":
+                        designationType = "HOMEBASE";
+                        break;
+                    default:
+                        designationType = "DEFAULT";
+                        break;
+                }
+
+                return designationType;
+            }
         }
     }
 }

@@ -64,7 +64,6 @@ namespace VAICOM
                 State.menuauximported = false;
                 Extensions.RIO.helper.showingjestermenu = false;
 
-                ValidateMultiPlayer();
                 DisplayCurrentModule();
                 ScanNewTheater();
 
@@ -99,7 +98,7 @@ namespace VAICOM
 
                 try
                 {
-                    if (State.PRO && State.activeconfig.AutoBrief)
+                    if (State.activeconfig.AutoBrief)
                     {
                         Extensions.AOCS.AOCSProvider.AOCS_ReadBriefing(true);
                     }

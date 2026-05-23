@@ -75,8 +75,8 @@ namespace VAICOM
                         {
                             try
                             {
-                                // replace profile file 
                                 FileHandler.Root.CheckProfile(true);
+                                FileHandler.Root.CheckWSOProfile(true);  // <-- WSO .vap if present will also be reset to default, if not present it will be created
                                 Log.Write("VA profile file restored.", Static.Colors.Text);
                             }
                             catch
@@ -179,58 +179,7 @@ namespace VAICOM
                 {
                 }
             }
-            private void removeallactivelicenses()
-            {
-                try
-                {
-                    RegistryKey getkey = Registry.CurrentUser.OpenSubKey(Products.Products.Families.Vaicom.RegKeyBase, true);
-                    if (getkey != null)
-                    {
-                        RegistryKey testkey = Registry.CurrentUser.OpenSubKey(Products.Products.Families.Vaicom.RegKeyRoot);
-                        if (testkey != null)
-                        {
-                            string keyname = "VAICOMPRO";
-                            Log.Write("Deleting reg key for " + keyname, Static.Colors.System);
-                            getkey.DeleteSubKeyTree(keyname, true);
-                        }
-                    }
-                    getkey.Close();
-                }
-                catch (Exception a)
-                {
-                    Log.Write(a.Message, Static.Colors.System);
-                }
 
-                Products.Products.CheckActiveLicenses();
-                resetenabledfeatures();
-
-                string productidstring = Products.Products.Families.Vaicom.VaicomProPlugin.product_id.ToString();
-
-                if (State.activelicenses.ContainsKey(productidstring))
-                {
-                    State.PRO = true;
-                }
-                else
-                {
-                    State.PRO = false;
-                }
-
-                productidstring = Products.Products.Families.Vaicom.ChatterThemePack.product_id.ToString();
-
-                if (State.activelicenses.ContainsKey(productidstring))
-                {
-                    State.chatterthemesactivated = true;
-                }
-                else
-                {
-                    State.chatterthemesactivated = false;
-                }
-
-                Products.Products.UpdateClientLicense();
-                showproductname();
-                showprolight();
-
-            }
             private void Clearkeywordsdb()
             {
                 try
@@ -413,8 +362,3 @@ namespace VAICOM
         }
     }
 }
-
-
-
-
-

@@ -5,6 +5,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using VAICOM.Client;
+using VAICOM.Helpers;
 using VAICOM.Products;
 using VAICOM.PushToTalk;
 using VAICOM.Servers;
@@ -592,17 +593,7 @@ namespace VAICOM
 
             private void setModuleInfotext(object sender, EventArgs e)
             {
-                string modulename;
-                if (State.currentmodule.Name.Equals("----"))
-                {
-                    modulename = "";
-                }
-                else
-                {
-                    modulename = State.currentmodule.Name;
-                }
-
-                string info = "" + modulename + " " + State.currentmodule.Alias;
+                string info = Common.GetCurrentModuleDisplayText();
                 ModuleInfo.Text = info;
             }
 
@@ -703,17 +694,7 @@ namespace VAICOM
                     string info2 = "Easy Communication: " + easycomms;
                     EasyCommsInfo.Text = info2;
 
-                    string modulename;
-                    if (State.currentmodule.Name.Equals("----"))
-                    {
-                        modulename = "";
-                    }
-                    else
-                    {
-                        modulename = State.currentmodule.Name;
-                    }
-
-                    string info3 = "" + modulename + " " + State.currentmodule.Alias;
+                    string info3 = Common.GetCurrentModuleDisplayText();
                     ModuleInfo.Text = info3;
 
                     string keyname = "TX1";
@@ -870,11 +851,11 @@ namespace VAICOM
             // force multi hotkey
             private void ForceMultiHotkeyOn(object sender, RoutedEventArgs e) { State.activeconfig.ForceMultiHotkey = true; PTT.PTT_ApplyNewConfig(); Settings.ConfigFile.WriteConfigToFile(true); updatepttinfo(); setMicKeysInfotext(); ChangeDialbug(); }
             private void ForceMultiHotkeyOff(object sender, RoutedEventArgs e) { State.activeconfig.ForceMultiHotkey = false; PTT.PTT_ApplyNewConfig(); Settings.ConfigFile.WriteConfigToFile(true); updatepttinfo(); setMicKeysInfotext(); ChangeDialbug(); }
-            private void SetCurrentValueForceMultiHotkey(object sender, EventArgs e) { ForceMultiHotkey.IsEnabled = State.PRO; ForceMultiHotkey.IsChecked = State.activeconfig.ForceMultiHotkey; setMicKeysInfotext(); ChangeDialbug(); }
+            private void SetCurrentValueForceMultiHotkey(object sender, EventArgs e) { ForceMultiHotkey.IsEnabled = true; ForceMultiHotkey.IsChecked = State.activeconfig.ForceMultiHotkey; setMicKeysInfotext(); ChangeDialbug(); }
             // force single hotkey
             private void ForceSingleHotkeyOn(object sender, RoutedEventArgs e) { State.activeconfig.ForceSingleHotkey = true; PTT.PTT_ApplyNewConfig(); Settings.ConfigFile.WriteConfigToFile(true); updatepttinfo(); setMicKeysInfotext(); ChangeDialbug(); }
             private void ForceSingleHotkeyOff(object sender, RoutedEventArgs e) { State.activeconfig.ForceSingleHotkey = false; PTT.PTT_ApplyNewConfig(); Settings.ConfigFile.WriteConfigToFile(true); updatepttinfo(); setMicKeysInfotext(); ChangeDialbug(); }
-            private void SetCurrentValueForceSingleHotkey(object sender, EventArgs e) { ForceSingleHotkey.IsEnabled = State.PRO; ForceSingleHotkey.IsChecked = State.activeconfig.ForceSingleHotkey; setMicKeysInfotext(); ChangeDialbug(); }
+            private void SetCurrentValueForceSingleHotkey(object sender, EventArgs e) { ForceSingleHotkey.IsEnabled = true; ForceSingleHotkey.IsChecked = State.activeconfig.ForceSingleHotkey; setMicKeysInfotext(); ChangeDialbug(); }
 
             public void HotkeyUpdateMulti(object sender, RoutedEventArgs e)
             {
@@ -927,7 +908,7 @@ namespace VAICOM
             }
             private void SetCurrentValueOperateDial(object sender, EventArgs e)
             {
-                OperateDial.IsEnabled = State.PRO; OperateDial.IsChecked = State.activeconfig.OperateDial; ChangeDialbug();
+                OperateDial.IsEnabled = true; OperateDial.IsChecked = State.activeconfig.OperateDial; ChangeDialbug();
             }
 
             private void Dial_SetMode_Up(object sender, EventArgs e)
@@ -1050,10 +1031,7 @@ namespace VAICOM
             }
             private void Selector_Prev(object sender, MouseButtonEventArgs e)
             {
-                if (State.PRO)
-                {
-                    Selector_Prev();
-                }
+                Selector_Prev();
             }
             public void Selector_Prev()
             {
@@ -1066,10 +1044,7 @@ namespace VAICOM
             }
             private void Selector_Next(object sender, MouseButtonEventArgs e)
             {
-                if (State.PRO)
-                {
-                    Selector_Next();
-                }
+                Selector_Next();
             }
             public void Selector_Next()
             {
@@ -1114,10 +1089,7 @@ namespace VAICOM
                 }
                 else // multi
                 {
-                    if (State.PRO)
-                    {
-                        UI.Playsound.Gum_Soft();
-                    }
+                    UI.Playsound.Gum_Soft();
                 }
             }
             private void Page_Dn(object sender, MouseButtonEventArgs e)
@@ -1151,11 +1123,7 @@ namespace VAICOM
                 }
                 else // multi
                 {
-                    if (State.PRO)
-                    {
-                        UI.Playsound.Gum_Soft();
-                    }
-
+                    UI.Playsound.Gum_Soft();
                 }
 
             }
@@ -1176,10 +1144,7 @@ namespace VAICOM
             }
             private void Dial_Sw_to_Up(object sender, MouseButtonEventArgs e)
             {
-                if (State.PRO)
-                {
-                    Dial_Sw_to_Up();
-                }
+                Dial_Sw_to_Up();
             }
             public void Dial_Sw_to_Up()
             {
@@ -1281,7 +1246,7 @@ namespace VAICOM
                 State.Proxy.Command.SetSessionEnabledByCategory("Keyword Collections", true);
                 State.Proxy.Command.SetSessionEnabledByCategory("Extension packs", true);
 
-                if (State.AIRIOactive && State.activeconfig.ICShotmic) //  
+                if (State.IsCrewHotMicActive()) //  
                 {
                     State.Proxy.State.SetListeningEnabled(true);
                 }
@@ -1293,10 +1258,7 @@ namespace VAICOM
 
             private void Hotmic_Sw_to_Up(object sender, MouseButtonEventArgs e)
             {
-                if (State.PRO)
-                {
-                    Hotmic_Sw_to_Up();
-                }
+                Hotmic_Sw_to_Up();
             }
             public void Hotmic_Sw_to_Up()
             {
@@ -1307,7 +1269,7 @@ namespace VAICOM
                 Settings.ConfigFile.WriteConfigToFile(true);
                 State.Proxy.State.SetListeningEnabled(true);
 
-                if (State.AIRIOactive && State.activeconfig.ICShotmic) //  
+                if (State.IsCrewHotMicActive()) //  
                 {
                     State.Proxy.Command.SetSessionEnabledByCategory("Keyword Collections", true);
                     State.Proxy.Command.SetSessionEnabledByCategory("Extension packs", true);
@@ -1339,7 +1301,7 @@ namespace VAICOM
             }
             public void Toggle_SRS_Mode_On_Init()
             {
-                SRS_Mode_Toggle_On.IsEnabled = State.PRO;
+                SRS_Mode_Toggle_On.IsEnabled = true;
                 if (State.activeconfig.UseSRSmapping)
                 {
                     SRS_Mode_Toggle_On.Visibility = Visibility.Visible;
@@ -1356,7 +1318,7 @@ namespace VAICOM
             }
             public void Toggle_SRS_Mode_Off_Init()
             {
-                SRS_Mode_Toggle_Off.IsEnabled = State.PRO;
+                SRS_Mode_Toggle_Off.IsEnabled = true;
                 if (State.activeconfig.UseSRSmapping)
                 {
                     SRS_Mode_Toggle_Off.Visibility = Visibility.Hidden;
@@ -1404,7 +1366,7 @@ namespace VAICOM
             }
             public void Set_Volume_init()
             {
-                Volume_Knob.IsEnabled = State.chatterthemesactivated;
+                Volume_Knob.IsEnabled = true;
                 Double vol = State.activeconfig.ChatterVolume;
                 RotateTransform RotateTransform = new RotateTransform();
                 RotateTransform.Angle = -150 + 300 * vol;
@@ -1450,7 +1412,7 @@ namespace VAICOM
 
             private void Button_Init_TX1(object sender, EventArgs e)
             {
-                Button_Top_TX1.IsEnabled = State.PRO;
+                Button_Top_TX1.IsEnabled = true;
             }
             private void Button_Press_TX1(object sender, MouseButtonEventArgs e)
             {
@@ -1508,7 +1470,7 @@ namespace VAICOM
 
             private void Button_Init_TX2(object sender, EventArgs e)
             {
-                Button_Top_TX2.IsEnabled = State.PRO;
+                Button_Top_TX2.IsEnabled = true;
             }
             private void Button_Press_TX2(object sender, MouseButtonEventArgs e)
             {
@@ -1566,7 +1528,7 @@ namespace VAICOM
 
             private void Button_Init_TX3(object sender, EventArgs e)
             {
-                Button_Top_TX3.IsEnabled = State.PRO;
+                Button_Top_TX3.IsEnabled = true;
             }
             private void Button_Press_TX3(object sender, MouseButtonEventArgs e)
             {
@@ -1625,7 +1587,7 @@ namespace VAICOM
 
             private void Button_Init_TX4(object sender, EventArgs e)
             {
-                Button_Top_TX4.IsEnabled = State.PRO;
+                Button_Top_TX4.IsEnabled = true;
             }
             private void Button_Press_TX4(object sender, MouseButtonEventArgs e)
             {
@@ -1682,7 +1644,7 @@ namespace VAICOM
 
             private void Button_Init_TX5(object sender, EventArgs e)
             {
-                Button_Top_TX5.IsEnabled = State.PRO;
+                Button_Top_TX5.IsEnabled = true;
             }
             private void Button_Press_TX5(object sender, MouseButtonEventArgs e)
             {
@@ -1739,7 +1701,7 @@ namespace VAICOM
 
             private void Button_Init_TX6(object sender, EventArgs e)
             {
-                Button_Top_TX6.IsEnabled = State.PRO;
+                Button_Top_TX6.IsEnabled = true;
             }
             private void Button_Press_TX6(object sender, MouseButtonEventArgs e)
             {
