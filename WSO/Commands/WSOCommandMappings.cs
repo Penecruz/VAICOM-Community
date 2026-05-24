@@ -51,6 +51,9 @@ namespace VAICOM.WSO
             { "wMsgWSO_Radar_ScanType_50Narrow",                                (InterfaceType.Wheel, "select", "radar_display_range", "nm_50;narrow", true) },
             { "wMsgWSO_Radar_FocusTarget",                                      (InterfaceType.Wheel, "select", "radar_focus_target", "", true) },
             { "wMsgWSO_Radar_LockTarget",                                       (InterfaceType.Wheel, "select", "radar_lock_target", "", true) },
+            { "wMsgWSO_Radar_FocusTarget_Direct",                               (InterfaceType.Wheel, "select", "radar_focus_target", "", true) }, //Focus IDX1 target
+            { "wMsgWSO_Radar_LockTarget_Direct",                                (InterfaceType.Wheel, "select", "radar_lock_target", "", true) }, //Lock IDX1 target
+            { "wMsgWSO_Radar_UnlockTarget",                                     (InterfaceType.Wheel, "select", "radar_unlock_tgt", "", false) },
             { "wMsgWSO_A2G_TVWeapons",                                          (InterfaceType.Wheel, "select", "a2g_tv_feed", "weapons", true) },
             { "wMsgWSO_A2G_TVPaveSpike",                                        (InterfaceType.Wheel, "select", "a2g_tv_feed", "pave_spike", true) },
             { "wMsgWSO_Navigation_GoToResume",                                  (InterfaceType.Wheel, "select", "resume_flightplan_1", "", false) },
@@ -98,9 +101,6 @@ namespace VAICOM.WSO
             { "wMsgWSO_Crew_StartAlignment",                                    (InterfaceType.Wheel, "select", "jester_start_alignment", "start", true) },
             { "wMsgWSO_Systems_FlaresJettison",                                 (InterfaceType.Wheel, "select", "systems_flares_jettison", "", false) },
             { "wMsgWSO_Systems_Countermeasures_Quantity",                       (InterfaceType.Wheel, "select", "systems_countermeasures_quantity", "", false) },
-            { "wMsgWSO_Radar_FocusTarget_Direct",                               (InterfaceType.Wheel, "select", "radar_focus_target", "", true) },
-            { "wMsgWSO_Radar_LockTarget_Direct",                                (InterfaceType.Wheel, "select", "radar_lock_target", "", true) },
-            { "wMsgWSO_Radar_UnlockTarget",                                     (InterfaceType.Wheel, "select", "radar_unlock_tgt", "", false) },
             { "wMsgWSO_A2G_PaveSpike_Ready",                                    (InterfaceType.Wheel, "select", "pave_spike_op", "ready", true) },
             { "wMsgWSO_A2G_PaveSpike_Standby",                                  (InterfaceType.Wheel, "select", "pave_spike_op", "standby", true) },
             { "wMsgWSO_A2G_PaveSpike_LaserCode",                                (InterfaceType.Wheel, "select", "pave_spike_laser_code", "", true) },
