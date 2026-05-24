@@ -877,7 +877,22 @@ namespace VAICOM
                         return true;
                     }
 
+                    if (IsDirectRadarTargetCommand(commandId)
+                        && WSOActionCache.TryGetByActionAndIndex(action, "1", out string firstContactValue)
+                        && !string.IsNullOrWhiteSpace(firstContactValue))
+                    {
+                        resolvedValue = firstContactValue;
+                        Log.Write($"WSO command '{commandId}' defaulted to first radar contact [idx=1] => {firstContactValue}", Colors.Text);
+                        return true;
+                    }
+
                     return true;
+                }
+
+                private static bool IsDirectRadarTargetCommand(string commandId)
+                {
+                    return commandId.Equals("wMsgWSO_Radar_FocusTarget_Direct", StringComparison.OrdinalIgnoreCase)
+                        || commandId.Equals("wMsgWSO_Radar_LockTarget_Direct", StringComparison.OrdinalIgnoreCase);
                 }
 
                 private static bool TryResolveValueFromActionCache(string action, string sentence, out string resolvedValue, out string cacheKey)
