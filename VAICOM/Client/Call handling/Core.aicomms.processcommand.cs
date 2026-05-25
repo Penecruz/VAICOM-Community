@@ -918,7 +918,7 @@ namespace VAICOM
                         }
                     }
 
-                    return false;
+                    return true;
                 }
 
                 private static bool IsDirectRadarTargetCommand(string commandId)
