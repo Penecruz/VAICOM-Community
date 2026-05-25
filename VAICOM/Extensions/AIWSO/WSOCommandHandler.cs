@@ -273,6 +273,56 @@ namespace VAICOM
                     HbSendProxyCommand.SendWsoCommand(State.WsoWheelClient, "wMsgWSO_A2G_PaveSpike_LaserCode", laserCode);
                 }
 
+                public static void RadarFocusTarget()
+                {
+                    List<string> focusTargetCacheKeys = new List<string> { "radar_focus_target" };
+
+                    string focusTargetCommandKey = "wMsgWSO_Radar_FocusTarget";
+
+                    string focusTargetNumber = GetNumberFromCommand();
+
+                    focusTargetCacheKeys.Add(focusTargetNumber);
+                    string focusTargetCacheKey = String.Join("|", focusTargetCacheKeys);
+
+                    CommandCompleted("Radar Focus Target", new List<string> { $"Target {focusTargetNumber}" });
+
+                    if (WSOActionCache.TryGetByActionAndIndex(focusTargetCacheKey, out string resolvedTarget)
+                            && !string.IsNullOrWhiteSpace(resolvedTarget))
+                    {
+                        HbSendProxyCommand.SendWsoCommand(State.WsoWheelClient, focusTargetCommandKey, resolvedTarget);
+                    }
+                    else
+                    {
+                        Log.Write($"Target not found for target {focusTargetNumber}", Colors.Warning);
+                        UI.Playsound.Recipientna();
+                    }
+                }
+
+                public static void RadarLockTarget()
+                {
+                    List<string> lockTargetCacheKeys = new List<string> { "radar_lock_target" };
+
+                    string lockTargetCommandKey = "wMsgWSO_Radar_LockTarget";
+
+                    string lockTargetNumber = GetNumberFromCommand();
+
+                    lockTargetCacheKeys.Add(lockTargetNumber);
+                    string lockTargetCacheKey = String.Join("|", lockTargetCacheKeys);
+
+                    CommandCompleted("Radar Lock Target", new List<string> { $"Target {lockTargetNumber}" });
+
+                    if (WSOActionCache.TryGetByActionAndIndex(lockTargetCacheKey, out string resolvedTarget)
+                            && !string.IsNullOrWhiteSpace(resolvedTarget))
+                    {
+                        HbSendProxyCommand.SendWsoCommand(State.WsoWheelClient, lockTargetCommandKey, resolvedTarget);
+                    }
+                    else
+                    {
+                        Log.Write($"Target not found for target {lockTargetNumber}", Colors.Warning);
+                        UI.Playsound.Recipientna();
+                    }
+                }
+
                 public static bool IsWSO()
                 {
                     if (!State.currentmodule.Id.Equals("F-4E-45MC", StringComparison.OrdinalIgnoreCase))

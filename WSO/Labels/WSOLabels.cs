@@ -46,10 +46,13 @@ namespace VAICOM.Extensions.WSO
             { "wMsgWSO_Radar_ScanType_25Narrow", "WSO Scan 25 Narrow" },
             { "wMsgWSO_Radar_ScanType_50Wide", "WSO Scan 50 Wide" },
             { "wMsgWSO_Radar_ScanType_50Narrow", "WSO Scan 50 Narrow" },
-            { "wMsgWSO_Radar_FocusTarget", "WSO Focus Target" },
-            { "wMsgWSO_Radar_LockTarget", "WSO Lock Target" },
+            { "wMsgWSO_Radar_FocusTarget_Direct", "WSO Focus Target" },
+            { "wMsgWSO_Radar_LockTarget_Direct", "WSO Lock Target" },
+            { "wMsgWSO_Radar_UnlockTarget", "WSO Unlock Target" },
             { "wMsgWSO_A2G_TVWeapons", "WSO TV Weapons" },
             { "wMsgWSO_A2G_TVPaveSpike", "WSO TV Pave Spike" },
+            { "wMsgWSO_A2G_PaveSpike_Ready", "WSO Pave Spike Ready" },
+            { "wMsgWSO_A2G_PaveSpike_Standby", "WSO Pave Spike Standby" },
             { "wMsgWSO_Navigation_Divert_LatLong", "WSO Divert To" },
             { "wMsgWSO_Navigation_Holding_ActivateCurrentTurnPoint", "WSO Hold Current Turn Point" },
             { "wMsgWSO_Navigation_Holding_DeactivateCurrentTurnPoint", "WSO Deactivate Current Turn Point" },
@@ -68,6 +71,8 @@ namespace VAICOM.Extensions.WSO
             { "wMsgWSO_Systems_FlareMode_Off", "WSO Flare Mode Off" },
             { "wMsgWSO_Systems_FlareMode_Single", "WSO Flare Mode Single" },
             { "wMsgWSO_Systems_FlareMode_Program", "WSO Flare Mode Program" },
+            { "wMsgWSO_Systems_FlaresJettison", "WSO Flares Jettison" },
+            { "wMsgWSO_Systems_Countermeasures_Quantity", "WSO Countermeasures Quantity" },
             { "wMsgWSO_Systems_Jammer_Standby", "WSO Jammer Standby" },
             { "wMsgWSO_Systems_Jammer_Transmit", "WSO Jammer Transmit" },
             { "wMsgWSO_Systems_AVTR_Record", "WSO AVTR Record" },
@@ -126,14 +131,6 @@ namespace VAICOM.Extensions.WSO
 
             // Jester fuel responses
             { "wMsgWSO_Fuel_FuelIsGood", "WSO Fuel Is Looking Good" },
-
-            { "wMsgWSO_Systems_FlaresJettison", "WSO Flares Jettison" },
-            { "wMsgWSO_Systems_Countermeasures_Quantity", "WSO Countermeasures Quantity" },
-            { "wMsgWSO_Radar_FocusTarget_Direct", "WSO Focus Target Direct" },
-            { "wMsgWSO_Radar_LockTarget_Direct", "WSO Lock Target Direct" },
-            { "wMsgWSO_Radar_UnlockTarget", "WSO Unlock Target" },
-            { "wMsgWSO_A2G_PaveSpike_Ready", "WSO Pave Spike Ready" },
-            { "wMsgWSO_A2G_PaveSpike_Standby", "WSO Pave Spike Standby" },
 
             // Context response commands
             { "wMsgWSO_Context_Short", "WSO Context Action Short" },

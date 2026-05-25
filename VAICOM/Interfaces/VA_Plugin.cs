@@ -470,6 +470,20 @@ namespace VAICOM
                         }
                         break;
 
+                    case "wso.radar.focustarget":
+                        if (WSOCommandHandler.IsWSO())
+                        {
+                            WSOCommandHandler.RadarFocusTarget();
+                        }
+                        break;
+
+                    case "wso.radar.locktarget":
+                        if (WSOCommandHandler.IsWSO())
+                        {
+                            WSOCommandHandler.RadarLockTarget();
+                        }
+                        break;
+
                     case "test":
                         API.API_Test(vaProxy);
                         break;

@@ -877,16 +877,25 @@ namespace VAICOM
                         return true;
                     }
 
-                    if (IsDirectRadarTargetCommand(commandId)
-                        && WSOActionCache.TryGetByActionAndIndex(action, "1", out string firstContactValue)
-                        && !string.IsNullOrWhiteSpace(firstContactValue))
+                    if (IsDirectRadarTargetCommand(commandId))
                     {
-                        resolvedValue = firstContactValue;
-                        Log.Write($"WSO command '{commandId}' defaulted to first radar contact [idx=1] => {firstContactValue}", Colors.Text);
-                        return true;
+
+                        if (WSOActionCache.TryGetByActionAndIndex(action, "1", out string firstContactValue)
+                            && !string.IsNullOrWhiteSpace(firstContactValue))
+                        {
+                            resolvedValue = firstContactValue;
+                            Log.Write($"WSO command '{commandId}' defaulted to first radar contact [idx=1] => {firstContactValue}", Colors.Text);
+                            return true;
+                        }
+                        else
+                        {
+                            Log.Write("No radar targets currently available.", Colors.Warning);
+                            UI.Playsound.Recipientna();
+                            return false;
+                        }
                     }
 
-                    return true;
+                    return false;
                 }
 
                 private static bool IsDirectRadarTargetCommand(string commandId)
