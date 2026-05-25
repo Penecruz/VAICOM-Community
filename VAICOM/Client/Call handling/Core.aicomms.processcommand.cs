@@ -825,6 +825,8 @@ namespace VAICOM
                             }
                         }
 
+                        RefreshKneeboardSnapshotAfterCommand();
+
                         if (dospeech())
                         {
                             Extensions.AOCS.AOCSProvider.AOCS_CallDeepInterrogate();
@@ -859,6 +861,27 @@ namespace VAICOM
 
                     State.processlocked = false;
                     return true;
+                }
+
+                private static void RefreshKneeboardSnapshotAfterCommand()
+                {
+                    try
+                    {
+                        if (State.activeconfig == null)
+                        {
+                            return;
+                        }
+
+                        if (!State.activeconfig.OpenKneeboard_Out && !State.activeconfig.Kneeboard_Enabled)
+                        {
+                            return;
+                        }
+
+                        KneeboardUpdater.UpdateServerData();
+                    }
+                    catch
+                    {
+                    }
                 }
 
                 public static bool TryResolveDynamicWsoValue(string commandId, string action, string mappedValue, out string resolvedValue)

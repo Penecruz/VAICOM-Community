@@ -332,6 +332,12 @@ namespace VAICOM
       return tab === 'ATC' ? 'WX/ATC' : tab;
     }
 
+    function formatAiCrewPhaseLabel(phase){
+      const text = String(phase || '').trim();
+      if (!text || text.toLowerCase() === 'unknown') return '';
+      return ' (' + text + ')';
+    }
+
     async function updateCursorModeForTab(){
       try{
         const okb = (typeof OpenKneeboard !== 'undefined') ? OpenKneeboard : window.OpenKneeboard;
@@ -733,6 +739,127 @@ namespace VAICOM
       ];
     }
 
+    function isF4Aircraft(data){
+      const server = (data && data.Server) || {};
+      const aircraft = String(server.Aircraft || '').toUpperCase();
+      return aircraft.indexOf('F-4') >= 0;
+    }
+
+    function rankF4KeywordByPhase(phase, phrase){
+      const p = String(phrase || '').trim();
+      if (!p) return 100;
+
+      const pp = p.toLowerCase();
+      function hasAny(terms){
+        for (let i = 0; i < terms.length; i++){
+          if (pp.indexOf(terms[i]) >= 0) return true;
+        }
+        return false;
+      }
+
+      const crewControl = [
+        'Countermeasures Yours',
+        'Countermeasures Mine',
+        'Crew Auto',
+        'Crew Disable',
+        'Crew Force',
+        'Eject Both',
+        'Eject WSO',
+        'Report Speed',
+        'Some Silence',
+        'Start Alignment Now',
+        'Talk to Me'
+      ];
+
+      const startupMisc = [
+        'Going Below 100 Feet',
+        'Going Below 150 Feet',
+        'Going Below 200 Feet',
+        'Going Below 50 Feet',
+        'Negative Not Going Low',
+        'Negative On Alignment',
+        'Start BATH Alignment',
+        'Start Full Alignment',
+        'Start Stored Alignment',
+        'Will Let You Know',
+        'Yes Start Alignment'
+      ];
+
+      if (phase === 'startup and taxi'){
+        if (/^Ground\s+/i.test(p)) return 0;
+        if (startupMisc.indexOf(p) >= 0) return 1;
+        if (crewControl.indexOf(p) >= 0) return 2;
+        return 3;
+      }
+
+      if (phase === 'enroute'){
+        if (hasAny([
+          'navigation', 'tacan', 'waypoint', 'flight plan', 'resume', 'hold ', 'hold at',
+          'divert', 'tune radio', 'select mode',
+          'radar', 'iff', 'boresight', 'scan', 'auto focus', 'go radar'
+        ])) return 0;
+        return 1;
+      }
+
+      if (phase === 'fence/target'){
+        if (hasAny([
+          'countermeasures', 'chaff', 'flare', 'jammer', 'jettison',
+          'pave spike', 'tv weapons', 'designate', 'undesignate', 'lock target', 'focus target', 'context '
+        ])) return 0;
+        return 1;
+      }
+
+      if (phase === 'approach/landing'){
+        if (hasAny([
+          'navigation', 'tacan', 'waypoint', 'flight plan', 'resume', 'hold ', 'divert', 'tune radio', 'select mode'
+        ])) return 0;
+        if (p === 'Fuel Is Looking Good') return 1;
+        return 2;
+      }
+
+      if (phase === 'divert/low fuel'){
+        if (hasAny(['divert', 'fuel'])) return 0;
+        if (hasAny([
+          'navigation', 'tacan', 'waypoint', 'flight plan', 'resume', 'hold ', 'tune radio', 'select mode'
+        ])) return 1;
+        return 2;
+      }
+
+      if (phase === 'taxi in/shutdown'){
+        if (/^Ground\s+/i.test(p)) return 0;
+        return 1;
+      }
+
+      return 0;
+    }
+
+    function reorderAiCrewPhrasesForPhase(data, phrases){
+      const list = Array.isArray(phrases) ? phrases.slice() : [];
+      const phase = String((data && data.AiCrewPhase) || '').trim().toLowerCase();
+
+      if (!isF4Aircraft(data)){
+        list.sort(function(a,b){ return a.localeCompare(b); });
+        return list;
+      }
+
+      if (phase === 'startup and taxi'
+        || phase === 'enroute'
+        || phase === 'fence/target'
+        || phase === 'approach/landing'
+        || phase === 'divert/low fuel'
+        || phase === 'taxi in/shutdown'){
+        list.sort(function(a, b){
+          const rankDiff = rankF4KeywordByPhase(phase, a) - rankF4KeywordByPhase(phase, b);
+          if (rankDiff !== 0) return rankDiff;
+          return String(a).localeCompare(String(b));
+        });
+        return list;
+      }
+
+      list.sort(function(a,b){ return a.localeCompare(b); });
+      return list;
+    }
+
     function getMergedLogByCategories(map, categories){
       const lines = [];
       if (!map) return '';
@@ -792,8 +919,7 @@ namespace VAICOM
           if (!phrase) return;
           if (cleaned.indexOf(phrase) < 0) cleaned.push(phrase);
         });
-        cleaned.sort(function(a,b){ return a.localeCompare(b); });
-        return cleaned;
+        return reorderAiCrewPhrasesForPhase(data, cleaned);
       }
 
       const phrases = [];
@@ -882,9 +1008,15 @@ namespace VAICOM
         return 'No keywords for this tab yet.';
       }
 
-      const mid = Math.ceil(rows.length / 2);
-      const left = rows.slice(0, mid).map(escapeHtml).join('<br>');
-      const right = rows.slice(mid).map(escapeHtml).join('<br>');
+      const leftRows = [];
+      const rightRows = [];
+      for (let i = 0; i < rows.length; i++){
+        if ((i % 2) === 0) leftRows.push(rows[i]);
+        else rightRows.push(rows[i]);
+      }
+
+      const left = leftRows.map(escapeHtml).join('<br>');
+      const right = rightRows.map(escapeHtml).join('<br>');
 
       return '<div class=""kwCols""><div class=""kwCol"">' + left + '</div><div class=""kwCol"">' + right + '</div></div>';
     }
@@ -1157,7 +1289,10 @@ namespace VAICOM
         tabBodyEl.style.cursor = '';
         tabBodyEl.title = '';
       }
-      document.getElementById('keywordTitle').textContent = 'Keywords: ' + tabLabel(selectedTab);
+      const aiCrewPhaseSuffix = selectedTab === 'AI CREW'
+        ? formatAiCrewPhaseLabel(data.AiCrewPhase)
+        : '';
+      document.getElementById('keywordTitle').textContent = 'Keywords: ' + tabLabel(selectedTab) + aiCrewPhaseSuffix;
       document.getElementById('keywordBody').innerHTML = formatKeywordReferenceHtml(data, selectedTab);
 
       const showRawWrap = document.getElementById('showRawWrap');
@@ -1740,6 +1875,112 @@ namespace VAICOM
                     lock (Sync)
                     {
                         lastAiCrewCommand = NormalizeLogEntry(commandText);
+                        snapshot.AiCrewPhase = InferF4EAiCrewPhase(lastAiCrewCommand, snapshot.AiCrewPhase);
+                        snapshot.UpdatedUtc = DateTime.UtcNow;
+                    }
+                }
+
+                private static string InferF4EAiCrewPhase(string commandText, string currentPhase)
+                {
+                    try
+                    {
+                        string moduleId = State.currentmodule == null ? "" : (State.currentmodule.Id ?? "");
+                        if (!moduleId.Equals("F-4E-45MC", StringComparison.OrdinalIgnoreCase))
+                        {
+                            return "Unknown";
+                        }
+
+                        string text = (commandText ?? "").ToLowerInvariant();
+                        if (string.IsNullOrWhiteSpace(text))
+                        {
+                            return string.IsNullOrWhiteSpace(currentPhase) ? "Unknown" : currentPhase;
+                        }
+
+                        bool hasAny(params string[] terms)
+                        {
+                            return terms.Any(t => text.IndexOf(t, StringComparison.Ordinal) >= 0);
+                        }
+
+                        if (hasAny("divert", "fuel"))
+                        {
+                            return "Divert/Low Fuel";
+                        }
+
+                        if (hasAny("below 50", "below 100", "below 150", "below 200", "approach", "landing"))
+                        {
+                            return "Approach/Landing";
+                        }
+
+                        if (hasAny(
+                            "lock target",
+                            "focus target",
+                            "unlock target",
+                            "pave spike",
+                            "tv weapons",
+                            "countermeasures",
+                            "chaff mode",
+                            "flare mode",
+                            "jammer",
+                            "flares jettison",
+                            "context select",
+                            "context hold",
+                            "context double"))
+                        {
+                            return "Fence/Target";
+                        }
+
+                        if (hasAny(
+                            "tacan",
+                            "waypoint",
+                            "flight plan",
+                            "resume",
+                            "hold",
+                            "tune radio",
+                            "select mode",
+                            "auto focus",
+                            "radar",
+                            "iff",
+                            "boresight",
+                            "scan"))
+                        {
+                            return "Enroute";
+                        }
+
+                        bool groundOperation = hasAny(
+                            "ground ",
+                            "chocks",
+                            "power",
+                            "air connect",
+                            "air disconnect",
+                            "air on",
+                            "air off",
+                            "ladder",
+                            "steps",
+                            "pitot check",
+                            "spoilers check",
+                            "flight controls check",
+                            "trim check",
+                            "start alignment",
+                            "alignment");
+
+                        if (groundOperation)
+                        {
+                            if (string.Equals(currentPhase, "Enroute", StringComparison.OrdinalIgnoreCase)
+                                || string.Equals(currentPhase, "Fence/Target", StringComparison.OrdinalIgnoreCase)
+                                || string.Equals(currentPhase, "Approach/Landing", StringComparison.OrdinalIgnoreCase)
+                                || string.Equals(currentPhase, "Divert/Low Fuel", StringComparison.OrdinalIgnoreCase))
+                            {
+                                return "Taxi In/Shutdown";
+                            }
+
+                            return "Startup and Taxi";
+                        }
+
+                        return string.IsNullOrWhiteSpace(currentPhase) ? "Unknown" : currentPhase;
+                    }
+                    catch
+                    {
+                        return string.IsNullOrWhiteSpace(currentPhase) ? "Unknown" : currentPhase;
                     }
                 }
 
@@ -2198,6 +2439,7 @@ namespace VAICOM
             {
                 public string ActiveCategory { get; set; } = "LOG";
                 public string NotesBuffer { get; set; } = "";
+                public string AiCrewPhase { get; set; } = "Unknown";
                 public DateTime UpdatedUtc { get; set; } = DateTime.UtcNow;
                 public OpenKneeboardServerSnapshot Server { get; set; } = new OpenKneeboardServerSnapshot();
                 public OpenKneeboardStatusSnapshot Status { get; set; } = new OpenKneeboardStatusSnapshot();
@@ -2215,6 +2457,7 @@ namespace VAICOM
                     {
                         ActiveCategory = ActiveCategory,
                         NotesBuffer = NotesBuffer,
+                        AiCrewPhase = AiCrewPhase,
                         UpdatedUtc = UpdatedUtc,
                         Server = Server == null ? new OpenKneeboardServerSnapshot() : Server.Clone(),
                         Status = Status == null ? new OpenKneeboardStatusSnapshot() : Status.Clone(),
