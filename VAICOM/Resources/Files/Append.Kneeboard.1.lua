@@ -200,9 +200,10 @@ for i,j in pairs(logcats) do
 	Unitsdata[i] = CreateElement "ceStringPoly"
 	setblockproperties(Unitsdata[i],"Unitsdata",i,0.6)	
 	AddElement(Unitsdata[i])
+  local atc_log_start_offset = i == "ATC" and 1.95 or 0
 	for k = 1,4 do
 		Logdata[k][i] = CreateElement "ceStringPoly"
-		setblockproperties(Logdata[k][i],"Logdata"..tostring(k),i,2.9+(k-1)*4.2)
+        setblockproperties(Logdata[k][i],"Logdata"..tostring(k),i,2.9+atc_log_start_offset+(k-1)*4.2)
 		AddElement(Logdata[k][i])
 		Aliasdata[k][i]	= CreateElement "ceStringPoly"
 		setblockproperties_alias(Aliasdata[k][i],"Aliasdata"..tostring(k),i,k-1)

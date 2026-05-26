@@ -51,7 +51,21 @@ namespace VAICOM
                             return false;
                         }
 
-                        return seatValue < 0.5;
+                        const double wsoSeatValue = 0.0;
+                        const double pilotSeatValue = 0.1;
+                        const double seatTolerance = 0.03;
+
+                        if (Math.Abs(seatValue - wsoSeatValue) <= seatTolerance)
+                        {
+                            return true;
+                        }
+
+                        if (Math.Abs(seatValue - pilotSeatValue) <= seatTolerance)
+                        {
+                            return false;
+                        }
+
+                        return seatValue < ((wsoSeatValue + pilotSeatValue) * 0.5);
                     }
                 }
                 catch

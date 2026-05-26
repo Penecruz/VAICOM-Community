@@ -307,14 +307,6 @@ namespace VAICOM
 
     function normalizeActiveCategory(cat, data){
       var c = String(cat || '').toUpperCase();
-      if (c === 'REF'){
-        var server = (data && data.Server) || {};
-        var aircraft = String(server.Aircraft || '').toUpperCase();
-        if (aircraft.indexOf('F-14') >= 0 || aircraft.indexOf('F-4') >= 0 || aircraft.indexOf('AH-64') >= 0 || aircraft.indexOf('AH64') >= 0){
-          return 'AI CREW';
-        }
-      }
-
       return normalizeCategory(c);
     }
 
