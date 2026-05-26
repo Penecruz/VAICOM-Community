@@ -12,3 +12,6 @@
 
 ## TX5 Intercom Implementation
 - For TX5 intercom hot mic, allow Options and menu navigation commands (e.g., Take 1..12) without requiring PTT press.
+
+## OpenKneeboard Implementation
+- For OpenKneeboard FLT PLN tab, prefer a full-window, scrollable, table-like kneeboard layout and avoid large path/header blocks above route data.

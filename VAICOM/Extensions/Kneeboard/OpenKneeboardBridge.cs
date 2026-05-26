@@ -1,10 +1,12 @@
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.IO;
 using System.Net;
+using System.Text.RegularExpressions;
 using System.Text;
 using System.Threading;
 using System.Windows;
@@ -23,6 +25,8 @@ namespace VAICOM
                 private static OpenKneeboardSnapshot snapshot = new OpenKneeboardSnapshot();
                 private static string lastAiCrewCommand = "";
                 private static bool captureRawServerMessages;
+                private static readonly string[] DtcFileExtensions = new[] { ".dtc", ".json" };
+                private const string RouteSelectionPrefix = "RTE::";
                 private static readonly string IndexHtml = @"<!doctype html>
 <html>
 <head>
@@ -36,12 +40,12 @@ namespace VAICOM
       width: 100%;
       height: 100%;
       background: #f1f1ef;
-      overflow: hidden;
+      overflow: visible;
       box-sizing: border-box;
       border: 1px solid #9aa0a6;
       box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.08);
     }
-    .sheetBody { height: 100%; overflow: hidden; padding: 8px; box-sizing: border-box; display: flex; flex-direction: column; }
+    .sheetBody { height: 100%; overflow: visible; padding: 8px; box-sizing: border-box; display: flex; flex-direction: column; }
     .headerRow { display:flex; align-items:flex-start; justify-content:space-between; gap:10px; margin-bottom:4px; }
     h3 { margin: 0; font-size: 28px; color: #111; }
     .logo { width: 36px; height: 36px; object-fit: contain; }
@@ -133,6 +137,7 @@ namespace VAICOM
     .tab-TANKER { background: rgba(125, 104, 50, 0.82); }
     .tab-FLIGHT { background: rgba(132, 70, 66, 0.82); }
     .tab-AOCS { background: rgba(112, 62, 143, 0.82); }
+    .tab-DTC { background: rgba(66, 93, 124, 0.82); }
     .tab-REF_CREW { background: rgba(130, 129, 71, 0.82); }
     .tab-NOTES { background: rgba(73, 80, 146, 0.82); }
     .tab-AI_CREW { background: rgba(131, 87, 44, 0.82); }
@@ -144,6 +149,7 @@ namespace VAICOM
     .tab.active.tab-TANKER,
     .tab.active.tab-FLIGHT,
     .tab.active.tab-AOCS,
+    .tab.active.tab-DTC,
     .tab.active.tab-REF_CREW,
     .tab.active.tab-NOTES,
     .tab.active.tab-AI_CREW {
@@ -175,12 +181,193 @@ namespace VAICOM
     body.notes-tab .tabPanel { flex: 0 0 55%; }
     body.notes-tab .keywordsPanel { flex: 1 1 auto; min-height: 110px; }
     body.notes-tab .keywordsContent { max-height: 140px; }
+    body.flt-plan-tab .session { display: none; }
+    body.flt-plan-tab .session { display: none; }
+    body.flt-plan-tab .tabPanel { flex: 1 1 auto; }
+    body.flt-plan-tab .tabKeywordDivider { display: none; }
     .mainContent { font-size: 24px; line-height: 1.32; }
+    .mainContent.fltPlanContent { white-space: normal; word-break: normal; font-size: 19px; line-height: 1.2; padding: 6px; height: 100%; min-height: 0; }
     .keywordsContent { font-size: 24px; line-height: 1.32; }
     .kwCols { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
     .kwCol { white-space: pre-wrap; word-break: break-word; }
     .controls { margin: 8px 0; color: #222; font-size: 19px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+    .controls.fltPlanControls { margin: 0 0 8px 0; }
+    .fltPlanSelected { font-size: 17px; color: #22303d; }
     .controls label { white-space: nowrap; }
+    .controls select {
+      font-family: inherit;
+      font-size: 17px;
+      padding: 2px 4px;
+      border: 1px solid #7c8692;
+      background: #ffffff;
+      color: #111;
+      min-width: 300px;
+      max-width: 460px;
+    }
+
+    function findFirstObjectByKeyPattern(value, pattern, depth){
+      if (depth > 8 || value === null || value === undefined) return null;
+      if (Array.isArray(value)){
+        for (let i = 0; i < value.length; i++){
+          const found = findFirstObjectByKeyPattern(value[i], pattern, depth + 1);
+          if (found) return found;
+        }
+        return null;
+      }
+
+      if (typeof value !== 'object') return null;
+
+      const keys = Object.keys(value);
+      for (let i = 0; i < keys.length; i++){
+        const k = keys[i];
+        const v = value[k];
+        if (pattern.test(String(k)) && v && typeof v === 'object'){
+          return v;
+        }
+      }
+
+      for (let i = 0; i < keys.length; i++){
+        const found = findFirstObjectByKeyPattern(value[keys[i]], pattern, depth + 1);
+        if (found) return found;
+      }
+
+      return null;
+    }
+
+    function collectScalarRows(prefix, value, rows, depth, maxRows){
+      if (rows.length >= maxRows || depth > 8) return;
+      if (value === null || value === undefined){
+        rows.push({ key: prefix || '-', value: '-' });
+        return;
+      }
+
+      if (Array.isArray(value)){
+        for (let i = 0; i < value.length; i++){
+          collectScalarRows((prefix || 'item') + '[' + i + ']', value[i], rows, depth + 1, maxRows);
+          if (rows.length >= maxRows) return;
+        }
+        return;
+      }
+
+      if (typeof value === 'object'){
+        const keys = Object.keys(value);
+        if (!keys.length){
+          rows.push({ key: prefix || '-', value: '{}' });
+          return;
+        }
+
+        keys.forEach(function(k){
+          if (rows.length >= maxRows) return;
+          const nextPrefix = prefix ? (prefix + '.' + k) : k;
+          collectScalarRows(nextPrefix, value[k], rows, depth + 1, maxRows);
+        });
+        return;
+      }
+
+      rows.push({ key: prefix || '-', value: String(value) });
+    }
+
+    function isNavPointObject(o){
+      if (!o || typeof o !== 'object') return false;
+      const hasXY = isFinite(Number(o.x)) && isFinite(Number(o.y));
+      const hasLatLon = (isFinite(Number(o.lat)) && isFinite(Number(o.lon)))
+        || (isFinite(Number(o.latitude)) && isFinite(Number(o.longitude)));
+      const hasWpMeta = o.type || o.action || o.name || o.ETA || o.alt;
+      return hasXY || hasLatLon || !!hasWpMeta;
+    }
+
+    function collectNavPoints(value, points, depth){
+      if (points.length >= 200 || depth > 9 || value === null || value === undefined) return;
+
+      if (Array.isArray(value)){
+        value.forEach(function(item){
+          if (points.length >= 200) return;
+          collectNavPoints(item, points, depth + 1);
+        });
+        return;
+      }
+
+      if (typeof value !== 'object') return;
+
+      if (isNavPointObject(value)){
+        points.push(value);
+      }
+
+      Object.keys(value).forEach(function(k){
+        if (points.length >= 200) return;
+        const child = value[k];
+        if (child && typeof child === 'object'){
+          collectNavPoints(child, points, depth + 1);
+        }
+      });
+    }
+
+    function formatDtcFocusedTable(root, selected){
+      const cmdsRoot = findFirstObjectByKeyPattern(root, /(cmds|countermeasures|countermeasure|cmds)/i, 0);
+      const navRoot = findFirstObjectByKeyPattern(root, /(nav|waypoint|waypoints|route|flight\s*plan|flightplan|steer)/i, 0);
+
+      const cmdRows = [];
+      if (cmdsRoot) collectScalarRows('CMDS', cmdsRoot, cmdRows, 0, 220);
+
+      const navPoints = [];
+      if (navRoot) collectNavPoints(navRoot, navPoints, 0);
+      if (!navPoints.length) collectNavPoints(root, navPoints, 0);
+
+      const lines = [];
+      lines.push('DTC FILE   : ' + getDtcDisplayName(selected));
+      lines.push('PATH       : ' + selected);
+      lines.push('');
+
+      lines.push('CMDS SUMMARY');
+      lines.push('------------');
+      if (!cmdRows.length){
+        lines.push('No CMDS data found.');
+      } else {
+        const maxKeyWidth = cmdRows.reduce(function(acc, r){ return Math.max(acc, String(r.key || '').length); }, 8);
+        const keyWidth = clamp(maxKeyWidth + 1, 20, 64);
+        cmdRows.forEach(function(r){
+          lines.push(String(r.key || '-').padEnd(keyWidth) + String(r.value || '-').replace(/\s+/g, ' ').trim());
+        });
+      }
+
+      lines.push('');
+      lines.push('NAV POINTS');
+      lines.push('----------');
+      lines.push('WP  NAME         TYPE           ALT      ETA       LAT/LON               X            Y');
+      lines.push('--- ------------ -------------- -------- -------- --------------------- ------------ ------------');
+
+      if (!navPoints.length){
+        lines.push('No nav points found.');
+      } else {
+        navPoints.slice(0, 200).forEach(function(p, idx){
+          const wp = String(idx + 1).padStart(2, '0');
+          const name = String(p.name || '').trim() || '-';
+          const type = String(p.type || p.action || 'WP').trim() || 'WP';
+          const alt = isFinite(Number(p.alt)) ? String(Math.round(Number(p.alt))) : '-';
+          const eta = formatEtaSeconds(p.ETA);
+          const lat = isFinite(Number(p.lat)) ? Number(p.lat) : (isFinite(Number(p.latitude)) ? Number(p.latitude) : NaN);
+          const lon = isFinite(Number(p.lon)) ? Number(p.lon) : (isFinite(Number(p.longitude)) ? Number(p.longitude) : NaN);
+          const latLon = (isFinite(lat) && isFinite(lon)) ? (lat.toFixed(5) + ', ' + lon.toFixed(5)) : '-';
+          const x = isFinite(Number(p.x)) ? String(Math.round(Number(p.x))) : '-';
+          const y = isFinite(Number(p.y)) ? String(Math.round(Number(p.y))) : '-';
+
+          lines.push(
+            wp + '  '
+            + name.substring(0, 12).padEnd(12, ' ') + ' '
+            + type.substring(0, 14).padEnd(14, ' ') + ' '
+            + alt.padStart(8, ' ') + ' '
+            + eta.padEnd(8, ' ') + ' '
+            + latLon.substring(0, 21).padEnd(21, ' ') + ' '
+            + x.padStart(12, ' ') + ' '
+            + y.padStart(12, ' ')
+          );
+        });
+      }
+
+      lines.push('');
+      lines.push('Note: LAT/LON requires DCS runtime map projection/origin if not provided directly by source data.');
+      return lines.join('\n');
+    }
     .controls button {
       font-family: inherit;
       font-size: 18px;
@@ -206,6 +393,65 @@ namespace VAICOM
       color: #2e8b57;
       font-weight: 700;
     }
+    .dtcSelector { margin: 0 0 8px 0; }
+    .dtcFileList { max-height: 180px; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; }
+    .dtcFileItem {
+      width: 100%;
+      text-align: left;
+      border: 1px solid #6d7d8d;
+      background: #ffffff;
+      color: #111;
+      padding: 4px 6px;
+      font-family: inherit;
+      font-size: 16px;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .dtcFileItem.active { border-color: #f2d76a; box-shadow: inset 0 0 0 1px rgba(242, 215, 106, 0.75); font-weight: 700; }
+    .dtcFileMeta { color: #4b5f73; font-size: 14px; }
+    .fltPlanBoard { border: 1px solid #7c8692; background: #f5f5f3; color: #111; min-height: 100%; box-sizing: border-box; padding: 8px; display: flex; flex-direction: column; }
+    .fltPlanHeaderGrid { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 6px; margin-bottom: 8px; }
+    .fltPlanHeaderCell { border: 1px solid #8b96a1; background: #ecefed; padding: 4px 6px; min-height: 36px; }
+    .fltPlanHeaderCellLabel { font-size: 13px; color: #2f3d4a; margin-bottom: 2px; }
+    .fltPlanHeaderCellValue { font-size: 17px; font-weight: 700; color: #111; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .fltPlanTimeGrid { display: grid; grid-template-columns: repeat(4, minmax(120px, 1fr)); gap: 6px; margin-bottom: 8px; }
+    .fltPlanTimeCell { border: 1px solid #8b96a1; background: #edf2f6; padding: 3px 5px; }
+    .fltPlanTimeCellLabel { font-size: 12px; color: #2f3d4a; }
+    .fltPlanTimeCellValue { font-size: 16px; font-weight: 700; color: #111; }
+    .fltPlanTimeCell.clickable { cursor: pointer; }
+    .fltPlanTimeCell.clickable:hover { background: #dce8f2; }
+    .fltPlanWpWrap { border: 1px solid #8b96a1; background: #ffffff; flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
+    .fltPlanWpTitle { padding: 4px 6px; border-bottom: 1px solid #8b96a1; font-size: 16px; font-weight: 700; text-transform: uppercase; }
+    .fltPlanWpTable { width: 100%; border-collapse: collapse; table-layout: fixed; }
+    .fltPlanWpTableWrap { flex: 1 1 auto; min-height: 0; overflow: auto; }
+    .fltPlanWpTable th, .fltPlanWpTable td { border: 1px solid #a3adb6; padding: 3px 4px; font-size: 15px; line-height: 1.15; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: center; vertical-align: middle; }
+    .fltPlanWpTable th { background: #e4e8ec; font-weight: 700; }
+    .fltPlanWpTable th.fltPlanEtaHeader { cursor: pointer; }
+    .fltPlanWpTable th.fltPlanEtaHeader:hover { background: #d7e4ef; }
+    .fltPlanAltTag { font-size: 11px; margin-left: 4px; color: #455869; }
+    .fltPlanMiniBtn { font-family: inherit; font-size: 10px; line-height: 1; padding: 1px 3px; min-width: 16px; border: 1px solid #7c8692; background: #f4f7fa; color: #111; cursor: pointer; }
+    .fltPlanMiniBtn:hover { background: #dce8f2; }
+    .fltPlanSpdValue { display: inline-block; min-width: 30px; text-align: center; margin: 0 2px; }
+    .fltPlanAdjustCell { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 2px; }
+    .fltPlanEtaWrap { display: inline-flex; align-items: center; justify-content: center; gap: 4px; }
+    .fltPlanEtaWrap input { margin: 0; }
+    .fltPlanCellNum { text-align: center; }
+    .fltPlanBottomGrid { display: grid; grid-template-columns: 0.85fr 0.64fr 0.635fr; grid-template-areas: 'freq . .' 'assets wx wx'; gap: 8px; margin-top: 8px; }
+    .fltPlanInfoFreqWrap { grid-area: freq; }
+    .fltPlanInfoAssetsWrap { grid-area: assets; }
+    .fltPlanInfoWxWrap { grid-area: wx; }
+    .fltPlanInfoBlock { border: 1px solid #8b96a1; background: #f7f9fb; min-height: 120px; display: flex; flex-direction: column; }
+    .fltPlanInfoFreqWrap .fltPlanInfoBlock { min-height: 78px; }
+    .fltPlanInfoTitle { border-bottom: 1px solid #8b96a1; background: #e4e8ec; font-size: 13px; font-weight: 700; padding: 3px 6px; }
+    .fltPlanInfoBody { padding: 4px 6px; font-size: 13px; line-height: 1.3; overflow: auto; white-space: pre-wrap; }
+    .fltPlanInfoTable { width: 100%; border-collapse: collapse; table-layout: fixed; }
+    .fltPlanInfoTable th, .fltPlanInfoTable td { border: 1px solid #aeb7c0; font-size: 12px; padding: 2px 3px; text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .fltPlanInfoTable th { background: #edf1f5; }
+    .fltPlanInfoWxWrap .fltPlanInfoTable td { white-space: normal; overflow: visible; text-overflow: clip; word-break: break-word; }
+    .fltPlanMessage { white-space: pre-wrap; font-size: 18px; line-height: 1.2; }
+    .fltPlanPlain { margin: 0; background: #ffffff; border: 1px solid #b7b7b7; padding: 10px; white-space: pre; word-break: normal; font-size: 16px; line-height: 1.2; min-height: 100%; box-sizing: border-box; overflow: auto; }
     pre { background: #ffffff; border: 1px solid #b7b7b7; padding: 10px; white-space: pre-wrap; word-break: break-word; font-size: 18px; color:#111; max-height: 190px; overflow: auto; }
     body.raw-mode .keywordsPanel { flex: 0 0 280px; }
     .hidden { display: none; }
@@ -223,6 +469,16 @@ namespace VAICOM
     </div>
 
     <div id='status' class='status'><span id='statusIndicator' class='statusIndicator'></span><span id='statusText'>Loading...</span></div>
+
+    <div id='dtcControls' class='controls fltPlanControls hidden'>
+      <button id='dtcRefresh' type='button'>Refresh FLT PLN</button>
+      <span id='dtcSelectedFileLabel' class='fltPlanSelected'>No FLT PLN selected</span>
+    </div>
+
+    <div id='dtcSelector' class='panel hidden'>
+      <h4 id='dtcSelectorHeader' class='clickable'>FLT PLN Files ▼</h4>
+      <div id='dtcFileList' class='content dtcFileList'></div>
+    </div>
 
     <div class='kneeLayout'>
       <div class='leftColumn'>
@@ -262,7 +518,7 @@ namespace VAICOM
   </div>
 
   <script>
-    const TABS = ['LOG','ATC','AWACS','JTAC','TANKER','AOCS','FLIGHT','AI CREW','GND CREW','NOTES'];
+    const TABS = ['LOG','DTC','ATC','AWACS','JTAC','TANKER','AOCS','FLIGHT','AI CREW','GND CREW','NOTES'];
     let selectedTab = 'LOG';
     let autoBrowse = true;
     let sessionCollapsed = false;
@@ -283,9 +539,38 @@ namespace VAICOM
     const drawModeStorageKey = 'vaicom.okb.notesDrawMode';
     const drawModeTimeoutMs = 30000;
     let tabKeywordsSplitByTab = {};
+    const dtcListCollapsedStorageKey = 'vaicom.okb.dtcListCollapsed';
+    let dtcListCollapsed = false;
+    let fltPlanEtaStartBySelection = {};
+    let fltPlanPlanStateBySelection = {};
 
     function clamp(v, min, max){
       return Math.max(min, Math.min(max, v));
+    }
+
+    function applyDtcListCollapsedState(collapsed){
+      dtcListCollapsed = !!collapsed;
+      const listEl = document.getElementById('dtcFileList');
+      const headerEl = document.getElementById('dtcSelectorHeader');
+      if (listEl) listEl.style.display = dtcListCollapsed ? 'none' : 'flex';
+      if (headerEl) headerEl.textContent = dtcListCollapsed ? 'FLT PLN Files ► (click to expand)' : 'FLT PLN Files ▼';
+    }
+
+    function readInitialDtcListCollapsed(){
+      try{
+        return window.localStorage && window.localStorage.getItem(dtcListCollapsedStorageKey) === '1';
+      }catch(_){
+        return false;
+      }
+    }
+
+    function persistDtcListCollapsedState(){
+      try{
+        if (window.localStorage){
+          window.localStorage.setItem(dtcListCollapsedStorageKey, dtcListCollapsed ? '1' : '0');
+        }
+      }catch(_){
+      }
     }
 
     function safe(v){ return (v === null || v === undefined || v === '') ? '-' : String(v); }
@@ -321,7 +606,9 @@ namespace VAICOM
     }
 
     function tabLabel(tab){
-      return tab === 'ATC' ? 'WX/ATC' : tab;
+      if (tab === 'ATC') return 'WX/ATC';
+      if (tab === 'DTC') return 'FLT PLN';
+      return tab;
     }
 
     function formatAiCrewPhaseLabel(phase){
@@ -622,6 +909,14 @@ namespace VAICOM
     }
 
     function applyCurrentTabKeywordsSplit(){
+      if (selectedTab === 'DTC'){
+        const tabPanel = document.querySelector('.tabPanel');
+        const keywordPanel = document.getElementById('keywordPanel');
+        if (tabPanel) tabPanel.style.flex = '1 1 auto';
+        if (keywordPanel) keywordPanel.style.flex = '';
+        return;
+      }
+
       const ratio = getCurrentTabKeywordsSplitRatio();
       if (isFinite(ratio)){
         applyTabKeywordsSplitRatio(ratio, false);
@@ -977,9 +1272,1124 @@ namespace VAICOM
 
     function formatKeywordReference(data, tab){
       if (tab === 'LOG') return 'No keyword reference for this tab.';
+      if (tab === 'DTC') return 'No keyword reference for this tab.';
       const phrases = getKeywordPhrasesForTab(data, tab);
       if (!phrases.length) return 'No keywords for this tab yet.';
       return phrases.join('\n');
+    }
+
+    function parseRteSelectionToken(value){
+      const text = String(value || '');
+      const prefix = 'RTE::';
+      if (text.indexOf(prefix) !== 0) return null;
+      const sep = text.indexOf('::', prefix.length);
+      if (sep < 0) return null;
+      const encodedRoute = text.substring(prefix.length, sep);
+      const filePath = text.substring(sep + 2);
+      let routeName = encodedRoute;
+      try{ routeName = decodeURIComponent(encodedRoute); }catch(_){ }
+      return { routeName: routeName, filePath: filePath };
+    }
+
+    function getPathFileName(path){
+      const norm = String(path || '').replace(/\\/g, '/');
+      const idx = norm.lastIndexOf('/');
+      return idx >= 0 ? norm.substring(idx + 1) : norm;
+    }
+
+    function getFltPlnPath(path){
+      const rte = parseRteSelectionToken(path);
+      return rte ? rte.filePath : String(path || '');
+    }
+
+    function getDtcDisplayName(path){
+      const text = String(path || '');
+      if (!text) return '-';
+      const rte = parseRteSelectionToken(text);
+      if (rte){
+        return String(rte.routeName || '-');
+      }
+      return getPathFileName(text);
+    }
+
+    function appendDtcRows(prefix, value, rows, depth){
+      if (rows.length >= 220) return;
+      if (depth > 8){
+        rows.push({ key: prefix, value: '[depth limit]' });
+        return;
+      }
+
+      if (value === null || value === undefined){
+        rows.push({ key: prefix, value: '-' });
+        return;
+      }
+
+      if (Array.isArray(value)){
+        if (!value.length){
+          rows.push({ key: prefix, value: '[]' });
+          return;
+        }
+
+        for (let i = 0; i < value.length; i++){
+          appendDtcRows(prefix + '[' + i + ']', value[i], rows, depth + 1);
+          if (rows.length >= 220) return;
+        }
+        return;
+      }
+
+      if (typeof value === 'object'){
+        const keys = Object.keys(value);
+        if (!keys.length){
+          rows.push({ key: prefix, value: '{}' });
+          return;
+        }
+
+        keys.forEach(function(k){
+          if (rows.length >= 220) return;
+          const nextPrefix = prefix ? (prefix + '.' + k) : k;
+          appendDtcRows(nextPrefix, value[k], rows, depth + 1);
+        });
+        return;
+      }
+
+      rows.push({ key: prefix, value: String(value) });
+    }
+
+    function findFirstObjectByKeyPattern(value, pattern, depth){
+      if (depth > 8 || value === null || value === undefined) return null;
+      if (Array.isArray(value)){
+        for (let i = 0; i < value.length; i++){
+          const found = findFirstObjectByKeyPattern(value[i], pattern, depth + 1);
+          if (found) return found;
+        }
+        return null;
+      }
+      if (typeof value !== 'object') return null;
+
+      const keys = Object.keys(value);
+      for (let i = 0; i < keys.length; i++){
+        const k = keys[i];
+        const v = value[k];
+        if (pattern.test(String(k)) && v && typeof v === 'object') return v;
+      }
+
+      for (let i = 0; i < keys.length; i++){
+        const found = findFirstObjectByKeyPattern(value[keys[i]], pattern, depth + 1);
+        if (found) return found;
+      }
+      return null;
+    }
+
+    function collectScalarRows(prefix, value, rows, depth, maxRows){
+      if (rows.length >= maxRows || depth > 8) return;
+      if (value === null || value === undefined){
+        rows.push({ key: prefix || '-', value: '-' });
+        return;
+      }
+      if (Array.isArray(value)){
+        for (let i = 0; i < value.length; i++){
+          collectScalarRows((prefix || 'item') + '[' + i + ']', value[i], rows, depth + 1, maxRows);
+          if (rows.length >= maxRows) return;
+        }
+        return;
+      }
+      if (typeof value === 'object'){
+        const keys = Object.keys(value);
+        if (!keys.length){ rows.push({ key: prefix || '-', value: '{}' }); return; }
+        keys.forEach(function(k){
+          if (rows.length >= maxRows) return;
+          const nextPrefix = prefix ? (prefix + '.' + k) : k;
+          collectScalarRows(nextPrefix, value[k], rows, depth + 1, maxRows);
+        });
+        return;
+      }
+      rows.push({ key: prefix || '-', value: String(value) });
+    }
+
+    function isNavPointObject(o){
+      if (!o || typeof o !== 'object') return false;
+      const hasXY = isFinite(Number(o.x)) && isFinite(Number(o.y));
+      const hasLatLon = (isFinite(Number(o.lat)) && isFinite(Number(o.lon)))
+        || (isFinite(Number(o.latitude)) && isFinite(Number(o.longitude)));
+      const hasWpMeta = o.type || o.action || o.name || o.ETA || o.alt;
+      return hasXY || hasLatLon || !!hasWpMeta;
+    }
+
+    function collectNavPoints(value, points, depth){
+      if (points.length >= 200 || depth > 9 || value === null || value === undefined) return;
+      if (Array.isArray(value)){
+        value.forEach(function(item){ if (points.length < 200) collectNavPoints(item, points, depth + 1); });
+        return;
+      }
+      if (typeof value !== 'object') return;
+      if (isNavPointObject(value)) points.push(value);
+      Object.keys(value).forEach(function(k){
+        if (points.length >= 200) return;
+        const child = value[k];
+        if (child && typeof child === 'object') collectNavPoints(child, points, depth + 1);
+      });
+    }
+
+    function formatDtcFocusedTable(root, selected){
+      const cmdsRoot = findFirstObjectByKeyPattern(root, /(cmds|countermeasures|countermeasure)/i, 0);
+      const navRoot = findFirstObjectByKeyPattern(root, /(nav|waypoint|waypoints|route|flight\s*plan|flightplan|steer)/i, 0);
+
+      const cmdRows = [];
+      if (cmdsRoot) collectScalarRows('CMDS', cmdsRoot, cmdRows, 0, 220);
+
+      const navPoints = [];
+      if (navRoot) collectNavPoints(navRoot, navPoints, 0);
+      if (!navPoints.length) collectNavPoints(root, navPoints, 0);
+
+      const lines = [];
+      lines.push('DTC FILE   : ' + getDtcDisplayName(selected));
+      lines.push('PATH       : ' + selected);
+      lines.push('');
+      lines.push('CMDS SUMMARY');
+      lines.push('------------');
+      if (!cmdRows.length){
+        lines.push('No CMDS data found.');
+      } else {
+        const maxKeyWidth = cmdRows.reduce(function(acc, r){ return Math.max(acc, String(r.key || '').length); }, 8);
+        const keyWidth = clamp(maxKeyWidth + 1, 20, 64);
+        cmdRows.forEach(function(r){
+          lines.push(String(r.key || '-').padEnd(keyWidth) + String(r.value || '-').replace(/\s+/g, ' ').trim());
+        });
+      }
+
+      lines.push('');
+      lines.push('NAV POINTS');
+      lines.push('----------');
+      lines.push('WP  NAME         TYPE           ALT      ETA       LAT/LON               X            Y');
+      lines.push('--- ------------ -------------- -------- -------- --------------------- ------------ ------------');
+      if (!navPoints.length){
+        lines.push('No nav points found.');
+      } else {
+        navPoints.slice(0, 200).forEach(function(p, idx){
+          const wp = String(idx + 1).padStart(2, '0');
+          const name = String(p.name || '').trim() || '-';
+          const type = String(p.type || p.action || 'WP').trim() || 'WP';
+          const alt = isFinite(Number(p.alt)) ? String(Math.round(Number(p.alt))) : '-';
+          const eta = formatEtaSeconds(p.ETA);
+          const lat = isFinite(Number(p.lat)) ? Number(p.lat) : (isFinite(Number(p.latitude)) ? Number(p.latitude) : NaN);
+          const lon = isFinite(Number(p.lon)) ? Number(p.lon) : (isFinite(Number(p.longitude)) ? Number(p.longitude) : NaN);
+          const latLon = (isFinite(lat) && isFinite(lon)) ? (lat.toFixed(5) + ', ' + lon.toFixed(5)) : '-';
+          const x = isFinite(Number(p.x)) ? String(Math.round(Number(p.x))) : '-';
+          const y = isFinite(Number(p.y)) ? String(Math.round(Number(p.y))) : '-';
+          lines.push(
+            wp + '  '
+            + name.substring(0, 12).padEnd(12, ' ') + ' '
+            + type.substring(0, 14).padEnd(14, ' ') + ' '
+            + alt.padStart(8, ' ') + ' '
+            + eta.padEnd(8, ' ') + ' '
+            + latLon.substring(0, 21).padEnd(21, ' ') + ' '
+            + x.padStart(12, ' ') + ' '
+            + y.padStart(12, ' ')
+          );
+        });
+      }
+
+      lines.push('');
+      lines.push('Note: LAT/LON requires DCS runtime map projection/origin if not provided directly by source data.');
+      return lines.join('\n');
+    }
+
+    function formatEtaSeconds(v){
+      const n = Number(v);
+      if (!isFinite(n) || n < 0) return '-';
+      const total = Math.floor(n);
+      const h = Math.floor(total / 3600);
+      const m = Math.floor((total % 3600) / 60);
+      const s = total % 60;
+      return String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+    }
+
+    function getTakeoffTimeBySelection(selected){
+      const key = getFlightPlanEtaStartKey(selected);
+      const value = Number(fltPlanEtaStartBySelection[key]);
+      return isFinite(value) ? value : NaN;
+    }
+
+    function hasTakeoffTimeBySelection(selected){
+      return isFinite(getTakeoffTimeBySelection(selected));
+    }
+
+    function getFlightPlanTimingDisplay(selected){
+      const takeoffSec = getTakeoffTimeBySelection(selected);
+      if (!isFinite(takeoffSec)){
+        return {
+          step: '-',
+          start: '-',
+          taxi: '-',
+          takeoff: '-',
+          tot: '-',
+        };
+      }
+
+      const planState = getFlightPlanPlanState(selected);
+      const totSec = isFinite(Number(planState.totSeconds)) ? Number(planState.totSeconds) : NaN;
+
+      return {
+        step: formatSecondsToClock(takeoffSec - (35 * 60)),
+        start: formatSecondsToClock(takeoffSec - (25 * 60)),
+        taxi: formatSecondsToClock(takeoffSec - (15 * 60)),
+        takeoff: formatSecondsToClock(takeoffSec),
+        tot: isFinite(totSec) ? formatSecondsToClock(totSec) : '-',
+      };
+    }
+
+    function getFlightPlanPlanState(selected){
+      const key = getFlightPlanEtaStartKey(selected);
+      if (!key) return { speedAdjustments: {}, altAdjustments: {}, lockedStep: '', totSeconds: NaN, lockedStart: null };
+      const existing = fltPlanPlanStateBySelection[key];
+      if (existing && typeof existing === 'object') return existing;
+      const created = { speedAdjustments: {}, altAdjustments: {}, lockedStep: '', totSeconds: NaN, lockedStart: null };
+      fltPlanPlanStateBySelection[key] = created;
+      return created;
+    }
+
+    function lockStartPositionForSelection(selected, data){
+      const state = getFlightPlanPlanState(selected);
+      const server = (data && data.Server) || {};
+      const x = Number(server.PlayerPosX);
+      const y = Number(server.PlayerPosY);
+      const altFeet = Number(server.PlayerAltFeet);
+      if (!isFinite(x) || !isFinite(y)) return;
+      state.lockedStart = {
+        x: x,
+        y: y,
+        altFeet: isFinite(altFeet) ? altFeet : NaN,
+      };
+    }
+
+    function stepToKey(step){
+      return String(step || '').trim();
+    }
+
+    function changeWaypointSpeedAdjustment(selected, step, delta){
+      const state = getFlightPlanPlanState(selected);
+      const key = stepToKey(step);
+      if (!key) return;
+      const current = Number(state.speedAdjustments[key]);
+      const next = (isFinite(current) ? current : 0) + Number(delta || 0);
+      state.speedAdjustments[key] = clamp(next, -600, 600);
+    }
+
+    function getWaypointSpeedAdjustment(state, step){
+      const key = stepToKey(step);
+      if (!key || !state || !state.speedAdjustments) return 0;
+      const v = Number(state.speedAdjustments[key]);
+      return isFinite(v) ? v : 0;
+    }
+
+    function setLockedTotStep(selected, step, locked, etaSeconds){
+      const state = getFlightPlanPlanState(selected);
+      const key = stepToKey(step);
+      state.lockedStep = locked ? key : '';
+      if (locked){
+        const eta = Number(etaSeconds);
+        if (isFinite(eta)){
+          state.totSeconds = eta;
+        }
+      }
+    }
+
+    function setTotByMinutesDelta(selected, minutesDelta){
+      const state = getFlightPlanPlanState(selected);
+      let base = Number(state.totSeconds);
+      if (!isFinite(base)){
+        base = getCurrentFlightPlanClockSeconds();
+      }
+      const delta = Math.round(Number(minutesDelta || 0) * 60);
+      state.totSeconds = base + delta;
+    }
+
+    function abbreviateRouteType(type){
+      const raw = String(type || '').trim();
+      if (!raw) return 'WP';
+      const lower = raw.toLowerCase();
+      if (lower === 'turning point') return 'TP';
+      if (lower === 'waypoint') return 'WP';
+      if (lower === 'initial point') return 'IP';
+      if (lower === 'target') return 'TGT';
+      if (lower === 'hold') return 'HLD';
+      const compact = raw.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+      if (!compact) return 'WP';
+      return compact.substring(0, 3);
+    }
+
+    function parseEtaToSeconds(etaText){
+      const text = String(etaText || '').trim();
+      const m = text.match(/^(\d{1,2}):(\d{2}):(\d{2})$/);
+      if (!m) return NaN;
+      const h = parseInt(m[1], 10);
+      const mm = parseInt(m[2], 10);
+      const s = parseInt(m[3], 10);
+      if (!isFinite(h) || !isFinite(mm) || !isFinite(s)) return NaN;
+      if (mm < 0 || mm > 59 || s < 0 || s > 59) return NaN;
+      return (h * 3600) + (mm * 60) + s;
+    }
+
+    function formatSecondsToClock(seconds){
+      let total = Number(seconds);
+      if (!isFinite(total)) return '-';
+      total = Math.round(total);
+      total = ((total % 86400) + 86400) % 86400;
+      const h = Math.floor(total / 3600);
+      const m = Math.floor((total % 3600) / 60);
+      const s = total % 60;
+      return String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+    }
+
+    function getMissionClockSeconds(data){
+      const server = (data && data.Server) || {};
+      const mission = Number(server.MissionTimeSeconds);
+      if (isFinite(mission) && mission >= 0) return mission;
+      return NaN;
+    }
+
+    function getSystemLocalClockSeconds(){
+      const now = new Date();
+      return (now.getHours() * 3600) + (now.getMinutes() * 60) + now.getSeconds();
+    }
+
+    function getCurrentFlightPlanClockSeconds(){
+      const mission = getMissionClockSeconds(latestData);
+      if (isFinite(mission)) return mission;
+      return getSystemLocalClockSeconds();
+    }
+
+    function getFlightPlanEtaStartKey(selected){
+      return String(selected || '');
+    }
+
+    function computeLegDistanceNm(prevWp, currWp){
+      if (!prevWp || !currWp) return NaN;
+      const prevX = Number(prevWp.x);
+      const prevY = Number(prevWp.y);
+      const currX = Number(currWp.x);
+      const currY = Number(currWp.y);
+      if (!isFinite(prevX) || !isFinite(prevY) || !isFinite(currX) || !isFinite(currY)) return NaN;
+      const dx = currX - prevX;
+      const dy = currY - prevY;
+      const meters = Math.sqrt((dx * dx) + (dy * dy));
+      return meters / 1852.0;
+    }
+
+    function estimateLegSpeedKcas(distanceNm, legSeconds, altFeet){
+      const dt = Number(legSeconds);
+      if (!isFinite(dt) || dt <= 0) return '-';
+      const gsKnots = (Number(distanceNm) * 3600.0) / dt;
+      if (!isFinite(gsKnots) || gsKnots <= 0) return '-';
+      const altitude = Math.max(0, Number(altFeet) || 0);
+      const tasToCasFactor = 1.0 + (altitude / 100000.0);
+      const estCas = gsKnots / tasToCasFactor;
+      if (!isFinite(estCas) || estCas <= 0) return '-';
+      return String(Math.round(estCas));
+    }
+
+    function formatDistanceNm(distanceNm){
+      const d = Number(distanceNm);
+      if (!isFinite(d) || d < 0) return '-';
+      if (d < 10){
+        return d.toFixed(1);
+      }
+      return String(Math.round(d));
+    }
+
+    function normalizeHeadingDeg(deg){
+      let d = Number(deg);
+      if (!isFinite(d)) return NaN;
+      d = ((d % 360) + 360) % 360;
+      return d;
+    }
+
+    function formatHeadingDeg(deg){
+      const d = normalizeHeadingDeg(deg);
+      if (!isFinite(d)) return '-';
+      let rounded = Math.round(d);
+      if (rounded <= 0) rounded = 360;
+      if (rounded > 360) rounded = 360;
+      return String(rounded).padStart(3, '0');
+    }
+
+    function computeTrueHeadingDeg(fromWp, toWp){
+      if (!fromWp || !toWp) return NaN;
+      const north0 = Number(fromWp.x);
+      const east0 = Number(fromWp.y);
+      const north1 = Number(toWp.x);
+      const east1 = Number(toWp.y);
+      if (!isFinite(north0) || !isFinite(east0) || !isFinite(north1) || !isFinite(east1)) return NaN;
+
+      const dNorth = north1 - north0;
+      const dEast = east1 - east0;
+      if (Math.abs(dNorth) < 0.001 && Math.abs(dEast) < 0.001) return NaN;
+
+      const radians = Math.atan2(dEast, dNorth);
+      return normalizeHeadingDeg((radians * 180.0 / Math.PI));
+    }
+
+    function getApproxMagVariationDeg(theater){
+      const t = String(theater || '').toUpperCase();
+      if (t.indexOf('CAUCASUS') >= 0) return 6.0;
+      if (t.indexOf('MARIANA') >= 0) return 2.0;
+      if (t.indexOf('PERSIAN') >= 0) return 2.0;
+      if (t.indexOf('SYRIA') >= 0) return 5.0;
+      if (t.indexOf('SINAI') >= 0) return 4.0;
+      if (t.indexOf('NEVADA') >= 0) return 12.0;
+      if (t.indexOf('NORMANDY') >= 0) return 1.0;
+      if (t.indexOf('KOLA') >= 0) return 11.0;
+      if (t.indexOf('AFGHAN') >= 0) return 2.0;
+      if (t.indexOf('SOUTH ATLANTIC') >= 0) return -12.0;
+      return 0.0;
+    }
+
+    function isAltTypeAgl(altType){
+      const t = String(altType || '').toUpperCase();
+      return t.indexOf('AGL') >= 0;
+    }
+
+    function formatAltCellHtml(wp){
+      const altitude = escapeHtml(String((wp && wp.alt) || '-'));
+      if (wp && isAltTypeAgl(wp.altType)){
+        return altitude + '<span class=""fltPlanAltTag"">AGL</span>';
+      }
+      return altitude;
+    }
+
+    function truncateText(value, maxLen){
+      const text = String(value || '');
+      if (text.length <= maxLen) return text;
+      return text.substring(0, Math.max(0, maxLen - 1)) + '…';
+    }
+
+    function pickClosestLines(lines, maxRows){
+      const arr = Array.isArray(lines) ? lines : [];
+      const parsed = arr.map(function(line){
+        const text = String(line || '').trim();
+        const m = text.match(/\b(\d{1,3})\s*NM\b/i);
+        return { text: text, nm: m ? parseInt(m[1], 10) : 9999 };
+      });
+
+      parsed.sort(function(a,b){ return a.nm - b.nm; });
+      return parsed.slice(0, Math.max(0, maxRows || 0)).map(function(x){ return x.text; });
+    }
+
+    function extractFreqAndUnit(line){
+      const text = String(line || '').trim();
+      if (!text) return null;
+      if (/\bMETAR\b/i.test(text) || /^WEATHER:/i.test(text)) return null;
+
+      const fm = text.match(/(\d{2,3}\.\d{1,3}\s*(?:AM|FM)?)/i);
+      const freq = fm ? fm[1].replace(/\s+/g, ' ').trim().toUpperCase() : '';
+      const icaoMatch = text.match(/\b([A-Z]{4})\b/);
+
+      let unit = icaoMatch ? String(icaoMatch[1] || '').toUpperCase() : '';
+      if (!unit) unit = '-';
+
+      if (!freq) return null;
+      return { unit: unit, freq: freq };
+    }
+
+    function formatFrequenciesBlockHtml(data){
+      const atcRaw = pickClosestLines(getMergedList(data && data.Units, 'ATC'), 4);
+      const flightRaw = pickClosestLines(getMergedList(data && data.Units, 'FLIGHT'), 4);
+      const entries = atcRaw.concat(flightRaw)
+        .map(extractFreqAndUnit)
+        .filter(function(x){ return !!x; })
+        .slice(0, 6);
+
+      const rows = entries.map(function(e){
+        return '<tr><td style=""width:48%;"">' + escapeHtml(truncateText(e.unit, 34)) + '</td><td>' + escapeHtml(e.freq) + '</td></tr>';
+      });
+      if (!rows.length){ rows.push('<tr><td colspan=""2"">No frequency data.</td></tr>'); }
+
+      return '<div class=""fltPlanInfoBlock""><div class=""fltPlanInfoTitle"">FREQUENCIES</div><div class=""fltPlanInfoBody""><table class=""fltPlanInfoTable""><thead><tr><th>UNIT</th><th>UHF/VHF</th></tr></thead><tbody>' + rows.join('') + '</tbody></table></div></div>';
+    }
+
+    function formatAssetsBlockHtml(data){
+      const tanker = pickClosestLines(getMergedList(data && data.Units, 'TANKER'), 3);
+      const awacs = pickClosestLines(getMergedList(data && data.Units, 'AWACS'), 2);
+      const jtac = pickClosestLines(getMergedList(data && data.Units, 'JTAC'), 2);
+      const all = tanker.concat(awacs).concat(jtac).slice(0, 7);
+
+      const rows = all.map(function(line){
+        return '<tr><td>' + escapeHtml(truncateText(line, 88)) + '</td></tr>';
+      });
+      if (!rows.length){ rows.push('<tr><td>No asset data.</td></tr>'); }
+
+      return '<div class=""fltPlanInfoBlock""><div class=""fltPlanInfoTitle"">ASSETS</div><div class=""fltPlanInfoBody""><table class=""fltPlanInfoTable""><thead><tr><th>CALLSIGN / UNIT / FREQ / TACAN</th></tr></thead><tbody>' + rows.join('') + '</tbody></table></div></div>';
+    }
+
+    function formatMetarBlockHtml(data){
+      const server = (data && data.Server) || {};
+      const metars = server.AtcMetars || {};
+      const keys = Object.keys(metars).slice(0, 4);
+
+      const rows = keys.map(function(k){
+        const text = String(metars[k] || '').trim();
+        return '<tr><td>' + escapeHtml(truncateText(text, 100)) + '</td></tr>';
+      });
+      if (!rows.length){ rows.push('<tr><td>No METAR data.</td></tr>'); }
+
+      return '<div class=""fltPlanInfoBlock""><div class=""fltPlanInfoTitle"">WX</div><div class=""fltPlanInfoBody""><table class=""fltPlanInfoTable""><thead><tr><th>METAR</th></tr></thead><tbody>' + rows.join('') + '</tbody></table></div></div>';
+    }
+
+    function estimateCruiseKcasForAltitude(altFeet){
+      const alt = Number(altFeet);
+      if (!isFinite(alt)) return 380;
+      if (alt > 28000){
+        const gs = 0.85 * 661.47;
+        const cas = gs / (1.0 + (alt / 100000.0));
+        return Math.max(200, Math.round(cas));
+      }
+      return 380;
+    }
+
+    function estimateRepresentativeGroundSpeedKnots(waypoints){
+      const rows = Array.isArray(waypoints) ? waypoints : [];
+      const samples = [];
+
+      for (let i = 1; i < rows.length; i++){
+        const prev = rows[i - 1];
+        const curr = rows[i];
+        const prevEta = parseEtaToSeconds(prev.eta);
+        const currEta = parseEtaToSeconds(curr.eta);
+        const legSeconds = (isFinite(currEta) && isFinite(prevEta)) ? (currEta - prevEta) : NaN;
+        if (!isFinite(legSeconds) || legSeconds <= 0) continue;
+
+        const legNm = computeLegDistanceNm(prev, curr);
+        if (!isFinite(legNm) || legNm <= 0) continue;
+
+        const gs = (legNm * 3600.0) / legSeconds;
+        if (isFinite(gs) && gs > 0) samples.push(gs);
+      }
+
+      if (!samples.length) return NaN;
+      const total = samples.reduce(function(acc, v){ return acc + v; }, 0);
+      return total / samples.length;
+    }
+
+    function estimateRepresentativeKcas(waypoints){
+      const rows = Array.isArray(waypoints) ? waypoints : [];
+      const samples = [];
+      rows.forEach(function(wp){
+        const v = Number(wp && wp.spd);
+        if (isFinite(v) && v > 0) samples.push(v);
+      });
+      if (!samples.length) return 300;
+      const total = samples.reduce(function(acc, x){ return acc + x; }, 0);
+      return Math.max(120, Math.min(750, total / samples.length));
+    }
+
+    function applySpeedAdjustmentsToWaypoints(waypoints, selected){
+      const rows = Array.isArray(waypoints) ? waypoints : [];
+      if (!rows.length) return rows;
+      const state = getFlightPlanPlanState(selected);
+
+      rows.forEach(function(wp){
+        const base = Number(wp.spd);
+        const adjustment = getWaypointSpeedAdjustment(state, wp.step);
+        if (!isFinite(base)){
+          wp.spd = '-';
+          return;
+        }
+        wp.spd = String(Math.max(80, Math.round(base + adjustment)));
+      });
+
+      return rows;
+    }
+
+    function applyLockedTotPlan(waypoints, selected){
+      const rows = Array.isArray(waypoints) ? waypoints : [];
+      if (!rows.length) return rows;
+
+      const state = getFlightPlanPlanState(selected);
+      const lockedStep = stepToKey(state.lockedStep);
+      const totSec = Number(state.totSeconds);
+      if (!lockedStep || !isFinite(totSec)) return rows;
+
+      const targetIndex = rows.findIndex(function(wp){ return stepToKey(wp.step) === lockedStep; });
+      if (targetIndex < 0) return rows;
+
+      const lockedEta = parseEtaToSeconds(rows[targetIndex].etaDisplay || rows[targetIndex].eta);
+      if (!isFinite(lockedEta)) return rows;
+
+      const delta = Math.round(totSec - lockedEta);
+      if (!isFinite(delta) || delta === 0) return rows;
+
+      for (let i = 0; i < rows.length; i++){
+        const curr = rows[i];
+        const eta = parseEtaToSeconds(curr.etaDisplay || curr.eta);
+        if (isFinite(eta)){
+          curr.etaDisplay = formatSecondsToClock(eta + delta);
+        }
+      }
+
+      const takeoffSec = getTakeoffTimeBySelection(selected);
+      if (isFinite(takeoffSec)){
+        const startKey = getFlightPlanEtaStartKey(selected);
+        if (startKey){
+          fltPlanEtaStartBySelection[startKey] = takeoffSec + delta;
+        }
+      }
+
+      return rows;
+    }
+
+    function applyStartLegPlan(startRow, waypoints){
+      if (!startRow || !Array.isArray(waypoints) || !waypoints.length) return;
+
+      const first = waypoints[0];
+      const wp1Eta = parseEtaToSeconds(first.etaDisplay || first.eta);
+      if (!isFinite(wp1Eta)) return;
+
+      const distanceNm = computeLegDistanceNm(startRow, first);
+      const representativeGs = estimateRepresentativeGroundSpeedKnots(waypoints);
+      if (!isFinite(distanceNm) || distanceNm <= 0 || !isFinite(representativeGs) || representativeGs <= 0) return;
+
+      const legSeconds = Math.max(1, Math.round((distanceNm * 3600.0) / representativeGs));
+      startRow.etaDisplay = formatSecondsToClock(wp1Eta - legSeconds);
+
+      const speedCas = estimateLegSpeedKcas(distanceNm, legSeconds, first.altFeet);
+      if (speedCas !== '-'){
+        startRow.spd = speedCas;
+        first.spd = speedCas;
+      }
+    }
+
+    function getRouteWaypoints(route){
+      const r = (route && typeof route === 'object') ? route : {};
+      const wpKeys = Object.keys(r)
+        .filter(function(k){ return /^\d+$/.test(String(k)); })
+        .sort(function(a,b){ return parseInt(a,10) - parseInt(b,10); });
+
+      return wpKeys.map(function(wk){
+        const wp = r[wk] || {};
+        const typeText = String(wp.type || wp.action || 'WP');
+        const altMeters = Number(wp.alt);
+        const altFeetRaw = isFinite(altMeters) ? (altMeters * 3.28084) : NaN;
+        const altValue = isFinite(altFeetRaw) ? (Math.round(altFeetRaw / 500) * 500) : NaN;
+        return {
+          step: String(wk),
+          type: abbreviateRouteType(typeText),
+          typeRaw: typeText,
+          name: String(wp.name || ''),
+          alt: isFinite(altValue) ? String(altValue) : '-',
+          altFeet: altValue,
+          altType: String(wp.alt_type || wp.altType || wp.alttype || ''),
+          eta: formatEtaSeconds(wp.ETA),
+          etaSourceSeconds: Number(wp.ETA),
+          x: isFinite(Number(wp.x)) ? String(Math.round(Number(wp.x))) : '-',
+          y: isFinite(Number(wp.y)) ? String(Math.round(Number(wp.y))) : '-',
+          xNum: Number(wp.x),
+          yNum: Number(wp.y)
+        };
+      });
+    }
+
+    function applyEtaPlanToWaypoints(waypoints, selected){
+      const rows = Array.isArray(waypoints) ? waypoints : [];
+      if (!rows.length) return rows;
+
+      rows.forEach(function(wp){
+        wp.spd = String(estimateCruiseKcasForAltitude(wp.altFeet));
+      });
+
+      return rows;
+    }
+
+    function applyRouteTimeline(rows, selected){
+      const list = Array.isArray(rows) ? rows : [];
+      if (!list.length) return list;
+
+      const etaMode = hasTakeoffTimeBySelection(selected);
+      const baseSeconds = etaMode ? getTakeoffTimeBySelection(selected) : 0;
+      let elapsed = 0;
+
+      list[0].etaDisplay = formatSecondsToClock(baseSeconds);
+
+      for (let i = 1; i < list.length; i++){
+        const prev = list[i - 1];
+        const curr = list[i];
+        const legNm = computeLegDistanceNm(prev, curr);
+        const legCas = Number(curr.spd);
+        const legAlt = isFinite(Number(curr.altFeet)) ? Number(curr.altFeet) : 0;
+        const legGs = isFinite(legCas) && legCas > 0 ? (legCas * (1.0 + (legAlt / 100000.0))) : NaN;
+        const legSeconds = (isFinite(legNm) && legNm > 0 && isFinite(legGs) && legGs > 0)
+          ? Math.max(1, Math.round((legNm * 3600.0) / legGs))
+          : 0;
+
+        elapsed += legSeconds;
+        curr.etaDisplay = formatSecondsToClock(baseSeconds + elapsed);
+      }
+
+      return list;
+    }
+
+    function applyHeadingPlan(rows, theater){
+      const list = Array.isArray(rows) ? rows : [];
+      if (!list.length) return list;
+
+      const magVar = Number(getApproxMagVariationDeg(theater));
+
+      for (let i = 0; i < list.length; i++){
+        const curr = list[i];
+        let trueHdg = NaN;
+
+        if (i === 0 && list.length > 1){
+          trueHdg = computeTrueHeadingDeg(curr, list[i + 1]);
+        } else if (i > 0){
+          trueHdg = computeTrueHeadingDeg(list[i - 1], curr);
+        }
+
+        const magnetic = isFinite(trueHdg) ? normalizeHeadingDeg(trueHdg - magVar) : NaN;
+        curr.hdg = formatHeadingDeg(magnetic);
+      }
+
+      return list;
+    }
+
+    function changeWaypointAltitude(selected, step, deltaFeet){
+      const state = getFlightPlanPlanState(selected);
+      if (!state.altAdjustments) state.altAdjustments = {};
+      const key = stepToKey(step);
+      if (!key) return;
+      const current = Number(state.altAdjustments[key]);
+      const next = (isFinite(current) ? current : 0) + Number(deltaFeet || 0);
+      state.altAdjustments[key] = clamp(next, -40000, 40000);
+    }
+
+    function applyAltitudeAdjustments(rows, selected){
+      const list = Array.isArray(rows) ? rows : [];
+      const state = getFlightPlanPlanState(selected);
+      const map = state.altAdjustments || {};
+      list.forEach(function(wp){
+        if (!wp || wp.isStart) return;
+        const key = stepToKey(wp.step);
+        const delta = Number(map[key]);
+        if (!isFinite(delta) || delta === 0) return;
+        const baseAlt = Number(wp.altFeet);
+        if (!isFinite(baseAlt)) return;
+        const nextAlt = Math.max(0, baseAlt + delta);
+        wp.altFeet = nextAlt;
+        wp.alt = String(Math.round(nextAlt));
+      });
+      return list;
+    }
+
+    function applyDistancePlan(rows){
+      const list = Array.isArray(rows) ? rows : [];
+      if (!list.length) return list;
+
+      list[0].dist = '-';
+      for (let i = 1; i < list.length; i++){
+        const prev = list[i - 1];
+        const curr = list[i];
+        curr.dist = formatDistanceNm(computeLegDistanceNm(prev, curr));
+      }
+
+      return list;
+    }
+
+    function setEtaStartNowForSelection(selected){
+      const key = getFlightPlanEtaStartKey(selected);
+      if (!key) return;
+      fltPlanEtaStartBySelection[key] = getCurrentFlightPlanClockSeconds();
+    }
+
+    function setTakeoffTimeByAnchorFromNow(selected, anchorType){
+      const key = getFlightPlanEtaStartKey(selected);
+      if (!key) return;
+
+      const anchor = String(anchorType || '').toUpperCase();
+      let addSeconds = 0;
+      if (anchor === 'STEP') addSeconds = 35 * 60;
+      else if (anchor === 'START') addSeconds = 25 * 60;
+      else if (anchor === 'TAXI') addSeconds = 15 * 60;
+      else addSeconds = 0;
+
+      lockStartPositionForSelection(selected, latestData);
+      fltPlanEtaStartBySelection[key] = getCurrentFlightPlanClockSeconds() + addSeconds;
+    }
+
+    function clearTakeoffTimeForSelection(selected){
+      const key = getFlightPlanEtaStartKey(selected);
+      if (!key) return;
+      delete fltPlanEtaStartBySelection[key];
+    }
+
+    function getFlightPlanStartRow(server, timing){
+      const s = server || {};
+      const key = getFlightPlanEtaStartKey((latestData && latestData.DtcSelectedFile) || '');
+      const state = getFlightPlanPlanState(key);
+      const locked = state && state.lockedStart ? state.lockedStart : null;
+      const x = Number(locked ? locked.x : s.PlayerPosX);
+      const y = Number(locked ? locked.y : s.PlayerPosY);
+      const altFeet = Number(locked ? locked.altFeet : s.PlayerAltFeet);
+
+      if (!isFinite(x) || !isFinite(y)) return null;
+
+      return {
+        step: '0',
+        type: 'ST',
+        name: 'CURRENT POS',
+        alt: isFinite(altFeet) ? String(Math.round(altFeet)) : '-',
+        etaDisplay: '-',
+        spd: '-',
+        x: String(Math.round(x)),
+        y: String(Math.round(y)),
+        isStart: true,
+      };
+    }
+
+    function formatRouteToolTableHtml(root, selected, data){
+      const presets = (root && typeof root === 'object') ? root : null;
+      if (!presets) return '';
+
+      const routeNames = Object.keys(presets);
+      if (!routeNames.length) return '';
+
+      routeNames.sort(function(a,b){ return String(a).localeCompare(String(b)); });
+      const primaryRouteName = String(routeNames[0] || getDtcDisplayName(selected) || '-');
+      const primaryRoute = presets[primaryRouteName] || {};
+      const waypoints = getRouteWaypoints(primaryRoute);
+      applyAltitudeAdjustments(waypoints, selected);
+      applyEtaPlanToWaypoints(waypoints, selected);
+      const timing = getFlightPlanTimingDisplay(selected);
+
+      const server = (data && data.Server) || {};
+      const callsign = safe(server.PlayerCallsign);
+      const mission = safe(server.MissionTitle);
+      const config = safe(server.Aircraft);
+      const theatre = safe(server.Theater);
+      const startRow = getFlightPlanStartRow(server, timing);
+      const displayRows = startRow ? [startRow].concat(waypoints) : waypoints;
+      applySpeedAdjustmentsToWaypoints(displayRows, selected);
+      applyRouteTimeline(displayRows, selected);
+      applyLockedTotPlan(displayRows, selected);
+      applyDistancePlan(displayRows);
+      applyHeadingPlan(displayRows, theatre);
+      const etaHeading = hasTakeoffTimeBySelection(selected) ? 'ETA' : 'ETE';
+
+      let html = '';
+      html += '<div class=""fltPlanBoard"">';
+      html += '<div class=""fltPlanHeaderGrid"">';
+      html += '<div class=""fltPlanHeaderCell""><div class=""fltPlanHeaderCellLabel"">ROUTE</div><div class=""fltPlanHeaderCellValue"">' + escapeHtml(primaryRouteName) + '</div></div>';
+      html += '<div class=""fltPlanHeaderCell""><div class=""fltPlanHeaderCellLabel"">CALL SIGN</div><div class=""fltPlanHeaderCellValue"">' + escapeHtml(callsign) + '</div></div>';
+      html += '<div class=""fltPlanHeaderCell""><div class=""fltPlanHeaderCellLabel"">MISSION</div><div class=""fltPlanHeaderCellValue"">' + escapeHtml(mission) + '</div></div>';
+      html += '<div class=""fltPlanHeaderCell""><div class=""fltPlanHeaderCellLabel"">CONFIG</div><div class=""fltPlanHeaderCellValue"">' + escapeHtml(config) + '</div></div>';
+      html += '</div>';
+      html += '<div class=""fltPlanHeaderGrid"">';
+      html += '<div class=""fltPlanHeaderCell""><div class=""fltPlanHeaderCellLabel"">THEATRE</div><div class=""fltPlanHeaderCellValue"">' + escapeHtml(theatre) + '</div></div>';
+      html += '<div class=""fltPlanHeaderCell""><div class=""fltPlanHeaderCellLabel"">SOURCE</div><div class=""fltPlanHeaderCellValue"">ROUTE TOOL</div></div>';
+      html += '<div class=""fltPlanHeaderCell""><div class=""fltPlanHeaderCellLabel"">ROUTE FILE</div><div class=""fltPlanHeaderCellValue"">' + escapeHtml(getPathFileName(getFltPlnPath(selected))) + '</div></div>';
+      html += '<div class=""fltPlanHeaderCell""><div class=""fltPlanHeaderCellLabel"">WAYPOINTS</div><div class=""fltPlanHeaderCellValue"">' + escapeHtml(String(waypoints.length)) + '</div></div>';
+      html += '</div>';
+
+      html += '<div class=""fltPlanTimeGrid"">';
+      html += '<div class=""fltPlanTimeCell clickable"" data-tko-anchor=""STEP"" title=""Set STEP to current clock (Takeoff auto = STEP +35m)""><div class=""fltPlanTimeCellLabel"">STEP</div><div class=""fltPlanTimeCellValue"">' + escapeHtml(timing.step) + '</div></div>';
+      html += '<div class=""fltPlanTimeCell clickable"" data-tko-anchor=""START"" title=""Set START to current clock (Takeoff auto = START +25m)""><div class=""fltPlanTimeCellLabel"">START</div><div class=""fltPlanTimeCellValue"">' + escapeHtml(timing.start) + '</div></div>';
+      html += '<div class=""fltPlanTimeCell clickable"" data-tko-anchor=""TAXI"" title=""Set TAXI to current clock (Takeoff auto = TAXI +15m)""><div class=""fltPlanTimeCellLabel"">TAXI</div><div class=""fltPlanTimeCellValue"">' + escapeHtml(timing.taxi) + '</div></div>';
+      html += '<div class=""fltPlanTimeCell clickable"" data-tko-anchor=""TAKEOFF"" title=""Set TAKEOFF to current clock""><div class=""fltPlanTimeCellLabel"">TAKE OFF</div><div class=""fltPlanTimeCellValue"">' + escapeHtml(timing.takeoff) + '</div></div>';
+      html += '<div class=""fltPlanTimeCell""><div class=""fltPlanTimeCellLabel"">TOT</div><div class=""fltPlanTimeCellValue""><div class=""fltPlanAdjustCell""><button type=""button"" class=""fltPlanMiniBtn"" data-tot-adjust=""-60"">◀</button><span class=""fltPlanSpdValue"">' + escapeHtml(timing.tot) + '</span><button type=""button"" class=""fltPlanMiniBtn"" data-tot-adjust=""60"">▶</button></div></div></div>';
+      html += '</div>';
+
+      html += '<div class=""fltPlanWpWrap"">';
+      html += '<div class=""fltPlanWpTitle"">Route: ' + escapeHtml(primaryRouteName) + '</div>';
+      html += '<div class=""fltPlanWpTableWrap"">';
+      html += '<table class=""fltPlanWpTable"">';
+      html += '<thead><tr><th style=""width:48px;"">STP</th><th style=""width:56px;"">TYPE</th><th style=""width:130px;"">NAME</th><th style=""width:78px;"">ALT</th><th style=""width:56px;"">HDG</th><th style=""width:86px;"">SPD KCAS</th><th style=""width:64px;"">DIST</th><th class=""fltPlanEtaHeader"" style=""width:90px;"" data-eta-header=""1"" title=""Click to set ETA start from current time"">' + etaHeading + '</th><th style=""width:150px;"">X / Y</th></tr></thead>';
+      html += '<tbody>';
+
+      if (!displayRows.length){
+        html += '<tr><td colspan=""9"">No waypoints found.</td></tr>';
+      } else {
+        displayRows.forEach(function(wp){
+          const stepKey = stepToKey(wp.step);
+          const lockChecked = !wp.isStart && stepKey && (stepKey === stepToKey(getFlightPlanPlanState(selected).lockedStep)) ? ' checked' : '';
+          html += '<tr>';
+          html += '<td class=""fltPlanCellNum"">' + escapeHtml(wp.step) + '</td>';
+          html += '<td>' + escapeHtml(wp.type) + '</td>';
+          html += '<td>' + escapeHtml(wp.name || '-') + '</td>';
+          if (wp.isStart){
+            html += '<td class=""fltPlanCellNum"">' + formatAltCellHtml(wp) + '</td>';
+          } else {
+            html += '<td class=""fltPlanCellNum""><div class=""fltPlanAdjustCell""><button type=""button"" class=""fltPlanMiniBtn"" data-alt-step=""' + escapeHtml(stepKey) + '"" data-alt-delta=""-500"">◀</button><span class=""fltPlanSpdValue"">' + formatAltCellHtml(wp) + '</span><button type=""button"" class=""fltPlanMiniBtn"" data-alt-step=""' + escapeHtml(stepKey) + '"" data-alt-delta=""500"">▶</button></div></td>';
+          }
+          if (wp.isStart){
+            html += '<td class=""fltPlanCellNum"">' + escapeHtml(wp.hdg || '-') + '</td>';
+            html += '<td class=""fltPlanCellNum"">' + escapeHtml(wp.spd || '-') + '</td>';
+          } else {
+            html += '<td class=""fltPlanCellNum"">' + escapeHtml(wp.hdg || '-') + '</td>';
+            html += '<td class=""fltPlanCellNum""><div class=""fltPlanAdjustCell""><button type=""button"" class=""fltPlanMiniBtn"" data-spd-step=""' + escapeHtml(stepKey) + '"" data-spd-delta=""-20"">◀</button><span class=""fltPlanSpdValue"">' + escapeHtml(wp.spd || '-') + '</span><button type=""button"" class=""fltPlanMiniBtn"" data-spd-step=""' + escapeHtml(stepKey) + '"" data-spd-delta=""20"">▶</button></div></td>';
+          }
+          html += '<td class=""fltPlanCellNum"">' + escapeHtml(wp.dist || '-') + '</td>';
+          if (wp.isStart){
+            html += '<td class=""fltPlanCellNum"">' + escapeHtml(wp.etaDisplay || wp.eta) + '</td>';
+          } else {
+            html += '<td class=""fltPlanCellNum""><span class=""fltPlanEtaWrap""><input type=""checkbox"" data-tot-lock-step=""' + escapeHtml(stepKey) + '""' + lockChecked + '><span>' + escapeHtml(wp.etaDisplay || wp.eta) + '</span></span></td>';
+          }
+          html += '<td class=""fltPlanCellNum"">' + escapeHtml((wp.x || '-') + ' / ' + (wp.y || '-')) + '</td>';
+          html += '</tr>';
+        });
+      }
+
+      html += '</tbody></table></div></div>';
+      html += '<div class=""fltPlanBottomGrid"">';
+      html += '<div class=""fltPlanInfoFreqWrap"">' + formatFrequenciesBlockHtml(data) + '</div>';
+      html += '<div class=""fltPlanInfoAssetsWrap"">' + formatAssetsBlockHtml(data) + '</div>';
+      html += '<div class=""fltPlanInfoWxWrap"">' + formatMetarBlockHtml(data) + '</div>';
+      html += '</div>';
+      html += '</div>';
+      return html;
+    }
+
+    function formatRouteToolTable(root, selected){
+      const presets = (root && typeof root === 'object') ? root : null;
+      if (!presets) return '';
+
+      const routeNames = Object.keys(presets);
+      if (!routeNames.length) return '';
+
+      const lines = [];
+      lines.push('ROUTE NAME : ' + getDtcDisplayName(selected));
+      lines.push('ROUTE FILE : ' + getPathFileName(getFltPlnPath(selected)));
+      lines.push('PATH       : ' + getFltPlnPath(selected));
+      lines.push('');
+
+      routeNames.sort(function(a,b){ return String(a).localeCompare(String(b)); });
+      routeNames.forEach(function(routeName){
+        const route = presets[routeName] || {};
+        const wpKeys = Object.keys(route)
+          .filter(function(k){ return /^\d+$/.test(String(k)); })
+          .sort(function(a,b){ return parseInt(a,10) - parseInt(b,10); });
+
+        lines.push('ROUTE: ' + routeName);
+        lines.push('WP  TYPE           ALT(ft)   ETA       X             Y');
+        lines.push('--- -------------- -------- -------- ------------ ------------');
+
+        if (!wpKeys.length){
+          lines.push('No waypoints found.');
+          lines.push('');
+          return;
+        }
+
+        wpKeys.forEach(function(wk){
+          const wp = route[wk] || {};
+          const wpNum = String(wk).padStart(2, '0');
+          const type = String(wp.type || wp.action || 'WP').substring(0, 14).padEnd(14, ' ');
+          const alt = isFinite(Number(wp.alt)) ? String(Math.round(Number(wp.alt))).padStart(8, ' ') : '       -';
+          const eta = formatEtaSeconds(wp.ETA).padEnd(8, ' ');
+          const x = isFinite(Number(wp.x)) ? String(Math.round(Number(wp.x))).padStart(12, ' ') : '           -';
+          const y = isFinite(Number(wp.y)) ? String(Math.round(Number(wp.y))).padStart(12, ' ') : '           -';
+          lines.push(wpNum + '  ' + type + ' ' + alt + ' ' + eta + ' ' + x + ' ' + y);
+        });
+
+        lines.push('');
+      });
+
+      lines.push('Note: X/Y are mission map coordinates. LAT/LON conversion needs map-projection/origin data from DCS runtime.');
+      return lines.join('\n');
+    }
+
+    function formatDtcTabContentHtml(data){
+      const files = Array.isArray(data.DtcFiles) ? data.DtcFiles : [];
+      const selected = String(data.DtcSelectedFile || '');
+      const jsonText = String(data.DtcJson || '').trim();
+      const sourceType = String(data.DtcSourceType || '').toUpperCase();
+
+      if (!files.length){
+        return '<div class=""fltPlanMessage"">No valid FLT PLN files found in Saved Games/DCS*/Missions (DTC) or Saved Games/DCS*/Config/RouteToolPresets/&lt;ActiveTerrain&gt;.lua (RouteTool).\n\nExport DTC or save RouteTool presets, then click Refresh FLT PLN.</div>';
+      }
+
+      if (!selected){
+        return '<div class=""fltPlanMessage"">Select a FLT PLN file from the file list to load data.</div>';
+      }
+
+      if (!jsonText){
+        return '<div class=""fltPlanMessage"">Selected FLT PLN file is valid but has no loadable content.</div>';
+      }
+
+      let parsed;
+      try{
+        parsed = JSON.parse(jsonText);
+      }catch(_){
+        return '<div class=""fltPlanMessage"">Failed to parse selected FLT PLN payload.</div>';
+      }
+
+      const root = (parsed && parsed.data && typeof parsed.data === 'object') ? parsed.data : parsed;
+      if (sourceType === 'RTE') {
+        const rteHtml = formatRouteToolTableHtml(root, selected, data);
+        if (rteHtml) return rteHtml;
+      }
+
+      return '<pre class=""fltPlanPlain"">' + escapeHtml(formatDtcTabContent(data)) + '</pre>';
+    }
+
+    function formatDtcTabContent(data){
+      const files = Array.isArray(data.DtcFiles) ? data.DtcFiles : [];
+      const selected = String(data.DtcSelectedFile || '');
+      const jsonText = String(data.DtcJson || '').trim();
+      const sourceType = String(data.DtcSourceType || '').toUpperCase();
+
+      if (!files.length){
+        return 'No valid FLT PLN files found in Saved Games/DCS*/Missions (DTC) or Saved Games/DCS*/Config/RouteToolPresets/<ActiveTerrain>.lua (RouteTool).\n\nExport DTC or save RouteTool presets, then click Refresh FLT PLN.';
+      }
+
+      if (!selected){
+        return 'Select a FLT PLN file from the file list to load data.';
+      }
+
+      if (!jsonText){
+        return 'Selected FLT PLN file is valid but has no loadable content.';
+      }
+
+      let parsed;
+      try{
+        parsed = JSON.parse(jsonText);
+      }catch(_){
+        return 'Failed to parse selected FLT PLN payload.';
+      }
+
+      const root = (parsed && parsed.data && typeof parsed.data === 'object') ? parsed.data : parsed;
+      if (sourceType === 'RTE') {
+        const rteText = formatRouteToolTable(root, selected);
+        if (rteText) return rteText;
+      }
+
+      if (sourceType === 'DTC') {
+        return formatDtcFocusedTable(root, selected);
+      }
+
+      const rows = [];
+      appendDtcRows('', root, rows, 0);
+
+      if (!rows.length){
+        return 'Selected FLT PLN file contains no tabular fields.';
+      }
+
+      const maxKeyWidth = rows.reduce(function(acc, r){ return Math.max(acc, String(r.key || '').length); }, 8);
+      const keyWidth = clamp(maxKeyWidth + 1, 16, 56);
+      const lines = [];
+      const sourceLabel = sourceType === 'RTE' ? 'ROUTE FILE' : 'DTC FILE';
+      lines.push(sourceLabel + ' : ' + getDtcDisplayName(selected));
+      lines.push('PATH     : ' + selected);
+      lines.push('');
+      lines.push('FIELD'.padEnd(keyWidth) + 'VALUE');
+      lines.push('-'.repeat(keyWidth) + '-----');
+      rows.forEach(function(r){
+        const key = String(r.key || '-');
+        const value = String(r.value || '-').replace(/\s+/g, ' ').trim();
+        lines.push(key.padEnd(keyWidth) + value);
+      });
+
+      if (rows.length >= 220){
+        lines.push('');
+        lines.push('... output truncated ...');
+      }
+
+      return lines.join('\n');
     }
 
     function escapeHtml(text){
@@ -1031,6 +2441,10 @@ namespace VAICOM
       if (tab === 'NOTES'){
         const notes = String(data.NotesBuffer || '').trim();
         return notes || 'No notes yet.';
+      }
+
+      if (tab === 'DTC'){
+        return formatDtcTabContent(data);
       }
 
       if (tab === 'AI CREW'){
@@ -1262,15 +2676,24 @@ namespace VAICOM
       ].join('\n');
 
       renderTabs(data);
+      updateDtcControls(data);
       applyCurrentTabKeywordsSplit();
       document.body.classList.toggle('notes-tab', selectedTab === 'NOTES');
+      document.body.classList.toggle('flt-plan-tab', selectedTab === 'DTC');
       if (selectedTab !== 'NOTES' || !drawModeEnabled){
         setDrawInteractionInNotes(false);
         clearDrawModeDisableTimer();
       }
       updateDrawModeToggleUi();
       document.getElementById('tabTitle').textContent = 'Tab: ' + tabLabel(selectedTab);
-      document.getElementById('tabBody').textContent = formatTabContent(data, selectedTab);
+      const tabBody = document.getElementById('tabBody');
+      if (selectedTab === 'DTC'){
+        tabBody.className = 'content mainContent fltPlanContent';
+        tabBody.innerHTML = formatDtcTabContentHtml(data);
+      } else {
+        tabBody.className = 'content mainContent';
+        tabBody.textContent = formatTabContent(data, selectedTab);
+      }
       updateCursorModeForTab();
       const tabBodyEl = document.getElementById('tabBody');
       const hasMetar = selectedTab === 'ATC' && /\bMETAR\s+[A-Z]{4}\b/i.test(tabBodyEl.textContent || '');
@@ -1284,8 +2707,14 @@ namespace VAICOM
       const aiCrewPhaseSuffix = selectedTab === 'AI CREW'
         ? formatAiCrewPhaseLabel(data.AiCrewPhase)
         : '';
-      document.getElementById('keywordTitle').textContent = 'Keywords: ' + tabLabel(selectedTab) + aiCrewPhaseSuffix;
-      document.getElementById('keywordBody').innerHTML = formatKeywordReferenceHtml(data, selectedTab);
+      const keywordPanelEl = document.getElementById('keywordPanel');
+      if (selectedTab === 'DTC'){
+        if (keywordPanelEl) keywordPanelEl.style.display = 'none';
+      } else {
+        if (keywordPanelEl) keywordPanelEl.style.display = 'flex';
+        document.getElementById('keywordTitle').textContent = 'Keywords: ' + tabLabel(selectedTab) + aiCrewPhaseSuffix;
+        document.getElementById('keywordBody').innerHTML = formatKeywordReferenceHtml(data, selectedTab);
+      }
 
       const showRawWrap = document.getElementById('showRawWrap');
       if (showRawWrap){
@@ -1319,11 +2748,60 @@ namespace VAICOM
       }
     }
 
+    function updateDtcControls(data){
+      const wrap = document.getElementById('dtcControls');
+      const selector = document.getElementById('dtcSelector');
+      const listEl = document.getElementById('dtcFileList');
+      const selectedLabel = document.getElementById('dtcSelectedFileLabel');
+      if (!wrap || !selector || !listEl || !selectedLabel) return;
+
+      const visible = selectedTab === 'DTC';
+      wrap.className = visible ? 'controls fltPlanControls' : 'controls fltPlanControls hidden';
+      selector.className = visible ? 'panel dtcSelector' : 'panel dtcSelector hidden';
+      if (!visible) return;
+
+      const files = Array.isArray(data.DtcFiles) ? data.DtcFiles : [];
+      const selected = String(data.DtcSelectedFile || '');
+      selectedLabel.textContent = selected ? ('Selected: ' + getDtcDisplayName(selected)) : 'No FLT PLN selected';
+
+      if (!files.length){
+        listEl.innerHTML = 'No FLT PLN files found.';
+        applyDtcListCollapsedState(dtcListCollapsed);
+        return;
+      }
+
+      const rows = [];
+      files.forEach(function(filePath){
+        const fp = String(filePath || '');
+        const active = selected && fp === selected;
+        const type = (fp.indexOf('RTE::') === 0 || /\.(rte|lua)$/i.test(fp)) ? 'RTE' : 'DTC';
+        rows.push('<button type=""button"" class=""dtcFileItem' + (active ? ' active' : '') + '"" data-file=""' + encodeURIComponent(fp) + '""><span>' + escapeHtml(getDtcDisplayName(fp)) + '</span><span class=""dtcFileMeta"">' + type + '</span></button>');
+      });
+      listEl.innerHTML = rows.join('');
+      applyDtcListCollapsedState(dtcListCollapsed);
+    }
+
     async function setServerMessageCapture(enabled){
       try{
         await fetch('dev/servermessages?enabled=' + (enabled ? '1' : '0'), { method: 'POST', cache: 'no-store' });
       }catch(e){
       }
+    }
+
+    async function refreshDtcFiles(){
+      try{
+        await fetch('dtc/list', { method: 'POST', cache: 'no-store' });
+      }catch(_){
+      }
+      await tick();
+    }
+
+    async function selectDtcFile(filePath){
+      try{
+        await fetch('dtc/select?file=' + encodeURIComponent(filePath || ''), { method: 'POST', cache: 'no-store' });
+      }catch(_){
+      }
+      await tick();
     }
 
     async function configureOpenKneeboard(){
@@ -1423,6 +2901,75 @@ namespace VAICOM
     });
 
     document.getElementById('tabBody').addEventListener('click', function(ev){
+      if (selectedTab === 'DTC' && latestData){
+        let node = ev.target;
+        while (node && node !== this){
+          if (node.getAttribute && node.getAttribute('data-spd-step')){
+            const selected = String((latestData && latestData.DtcSelectedFile) || '');
+            const step = String(node.getAttribute('data-spd-step') || '');
+            const delta = Number(node.getAttribute('data-spd-delta') || 0);
+            if (selected && step && isFinite(delta) && delta !== 0){
+              changeWaypointSpeedAdjustment(selected, step, delta);
+              render(latestData);
+            }
+            return;
+          }
+          if (node.getAttribute && node.getAttribute('data-alt-step')){
+            const selected = String((latestData && latestData.DtcSelectedFile) || '');
+            const step = String(node.getAttribute('data-alt-step') || '');
+            const delta = Number(node.getAttribute('data-alt-delta') || 0);
+            if (selected && step && isFinite(delta) && delta !== 0){
+              changeWaypointAltitude(selected, step, delta);
+              render(latestData);
+            }
+            return;
+          }
+          if (node.getAttribute && node.getAttribute('data-tot-adjust')){
+            const selected = String((latestData && latestData.DtcSelectedFile) || '');
+            const seconds = Number(node.getAttribute('data-tot-adjust') || 0);
+            if (selected && isFinite(seconds) && seconds !== 0){
+              setTotByMinutesDelta(selected, seconds / 60.0);
+              render(latestData);
+            }
+            return;
+          }
+          if (node.getAttribute && node.getAttribute('data-tot-lock-step')){
+            const selected = String((latestData && latestData.DtcSelectedFile) || '');
+            const step = String(node.getAttribute('data-tot-lock-step') || '');
+            const checked = !!node.checked;
+            if (selected && step){
+              let etaSeconds = NaN;
+              try{
+                const row = node.closest ? node.closest('tr') : null;
+                const etaCell = row ? row.cells[7] : null;
+                etaSeconds = parseEtaToSeconds((etaCell && etaCell.textContent) ? etaCell.textContent : '');
+              }catch(_){ }
+              setLockedTotStep(selected, step, checked, etaSeconds);
+              render(latestData);
+            }
+            return;
+          }
+          if (node.getAttribute && node.getAttribute('data-tko-anchor')){
+            const selected = String((latestData && latestData.DtcSelectedFile) || '');
+            const anchor = String(node.getAttribute('data-tko-anchor') || '');
+            if (selected && anchor){
+              setTakeoffTimeByAnchorFromNow(selected, anchor);
+              render(latestData);
+            }
+            return;
+          }
+          if (node.getAttribute && node.getAttribute('data-eta-header')){
+            const selected = String((latestData && latestData.DtcSelectedFile) || '');
+            if (selected){
+              setEtaStartNowForSelection(selected);
+              render(latestData);
+            }
+            return;
+          }
+          node = node.parentNode;
+        }
+      }
+
       if (selectedTab !== 'ATC' || !latestData) return;
       const text = this.textContent || '';
       const selection = window.getSelection ? window.getSelection() : null;
@@ -1475,12 +3022,33 @@ namespace VAICOM
       setServerMessageCapture(showServerMessages);
     });
 
+    document.getElementById('dtcRefresh').addEventListener('click', function(){
+      refreshDtcFiles();
+    });
+
+    document.getElementById('dtcFileList').addEventListener('click', function(ev){
+      let node = ev.target;
+      while (node && node !== this && !node.getAttribute('data-file')){
+        node = node.parentNode;
+      }
+      if (!node || node === this) return;
+      const encoded = String(node.getAttribute('data-file') || '');
+      const file = decodeURIComponent(encoded);
+      selectDtcFile(file);
+    });
+
+    document.getElementById('dtcSelectorHeader').addEventListener('click', function(){
+      applyDtcListCollapsedState(!dtcListCollapsed);
+      persistDtcListCollapsedState();
+    });
+
     document.getElementById('sessionHeader').addEventListener('click', function(){
       applySessionCollapsedState(!sessionCollapsed);
       persistSessionCollapsedState();
     });
 
     applySessionCollapsedState(readInitialSessionCollapsed());
+    applyDtcListCollapsedState(readInitialDtcListCollapsed());
     drawModeEnabled = readDrawModePreference();
     updateDrawModeToggleUi();
     tabKeywordsSplitByTab = readTabKeywordsSplitRatioByTab();
@@ -1510,6 +3078,7 @@ namespace VAICOM
                 public static void Initialize()
                 {
                     ResetSnapshot();
+                    RefreshDtcFilesSnapshot();
                     SetPluginRegistration(State.activeconfig != null && State.activeconfig.OpenKneeboard_Out);
                     StartWebHost();
                 }
@@ -1806,6 +3375,8 @@ namespace VAICOM
                     {
                         snapshot = new OpenKneeboardSnapshot();
                     }
+
+                    RefreshDtcFilesSnapshot();
                 }
 
                 public static void UpdateActiveCategory(string category)
@@ -2246,6 +3817,26 @@ namespace VAICOM
                         return;
                     }
 
+                    if (path == "/okb/dtc/list")
+                    {
+                        RefreshDtcFilesSnapshot();
+                        WriteJson(context.Response, BuildSnapshotJson());
+                        return;
+                    }
+
+                    if (path == "/okb/dtc/select")
+                    {
+                        string file = WebUtility.UrlDecode(context.Request.QueryString["file"] ?? "");
+                        bool ok = SelectDtcFileSnapshot(file);
+                        if (!ok)
+                        {
+                            context.Response.StatusCode = 400;
+                        }
+
+                        WriteJson(context.Response, BuildSnapshotJson());
+                        return;
+                    }
+
                     if (path == "/okb/logo.png")
                     {
                         byte[] logo = GetLogoBytes();
@@ -2395,6 +3986,615 @@ namespace VAICOM
                     return result;
                 }
 
+                private static void RefreshDtcFilesSnapshot()
+                {
+                    try
+                    {
+                        List<string> files = GetAvailableDtcFiles();
+
+                        lock (Sync)
+                        {
+                            snapshot.DtcFiles = files;
+
+                            if (!string.IsNullOrWhiteSpace(snapshot.DtcSelectedFile))
+                            {
+                                string selected = FindMatchingFlightPlanSelection(snapshot.DtcSelectedFile, files);
+                                if (string.IsNullOrWhiteSpace(selected))
+                                {
+                                    snapshot.DtcSelectedFile = "";
+                                    snapshot.DtcJson = "";
+                                }
+                                else
+                                {
+                                    snapshot.DtcSelectedFile = selected;
+                                    if (TryReadValidatedFlightPlan(selected, out string json, out string sourceType))
+                                    {
+                                        snapshot.DtcJson = json;
+                                        snapshot.DtcSourceType = sourceType;
+                                    }
+                                }
+                            }
+
+                            snapshot.UpdatedUtc = DateTime.UtcNow;
+                        }
+                    }
+                    catch
+                    {
+                    }
+                }
+
+                private static bool SelectDtcFileSnapshot(string file)
+                {
+                    lock (Sync)
+                    {
+                        if (string.IsNullOrWhiteSpace(file))
+                        {
+                            snapshot.DtcSelectedFile = "";
+                            snapshot.DtcJson = "";
+                            snapshot.DtcSourceType = "";
+                            snapshot.UpdatedUtc = DateTime.UtcNow;
+                            return true;
+                        }
+
+                        string selected = FindMatchingFlightPlanSelection(file, snapshot.DtcFiles ?? new List<string>());
+
+                        if (string.IsNullOrWhiteSpace(selected))
+                        {
+                            return false;
+                        }
+
+                        if (!TryReadValidatedFlightPlan(selected, out string json, out string sourceType))
+                        {
+                            return false;
+                        }
+
+                        snapshot.DtcSelectedFile = selected;
+                        snapshot.DtcJson = json;
+                        snapshot.DtcSourceType = sourceType;
+                        snapshot.UpdatedUtc = DateTime.UtcNow;
+                        return true;
+                    }
+                }
+
+                private static string FindMatchingFlightPlanSelection(string requested, List<string> candidates)
+                {
+                    try
+                    {
+                        List<string> list = candidates ?? new List<string>();
+                        string req = requested ?? "";
+
+                        string direct = list.FirstOrDefault(f => string.Equals(f, req, StringComparison.OrdinalIgnoreCase));
+                        if (!string.IsNullOrWhiteSpace(direct))
+                        {
+                            return direct;
+                        }
+
+                        string reqPath;
+                        string reqRoute;
+                        if (TryParseRouteSelectionToken(req, out reqPath, out reqRoute))
+                        {
+                            foreach (string c in list)
+                            {
+                                string cPath;
+                                string cRoute;
+                                if (!TryParseRouteSelectionToken(c, out cPath, out cRoute))
+                                {
+                                    continue;
+                                }
+
+                                if (string.Equals(reqRoute, cRoute, StringComparison.OrdinalIgnoreCase)
+                                    && string.Equals(Path.GetFullPath(reqPath ?? ""), Path.GetFullPath(cPath ?? ""), StringComparison.OrdinalIgnoreCase))
+                                {
+                                    return c;
+                                }
+                            }
+                        }
+
+                        if (req.IndexOf(RouteSelectionPrefix, StringComparison.Ordinal) < 0)
+                        {
+                            string reqFull = Path.GetFullPath(req);
+                            string pathMatch = list.FirstOrDefault(c =>
+                            {
+                                try { return string.Equals(Path.GetFullPath(c ?? ""), reqFull, StringComparison.OrdinalIgnoreCase); }
+                                catch { return false; }
+                            });
+                            if (!string.IsNullOrWhiteSpace(pathMatch))
+                            {
+                                return pathMatch;
+                            }
+                        }
+                    }
+                    catch
+                    {
+                    }
+
+                    return "";
+                }
+
+                private static List<string> GetAvailableDtcFiles()
+                {
+                    List<string> files = new List<string>();
+
+                    foreach (string missionsDir in GetSavedGamesMissionFolders())
+                    {
+                        try
+                        {
+                            if (!Directory.Exists(missionsDir))
+                            {
+                                continue;
+                            }
+
+                            foreach (string candidate in Directory.EnumerateFiles(missionsDir, "*.*", SearchOption.AllDirectories))
+                            {
+                                if (!IsDtcExtension(candidate))
+                                {
+                                    continue;
+                                }
+
+                                if (!IsPathUnderDirectory(candidate, missionsDir))
+                                {
+                                    continue;
+                                }
+
+                                if (!TryReadValidatedFlightPlan(candidate, out _, out _))
+                                {
+                                    continue;
+                                }
+
+                                files.Add(Path.GetFullPath(candidate));
+                                if (files.Count >= 250)
+                                {
+                                    break;
+                                }
+                            }
+
+                            foreach (string routeCandidate in Directory.EnumerateFiles(missionsDir, "*.rte", SearchOption.AllDirectories))
+                            {
+                                if (!IsPathUnderDirectory(routeCandidate, missionsDir))
+                                {
+                                    continue;
+                                }
+
+                                if (!TryReadValidatedFlightPlan(routeCandidate, out _, out _))
+                                {
+                                    continue;
+                                }
+
+                                files.Add(Path.GetFullPath(routeCandidate));
+                                if (files.Count >= 250)
+                                {
+                                    break;
+                                }
+                            }
+                        }
+                        catch
+                        {
+                        }
+
+                        if (files.Count >= 250)
+                        {
+                            break;
+                        }
+                    }
+
+                    foreach (string routeToolFile in GetRouteToolPresetFiles())
+                    {
+                        try
+                        {
+                            if (string.IsNullOrWhiteSpace(routeToolFile) || !File.Exists(routeToolFile))
+                            {
+                                continue;
+                            }
+
+                            List<string> routeNames = ExtractRouteNamesFromLua(routeToolFile);
+                            if (routeNames.Count == 0)
+                            {
+                                continue;
+                            }
+
+                            foreach (string routeName in routeNames)
+                            {
+                                string token = RouteSelectionPrefix + Uri.EscapeDataString(routeName) + "::" + Path.GetFullPath(routeToolFile);
+                                files.Add(token);
+                                if (files.Count >= 250)
+                                {
+                                    break;
+                                }
+                            }
+
+                            if (files.Count >= 250)
+                            {
+                                break;
+                            }
+                        }
+                        catch
+                        {
+                        }
+
+                        if (files.Count >= 250)
+                        {
+                            break;
+                        }
+                    }
+
+                    return files
+                        .Distinct(StringComparer.OrdinalIgnoreCase)
+                        .OrderByDescending(p =>
+                        {
+                            try { return File.GetLastWriteTimeUtc(p); }
+                            catch { return DateTime.MinValue; }
+                        })
+                        .ThenBy(p => p, StringComparer.OrdinalIgnoreCase)
+                        .ToList();
+                }
+
+                private static List<string> GetRouteToolPresetFiles()
+                {
+                    List<string> files = new List<string>();
+
+                    try
+                    {
+                        string userProfile = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+                        if (string.IsNullOrWhiteSpace(userProfile))
+                        {
+                            return files;
+                        }
+
+                        string savedGames = Path.Combine(userProfile, "Saved Games");
+                        if (!Directory.Exists(savedGames))
+                        {
+                            return files;
+                        }
+
+                        foreach (string dcsRoot in Directory.EnumerateDirectories(savedGames, "DCS*", SearchOption.TopDirectoryOnly))
+                        {
+                            try
+                            {
+                                string name = Path.GetFileName(dcsRoot);
+                                if (string.IsNullOrWhiteSpace(name) || !name.StartsWith("DCS", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    continue;
+                                }
+
+                                string routeDir = Path.Combine(dcsRoot, "Config", "RouteToolPresets");
+                                if (!Directory.Exists(routeDir))
+                                {
+                                    continue;
+                                }
+
+                                string activeTheater = string.IsNullOrWhiteSpace(State.currentstate == null ? "" : State.currentstate.theatre)
+                                    ? ""
+                                    : State.currentstate.theatre.Trim();
+
+                                if (!string.IsNullOrWhiteSpace(activeTheater))
+                                {
+                                    string activeFile = Path.Combine(routeDir, activeTheater + ".lua");
+                                    if (File.Exists(activeFile))
+                                    {
+                                        files.Add(Path.GetFullPath(activeFile));
+                                        continue;
+                                    }
+                                }
+
+                                foreach (string fallback in Directory.EnumerateFiles(routeDir, "*.lua", SearchOption.TopDirectoryOnly))
+                                {
+                                    files.Add(Path.GetFullPath(fallback));
+                                }
+                            }
+                            catch
+                            {
+                            }
+                        }
+                    }
+                    catch
+                    {
+                    }
+
+                    return files
+                        .Distinct(StringComparer.OrdinalIgnoreCase)
+                        .OrderBy(p => p, StringComparer.OrdinalIgnoreCase)
+                        .ToList();
+                }
+
+                private static List<string> GetSavedGamesMissionFolders()
+                {
+                    List<string> roots = new List<string>();
+
+                    try
+                    {
+                        string userProfile = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+                        if (string.IsNullOrWhiteSpace(userProfile))
+                        {
+                            return roots;
+                        }
+
+                        string savedGames = Path.Combine(userProfile, "Saved Games");
+                        if (!Directory.Exists(savedGames))
+                        {
+                            return roots;
+                        }
+
+                        foreach (string dcsRoot in Directory.EnumerateDirectories(savedGames, "DCS*", SearchOption.TopDirectoryOnly))
+                        {
+                            try
+                            {
+                                string name = Path.GetFileName(dcsRoot);
+                                if (string.IsNullOrWhiteSpace(name) || !name.StartsWith("DCS", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    continue;
+                                }
+
+                                roots.Add(Path.Combine(dcsRoot, "Missions"));
+                            }
+                            catch
+                            {
+                            }
+                        }
+                    }
+                    catch
+                    {
+                    }
+
+                    return roots
+                        .Distinct(StringComparer.OrdinalIgnoreCase)
+                        .ToList();
+                }
+
+                private static bool IsDtcExtension(string path)
+                {
+                    try
+                    {
+                        string ext = Path.GetExtension(path);
+                        return DtcFileExtensions.Any(x => string.Equals(x, ext, StringComparison.OrdinalIgnoreCase));
+                    }
+                    catch
+                    {
+                        return false;
+                    }
+                }
+
+                private static bool IsPathUnderDirectory(string filePath, string rootDirectory)
+                {
+                    try
+                    {
+                        string fullFile = Path.GetFullPath(filePath ?? "");
+                        string fullRoot = Path.GetFullPath(rootDirectory ?? "").TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)
+                            + Path.DirectorySeparatorChar;
+
+                        return fullFile.StartsWith(fullRoot, StringComparison.OrdinalIgnoreCase);
+                    }
+                    catch
+                    {
+                        return false;
+                    }
+                }
+
+                private static bool TryReadValidatedFlightPlan(string filePath, out string json, out string sourceType)
+                {
+                    json = "";
+                    sourceType = "";
+
+                    try
+                    {
+                        string routeSelectionPath;
+                        string routeSelectionName;
+                        if (TryParseRouteSelectionToken(filePath, out routeSelectionPath, out routeSelectionName))
+                        {
+                            return TryReadRouteSelection(routeSelectionPath, routeSelectionName, out json, out sourceType);
+                        }
+
+                        if (string.IsNullOrWhiteSpace(filePath) || !File.Exists(filePath))
+                        {
+                            return false;
+                        }
+
+                        string raw = File.ReadAllText(filePath);
+                        if (string.IsNullOrWhiteSpace(raw))
+                        {
+                            return false;
+                        }
+
+                        string ext = Path.GetExtension(filePath ?? "");
+                        if (string.Equals(ext, ".rte", StringComparison.OrdinalIgnoreCase)
+                            || string.Equals(ext, ".lua", StringComparison.OrdinalIgnoreCase))
+                        {
+                            if (!TryConvertRouteToolLuaToJson(raw, out string rteJson))
+                            {
+                                return false;
+                            }
+
+                            JObject rteParsed = JObject.Parse(rteJson);
+                            json = rteParsed.ToString(Formatting.None);
+                            sourceType = "RTE";
+                            return true;
+                        }
+
+                        JObject parsed = JObject.Parse(raw);
+                        if (parsed == null)
+                        {
+                            return false;
+                        }
+
+                        JToken dataToken;
+                        if (parsed.TryGetValue("data", StringComparison.OrdinalIgnoreCase, out dataToken))
+                        {
+                            if (dataToken == null || dataToken.Type != JTokenType.Object)
+                            {
+                                return false;
+                            }
+                        }
+
+                        json = parsed.ToString(Formatting.None);
+                        sourceType = "DTC";
+                        return true;
+                    }
+                    catch
+                    {
+                        return false;
+                    }
+                }
+
+                private static bool TryReadRouteSelection(string luaFilePath, string routeName, out string json, out string sourceType)
+                {
+                    json = "";
+                    sourceType = "";
+
+                    try
+                    {
+                        if (string.IsNullOrWhiteSpace(luaFilePath) || !File.Exists(luaFilePath))
+                        {
+                            return false;
+                        }
+
+                        string raw = File.ReadAllText(luaFilePath);
+                        if (!TryConvertRouteToolLuaToJson(raw, out string rteJson))
+                        {
+                            return false;
+                        }
+
+                        JObject parsed = JObject.Parse(rteJson);
+                        JObject data = parsed["data"] as JObject;
+                        if (data == null)
+                        {
+                            return false;
+                        }
+
+                        JToken selectedRoute;
+                        if (!data.TryGetValue(routeName ?? "", StringComparison.OrdinalIgnoreCase, out selectedRoute))
+                        {
+                            return false;
+                        }
+
+                        JObject wrapped = new JObject();
+                        JObject routeContainer = new JObject();
+                        routeContainer[routeName] = selectedRoute;
+                        wrapped["data"] = routeContainer;
+
+                        json = wrapped.ToString(Formatting.None);
+                        sourceType = "RTE";
+                        return true;
+                    }
+                    catch
+                    {
+                        return false;
+                    }
+                }
+
+                private static bool TryParseRouteSelectionToken(string token, out string luaFilePath, out string routeName)
+                {
+                    luaFilePath = "";
+                    routeName = "";
+
+                    try
+                    {
+                        string text = token ?? "";
+                        if (!text.StartsWith(RouteSelectionPrefix, StringComparison.Ordinal))
+                        {
+                            return false;
+                        }
+
+                        int sep = text.IndexOf("::", RouteSelectionPrefix.Length, StringComparison.Ordinal);
+                        if (sep < 0)
+                        {
+                            return false;
+                        }
+
+                        string encodedRoute = text.Substring(RouteSelectionPrefix.Length, sep - RouteSelectionPrefix.Length);
+                        routeName = Uri.UnescapeDataString(encodedRoute ?? "");
+                        luaFilePath = text.Substring(sep + 2);
+
+                        return !string.IsNullOrWhiteSpace(routeName) && !string.IsNullOrWhiteSpace(luaFilePath);
+                    }
+                    catch
+                    {
+                        return false;
+                    }
+                }
+
+                private static List<string> ExtractRouteNamesFromLua(string luaFilePath)
+                {
+                    List<string> routes = new List<string>();
+
+                    try
+                    {
+                        if (string.IsNullOrWhiteSpace(luaFilePath) || !File.Exists(luaFilePath))
+                        {
+                            return routes;
+                        }
+
+                        string raw = File.ReadAllText(luaFilePath);
+                        if (!TryConvertRouteToolLuaToJson(raw, out string rteJson))
+                        {
+                            return routes;
+                        }
+
+                        JObject parsed = JObject.Parse(rteJson);
+                        JObject data = parsed["data"] as JObject;
+                        if (data == null)
+                        {
+                            return routes;
+                        }
+
+                        routes = data.Properties()
+                            .Select(p => p.Name)
+                            .Where(n => !string.IsNullOrWhiteSpace(n))
+                            .Distinct(StringComparer.OrdinalIgnoreCase)
+                            .OrderBy(n => n, StringComparer.OrdinalIgnoreCase)
+                            .ToList();
+                    }
+                    catch
+                    {
+                    }
+
+                    return routes;
+                }
+
+                private static bool TryConvertRouteToolLuaToJson(string luaText, out string json)
+                {
+                    json = "";
+
+                    try
+                    {
+                        if (string.IsNullOrWhiteSpace(luaText))
+                        {
+                            return false;
+                        }
+
+                        string s = luaText;
+                        s = Regex.Replace(s, @"--.*?$", "", RegexOptions.Multiline);
+                        s = Regex.Replace(s, @"\bend of\b[\s\S]*$", "", RegexOptions.IgnoreCase);
+                        s = Regex.Replace(s, @"\bpresets\s*=", "", RegexOptions.IgnoreCase);
+                        s = s.Replace("\r", " ").Replace("\n", " ");
+                        s = Regex.Replace(s, @"\s+", " ");
+
+                        s = Regex.Replace(s, @"\[(\d+)\]\s*=", "\"$1\":");
+                        s = Regex.Replace(s, @"\[\s*""((?:\\.|[^""\\])*)""\s*\]\s*=", "\"$1\":");
+                        s = Regex.Replace(s, @"\b([A-Za-z_][A-Za-z0-9_]*)\s*=", "\"$1\":");
+
+                        s = s.Replace("'", "\"");
+                        s = Regex.Replace(s, @",\s*([}\]])", "$1");
+                        s = s.Trim();
+
+                        if (!s.StartsWith("{", StringComparison.Ordinal))
+                        {
+                            return false;
+                        }
+
+                        JToken parsed = JToken.Parse(s);
+                        JObject wrapped = new JObject
+                        {
+                            ["data"] = parsed
+                        };
+
+                        json = wrapped.ToString(Formatting.None);
+                        return true;
+                    }
+                    catch
+                    {
+                        return false;
+                    }
+                }
+
                 private static OpenKneeboardServerSnapshot BuildServerSnapshot()
                 {
                     OpenKneeboardServerSnapshot server = new OpenKneeboardServerSnapshot();
@@ -2414,6 +4614,20 @@ namespace VAICOM
                             server.MissionTitle = State.currentstate.missiontitle;
                             server.MissionBriefing = State.currentstate.missionbriefing;
                             server.MissionDetails = State.currentstate.missiondetails;
+                            double missionStartSeconds = 0;
+                            double missionElapsedSeconds = State.currentstate.timer;
+                            bool hasMissionStart = double.TryParse(State.currentstate.sortie ?? "", out missionStartSeconds);
+                            if (hasMissionStart && missionElapsedSeconds >= 0)
+                            {
+                                server.MissionTimeSeconds = missionStartSeconds + missionElapsedSeconds;
+                            }
+                            else
+                            {
+                                server.MissionTimeSeconds = State.currentstate.tod;
+                            }
+                            server.PlayerPosX = State.currentstate.bpos == null ? 0 : State.currentstate.bpos.x;
+                            server.PlayerPosY = State.currentstate.bpos == null ? 0 : State.currentstate.bpos.z;
+                            server.PlayerAltFeet = State.currentstate.bpos == null ? 0 : (State.currentstate.bpos.y * 3.28084);
                             server.Multiplayer = State.currentstate.multiplayer;
                             server.DebugMode = State.activeconfig.Debugmode;
                             server.AtcMetars = State.currentstate.atcmetars == null
@@ -2444,6 +4658,10 @@ namespace VAICOM
                 public Dictionary<string, List<string>> UnitDetails { get; set; } = new Dictionary<string, List<string>>();
                 public Dictionary<string, Dictionary<string, List<string>>> AliasesChunk0 { get; set; } = new Dictionary<string, Dictionary<string, List<string>>>();
                 public Dictionary<string, Dictionary<string, List<string>>> AliasesChunk1 { get; set; } = new Dictionary<string, Dictionary<string, List<string>>>();
+                public List<string> DtcFiles { get; set; } = new List<string>();
+                public string DtcSelectedFile { get; set; } = "";
+                public string DtcJson { get; set; } = "";
+                public string DtcSourceType { get; set; } = "";
 
                 public OpenKneeboardSnapshot Clone()
                 {
@@ -2462,6 +4680,10 @@ namespace VAICOM
                         UnitDetails = CloneListMap(UnitDetails),
                         AliasesChunk0 = CloneAliasMap(AliasesChunk0),
                         AliasesChunk1 = CloneAliasMap(AliasesChunk1),
+                        DtcFiles = new List<string>(DtcFiles ?? new List<string>()),
+                        DtcSelectedFile = DtcSelectedFile,
+                        DtcJson = DtcJson,
+                        DtcSourceType = DtcSourceType,
                     };
 
                     return clone;
@@ -2524,6 +4746,10 @@ namespace VAICOM
                 public string MissionTitle { get; set; } = "";
                 public string MissionBriefing { get; set; } = "";
                 public string MissionDetails { get; set; } = "";
+                public double MissionTimeSeconds { get; set; }
+                public double PlayerPosX { get; set; }
+                public double PlayerPosY { get; set; }
+                public double PlayerAltFeet { get; set; }
                 public bool Multiplayer { get; set; }
                 public bool DebugMode { get; set; }
                 public Dictionary<string, string> AtcMetars { get; set; } = new Dictionary<string, string>();
@@ -2539,6 +4765,10 @@ namespace VAICOM
                         MissionTitle = MissionTitle,
                         MissionBriefing = MissionBriefing,
                         MissionDetails = MissionDetails,
+                        MissionTimeSeconds = MissionTimeSeconds,
+                        PlayerPosX = PlayerPosX,
+                        PlayerPosY = PlayerPosY,
+                        PlayerAltFeet = PlayerAltFeet,
                         Multiplayer = Multiplayer,
                         DebugMode = DebugMode,
                         AtcMetars = new Dictionary<string, string>(AtcMetars ?? new Dictionary<string, string>()),

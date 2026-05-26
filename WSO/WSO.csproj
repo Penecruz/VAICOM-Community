@@ -65,9 +65,10 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+    <None Include="Temp\ANZUS_NTTR_2025_5.0.zip" />
+    <None Include="Temp\Caucasus.lua" />
+    <None Include="Temp\Vaicom Test-1.dtc" />
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Temp\" />
-  </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
