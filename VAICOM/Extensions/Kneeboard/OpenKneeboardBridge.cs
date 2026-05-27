@@ -555,6 +555,7 @@ namespace VAICOM
     let fltPlanEtaStartBySelection = {};
     let fltPlanPlanStateBySelection = {};
     let fltPlanDtcPageBySelection = {};
+    let fltPlanDtcRouteBySelection = {};
 
     function clamp(v, min, max){
       return Math.max(min, Math.min(max, v));
@@ -1698,6 +1699,19 @@ namespace VAICOM
       fltPlanDtcPageBySelection[key] = (p === 2) ? 2 : 1;
     }
 
+    function getDtcRouteBySelection(selected){
+      const key = getFlightPlanEtaStartKey(selected);
+      const route = String(fltPlanDtcRouteBySelection[key] || '').toUpperCase();
+      return /^R[123]$/.test(route) ? route : 'R1';
+    }
+
+    function setDtcRouteBySelection(selected, route){
+      const key = getFlightPlanEtaStartKey(selected);
+      if (!key) return;
+      const r = String(route || '').toUpperCase();
+      fltPlanDtcRouteBySelection[key] = /^R[123]$/.test(r) ? r : 'R1';
+    }
+
     function computeLegDistanceNm(prevWp, currWp){
       if (!prevWp || !currWp) return NaN;
       const prevX = Number(prevWp.x);
@@ -2213,32 +2227,77 @@ namespace VAICOM
         routeById[String(k).toUpperCase()] = point;
       });
 
-      return navPts.slice(0, 200).map(function(p, idx){
-        const point = (p && typeof p === 'object') ? p : {};
-        const id = String(point.id || ('STPT' + String(idx + 1))).trim();
-        const routePoint = routeById[id.toUpperCase()] || {};
+      if (navPts.length){
+        return navPts.slice(0, 200).map(function(p, idx){
+          const point = (p && typeof p === 'object') ? p : {};
+          const id = String(point.id || ('STPT' + String(idx + 1))).trim();
+          const routePoint = routeById[id.toUpperCase()] || {};
 
-        const etaNum = isFinite(Number(routePoint.ETA)) ? Number(routePoint.ETA) : Number(point.ETA);
-        const altNum = isFinite(Number(routePoint.alt)) ? Number(routePoint.alt) : (isFinite(Number(point.alt)) ? Number(point.alt) : Number(point.altitude));
+          const etaNum = isFinite(Number(routePoint.ETA)) ? Number(routePoint.ETA) : (isFinite(Number(point.ETA)) ? Number(point.ETA) : Number(point.TOS));
+          const altNum = isFinite(Number(routePoint.alt)) ? Number(routePoint.alt) : (isFinite(Number(point.alt)) ? Number(point.alt) : (isFinite(Number(point.routeAltitude)) ? Number(point.routeAltitude) : Number(point.altitude)));
+          const xNum = isFinite(Number(point.x)) ? Number(point.x) : Number(point.posX);
+          const yNum = isFinite(Number(point.y)) ? Number(point.y) : Number(point.posY);
+          const stepNum = isFinite(Number(point.wypt_num)) ? Math.round(Number(point.wypt_num)) : (isFinite(Number(point.number)) ? Math.round(Number(point.number)) : (idx + 1));
+          const speed = isFinite(Number(routePoint.speed)) ? Math.round(Number(routePoint.speed)) : (isFinite(Number(point.speed)) ? Math.round(Number(point.speed)) : NaN);
+          const isTarget = !!routePoint.TGT;
+
+          const noteText = String(point.note || point.text_note || '').trim();
+
+          return {
+            step: String(stepNum),
+            type: abbreviateRouteType(isTarget ? 'TGT' : 'WP'),
+            typeRaw: isTarget ? 'TGT' : 'WP',
+            name: noteText || String(point.name || point.wp || point.waypoint || point.label || ''),
+            alt: isFinite(altNum) ? String(Math.round(altNum)) : '-',
+            altFeet: altNum,
+            altType: String(point.altitudeType || point.alt_type || point.altType || point.alttype || ''),
+            eta: formatEtaSeconds(etaNum),
+            etaSourceSeconds: etaNum,
+            spd: isFinite(speed) ? String(speed) : '-',
+            x: isFinite(xNum) ? String(Math.round(xNum)) : '-',
+            y: isFinite(yNum) ? String(Math.round(yNum)) : '-',
+            xNum: xNum,
+            yNum: yNum
+          };
+        });
+      }
+
+      const candidates = [];
+      collectNavPoints(root, candidates, 0);
+      const filtered = candidates.filter(function(p){
+        const point = (p && typeof p === 'object') ? p : {};
+        const hasXY = isFinite(Number(point.x)) && isFinite(Number(point.y));
+        const hasPointMeta = isFinite(Number(point.wypt_num)) || !!point.id || !!point.name || !!point.wp || !!point.waypoint || !!point.alt || !!point.altitude;
+        const looksLikeComm = point.freq !== undefined || point.frequency !== undefined || point.Channel !== undefined || point.channel !== undefined || point.modulation !== undefined;
+        return hasXY && hasPointMeta && !looksLikeComm;
+      });
+
+      filtered.sort(function(a, b){
+        const aw = Number(a && a.wypt_num);
+        const bw = Number(b && b.wypt_num);
+        if (isFinite(aw) && isFinite(bw) && aw !== bw) return aw - bw;
+        return 0;
+      });
+
+      return filtered.slice(0, 200).map(function(point, idx){
+        const etaNum = isFinite(Number(point.ETA)) ? Number(point.ETA) : (isFinite(Number(point.eta)) ? Number(point.eta) : Number(point.TOS));
+        const altNum = isFinite(Number(point.alt)) ? Number(point.alt) : (isFinite(Number(point.routeAltitude)) ? Number(point.routeAltitude) : Number(point.altitude));
         const xNum = isFinite(Number(point.x)) ? Number(point.x) : Number(point.posX);
         const yNum = isFinite(Number(point.y)) ? Number(point.y) : Number(point.posY);
-        const stepNum = isFinite(Number(point.wypt_num)) ? Math.round(Number(point.wypt_num)) : (idx + 1);
-        const speed = isFinite(Number(routePoint.speed)) ? Math.round(Number(routePoint.speed)) : NaN;
-        const isTarget = !!routePoint.TGT;
-
+        const stepNum = isFinite(Number(point.wypt_num)) ? Math.round(Number(point.wypt_num)) : (isFinite(Number(point.number)) ? Math.round(Number(point.number)) : (idx + 1));
         const noteText = String(point.note || point.text_note || '').trim();
 
         return {
           step: String(stepNum),
-          type: abbreviateRouteType(isTarget ? 'TGT' : 'WP'),
-          typeRaw: isTarget ? 'TGT' : 'WP',
+          type: abbreviateRouteType(point.type || point.action || 'WP'),
+          typeRaw: String(point.type || point.action || 'WP'),
           name: noteText || String(point.name || point.wp || point.waypoint || point.label || ''),
           alt: isFinite(altNum) ? String(Math.round(altNum)) : '-',
           altFeet: altNum,
           altType: String(point.altitudeType || point.alt_type || point.altType || point.alttype || ''),
           eta: formatEtaSeconds(etaNum),
           etaSourceSeconds: etaNum,
-          spd: isFinite(speed) ? String(speed) : '-',
+          spd: isFinite(Number(point.speed)) ? String(Math.round(Number(point.speed))) : '-',
           x: isFinite(xNum) ? String(Math.round(xNum)) : '-',
           y: isFinite(yNum) ? String(Math.round(yNum)) : '-',
           xNum: xNum,
@@ -2248,10 +2307,35 @@ namespace VAICOM
     }
 
     function formatDtcCmdsBlockHtml(root){
-      const cmds = findFirstObjectByKeyPattern(root, /^CMDSProgramSettings$/i, 0);
+      function collectCmdsSettings(value, depth, found){
+        if (depth > 10 || value === null || value === undefined) return;
+        if (Array.isArray(value)){
+          value.forEach(function(v){ collectCmdsSettings(v, depth + 1, found); });
+          return;
+        }
+        if (typeof value !== 'object') return;
+
+        Object.keys(value).forEach(function(k){
+          const v = value[k];
+          if (/^CMDSProgramSettings$/i.test(String(k)) && v && typeof v === 'object'){
+            found.push(v);
+          }
+          if (v && typeof v === 'object') collectCmdsSettings(v, depth + 1, found);
+        });
+      }
+
+      const foundCmds = [];
+      collectCmdsSettings(root, 0, foundCmds);
+      const cmds = foundCmds
+        .sort(function(a, b){
+          function score(obj){
+            return Object.keys(obj || {}).filter(function(k){ return /^(AUTO_?\d+|MAN_?\d+|BYP)$/i.test(String(k)); }).length;
+          }
+          return score(b) - score(a);
+        })[0];
       if (!cmds || typeof cmds !== 'object') return '';
 
-      const preferredOrder = ['AUTO_1','AUTO_2','AUTO_3','BYP','MAN_1','MAN_2','MAN_3','MAN_4','MAN_5','MAN_6'];
+      const preferredOrder = ['AUTO_1','AUTO1','AUTO_2','AUTO2','AUTO_3','AUTO3','BYP','MAN_1','MAN1','MAN_2','MAN2','MAN_3','MAN3','MAN_4','MAN4','MAN_5','MAN5','MAN_6','MAN6'];
       const keys = [];
       preferredOrder.forEach(function(k){
         if (cmds[k] && typeof cmds[k] === 'object') keys.push(k);
@@ -2267,9 +2351,9 @@ namespace VAICOM
 
       function modeShortLabel(k){
         const key = String(k || '').toUpperCase();
-        const auto = key.match(/^AUTO_(\d+)$/);
+        const auto = key.match(/^AUTO_?(\d+)$/);
         if (auto) return 'A' + auto[1];
-        const man = key.match(/^MAN_(\d+)$/);
+        const man = key.match(/^MAN_?(\d+)$/);
         if (man) return 'M' + man[1];
         if (key === 'BYP') return 'BYP';
         return key;
@@ -2288,20 +2372,27 @@ namespace VAICOM
         const other1 = (p.Other1 && typeof p.Other1 === 'object') ? p.Other1 : {};
         const other2 = (p.Other2 && typeof p.Other2 === 'object') ? p.Other2 : {};
 
+        const cInt = num(chaff.Interval, num(chaff.SalvoInterval, num(chaff.BurstInterval, 0)));
+        const cQty = num(chaff.Quantity, num(chaff.BurstQuantity, num(chaff.SalvoQuantity, 0)));
+        const cRpt = num(chaff.Repeat, num(chaff.SalvoQuantity, 0));
+        const fQty = num(flare.Quantity, num(flare.BurstQuantity, num(flare.SalvoQuantity, 0)));
+        const o1Qty = num(other1.Quantity, num(other1.BurstQuantity, num(other1.SalvoQuantity, 0)));
+        const o2Qty = num(other2.Quantity, num(other2.BurstQuantity, num(other2.SalvoQuantity, 0)));
+
         const modeLabel = modeShortLabel(k);
         const line = '<strong>' + modeLabel + '</strong>'
-          + ' <strong>C</strong> Int' + num(chaff.Interval, 0)
-          + ' Qty' + num(chaff.Quantity, 0)
-          + ' Rpt' + num(chaff.Repeat, 0)
-          + ' <strong>F</strong> Qty' + num(flare.Quantity, 0)
-          + ' <strong>O1</strong>' + (num(other1.Quantity, 0) > 0 ? (' Qty' + num(other1.Quantity, 0)) : '')
-          + ' <strong>O2</strong>' + (num(other2.Quantity, 0) > 0 ? (' Qty' + num(other2.Quantity, 0)) : '');
+          + ' <strong>C</strong> Int' + cInt
+          + ' Qty' + cQty
+          + ' Rpt' + cRpt
+          + ' <strong>F</strong> Qty' + fQty
+          + ' <strong>O1</strong>' + (o1Qty > 0 ? (' Qty' + o1Qty) : '')
+          + ' <strong>O2</strong>' + (o2Qty > 0 ? (' Qty' + o2Qty) : '');
 
         rowByKey[String(k).toUpperCase()] = line;
       });
 
-      const leftModes = ['AUTO_1', 'AUTO_2', 'AUTO_3', 'BYP'];
-      const rightModes = ['MAN_1', 'MAN_2', 'MAN_3', 'MAN_4', 'MAN_5', 'MAN_6'];
+      const leftModes = ['AUTO_1', 'AUTO1', 'AUTO_2', 'AUTO2', 'AUTO_3', 'AUTO3', 'BYP'];
+      const rightModes = ['MAN_1', 'MAN1', 'MAN_2', 'MAN2', 'MAN_3', 'MAN3', 'MAN_4', 'MAN4', 'MAN_5', 'MAN5', 'MAN_6', 'MAN6'];
       const leftRows = leftModes
         .map(function(k){ return rowByKey[String(k).toUpperCase()]; })
         .filter(function(x){ return !!x; });
@@ -2383,14 +2474,30 @@ namespace VAICOM
       return '<div class=""fltPlanPage2Section""><div class=""fltPlanPage2Title"">COMMS</div><div class=""fltPlanPage2Body""><table class=""fltPlanPage2Table""><thead><tr><th>COMM 1' + (comm1Guard ? ' (G)' : '') + '</th><th>COMM 2' + (comm2Guard ? ' (G)' : '') + '</th></tr></thead><tbody>' + bodyRows.join('') + '</tbody></table></div></div>';
     }
 
-    function formatDtcRouteSummaryHtml(root){
+    function formatDtcRouteSummaryHtml(root, waypoints){
       const wypt = findDtcWyptObject(root, 0) || {};
       const navPts = Array.isArray(wypt.NAV_PTS) ? wypt.NAV_PTS : [];
+      const navRoute = Array.isArray(wypt.NAV_ROUTE) ? wypt.NAV_ROUTE : [];
+
+      function isRouteSelected(v){
+        if (v === true) return true;
+        if (v === false || v === null || v === undefined) return false;
+        if (typeof v === 'number') return v !== 0;
+        const s = String(v).trim().toLowerCase();
+        return s === 'true' || s === '1' || s === 'yes' || s === 'y';
+      }
+
+      const idToStep = {};
+      navPts.forEach(function(p, idx){
+        const id = String((p && p.id) || '').toUpperCase();
+        const step = isFinite(Number(p && p.wypt_num)) ? Math.round(Number(p.wypt_num)) : (idx + 1);
+        if (id) idToStep[id] = step;
+      });
 
       function routeList(routeKey){
         const orderKey = routeKey + '_order';
         const points = navPts.filter(function(p){
-          return !!(p && typeof p === 'object' && p[routeKey]);
+          return !!(p && typeof p === 'object' && isRouteSelected(p[routeKey]));
         }).sort(function(a, b){
           const ao = Number(a && a[orderKey]);
           const bo = Number(b && b[orderKey]);
@@ -2402,10 +2509,32 @@ namespace VAICOM
         });
 
         const labels = points.map(function(p){
-          const n = Number(p && p.wypt_num);
+          const n = isFinite(Number(p && p.wypt_num)) ? Number(p && p.wypt_num) : Number(p && p.number);
           return isFinite(n) ? ('STP' + String(Math.round(n))) : '-';
         });
-        return labels.length ? labels.join(', ') : '-';
+        if (labels.length) return labels.join(', ');
+
+        const routeIndex = routeKey === 'R1' ? 0 : (routeKey === 'R2' ? 1 : 2);
+        const routeObj = (navRoute.length > routeIndex && navRoute[routeIndex] && typeof navRoute[routeIndex] === 'object') ? navRoute[routeIndex] : {};
+        const routeKeys = Object.keys(routeObj);
+        if (routeKeys.length){
+          const routeSteps = routeKeys.map(function(k){
+            const rp = routeObj[k] || {};
+            const wn = Number(rp.wypt_num);
+            if (isFinite(wn)) return Math.round(wn);
+            const mapped = idToStep[String(k || '').toUpperCase()];
+            return isFinite(Number(mapped)) ? Number(mapped) : NaN;
+          }).filter(function(v){ return isFinite(v); }).sort(function(a,b){ return a-b; });
+          if (routeSteps.length){
+            return routeSteps.map(function(n){ return 'STP' + String(n); }).join(', ');
+          }
+        }
+
+        if (routeKey === 'R1' && Array.isArray(waypoints) && waypoints.length){
+          return waypoints.map(function(wp){ return 'STP' + String(wp.step || '-'); }).join(', ');
+        }
+
+        return '-';
       }
 
       const body = [
@@ -2417,14 +2546,96 @@ namespace VAICOM
       return '<div class=""fltPlanPage2Section""><div class=""fltPlanPage2Title"">ROUTES</div><div class=""fltPlanPage2Body""><table class=""fltPlanPage2Table""><thead><tr><th style=""width:56px;"">ROUTE</th><th>WAYPOINTS</th></tr></thead><tbody>' + body.join('') + '</tbody></table></div></div>';
     }
 
-    function formatDtcPage2Html(root, pageSwitcherHtml){
+    function getDtcAvailableRoutes(root, waypoints){
+      const wypt = findDtcWyptObject(root, 0) || {};
+      const navPts = Array.isArray(wypt.NAV_PTS) ? wypt.NAV_PTS : [];
+      const navRoute = Array.isArray(wypt.NAV_ROUTE) ? wypt.NAV_ROUTE : [];
+
+      function hasRouteKey(routeKey){
+        if (navPts.some(function(p){ return !!(p && typeof p === 'object' && p[routeKey] === true); })) return true;
+        const idx = routeKey === 'R1' ? 0 : (routeKey === 'R2' ? 1 : 2);
+        const routeObj = (navRoute.length > idx && navRoute[idx] && typeof navRoute[idx] === 'object') ? navRoute[idx] : {};
+        if (Object.keys(routeObj).length > 0) return true;
+        if (routeKey === 'R1' && Array.isArray(waypoints) && waypoints.length > 0) return true;
+        return false;
+      }
+
+      const available = ['R1','R2','R3'].filter(hasRouteKey);
+      return available.length ? available : ['R1'];
+    }
+
+    function filterDtcWaypointsByRoute(root, waypoints, routeKey){
+      const route = String(routeKey || 'R1').toUpperCase();
+      if (!/^R[123]$/.test(route)) return Array.isArray(waypoints) ? waypoints : [];
+
+      const wypt = findDtcWyptObject(root, 0) || {};
+      const navPts = Array.isArray(wypt.NAV_PTS) ? wypt.NAV_PTS : [];
+      const navRoute = Array.isArray(wypt.NAV_ROUTE) ? wypt.NAV_ROUTE : [];
+      const list = Array.isArray(waypoints) ? waypoints : [];
+      if (!navPts.length || !list.length) return list;
+
+      const stepSet = {};
+      const routeOrder = {};
+      const orderKey = route + '_order';
+
+      navPts.forEach(function(p){
+        if (!p || typeof p !== 'object') return;
+        const selected = (p[route] === true) || (String(p[route] || '').toLowerCase() === 'true') || (Number(p[route]) === 1);
+        if (!selected) return;
+        const step = isFinite(Number(p.wypt_num)) ? Math.round(Number(p.wypt_num)) : (isFinite(Number(p.number)) ? Math.round(Number(p.number)) : NaN);
+        if (!isFinite(step)) return;
+        stepSet[step] = true;
+        const ord = Number(p[orderKey]);
+        if (isFinite(ord)) routeOrder[step] = ord;
+      });
+
+      if (!Object.keys(stepSet).length){
+        const idx = route === 'R1' ? 0 : (route === 'R2' ? 1 : 2);
+        const routeObj = (navRoute.length > idx && navRoute[idx] && typeof navRoute[idx] === 'object') ? navRoute[idx] : {};
+        const idToStep = {};
+        navPts.forEach(function(p){
+          const id = String((p && p.id) || '').toUpperCase();
+          const step = isFinite(Number(p && p.wypt_num)) ? Math.round(Number(p.wypt_num)) : (isFinite(Number(p && p.number)) ? Math.round(Number(p.number)) : NaN);
+          if (id && isFinite(step)) idToStep[id] = step;
+        });
+        Object.keys(routeObj).forEach(function(k){
+          const rp = routeObj[k] || {};
+          let step = Number(rp.wypt_num);
+          if (!isFinite(step)) step = Number(idToStep[String(k || '').toUpperCase()]);
+          if (!isFinite(step)) return;
+          step = Math.round(step);
+          stepSet[step] = true;
+          const ord = Number(rp[orderKey] || rp.route_num || rp.order);
+          if (isFinite(ord)) routeOrder[step] = ord;
+        });
+      }
+
+      if (!Object.keys(stepSet).length){
+        return route === 'R1' ? list : [];
+      }
+
+      return list
+        .filter(function(wp){ return !!stepSet[Number(wp.step)]; })
+        .sort(function(a, b){
+          const sa = Number(a && a.step);
+          const sb = Number(b && b.step);
+          const oa = routeOrder[sa];
+          const ob = routeOrder[sb];
+          if (isFinite(oa) && isFinite(ob) && oa !== ob) return oa - ob;
+          if (isFinite(oa) && !isFinite(ob)) return -1;
+          if (!isFinite(oa) && isFinite(ob)) return 1;
+          return sa - sb;
+        });
+    }
+
+    function formatDtcPage2Html(root, pageSwitcherHtml, waypoints){
       let html = '<div class=""fltPlanBoard"">';
       if (pageSwitcherHtml){
         html += '<div style=""margin:4px 0 6px 0;"">' + pageSwitcherHtml + '</div>';
       }
       html += '<div class=""fltPlanPage2Grid"">';
       html += formatDtcCommPanelHtml(root);
-      html += formatDtcRouteSummaryHtml(root);
+      html += formatDtcRouteSummaryHtml(root, waypoints);
       html += '</div></div>';
       return html;
     }
@@ -2543,14 +2754,24 @@ namespace VAICOM
     }
 
     function formatDtcTableHtml(root, selected, data){
-      const waypoints = getDtcWaypoints(root);
+      const allWaypoints = getDtcWaypoints(root);
+      const availableRoutes = getDtcAvailableRoutes(root, allWaypoints);
+      let routeKey = getDtcRouteBySelection(selected);
+      if (availableRoutes.indexOf(routeKey) < 0){
+        routeKey = availableRoutes[0] || 'R1';
+        setDtcRouteBySelection(selected, routeKey);
+      }
+      const waypoints = filterDtcWaypointsByRoute(root, allWaypoints, routeKey);
       const cmdsBlockHtml = formatDtcCmdsBlockHtml(root);
       const page = getDtcPageBySelection(selected);
-      const pageSwitcherHtml = '<span class=""fltPlanPageSwitcher""><button type=""button"" class=""fltPlanPageBtn' + (page === 1 ? ' active' : '') + '"" data-dtc-page=""1"">Page 1</button><button type=""button"" class=""fltPlanPageBtn' + (page === 2 ? ' active' : '') + '"" data-dtc-page=""2"">Page 2</button></span>';
+      const routeButtons = availableRoutes.map(function(r){
+        return '<button type=""button"" class=""fltPlanPageBtn' + (routeKey === r ? ' active' : '') + '"" data-dtc-route=""' + r + '"">' + r + '</button>';
+      }).join('');
+      const pageSwitcherHtml = '<span class=""fltPlanPageSwitcher""><button type=""button"" class=""fltPlanPageBtn' + (page === 1 ? ' active' : '') + '"" data-dtc-page=""1"">Page 1</button><button type=""button"" class=""fltPlanPageBtn' + (page === 2 ? ' active' : '') + '"" data-dtc-page=""2"">Page 2</button></span><span class=""fltPlanPageSwitcher"">' + routeButtons + '</span>';
       if (page === 2){
-        return formatDtcPage2Html(root, pageSwitcherHtml);
+        return formatDtcPage2Html(root, pageSwitcherHtml, waypoints);
       }
-      return renderFlightPlanBoardHtml(selected, data, getDtcDisplayName(selected), 'DTC JSON', getPathFileName(selected), waypoints, cmdsBlockHtml, pageSwitcherHtml);
+      return renderFlightPlanBoardHtml(selected, data, getDtcDisplayName(selected) + ' ' + routeKey, 'DTC JSON', getPathFileName(selected), waypoints, cmdsBlockHtml, pageSwitcherHtml);
     }
 
     function formatRouteToolTable(root, selected){
@@ -3259,6 +3480,15 @@ namespace VAICOM
             const page = Number(node.getAttribute('data-dtc-page') || 1);
             if (selected){
               setDtcPageBySelection(selected, page);
+              render(latestData);
+            }
+            return;
+          }
+          if (node.getAttribute && node.getAttribute('data-dtc-route')){
+            const selected = String((latestData && latestData.DtcSelectedFile) || '');
+            const route = String(node.getAttribute('data-dtc-route') || 'R1');
+            if (selected){
+              setDtcRouteBySelection(selected, route);
               render(latestData);
             }
             return;
