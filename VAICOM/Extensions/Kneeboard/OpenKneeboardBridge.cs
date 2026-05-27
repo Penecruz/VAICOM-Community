@@ -438,8 +438,9 @@ namespace VAICOM
     .fltPlanEtaWrap { display: inline-flex; align-items: center; justify-content: center; gap: 4px; }
     .fltPlanEtaWrap input { margin: 0; }
     .fltPlanCellNum { text-align: center; }
-    .fltPlanBottomGrid { display: grid; grid-template-columns: 0.85fr 0.64fr 0.635fr; grid-template-areas: 'freq . .' 'assets wx wx'; gap: 8px; margin-top: 8px; }
+    .fltPlanBottomGrid { display: grid; grid-template-columns: 0.85fr 0.64fr 0.635fr; grid-template-areas: 'freq cmds cmds' 'assets wx wx'; gap: 8px; margin-top: 8px; }
     .fltPlanInfoFreqWrap { grid-area: freq; }
+    .fltPlanInfoCmdsWrap { grid-area: cmds; }
     .fltPlanInfoAssetsWrap { grid-area: assets; }
     .fltPlanInfoWxWrap { grid-area: wx; }
     .fltPlanInfoBlock { border: 1px solid #8b96a1; background: #f7f9fb; min-height: 120px; display: flex; flex-direction: column; }
@@ -450,6 +451,16 @@ namespace VAICOM
     .fltPlanInfoTable th, .fltPlanInfoTable td { border: 1px solid #aeb7c0; font-size: 12px; padding: 2px 3px; text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .fltPlanInfoTable th { background: #edf1f5; }
     .fltPlanInfoWxWrap .fltPlanInfoTable td { white-space: normal; overflow: visible; text-overflow: clip; word-break: break-word; }
+    .fltPlanPageSwitcher { margin-left: 8px; display: inline-flex; gap: 4px; vertical-align: middle; }
+    .fltPlanPageBtn { font-size: 12px; border: 1px solid #8b96a1; background: #eceff3; padding: 2px 9px; cursor: pointer; min-height: 22px; }
+    .fltPlanPageBtn.active { background: #d3dae2; font-weight: 700; }
+    .fltPlanPage2Grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
+    .fltPlanPage2Section { border: 1px solid #8b96a1; background: #f7f9fb; }
+    .fltPlanPage2Title { border-bottom: 1px solid #8b96a1; background: #e4e8ec; font-size: 13px; font-weight: 700; padding: 3px 6px; }
+    .fltPlanPage2Body { padding: 4px 6px; }
+    .fltPlanPage2Table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+    .fltPlanPage2Table th, .fltPlanPage2Table td { border: 1px solid #aeb7c0; font-size: 12px; padding: 2px 3px; text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .fltPlanPage2Table th { background: #edf1f5; }
     .fltPlanMessage { white-space: pre-wrap; font-size: 18px; line-height: 1.2; }
     .fltPlanPlain { margin: 0; background: #ffffff; border: 1px solid #b7b7b7; padding: 10px; white-space: pre; word-break: normal; font-size: 16px; line-height: 1.2; min-height: 100%; box-sizing: border-box; overflow: auto; }
     pre { background: #ffffff; border: 1px solid #b7b7b7; padding: 10px; white-space: pre-wrap; word-break: break-word; font-size: 18px; color:#111; max-height: 190px; overflow: auto; }
@@ -543,6 +554,7 @@ namespace VAICOM
     let dtcListCollapsed = false;
     let fltPlanEtaStartBySelection = {};
     let fltPlanPlanStateBySelection = {};
+    let fltPlanDtcPageBySelection = {};
 
     function clamp(v, min, max){
       return Math.max(min, Math.min(max, v));
@@ -1604,6 +1616,16 @@ namespace VAICOM
       state.totSeconds = base + delta;
     }
 
+    function setTotBySecondsDelta(selected, secondsDelta){
+      const state = getFlightPlanPlanState(selected);
+      let base = Number(state.totSeconds);
+      if (!isFinite(base)){
+        base = getCurrentFlightPlanClockSeconds();
+      }
+      const delta = Math.round(Number(secondsDelta || 0));
+      state.totSeconds = base + delta;
+    }
+
     function abbreviateRouteType(type){
       const raw = String(type || '').trim();
       if (!raw) return 'WP';
@@ -1661,6 +1683,19 @@ namespace VAICOM
 
     function getFlightPlanEtaStartKey(selected){
       return String(selected || '');
+    }
+
+    function getDtcPageBySelection(selected){
+      const key = getFlightPlanEtaStartKey(selected);
+      const v = Number(fltPlanDtcPageBySelection[key]);
+      return v === 2 ? 2 : 1;
+    }
+
+    function setDtcPageBySelection(selected, page){
+      const key = getFlightPlanEtaStartKey(selected);
+      if (!key) return;
+      const p = Number(page);
+      fltPlanDtcPageBySelection[key] = (p === 2) ? 2 : 1;
     }
 
     function computeLegDistanceNm(prevWp, currWp){
@@ -2143,19 +2178,261 @@ namespace VAICOM
       };
     }
 
-    function formatRouteToolTableHtml(root, selected, data){
-      const presets = (root && typeof root === 'object') ? root : null;
-      if (!presets) return '';
+    function findDtcWyptObject(value, depth){
+      if (depth > 10 || value === null || value === undefined) return null;
+      if (Array.isArray(value)){
+        for (let i = 0; i < value.length; i++){
+          const found = findDtcWyptObject(value[i], depth + 1);
+          if (found) return found;
+        }
+        return null;
+      }
+      if (typeof value !== 'object') return null;
 
-      const routeNames = Object.keys(presets);
-      if (!routeNames.length) return '';
+      if (Array.isArray(value.NAV_PTS)) return value;
+      if (value.WYPT && typeof value.WYPT === 'object' && Array.isArray(value.WYPT.NAV_PTS)) return value.WYPT;
 
-      routeNames.sort(function(a,b){ return String(a).localeCompare(String(b)); });
-      const primaryRouteName = String(routeNames[0] || getDtcDisplayName(selected) || '-');
-      const primaryRoute = presets[primaryRouteName] || {};
-      const waypoints = getRouteWaypoints(primaryRoute);
-      applyAltitudeAdjustments(waypoints, selected);
-      applyEtaPlanToWaypoints(waypoints, selected);
+      const keys = Object.keys(value);
+      for (let i = 0; i < keys.length; i++){
+        const found = findDtcWyptObject(value[keys[i]], depth + 1);
+        if (found) return found;
+      }
+      return null;
+    }
+
+    function getDtcWaypoints(root){
+      const wypt = findDtcWyptObject(root, 0) || {};
+      const navPts = Array.isArray(wypt.NAV_PTS) ? wypt.NAV_PTS : [];
+      const navRoute = Array.isArray(wypt.NAV_ROUTE) ? wypt.NAV_ROUTE : [];
+      const primaryRoute = (navRoute.length && navRoute[0] && typeof navRoute[0] === 'object') ? navRoute[0] : {};
+
+      const routeById = {};
+      Object.keys(primaryRoute).forEach(function(k){
+        const point = primaryRoute[k];
+        if (!point || typeof point !== 'object') return;
+        routeById[String(k).toUpperCase()] = point;
+      });
+
+      return navPts.slice(0, 200).map(function(p, idx){
+        const point = (p && typeof p === 'object') ? p : {};
+        const id = String(point.id || ('STPT' + String(idx + 1))).trim();
+        const routePoint = routeById[id.toUpperCase()] || {};
+
+        const etaNum = isFinite(Number(routePoint.ETA)) ? Number(routePoint.ETA) : Number(point.ETA);
+        const altNum = isFinite(Number(routePoint.alt)) ? Number(routePoint.alt) : (isFinite(Number(point.alt)) ? Number(point.alt) : Number(point.altitude));
+        const xNum = isFinite(Number(point.x)) ? Number(point.x) : Number(point.posX);
+        const yNum = isFinite(Number(point.y)) ? Number(point.y) : Number(point.posY);
+        const stepNum = isFinite(Number(point.wypt_num)) ? Math.round(Number(point.wypt_num)) : (idx + 1);
+        const speed = isFinite(Number(routePoint.speed)) ? Math.round(Number(routePoint.speed)) : NaN;
+        const isTarget = !!routePoint.TGT;
+
+        const noteText = String(point.note || point.text_note || '').trim();
+
+        return {
+          step: String(stepNum),
+          type: abbreviateRouteType(isTarget ? 'TGT' : 'WP'),
+          typeRaw: isTarget ? 'TGT' : 'WP',
+          name: noteText || String(point.name || point.wp || point.waypoint || point.label || ''),
+          alt: isFinite(altNum) ? String(Math.round(altNum)) : '-',
+          altFeet: altNum,
+          altType: String(point.altitudeType || point.alt_type || point.altType || point.alttype || ''),
+          eta: formatEtaSeconds(etaNum),
+          etaSourceSeconds: etaNum,
+          spd: isFinite(speed) ? String(speed) : '-',
+          x: isFinite(xNum) ? String(Math.round(xNum)) : '-',
+          y: isFinite(yNum) ? String(Math.round(yNum)) : '-',
+          xNum: xNum,
+          yNum: yNum
+        };
+      });
+    }
+
+    function formatDtcCmdsBlockHtml(root){
+      const cmds = findFirstObjectByKeyPattern(root, /^CMDSProgramSettings$/i, 0);
+      if (!cmds || typeof cmds !== 'object') return '';
+
+      const preferredOrder = ['AUTO_1','AUTO_2','AUTO_3','BYP','MAN_1','MAN_2','MAN_3','MAN_4','MAN_5','MAN_6'];
+      const keys = [];
+      preferredOrder.forEach(function(k){
+        if (cmds[k] && typeof cmds[k] === 'object') keys.push(k);
+      });
+
+      Object.keys(cmds).forEach(function(k){
+        if (keys.indexOf(k) >= 0) return;
+        if (!cmds[k] || typeof cmds[k] !== 'object') return;
+        keys.push(k);
+      });
+
+      if (!keys.length) return '';
+
+      function modeShortLabel(k){
+        const key = String(k || '').toUpperCase();
+        const auto = key.match(/^AUTO_(\d+)$/);
+        if (auto) return 'A' + auto[1];
+        const man = key.match(/^MAN_(\d+)$/);
+        if (man) return 'M' + man[1];
+        if (key === 'BYP') return 'BYP';
+        return key;
+      }
+
+      function num(v, fallback){
+        const n = Number(v);
+        return isFinite(n) ? n : fallback;
+      }
+
+      const rowByKey = {};
+      keys.forEach(function(k){
+        const p = cmds[k] || {};
+        const chaff = (p.Chaff && typeof p.Chaff === 'object') ? p.Chaff : {};
+        const flare = (p.Flare && typeof p.Flare === 'object') ? p.Flare : {};
+        const other1 = (p.Other1 && typeof p.Other1 === 'object') ? p.Other1 : {};
+        const other2 = (p.Other2 && typeof p.Other2 === 'object') ? p.Other2 : {};
+
+        const modeLabel = modeShortLabel(k);
+        const line = '<strong>' + modeLabel + '</strong>'
+          + ' <strong>C</strong> Int' + num(chaff.Interval, 0)
+          + ' Qty' + num(chaff.Quantity, 0)
+          + ' Rpt' + num(chaff.Repeat, 0)
+          + ' <strong>F</strong> Qty' + num(flare.Quantity, 0)
+          + ' <strong>O1</strong>' + (num(other1.Quantity, 0) > 0 ? (' Qty' + num(other1.Quantity, 0)) : '')
+          + ' <strong>O2</strong>' + (num(other2.Quantity, 0) > 0 ? (' Qty' + num(other2.Quantity, 0)) : '');
+
+        rowByKey[String(k).toUpperCase()] = line;
+      });
+
+      const leftModes = ['AUTO_1', 'AUTO_2', 'AUTO_3', 'BYP'];
+      const rightModes = ['MAN_1', 'MAN_2', 'MAN_3', 'MAN_4', 'MAN_5', 'MAN_6'];
+      const leftRows = leftModes
+        .map(function(k){ return rowByKey[String(k).toUpperCase()]; })
+        .filter(function(x){ return !!x; });
+      const rightRows = rightModes
+        .map(function(k){ return rowByKey[String(k).toUpperCase()]; })
+        .filter(function(x){ return !!x; });
+      const maxRows = Math.max(leftRows.length, rightRows.length);
+
+      const rows = [];
+      for (let i = 0; i < maxRows; i++){
+        const left = leftRows[i] || '';
+        const right = rightRows[i] || '';
+        rows.push('<tr><td style=""width:50%;"">' + left + '</td><td>' + right + '</td></tr>');
+      }
+
+      return '<div class=""fltPlanInfoBlock""><div class=""fltPlanInfoTitle"">CMDS</div><div class=""fltPlanInfoBody""><table class=""fltPlanInfoTable""><tbody>' + rows.join('') + '</tbody></table></div></div>';
+    }
+
+    function formatDtcCommPanelHtml(root){
+      const commRoot = findFirstObjectByKeyPattern(root, /^COMM$/i, 0) || {};
+
+      function formatCommFrequency(value){
+        const n = Number(value);
+        if (!isFinite(n)) return '-';
+        let s = n.toFixed(3).replace(/0+$/,'');
+        if (s.endsWith('.')) s = s.substring(0, s.length - 1);
+        return s;
+      }
+
+      function getCommRows(commObj){
+        if (!commObj || typeof commObj !== 'object') return [];
+        const rows = [];
+        Object.keys(commObj).forEach(function(k){
+          const o = commObj[k];
+          if (!o || typeof o !== 'object') return;
+          const fq = Number(o.frequency || o.Frequency || o.freq);
+          if (!isFinite(fq)) return;
+          const mod = Number(o.modulation);
+
+          const key = String(k || '');
+          const chMatch = key.match(/^Channel_(\d+)$/i);
+          const chNum = chMatch ? parseInt(chMatch[1], 10) : NaN;
+          const rawLabel = String(o.name || key.replace(/^Channel_/i, 'CH '));
+          const label = rawLabel.replace(/\s+/g, '');
+          rows.push({
+            label: label,
+            freq: formatCommFrequency(fq),
+            sortGroup: isFinite(chNum) ? 0 : 1,
+            sortValue: isFinite(chNum) ? chNum : 999,
+          });
+        });
+
+        rows.sort(function(a, b){
+          if (a.sortGroup !== b.sortGroup) return a.sortGroup - b.sortGroup;
+          if (a.sortValue !== b.sortValue) return a.sortValue - b.sortValue;
+          return String(a.label).localeCompare(String(b.label));
+        });
+
+        return rows;
+      }
+
+      const comm1 = commRoot.COMM1 || commRoot.Comm1 || commRoot.COMM_1 || {};
+      const comm2 = commRoot.COMM2 || commRoot.Comm2 || commRoot.COMM_2 || {};
+      const rows1 = getCommRows(comm1);
+      const rows2 = getCommRows(comm2);
+      const comm1Guard = !!comm1.Guard;
+      const comm2Guard = !!comm2.Guard;
+
+      const maxRows = Math.max(rows1.length, rows2.length);
+      if (!maxRows) return '<div class=""fltPlanPage2Section""><div class=""fltPlanPage2Title"">COMMS</div><div class=""fltPlanPage2Body"">No comm data.</div></div>';
+
+      const bodyRows = [];
+      for (let i = 0; i < maxRows; i++){
+        const a = rows1[i];
+        const b = rows2[i];
+        bodyRows.push('<tr><td>' + (a ? (escapeHtml(a.label) + ' ' + escapeHtml(String(a.freq))) : '') + '</td><td>' + (b ? (escapeHtml(b.label) + ' ' + escapeHtml(String(b.freq))) : '') + '</td></tr>');
+      }
+
+      return '<div class=""fltPlanPage2Section""><div class=""fltPlanPage2Title"">COMMS</div><div class=""fltPlanPage2Body""><table class=""fltPlanPage2Table""><thead><tr><th>COMM 1' + (comm1Guard ? ' (G)' : '') + '</th><th>COMM 2' + (comm2Guard ? ' (G)' : '') + '</th></tr></thead><tbody>' + bodyRows.join('') + '</tbody></table></div></div>';
+    }
+
+    function formatDtcRouteSummaryHtml(root){
+      const wypt = findDtcWyptObject(root, 0) || {};
+      const navPts = Array.isArray(wypt.NAV_PTS) ? wypt.NAV_PTS : [];
+
+      function routeList(routeKey){
+        const orderKey = routeKey + '_order';
+        const points = navPts.filter(function(p){
+          return !!(p && typeof p === 'object' && p[routeKey]);
+        }).sort(function(a, b){
+          const ao = Number(a && a[orderKey]);
+          const bo = Number(b && b[orderKey]);
+          if (isFinite(ao) && isFinite(bo) && ao !== bo) return ao - bo;
+          const aw = Number(a && a.wypt_num);
+          const bw = Number(b && b.wypt_num);
+          if (isFinite(aw) && isFinite(bw) && aw !== bw) return aw - bw;
+          return 0;
+        });
+
+        const labels = points.map(function(p){
+          const n = Number(p && p.wypt_num);
+          return isFinite(n) ? ('STP' + String(Math.round(n))) : '-';
+        });
+        return labels.length ? labels.join(', ') : '-';
+      }
+
+      const body = [
+        '<tr><td>R1</td><td>' + escapeHtml(routeList('R1')) + '</td></tr>',
+        '<tr><td>R2</td><td>' + escapeHtml(routeList('R2')) + '</td></tr>',
+        '<tr><td>R3</td><td>' + escapeHtml(routeList('R3')) + '</td></tr>'
+      ];
+
+      return '<div class=""fltPlanPage2Section""><div class=""fltPlanPage2Title"">ROUTES</div><div class=""fltPlanPage2Body""><table class=""fltPlanPage2Table""><thead><tr><th style=""width:56px;"">ROUTE</th><th>WAYPOINTS</th></tr></thead><tbody>' + body.join('') + '</tbody></table></div></div>';
+    }
+
+    function formatDtcPage2Html(root, pageSwitcherHtml){
+      let html = '<div class=""fltPlanBoard"">';
+      if (pageSwitcherHtml){
+        html += '<div style=""margin:4px 0 6px 0;"">' + pageSwitcherHtml + '</div>';
+      }
+      html += '<div class=""fltPlanPage2Grid"">';
+      html += formatDtcCommPanelHtml(root);
+      html += formatDtcRouteSummaryHtml(root);
+      html += '</div></div>';
+      return html;
+    }
+
+    function renderFlightPlanBoardHtml(selected, data, primaryRouteName, sourceLabel, sourceFileName, waypoints, cmdsBlockHtml, pageSwitcherHtml){
+      const rows = Array.isArray(waypoints) ? waypoints.slice() : [];
+      applyAltitudeAdjustments(rows, selected);
+      applyEtaPlanToWaypoints(rows, selected);
       const timing = getFlightPlanTimingDisplay(selected);
 
       const server = (data && data.Server) || {};
@@ -2164,7 +2441,7 @@ namespace VAICOM
       const config = safe(server.Aircraft);
       const theatre = safe(server.Theater);
       const startRow = getFlightPlanStartRow(server, timing);
-      const displayRows = startRow ? [startRow].concat(waypoints) : waypoints;
+      const displayRows = startRow ? [startRow].concat(rows) : rows;
       applySpeedAdjustmentsToWaypoints(displayRows, selected);
       applyRouteTimeline(displayRows, selected);
       applyLockedTotPlan(displayRows, selected);
@@ -2182,17 +2459,20 @@ namespace VAICOM
       html += '</div>';
       html += '<div class=""fltPlanHeaderGrid"">';
       html += '<div class=""fltPlanHeaderCell""><div class=""fltPlanHeaderCellLabel"">THEATRE</div><div class=""fltPlanHeaderCellValue"">' + escapeHtml(theatre) + '</div></div>';
-      html += '<div class=""fltPlanHeaderCell""><div class=""fltPlanHeaderCellLabel"">SOURCE</div><div class=""fltPlanHeaderCellValue"">ROUTE TOOL</div></div>';
-      html += '<div class=""fltPlanHeaderCell""><div class=""fltPlanHeaderCellLabel"">ROUTE FILE</div><div class=""fltPlanHeaderCellValue"">' + escapeHtml(getPathFileName(getFltPlnPath(selected))) + '</div></div>';
-      html += '<div class=""fltPlanHeaderCell""><div class=""fltPlanHeaderCellLabel"">WAYPOINTS</div><div class=""fltPlanHeaderCellValue"">' + escapeHtml(String(waypoints.length)) + '</div></div>';
+      html += '<div class=""fltPlanHeaderCell""><div class=""fltPlanHeaderCellLabel"">SOURCE</div><div class=""fltPlanHeaderCellValue"">' + escapeHtml(sourceLabel || '-') + '</div></div>';
+      html += '<div class=""fltPlanHeaderCell""><div class=""fltPlanHeaderCellLabel"">ROUTE FILE</div><div class=""fltPlanHeaderCellValue"">' + escapeHtml(sourceFileName || '-') + '</div></div>';
+      html += '<div class=""fltPlanHeaderCell""><div class=""fltPlanHeaderCellLabel"">WAYPOINTS</div><div class=""fltPlanHeaderCellValue"">' + escapeHtml(String(rows.length)) + '</div></div>';
       html += '</div>';
+      if (pageSwitcherHtml){
+        html += '<div style=""margin:4px 0 2px 0;"">' + pageSwitcherHtml + '</div>';
+      }
 
       html += '<div class=""fltPlanTimeGrid"">';
       html += '<div class=""fltPlanTimeCell clickable"" data-tko-anchor=""STEP"" title=""Set STEP to current clock (Takeoff auto = STEP +35m)""><div class=""fltPlanTimeCellLabel"">STEP</div><div class=""fltPlanTimeCellValue"">' + escapeHtml(timing.step) + '</div></div>';
       html += '<div class=""fltPlanTimeCell clickable"" data-tko-anchor=""START"" title=""Set START to current clock (Takeoff auto = START +25m)""><div class=""fltPlanTimeCellLabel"">START</div><div class=""fltPlanTimeCellValue"">' + escapeHtml(timing.start) + '</div></div>';
       html += '<div class=""fltPlanTimeCell clickable"" data-tko-anchor=""TAXI"" title=""Set TAXI to current clock (Takeoff auto = TAXI +15m)""><div class=""fltPlanTimeCellLabel"">TAXI</div><div class=""fltPlanTimeCellValue"">' + escapeHtml(timing.taxi) + '</div></div>';
       html += '<div class=""fltPlanTimeCell clickable"" data-tko-anchor=""TAKEOFF"" title=""Set TAKEOFF to current clock""><div class=""fltPlanTimeCellLabel"">TAKE OFF</div><div class=""fltPlanTimeCellValue"">' + escapeHtml(timing.takeoff) + '</div></div>';
-      html += '<div class=""fltPlanTimeCell""><div class=""fltPlanTimeCellLabel"">TOT</div><div class=""fltPlanTimeCellValue""><div class=""fltPlanAdjustCell""><button type=""button"" class=""fltPlanMiniBtn"" data-tot-adjust=""-60"">◀</button><span class=""fltPlanSpdValue"">' + escapeHtml(timing.tot) + '</span><button type=""button"" class=""fltPlanMiniBtn"" data-tot-adjust=""60"">▶</button></div></div></div>';
+      html += '<div class=""fltPlanTimeCell""><div class=""fltPlanTimeCellLabel"">TOT</div><div class=""fltPlanTimeCellValue""><div class=""fltPlanAdjustCell""><button type=""button"" class=""fltPlanMiniBtn"" data-tot-adjust-sec=""-1"" title=""-1 second"">«</button><button type=""button"" class=""fltPlanMiniBtn"" data-tot-adjust=""-60"" title=""-1 minute"">◀</button><span class=""fltPlanSpdValue"">' + escapeHtml(timing.tot) + '</span><button type=""button"" class=""fltPlanMiniBtn"" data-tot-adjust=""60"" title=""+1 minute"">▶</button><button type=""button"" class=""fltPlanMiniBtn"" data-tot-adjust-sec=""1"" title=""+1 second"">»</button></div></div></div>';
       html += '</div>';
 
       html += '<div class=""fltPlanWpWrap"">';
@@ -2238,11 +2518,39 @@ namespace VAICOM
       html += '</tbody></table></div></div>';
       html += '<div class=""fltPlanBottomGrid"">';
       html += '<div class=""fltPlanInfoFreqWrap"">' + formatFrequenciesBlockHtml(data) + '</div>';
+      if (cmdsBlockHtml){
+        html += '<div class=""fltPlanInfoCmdsWrap"">' + cmdsBlockHtml + '</div>';
+      }
       html += '<div class=""fltPlanInfoAssetsWrap"">' + formatAssetsBlockHtml(data) + '</div>';
       html += '<div class=""fltPlanInfoWxWrap"">' + formatMetarBlockHtml(data) + '</div>';
       html += '</div>';
       html += '</div>';
       return html;
+    }
+
+    function formatRouteToolTableHtml(root, selected, data){
+      const presets = (root && typeof root === 'object') ? root : null;
+      if (!presets) return '';
+
+      const routeNames = Object.keys(presets);
+      if (!routeNames.length) return '';
+
+      routeNames.sort(function(a,b){ return String(a).localeCompare(String(b)); });
+      const primaryRouteName = String(routeNames[0] || getDtcDisplayName(selected) || '-');
+      const primaryRoute = presets[primaryRouteName] || {};
+      const waypoints = getRouteWaypoints(primaryRoute);
+      return renderFlightPlanBoardHtml(selected, data, primaryRouteName, 'ROUTE TOOL', getPathFileName(getFltPlnPath(selected)), waypoints, '', '');
+    }
+
+    function formatDtcTableHtml(root, selected, data){
+      const waypoints = getDtcWaypoints(root);
+      const cmdsBlockHtml = formatDtcCmdsBlockHtml(root);
+      const page = getDtcPageBySelection(selected);
+      const pageSwitcherHtml = '<span class=""fltPlanPageSwitcher""><button type=""button"" class=""fltPlanPageBtn' + (page === 1 ? ' active' : '') + '"" data-dtc-page=""1"">Page 1</button><button type=""button"" class=""fltPlanPageBtn' + (page === 2 ? ' active' : '') + '"" data-dtc-page=""2"">Page 2</button></span>';
+      if (page === 2){
+        return formatDtcPage2Html(root, pageSwitcherHtml);
+      }
+      return renderFlightPlanBoardHtml(selected, data, getDtcDisplayName(selected), 'DTC JSON', getPathFileName(selected), waypoints, cmdsBlockHtml, pageSwitcherHtml);
     }
 
     function formatRouteToolTable(root, selected){
@@ -2300,7 +2608,7 @@ namespace VAICOM
       const sourceType = String(data.DtcSourceType || '').toUpperCase();
 
       if (!files.length){
-        return '<div class=""fltPlanMessage"">No valid FLT PLN files found in Saved Games/DCS*/Missions (DTC) or Saved Games/DCS*/Config/RouteToolPresets/&lt;ActiveTerrain&gt;.lua (RouteTool).\n\nExport DTC or save RouteTool presets, then click Refresh FLT PLN.</div>';
+        return '<div class=""fltPlanMessage"">No valid FLT PLN files found in Saved Games/DCS*/DTC (DTC) or Saved Games/DCS*/Config/RouteToolPresets/&lt;ActiveTerrain&gt;.lua (RouteTool).\n\nExport DTC or save RouteTool presets, then click Refresh FLT PLN.</div>';
       }
 
       if (!selected){
@@ -2323,6 +2631,10 @@ namespace VAICOM
         const rteHtml = formatRouteToolTableHtml(root, selected, data);
         if (rteHtml) return rteHtml;
       }
+      if (sourceType === 'DTC') {
+        const dtcHtml = formatDtcTableHtml(root, selected, data);
+        if (dtcHtml) return dtcHtml;
+      }
 
       return '<pre class=""fltPlanPlain"">' + escapeHtml(formatDtcTabContent(data)) + '</pre>';
     }
@@ -2334,7 +2646,7 @@ namespace VAICOM
       const sourceType = String(data.DtcSourceType || '').toUpperCase();
 
       if (!files.length){
-        return 'No valid FLT PLN files found in Saved Games/DCS*/Missions (DTC) or Saved Games/DCS*/Config/RouteToolPresets/<ActiveTerrain>.lua (RouteTool).\n\nExport DTC or save RouteTool presets, then click Refresh FLT PLN.';
+        return 'No valid FLT PLN files found in Saved Games/DCS*/DTC (DTC) or Saved Games/DCS*/Config/RouteToolPresets/<ActiveTerrain>.lua (RouteTool).\n\nExport DTC or save RouteTool presets, then click Refresh FLT PLN.';
       }
 
       if (!selected){
@@ -2929,6 +3241,24 @@ namespace VAICOM
             const seconds = Number(node.getAttribute('data-tot-adjust') || 0);
             if (selected && isFinite(seconds) && seconds !== 0){
               setTotByMinutesDelta(selected, seconds / 60.0);
+              render(latestData);
+            }
+            return;
+          }
+          if (node.getAttribute && node.getAttribute('data-tot-adjust-sec')){
+            const selected = String((latestData && latestData.DtcSelectedFile) || '');
+            const seconds = Number(node.getAttribute('data-tot-adjust-sec') || 0);
+            if (selected && isFinite(seconds) && seconds !== 0){
+              setTotBySecondsDelta(selected, seconds);
+              render(latestData);
+            }
+            return;
+          }
+          if (node.getAttribute && node.getAttribute('data-dtc-page')){
+            const selected = String((latestData && latestData.DtcSelectedFile) || '');
+            const page = Number(node.getAttribute('data-dtc-page') || 1);
+            if (selected){
+              setDtcPageBySelection(selected, page);
               render(latestData);
             }
             return;
@@ -4115,23 +4445,23 @@ namespace VAICOM
                 {
                     List<string> files = new List<string>();
 
-                    foreach (string missionsDir in GetSavedGamesMissionFolders())
+                    foreach (string dtcDir in GetSavedGamesDtcFolders())
                     {
                         try
                         {
-                            if (!Directory.Exists(missionsDir))
+                            if (!Directory.Exists(dtcDir))
                             {
                                 continue;
                             }
 
-                            foreach (string candidate in Directory.EnumerateFiles(missionsDir, "*.*", SearchOption.AllDirectories))
+                            foreach (string candidate in Directory.EnumerateFiles(dtcDir, "*.*", SearchOption.AllDirectories))
                             {
                                 if (!IsDtcExtension(candidate))
                                 {
                                     continue;
                                 }
 
-                                if (!IsPathUnderDirectory(candidate, missionsDir))
+                                if (!IsPathUnderDirectory(candidate, dtcDir))
                                 {
                                     continue;
                                 }
@@ -4146,6 +4476,25 @@ namespace VAICOM
                                 {
                                     break;
                                 }
+                            }
+                        }
+                        catch
+                        {
+                        }
+
+                        if (files.Count >= 250)
+                        {
+                            break;
+                        }
+                    }
+
+                    foreach (string missionsDir in GetSavedGamesMissionFolders())
+                    {
+                        try
+                        {
+                            if (!Directory.Exists(missionsDir))
+                            {
+                                continue;
                             }
 
                             foreach (string routeCandidate in Directory.EnumerateFiles(missionsDir, "*.rte", SearchOption.AllDirectories))
@@ -4221,10 +4570,64 @@ namespace VAICOM
                         .Distinct(StringComparer.OrdinalIgnoreCase)
                         .OrderByDescending(p =>
                         {
-                            try { return File.GetLastWriteTimeUtc(p); }
+                            try
+                            {
+                                string routePath;
+                                string routeName;
+                                if (TryParseRouteSelectionToken(p, out routePath, out routeName))
+                                {
+                                    return File.GetLastWriteTimeUtc(routePath);
+                                }
+
+                                return File.GetLastWriteTimeUtc(p);
+                            }
                             catch { return DateTime.MinValue; }
                         })
                         .ThenBy(p => p, StringComparer.OrdinalIgnoreCase)
+                        .ToList();
+                }
+
+                private static List<string> GetSavedGamesDtcFolders()
+                {
+                    List<string> roots = new List<string>();
+
+                    try
+                    {
+                        string userProfile = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+                        if (string.IsNullOrWhiteSpace(userProfile))
+                        {
+                            return roots;
+                        }
+
+                        string savedGames = Path.Combine(userProfile, "Saved Games");
+                        if (!Directory.Exists(savedGames))
+                        {
+                            return roots;
+                        }
+
+                        foreach (string dcsRoot in Directory.EnumerateDirectories(savedGames, "DCS*", SearchOption.TopDirectoryOnly))
+                        {
+                            try
+                            {
+                                string name = Path.GetFileName(dcsRoot);
+                                if (string.IsNullOrWhiteSpace(name) || !name.StartsWith("DCS", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    continue;
+                                }
+
+                                roots.Add(Path.Combine(dcsRoot, "DTC"));
+                            }
+                            catch
+                            {
+                            }
+                        }
+                    }
+                    catch
+                    {
+                    }
+
+                    return roots
+                        .Distinct(StringComparer.OrdinalIgnoreCase)
                         .ToList();
                 }
 
