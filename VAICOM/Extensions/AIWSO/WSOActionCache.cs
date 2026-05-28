@@ -16,7 +16,7 @@ namespace VAICOM
             {
                 private static Dictionary<string, string> CacheByActionAndIndex = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
                 private static Dictionary<string, string> CacheByActionAndName = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-
+                
                 private static readonly object CacheLock = new object();
                 private static readonly object SignatureLock = new object();
 
@@ -74,7 +74,10 @@ namespace VAICOM
                             return false;
                         }
 
-                        WriteCacheRawToFile(receivedMessage);
+                        if (State.activeconfig.Debugmode)
+                        {
+                            WriteCacheRawToFile(receivedMessage);
+                        }
 
                         if (TrySkipUnchangedCacheBulk(items))
                         {

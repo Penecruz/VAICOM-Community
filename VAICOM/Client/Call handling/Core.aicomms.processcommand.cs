@@ -1240,8 +1240,8 @@ namespace VAICOM
 
                             if (type == WSOCommandMappings.InterfaceType.Dialog)
                             {
-                                // Construct the command string in the format "category|action"
-                                string dialogCommandString = $"{category}|{action}";
+                                // Construct the command string in the format "category|action|value"
+                                string dialogCommandString = $"{category}|{action}|{value}";
 
                                 // Create a new CommsMessage for the Jester API command
                                 State.currentmessage = new Message.CommsMessage
@@ -1253,7 +1253,7 @@ namespace VAICOM
                                 };
 
                                 // Send the command to the Jester 2.0 API using hb_send_proxy fields
-                                HbSendProxyCommand.SendDialogCommand(State.WsoDialogClient, category, action);
+                                HbSendProxyCommand.SendDialogCommand(State.WsoDialogClient, category, action, value);
                                 Log.Write($"Sending command '{commandId}' to Jester 2.0 dialog API...", Colors.Text);
 
                                 return;
