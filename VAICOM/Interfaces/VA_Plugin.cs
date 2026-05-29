@@ -55,8 +55,15 @@ namespace VAICOM
                     return;
                 }
 
-                string contextinput = Helpers.Common.StringNormalize(vaProxy.Context);
+                string contextinput = API.NormalizeKneeboardContext(Helpers.Common.StringNormalize(vaProxy.Context));
                 bool longpress = State.Proxy.Utility.ParseTokens("{CMDLONGPRESSINVOKED}") == "1";
+
+                if (API.IsOpenKneeboardTabActionContext(contextinput))
+                {
+                    API.ControlOpenKneeboardOut(vaProxy, contextinput);
+                    VA_ExposeVariables(State.Proxy);
+                    return;
+                }
 
                 switch (contextinput)
                 {

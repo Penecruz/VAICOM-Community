@@ -289,6 +289,111 @@ namespace VAICOM
             public static List<string> tabcats = new List<string>()
             { "ALL","LOG", "AWACS","JTAC", "ATC", "TANKER", "FLIGHT", "AOCS" ,"REF","NOTES" };
 
+            private static readonly List<string> okbTabOrder = new List<string>()
+            { "LOG", "ATC", "AWACS", "JTAC", "TANKER", "AOCS", "FLIGHT", "AI CREW", "GND CREW", "NOTES" };
+
+            private static string okbActiveTab = "LOG";
+
+            public static string NormalizeKneeboardContext(string input)
+            {
+                if (string.IsNullOrWhiteSpace(input))
+                {
+                    return input;
+                }
+
+                string normalized = input.Trim().ToLowerInvariant();
+                const string okbTabPrefix = "vaicom-community;okb-out;tab-";
+                if (!normalized.StartsWith(okbTabPrefix, StringComparison.Ordinal))
+                {
+                    return normalized;
+                }
+
+                return normalized;
+            }
+
+            public static bool IsOpenKneeboardTabActionContext(string input)
+            {
+                return !string.IsNullOrWhiteSpace(input)
+                    && input.StartsWith("vaicom-community;okb-out;tab-", StringComparison.OrdinalIgnoreCase);
+            }
+
+            public static void ControlOpenKneeboardOut(dynamic vaProxy, string actionContext)
+            {
+                if (!IsOpenKneeboardTabActionContext(actionContext))
+                {
+                    return;
+                }
+
+                string action = actionContext.Trim().ToLowerInvariant().Substring("vaicom-community;okb-out;tab-".Length);
+                switch (action)
+                {
+                    case "next":
+                        CycleOkbTabs(vaProxy, 1);
+                        break;
+                    case "prev":
+                        CycleOkbTabs(vaProxy, -1);
+                        break;
+                    case "log":
+                        SelectOkbTab(vaProxy, "LOG");
+                        break;
+                    case "atc":
+                        SelectOkbTab(vaProxy, "ATC");
+                        break;
+                    case "awacs":
+                        SelectOkbTab(vaProxy, "AWACS");
+                        break;
+                    case "jtac":
+                        SelectOkbTab(vaProxy, "JTAC");
+                        break;
+                    case "tanker":
+                        SelectOkbTab(vaProxy, "TANKER");
+                        break;
+                    case "aocs":
+                        SelectOkbTab(vaProxy, "AOCS");
+                        break;
+                    case "flight":
+                        SelectOkbTab(vaProxy, "FLIGHT");
+                        break;
+                    case "notes":
+                        SelectOkbTab(vaProxy, "NOTES");
+                        break;
+                    case "gnd-crew":
+                    case "ref":
+                        SelectOkbTab(vaProxy, "GND CREW");
+                        break;
+                    case "ai-crew":
+                        SelectOkbTab(vaProxy, "AI CREW");
+                        break;
+                    default:
+                        break;
+                }
+            }
+
+            private static void CycleOkbTabs(dynamic vaProxy, int direction)
+            {
+                string current = okbActiveTab;
+                if (string.IsNullOrWhiteSpace(current) || okbTabOrder.IndexOf(current) < 0)
+                {
+                    current = "LOG";
+                }
+
+                int index = okbTabOrder.IndexOf(current);
+                if (index < 0)
+                {
+                    index = 0;
+                }
+
+                int next = (index + (direction > 0 ? 1 : -1) + okbTabOrder.Count) % okbTabOrder.Count;
+                SelectOkbTab(vaProxy, okbTabOrder[next]);
+            }
+
+            private static void SelectOkbTab(dynamic vaProxy, string tab)
+            {
+                string normalized = string.IsNullOrWhiteSpace(tab) ? "LOG" : tab.ToUpperInvariant();
+                okbActiveTab = normalized;
+                OpenKneeboardBridge.UpdateActiveCategory(normalized);
+            }
+
             public static void CycleTabs(dynamic vaProxy, int ud)
             {
                 int catnum = tabcats.IndexOf(State.KneeboardState.activecat.ToUpper()) + ud;

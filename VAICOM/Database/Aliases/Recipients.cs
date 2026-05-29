@@ -692,12 +692,20 @@ namespace VAICOM
                 { "Navy One",               "Navy One"              },
                 { "Nearest Tanker",         "nearesttanker"         },
 
-                   // crew
+                // crew
 
                 { "Crew",                   "crew"                   },
                 { "Chief",                  "crew"                   },
                 { "Sarge",                  "crew"                   },
                 { "Ground",                 "crew"                   },
+
+                // AI CREW
+                { "Boots",                  "crew"                   },
+                { "Jester",                 "crew"                   },
+                { "Iceman",                 "crew"                   },
+                { "George",                 "crew"                   },
+                { "WSO",                    "crew"                   },
+                { "RIO",                    "crew"                   },
 
                 // AOCS
 
