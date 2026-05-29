@@ -7,11 +7,11 @@
       "isbeta": false,
       "isdev": false,
       "productid": 1,
-      "releasedate": 202605425,
-      "version": 3131,
-      "versionstring": "3.1.3.1",
+      "releasedate": 20260530,
+      "version": 3132,
+      "versionstring": "3.1.3.2",
       "downloadurl": "https://raw.githubusercontent.com/Penecruz/VAICOM-Community/Development/VAICOM_Installer/Resources/VAICOMPRO.zip",
-      "releasenotes": "BETA 3.1.3.1 \n- OpenKneeboard OUt now groups keywords in row across format to keep similar comands at the top of the window. \n- OpenKneeboard OUT F-4E keywords now have phase of flight handlingbased on last sent command. \n- OpenKneeboard OUT pages refresh on any passed command without requirening the Page Command. "
+      "releasenotes": "BETA 3.1.3.2 \n- OpenKneeboard OUt now groups keywords in row across format to keep similar comands at the top of the window. \n- OpenKneeboard OUT F-4E keywords now have phase of flight handlingbased on last sent command. \n- OpenKneeboard OUT pages refresh on any passed command without requirening the Page Command. \n- Add WSO commands for fuel managment, tanker or airfield divert also add display support. /n- Add WSO commands Radar Lock Target, and Radar Focus target [1-20] to Openkeeboard commands list. /n- Add Plugin controls for OpenKneeboard OUT tab browsing for use in Voice Attack 'execute an external plugin command'. "
     }
   ]
 }

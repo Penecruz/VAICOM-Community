@@ -71,10 +71,8 @@ namespace VAICOM
                             {
                                 File.WriteAllText(path, jsonstring);
                             }
-                        }                        
+                        }
                     }
-
-                    EnsureAiCrewPageRecipientAliases(ref warncounter);
                     catch (Exception e)
                     {
                         Log.Write("Exception while writing all categories: " + e.ToString(), Colors.Text);
@@ -146,6 +144,8 @@ namespace VAICOM
                             }
                         }
                     }
+
+                    EnsureAiCrewPageRecipientAliases(ref warncounter);
 
                     Aliases.appendiceswpn = Aliases.reference["aiappendiceswpn"];
                     Aliases.appendicesdir = Aliases.reference["aiappendicesdir"];

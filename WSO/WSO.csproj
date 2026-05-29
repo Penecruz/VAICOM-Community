@@ -64,10 +64,12 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <None Include="DevPipe\ExampleMod.lua" />
+    <None Include="DevPipe\Jester 2.0 Lua API Instructions" />
+    <None Include="DevPipe\properties_snapshot.json" />
+    <None Include="DevPipe\TimeOverTarget.lua" />
     <None Include="packages.config" />
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Temp\" />
-  </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
