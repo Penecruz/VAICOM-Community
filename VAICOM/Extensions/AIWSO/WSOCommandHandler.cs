@@ -330,9 +330,18 @@ namespace VAICOM
                     string tankerNumber = GetNumberFromCommand();
                     string divertToTanker = $"divert_tanker_{tankerNumber}";
 
-                    CommandCompleted("Rejoin With Tanker", new List<string> { $"Tanker {tankerNumber}" });
+                    if (WSODialogOptionsCache.TryGetOptionByAction(divertToTanker, out string tanker))
+                    {
+                        CommandCompleted("Rejoin With Tanker", new List<string> { $"Tanker {tankerNumber}", tanker });
+                        HbSendProxyCommand.SendDialogCommand(State.WsoDialogClient, "action", divertToTanker, "");
 
-                    HbSendProxyCommand.SendDialogCommand(State.WsoDialogClient, "action", divertToTanker, "");
+                    }
+                    else
+                    {
+                        CommandCompleted("Rejoin With Tanker", new List<string> { $"Tanker {tankerNumber}" });
+                        Log.Write($"Tanker {tankerNumber} not available", Colors.Warning);
+                        UI.Playsound.Recipientna();
+                    }
                 }
 
                 public static bool IsWSO()

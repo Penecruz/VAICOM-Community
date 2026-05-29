@@ -157,16 +157,15 @@ const stateProxyHandler = {
     // Send the current/updated state of the dialog and options to VAICOM
     // Ignore the timer as this updates thousands of times and is for the expiry
     if (key !== "timer" && key !== "timing_s") {
-      sendSocketMessage(`Jester 2.0 dialog state: ${JSON.stringify(state)}`);
+      sendSocketMessage(`${JSON.stringify(state)}`);
     }
 
     return true;
   },
 };
 
-// Wrap the HB state object with a proxy object. This is used for debugging purposes
-// to send the dialog state back to VAICOM, but can be extended further on the server
-// to actually maintain state of what is in the dialogs and may need to be cached.
+// Wrap the HB state object with a proxy object. This is sent to the server
+// to maintain state of what is in the dialogs to be cached.
 state = new Proxy(proxiedState, stateProxyHandler);
 
 function hb_send_proxy(action, command = "") {

@@ -1240,6 +1240,14 @@ namespace VAICOM
 
                             if (type == WSOCommandMappings.InterfaceType.Dialog)
                             {
+                                if (commandId.Equals("wMsgWSO_Fuel_RefuelAtAirfield") &&
+                                    !WSODialogOptionsCache.TryGetActionByRecipient(State.currentkey["wsocmdrecipient"], out action))
+                                {
+                                    Log.Write($"{State.currentkey["wsocmdrecipient"]} is not an available option.", Colors.Warning);
+                                    UI.Playsound.Recipientna();
+                                    return;
+                                }
+
                                 // Construct the command string in the format "category|action|value"
                                 string dialogCommandString = $"{category}|{action}|{value}";
 

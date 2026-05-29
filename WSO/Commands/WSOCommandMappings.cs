@@ -151,6 +151,7 @@ namespace VAICOM.WSO
             { "wMsgWSO_Fuel_RemainOnMission",                                   (InterfaceType.Dialog, "action", "fuel_remain_on_mission", "", false) },
             { "wMsgWSO_Fuel_AirfieldOptions",                                   (InterfaceType.Dialog, "select_option", "show_dialog_options", "Divert to Airfield", true) },
             { "wMsgWSO_Fuel_TankerOptions",                                     (InterfaceType.Dialog, "select_option", "show_dialog_options", "Rejoin with Tanker", true) },
+            { "wMsgWSO_Fuel_RefuelAtAirfield",                                  (InterfaceType.Dialog, "action", "", "", false) },
 
             // Jester Contextual Menu response commands
             { "wMsgWSO_Context_Short",                                          (InterfaceType.Context, "select", "context_action_short", "", false) },

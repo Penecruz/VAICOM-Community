@@ -156,6 +156,7 @@ namespace VAICOM.Extensions.WSO
             { "wMsgWSO_Fuel_RemainOnMission", new CommandInfo { uniqueid = 24772, category = CommandCategories.WSO, name = "wMsgWSO_Fuel_RemainOnMission", displayname = Labels.aicommands["wMsgWSO_Fuel_RemainOnMission"], enabled = true } },
             { "wMsgWSO_Fuel_AirfieldOptions", new CommandInfo { uniqueid = 24773, category = CommandCategories.WSO, name = "wMsgWSO_Fuel_AirfieldOptions", displayname = Labels.aicommands["wMsgWSO_Fuel_AirfieldOptions"], enabled = true } },
             { "wMsgWSO_Fuel_TankerOptions", new CommandInfo { uniqueid = 24774, category = CommandCategories.WSO, name = "wMsgWSO_Fuel_TankerOptions", displayname = Labels.aicommands["wMsgWSO_Fuel_TankerOptions"], enabled = true } },
+            { "wMsgWSO_Fuel_RefuelAtAirfield", new CommandInfo { uniqueid = 24775, category = CommandCategories.WSO, name = "wMsgWSO_Fuel_RefuelAtAirfield", displayname = Labels.aicommands["wMsgWSO_Fuel_RefuelAtAirfield"], enabled = true } },
 
             // Context response commands
             { "wMsgWSO_Context_Short", new CommandInfo { uniqueid = 24800, category = CommandCategories.WSO, name = "wMsgWSO_Context_Short", displayname = Labels.aicommands["wMsgWSO_Context_Short"], enabled = true } },
@@ -168,7 +169,8 @@ namespace VAICOM.Extensions.WSO
         {
             "wMsgWSO_Navigation_Divert_LatLong",
             "wMsgWSO_Navigation_TACAN_TuneAsset",
-            "wMsgWSO_Radio_TuneATC"
+            "wMsgWSO_Radio_TuneATC",
+            "wMsgWSO_Fuel_RefuelAtAirfield"
         };
 
     }    

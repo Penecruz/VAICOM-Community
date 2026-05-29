@@ -135,6 +135,7 @@ namespace VAICOM.Extensions.WSO
             { "wMsgWSO_Fuel_RemainOnMission", "WSO Remain On Mission" },
             { "wMsgWSO_Fuel_AirfieldOptions", "WSO Airfield Refueling Options" },
             { "wMsgWSO_Fuel_TankerOptions", "WSO Tanker Refueling Options" },
+            { "wMsgWSO_Fuel_RefuelAtAirfield", "WSO Refuel At" },
             
             // Context response commands
             { "wMsgWSO_Context_Short", "WSO Context Action Short" },
