@@ -263,6 +263,11 @@ namespace VAICOM
 
   <script>
     const TABS = ['LOG','ATC','AWACS','JTAC','TANKER','AOCS','FLIGHT','AI CREW','GND CREW','NOTES'];
+    const OKB_TAB_TYPE_ID = 'VAICOM-Community;okb-out';
+    const OKB_CUSTOM_ACTION_PREFIX = OKB_TAB_TYPE_ID + ';';
+    const OKB_ACTION_TAB_PREV = OKB_CUSTOM_ACTION_PREFIX + 'tab-prev';
+    const OKB_ACTION_TAB_NEXT = OKB_CUSTOM_ACTION_PREFIX + 'tab-next';
+    const OKB_ACTION_TAB_SELECT = OKB_CUSTOM_ACTION_PREFIX + 'tab-select';
     let selectedTab = 'LOG';
     let autoBrowse = true;
     let sessionCollapsed = false;
@@ -278,6 +283,7 @@ namespace VAICOM
     let drawModeDisableTimer = null;
     let drawModeDeadlineUtcMs = 0;
     let drawModeCountdownTimer = null;
+    let customActionHandlerRegistered = false;
     const sessionCollapsedStorageKey = 'vaicom.okb.sessionCollapsed';
     const tabKeywordsSplitStorageKey = 'vaicom.okb.tabKeywordsSplitByTab';
     const drawModeStorageKey = 'vaicom.okb.notesDrawMode';
@@ -308,6 +314,94 @@ namespace VAICOM
     function normalizeActiveCategory(cat, data){
       var c = String(cat || '').toUpperCase();
       return normalizeCategory(c);
+    }
+
+    function setSelectedTab(tab){
+      var normalized = normalizeCategory(tab);
+      if (normalized === 'WX/ATC') normalized = 'ATC';
+      if (TABS.indexOf(normalized) < 0) return false;
+
+      selectedTab = normalized;
+      autoBrowse = false;
+      const autoBrowseEl = document.getElementById('autoBrowse');
+      if (autoBrowseEl) autoBrowseEl.checked = false;
+      if (latestData) render(latestData);
+      return true;
+    }
+
+    function selectRelativeTab(step){
+      const idx = TABS.indexOf(selectedTab);
+      const currentIndex = idx >= 0 ? idx : 0;
+      const delta = step >= 0 ? 1 : -1;
+      const nextIndex = (currentIndex + delta + TABS.length) % TABS.length;
+      setSelectedTab(TABS[nextIndex]);
+    }
+
+    function getTabFromCustomExtraData(extraData){
+      if (extraData === null || extraData === undefined) return '';
+      if (typeof extraData === 'string') return extraData;
+      if (typeof extraData === 'number' && isFinite(extraData)) {
+        const idx = ((Math.floor(extraData) % TABS.length) + TABS.length) % TABS.length;
+        return TABS[idx];
+      }
+      if (typeof extraData !== 'object') return '';
+
+      if (typeof extraData.tab === 'string') return extraData.tab;
+      if (typeof extraData.category === 'string') return extraData.category;
+      if (typeof extraData.name === 'string') return extraData.name;
+
+      if (typeof extraData.index === 'number' && isFinite(extraData.index)) {
+        const idx = ((Math.floor(extraData.index) % TABS.length) + TABS.length) % TABS.length;
+        return TABS[idx];
+      }
+
+      return '';
+    }
+
+    function handleCustomActionEvent(ev){
+      const detail = (ev && ev.detail) ? ev.detail : {};
+      const id = String((detail && detail.id) || '');
+      const extraData = detail ? detail.extraData : undefined;
+
+      if (!id || id.indexOf(OKB_CUSTOM_ACTION_PREFIX) !== 0) return;
+
+      if (id === OKB_ACTION_TAB_PREV) {
+        selectRelativeTab(-1);
+        return;
+      }
+
+      if (id === OKB_ACTION_TAB_NEXT) {
+        selectRelativeTab(1);
+        return;
+      }
+
+      if (id === OKB_ACTION_TAB_SELECT) {
+        const requestedTab = getTabFromCustomExtraData(extraData);
+        if (requestedTab) setSelectedTab(requestedTab);
+        return;
+      }
+
+      const directTabIdPrefix = OKB_CUSTOM_ACTION_PREFIX + 'tab-';
+      if (id.indexOf(directTabIdPrefix) !== 0) return;
+
+      const tabToken = id.substring(directTabIdPrefix.length).replace(/-/g, ' ').toUpperCase();
+      setSelectedTab(tabToken);
+    }
+
+    function registerCustomActionHandlers(){
+      if (customActionHandlerRegistered) return;
+
+      const okb = (typeof OpenKneeboard !== 'undefined') ? OpenKneeboard : window.OpenKneeboard;
+      const targets = [okb, window];
+      for (let i = 0; i < targets.length; i++){
+        const t = targets[i];
+        if (!t || !t.addEventListener) continue;
+        try{
+          t.addEventListener('plugin/tab/customAction', handleCustomActionEvent);
+          customActionHandlerRegistered = true;
+        }catch(_){
+        }
+      }
     }
 
     function mergeUnique(dest, src){
@@ -1220,10 +1314,7 @@ namespace VAICOM
         btn.className = 'tab ' + tabCssClass(tab) + (tab === selectedTab ? ' active' : '');
         btn.textContent = tabLabel(tab);
         btn.onclick = function(){
-          selectedTab = tab;
-          autoBrowse = false;
-          document.getElementById('autoBrowse').checked = false;
-          if (latestData) render(latestData);
+          setSelectedTab(tab);
         };
         tabsEl.appendChild(btn);
       });
@@ -1486,6 +1577,7 @@ namespace VAICOM
     tabKeywordsSplitByTab = readTabKeywordsSplitRatioByTab();
     initTabKeywordsDivider();
     applyCurrentTabKeywordsSplit();
+    registerCustomActionHandlers();
     window.addEventListener('resize', function(){
       applyCurrentTabKeywordsSplit();
     });
@@ -1502,7 +1594,7 @@ namespace VAICOM
 
                 private const string Prefix = "http://127.0.0.1:7779/okb/";
                 private const string OpenKneeboardPluginsRegistryKey = @"SOFTWARE\Fred Emmott\OpenKneeboard\Plugins\v1";
-                private const string OpenKneeboardPluginId = "github.com/Penecruz/VAICOM-Community";
+                private const string OpenKneeboardPluginId = "VAICOM-Community";
                 private const string OpenKneeboardPluginTabId = OpenKneeboardPluginId + ";okb-out";
                 private const string OpenKneeboardKeywordsPluginId = "github.com/Penecruz/VAICOM-Community/keywords";
                 private const string OpenKneeboardKeywordsPluginTabId = OpenKneeboardKeywordsPluginId + ";keywords";
@@ -1700,6 +1792,74 @@ namespace VAICOM
                                 {
                                     ID = OpenKneeboardPluginTabId,
                                     Name = "VAICOM OpenKneeboard Out",
+                                    CustomActions = new[]
+                                    {
+                                        new
+                                        {
+                                            ID = OpenKneeboardPluginTabId + ";tab-prev",
+                                            Name = "Tab Previous",
+                                        },
+                                        new
+                                        {
+                                            ID = OpenKneeboardPluginTabId + ";tab-next",
+                                            Name = "Tab Next",
+                                        },
+                                        new
+                                        {
+                                            ID = OpenKneeboardPluginTabId + ";tab-select",
+                                            Name = "Tab Select (via ExtraData)",
+                                        },
+                                        new
+                                        {
+                                            ID = OpenKneeboardPluginTabId + ";tab-log",
+                                            Name = "Tab LOG",
+                                        },
+                                        new
+                                        {
+                                            ID = OpenKneeboardPluginTabId + ";tab-atc",
+                                            Name = "Tab WX/ATC",
+                                        },
+                                        new
+                                        {
+                                            ID = OpenKneeboardPluginTabId + ";tab-awacs",
+                                            Name = "Tab AWACS",
+                                        },
+                                        new
+                                        {
+                                            ID = OpenKneeboardPluginTabId + ";tab-jtac",
+                                            Name = "Tab JTAC",
+                                        },
+                                        new
+                                        {
+                                            ID = OpenKneeboardPluginTabId + ";tab-tanker",
+                                            Name = "Tab TANKER",
+                                        },
+                                        new
+                                        {
+                                            ID = OpenKneeboardPluginTabId + ";tab-aocs",
+                                            Name = "Tab AOCS",
+                                        },
+                                        new
+                                        {
+                                            ID = OpenKneeboardPluginTabId + ";tab-flight",
+                                            Name = "Tab FLIGHT",
+                                        },
+                                        new
+                                        {
+                                            ID = OpenKneeboardPluginTabId + ";tab-ai-crew",
+                                            Name = "Tab AI CREW",
+                                        },
+                                        new
+                                        {
+                                            ID = OpenKneeboardPluginTabId + ";tab-gnd-crew",
+                                            Name = "Tab GND CREW",
+                                        },
+                                        new
+                                        {
+                                            ID = OpenKneeboardPluginTabId + ";tab-notes",
+                                            Name = "Tab NOTES",
+                                        },
+                                    },
                                     Implementation = "WebBrowser",
                                     ImplementationArgs = new
                                     {

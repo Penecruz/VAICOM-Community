@@ -432,6 +432,18 @@ namespace VAICOM
                                     case "wMsgShowKneeboardTab":
                                         try
                                         {
+                                            string recipientKey = State.have["recipient"] ? State.currentkey["recipient"] : "";
+                                            string recipientAlias = State.have["recipient"] ? State.usedalias["recipient"] : "";
+                                            if (IsAiCrewPageRequest(recipientKey, recipientAlias, State.currentfullsentence))
+                                            {
+                                                if (State.activeconfig.OpenKneeboard_Out)
+                                                {
+                                                    OpenKneeboardBridge.UpdateActiveCategory("AI CREW");
+                                                }
+                                                UI.Playsound.Commandcomplete();
+                                                break;
+                                            }
+
                                             string cat = Database.Recipients.Table[State.currentkey["recipient"]].RecipientClass().Name;
                                             KneeboardUpdater.SwitchPage(cat);
                                             UI.Playsound.Commandcomplete();
@@ -582,6 +594,47 @@ namespace VAICOM
                     }
 
                     KneeboardUpdater.SwitchPage(cat);
+                }
+
+                private static bool IsAiCrewPageRequest(string recipientKey, string recipientAlias, string fullSentence)
+                {
+                    string key = string.IsNullOrWhiteSpace(recipientKey) ? "" : recipientKey.Trim().ToLowerInvariant();
+                    if (key.Equals("jester")
+                        || key.Equals("boots")
+                        || key.Equals("george")
+                        || key.Equals("iceman")
+                        || key.Equals("rio")
+                        || key.Equals("wso")
+                        || key.Equals("ai")
+                        || key.Equals("aicrew")
+                        || key.Equals("ai crew"))
+                    {
+                        return true;
+                    }
+
+                    string alias = string.IsNullOrWhiteSpace(recipientAlias) ? "" : recipientAlias.Trim().ToLowerInvariant();
+                    if (alias.Equals("jester")
+                        || alias.Equals("boots")
+                        || alias.Equals("george")
+                        || alias.Equals("iceman")
+                        || alias.Equals("rio")
+                        || alias.Equals("wso")
+                        || alias.Equals("ai crew"))
+                    {
+                        return true;
+                    }
+
+                    string spoken = string.IsNullOrWhiteSpace(fullSentence)
+                        ? ""
+                        : fullSentence.ToLowerInvariant();
+
+                    return spoken.Contains("ai crew")
+                        || spoken.Contains("jester")
+                        || spoken.Contains("boots")
+                        || spoken.Contains("george")
+                        || spoken.Contains("iceman")
+                        || spoken.Contains("rio")
+                        || spoken.Contains("wso");
                 }
 
                 public static void SwapSRSListeningStates()
