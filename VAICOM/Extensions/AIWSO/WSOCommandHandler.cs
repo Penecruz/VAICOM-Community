@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Net.WebSockets;
+using Newtonsoft.Json.Linq;
 using VAICOM.Extensions.Kneeboard;
 using VAICOM.PushToTalk;
 using VAICOM.Static;
@@ -321,6 +323,16 @@ namespace VAICOM
                         Log.Write($"Target not found for target {lockTargetNumber}", Colors.Warning);
                         UI.Playsound.Recipientna();
                     }
+                }
+
+                public static void RejoinWithTanker()
+                {
+                    string tankerNumber = GetNumberFromCommand();
+                    string divertToTanker = $"divert_tanker_{tankerNumber}";
+
+                    CommandCompleted("Rejoin With Tanker", new List<string> { $"Tanker {tankerNumber}" });
+
+                    HbSendProxyCommand.SendDialogCommand(State.WsoDialogClient, "action", divertToTanker, "");
                 }
 
                 public static bool IsWSO()

@@ -491,6 +491,13 @@ namespace VAICOM
                         }
                         break;
 
+                    case "wso.fuel.tanker":
+                        if (WSOCommandHandler.IsWSO())
+                        {
+                            WSOCommandHandler.RejoinWithTanker();
+                        }
+                        break;
+
                     case "test":
                         API.API_Test(vaProxy);
                         break;

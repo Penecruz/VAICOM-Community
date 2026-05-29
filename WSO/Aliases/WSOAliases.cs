@@ -140,6 +140,10 @@ namespace VAICOM.Extensions.WSO
 
             // Jester fuel responses
             { "Fuel Is Looking Good", "wMsgWSO_Fuel_FuelIsGood" },
+            { "Fuel Is Looking Low", "wMsgWSO_Fuel_FuelIsLow" },
+            { "Remain On Mission", "wMsgWSO_Fuel_RemainOnMission" },
+            { "Airfield Refueling Options", "wMsgWSO_Fuel_AirfieldOptions" },
+            { "Tanker Refueling Options", "wMsgWSO_Fuel_TankerOptions" },
 
             // Context response aliases
             { "Context Select", "wMsgWSO_Context_Short" },
