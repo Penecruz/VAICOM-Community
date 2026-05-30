@@ -105,6 +105,12 @@ namespace VAICOM.Extensions.WSO
             { "wMsgWSO_Crew_Countermeasures_Jester", new CommandInfo { uniqueid = 24509, category = CommandCategories.WSO, name = "wMsgWSO_Crew_Countermeasures_Jester", displayname = Labels.aicommands["wMsgWSO_Crew_Countermeasures_Jester"], enabled = true } },
             { "wMsgWSO_Crew_StartAlignment", new CommandInfo { uniqueid = 24510, category = CommandCategories.WSO, name = "wMsgWSO_Crew_StartAlignment", displayname = Labels.aicommands["wMsgWSO_Crew_StartAlignment"], enabled = true } },
             { "wMsgWSO_Crew_Shutdown", new CommandInfo { uniqueid = 24511, category = CommandCategories.WSO, name = "wMsgWSO_Crew_Shutdown", displayname = Labels.aicommands["wMsgWSO_Crew_Shutdown"], enabled = true } },
+            { "wMsgWSO_Crew_AltitudeMonitor_500", new CommandInfo { uniqueid = 24512, category = CommandCategories.WSO, name = "wMsgWSO_Crew_AltitudeMonitor_500", displayname = Labels.aicommands["wMsgWSO_Crew_AltitudeMonitor_500"], enabled = true } },
+            { "wMsgWSO_Crew_AltitudeMonitor_300", new CommandInfo { uniqueid = 24513, category = CommandCategories.WSO, name = "wMsgWSO_Crew_AltitudeMonitor_300", displayname = Labels.aicommands["wMsgWSO_Crew_AltitudeMonitor_300"], enabled = true } },
+            { "wMsgWSO_Crew_AltitudeMonitor_200", new CommandInfo { uniqueid = 24514, category = CommandCategories.WSO, name = "wMsgWSO_Crew_AltitudeMonitor_200", displayname = Labels.aicommands["wMsgWSO_Crew_AltitudeMonitor_200"], enabled = true } },
+            { "wMsgWSO_Crew_AltitudeMonitor_100", new CommandInfo { uniqueid = 24515, category = CommandCategories.WSO, name = "wMsgWSO_Crew_AltitudeMonitor_100", displayname = Labels.aicommands["wMsgWSO_Crew_AltitudeMonitor_100"], enabled = true } },
+            { "wMsgWSO_Crew_AltitudeMonitor_50", new CommandInfo { uniqueid = 24516, category = CommandCategories.WSO, name = "wMsgWSO_Crew_AltitudeMonitor_50", displayname = Labels.aicommands["wMsgWSO_Crew_AltitudeMonitor_50"], enabled = true } },
+            { "wMsgWSO_Crew_AltitudeMonitor_Off", new CommandInfo { uniqueid = 24517, category = CommandCategories.WSO, name = "wMsgWSO_Crew_AltitudeMonitor_Off", displayname = Labels.aicommands["wMsgWSO_Crew_AltitudeMonitor_Off"], enabled = true } },
             
             // Ground Crew commands
             { "wMsgWSO_Ground_WheelChocks_Place", new CommandInfo { uniqueid = 24600, category = CommandCategories.WSO, name = "wMsgWSO_Ground_WheelChocks_Place", displayname = Labels.aicommands["wMsgWSO_Ground_WheelChocks_Place"], enabled = true } },

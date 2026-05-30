@@ -89,6 +89,12 @@ namespace VAICOM.Extensions.WSO
             { "wMsgWSO_Crew_Countermeasures_Jester", "WSO Countermeasures Jester" },
             { "wMsgWSO_Crew_StartAlignment", "WSO Start Alignment Now" },
             { "wMsgWSO_Crew_Shutdown", "WSO Shutdown" },
+            { "wMsgWSO_Crew_AltitudeMonitor_500", "WSO Call Below 500" },
+            { "wMsgWSO_Crew_AltitudeMonitor_300", "WSO Call Below 300" },
+            { "wMsgWSO_Crew_AltitudeMonitor_200", "WSO Call Below 200" },
+            { "wMsgWSO_Crew_AltitudeMonitor_100", "WSO Call Below 100" },
+            { "wMsgWSO_Crew_AltitudeMonitor_50", "WSO Call Below 50" },
+            { "wMsgWSO_Crew_AltitudeMonitor_Off", "WSO No Altitude Monitor" },
 
             // Ground Crew commands
             { "wMsgWSO_Ground_WheelChocks_Place", "WSO Ground Place Chocks" },
