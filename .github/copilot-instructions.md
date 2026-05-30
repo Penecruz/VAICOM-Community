@@ -12,3 +12,6 @@
 
 ## TX5 Intercom Implementation
 - For TX5 intercom hot mic, allow Options and menu navigation commands (e.g., Take 1..12) without requiring PTT press.
+
+## Jester Mods Installation
+- For auto-installed Jester mods, set the Saved Games path to `\Saved Games\DCS_F4E\jester\mods` (and initialize under that), instead of the default DCS/DCS.openbeta folder mapping.

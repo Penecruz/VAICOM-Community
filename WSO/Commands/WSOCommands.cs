@@ -104,6 +104,7 @@ namespace VAICOM.Extensions.WSO
             { "wMsgWSO_Crew_Countermeasures_Manual", new CommandInfo { uniqueid = 24508, category = CommandCategories.WSO, name = "wMsgWSO_Crew_Countermeasures_Manual", displayname = Labels.aicommands["wMsgWSO_Crew_Countermeasures_Manual"], enabled = true } },
             { "wMsgWSO_Crew_Countermeasures_Jester", new CommandInfo { uniqueid = 24509, category = CommandCategories.WSO, name = "wMsgWSO_Crew_Countermeasures_Jester", displayname = Labels.aicommands["wMsgWSO_Crew_Countermeasures_Jester"], enabled = true } },
             { "wMsgWSO_Crew_StartAlignment", new CommandInfo { uniqueid = 24510, category = CommandCategories.WSO, name = "wMsgWSO_Crew_StartAlignment", displayname = Labels.aicommands["wMsgWSO_Crew_StartAlignment"], enabled = true } },
+            { "wMsgWSO_Crew_Shutdown", new CommandInfo { uniqueid = 24511, category = CommandCategories.WSO, name = "wMsgWSO_Crew_Shutdown", displayname = Labels.aicommands["wMsgWSO_Crew_Shutdown"], enabled = true } },
             
             // Ground Crew commands
             { "wMsgWSO_Ground_WheelChocks_Place", new CommandInfo { uniqueid = 24600, category = CommandCategories.WSO, name = "wMsgWSO_Ground_WheelChocks_Place", displayname = Labels.aicommands["wMsgWSO_Ground_WheelChocks_Place"], enabled = true } },

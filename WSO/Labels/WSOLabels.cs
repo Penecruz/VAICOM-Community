@@ -88,6 +88,7 @@ namespace VAICOM.Extensions.WSO
             { "wMsgWSO_Crew_Countermeasures_Manual", "WSO Countermeasures Manual" },
             { "wMsgWSO_Crew_Countermeasures_Jester", "WSO Countermeasures Jester" },
             { "wMsgWSO_Crew_StartAlignment", "WSO Start Alignment Now" },
+            { "wMsgWSO_Crew_Shutdown", "WSO Shutdown" },
 
             // Ground Crew commands
             { "wMsgWSO_Ground_WheelChocks_Place", "WSO Ground Place Chocks" },

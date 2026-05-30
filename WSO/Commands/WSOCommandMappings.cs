@@ -99,6 +99,7 @@ namespace VAICOM.WSO
             { "wMsgWSO_Crew_Countermeasures_Manual",                            (InterfaceType.Wheel, "select", "crew_countermeasures", "manual", true) },
             { "wMsgWSO_Crew_Countermeasures_Jester",                            (InterfaceType.Wheel, "select", "crew_countermeasures", "jester", true) },            
             { "wMsgWSO_Crew_StartAlignment",                                    (InterfaceType.Wheel, "select", "jester_start_alignment", "start", true) },
+            { "wMsgWSO_Crew_Shutdown",                                          (InterfaceType.Wheel, "select", "custom_shutdown", "start", true) },
             { "wMsgWSO_Systems_FlaresJettison",                                 (InterfaceType.Wheel, "select", "systems_flares_jettison", "", false) },
             { "wMsgWSO_Systems_Countermeasures_Quantity",                       (InterfaceType.Wheel, "select", "systems_countermeasures_quantity", "", false) },
             { "wMsgWSO_A2G_PaveSpike_Ready",                                    (InterfaceType.Wheel, "select", "pave_spike_op", "ready", true) },
