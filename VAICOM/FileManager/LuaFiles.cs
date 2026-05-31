@@ -225,7 +225,7 @@ namespace VAICOM
                   export = false,
                   autoremove  = false,
                   quiet  = true,
-                  AIRIO = false,
+                  AIRIO = true,
                   kneeboard = false,
                 } },
 

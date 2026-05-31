@@ -22,8 +22,19 @@ local function parse_value(raw)
         return nil
     end
 
+    if type(raw) == "boolean" then
+        return raw and 1 or 0
+    end
+
     if type(raw) == "number" then
         return raw
+    end
+
+    local text = tostring(raw):lower()
+    if text == "true" then
+        return 1
+    elseif text == "false" then
+        return 0
     end
 
     local token = tostring(raw):match("([%d%.e%+%-]+)")
@@ -81,34 +92,41 @@ local function run_shutdown_sequence()
     local task = Task:new()
     task:Say('misc/roger')
 
+    local tgp_power_on = read_property('/EO TGT Designator System/Target Designator Set Control', 'Power On Light')
+    local rwr_powered = read_property('/RWR AN_ALR_46/WSO Lights/System Power Lamp', 'Powered')
+
     task:Click("Radar Power", "STBY")
-        :Wait(s(1), { voice = true })
         :Click("Screen Mode", "off")
-        :Wait(s(1), { voice = true })
-        :Click("TACAN Function", "OFF")
-        :Wait(s(1), { voice = true })
-        :Click("Radio Mode", "OFF")
-        :Wait(s(1), { voice = true })
+        :Wait(s(4), { voice = true })
         :Click("ECM Mode Left", "STBY")
         :Click("ECM Mode Right", "STBY")
-        :Wait(s(1), { voice = true })
-        :Click("INS Mode Knob", "OFF")
-        :Click("Align Mode Knob", "OFF")
-        :Wait(s(1), { voice = true })
+        :Wait(s(5), { voice = true })
         :Click("Chaff Mode", "OFF")
         :Wait(s(1), { voice = true })
         :Click("Flare Mode", "OFF")
-        :Say('checklists/continue')
+        :Wait(s(5), { voice = true })
 
-    local tgp_power_on = read_property('/EO TGT Designator System/Target Designator Set Control', 'Power On Light')
+    if rwr_powered ~= nil and rwr_powered > 0 then
+        task:Click("WSO RWR System Power Button", "ON")
+    end
+    task:Wait(s(3), { voice = true })
+        :Click("Radio Mode", "OFF")
+        :Wait(s(2), { voice = true })
+        :Click("TACAN Function", "OFF")
+        :Wait(s(6), { voice = true })
+        :Click("INS Mode Knob", "OFF")
+        :Click("Align Mode Knob", "OFF")
+        :Wait(s(3), { voice = true })
+        :Click("Nav Panel Function", "OFF")
+        :Wait(s(6), { voice = true })
+
     if tgp_power_on ~= nil and tgp_power_on > 0 then
         task:ClickShort("TGP Power On", "ON")
     end
 
-    local rwr_powered = read_property('/RWR AN_ALR_46/WSO Lights/System Power Lamp', 'Powered')
-    if rwr_powered ~= nil and rwr_powered > 0 then
-        task:ClickShort("WSO RWR System Power Button", "ON")
-    end
+    task:Say('checklists/Hold')
+        :Wait(s(7), { voice = true })
+        :Say('checklists/continue')
 
     GetJester():AddTask(task)
 end

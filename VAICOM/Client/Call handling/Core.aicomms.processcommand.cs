@@ -719,7 +719,10 @@ namespace VAICOM
                         bool isGeorgeCommand = State.currentcommand != null
                             && !string.IsNullOrEmpty(State.currentcommand.dcsid)
                             && State.currentcommand.dcsid.StartsWith("wMsgGeorge", StringComparison.OrdinalIgnoreCase);
+                        bool isAirioCommand = State.currentcommand != null
+                            && State.currentcommand.isRIO();
                         bool isHotMicAllowedCommand = isIntercomRecipientClass
+                            || isAirioCommand
                             || isGeorgeCommand
                             || State.currentcommand.isKneeboard()
                             || State.currentcommand.isOptions()
