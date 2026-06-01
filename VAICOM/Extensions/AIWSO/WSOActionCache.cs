@@ -16,7 +16,8 @@ namespace VAICOM
             {
                 private static Dictionary<string, string> CacheByActionAndIndex = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
                 private static Dictionary<string, string> CacheByActionAndName = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-                
+                private static Dictionary<string, string> CacheByActionAndAsset = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+
                 private static readonly object CacheLock = new object();
                 private static readonly object SignatureLock = new object();
 
@@ -89,9 +90,10 @@ namespace VAICOM
                             // it is in a consistent state as entries may have been removed.
                             lock (CacheLock)
                             {
-                                Log.Write($"WSO menus have been updated so rebuilding caches", Colors.Text);
+                                // Log.Write($"WSO menus have been updated so rebuilding caches", Colors.Text);
                                 CacheByActionAndIndex = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
                                 CacheByActionAndName = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+                                CacheByActionAndAsset = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
                             }
                         }
 
@@ -106,7 +108,7 @@ namespace VAICOM
 
                         if (cachedCount > 0)
                         {
-                            Log.Write($"WSO action cache updated ({cachedCount} entries).", Colors.Text);
+                            // Log.Write($"WSO action cache updated ({cachedCount} entries).", Colors.Text);
                             if (State.deepdebugmode)
                             {
                                 LogCacheSnapshot(50);
@@ -152,6 +154,23 @@ namespace VAICOM
                     lock (CacheLock)
                     {
                         bool hasEntry = CacheByActionAndName.TryGetValue($"{action}|{name}", out string entry);
+
+                        if (hasEntry)
+                        {
+                            value = entry;
+                            return true;
+                        }
+                    }
+
+                    value = "";
+                    return false;
+                }
+
+                public static bool TryGetByActionAndAsset(string action, string name, out string value)
+                {
+                    lock (CacheLock)
+                    {
+                        bool hasEntry = CacheByActionAndAsset.TryGetValue($"{action}|{name}", out string entry);
 
                         if (hasEntry)
                         {
@@ -268,6 +287,10 @@ namespace VAICOM
                                 asset = name.Substring(0, freqIndex - 1);
                             }
 
+                            // Cache against the raw asset name, e.g. Arco 1-1 KC-135
+                            CacheByActionAndAsset[$"{action}|{name}"] = value;
+
+                            // Cache using recipient for alias support, e.g. airfields
                             if (TryGetRecipientByAsset(asset.ToLowerInvariant(), out string recipient))
                             {
                                 CacheByActionAndName[$"{action}|{recipient.ToLowerInvariant()}"] = value;
@@ -285,6 +308,10 @@ namespace VAICOM
                             // The path for assets (Tune Assets) is for name based TACANs, e.g. Arco 1-1 KC-135
                             if (path.Contains("Tune Assets"))
                             {
+                                // Cache against the raw asset name, e.g. Arco 1-1 KC-135
+                                CacheByActionAndAsset[$"{action}|{name}"] = value;
+
+                                // Cache using recipient for alias support, e.g. airfields
                                 if (TryGetRecipientByAsset(name.ToLowerInvariant(), out string recipient))
                                 {
                                     CacheByActionAndName[$"{action}|{recipient.ToLowerInvariant()}"] = value;

@@ -335,6 +335,16 @@ namespace VAICOM
                         CommandCompleted("Rejoin With Tanker", new List<string> { $"Tanker {tankerNumber}", tanker });
                         HbSendProxyCommand.SendDialogCommand(State.WsoDialogClient, "action", divertToTanker, "");
 
+                        // Automatically tune tacan and radio frequency if we have cached values for them
+                        if (WSOActionCache.TryGetByActionAndAsset("nav_tacan_tr", tanker, out string tacan))
+                        { 
+                            HbSendProxyCommand.SendWsoCommand(State.WsoWheelClient, "wMsgWSO_Navigation_TACAN_TuneAsset", tacan);
+                        }
+                        if (WSOActionCache.TryGetByActionAndAsset("radio_tune_atc", tanker, out string frequency))
+                        {
+                            HbSendProxyCommand.SendWsoCommand(State.WsoWheelClient, "wMsgWSO_Radio_TuneATC", frequency);
+                        }
+
                     }
                     else
                     {
