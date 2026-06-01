@@ -58,6 +58,10 @@ namespace VAICOM
                     {
                         State.activeconfig.OpenKneeboard_Out = false;
                     }
+                    if (State.activeconfig.OpenKneeboard_Out_Port <= 0 || State.activeconfig.OpenKneeboard_Out_Port > 65535)
+                    {
+                        State.activeconfig.OpenKneeboard_Out_Port = 7779;
+                    }
 
                     // added 2.5.19
                     if (State.activeconfig.Custom_Path_Setting1.Equals(null))

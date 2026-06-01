@@ -1592,7 +1592,7 @@ namespace VAICOM
                 private static Thread listenerThread;
                 private static bool isRunning;
 
-                private const string Prefix = "http://127.0.0.1:7779/okb/";
+                private const int DefaultOpenKneeboardOutPort = 7779;
                 private const string OpenKneeboardPluginsRegistryKey = @"SOFTWARE\Fred Emmott\OpenKneeboard\Plugins\v1";
                 private const string OpenKneeboardPluginId = "VAICOM-Community";
                 private const string OpenKneeboardPluginTabId = OpenKneeboardPluginId + ";okb-out";
@@ -1608,7 +1608,13 @@ namespace VAICOM
 
                 public static void SetEnabled(bool enabled)
                 {
+                    if (enabled)
+                    {
+                        StopWebHost();
+                    }
+
                     SetPluginRegistration(enabled);
+                    SetKeywordsPluginRegistration();
 
                     if (enabled)
                     {
@@ -1618,6 +1624,62 @@ namespace VAICOM
                     {
                         StopWebHost();
                     }
+                }
+
+                private static void SetKeywordsPluginRegistration()
+                {
+                    try
+                    {
+                        string manifestPath = GetKeywordsPluginManifestPath();
+                        if (string.IsNullOrWhiteSpace(manifestPath))
+                        {
+                            return;
+                        }
+
+                        WriteKeywordsPluginManifest(manifestPath, "");
+
+                        using (RegistryKey key = Registry.CurrentUser.CreateSubKey(OpenKneeboardPluginsRegistryKey))
+                        {
+                            if (key == null)
+                            {
+                                return;
+                            }
+
+                            key.SetValue(manifestPath, 1, RegistryValueKind.DWord);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Log.Write("OpenKneeboard keywords plugin registration failed: " + ex.Message, Colors.Warning);
+                    }
+                }
+
+                private static int GetOpenKneeboardOutPort()
+                {
+                    int configuredPort = DefaultOpenKneeboardOutPort;
+
+                    try
+                    {
+                        if (State.activeconfig != null)
+                        {
+                            configuredPort = State.activeconfig.OpenKneeboard_Out_Port;
+                        }
+                    }
+                    catch
+                    {
+                    }
+
+                    if (configuredPort <= 0 || configuredPort > 65535)
+                    {
+                        configuredPort = DefaultOpenKneeboardOutPort;
+                    }
+
+                    return configuredPort;
+                }
+
+                private static string GetPrefix()
+                {
+                    return "http://127.0.0.1:" + GetOpenKneeboardOutPort() + "/okb/";
                 }
 
                 public static void RegisterKeywordsHtmlPlugin(string keywordsHtmlPath)
@@ -1694,12 +1756,102 @@ namespace VAICOM
                                 return;
                             }
 
-                            key.SetValue(manifestPath, enabled ? 1 : 0, RegistryValueKind.DWord);
+                            if (enabled)
+                            {
+                                DeactivateAllOpenKneeboardOutRegistrations(key);
+                                CleanupStaleOpenKneeboardOutManifestFiles(manifestPath);
+
+                                key.SetValue(manifestPath, 1, RegistryValueKind.DWord);
+                            }
+                            else
+                            {
+                                DeactivateAllOpenKneeboardOutRegistrations(key);
+                            }
                         }
                     }
                     catch (Exception ex)
                     {
                         Log.Write("OpenKneeboard plugin registration failed: " + ex.Message, Colors.Warning);
+                    }
+                }
+
+                private static void DeactivateAllOpenKneeboardOutRegistrations(RegistryKey key)
+                {
+                    try
+                    {
+                        foreach (string valueName in key.GetValueNames())
+                        {
+                            if (string.IsNullOrWhiteSpace(valueName))
+                            {
+                                continue;
+                            }
+
+                            string fileName = Path.GetFileName(valueName);
+                            if (string.IsNullOrWhiteSpace(fileName))
+                            {
+                                continue;
+                            }
+
+                            if (!fileName.StartsWith("OpenKneeboard", StringComparison.OrdinalIgnoreCase))
+                            {
+                                continue;
+                            }
+
+                            if (fileName.IndexOf("OpenKneeboard.Keywords", StringComparison.OrdinalIgnoreCase) >= 0)
+                            {
+                                continue;
+                            }
+
+                            key.SetValue(valueName, 0, RegistryValueKind.DWord);
+                        }
+                    }
+                    catch
+                    {
+                    }
+                }
+
+                private static void CleanupStaleOpenKneeboardOutManifestFiles(string activeManifestPath)
+                {
+                    try
+                    {
+                        string activeFullPath = Path.GetFullPath(activeManifestPath);
+                        string manifestFolder = Path.GetDirectoryName(activeFullPath);
+                        if (string.IsNullOrWhiteSpace(manifestFolder) || !Directory.Exists(manifestFolder))
+                        {
+                            return;
+                        }
+
+                        string[] staleManifests = Directory.GetFiles(manifestFolder, "OpenKneeboard*.v1.json");
+                        foreach (string staleManifest in staleManifests)
+                        {
+                            string staleManifestFileName = Path.GetFileName(staleManifest);
+                            if (string.IsNullOrWhiteSpace(staleManifestFileName))
+                            {
+                                continue;
+                            }
+
+                            if (staleManifestFileName.IndexOf("OpenKneeboard.Keywords", StringComparison.OrdinalIgnoreCase) >= 0)
+                            {
+                                continue;
+                            }
+
+                            string staleFullPath = Path.GetFullPath(staleManifest);
+                            if (string.Equals(staleFullPath, activeFullPath, StringComparison.OrdinalIgnoreCase))
+                            {
+                                continue;
+                            }
+
+                            try
+                            {
+                                File.Delete(staleManifest);
+                            }
+                            catch
+                            {
+                            }
+                        }
+                    }
+                    catch
+                    {
                     }
                 }
 
@@ -1722,7 +1874,7 @@ namespace VAICOM
                             : "config";
                         string outputFolder = Path.Combine(pluginRoot, configFolder);
 
-                        return Path.Combine(outputFolder, "OpenKneeboard.v1.json");
+                        return Path.Combine(outputFolder, "OpenKneeboard." + GetOpenKneeboardOutPort() + ".v1.json");
                     }
                     catch
                     {
@@ -1863,7 +2015,7 @@ namespace VAICOM
                                     Implementation = "WebBrowser",
                                     ImplementationArgs = new
                                     {
-                                        URI = Prefix,
+                                        URI = GetPrefix(),
                                         InitialSize = new
                                         {
                                             Width = 1050,
@@ -2312,15 +2464,16 @@ namespace VAICOM
 
                     try
                     {
+                        string prefix = GetPrefix();
                         listener = new HttpListener();
-                        listener.Prefixes.Add(Prefix);
+                        listener.Prefixes.Add(prefix);
                         listener.Start();
 
                         isRunning = true;
                         listenerThread = new Thread(ListenLoop) { IsBackground = true, Name = "OpenKneeboardWebHost" };
                         listenerThread.Start();
 
-                        Log.Write("OpenKneeboard dashboard host started at " + Prefix, Colors.Text);
+                        Log.Write("OpenKneeboard dashboard host started at " + prefix, Colors.Text);
                     }
                     catch (Exception ex)
                     {
