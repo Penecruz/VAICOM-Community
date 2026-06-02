@@ -66,9 +66,14 @@
   <ItemGroup>
     <None Include="DevPipe\ExampleMod.lua" />
     <None Include="DevPipe\Jester 2.0 Lua API Instructions" />
+    <None Include="DevPipe\Jester2_Actions_Catalog.md" />
+    <None Include="DevPipe\jester_action_catalog.csv" />
     <None Include="DevPipe\properties_snapshot.json" />
     <None Include="DevPipe\TimeOverTarget.lua" />
     <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="DevPipe\listenTo_index.txt" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

@@ -2870,48 +2870,148 @@ base.vaicom.state = {
 					return result
 				end
 
+              local function normalizeBand(v)
+					if v == nil then return "" end
+					local s = base.tostring(v)
+					if s == "" then return "" end
+					local u = base.string.upper(s)
+					if u == "X" or u == "Y" then return u end
+					local n = base.tonumber(s)
+					if n == 0 then return "X" end
+					if n == 1 then return "Y" end
+					return s
+				end
+
+				local function extractTaskTacan(taskObj)
+					if base.type(taskObj) ~= "table" then return "" end
+					local id = taskObj.id
+					local params = taskObj.params or {}
+
+					if id == "WrappedAction" and params.action and base.type(params.action) == "table" then
+						id = params.action.id
+						params = params.action.params or {}
+					elseif taskObj.action and base.type(taskObj.action) == "table" then
+						id = taskObj.action.id or id
+						params = taskObj.action.params or params
+					end
+
+                  local idStr = base.tostring(id or "")
+					local idLower = base.string.lower(idStr)
+					local isBeaconTask = (id == "ActivateBeacon") or (idLower ~= "" and base.string.find(idLower, "beacon") ~= nil)
+
+					local channel = params.channel or params.Channel or params.channelNumber
+                    if channel == nil and params.beacon and base.type(params.beacon) == "table" then
+						channel = params.beacon.channel or params.beacon.Channel or params.beacon.channelNumber
+					end
+					if channel == nil then return "" end
+					if not isBeaconTask and params.modeChannel == nil and params.band == nil and params.mode == nil and params.beacon == nil then
+						return ""
+					end
+
+					local chNum = base.tonumber(channel)
+					local ch = chNum ~= nil and base.tostring(base.math.floor(chNum + 0.5)) or base.tostring(channel)
+                    local band = params.modeChannel or params.band or params.mode
+					if band == nil and params.beacon and base.type(params.beacon) == "table" then
+						band = params.beacon.modeChannel or params.beacon.band or params.beacon.mode
+					end
+					return ch .. normalizeBand(band)
+				end
+
+				local function extractTacanFromTaskNode(taskObj, depth)
+					if base.type(taskObj) ~= "table" then return "" end
+					if depth ~= nil and depth > 8 then return "" end
+
+					local tac = extractTaskTacan(taskObj)
+					if tac ~= "" then
+						return tac
+					end
+
+					local params = taskObj.params or {}
+					local nested = {
+						params.tasks,
+						params.task,
+						taskObj.task,
+						taskObj.tasks,
+					}
+
+					for _, node in base.pairs(nested) do
+						if base.type(node) == "table" then
+							for _, child in base.pairs(node) do
+								local childTac = extractTacanFromTaskNode(child, (depth or 0) + 1)
+								if childTac ~= "" then
+									return childTac
+								end
+							end
+						end
+					end
+
+					return ""
+				end
+
+				local function extractTacanFromRoutePoints(points)
+					if base.type(points) ~= "table" then return "" end
+					for _, p in base.pairs(points) do
+						local tasks = p and p.task and p.task.params and p.task.params.tasks
+						if base.type(tasks) == "table" then
+							for _, t in base.pairs(tasks) do
+								local tac = extractTacanFromTaskNode(t, 0)
+								if tac ~= "" then
+									return tac
+								end
+							end
+						end
+					end
+					return ""
+				end
+
+				local function normalizeTacanValue(value)
+					if value == nil then return "" end
+					local s = base.tostring(value)
+					if s == nil then return "" end
+					local lower = base.string.lower(s)
+					if s == "" or lower == "nil" or lower == "null" then
+						return ""
+					end
+					return s
+				end
+
+				local function getGroupNameCandidates(groupName)
+					local candidates = {}
+					local seen = {}
+
+					local function addCandidate(v)
+						v = base.tostring(v or "")
+						if v == "" then return end
+						if seen[v] then return end
+						seen[v] = true
+						base.table.insert(candidates, v)
+					end
+
+					local raw = base.tostring(groupName or "")
+					addCandidate(raw)
+					addCandidate(base.string.gsub(raw, "#%d+$", ""))
+					addCandidate(base.string.gsub(base.string.gsub(raw, "#%d+$", ""), "_%d+$", ""))
+
+					for token in base.string.gmatch(base.string.gsub(raw, "#%d+$", ""), "[^_]+") do
+						addCandidate(token)
+					end
+
+					return candidates
+				end
+
+             local function resolveTacanFromGroupMap(groupName, sourceMap)
+					for _, candidate in base.pairs(getGroupNameCandidates(groupName)) do
+                      local tac = normalizeTacanValue(sourceMap[candidate])
+						if tac ~= "" then return tac end
+					end
+					return ""
+				end
+
 				local function buildMissionGroupTacanMap()
 					local result = {}
 					local missionObj = getMissionObject()
 					if base.type(missionObj) ~= "table" then
 						return result
-					end
-
-					local function normalizeBand(v)
-						if v == nil then return "" end
-						local s = base.tostring(v)
-						if s == "" then return "" end
-						local u = base.string.upper(s)
-						if u == "X" or u == "Y" then return u end
-						local n = base.tonumber(s)
-						if n == 0 then return "X" end
-						if n == 1 then return "Y" end
-						return s
-					end
-
-					local function extractTaskTacan(taskObj)
-						if base.type(taskObj) ~= "table" then return "" end
-						local id = taskObj.id
-						local params = taskObj.params or {}
-
-						if id == "WrappedAction" and params.action and base.type(params.action) == "table" then
-							id = params.action.id
-							params = params.action.params or {}
-						elseif taskObj.action and base.type(taskObj.action) == "table" then
-							id = taskObj.action.id or id
-							params = taskObj.action.params or params
-						end
-
-						if id ~= "ActivateBeacon" then
-							return ""
-						end
-
-						local channel = params.channel or params.Channel or params.channelNumber
-						if channel == nil then return "" end
-
-						local chNum = base.tonumber(channel)
-						local ch = chNum ~= nil and base.tostring(base.math.floor(chNum + 0.5)) or base.tostring(channel)
-						return ch .. normalizeBand(params.modeChannel or params.band or params.mode)
 					end
 
 					local coal = missionObj.coalition
@@ -2962,7 +3062,7 @@ base.vaicom.state = {
 						missionCmdsKeys = {},
 						beaconEntries = {},
                        keyHits = {},
-                     tankerTaskEntries = {},
+                        tankerTaskEntries = {},
                        weatherType = "nil",
 						weatherKeys = {},
 						weatherSummary = {},
@@ -3182,8 +3282,8 @@ base.vaicom.state = {
 					return probe
 				end
 
-				local chunk = {}	
-             local missionGroupTacanMap = buildMissionGroupTacanMap()
+                local chunk = {}	
+            local missionGroupTacanMap = buildMissionGroupTacanMap()
 				chunk[1] 		= {
 									dcsversion			= base.vaicom.state.dcsversion,
 									root				= base.vaicom.state.root,
@@ -3295,13 +3395,13 @@ base.vaicom.state = {
 						if base.vaicom.state.debugmode and (recipientclass == "Tanker" or recipientclass == "ATC" or recipientclass == "AWACS" or recipientclass == "Flight") then
                             unitDiagnostics = base.tostring(base.vaicom.properties.unitdiagnostics(k))
 						end
-                       local tacanValue = base.tostring(base.vaicom.properties.tacan(k))
-						if tacanValue == "" and (recipientclass == "Tanker" or recipientclass == "ATC" or recipientclass == "AWACS" or recipientclass == "Flight") then
+                        local tacanValue = normalizeTacanValue(base.vaicom.properties.tacan(k))
+                       if tacanValue == "" and (recipientclass == "Tanker" or recipientclass == "ATC" or recipientclass == "AWACS" or recipientclass == "Flight") then
 							local okGroup, groupObj = base.pcall(function() return k:getGroup() end)
 							if okGroup and groupObj and groupObj.getName then
 								local okName, groupName = base.pcall(function() return groupObj:getName() end)
-								if okName and groupName ~= nil then
-									tacanValue = missionGroupTacanMap[base.tostring(groupName)] or ""
+                            if okName and groupName ~= nil then
+                               tacanValue = resolveTacanFromGroupMap(groupName, missionGroupTacanMap)
 								end
 							end
 						end
