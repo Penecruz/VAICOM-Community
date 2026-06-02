@@ -6,6 +6,7 @@ local Behavior   = require('base.Behavior')
 local Task       = require('base.Task')
 local Urge       = require('base.Urge')
 local StressReaction = require('base.StressReaction')
+local Interactions = require('base.Interactions')
 
 local VaicomMods = Class(Behavior)
 VaicomMods.is_registered = false
@@ -16,6 +17,36 @@ local RADALT_SPEED_GATE_KTS = 270
 local RADALT_HYSTERESIS_FEET = 25
 local RADALT_CALL_BELOW_TARGET_FEET = 20
 local RADALT_PRESET_VALUES = { 500, 300, 200, 100, 50 }
+local INS_SHUTDOWN_DELAY_SECONDS = 20
+
+local function click_raw_safe(device_name, command_name, value)
+    local device_id = Interactions and Interactions.devices and Interactions.devices[device_name]
+    local command_id = Interactions and Interactions.device_commands and Interactions.device_commands[command_name]
+    if device_id ~= nil and command_id ~= nil then
+        ClickRaw(device_id, command_id, value)
+    end
+end
+
+local function process_delayed_ins_shutdown(self)
+    if self.ins_shutdown_delay_remaining == nil then
+        return
+    end
+
+    if self.ins_shutdown_delay_remaining > 0 then
+        self.ins_shutdown_delay_remaining = self.ins_shutdown_delay_remaining - 1
+        return
+    end
+
+    local ins_shutdown_task = Task:new()
+    ins_shutdown_task:Click("INS Mode Knob", "OFF")
+        :Click("Align Mode Knob", "OFF")
+        :Then(function()
+            click_raw_safe("OXYGENSYSTEM", "OXYGENSYSTEM_RIO_Set_Ox_Supply", 1)
+        end, { hands = true })
+
+    GetJester():AddTask(ins_shutdown_task)
+    self.ins_shutdown_delay_remaining = nil
+end
 
 local function parse_value(raw)
     if raw == nil then
@@ -88,7 +119,7 @@ local function get_radalt_warning_phrase(feet)
     return 'checklists/1000ft'
 end
 
-local function run_shutdown_sequence()
+local function run_shutdown_sequence(self)
     local task = Task:new()
     task:Say('misc/roger')
 
@@ -100,35 +131,42 @@ local function run_shutdown_sequence()
         :Wait(s(4), { voice = true })
         :Click("ECM Mode Left", "STBY")
         :Click("ECM Mode Right", "STBY")
-        :Wait(s(5), { voice = true })
+        :Wait(s(4), { voice = true })
         :Click("Chaff Mode", "OFF")
         :Wait(s(1), { voice = true })
         :Click("Flare Mode", "OFF")
-        :Wait(s(5), { voice = true })
+        :Wait(s(4), { voice = true })
 
     if rwr_powered ~= nil and rwr_powered > 0 then
         task:Click("WSO RWR System Power Button", "ON")
     end
     task:Wait(s(3), { voice = true })
+        :Then(function()
+            click_raw_safe("ICS", "WSO_KY28_ZEROIZE_BUTTON", 1)
+        end, { hands = true })
+        :Wait(s(0.2), { hands = true })
+        :Then(function()
+            click_raw_safe("ICS", "WSO_KY28_ZEROIZE_BUTTON", 0)
+        end, { hands = true })
+        :Wait(s(0.3), { hands = true })
+        :Then(function()
+            click_raw_safe("ICS", "WSO_KY28_MODE_KNOB", 0)
+        end, { hands = true })
         :Click("Radio Mode", "OFF")
         :Wait(s(2), { voice = true })
         :Click("TACAN Function", "OFF")
-        :Wait(s(6), { voice = true })
-        :Click("INS Mode Knob", "OFF")
-        :Click("Align Mode Knob", "OFF")
         :Wait(s(3), { voice = true })
         :Click("Nav Panel Function", "OFF")
-        :Wait(s(6), { voice = true })
+        :Wait(s(2), { voice = true })
 
     if tgp_power_on ~= nil and tgp_power_on > 0 then
         task:ClickShort("TGP Power On", "ON")
     end
 
-    task:Say('checklists/Hold')
-        :Wait(s(7), { voice = true })
-        :Say('checklists/continue')
+    --task:Say('general/done')
 
     GetJester():AddTask(task)
+    self.ins_shutdown_delay_remaining = INS_SHUTDOWN_DELAY_SECONDS
 end
 
 local function monitor_radalt_bug(self)
@@ -186,6 +224,7 @@ function VaicomMods:Constructor()
     self.radalt_min_alt_feet = nil
     self.radalt_latched = false
     self.last_radar_alt = nil
+    self.ins_shutdown_delay_remaining = nil
     self.monitor_urge = Urge:new({
         time_to_release = s(1),
         on_release_function = function()
@@ -194,6 +233,15 @@ function VaicomMods:Constructor()
         stress_reaction = StressReaction.ignorance,
     })
     self.monitor_urge:Restart()
+
+    self.ins_shutdown_urge = Urge:new({
+        time_to_release = s(1),
+        on_release_function = function()
+            process_delayed_ins_shutdown(self)
+        end,
+        stress_reaction = StressReaction.ignorance,
+    })
+    self.ins_shutdown_urge:Restart()
 end
 
 function VaicomMods:Register()
@@ -204,7 +252,7 @@ function VaicomMods:Register()
             return
         end
 
-        run_shutdown_sequence()
+        run_shutdown_sequence(self)
     end)
 
     ListenTo("vaicom_radalt_monitor", "VaicomMods", function(task, mode)
@@ -270,6 +318,10 @@ function VaicomMods:Tick()
 
     if self.monitor_urge then
         self.monitor_urge:Tick()
+    end
+
+    if self.ins_shutdown_urge then
+        self.ins_shutdown_urge:Tick()
     end
 end
 
