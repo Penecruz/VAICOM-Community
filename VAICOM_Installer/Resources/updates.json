@@ -6,11 +6,11 @@
       "isbeta": false,
       "isdev": false,
       "productid": 1,
-      "releasedate": 20260523,
-      "version": 3130,
-      "versionstring": "3.1.3.0",
-      "downloadurl": "https://github.com/Penecruz/VAICOM-Community/releases/download/v3.1.3.0/VAICOMPRO.zip",
-      "releasenotes": "Release 3.1.3.0\n- Add ‘Boots’ AIWSO for the F-4E Phantom II our jester 2.0 implementation.\n- Add OpenKneeboard OUT a vaicom Web Console for the amazing OpenKneeboard application.\n- Add new Vaicom HTML Keywords reference system, with plugin for OpenKneeboard.\n- Add F-100D Super Sabre as supported module.\n- Add new F10 menu handling to eliminate connection issues on servers with large logistic menu systems e.g. Foothold missions.\n- Remove all Pro licencing code from Vaicom and any graphical reference in the UI.\n- Add ICS Hot Mic logic for AH-64D Apache and F-4E Phantom II.\n- Add new Hot Mic listening state handler for all supported AI CREW modules.\n- Add common AI CREW UI interfaces and adopt shared code.\n- Fixes F-14 Tomcat “Jester Options” mini wheel not exiting cleanly after message sent.\n- Adds F-14 Tomcat Pilot/RIO monitoring on Vaicom UI to reflect connection.\n- Adds F-4E Phantom II Pilot/WSO monitoring on Vaicom UI to reflect connection.\n- Adds E-7A as supported AWACS recipient and Kneeboard unit.\n- Adds BRA to Kneeboard units and airfields.\n- Adds TACAN information to Kneeboard Tankers and AWACS.\n- Many small bug fixes and enhancements"
+      "releasedate": 20260602,
+      "version": 3136,
+      "versionstring": "3.1.3.6",
+      "downloadurl": "https://github.com/Penecruz/VAICOM-Community/releases/download/v3.1.3.6/VAICOMPRO.zip",
+      "releasenotes": "Release 3.1.3.6\n- OpenKneeboard OUT now groups keywords in row-across format to keep similar commands at the top.\n- OpenKneeboard OUT F-4E keywords now have phase-of-flight handling based on last sent command.\n- OpenKneeboard OUT pages refresh on any passed command without requiring the Page command.\n- Added WSO commands for fuel management, tanker/airfield divert, plus display support.\n- Added WSO commands Radar Lock Target and Radar Focus Target [1-20] to OpenKneeboard commands list.\n- Added plugin controls for OpenKneeboard OUT tab browsing for use in Voice Attack \"execute an external plugin command\".\n- Added WSO VAICOM custom mod \"Shutdown\" Boots performs switching in WSO station and secures his systems during shutdown.\n- Added WSO custom mod \"Radar Alt Monitor\" set altitude and Boots calls out when descending 20 ft RA below requested altitude.\n- Added VAICOM mods section to Jester wheel under Crew Contract. (Jet needs to be running to display)\n- Fixed F-14 AIRIO file swapping and Jester Enable checkbox behaviour.\n- Fixed AIRIO commands incorrectly requiring recipient on ICS Hot Mic.\n- VAICOM F-4E WSO VAICOM F-4E WSO.vap now refreshes on every startup.\n- OKB OUT now accepts user-selected port (requires OpenKneeboard restart)."
     }
   ]
 }
