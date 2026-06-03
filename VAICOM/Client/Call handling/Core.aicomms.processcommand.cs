@@ -654,12 +654,51 @@ namespace VAICOM
                     return State.currentcommand.isState() && State.activeconfig.DeepInterrogate && Server.tunedforAOCS;
                 }
 
+                private static bool TryProcessOfflineKneeboardCommand()
+                {
+                    try
+                    {
+                        getinputsentence();
+                        scanforkeywords();
+                        correctforimportedobjects();
+
+                        State.haveinputscomplete = setcommand();
+                        if (!State.haveinputscomplete || State.currentcommand == null)
+                        {
+                            return false;
+                        }
+
+                        bool isKneeboardCommand = State.currentcommand.isKneeboard()
+                            || State.currentcommand.uniqueid.Equals(23004)
+                            || State.currentcommand.uniqueid.Equals(23005);
+
+                        if (!isKneeboardCommand)
+                        {
+                            return false;
+                        }
+
+                        sendvoid();
+                        RefreshKneeboardSnapshotAfterCommand();
+                        State.MessageReset();
+                        return true;
+                    }
+                    catch
+                    {
+                        return false;
+                    }
+                }
+
                 // processes voice command, called directly from plugin
                 public static bool processcommand()
                 {
                     // Check if DCS is running
                     if (!State.dcsrunning)
                     {
+                        if (TryProcessOfflineKneeboardCommand())
+                        {
+                            return true;
+                        }
+
                         Log.Write("DCS is not connected. Command processing is disabled.", Colors.Warning);
                         UI.Playsound.Error();
                         return false;
@@ -859,9 +898,16 @@ namespace VAICOM
                         else
                         {
                             bool immediateHotMicSend = !State.transmitting && State.IsCrewHotMicActiveOnIntercomTX();
+                            bool deferSendUntilReleaseInVoiceModes = (State.activeconfig.MP_VoIPUseSwitch || State.activeconfig.MP_VoIPParallel)
+                                && State.transmitting
+                                && !riocommand
+                                && !selectcommand
+                                && !optionscommand
+                                && !menucommand
+                                && !immediateHotMicSend;
 
-                            if (riocommand || selectcommand || optionscommand || menucommand || immediateHotMicSend ||
-                                !((State.activeconfig.MP_VoIPUseSwitch || State.activeconfig.MP_VoIPParallel) && State.activeconfig.MP_DelayTransmit)) //  || !State.currentTXnode.tunedforhuman 
+                            if (!deferSendUntilReleaseInVoiceModes && (riocommand || selectcommand || optionscommand || menucommand || immediateHotMicSend ||
+                                !((State.activeconfig.MP_VoIPUseSwitch || State.activeconfig.MP_VoIPParallel) && State.activeconfig.MP_DelayTransmit))) //  || !State.currentTXnode.tunedforhuman 
                             {
                                 sendmessage();
                             }

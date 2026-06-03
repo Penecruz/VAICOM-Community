@@ -698,6 +698,8 @@ namespace VAICOM
                 { "Chief",                  "crew"                   },
                 { "Sarge",                  "crew"                   },
                 { "Ground",                 "crew"                   },
+                { "AI Crew",                "aicrew"                 },
+                { "AI Crew Page",           "aicrew"                 },
 
                 // AOCS
 
@@ -715,7 +717,6 @@ namespace VAICOM
 
                 { "Kneeboard",              "kneeboard"              },
                 { "Show Kneeboard",         "kneeboard"              },
-
             };
 
         }

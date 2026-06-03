@@ -566,6 +566,7 @@ namespace VAICOM
                 { "nearesttanker",          "Nearest Tanker"        },
 
                 { "crew",                   "Ground Crew"           },
+                { "aicrew",                 "AI Crew"               },
 
                 { "aocs",                   "AOCS"                  },
 
