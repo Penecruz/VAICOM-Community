@@ -3466,6 +3466,12 @@ base.vaicom.state = {
 						-- during sending and prevent sending all chunks to VAICOM.
 						if #payload < maxSize then
 							sendChunk(payload, chunkId)
+						else
+							-- Send empty menu items if menu too large
+							local menuPayload = { menuaux = { items = {}, name = "other" } }
+							chunkPayload = addChunkHeader(menuPayload, chunkId)
+							payload = JSON:encode(chunkPayload)
+							sendChunk(payload, chunkId)
 						end
 					else
 						sendChunk(payload, chunkId)
