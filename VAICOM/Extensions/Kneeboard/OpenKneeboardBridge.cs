@@ -31,7 +31,7 @@ namespace VAICOM
   <title>VAICOM Kneeboard 1.0</title>
   <style>
     html, body { width: 100%; height: 100%; margin: 0; }
-    body { font-family: Consolas, monospace; background: transparent; color: #151515; letter-spacing: 0.1px; font-size: 23px; }
+    body { font-family: Consolas, monospace; background: transparent; color: #151515; letter-spacing: 0.1px; font-size: 23px; --contentFontSize: 24px; }
     .sheet {
       width: 100%;
       height: 100%;
@@ -175,8 +175,8 @@ namespace VAICOM
     body.notes-tab .tabPanel { flex: 0 0 55%; }
     body.notes-tab .keywordsPanel { flex: 1 1 auto; min-height: 110px; }
     body.notes-tab .keywordsContent { max-height: 140px; }
-    .mainContent { font-size: 24px; line-height: 1.32; }
-    .keywordsContent { font-size: 24px; line-height: 1.32; }
+    .mainContent { font-size: var(--contentFontSize); line-height: 1.32; }
+    .keywordsContent { font-size: var(--contentFontSize); line-height: 1.32; }
     .keywordsGroups { display: flex; flex-direction: column; gap: 8px; }
     .kwGroup {
       border: 1px solid #bcc7d2;
@@ -283,6 +283,8 @@ namespace VAICOM
     <div class='controls'>
       <label><input id='autoBrowse' type='checkbox' checked> Auto Browse</label>
       <label><input id='nightMode' type='checkbox'> Night Mode</label>
+      <label>Font Size <input id='fontSizeSlider' type='range' min='18' max='34' step='1' value='24'></label>
+      <span id='fontSizeValue'>24</span>
       <button id='drawModeToggle' type='button'>Draw OFF</button>
       <span id='drawTimer' class='drawTimer hidden'>30s</span>
       <label id='showRawWrap'><input id='showRaw' type='checkbox'> Show raw JSON</label>
@@ -320,9 +322,11 @@ namespace VAICOM
     const tabKeywordsSplitStorageKey = 'vaicom.okb.tabKeywordsSplitByTab';
     const drawModeStorageKey = 'vaicom.okb.notesDrawMode';
     const nightModeStorageKey = 'vaicom.okb.nightMode';
+    const contentFontSizeStorageKey = 'vaicom.okb.contentFontSize';
     const drawModeTimeoutMs = 30000;
     let tabKeywordsSplitByTab = {};
     let nightModeEnabled = false;
+    let contentFontSizePx = 24;
 
     function clamp(v, min, max){
       return Math.max(min, Math.min(max, v));
@@ -459,6 +463,37 @@ namespace VAICOM
       document.body.classList.toggle('night-mode', !!nightModeEnabled);
       const box = document.getElementById('nightMode');
       if (box) box.checked = !!nightModeEnabled;
+    }
+
+    function readContentFontSizePreference(){
+      try{
+        if (!window.localStorage) return 24;
+        const raw = window.localStorage.getItem(contentFontSizeStorageKey);
+        const parsed = parseFloat(raw);
+        if (!isFinite(parsed)) return 24;
+        return clamp(parsed, 18, 34);
+      }catch(_){
+        return 24;
+      }
+    }
+
+    function persistContentFontSizePreference(){
+      try{
+        if (window.localStorage){
+          window.localStorage.setItem(contentFontSizeStorageKey, String(contentFontSizePx));
+        }
+      }catch(_){
+      }
+    }
+
+    function applyContentFontSizeUi(){
+      const safeSize = clamp(contentFontSizePx, 18, 34);
+      contentFontSizePx = safeSize;
+      document.body.style.setProperty('--contentFontSize', String(safeSize) + 'px');
+      const slider = document.getElementById('fontSizeSlider');
+      if (slider) slider.value = String(safeSize);
+      const value = document.getElementById('fontSizeValue');
+      if (value) value.textContent = String(safeSize);
     }
 
     function mergeUnique(dest, src){
@@ -1954,6 +1989,12 @@ namespace VAICOM
       applyNightModeUi();
     });
 
+    document.getElementById('fontSizeSlider').addEventListener('input', function(ev){
+      contentFontSizePx = clamp(parseInt(ev.target.value, 10) || 24, 18, 34);
+      applyContentFontSizeUi();
+      persistContentFontSizePreference();
+    });
+
     document.getElementById('drawModeToggle').addEventListener('click', function(){
       if (okbDoodlesOnlyForced || selectedTab !== 'NOTES') return;
       if (drawModeEnabled){
@@ -2061,6 +2102,8 @@ namespace VAICOM
     applySessionCollapsedState(readInitialSessionCollapsed());
     nightModeEnabled = readNightModePreference();
     applyNightModeUi();
+    contentFontSizePx = readContentFontSizePreference();
+    applyContentFontSizeUi();
     drawModeEnabled = readDrawModePreference();
     updateDrawModeToggleUi();
     tabKeywordsSplitByTab = readTabKeywordsSplitRatioByTab();

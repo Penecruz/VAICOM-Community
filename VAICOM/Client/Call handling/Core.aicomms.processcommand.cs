@@ -750,7 +750,8 @@ namespace VAICOM
 
                         State.currentrecipientclass = getrecipientclass();
 
-                        bool intercomOnlyHotMic = !State.transmitting && State.IsCrewHotMicActive();
+                        bool intercomOnlyHotMic = !State.transmitting
+                            && (State.IsCrewHotMicActiveOnIntercomTX() || State.IntercomHotMicLatched);
                         bool isIntercomRecipientClass = State.currentrecipientclass.Equals(Recipientclasses.Crew)
                             || State.currentrecipientclass.Equals(Recipientclasses.RIO)
                             || State.currentrecipientclass.Equals(Recipientclasses.AI_pilot)
