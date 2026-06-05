@@ -498,6 +498,13 @@ namespace VAICOM
                         }
                         break;
 
+                    case "wso.mod.jesterwheel":
+                        if (WSOCommandHandler.IsWSO())
+                        {
+                            WSOCommandHandler.JesterWheelModProxy();
+                        }
+                        break;
+
                     case "test":
                         API.API_Test(vaProxy);
                         break;

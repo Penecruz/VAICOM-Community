@@ -354,6 +354,48 @@ namespace VAICOM
                     }
                 }
 
+                public static void JesterWheelModProxy()
+                {
+                    string name = State.Proxy.GetText("Name");
+                    string action = State.Proxy.GetText("Action");
+                    string value = State.Proxy.GetText("Value");
+                    List<string> messageParams = new List<string>();
+
+                    if (string.IsNullOrEmpty(name))
+                    {
+                        Log.Write($"Missing required name for command", Colors.Warning);
+                        UI.Playsound.Error();
+                        return;
+                    }
+                    else
+                    {
+                        name = name.Trim();
+                    }
+                    if (string.IsNullOrEmpty(action))
+                    {
+                        Log.Write($"Missing required action for command {name}", Colors.Warning);
+                        UI.Playsound.Error();
+                        return;
+                    }
+                    else
+                    {
+                        action = action.Trim();
+                    }
+                    if (string.IsNullOrEmpty(value))
+                    {
+                        value = "";
+                    }
+                    else
+                    {
+                        value = value.Trim();
+                        messageParams.Add(value);
+                    }
+
+                    CommandCompleted(name, messageParams);
+                    HbSendProxyCommand.SendWheelCommand(State.WsoWheelClient, "select", action, value);
+
+                }
+
                 public static bool IsWSO()
                 {
                     if (!State.currentmodule.Id.Equals("F-4E-45MC", StringComparison.OrdinalIgnoreCase))
