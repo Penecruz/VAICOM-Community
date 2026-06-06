@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using VAICOM.FileManager;
 using VAICOM.Static;
 
@@ -12,6 +14,8 @@ namespace VAICOM
         public partial class ConfigWindow : Window
         {
             // ------------  EXTENSIONS PAGE -----------------------------
+
+            private static readonly Regex OpenKneeboardOutPortDigitsOnlyRegex = new Regex("^[0-9]+$");
 
             // Pene edits Kneeboard Activate/deactivate Box
 
@@ -320,6 +324,74 @@ namespace VAICOM
                     checkbox.IsEnabled = true;
                     checkbox.IsChecked = State.activeconfig.OpenKneeboard_Out;
                 }
+            }
+
+            private void OpenKneeboardOutPortInit(object sender, EventArgs e)
+            {
+                TextBox textBox = sender as TextBox;
+                if (textBox == null)
+                {
+                    return;
+                }
+
+                int configuredPort = State.activeconfig.OpenKneeboard_Out_Port;
+                if (configuredPort <= 0 || configuredPort > 65535)
+                {
+                    configuredPort = 7779;
+                    State.activeconfig.OpenKneeboard_Out_Port = configuredPort;
+                }
+
+                textBox.Text = configuredPort.ToString();
+            }
+
+            private void OpenKneeboardOutPortPreviewTextInput(object sender, TextCompositionEventArgs e)
+            {
+                e.Handled = !OpenKneeboardOutPortDigitsOnlyRegex.IsMatch(e.Text);
+            }
+
+            private void OpenKneeboardOutPortPasting(object sender, DataObjectPastingEventArgs e)
+            {
+                if (!e.DataObject.GetDataPresent(typeof(string)))
+                {
+                    e.CancelCommand();
+                    return;
+                }
+
+                string pastedText = (string)e.DataObject.GetData(typeof(string));
+                if (string.IsNullOrWhiteSpace(pastedText) || !OpenKneeboardOutPortDigitsOnlyRegex.IsMatch(pastedText))
+                {
+                    e.CancelCommand();
+                }
+            }
+
+            private void OpenKneeboardOutPortLostFocus(object sender, RoutedEventArgs e)
+            {
+                TextBox textBox = sender as TextBox;
+                if (textBox == null)
+                {
+                    return;
+                }
+
+                int parsedPort;
+                if (!int.TryParse(textBox.Text, out parsedPort) || parsedPort <= 0 || parsedPort > 65535)
+                {
+                    textBox.Text = State.activeconfig.OpenKneeboard_Out_Port.ToString();
+                    return;
+                }
+
+                if (State.activeconfig.OpenKneeboard_Out_Port != parsedPort)
+                {
+                    State.activeconfig.OpenKneeboard_Out_Port = parsedPort;
+                    Settings.ConfigFile.WriteConfigToFile(true);
+
+                    if (State.activeconfig.OpenKneeboard_Out)
+                    {
+                        Extensions.Kneeboard.OpenKneeboardBridge.SetEnabled(false);
+                        Extensions.Kneeboard.OpenKneeboardBridge.SetEnabled(true);
+                    }
+                }
+
+                textBox.Text = State.activeconfig.OpenKneeboard_Out_Port.ToString();
             }
 
 

@@ -76,7 +76,8 @@ namespace VAICOM
             {
                 return dcsid.Equals("wMsgWSO_Navigation_Divert_LatLong")
                     || dcsid.Equals("wMsgWSO_Navigation_TACAN_TuneAsset")
-                    || dcsid.Equals("wMsgWSO_Radio_TuneATC");
+                    || dcsid.Equals("wMsgWSO_Radio_TuneATC")
+                    || dcsid.Equals("wMsgWSO_Fuel_RefuelAtAirfield");
             }
 
             public bool isReply()

@@ -88,6 +88,13 @@ namespace VAICOM.Extensions.WSO
             { "wMsgWSO_Crew_Countermeasures_Manual", "WSO Countermeasures Manual" },
             { "wMsgWSO_Crew_Countermeasures_Jester", "WSO Countermeasures Jester" },
             { "wMsgWSO_Crew_StartAlignment", "WSO Start Alignment Now" },
+            { "wMsgWSO_Crew_Shutdown", "WSO Shutdown" },
+            { "wMsgWSO_Crew_AltitudeMonitor_500", "WSO Call Below 500" },
+            { "wMsgWSO_Crew_AltitudeMonitor_300", "WSO Call Below 300" },
+            { "wMsgWSO_Crew_AltitudeMonitor_200", "WSO Call Below 200" },
+            { "wMsgWSO_Crew_AltitudeMonitor_100", "WSO Call Below 100" },
+            { "wMsgWSO_Crew_AltitudeMonitor_50", "WSO Call Below 50" },
+            { "wMsgWSO_Crew_AltitudeMonitor_Off", "WSO No Altitude Monitor" },
 
             // Ground Crew commands
             { "wMsgWSO_Ground_WheelChocks_Place", "WSO Ground Place Chocks" },
@@ -131,7 +138,12 @@ namespace VAICOM.Extensions.WSO
 
             // Jester fuel responses
             { "wMsgWSO_Fuel_FuelIsGood", "WSO Fuel Is Looking Good" },
-
+            { "wMsgWSO_Fuel_FuelIsLow", "WSO Fuel Is Looking Low" },
+            { "wMsgWSO_Fuel_RemainOnMission", "WSO Remain On Mission" },
+            { "wMsgWSO_Fuel_AirfieldOptions", "WSO Airfield Refueling Options" },
+            { "wMsgWSO_Fuel_TankerOptions", "WSO Tanker Refueling Options" },
+            { "wMsgWSO_Fuel_RefuelAtAirfield", "WSO Refuel At" },
+            
             // Context response commands
             { "wMsgWSO_Context_Short", "WSO Context Action Short" },
             { "wMsgWSO_Context_Long", "WSO Context Action Long" },

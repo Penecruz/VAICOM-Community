@@ -196,6 +196,7 @@ namespace VAICOM
 
                         string receivedMessage = messageBuilder.ToString();
                         Log.Write($"Received Jester dialog message: {receivedMessage}", Colors.Text);
+                        WSODialogOptionsCache.TryHandleDialogCacheMessage(receivedMessage);
                     }
                 }
 

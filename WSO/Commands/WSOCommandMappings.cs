@@ -99,6 +99,13 @@ namespace VAICOM.WSO
             { "wMsgWSO_Crew_Countermeasures_Manual",                            (InterfaceType.Wheel, "select", "crew_countermeasures", "manual", true) },
             { "wMsgWSO_Crew_Countermeasures_Jester",                            (InterfaceType.Wheel, "select", "crew_countermeasures", "jester", true) },            
             { "wMsgWSO_Crew_StartAlignment",                                    (InterfaceType.Wheel, "select", "jester_start_alignment", "start", true) },
+            { "wMsgWSO_Crew_Shutdown",                                          (InterfaceType.Wheel, "select", "custom_shutdown", "start", true) },
+            { "wMsgWSO_Crew_AltitudeMonitor_500",                               (InterfaceType.Wheel, "select", "vaicom_radalt_monitor", "500", true) },
+            { "wMsgWSO_Crew_AltitudeMonitor_300",                               (InterfaceType.Wheel, "select", "vaicom_radalt_monitor", "300", true) },
+            { "wMsgWSO_Crew_AltitudeMonitor_200",                               (InterfaceType.Wheel, "select", "vaicom_radalt_monitor", "200", true) },
+            { "wMsgWSO_Crew_AltitudeMonitor_100",                               (InterfaceType.Wheel, "select", "vaicom_radalt_monitor", "100", true) },
+            { "wMsgWSO_Crew_AltitudeMonitor_50",                                (InterfaceType.Wheel, "select", "vaicom_radalt_monitor", "50", true) },
+            { "wMsgWSO_Crew_AltitudeMonitor_Off",                               (InterfaceType.Wheel, "select", "vaicom_radalt_monitor", "off", true) },
             { "wMsgWSO_Systems_FlaresJettison",                                 (InterfaceType.Wheel, "select", "systems_flares_jettison", "", false) },
             { "wMsgWSO_Systems_Countermeasures_Quantity",                       (InterfaceType.Wheel, "select", "systems_countermeasures_quantity", "", false) },
             { "wMsgWSO_A2G_PaveSpike_Ready",                                    (InterfaceType.Wheel, "select", "pave_spike_op", "ready", true) },
@@ -147,6 +154,11 @@ namespace VAICOM.WSO
             
             // Jester fuel dialog responses.
             { "wMsgWSO_Fuel_FuelIsGood",                                        (InterfaceType.Dialog, "action", "fuel_good", "", false) },
+            { "wMsgWSO_Fuel_FuelIsLow",                                         (InterfaceType.Dialog, "select_option", "select_dialog_option", "Fuel is low", true) },
+            { "wMsgWSO_Fuel_RemainOnMission",                                   (InterfaceType.Dialog, "action", "fuel_remain_on_mission", "", false) },
+            { "wMsgWSO_Fuel_AirfieldOptions",                                   (InterfaceType.Dialog, "select_option", "show_dialog_options", "Divert to Airfield", true) },
+            { "wMsgWSO_Fuel_TankerOptions",                                     (InterfaceType.Dialog, "select_option", "show_dialog_options", "Rejoin with Tanker", true) },
+            { "wMsgWSO_Fuel_RefuelAtAirfield",                                  (InterfaceType.Dialog, "action", "", "", false) },
 
             // Jester Contextual Menu response commands
             { "wMsgWSO_Context_Short",                                          (InterfaceType.Context, "select", "context_action_short", "", false) },

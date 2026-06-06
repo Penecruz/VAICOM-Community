@@ -35,7 +35,7 @@ namespace VAICOM
   <title>VAICOM Kneeboard 1.0</title>
   <style>
     html, body { width: 100%; height: 100%; margin: 0; }
-    body { font-family: Consolas, monospace; background: transparent; color: #151515; letter-spacing: 0.1px; font-size: 23px; }
+    body { font-family: Consolas, monospace; background: transparent; color: #151515; letter-spacing: 0.1px; font-size: 23px; --contentFontSize: 24px; }
     .sheet {
       width: 100%;
       height: 100%;
@@ -181,13 +181,22 @@ namespace VAICOM
     body.notes-tab .tabPanel { flex: 0 0 55%; }
     body.notes-tab .keywordsPanel { flex: 1 1 auto; min-height: 110px; }
     body.notes-tab .keywordsContent { max-height: 140px; }
-    body.flt-plan-tab .session { display: none; }
-    body.flt-plan-tab .session { display: none; }
-    body.flt-plan-tab .tabPanel { flex: 1 1 auto; }
-    body.flt-plan-tab .tabKeywordDivider { display: none; }
-    .mainContent { font-size: 24px; line-height: 1.32; }
-    .mainContent.fltPlanContent { white-space: normal; word-break: normal; font-size: 19px; line-height: 1.2; padding: 6px; height: 100%; min-height: 0; }
-    .keywordsContent { font-size: 24px; line-height: 1.32; }
+    .mainContent { font-size: var(--contentFontSize); line-height: 1.32; }
+    .keywordsContent { font-size: var(--contentFontSize); line-height: 1.32; }
+    .keywordsGroups { display: flex; flex-direction: column; gap: 8px; }
+    .kwGroup {
+      border: 1px solid #bcc7d2;
+      background: #f8fafc;
+      padding: 6px 8px;
+    }
+    .kwGroupTitle {
+      font-size: 17px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      color: #203448;
+      margin: 0 0 4px 0;
+    }
     .kwCols { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
     .kwCol { white-space: pre-wrap; word-break: break-word; }
     .controls { margin: 8px 0; color: #222; font-size: 19px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
@@ -466,6 +475,23 @@ namespace VAICOM
     pre { background: #ffffff; border: 1px solid #b7b7b7; padding: 10px; white-space: pre-wrap; word-break: break-word; font-size: 18px; color:#111; max-height: 190px; overflow: auto; }
     body.raw-mode .keywordsPanel { flex: 0 0 280px; }
     .hidden { display: none; }
+
+    body.night-mode { color: #dbe4ee; }
+    body.night-mode .sheet { background: #1b2129; border-color: #4b5663; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05); }
+    body.night-mode h3 { color: #e9f0f8; }
+    body.night-mode .meta { color: #a9b8c7; }
+    body.night-mode .status { background: #27313b; border-color: #516070; color: #dce6f0; }
+    body.night-mode .panel { background: #232c35; border-color: #556678; }
+    body.night-mode .panel h4 { color: #e5edf6; border-bottom-color: #556678; }
+    body.night-mode .panel .content { color: #dde6f0; }
+    body.night-mode .tabRail { background: #2a3038; border-color: #5c6774; }
+    body.night-mode .tabKeywordDivider { border-color: #5f6d7b; background: linear-gradient(to bottom, #4a5562, #3e4956); }
+    body.night-mode .tabKeywordDivider::before { background: #b8c6d4; box-shadow: 0 -2px 0 #7f8d9a, 0 2px 0 #7f8d9a; }
+    body.night-mode .kwGroup { background: #2a3340; border-color: #5f6f80; }
+    body.night-mode .kwGroupTitle { color: #b8d1ea; }
+    body.night-mode .controls { color: #d1dce8; }
+    body.night-mode .controls button { background: #2b3541; color: #e2eaf2; border-color: #607183; }
+    body.night-mode pre { background: #202a34; color: #dde7f2; border-color: #5d6f81; }
   </style>
 </head>
 <body>
@@ -518,6 +544,9 @@ namespace VAICOM
 
     <div class='controls'>
       <label><input id='autoBrowse' type='checkbox' checked> Auto Browse</label>
+      <label><input id='nightMode' type='checkbox'> Night Mode</label>
+      <label>Font Size <input id='fontSizeSlider' type='range' min='18' max='34' step='1' value='24'></label>
+      <span id='fontSizeValue'>24</span>
       <button id='drawModeToggle' type='button'>Draw OFF</button>
       <span id='drawTimer' class='drawTimer hidden'>30s</span>
       <label id='showRawWrap'><input id='showRaw' type='checkbox'> Show raw JSON</label>
@@ -529,7 +558,12 @@ namespace VAICOM
   </div>
 
   <script>
-    const TABS = ['LOG','DTC','ATC','AWACS','JTAC','TANKER','AOCS','FLIGHT','AI CREW','GND CREW','NOTES'];
+    const TABS = ['LOG','ATC','AWACS','JTAC','TANKER','AOCS','FLIGHT','AI CREW','GND CREW','NOTES'];
+    const OKB_TAB_TYPE_ID = 'VAICOM-Community;okb-out';
+    const OKB_CUSTOM_ACTION_PREFIX = OKB_TAB_TYPE_ID + ';';
+    const OKB_ACTION_TAB_PREV = OKB_CUSTOM_ACTION_PREFIX + 'tab-prev';
+    const OKB_ACTION_TAB_NEXT = OKB_CUSTOM_ACTION_PREFIX + 'tab-next';
+    const OKB_ACTION_TAB_SELECT = OKB_CUSTOM_ACTION_PREFIX + 'tab-select';
     let selectedTab = 'LOG';
     let autoBrowse = true;
     let sessionCollapsed = false;
@@ -545,17 +579,16 @@ namespace VAICOM
     let drawModeDisableTimer = null;
     let drawModeDeadlineUtcMs = 0;
     let drawModeCountdownTimer = null;
+    let customActionHandlerRegistered = false;
     const sessionCollapsedStorageKey = 'vaicom.okb.sessionCollapsed';
     const tabKeywordsSplitStorageKey = 'vaicom.okb.tabKeywordsSplitByTab';
     const drawModeStorageKey = 'vaicom.okb.notesDrawMode';
+    const nightModeStorageKey = 'vaicom.okb.nightMode';
+    const contentFontSizeStorageKey = 'vaicom.okb.contentFontSize';
     const drawModeTimeoutMs = 30000;
     let tabKeywordsSplitByTab = {};
-    const dtcListCollapsedStorageKey = 'vaicom.okb.dtcListCollapsed';
-    let dtcListCollapsed = false;
-    let fltPlanEtaStartBySelection = {};
-    let fltPlanPlanStateBySelection = {};
-    let fltPlanDtcPageBySelection = {};
-    let fltPlanDtcRouteBySelection = {};
+    let nightModeEnabled = false;
+    let contentFontSizePx = 24;
 
     function clamp(v, min, max){
       return Math.max(min, Math.min(max, v));
@@ -606,6 +639,148 @@ namespace VAICOM
     function normalizeActiveCategory(cat, data){
       var c = String(cat || '').toUpperCase();
       return normalizeCategory(c);
+    }
+
+    function setSelectedTab(tab){
+      var normalized = normalizeCategory(tab);
+      if (normalized === 'WX/ATC') normalized = 'ATC';
+      if (TABS.indexOf(normalized) < 0) return false;
+
+      selectedTab = normalized;
+      autoBrowse = false;
+      const autoBrowseEl = document.getElementById('autoBrowse');
+      if (autoBrowseEl) autoBrowseEl.checked = false;
+      if (latestData) render(latestData);
+      return true;
+    }
+
+    function selectRelativeTab(step){
+      const idx = TABS.indexOf(selectedTab);
+      const currentIndex = idx >= 0 ? idx : 0;
+      const delta = step >= 0 ? 1 : -1;
+      const nextIndex = (currentIndex + delta + TABS.length) % TABS.length;
+      setSelectedTab(TABS[nextIndex]);
+    }
+
+    function getTabFromCustomExtraData(extraData){
+      if (extraData === null || extraData === undefined) return '';
+      if (typeof extraData === 'string') return extraData;
+      if (typeof extraData === 'number' && isFinite(extraData)) {
+        const idx = ((Math.floor(extraData) % TABS.length) + TABS.length) % TABS.length;
+        return TABS[idx];
+      }
+      if (typeof extraData !== 'object') return '';
+
+      if (typeof extraData.tab === 'string') return extraData.tab;
+      if (typeof extraData.category === 'string') return extraData.category;
+      if (typeof extraData.name === 'string') return extraData.name;
+
+      if (typeof extraData.index === 'number' && isFinite(extraData.index)) {
+        const idx = ((Math.floor(extraData.index) % TABS.length) + TABS.length) % TABS.length;
+        return TABS[idx];
+      }
+
+      return '';
+    }
+
+    function handleCustomActionEvent(ev){
+      const detail = (ev && ev.detail) ? ev.detail : {};
+      const id = String((detail && detail.id) || '');
+      const extraData = detail ? detail.extraData : undefined;
+
+      if (!id || id.indexOf(OKB_CUSTOM_ACTION_PREFIX) !== 0) return;
+
+      if (id === OKB_ACTION_TAB_PREV) {
+        selectRelativeTab(-1);
+        return;
+      }
+
+      if (id === OKB_ACTION_TAB_NEXT) {
+        selectRelativeTab(1);
+        return;
+      }
+
+      if (id === OKB_ACTION_TAB_SELECT) {
+        const requestedTab = getTabFromCustomExtraData(extraData);
+        if (requestedTab) setSelectedTab(requestedTab);
+        return;
+      }
+
+      const directTabIdPrefix = OKB_CUSTOM_ACTION_PREFIX + 'tab-';
+      if (id.indexOf(directTabIdPrefix) !== 0) return;
+
+      const tabToken = id.substring(directTabIdPrefix.length).replace(/-/g, ' ').toUpperCase();
+      setSelectedTab(tabToken);
+    }
+
+    function registerCustomActionHandlers(){
+      if (customActionHandlerRegistered) return;
+
+      const okb = (typeof OpenKneeboard !== 'undefined') ? OpenKneeboard : window.OpenKneeboard;
+      const targets = [okb, window];
+      for (let i = 0; i < targets.length; i++){
+        const t = targets[i];
+        if (!t || !t.addEventListener) continue;
+        try{
+          t.addEventListener('plugin/tab/customAction', handleCustomActionEvent);
+          customActionHandlerRegistered = true;
+        }catch(_){
+        }
+      }
+    }
+
+    function readNightModePreference(){
+      try{
+        return window.localStorage && window.localStorage.getItem(nightModeStorageKey) === '1';
+      }catch(_){
+        return false;
+      }
+    }
+
+    function persistNightModePreference(){
+      try{
+        if (window.localStorage){
+          window.localStorage.setItem(nightModeStorageKey, nightModeEnabled ? '1' : '0');
+        }
+      }catch(_){
+      }
+    }
+
+    function applyNightModeUi(){
+      document.body.classList.toggle('night-mode', !!nightModeEnabled);
+      const box = document.getElementById('nightMode');
+      if (box) box.checked = !!nightModeEnabled;
+    }
+
+    function readContentFontSizePreference(){
+      try{
+        if (!window.localStorage) return 24;
+        const raw = window.localStorage.getItem(contentFontSizeStorageKey);
+        const parsed = parseFloat(raw);
+        if (!isFinite(parsed)) return 24;
+        return clamp(parsed, 18, 34);
+      }catch(_){
+        return 24;
+      }
+    }
+
+    function persistContentFontSizePreference(){
+      try{
+        if (window.localStorage){
+          window.localStorage.setItem(contentFontSizeStorageKey, String(contentFontSizePx));
+        }
+      }catch(_){
+      }
+    }
+
+    function applyContentFontSizeUi(){
+      const safeSize = clamp(contentFontSizePx, 18, 34);
+      contentFontSizePx = safeSize;
+      document.body.style.setProperty('--contentFontSize', String(safeSize) + 'px');
+      const slider = document.getElementById('fontSizeSlider');
+      if (slider) slider.value = String(safeSize);
+      const value = document.getElementById('fontSizeValue');
+      if (value) value.textContent = String(safeSize);
     }
 
     function mergeUnique(dest, src){
@@ -1160,6 +1335,409 @@ namespace VAICOM
       return list;
     }
 
+    function textHasAny(text, terms){
+      const source = String(text || '').toLowerCase();
+      for (let i = 0; i < terms.length; i++){
+        if (source.indexOf(String(terms[i] || '').toLowerCase()) >= 0) return true;
+      }
+      return false;
+    }
+
+    function isCarrierContext(data){
+      const carrierTokens = [
+        'carrier', 'supercarrier', 'cvn', 'lso', 'paddles', 'marshal', 'platform',
+        'roosevelt', 'lincoln', 'washington', 'stennis', 'truman', 'vinson',
+        'kuznetsov', 'tarawa', 'perry', 'normandy'
+      ];
+
+      const server = (data && data.Server) || {};
+      const scan = [];
+      scan.push(String(server.MissionTitle || ''));
+      scan.push(String(server.MissionBriefing || ''));
+      scan.push(String(server.MissionDetails || ''));
+
+      const atcUnits = getMergedList(data && data.Units, 'ATC');
+      const atcDetails = getMergedList(data && data.UnitDetails, 'ATC');
+      const atcLog = getMergedLog(data && data.Logs, 'ATC');
+      atcUnits.forEach(function(v){ scan.push(String(v || '')); });
+      atcDetails.forEach(function(v){ scan.push(String(v || '')); });
+      scan.push(atcLog);
+
+      return textHasAny(scan.join('\n'), carrierTokens);
+    }
+
+    function isCarrierCapableAircraft(data){
+      const server = (data && data.Server) || {};
+      const aircraft = String(server.Aircraft || '').toUpperCase();
+      return textHasAny(aircraft, [
+        'F/A-18', 'FA-18', 'HORNET',
+        'F-14', 'TOMCAT',
+        'AV-8', 'AV8', 'HARRIER',
+        'A-4', 'SKYHAWK',
+        'SU-33'
+      ]);
+    }
+
+    function classifyAtcKeyword(phrase){
+      const p = String(phrase || '').toLowerCase();
+      if (!p) return 'general';
+
+      if (textHasAny(p, ['salute', 'request launch', 'airborne', 'passing 2.5 kilo'])) return 'launch_ops';
+      if (textHasAny(p, ['case i', 'case one', 'see you at ten', 'overhead', 'kiss off', 'charlie'])) return 'case_i';
+      if (textHasAny(p, [
+        'case ii', 'case two',
+        'case iii', 'case three',
+        'expected on time', 'platform', 'approach check in', 'checking in',
+        'commencing', 'established', 'needles', 'up and left', 'up and on', 'up and right'
+      ])) return 'case_ii_iii';
+      if (textHasAny(p, ['marking moms', 'inbound for carrier', 'low state', 'confirm remaining fuel', 'lso', 'paddles'])) return 'carrier_common';
+
+      if (textHasAny(p, [
+        'catapult', 'marshal', 'ball', 'meatball', 'clara'
+      ])) return 'carrier';
+
+      if (textHasAny(p, [
+        'startup', 'engine start', 'engines start', 'request startup', 'hover', 'taxi',
+        'wheelchocks', 'chocks'
+      ])) return 'startup_taxi';
+
+      if (textHasAny(p, [
+        'takeoff', 'departure'
+      ])) return 'departure';
+
+      if (textHasAny(p, [
+        'inbound', 'vector', 'initial', 'overhead', 'straight in', 'approach', 'final', 'request landing'
+      ])) return 'arrival_approach';
+
+      if (textHasAny(p, ['parking', 'abort', 'cancel'])) return 'shutdown';
+
+      return 'general';
+    }
+
+    function reorderAtcPhrasesForContext(data, phrases){
+      const list = Array.isArray(phrases) ? phrases.slice() : [];
+      const carrierContext = isCarrierContext(data);
+      const carrierCapable = isCarrierCapableAircraft(data);
+
+      const rankMap = (carrierContext && carrierCapable)
+        ? {
+          launch_ops: 0,
+          case_i: 1,
+          case_ii_iii: 2,
+          carrier_common: 4,
+          carrier: 5,
+          startup_taxi: 6,
+          departure: 7,
+          arrival_approach: 8,
+          shutdown: 9,
+          general: 10,
+        }
+        : {
+          startup_taxi: 0,
+          departure: 1,
+          arrival_approach: 2,
+          shutdown: 3,
+          general: 4,
+          carrier: 5,
+          launch_ops: 6,
+          case_i: 7,
+          case_ii_iii: 8,
+          carrier_common: 10,
+        };
+
+      list.sort(function(a, b){
+        const ra = rankMap[classifyAtcKeyword(a)] || 99;
+        const rb = rankMap[classifyAtcKeyword(b)] || 99;
+        if (ra !== rb) return ra - rb;
+        return String(a).localeCompare(String(b));
+      });
+
+      return list;
+    }
+
+    function classifyGroundCrewKeyword(phrase){
+      const p = String(phrase || '').toLowerCase();
+      if (!p) return 'general';
+
+      if (textHasAny(p, ['request repair'])) return 'servicing_arming';
+
+      if (textHasAny(p, [
+        'refuel', 'refueling', 'cannon', 'rearming', 'load water', 'request hmd', 'request nvg',
+        'start cartridges', 'remove start cartridges', 'turbo on', 'turbo off'
+      ])) return 'servicing_arming';
+
+      if (textHasAny(p, ['apply air', 'connect air supply', 'disconnect air supply'])) return 'startup';
+
+      if (textHasAny(p, [
+        'ground power', 'power connect', 'power disconnect', 'air connect', 'air disconnect', 'air on', 'air off',
+        'run inertial starter', 'request engines start', 'request startup'
+      ])) return 'startup';
+
+      if (textHasAny(p, [
+        'comms check', 'a r i check', 'flight controls check', 'pitot check', 'spoilers check', 'stab aug check', 'trim check'
+      ])) return 'ground_checks';
+
+      if (textHasAny(p, [
+        'chocks', 'wheelchocks', 'ladder', 'steps', 'taxi', 'dispatch'
+      ])) return 'dispatching';
+
+      return 'general';
+    }
+
+    function reorderGroundCrewPhrasesForFlow(phrases){
+      const list = Array.isArray(phrases) ? phrases.slice() : [];
+      const rankMap = {
+        servicing_arming: 0,
+        startup: 1,
+        ground_checks: 2,
+        dispatching: 3,
+        general: 4,
+      };
+
+      list.sort(function(a, b){
+        const ra = rankMap[classifyGroundCrewKeyword(a)] || 99;
+        const rb = rankMap[classifyGroundCrewKeyword(b)] || 99;
+        if (ra !== rb) return ra - rb;
+        return String(a).localeCompare(String(b));
+      });
+
+      return list;
+    }
+
+    function classifyJtacKeyword(phrase){
+      const p = String(phrase || '').toLowerCase();
+      if (!p) return 'general';
+
+      if (textHasAny(p, ['playtime', 'check in'])) return 'establish_checkin';
+      if (textHasAny(p, ['ready to copy', 'ready for remarks', 'nine line', 'readback', 'copy', 'reading back', 'remarks', 'what is my target'])) return 'tasking';
+      if (textHasAny(p, ['ip inbound', 'one minute'])) return 'ip_inbound';
+      if (textHasAny(p, ['sparkle', 'snake', 'steady', 'pulse', 'rope', 'laser on', 'shift', 'spot', 'contact sparkle', 'contact the mark'])) return 'setup_talkon';
+      if (textHasAny(p, ['in from', ' in ', 'off', 'guns', 'bombs away', 'rifles', 'rockets', 'attack complete', 'in hot', 'ten seconds', 'terminate'])) return 'engage';
+      if (textHasAny(p, ['request bda', 'bda', 'no joy', 'unable to comply', 'request target', 'request tasking', 'confirm kill', 'copy kill', 'standby for bda', 'advise ready for bda'])) return 'retasking';
+      if (textHasAny(p, ['check out', 'checkout'])) return 'establish_checkout';
+
+      return 'general';
+    }
+
+    function reorderJtacPhrasesForFlow(phrases){
+      const list = Array.isArray(phrases) ? phrases.slice() : [];
+      const rankMap = {
+        establish_checkin: 0,
+        tasking: 1,
+        ip_inbound: 2,
+        setup_talkon: 3,
+        engage: 4,
+        retasking: 5,
+        establish_checkout: 6,
+        general: 7,
+      };
+
+      list.sort(function(a, b){
+        const ra = rankMap[classifyJtacKeyword(a)] || 99;
+        const rb = rankMap[classifyJtacKeyword(b)] || 99;
+        if (ra !== rb) return ra - rb;
+        return String(a).localeCompare(String(b));
+      });
+
+      return list;
+    }
+
+    function classifyFlightKeyword(phrase){
+      const p = String(phrase || '').toLowerCase();
+      if (!p) return 'general';
+
+      if (textHasAny(p, [
+        '30 left go', '30 right go', '45 left go', '45 right go',
+        '60 left go', '60 right go', '90 left go', '90 right go',
+        'turnabout left go', 'turnabout right go', 'rotate go', 'shackle go',
+        'helos go spread', 'go helo left', 'go helo right', 'go helo tight', 'close group',
+        'kick out to '
+      ])) return 'tactical_formation';
+
+      if (textHasAny(p, [
+        'ground target', 'armor', 'artillery', 'air defense', 'aaa', 'sam', 'utility', 'infantry', 'ship',
+        'd-link target', 'ray target', 'attack', 'task and return to base', 'rifle', 'rockets', 'bombs away',
+        'reference my spee', 'reference my steerpoint', 'reference point', 'reference ', 'check my spee'
+      ])) return 'tactical_a2g';
+
+      if (p.indexOf('..') >= 0) return 'enroute';
+
+      if (textHasAny(p, [
+        'bandit', 'bogey', 'hostile', 'my enemy', 'my target', 'cover me', 'pincer', 'break ', 'clear ', 'pump',
+        'radar on', 'radar off', 'ecm', 'music on', 'music off', 'fence in', 'fence out', 'out cold', 'off cold'
+      ])) return 'tactical_a2a';
+
+      if (textHasAny(p, [
+        'check in', 'join up', 'rejoin', 'fly route', 'anchor', 'hold position', 'return to base', 'go home', 'rtb',
+        'tanker', 'line abreast', 'trail', 'wedge', 'echelon', 'finger four', 'spread four', 'formation',
+        'heading ', 'flow ', 'widen', 'close up', 'go heavy', 'go cruise', 'go combat'
+      ])) return 'enroute';
+
+      return 'general';
+    }
+
+    function reorderFlightPhrasesForContext(phrases){
+      const list = Array.isArray(phrases) ? phrases.slice() : [];
+      const rankMap = { enroute: 0, tactical_formation: 1, tactical_a2a: 2, tactical_a2g: 3, general: 4 };
+
+      list.sort(function(a, b){
+        const ra = rankMap[classifyFlightKeyword(a)] || 99;
+        const rb = rankMap[classifyFlightKeyword(b)] || 99;
+        if (ra !== rb) return ra - rb;
+        return String(a).localeCompare(String(b));
+      });
+
+      return list;
+    }
+
+    function getKeywordGroupsForTab(data, tab, phrases){
+      const rows = Array.isArray(phrases) ? phrases.slice() : [];
+      if (!rows.length) return [];
+
+      if (tab === 'ATC'){
+        const carrierContext = isCarrierContext(data);
+        const carrierCapable = isCarrierCapableAircraft(data);
+        const labels = {
+          launch_ops: 'Launch Ops',
+          case_i: 'Recovery CASE I',
+          case_ii_iii: 'Recovery CASE II / III',
+          carrier_common: 'Carrier Common',
+          carrier: carrierContext ? 'Carrier Ops Priority' : 'Carrier Ops',
+          startup_taxi: 'Startup and Taxi',
+          departure: 'Departure',
+          arrival_approach: 'Arrival and Approach',
+          shutdown: 'Taxi In and Shutdown',
+          general: 'General',
+        };
+
+        const orderedKeys = (carrierContext && carrierCapable)
+          ? ['launch_ops', 'case_i', 'case_ii_iii', 'carrier_common', 'carrier', 'startup_taxi', 'departure', 'arrival_approach', 'shutdown', 'general']
+          : ['startup_taxi', 'departure', 'arrival_approach', 'shutdown', 'general', 'carrier', 'launch_ops', 'case_i', 'case_ii_iii', 'carrier_common'];
+
+        const buckets = {
+          launch_ops: [],
+          case_i: [],
+          case_ii_iii: [],
+          carrier_common: [],
+          carrier: [],
+          startup_taxi: [],
+          departure: [],
+          arrival_approach: [],
+          shutdown: [],
+          general: []
+        };
+        rows.forEach(function(r){
+          const key = classifyAtcKeyword(r);
+          (buckets[key] || buckets.general).push(r);
+        });
+
+        const groups = [];
+        orderedKeys.forEach(function(k){
+          const vals = buckets[k] || [];
+          if (!vals.length) return;
+          groups.push({ title: labels[k], items: vals });
+        });
+        return groups;
+      }
+
+      if (tab === 'GND CREW'){
+        const orderedKeys = ['servicing_arming', 'startup', 'ground_checks', 'dispatching', 'general'];
+        const labels = {
+          servicing_arming: 'Servicing and Arming',
+          startup: 'Startup',
+          ground_checks: 'Ground Checks',
+          dispatching: 'Dispatching',
+          general: 'General',
+        };
+        const buckets = {
+          servicing_arming: [],
+          startup: [],
+          ground_checks: [],
+          dispatching: [],
+          general: []
+        };
+        rows.forEach(function(r){
+          const key = classifyGroundCrewKeyword(r);
+          (buckets[key] || buckets.general).push(r);
+        });
+
+        const groups = [];
+        orderedKeys.forEach(function(k){
+          const vals = buckets[k] || [];
+          if (!vals.length) return;
+          groups.push({ title: labels[k], items: vals });
+        });
+        return groups;
+      }
+
+      if (tab === 'JTAC'){
+        const orderedKeys = ['establish_checkin', 'tasking', 'ip_inbound', 'setup_talkon', 'engage', 'retasking', 'establish_checkout', 'general'];
+        const labels = {
+          establish_checkin: 'Stage Establish (Check In)',
+          tasking: 'Stage Tasking',
+          ip_inbound: 'Stage IP Inbound',
+          setup_talkon: 'Stage Setup and Talk On',
+          engage: 'Stage Engage',
+          retasking: 'Stage Re-Engage / Re-Tasking',
+          establish_checkout: 'Stage Establish (Check Out)',
+          general: 'General',
+        };
+        const buckets = {
+          establish_checkin: [],
+          tasking: [],
+          ip_inbound: [],
+          setup_talkon: [],
+          engage: [],
+          retasking: [],
+          establish_checkout: [],
+          general: []
+        };
+        rows.forEach(function(r){
+          const key = classifyJtacKeyword(r);
+          (buckets[key] || buckets.general).push(r);
+        });
+
+        const groups = [];
+        orderedKeys.forEach(function(k){
+          const vals = buckets[k] || [];
+          if (!vals.length) return;
+          groups.push({ title: labels[k], items: vals });
+        });
+        return groups;
+      }
+
+      if (tab === 'FLIGHT'){
+        const orderedKeys = ['enroute', 'tactical_formation', 'tactical_a2a', 'tactical_a2g', 'general'];
+        const labels = {
+          enroute: 'Enroute',
+          tactical_formation: 'Tactical Formation',
+          tactical_a2a: 'Tactical Air to Air',
+          tactical_a2g: 'Tactical Air to Ground',
+          general: 'General',
+        };
+        const buckets = { enroute: [], tactical_formation: [], tactical_a2a: [], tactical_a2g: [], general: [] };
+        rows.forEach(function(r){
+          const key = classifyFlightKeyword(r);
+          (buckets[key] || buckets.general).push(r);
+        });
+
+        const groups = [];
+        orderedKeys.forEach(function(k){
+          const vals = buckets[k] || [];
+          if (!vals.length) return;
+          groups.push({ title: labels[k], items: vals });
+        });
+        return groups;
+      }
+
+      if (tab === 'AI CREW'){
+        const suffix = formatAiCrewPhaseLabel(data && data.AiCrewPhase);
+        return [{ title: 'Primary' + suffix, items: rows }];
+      }
+
+      return [{ title: 'Reference', items: rows }];
+    }
+
     function getMergedLogByCategories(map, categories){
       const lines = [];
       if (!map) return '';
@@ -1275,8 +1853,19 @@ namespace VAICOM
         phrases.forEach(function(p){
           if (!/^George\s/i.test(p)) filtered.push(p);
         });
-        filtered.sort(function(a,b){ return a.localeCompare(b); });
-        return filtered;
+        return reorderGroundCrewPhrasesForFlow(filtered);
+      }
+
+      if (tab === 'ATC'){
+        return reorderAtcPhrasesForContext(data, phrases);
+      }
+
+      if (tab === 'FLIGHT'){
+        return reorderFlightPhrasesForContext(phrases);
+      }
+
+      if (tab === 'JTAC'){
+        return reorderJtacPhrasesForFlow(phrases);
       }
 
       phrases.sort(function(a,b){ return a.localeCompare(b); });
@@ -2943,17 +3532,27 @@ namespace VAICOM
         return 'No keywords for this tab yet.';
       }
 
-      const leftRows = [];
-      const rightRows = [];
-      for (let i = 0; i < rows.length; i++){
-        if ((i % 2) === 0) leftRows.push(rows[i]);
-        else rightRows.push(rows[i]);
-      }
+      const groups = getKeywordGroupsForTab(data, tab, rows);
+      if (!groups.length) return escapeHtml(text);
 
-      const left = leftRows.map(escapeHtml).join('<br>');
-      const right = rightRows.map(escapeHtml).join('<br>');
+      const blocks = groups.map(function(group){
+        const items = Array.isArray(group.items) ? group.items : [];
+        const splitIndex = Math.ceil(items.length / 2);
+        const leftRows = items.slice(0, splitIndex);
+        const rightRows = items.slice(splitIndex);
+        const left = leftRows.map(escapeHtml).join('<br>');
+        const right = rightRows.map(escapeHtml).join('<br>');
 
-      return '<div class=""kwCols""><div class=""kwCol"">' + left + '</div><div class=""kwCol"">' + right + '</div></div>';
+        return '<div class=""kwGroup""><div class=""kwGroupTitle"">'
+          + escapeHtml(group.title)
+          + '</div><div class=""kwCols""><div class=""kwCol"">'
+          + left
+          + '</div><div class=""kwCol"">'
+          + right
+          + '</div></div></div>';
+      });
+
+      return '<div class=""keywordsGroups"">' + blocks.join('') + '</div>';
     }
 
     function formatTabContent(data, tab){
@@ -3167,10 +3766,7 @@ namespace VAICOM
         btn.className = 'tab ' + tabCssClass(tab) + (tab === selectedTab ? ' active' : '');
         btn.textContent = tabLabel(tab);
         btn.onclick = function(){
-          selectedTab = tab;
-          autoBrowse = false;
-          document.getElementById('autoBrowse').checked = false;
-          if (latestData) render(latestData);
+          setSelectedTab(tab);
         };
         tabsEl.appendChild(btn);
       });
@@ -3385,6 +3981,18 @@ namespace VAICOM
     document.getElementById('autoBrowse').addEventListener('change', function(ev){
       autoBrowse = ev.target.checked;
       if (latestData) render(latestData);
+    });
+
+    document.getElementById('nightMode').addEventListener('change', function(ev){
+      nightModeEnabled = !!ev.target.checked;
+      persistNightModePreference();
+      applyNightModeUi();
+    });
+
+    document.getElementById('fontSizeSlider').addEventListener('input', function(ev){
+      contentFontSizePx = clamp(parseInt(ev.target.value, 10) || 24, 18, 34);
+      applyContentFontSizeUi();
+      persistContentFontSizePreference();
     });
 
     document.getElementById('drawModeToggle').addEventListener('click', function(){
@@ -3608,12 +4216,16 @@ namespace VAICOM
     });
 
     applySessionCollapsedState(readInitialSessionCollapsed());
-    applyDtcListCollapsedState(readInitialDtcListCollapsed());
+    nightModeEnabled = readNightModePreference();
+    applyNightModeUi();
+    contentFontSizePx = readContentFontSizePreference();
+    applyContentFontSizeUi();
     drawModeEnabled = readDrawModePreference();
     updateDrawModeToggleUi();
     tabKeywordsSplitByTab = readTabKeywordsSplitRatioByTab();
     initTabKeywordsDivider();
     applyCurrentTabKeywordsSplit();
+    registerCustomActionHandlers();
     window.addEventListener('resize', function(){
       applyCurrentTabKeywordsSplit();
     });
@@ -3628,9 +4240,9 @@ namespace VAICOM
                 private static Thread listenerThread;
                 private static bool isRunning;
 
-                private const string Prefix = "http://127.0.0.1:7779/okb/";
+                private const int DefaultOpenKneeboardOutPort = 7779;
                 private const string OpenKneeboardPluginsRegistryKey = @"SOFTWARE\Fred Emmott\OpenKneeboard\Plugins\v1";
-                private const string OpenKneeboardPluginId = "github.com/Penecruz/VAICOM-Community";
+                private const string OpenKneeboardPluginId = "VAICOM-Community";
                 private const string OpenKneeboardPluginTabId = OpenKneeboardPluginId + ";okb-out";
                 private const string OpenKneeboardKeywordsPluginId = "github.com/Penecruz/VAICOM-Community/keywords";
                 private const string OpenKneeboardKeywordsPluginTabId = OpenKneeboardKeywordsPluginId + ";keywords";
@@ -3645,7 +4257,13 @@ namespace VAICOM
 
                 public static void SetEnabled(bool enabled)
                 {
+                    if (enabled)
+                    {
+                        StopWebHost();
+                    }
+
                     SetPluginRegistration(enabled);
+                    SetKeywordsPluginRegistration();
 
                     if (enabled)
                     {
@@ -3655,6 +4273,62 @@ namespace VAICOM
                     {
                         StopWebHost();
                     }
+                }
+
+                private static void SetKeywordsPluginRegistration()
+                {
+                    try
+                    {
+                        string manifestPath = GetKeywordsPluginManifestPath();
+                        if (string.IsNullOrWhiteSpace(manifestPath))
+                        {
+                            return;
+                        }
+
+                        WriteKeywordsPluginManifest(manifestPath, "");
+
+                        using (RegistryKey key = Registry.CurrentUser.CreateSubKey(OpenKneeboardPluginsRegistryKey))
+                        {
+                            if (key == null)
+                            {
+                                return;
+                            }
+
+                            key.SetValue(manifestPath, 1, RegistryValueKind.DWord);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Log.Write("OpenKneeboard keywords plugin registration failed: " + ex.Message, Colors.Warning);
+                    }
+                }
+
+                private static int GetOpenKneeboardOutPort()
+                {
+                    int configuredPort = DefaultOpenKneeboardOutPort;
+
+                    try
+                    {
+                        if (State.activeconfig != null)
+                        {
+                            configuredPort = State.activeconfig.OpenKneeboard_Out_Port;
+                        }
+                    }
+                    catch
+                    {
+                    }
+
+                    if (configuredPort <= 0 || configuredPort > 65535)
+                    {
+                        configuredPort = DefaultOpenKneeboardOutPort;
+                    }
+
+                    return configuredPort;
+                }
+
+                private static string GetPrefix()
+                {
+                    return "http://127.0.0.1:" + GetOpenKneeboardOutPort() + "/okb/";
                 }
 
                 public static void RegisterKeywordsHtmlPlugin(string keywordsHtmlPath)
@@ -3731,12 +4405,102 @@ namespace VAICOM
                                 return;
                             }
 
-                            key.SetValue(manifestPath, enabled ? 1 : 0, RegistryValueKind.DWord);
+                            if (enabled)
+                            {
+                                DeactivateAllOpenKneeboardOutRegistrations(key);
+                                CleanupStaleOpenKneeboardOutManifestFiles(manifestPath);
+
+                                key.SetValue(manifestPath, 1, RegistryValueKind.DWord);
+                            }
+                            else
+                            {
+                                DeactivateAllOpenKneeboardOutRegistrations(key);
+                            }
                         }
                     }
                     catch (Exception ex)
                     {
                         Log.Write("OpenKneeboard plugin registration failed: " + ex.Message, Colors.Warning);
+                    }
+                }
+
+                private static void DeactivateAllOpenKneeboardOutRegistrations(RegistryKey key)
+                {
+                    try
+                    {
+                        foreach (string valueName in key.GetValueNames())
+                        {
+                            if (string.IsNullOrWhiteSpace(valueName))
+                            {
+                                continue;
+                            }
+
+                            string fileName = Path.GetFileName(valueName);
+                            if (string.IsNullOrWhiteSpace(fileName))
+                            {
+                                continue;
+                            }
+
+                            if (!fileName.StartsWith("OpenKneeboard", StringComparison.OrdinalIgnoreCase))
+                            {
+                                continue;
+                            }
+
+                            if (fileName.IndexOf("OpenKneeboard.Keywords", StringComparison.OrdinalIgnoreCase) >= 0)
+                            {
+                                continue;
+                            }
+
+                            key.SetValue(valueName, 0, RegistryValueKind.DWord);
+                        }
+                    }
+                    catch
+                    {
+                    }
+                }
+
+                private static void CleanupStaleOpenKneeboardOutManifestFiles(string activeManifestPath)
+                {
+                    try
+                    {
+                        string activeFullPath = Path.GetFullPath(activeManifestPath);
+                        string manifestFolder = Path.GetDirectoryName(activeFullPath);
+                        if (string.IsNullOrWhiteSpace(manifestFolder) || !Directory.Exists(manifestFolder))
+                        {
+                            return;
+                        }
+
+                        string[] staleManifests = Directory.GetFiles(manifestFolder, "OpenKneeboard*.v1.json");
+                        foreach (string staleManifest in staleManifests)
+                        {
+                            string staleManifestFileName = Path.GetFileName(staleManifest);
+                            if (string.IsNullOrWhiteSpace(staleManifestFileName))
+                            {
+                                continue;
+                            }
+
+                            if (staleManifestFileName.IndexOf("OpenKneeboard.Keywords", StringComparison.OrdinalIgnoreCase) >= 0)
+                            {
+                                continue;
+                            }
+
+                            string staleFullPath = Path.GetFullPath(staleManifest);
+                            if (string.Equals(staleFullPath, activeFullPath, StringComparison.OrdinalIgnoreCase))
+                            {
+                                continue;
+                            }
+
+                            try
+                            {
+                                File.Delete(staleManifest);
+                            }
+                            catch
+                            {
+                            }
+                        }
+                    }
+                    catch
+                    {
                     }
                 }
 
@@ -3759,7 +4523,7 @@ namespace VAICOM
                             : "config";
                         string outputFolder = Path.Combine(pluginRoot, configFolder);
 
-                        return Path.Combine(outputFolder, "OpenKneeboard.v1.json");
+                        return Path.Combine(outputFolder, "OpenKneeboard." + GetOpenKneeboardOutPort() + ".v1.json");
                     }
                     catch
                     {
@@ -3829,10 +4593,78 @@ namespace VAICOM
                                 {
                                     ID = OpenKneeboardPluginTabId,
                                     Name = "VAICOM OpenKneeboard Out",
+                                    CustomActions = new[]
+                                    {
+                                        new
+                                        {
+                                            ID = OpenKneeboardPluginTabId + ";tab-prev",
+                                            Name = "Tab Previous",
+                                        },
+                                        new
+                                        {
+                                            ID = OpenKneeboardPluginTabId + ";tab-next",
+                                            Name = "Tab Next",
+                                        },
+                                        new
+                                        {
+                                            ID = OpenKneeboardPluginTabId + ";tab-select",
+                                            Name = "Tab Select (via ExtraData)",
+                                        },
+                                        new
+                                        {
+                                            ID = OpenKneeboardPluginTabId + ";tab-log",
+                                            Name = "Tab LOG",
+                                        },
+                                        new
+                                        {
+                                            ID = OpenKneeboardPluginTabId + ";tab-atc",
+                                            Name = "Tab WX/ATC",
+                                        },
+                                        new
+                                        {
+                                            ID = OpenKneeboardPluginTabId + ";tab-awacs",
+                                            Name = "Tab AWACS",
+                                        },
+                                        new
+                                        {
+                                            ID = OpenKneeboardPluginTabId + ";tab-jtac",
+                                            Name = "Tab JTAC",
+                                        },
+                                        new
+                                        {
+                                            ID = OpenKneeboardPluginTabId + ";tab-tanker",
+                                            Name = "Tab TANKER",
+                                        },
+                                        new
+                                        {
+                                            ID = OpenKneeboardPluginTabId + ";tab-aocs",
+                                            Name = "Tab AOCS",
+                                        },
+                                        new
+                                        {
+                                            ID = OpenKneeboardPluginTabId + ";tab-flight",
+                                            Name = "Tab FLIGHT",
+                                        },
+                                        new
+                                        {
+                                            ID = OpenKneeboardPluginTabId + ";tab-ai-crew",
+                                            Name = "Tab AI CREW",
+                                        },
+                                        new
+                                        {
+                                            ID = OpenKneeboardPluginTabId + ";tab-gnd-crew",
+                                            Name = "Tab GND CREW",
+                                        },
+                                        new
+                                        {
+                                            ID = OpenKneeboardPluginTabId + ";tab-notes",
+                                            Name = "Tab NOTES",
+                                        },
+                                    },
                                     Implementation = "WebBrowser",
                                     ImplementationArgs = new
                                     {
-                                        URI = Prefix,
+                                        URI = GetPrefix(),
                                         InitialSize = new
                                         {
                                             Width = 1050,
@@ -4283,15 +5115,16 @@ namespace VAICOM
 
                     try
                     {
+                        string prefix = GetPrefix();
                         listener = new HttpListener();
-                        listener.Prefixes.Add(Prefix);
+                        listener.Prefixes.Add(prefix);
                         listener.Start();
 
                         isRunning = true;
                         listenerThread = new Thread(ListenLoop) { IsBackground = true, Name = "OpenKneeboardWebHost" };
                         listenerThread.Start();
 
-                        Log.Write("OpenKneeboard dashboard host started at " + Prefix, Colors.Text);
+                        Log.Write("OpenKneeboard dashboard host started at " + prefix, Colors.Text);
                     }
                     catch (Exception ex)
                     {

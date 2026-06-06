@@ -92,6 +92,16 @@ namespace VAICOM.Extensions.WSO
             { "Eject WSO", "wMsgWSO_Crew_Ejection_WSO" },
             { "Eject Both", "wMsgWSO_Crew_Ejection_Both" },
             { "Start Alignment Now", "wMsgWSO_Crew_StartAlignment" },
+            { "Shutdown", "wMsgWSO_Crew_Shutdown" },
+            { "Begin Shutdown", "wMsgWSO_Crew_Shutdown" },
+            { "Start Shutdown", "wMsgWSO_Crew_Shutdown" },
+            { "Call me below 500", "wMsgWSO_Crew_AltitudeMonitor_500" },
+            { "Call me below 300", "wMsgWSO_Crew_AltitudeMonitor_300" },
+            { "Call me below 200", "wMsgWSO_Crew_AltitudeMonitor_200" },
+            { "Call me below 100", "wMsgWSO_Crew_AltitudeMonitor_100" },
+            { "Call me below 50", "wMsgWSO_Crew_AltitudeMonitor_50" },
+            { "No altitude monitor", "wMsgWSO_Crew_AltitudeMonitor_Off" },
+            { "No more calls Required", "wMsgWSO_Crew_AltitudeMonitor_Off" },
             { "Countermeasures Mine", "wMsgWSO_Crew_Countermeasures_Manual" },
             { "Countermeasures Yours", "wMsgWSO_Crew_Countermeasures_Jester" },
             { "Pave Spike Ready", "wMsgWSO_A2G_PaveSpike_Ready" },
@@ -140,6 +150,12 @@ namespace VAICOM.Extensions.WSO
 
             // Jester fuel responses
             { "Fuel Is Looking Good", "wMsgWSO_Fuel_FuelIsGood" },
+            { "Fuel Is Looking Low", "wMsgWSO_Fuel_FuelIsLow" },
+            { "Remain On Mission", "wMsgWSO_Fuel_RemainOnMission" },
+            { "Airfield Refueling Options", "wMsgWSO_Fuel_AirfieldOptions" },
+            { "Tanker Refueling Options", "wMsgWSO_Fuel_TankerOptions" },
+            { "Refuel At", "wMsgWSO_Fuel_RefuelAtAirfield" },
+            { "Refuel At Airfield", "wMsgWSO_Fuel_RefuelAtAirfield" },
 
             // Context response aliases
             { "Context Select", "wMsgWSO_Context_Short" },

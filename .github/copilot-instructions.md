@@ -15,3 +15,5 @@
 
 ## OpenKneeboard Implementation
 - For OpenKneeboard FLT PLN tab, prefer a full-window, scrollable, table-like kneeboard layout and avoid large path/header blocks above route data.
+## Jester Mods Installation
+- For auto-installed Jester mods, set the Saved Games path to `\Saved Games\DCS_F4E\jester\mods` (and initialize under that), instead of the default DCS/DCS.openbeta folder mapping.

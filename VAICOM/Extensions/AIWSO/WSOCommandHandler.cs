@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Net.WebSockets;
+using Newtonsoft.Json.Linq;
 using VAICOM.Extensions.Kneeboard;
 using VAICOM.PushToTalk;
 using VAICOM.Static;
@@ -321,6 +323,77 @@ namespace VAICOM
                         Log.Write($"Target not found for target {lockTargetNumber}", Colors.Warning);
                         UI.Playsound.Recipientna();
                     }
+                }
+
+                public static void RejoinWithTanker()
+                {
+                    string tankerNumber = GetNumberFromCommand();
+                    string divertToTanker = $"divert_tanker_{tankerNumber}";
+
+                    if (WSODialogOptionsCache.TryGetOptionByAction(divertToTanker, out string tanker))
+                    {
+                        CommandCompleted("Rejoin With Tanker", new List<string> { $"Tanker {tankerNumber}", tanker });
+                        HbSendProxyCommand.SendDialogCommand(State.WsoDialogClient, "action", divertToTanker, "");
+
+                        // Automatically tune tacan and radio frequency if we have cached values for them
+                        if (WSOActionCache.TryGetByActionAndAsset("nav_tacan_tr", tanker, out string tacan))
+                        { 
+                            HbSendProxyCommand.SendWsoCommand(State.WsoWheelClient, "wMsgWSO_Navigation_TACAN_TuneAsset", tacan);
+                        }
+                        if (WSOActionCache.TryGetByActionAndAsset("radio_tune_atc", tanker, out string frequency))
+                        {
+                            HbSendProxyCommand.SendWsoCommand(State.WsoWheelClient, "wMsgWSO_Radio_TuneATC", frequency);
+                        }
+
+                    }
+                    else
+                    {
+                        CommandCompleted("Rejoin With Tanker", new List<string> { $"Tanker {tankerNumber}" });
+                        Log.Write($"Tanker {tankerNumber} not available", Colors.Warning);
+                        UI.Playsound.Recipientna();
+                    }
+                }
+
+                public static void JesterWheelModProxy()
+                {
+                    string name = State.Proxy.GetText("Name");
+                    string action = State.Proxy.GetText("Action");
+                    string value = State.Proxy.GetText("Value");
+                    List<string> messageParams = new List<string>();
+
+                    if (string.IsNullOrEmpty(name))
+                    {
+                        Log.Write($"Missing required name for command", Colors.Warning);
+                        UI.Playsound.Error();
+                        return;
+                    }
+                    else
+                    {
+                        name = name.Trim();
+                    }
+                    if (string.IsNullOrEmpty(action))
+                    {
+                        Log.Write($"Missing required action for command {name}", Colors.Warning);
+                        UI.Playsound.Error();
+                        return;
+                    }
+                    else
+                    {
+                        action = action.Trim();
+                    }
+                    if (string.IsNullOrEmpty(value))
+                    {
+                        value = "";
+                    }
+                    else
+                    {
+                        value = value.Trim();
+                        messageParams.Add(value);
+                    }
+
+                    CommandCompleted(name, messageParams);
+                    HbSendProxyCommand.SendWheelCommand(State.WsoWheelClient, "select", action, value);
+
                 }
 
                 public static bool IsWSO()

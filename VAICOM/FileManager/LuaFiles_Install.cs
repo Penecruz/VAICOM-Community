@@ -303,7 +303,17 @@ namespace VAICOM
                                         }
                                         else // to Saved Games
                                         {
-                                            basepath = UserSavedGamesFolder + "\\" + Server.dcsversion[set.Key] + "\\" + thisfile.installfolder;
+                                            bool isJesterModInstall = !string.IsNullOrWhiteSpace(thisfile.installfolder)
+                                                && thisfile.installfolder.StartsWith("jester\\mods", StringComparison.OrdinalIgnoreCase);
+
+                                            if (isJesterModInstall)
+                                            {
+                                                basepath = UserSavedGamesFolder + "\\DCS_F4E\\" + thisfile.installfolder;
+                                            }
+                                            else
+                                            {
+                                                basepath = UserSavedGamesFolder + "\\" + Server.dcsversion[set.Key] + "\\" + thisfile.installfolder;
+                                            }
                                         }
 
                                         // Validate basepath
@@ -335,7 +345,10 @@ namespace VAICOM
                                         {
                                             // ----- remove the file first (unless string replace type) ----
 
-                                            if (State.luahardreset && thisfile.hardreset && !thisfile.stringreplace)
+                                            bool isJesterModInstall = !string.IsNullOrWhiteSpace(thisfile.installfolder)
+                                                && thisfile.installfolder.StartsWith("jester\\mods", StringComparison.OrdinalIgnoreCase);
+
+                                            if ((State.luahardreset || isJesterModInstall) && thisfile.hardreset && !thisfile.stringreplace)
                                             {
                                                 if (File.Exists(path))
                                                 {

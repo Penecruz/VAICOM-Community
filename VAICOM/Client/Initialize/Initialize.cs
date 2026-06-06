@@ -480,7 +480,7 @@ namespace VAICOM
                     ResetPTTConfig(vaProxy);
                     InstallLuaFiles(vaProxy);
                     FileHandler.Root.CheckProfile(false);
-                    FileHandler.Root.CheckWSOProfile(false);  // WSO
+                    FileHandler.Root.CheckWSOProfile(true);  // WSO (always refresh profile on startup)
 
                     // Call MergeRIO
                     MergeRIO(vaProxy);

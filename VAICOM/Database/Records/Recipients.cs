@@ -667,6 +667,7 @@ namespace VAICOM
                 
                 { "wAIUnitCrewNull",        new Recipient { uniqueid = 18000, category = RecipientCategories.aicrew, name = "wAIUnitCrewNull",          } },
                 { "crew",                   new Recipient { uniqueid = 18001, category = RecipientCategories.aicrew, name = "wAIUnitCrewCrew",          displayname = Labels.airecipients["crew"] } },
+                { "aicrew",                 new Recipient { uniqueid = 18002, category = RecipientCategories.aicrew, name = "wAIUnitCrewAICrew",        displayname = Labels.airecipients["aicrew"] } },
                 { "wAIUnitCrewMaximum",     new Recipient { uniqueid = 18099, category = RecipientCategories.aicrew, name = "wAIUnitCrewMaximum",       } },
 
                 // parked
@@ -678,8 +679,7 @@ namespace VAICOM
                 { "wAIUnitAOCSMaximum",     new Recipient { uniqueid = 19049, category = RecipientCategories.aocs,  name = "wAIUnitAOCSMaximum",   } },
 
                 { "wAIUnitAuxNull",         new Recipient { uniqueid = 19050, category = RecipientCategories.auxmenu, name = "wAIUnitAuxNull",          } },
-                { "aux",                    new Recipient { uniqueid = 19051, category = RecipientCategories.auxmenu, name = "wAIUnitAuxMysteryGuest",  displayname = Labels.airecipients["aux"] } },
-                //{ "AI_ATC",                 new Recipient { uniqueid = 19052, category = RecipientCategories.auxmenu, name = "wAI_ATC",  displayname = Labels.airecipients["AI_ATC"] } },
+                { "aux",                    new Recipient { uniqueid = 19051, category = RecipientCategories.auxmenu, name = "wAIUnitAuxMysteryGuest",  displayname = Labels.airecipients["aux"] } },                
                 { "wAIUnitAuxMaximum",      new Recipient { uniqueid = 19099, category = RecipientCategories.auxmenu, name = "wAIUnitAuxMaximum",       } },
 
                 { "wAIUnitCargoNull",       new Recipient { uniqueid = 19100, category = RecipientCategories.cargo, name = "wAIUnitCargoNull",          } },
