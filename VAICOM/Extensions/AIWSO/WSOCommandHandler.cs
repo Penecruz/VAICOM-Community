@@ -357,6 +357,7 @@ namespace VAICOM
                 public static void JesterWheelModProxy()
                 {
                     string name = State.Proxy.GetText("Name");
+                    string category = State.Proxy.GetText("Category");
                     string action = State.Proxy.GetText("Action");
                     string value = State.Proxy.GetText("Value");
                     List<string> messageParams = new List<string>();
@@ -371,6 +372,15 @@ namespace VAICOM
                     {
                         name = name.Trim();
                     }
+                    
+                    // In almost all cases for actions on the wheel this will be "select".
+                    // There are some items though that use "misc", primarily for operation
+                    // of the wheel, e.g. "misc" for focusing the text field and closing the wheel.
+                    if (string.IsNullOrEmpty(category))
+                    {
+                        category = "select";
+                    }
+
                     if (string.IsNullOrEmpty(action))
                     {
                         Log.Write($"Missing required action for command {name}", Colors.Warning);
@@ -381,6 +391,9 @@ namespace VAICOM
                     {
                         action = action.Trim();
                     }
+                    // Users should set this to any empty string in VoiceAttack even if their action does not
+                    // require a value. This is due to VoiceAttack remembering what the last value was
+                    // that was set, so will reuse that value even if one is not specified.
                     if (string.IsNullOrEmpty(value))
                     {
                         value = "";
@@ -392,8 +405,7 @@ namespace VAICOM
                     }
 
                     CommandCompleted(name, messageParams);
-                    HbSendProxyCommand.SendWheelCommand(State.WsoWheelClient, "select", action, value);
-
+                    HbSendProxyCommand.SendWheelCommand(State.WsoWheelClient, category, action, value);
                 }
 
                 public static bool IsWSO()
