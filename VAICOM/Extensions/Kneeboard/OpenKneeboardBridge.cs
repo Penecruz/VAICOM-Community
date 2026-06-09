@@ -4094,6 +4094,206 @@ namespace VAICOM
         return { x: sx, y: sy };
       }
 
+      const selected = getActiveFlightPlanSelection((typeof data === 'undefined' ? null : data));
+      const mapView = getMapViewBySelection(selected);
+      const zoom = clamp(isFinite(Number(mapView.zoom)) ? Number(mapView.zoom) : 1, 0.6, 4.0);
+      const panX = isFinite(Number(mapView.panX)) ? Number(mapView.panX) : 0;
+      const panY = isFinite(Number(mapView.panY)) ? Number(mapView.panY) : 0;
+
+      function toTheaterTileKey(theater){
+        const raw = String(theater || '').toUpperCase();
+        if (raw.indexOf('PERSIAN') >= 0) return 'PersianGulf';
+        if (raw.indexOf('SOUTH ATLANTIC') >= 0) return 'SouthAtlantic';
+        if (raw.indexOf('NEVADA') >= 0) return 'Nevada';
+        if (raw.indexOf('MARIANA') >= 0) return 'Marianas';
+        if (raw.indexOf('MARIANAISLANDS') >= 0) return 'Marianas';
+        if (raw.indexOf('AFGHAN') >= 0) return 'Afghanistan';
+        if (raw.indexOf('CAUCASUS') >= 0) return 'Caucasus';
+        if (raw.indexOf('NORMANDY') >= 0) return 'Normandy';
+        if (raw.indexOf('SYRIA') >= 0) return 'Syria';
+        if (raw.indexOf('SINAI') >= 0) return 'Sinai';
+        if (raw.indexOf('KOLA') >= 0) return 'Kola';
+        return '';
+      }
+
+      function getTheaterLatLonBounds(key){
+        const table = {
+          Caucasus:      { minLat: 38.0,  maxLat: 47.0,  minLon: 27.0,   maxLon: 49.0 },
+          Syria:         { minLat: 30.0,  maxLat: 38.8,  minLon: 32.0,   maxLon: 44.5 },
+          PersianGulf:   { minLat: 22.0,  maxLat: 31.8,  minLon: 46.0,   maxLon: 61.2 },
+          Nevada:        { minLat: 33.5,  maxLat: 39.5,  minLon: -119.8, maxLon: -112.0 },
+          Marianas:      { minLat: 10.0,  maxLat: 22.0,  minLon: 138.0,  maxLon: 153.5 },
+          Sinai:         { minLat: 26.0,  maxLat: 34.0,  minLon: 30.0,   maxLon: 37.5 },
+          Normandy:      { minLat: 47.0,  maxLat: 51.5,  minLon: -3.5,   maxLon: 4.0 },
+          Kola:          { minLat: 63.0,  maxLat: 72.5,  minLon: 16.0,   maxLon: 41.0 },
+          SouthAtlantic: { minLat: -59.5, maxLat: -46.0, minLon: -74.0,  maxLon: -48.0 },
+          Afghanistan:   { minLat: 29.0,  maxLat: 38.8,  minLon: 59.0,   maxLon: 72.5 }
+        };
+        return table[key] || null;
+      }
+
+      function getOnlineTileTemplateForTheater(theaterKey){
+        if (!theaterKey) return '';
+        return 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
+      }
+
+      function clampLatMercator(lat){
+        return clamp(Number(lat) || 0, -85.05112878, 85.05112878);
+      }
+
+      function lonToTileX(lon, z){
+        const n = Math.pow(2, z);
+        return Math.floor(((Number(lon) + 180.0) / 360.0) * n);
+      }
+
+      function latToTileY(lat, z){
+        const n = Math.pow(2, z);
+        const clampedLat = clampLatMercator(lat);
+        const latRad = clampedLat * Math.PI / 180.0;
+        const merc = Math.log(Math.tan(latRad) + (1.0 / Math.cos(latRad)));
+        return Math.floor(((1.0 - (merc / Math.PI)) / 2.0) * n);
+      }
+
+      function tileXToLon(x, z){
+        return (Number(x) / Math.pow(2, z)) * 360.0 - 180.0;
+      }
+
+      function tileYToLat(y, z){
+        const n = Math.PI - (2.0 * Math.PI * Number(y) / Math.pow(2, z));
+        return 180.0 / Math.PI * Math.atan(0.5 * (Math.exp(n) - Math.exp(-n)));
+      }
+
+      function dcsToLatLon(north, east, dcsBounds, llBounds){
+        const dn = Number(dcsBounds.maxNorth) - Number(dcsBounds.minNorth);
+        const de = Number(dcsBounds.maxEast) - Number(dcsBounds.minEast);
+        if (!(dn > 1) || !(de > 1)) return null;
+        const rn = (Number(north) - Number(dcsBounds.minNorth)) / dn;
+        const re = (Number(east) - Number(dcsBounds.minEast)) / de;
+        const lat = Number(llBounds.maxLat) - (rn * (Number(llBounds.maxLat) - Number(llBounds.minLat)));
+        const lon = Number(llBounds.minLon) + (re * (Number(llBounds.maxLon) - Number(llBounds.minLon)));
+        return { lat: lat, lon: lon };
+      }
+
+      function latLonToDcs(lat, lon, dcsBounds, llBounds){
+        const latSpan = Number(llBounds.maxLat) - Number(llBounds.minLat);
+        const lonSpan = Number(llBounds.maxLon) - Number(llBounds.minLon);
+        if (!(latSpan > 0.00001) || !(lonSpan > 0.00001)) return null;
+        const rn = (Number(llBounds.maxLat) - Number(lat)) / latSpan;
+        const re = (Number(lon) - Number(llBounds.minLon)) / lonSpan;
+        const north = Number(dcsBounds.minNorth) + (rn * (Number(dcsBounds.maxNorth) - Number(dcsBounds.minNorth)));
+        const east = Number(dcsBounds.minEast) + (re * (Number(dcsBounds.maxEast) - Number(dcsBounds.minEast)));
+        return { north: north, east: east };
+      }
+
+      const server = (data && data.Server) || {};
+      const theaterKey = toTheaterTileKey(server.Theater);
+      const latLonBounds = getTheaterLatLonBounds(theaterKey);
+      const onlineTemplate = getOnlineTileTemplateForTheater(theaterKey);
+      const northPad = Math.max(1, spanNorth * 0.25);
+      const eastPad = Math.max(1, spanEast * 0.25);
+      const dcsBounds = {
+        minNorth: minNorth - northPad,
+        maxNorth: maxNorth + northPad,
+        minEast: minEast - eastPad,
+        maxEast: maxEast + eastPad
+      };
+
+      const tileZoom = clamp(6 + Math.round((zoom - 1.0) * 2.0), 6, 11);
+      const tileEls = [];
+      if (theaterKey && latLonBounds && onlineTemplate){
+        const nw = dcsToLatLon(dcsBounds.maxNorth, dcsBounds.minEast, dcsBounds, latLonBounds);
+        const se = dcsToLatLon(dcsBounds.minNorth, dcsBounds.maxEast, dcsBounds, latLonBounds);
+        if (nw && se){
+          let txMin = lonToTileX(Math.min(nw.lon, se.lon), tileZoom);
+          let txMax = lonToTileX(Math.max(nw.lon, se.lon), tileZoom);
+          let tyMin = latToTileY(Math.max(nw.lat, se.lat), tileZoom);
+          let tyMax = latToTileY(Math.min(nw.lat, se.lat), tileZoom);
+
+          if (txMin > txMax){ const t = txMin; txMin = txMax; txMax = t; }
+          if (tyMin > tyMax){ const t = tyMin; tyMin = tyMax; tyMax = t; }
+
+          const tileCount = (txMax - txMin + 1) * (tyMax - tyMin + 1);
+          if (tileCount > 0 && tileCount <= 256){
+            for (let tx = txMin; tx <= txMax; tx++){
+              for (let ty = tyMin; ty <= tyMax; ty++){
+                const lonW = tileXToLon(tx, tileZoom);
+                const lonE = tileXToLon(tx + 1, tileZoom);
+                const latN = tileYToLat(ty, tileZoom);
+                const latS = tileYToLat(ty + 1, tileZoom);
+
+                const dcsNW = latLonToDcs(latN, lonW, dcsBounds, latLonBounds);
+                const dcsSE = latLonToDcs(latS, lonE, dcsBounds, latLonBounds);
+                if (!dcsNW || !dcsSE) continue;
+
+                const p1 = mapPt({ xNum: dcsNW.north, yNum: dcsNW.east });
+                const p2 = mapPt({ xNum: dcsSE.north, yNum: dcsSE.east });
+                const x = Math.min(p1.x, p2.x);
+                const y = Math.min(p1.y, p2.y);
+                const w = Math.abs(p2.x - p1.x);
+                const h = Math.abs(p2.y - p1.y);
+                if (!isFinite(x) || !isFinite(y) || !isFinite(w) || !isFinite(h) || w < 1 || h < 1) continue;
+
+                const href = onlineTemplate
+                  .replace('{z}', String(tileZoom))
+                  .replace('{y}', String(ty))
+                  .replace('{x}', String(tx));
+                tileEls.push('<image x=""' + x.toFixed(1) + '"" y=""' + y.toFixed(1) + '"" width=""' + w.toFixed(1) + '"" height=""' + h.toFixed(1) + '"" preserveAspectRatio=""none"" href=""' + href + '"" xlink:href=""' + href + '"" opacity=""0.85"" />');
+              }
+            }
+          }
+        }
+      }
+
+      if (!tileEls.length && theaterKey && latLonBounds && onlineTemplate){
+        const fallbackZooms = [];
+        for (let z = tileZoom - 1; z >= 6; z--) fallbackZooms.push(z);
+        for (let z = tileZoom + 1; z <= 11; z++) fallbackZooms.push(z);
+
+        for (let zi = 0; zi < fallbackZooms.length && !tileEls.length; zi++){
+          const z = fallbackZooms[zi];
+          const nw = dcsToLatLon(dcsBounds.maxNorth, dcsBounds.minEast, dcsBounds, latLonBounds);
+          const se = dcsToLatLon(dcsBounds.minNorth, dcsBounds.maxEast, dcsBounds, latLonBounds);
+          if (!nw || !se) continue;
+
+          let txMin = lonToTileX(Math.min(nw.lon, se.lon), z);
+          let txMax = lonToTileX(Math.max(nw.lon, se.lon), z);
+          let tyMin = latToTileY(Math.max(nw.lat, se.lat), z);
+          let tyMax = latToTileY(Math.min(nw.lat, se.lat), z);
+          if (txMin > txMax){ const t = txMin; txMin = txMax; txMax = t; }
+          if (tyMin > tyMax){ const t = tyMin; tyMin = tyMax; tyMax = t; }
+
+          const tileCount = (txMax - txMin + 1) * (tyMax - tyMin + 1);
+          if (!(tileCount > 0 && tileCount <= 256)) continue;
+
+          for (let tx = txMin; tx <= txMax; tx++){
+            for (let ty = tyMin; ty <= tyMax; ty++){
+              const lonW = tileXToLon(tx, z);
+              const lonE = tileXToLon(tx + 1, z);
+              const latN = tileYToLat(ty, z);
+              const latS = tileYToLat(ty + 1, z);
+
+              const dcsNW = latLonToDcs(latN, lonW, dcsBounds, latLonBounds);
+              const dcsSE = latLonToDcs(latS, lonE, dcsBounds, latLonBounds);
+              if (!dcsNW || !dcsSE) continue;
+
+              const p1 = mapPt({ xNum: dcsNW.north, yNum: dcsNW.east });
+              const p2 = mapPt({ xNum: dcsSE.north, yNum: dcsSE.east });
+              const x = Math.min(p1.x, p2.x);
+              const y = Math.min(p1.y, p2.y);
+              const w = Math.abs(p2.x - p1.x);
+              const h = Math.abs(p2.y - p1.y);
+              if (!isFinite(x) || !isFinite(y) || !isFinite(w) || !isFinite(h) || w < 1 || h < 1) continue;
+
+              const href = onlineTemplate
+                .replace('{z}', String(z))
+                .replace('{y}', String(ty))
+                .replace('{x}', String(tx));
+              tileEls.push('<image x=""' + x.toFixed(1) + '"" y=""' + y.toFixed(1) + '"" width=""' + w.toFixed(1) + '"" height=""' + h.toFixed(1) + '"" preserveAspectRatio=""none"" href=""' + href + '"" xlink:href=""' + href + '"" opacity=""0.85"" />');
+            }
+          }
+        }
+      }
+
       const mapped = rows.map(function(wp){
         const p = mapPt(wp);
         return { wp: wp, x: p.x, y: p.y, kind: getMudMapPointType(wp) };
@@ -4226,15 +4426,10 @@ namespace VAICOM
         '</g>'
       ].join('');
 
-      const selected = getActiveFlightPlanSelection((typeof data === 'undefined' ? null : data));
-      const mapView = getMapViewBySelection(selected);
-      const zoom = clamp(isFinite(Number(mapView.zoom)) ? Number(mapView.zoom) : 1, 0.6, 4.0);
-      const panX = isFinite(Number(mapView.panX)) ? Number(mapView.panX) : 0;
-      const panY = isFinite(Number(mapView.panY)) ? Number(mapView.panY) : 0;
-
-      return '<svg viewBox=""0 0 ' + width + ' ' + height + '"" class=""fltPlanPage3Canvas"" preserveAspectRatio=""xMidYMid meet"" data-map-canvas=""1"">'
+      return '<svg viewBox=""0 0 ' + width + ' ' + height + '"" class=""fltPlanPage3Canvas"" preserveAspectRatio=""xMidYMid meet"" data-map-canvas=""1"" xmlns=""http://www.w3.org/2000/svg"" xmlns:xlink=""http://www.w3.org/1999/xlink"">'
         + '<rect x=""0"" y=""0"" width=""' + width + '"" height=""' + height + '"" fill=""' + palette.bg + '"" />'
         + '<g data-map-content=""1"" transform=""translate(' + panX.toFixed(1) + ' ' + panY.toFixed(1) + ') scale(' + zoom.toFixed(3) + ')"">'
+        + tileEls.join('')
         + lineEls.join('')
         + assetEls.join('')
         + pointEls.join('')
@@ -6624,6 +6819,8 @@ namespace VAICOM
                 {
                     byte[] bytes = payload ?? Array.Empty<byte>();
                     response.ContentType = contentType;
+                    response.AddHeader("Cache-Control", "public, max-age=86400");
+                    response.AddHeader("Access-Control-Allow-Origin", "*");
                     response.ContentLength64 = bytes.Length;
                     response.OutputStream.Write(bytes, 0, bytes.Length);
                     response.OutputStream.Close();
