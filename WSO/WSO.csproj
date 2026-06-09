@@ -71,6 +71,10 @@
     <None Include="DevPipe\properties_snapshot.json" />
     <None Include="DevPipe\TimeOverTarget.lua" />
     <None Include="packages.config" />
+    <None Include="Temp\ANZUS_NTTR_2025_5.0.zip" />
+    <None Include="Temp\Caucasus.lua" />
+    <None Include="Temp\F-16C_Vaicom_TEST-2.dtc" />
+    <None Include="Temp\Vaicom Test-1.dtc" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="DevPipe\listenTo_index.txt" />

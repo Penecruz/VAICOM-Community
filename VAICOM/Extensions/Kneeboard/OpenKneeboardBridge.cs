@@ -1,10 +1,12 @@
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.IO;
 using System.Net;
+using System.Text.RegularExpressions;
 using System.Text;
 using System.Threading;
 using System.Windows;
@@ -23,6 +25,8 @@ namespace VAICOM
                 private static OpenKneeboardSnapshot snapshot = new OpenKneeboardSnapshot();
                 private static string lastAiCrewCommand = "";
                 private static bool captureRawServerMessages;
+                private static readonly string[] DtcFileExtensions = new[] { ".dtc", ".json" };
+                private const string RouteSelectionPrefix = "RTE::";
                 private static readonly string IndexHtml = @"<!doctype html>
 <html>
 <head>
@@ -36,12 +40,12 @@ namespace VAICOM
       width: 100%;
       height: 100%;
       background: #f1f1ef;
-      overflow: hidden;
+      overflow: visible;
       box-sizing: border-box;
       border: 1px solid #9aa0a6;
       box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.08);
     }
-    .sheetBody { height: 100%; overflow: hidden; padding: 8px; box-sizing: border-box; display: flex; flex-direction: column; }
+    .sheetBody { height: 100%; overflow: visible; padding: 8px; box-sizing: border-box; display: flex; flex-direction: column; }
     .headerRow { display:flex; align-items:flex-start; justify-content:space-between; gap:10px; margin-bottom:4px; }
     h3 { margin: 0; font-size: 28px; color: #111; }
     .logo { width: 36px; height: 36px; object-fit: contain; }
@@ -133,6 +137,7 @@ namespace VAICOM
     .tab-TANKER { background: rgba(125, 104, 50, 0.82); }
     .tab-FLIGHT { background: rgba(132, 70, 66, 0.82); }
     .tab-AOCS { background: rgba(112, 62, 143, 0.82); }
+    .tab-DTC { background: rgba(66, 93, 124, 0.82); }
     .tab-REF_CREW { background: rgba(130, 129, 71, 0.82); }
     .tab-NOTES { background: rgba(73, 80, 146, 0.82); }
     .tab-AI_CREW { background: rgba(131, 87, 44, 0.82); }
@@ -144,6 +149,7 @@ namespace VAICOM
     .tab.active.tab-TANKER,
     .tab.active.tab-FLIGHT,
     .tab.active.tab-AOCS,
+    .tab.active.tab-DTC,
     .tab.active.tab-REF_CREW,
     .tab.active.tab-NOTES,
     .tab.active.tab-AI_CREW {
@@ -194,7 +200,497 @@ namespace VAICOM
     .kwCols { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
     .kwCol { white-space: pre-wrap; word-break: break-word; }
     .controls { margin: 8px 0; color: #222; font-size: 19px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+    .controls.fltPlanControls { margin: 0 0 8px 0; }
+    .fltPlanSelected { font-size: 17px; color: #22303d; }
     .controls label { white-space: nowrap; }
+    .controls select {
+      font-family: inherit;
+      font-size: 17px;
+      padding: 2px 4px;
+      border: 1px solid #7c8692;
+      background: #ffffff;
+      color: #111;
+      min-width: 300px;
+      max-width: 460px;
+    }
+
+    function findFirstObjectByKeyPattern(value, pattern, depth){
+      if (depth > 8 || value === null || value === undefined) return null;
+      if (Array.isArray(value)){
+        for (let i = 0; i < value.length; i++){
+          const found = findFirstObjectByKeyPattern(value[i], pattern, depth + 1);
+          if (found) return found;
+        }
+        return null;
+      }
+
+      if (typeof value !== 'object') return null;
+
+      const keys = Object.keys(value);
+      for (let i = 0; i < keys.length; i++){
+        const k = keys[i];
+        const v = value[k];
+        if (pattern.test(String(k)) && v && typeof v === 'object'){
+          return v;
+        }
+      }
+
+      for (let i = 0; i < keys.length; i++){
+        const found = findFirstObjectByKeyPattern(value[keys[i]], pattern, depth + 1);
+        if (found) return found;
+      }
+
+      return null;
+    }
+
+    function collectScalarRows(prefix, value, rows, depth, maxRows){
+      if (rows.length >= maxRows || depth > 8) return;
+      if (value === null || value === undefined){
+        rows.push({ key: prefix || '-', value: '-' });
+        return;
+      }
+
+      if (Array.isArray(value)){
+        for (let i = 0; i < value.length; i++){
+          collectScalarRows((prefix || 'item') + '[' + i + ']', value[i], rows, depth + 1, maxRows);
+          if (rows.length >= maxRows) return;
+        }
+        return;
+      }
+
+      if (typeof value === 'object'){
+        const keys = Object.keys(value);
+        if (!keys.length){
+          rows.push({ key: prefix || '-', value: '{}' });
+          return;
+        }
+
+        keys.forEach(function(k){
+          if (rows.length >= maxRows) return;
+          const nextPrefix = prefix ? (prefix + '.' + k) : k;
+          collectScalarRows(nextPrefix, value[k], rows, depth + 1, maxRows);
+        });
+        return;
+      }
+
+      rows.push({ key: prefix || '-', value: String(value) });
+    }
+
+    function isNavPointObject(o){
+      if (!o || typeof o !== 'object') return false;
+      const hasXY = isFinite(Number(o.x)) && isFinite(Number(o.y));
+      const hasLatLon = (isFinite(Number(o.lat)) && isFinite(Number(o.lon)))
+        || (isFinite(Number(o.latitude)) && isFinite(Number(o.longitude)));
+      const hasWpMeta = o.type || o.action || o.name || o.ETA || o.alt;
+      return hasXY || hasLatLon || !!hasWpMeta;
+    }
+
+    function collectNavPoints(value, points, depth){
+      if (points.length >= 200 || depth > 9 || value === null || value === undefined) return;
+
+      if (Array.isArray(value)){
+        value.forEach(function(item){
+          if (points.length >= 200) return;
+          collectNavPoints(item, points, depth + 1);
+        });
+        return;
+      }
+
+      if (typeof value !== 'object') return;
+
+      if (isNavPointObject(value)){
+        points.push(value);
+      }
+
+      Object.keys(value).forEach(function(k){
+        if (points.length >= 200) return;
+        const child = value[k];
+        if (child && typeof child === 'object'){
+          collectNavPoints(child, points, depth + 1);
+        }
+      });
+    }
+
+    function getMudMapPointType(wp){
+      const typeRaw = String((wp && (wp.typeRaw || wp.type || '')) || '').toUpperCase();
+      const nameRaw = String((wp && (wp.name || '')) || '').toUpperCase();
+      const combined = typeRaw + ' ' + nameRaw;
+
+      if (combined.indexOf('AAR') >= 0 || combined.indexOf('AIR REFUEL') >= 0) return 'aar';
+      if (combined.indexOf('CAP') >= 0 || combined.indexOf('COMBAT AIR PATROL') >= 0) return 'cap';
+      if (combined.indexOf('HLD') >= 0 || combined.indexOf('HOLD') >= 0) return 'hld';
+      if (combined.indexOf('TGT') >= 0 || combined.indexOf('TARGET') >= 0) return 'tgt';
+      if (combined.indexOf('IP') >= 0 || combined.indexOf('INITIAL POINT') >= 0 || combined.indexOf('INBOUND POINT') >= 0) return 'ip';
+      if (combined.indexOf('DVRT') >= 0 || combined.indexOf('DIVERT') >= 0 || combined.indexOf('DIVERSION') >= 0) return 'dvrt';
+      if (combined.indexOf('LDG') >= 0 || combined.indexOf('LAND') >= 0) return 'ldg';
+      if (combined.indexOf('LAND') >= 0 || combined.indexOf('HOME') >= 0 || combined.indexOf('BASE') >= 0 || combined.indexOf('TAKEOFF') >= 0) return 'home';
+      return 'wp';
+    }
+
+    function getMudMapSegments(points){
+      const rows = Array.isArray(points) ? points : [];
+      const segs = [];
+      for (let i = 1; i < rows.length; i++){
+        const a = rows[i - 1];
+        const b = rows[i];
+        const aType = getMudMapPointType(a);
+        const bType = getMudMapPointType(b);
+        const fromHomeLike = (aType === 'home' || aType === 'ldg');
+        const toHomeLike = (bType === 'home' || bType === 'ldg');
+        const dashed = (fromHomeLike && !toHomeLike);
+        segs.push({ from: a, to: b, dashed: dashed });
+      }
+      return segs;
+    }
+
+    function getMudMapAssets(data){
+      const server = (data && data.Server) || {};
+      const rawAssets = Array.isArray(server.FriendlyAssets) ? server.FriendlyAssets : [];
+      return rawAssets
+        .map(function(a){
+          const rawX = Number(a && a.X);
+          const rawY = Number(a && a.Y);
+          if (!isFinite(rawX) || !isFinite(rawY)) return null;
+          return {
+            callsign: String((a && a.Callsign) || '').trim(),
+            name: String((a && a.Name) || '').trim(),
+            category: String((a && a.Category) || '').trim().toUpperCase(),
+            rawLine: String((a && a.RawLine) || '').trim(),
+            rawX: rawX,
+            rawY: rawY,
+            xNum: rawX,
+            yNum: rawY
+          };
+        })
+        .filter(function(a){ return !!a; });
+    }
+
+    function normalizeAssetCallsignKey(text){
+      return String(text || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+    }
+
+    function parseBraFromUnitLine(line){
+      const text = String(line || '').trim();
+      if (!text) return null;
+      const bra = text.match(/\b(\d{3})\/(\d{1,3})(?:\/|\b)/);
+      if (!bra) return null;
+      const bearing = Number(bra[1]);
+      if (!isFinite(bearing)) return null;
+      const csMatch = text.match(/\]\s*([^\s]+)/);
+      const callsign = csMatch ? String(csMatch[1] || '').trim() : '';
+      if (!callsign) return null;
+      return {
+        callsignKey: normalizeAssetCallsignKey(callsign),
+        bearing: bearing,
+      };
+    }
+
+    function buildBraBearingMap(data){
+      const result = {};
+      const cats = ['TANKER', 'AWACS', 'JTAC', 'FLIGHT'];
+      cats.forEach(function(cat){
+        const lines = getMergedList(data && data.Units, cat);
+        (Array.isArray(lines) ? lines : []).forEach(function(line){
+          const parsed = parseBraFromUnitLine(line);
+          if (!parsed || !parsed.callsignKey || !isFinite(parsed.bearing)) return;
+          if (result[parsed.callsignKey] === undefined){
+            result[parsed.callsignKey] = parsed.bearing;
+          }
+        });
+      });
+      return result;
+    }
+
+    function angularDifferenceDeg(a, b){
+      const da = Number(a);
+      const db = Number(b);
+      if (!isFinite(da) || !isFinite(db)) return 180;
+      return Math.abs((((da - db) % 360) + 540) % 360 - 180);
+    }
+
+    function resolveAssetAxisSwap(assets, data){
+      const list = Array.isArray(assets) ? assets : [];
+      if (!list.length) return false;
+
+      const ownship = list.find(function(a){ return String(a && a.category || '').toUpperCase() === 'PLAYER'; });
+      if (!ownship) return false;
+
+      const ownX = Number(ownship.rawX);
+      const ownY = Number(ownship.rawY);
+      if (!isFinite(ownX) || !isFinite(ownY)) return false;
+
+      const bearingMap = buildBraBearingMap(data);
+      const samples = list.filter(function(a){
+        const key = normalizeAssetCallsignKey(a && a.callsign);
+        return key && bearingMap[key] !== undefined && a !== ownship;
+      }).slice(0, 10);
+      if (!samples.length) return false;
+
+      function score(swapped){
+        let total = 0;
+        let count = 0;
+        samples.forEach(function(a){
+          const key = normalizeAssetCallsignKey(a.callsign);
+          const braBearing = Number(bearingMap[key]);
+          const north = swapped ? Number(a.rawY) : Number(a.rawX);
+          const east = swapped ? Number(a.rawX) : Number(a.rawY);
+          const ownNorth = swapped ? ownY : ownX;
+          const ownEast = swapped ? ownX : ownY;
+          if (!isFinite(north) || !isFinite(east) || !isFinite(ownNorth) || !isFinite(ownEast) || !isFinite(braBearing)) return;
+          const dNorth = north - ownNorth;
+          const dEast = east - ownEast;
+          if (Math.abs(dNorth) < 0.001 && Math.abs(dEast) < 0.001) return;
+          const bearing = normalizeHeadingDeg((Math.atan2(dEast, dNorth) * 180.0 / Math.PI));
+          total += angularDifferenceDeg(bearing, braBearing);
+          count++;
+        });
+        return count > 0 ? (total / count) : 999;
+      }
+
+      const normalScore = score(false);
+      const swappedScore = score(true);
+      return swappedScore + 8 < normalScore;
+    }
+
+    function getMudMapAssetKind(asset){
+      const category = String((asset && asset.category) || '').toUpperCase();
+      const text = (category + ' ' + String((asset && asset.name) || '').toUpperCase());
+      if (text.indexOf('TANKER') >= 0 || text.indexOf('REFUEL') >= 0) return 'tanker';
+      if (text.indexOf('AWACS') >= 0) return 'awacs';
+      if (text.indexOf('JTAC') >= 0) return 'jtac';
+      if (text.indexOf('HELO') >= 0 || text.indexOf('HELICOPTER') >= 0 || text.indexOf('ROTOR') >= 0) return 'rotary';
+      return 'fixed';
+    }
+
+    function buildMudMapSvg(waypoints, data){
+      const rows = Array.isArray(waypoints) ? waypoints.filter(function(wp){
+        return isFinite(Number(wp && wp.xNum)) && isFinite(Number(wp && wp.yNum));
+      }) : [];
+
+      if (!rows.length){
+        return '<div class=""fltPlanMessage"">No mappable waypoint coordinates found.</div>';
+      }
+
+      const width = 920;
+      const height = 760;
+      const pad = 54;
+
+      const eastValues = rows.map(function(wp){ return Number(wp.yNum); });
+      const northValues = rows.map(function(wp){ return Number(wp.xNum); });
+      const minEast = Math.min.apply(null, eastValues);
+      const maxEast = Math.max.apply(null, eastValues);
+      const minNorth = Math.min.apply(null, northValues);
+      const maxNorth = Math.max.apply(null, northValues);
+
+      const spanEast = Math.max(1, maxEast - minEast);
+      const spanNorth = Math.max(1, maxNorth - minNorth);
+      const scaleX = (width - (pad * 2)) / spanEast;
+      const scaleY = (height - (pad * 2)) / spanNorth;
+      const scale = Math.min(scaleX, scaleY);
+      const drawW = spanEast * scale;
+      const drawH = spanNorth * scale;
+      const offsetX = (width - drawW) / 2;
+      const offsetY = (height - drawH) / 2;
+
+      function mapPt(wp){
+        const north = Number(wp.xNum);
+        const east = Number(wp.yNum);
+        const sx = offsetX + ((east - minEast) * scale);
+        const sy = offsetY + ((maxNorth - north) * scale);
+        return { x: sx, y: sy, north: north, east: east };
+      }
+
+      const mapped = rows.map(function(wp){
+        const p = mapPt(wp);
+        return { wp: wp, x: p.x, y: p.y, north: p.north, east: p.east, kind: getMudMapPointType(wp) };
+      });
+
+      const labelGroups = {};
+      mapped.forEach(function(m){
+        const key = String(Math.round(m.x / 10)) + '|' + String(Math.round(m.y / 10));
+        if (!labelGroups[key]) labelGroups[key] = [];
+        labelGroups[key].push(m);
+      });
+
+      Object.keys(labelGroups).forEach(function(k){
+        const group = labelGroups[k];
+        if (!group || !group.length) return;
+        group.sort(function(a, b){
+          return Number(a && a.wp && a.wp.step) - Number(b && b.wp && b.wp.step);
+        });
+        const offsets = [
+          { dx: 11, dy: -11 },
+          { dx: 11, dy: -24 },
+          { dx: 11, dy: 2 },
+          { dx: 11, dy: -37 },
+          { dx: 11, dy: 15 },
+          { dx: -66, dy: -11 },
+          { dx: -66, dy: -24 },
+          { dx: -66, dy: 2 },
+          { dx: -66, dy: 15 },
+        ];
+        for (let i = 0; i < group.length; i++){
+          const m = group[i];
+          const o = offsets[i % offsets.length];
+          m.labelDx = o.dx;
+          m.labelDy = o.dy;
+        }
+      });
+
+      const byStep = {};
+      mapped.forEach(function(m){ byStep[String(m.wp.step)] = m; });
+      const segments = getMudMapSegments(rows)
+        .map(function(seg){
+          return {
+            from: byStep[String(seg.from.step)],
+            to: byStep[String(seg.to.step)],
+            dashed: !!seg.dashed
+          };
+        })
+        .filter(function(seg){ return !!(seg.from && seg.to); });
+
+      const lineEls = segments.map(function(seg){
+        return '<line x1=""' + seg.from.x.toFixed(1) + '"" y1=""' + seg.from.y.toFixed(1) + '"" x2=""' + seg.to.x.toFixed(1) + '"" y2=""' + seg.to.y.toFixed(1) + '"" stroke=""#3d566e"" stroke-width=""2""' + (seg.dashed ? ' stroke-dasharray=""8 6""' : '') + ' />';
+      });
+
+      function iconFor(m){
+        const x = m.x.toFixed(1);
+        const y = m.y.toFixed(1);
+        function racetrack(colorHex, label){
+          const w = 64;
+          const h = 32;
+          const rx = 14;
+          return '<g><rect x=""' + (m.x - (w / 2)).toFixed(1) + '"" y=""' + (m.y - (h / 2)).toFixed(1) + '"" width=""' + w + '"" height=""' + h + '"" rx=""' + rx + '"" ry=""' + rx + '"" fill=""#ffffff"" stroke=""' + colorHex + '"" stroke-width=""2.2"" /><text x=""' + x + '"" y=""' + (m.y + 5.5).toFixed(1) + '"" text-anchor=""middle"" font-size=""14"" fill=""' + colorHex + '"" font-weight=""700"">' + label + '</text></g>';
+        }
+        if (m.kind === 'aar') return racetrack('#111111', 'AAR');
+        if (m.kind === 'cap') return racetrack('#2f5fa7', 'CAP');
+        if (m.kind === 'hld') return racetrack('#2f7f4f', 'HLD');
+        if (m.kind === 'ip'){
+          const s = 9;
+          return '<rect x=""' + (m.x - s).toFixed(1) + '"" y=""' + (m.y - s).toFixed(1) + '"" width=""' + (s * 2) + '"" height=""' + (s * 2) + '"" fill=""#2f7f4f"" stroke=""#1e5535"" stroke-width=""1.5"" />';
+        }
+        if (m.kind === 'tgt'){
+          const p1 = x + ',' + (m.y - 10).toFixed(1);
+          const p2 = (m.x - 10).toFixed(1) + ',' + (m.y + 8).toFixed(1);
+          const p3 = (m.x + 10).toFixed(1) + ',' + (m.y + 8).toFixed(1);
+          return '<polygon points=""' + p1 + ' ' + p2 + ' ' + p3 + '"" fill=""#a33d3d"" stroke=""#682626"" stroke-width=""1.5"" />';
+        }
+        if (m.kind === 'home' || m.kind === 'ldg'){
+          const r = 10;
+          const roofTop = x + ',' + (m.y - 12).toFixed(1);
+          const roofL = (m.x - r).toFixed(1) + ',' + (m.y - 2).toFixed(1);
+          const roofR = (m.x + r).toFixed(1) + ',' + (m.y - 2).toFixed(1);
+          const baseX = (m.x - 8).toFixed(1);
+          const baseY = (m.y - 2).toFixed(1);
+          return '<polygon points=""' + roofTop + ' ' + roofL + ' ' + roofR + '"" fill=""#735c2f"" stroke=""#4c3d1f"" stroke-width=""1.5"" /><rect x=""' + baseX + '"" y=""' + baseY + '"" width=""16"" height=""12"" fill=""#b1945a"" stroke=""#4c3d1f"" stroke-width=""1.5"" />';
+        }
+        return '<circle cx=""' + x + '"" cy=""' + y + '"" r=""8"" fill=""#3a6ea5"" stroke=""#244766"" stroke-width=""1.5"" />';
+      }
+
+      const pointEls = mapped.map(function(m){
+        const step = escapeHtml(String(m.wp.step || '-'));
+        const name = escapeHtml(String(m.wp.name || ''));
+        const label = name && name !== '-' ? ('STP ' + step + ' ' + name) : ('STP ' + step);
+        const tx = (m.x + 11).toFixed(1);
+        const ty = (m.y - 11).toFixed(1);
+        return iconFor(m)
+          + '<text x=""' + tx + '"" y=""' + ty + '"" font-size=""11"" fill=""#1f2e3d"" font-weight=""700"">' + label + '</text>';
+      });
+
+      const northArrow = [
+        '<g transform=""translate(' + (width - 46) + ',44)"">',
+        '<line x1=""0"" y1=""18"" x2=""0"" y2=""-10"" stroke=""#263748"" stroke-width=""2"" />',
+        '<polygon points=""0,-18 -6,-6 6,-6"" fill=""#263748"" />',
+        '<text x=""0"" y=""32"" text-anchor=""middle"" font-size=""12"" fill=""#263748"" font-weight=""700"">N</text>',
+        '</g>'
+      ].join('');
+
+      return '<svg viewBox=""0 0 ' + width + ' ' + height + '"" class=""fltPlanPage3Canvas"" preserveAspectRatio=""xMidYMid meet"">'
+        + '<rect x=""0"" y=""0"" width=""' + width + '"" height=""' + height + '"" fill=""#ffffff"" />'
+        + lineEls.join('')
+        + pointEls.join('')
+        + northArrow
+        + '</svg>';
+    }
+
+    function formatDtcPage3Html(pageSwitcherHtml, waypoints){
+      let html = '<div class=""fltPlanBoard"">';
+      if (pageSwitcherHtml){
+        html += '<div style=""margin:4px 0 6px 0;"">' + pageSwitcherHtml + '</div>';
+      }
+      html += '<div class=""fltPlanPage3Wrap"">';
+      html += '<div class=""fltPlanPage3Legend"">Mud Map (North Up): WP ○, IP □, TGT △, AAR/CAP/HLD racetrack, LDG/HOME ⌂. Dashed leg indicates diversion from HOME/LAND to next point.</div>';
+      html += buildMudMapSvg(waypoints);
+      html += '</div></div>';
+      return html;
+    }
+
+    function formatDtcFocusedTable(root, selected){
+      const cmdsRoot = findFirstObjectByKeyPattern(root, /(cmds|countermeasures|countermeasure|cmds)/i, 0);
+      const navRoot = findFirstObjectByKeyPattern(root, /(nav|waypoint|waypoints|route|flight\s*plan|flightplan|steer)/i, 0);
+
+      const cmdRows = [];
+      if (cmdsRoot) collectScalarRows('CMDS', cmdsRoot, cmdRows, 0, 220);
+
+      const navPoints = [];
+      if (navRoot) collectNavPoints(navRoot, navPoints, 0);
+      if (!navPoints.length) collectNavPoints(root, navPoints, 0);
+
+      const lines = [];
+      lines.push('DTC FILE   : ' + getDtcDisplayName(selected));
+      lines.push('PATH       : ' + selected);
+      lines.push('');
+
+      lines.push('CMDS SUMMARY');
+      lines.push('------------');
+      if (!cmdRows.length){
+        lines.push('No CMDS data found.');
+      } else {
+        const maxKeyWidth = cmdRows.reduce(function(acc, r){ return Math.max(acc, String(r.key || '').length); }, 8);
+        const keyWidth = clamp(maxKeyWidth + 1, 20, 64);
+        cmdRows.forEach(function(r){
+          lines.push(String(r.key || '-').padEnd(keyWidth) + String(r.value || '-').replace(/\s+/g, ' ').trim());
+        });
+      }
+
+      lines.push('');
+      lines.push('NAV POINTS');
+      lines.push('----------');
+      lines.push('WP  NAME         TYPE           ALT      ETA       LAT/LON               X            Y');
+      lines.push('--- ------------ -------------- -------- -------- --------------------- ------------ ------------');
+
+      if (!navPoints.length){
+        lines.push('No nav points found.');
+      } else {
+        navPoints.slice(0, 200).forEach(function(p, idx){
+          const wp = String(idx + 1).padStart(2, '0');
+          const name = String(p.name || '').trim() || '-';
+          const type = String(p.type || p.action || 'WP').trim() || 'WP';
+          const alt = isFinite(Number(p.alt)) ? String(Math.round(Number(p.alt))) : '-';
+          const eta = formatEtaSeconds(p.ETA);
+          const lat = isFinite(Number(p.lat)) ? Number(p.lat) : (isFinite(Number(p.latitude)) ? Number(p.latitude) : NaN);
+          const lon = isFinite(Number(p.lon)) ? Number(p.lon) : (isFinite(Number(p.longitude)) ? Number(p.longitude) : NaN);
+          const latLon = (isFinite(lat) && isFinite(lon)) ? (lat.toFixed(5) + ', ' + lon.toFixed(5)) : '-';
+          const x = isFinite(Number(p.x)) ? String(Math.round(Number(p.x))) : '-';
+          const y = isFinite(Number(p.y)) ? String(Math.round(Number(p.y))) : '-';
+
+          lines.push(
+            wp + '  '
+            + name.substring(0, 12).padEnd(12, ' ') + ' '
+            + type.substring(0, 14).padEnd(14, ' ') + ' '
+            + alt.padStart(8, ' ') + ' '
+            + eta.padEnd(8, ' ') + ' '
+            + latLon.substring(0, 21).padEnd(21, ' ') + ' '
+            + x.padStart(12, ' ') + ' '
+            + y.padStart(12, ' ')
+          );
+        });
+      }
+
+      lines.push('');
+      lines.push('Note: LAT/LON requires DCS runtime map projection/origin if not provided directly by source data.');
+      return lines.join('\n');
+    }
     .controls button {
       font-family: inherit;
       font-size: 18px;
@@ -220,6 +716,79 @@ namespace VAICOM
       color: #2e8b57;
       font-weight: 700;
     }
+    .dtcSelector { margin: 0 0 8px 0; box-sizing: border-box; }
+    .dtcFileList { max-height: 180px; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; }
+    .dtcFileItem {
+      width: 100%;
+      text-align: left;
+      border: 1px solid #6d7d8d;
+      background: #ffffff;
+      color: #111;
+      padding: 4px 6px;
+      font-family: inherit;
+      font-size: 16px;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .dtcFileItem.active { border-color: #f2d76a; box-shadow: inset 0 0 0 1px rgba(242, 215, 106, 0.75); font-weight: 700; }
+    .dtcFileMeta { color: #4b5f73; font-size: 14px; }
+    .fltPlanBoard { border: 1px solid #7c8692; background: #f5f5f3; color: #111; min-height: 100%; box-sizing: border-box; padding: 8px; display: flex; flex-direction: column; }
+    .fltPlanHeaderGrid { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 6px; margin-bottom: 8px; }
+    .fltPlanHeaderCell { border: 1px solid #8b96a1; background: #ecefed; padding: 4px 6px; min-height: 36px; }
+    .fltPlanHeaderCellLabel { font-size: 13px; color: #2f3d4a; margin-bottom: 2px; }
+    .fltPlanHeaderCellValue { font-size: 17px; font-weight: 700; color: #111; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .fltPlanTimeGrid { display: grid; grid-template-columns: repeat(4, minmax(120px, 1fr)); gap: 6px; margin-bottom: 8px; }
+    .fltPlanTimeCell { border: 1px solid #8b96a1; background: #edf2f6; padding: 3px 5px; }
+    .fltPlanTimeCellLabel { font-size: 12px; color: #2f3d4a; }
+    .fltPlanTimeCellValue { font-size: 16px; font-weight: 700; color: #111; }
+    .fltPlanTimeCell.clickable { cursor: pointer; }
+    .fltPlanTimeCell.clickable:hover { background: #dce8f2; }
+    .fltPlanWpWrap { border: 1px solid #8b96a1; background: #ffffff; flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
+    .fltPlanWpTitle { padding: 4px 6px; border-bottom: 1px solid #8b96a1; font-size: 16px; font-weight: 700; text-transform: uppercase; }
+    .fltPlanWpTable { width: 100%; border-collapse: collapse; table-layout: fixed; }
+    .fltPlanWpTableWrap { flex: 1 1 auto; min-height: 0; overflow: auto; }
+    .fltPlanWpTable th, .fltPlanWpTable td { border: 1px solid #a3adb6; padding: 3px 4px; font-size: 15px; line-height: 1.15; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: center; vertical-align: middle; }
+    .fltPlanWpTable th { background: #e4e8ec; font-weight: 700; }
+    .fltPlanWpTable th.fltPlanEtaHeader { cursor: pointer; }
+    .fltPlanWpTable th.fltPlanEtaHeader:hover { background: #d7e4ef; }
+    .fltPlanAltTag { font-size: 11px; margin-left: 4px; color: #455869; }
+    .fltPlanMiniBtn { font-family: inherit; font-size: 10px; line-height: 1; padding: 1px 3px; min-width: 16px; border: 1px solid #7c8692; background: #f4f7fa; color: #111; cursor: pointer; }
+    .fltPlanMiniBtn:hover { background: #dce8f2; }
+    .fltPlanSpdValue { display: inline-block; min-width: 30px; text-align: center; margin: 0 2px; }
+    .fltPlanAdjustCell { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 2px; }
+    .fltPlanEtaWrap { display: inline-flex; align-items: center; justify-content: center; gap: 4px; }
+    .fltPlanEtaWrap input { margin: 0; }
+    .fltPlanCellNum { text-align: center; }
+    .fltPlanBottomGrid { display: grid; grid-template-columns: 0.85fr 0.64fr 0.635fr; grid-template-areas: 'freq cmds cmds' 'assets wx wx'; gap: 8px; margin-top: 8px; }
+    .fltPlanInfoFreqWrap { grid-area: freq; }
+    .fltPlanInfoCmdsWrap { grid-area: cmds; }
+    .fltPlanInfoAssetsWrap { grid-area: assets; }
+    .fltPlanInfoWxWrap { grid-area: wx; }
+    .fltPlanInfoBlock { border: 1px solid #8b96a1; background: #f7f9fb; min-height: 120px; display: flex; flex-direction: column; }
+    .fltPlanInfoFreqWrap .fltPlanInfoBlock { min-height: 78px; }
+    .fltPlanInfoTitle { border-bottom: 1px solid #8b96a1; background: #e4e8ec; font-size: 13px; font-weight: 700; padding: 3px 6px; }
+    .fltPlanInfoBody { padding: 4px 6px; font-size: 13px; line-height: 1.3; overflow: auto; white-space: pre-wrap; }
+    .fltPlanInfoTable { width: 100%; border-collapse: collapse; table-layout: fixed; }
+    .fltPlanInfoTable th, .fltPlanInfoTable td { border: 1px solid #aeb7c0; font-size: 12px; padding: 2px 3px; text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .fltPlanInfoTable th { background: #edf1f5; }
+    .fltPlanInfoWxWrap .fltPlanInfoTable td { white-space: normal; overflow: visible; text-overflow: clip; word-break: break-word; }
+    .fltPlanPageSwitcher { margin-left: 8px; display: inline-flex; gap: 4px; vertical-align: middle; }
+    .fltPlanPageBtn { font-size: 12px; border: 1px solid #8b96a1; background: #eceff3; padding: 2px 9px; cursor: pointer; min-height: 22px; }
+    .fltPlanPageBtn.active { background: #d3dae2; font-weight: 700; }
+    .fltPlanPage2Grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
+    .fltPlanPage2Section { border: 1px solid #8b96a1; background: #f7f9fb; }
+    .fltPlanPage2Title { border-bottom: 1px solid #8b96a1; background: #e4e8ec; font-size: 13px; font-weight: 700; padding: 3px 6px; }
+    .fltPlanPage2Body { padding: 4px 6px; }
+    .fltPlanPage2Table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+    .fltPlanPage2Table th, .fltPlanPage2Table td { border: 1px solid #aeb7c0; font-size: 12px; padding: 2px 3px; text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .fltPlanPage2Table th { background: #edf1f5; }
+    .fltPlanPage3Wrap { border: 1px solid #8b96a1; background: #f7f9fb; margin-top: 8px; padding: 4px; }
+    .fltPlanPage3Legend { display: none; }
+    .fltPlanPage3Canvas { border: 1px solid #8b96a1; background: #ffffff; width: 100%; height: 860px; box-sizing: border-box; }
+    .fltPlanMessage { white-space: pre-wrap; font-size: 18px; line-height: 1.2; }
+    .fltPlanPlain { margin: 0; background: #ffffff; border: 1px solid #b7b7b7; padding: 10px; white-space: pre; word-break: normal; font-size: 16px; line-height: 1.2; min-height: 100%; box-sizing: border-box; overflow: auto; }
     pre { background: #ffffff; border: 1px solid #b7b7b7; padding: 10px; white-space: pre-wrap; word-break: break-word; font-size: 18px; color:#111; max-height: 190px; overflow: auto; }
     body.raw-mode .keywordsPanel { flex: 0 0 280px; }
     .hidden { display: none; }
@@ -239,6 +808,43 @@ namespace VAICOM
     body.night-mode .kwGroupTitle { color: #b8d1ea; }
     body.night-mode .controls { color: #d1dce8; }
     body.night-mode .controls button { background: #2b3541; color: #e2eaf2; border-color: #607183; }
+    body.night-mode .fltPlanSelected { color: #9fb6cb; }
+    body.night-mode .dtcFileItem { background: #1f2731; color: #e2eaf4; border-color: #5a6b7c; }
+    body.night-mode .dtcFileItem:hover { background: #2a3440; }
+    body.night-mode .dtcFileMeta { color: #9eb2c6; }
+    body.night-mode .fltPlanBoard { background: #1c242d; color: #dfe8f2; border-color: #5c6d7f; }
+    body.night-mode .fltPlanHeaderCell { background: #2a3440; border-color: #5c6d7f; }
+    body.night-mode .fltPlanHeaderCellLabel { color: #9eb3c8; }
+    body.night-mode .fltPlanHeaderCellValue { color: #e2eaf4; }
+    body.night-mode .fltPlanTimeCell { background: #26303b; border-color: #5c6d7f; }
+    body.night-mode .fltPlanTimeCellLabel { color: #9eb3c8; }
+    body.night-mode .fltPlanTimeCellValue { color: #e2eaf4; }
+    body.night-mode .fltPlanTimeCell.clickable:hover { background: #31404f; }
+    body.night-mode .fltPlanWpWrap { background: #212a34; border-color: #5c6d7f; }
+    body.night-mode .fltPlanWpTitle { border-bottom-color: #5c6d7f; color: #dfe8f2; }
+    body.night-mode .fltPlanWpTable th,
+    body.night-mode .fltPlanWpTable td { border-color: #5a6c7f; color: #dfe8f2; }
+    body.night-mode .fltPlanWpTable th { background: #2a3541; }
+    body.night-mode .fltPlanWpTable th.fltPlanEtaHeader:hover { background: #334253; }
+    body.night-mode .fltPlanAltTag { color: #9fb5ca; }
+    body.night-mode .fltPlanMiniBtn { background: #2b3541; color: #e2eaf4; border-color: #5f7184; }
+    body.night-mode .fltPlanMiniBtn:hover { background: #364453; }
+    body.night-mode .fltPlanInfoBlock,
+    body.night-mode .fltPlanPage2Section,
+    body.night-mode .fltPlanPage3Wrap { background: #202933; border-color: #5c6d7f; }
+    body.night-mode .fltPlanInfoTitle,
+    body.night-mode .fltPlanPage2Title { background: #2a3541; border-bottom-color: #5c6d7f; color: #dfe8f2; }
+    body.night-mode .fltPlanInfoTable th,
+    body.night-mode .fltPlanInfoTable td,
+    body.night-mode .fltPlanPage2Table th,
+    body.night-mode .fltPlanPage2Table td { border-color: #5a6c7f; color: #dfe8f2; }
+    body.night-mode .fltPlanInfoTable th,
+    body.night-mode .fltPlanPage2Table th { background: #2f3b48; }
+    body.night-mode .fltPlanPageBtn { background: #2a3541; color: #e2eaf4; border-color: #5c6d7f; }
+    body.night-mode .fltPlanPageBtn.active { background: #3a4a5b; color: #f5fbff; }
+    body.night-mode .fltPlanPage3Legend { color: #b7c9db; }
+    body.night-mode .fltPlanPage3Canvas { background: #1a232c; border-color: #5c6d7f; }
+    body.night-mode .fltPlanPlain { background: #202a34; color: #dde7f2; border-color: #5d6f81; }
     body.night-mode pre { background: #202a34; color: #dde7f2; border-color: #5d6f81; }
   </style>
 </head>
@@ -257,6 +863,16 @@ namespace VAICOM
 
     <div class='kneeLayout'>
       <div class='leftColumn'>
+        <div id='dtcControls' class='controls fltPlanControls hidden'>
+          <button id='dtcRefresh' type='button'>Refresh FLT PLN</button>
+          <span id='dtcSelectedFileLabel' class='fltPlanSelected'>No FLT PLN selected</span>
+        </div>
+
+        <div id='dtcSelector' class='panel hidden'>
+          <h4 id='dtcSelectorHeader' class='clickable'>FLT PLN Files ▼</h4>
+          <div id='dtcFileList' class='content dtcFileList'></div>
+        </div>
+
         <div class='panel session'>
           <h4 id='sessionHeader' class='clickable'>Session ▼</h4>
           <div id='session' class='content'></div>
@@ -283,6 +899,7 @@ namespace VAICOM
     <div class='controls'>
       <label><input id='autoBrowse' type='checkbox' checked> Auto Browse</label>
       <label><input id='nightMode' type='checkbox'> Night Mode</label>
+      <label><input id='dlinkOn' type='checkbox' checked> DLink ON</label>
       <label>Font Size <input id='fontSizeSlider' type='range' min='18' max='34' step='1' value='24'></label>
       <span id='fontSizeValue'>24</span>
       <button id='drawModeToggle' type='button'>Draw OFF</button>
@@ -296,7 +913,7 @@ namespace VAICOM
   </div>
 
   <script>
-    const TABS = ['LOG','ATC','AWACS','JTAC','TANKER','AOCS','FLIGHT','AI CREW','GND CREW','NOTES'];
+    const TABS = ['LOG','DTC','ATC','AWACS','JTAC','TANKER','AOCS','FLIGHT','AI CREW','GND CREW','NOTES'];
     const OKB_TAB_TYPE_ID = 'VAICOM-Community;okb-out';
     const OKB_CUSTOM_ACTION_PREFIX = OKB_TAB_TYPE_ID + ';';
     const OKB_ACTION_TAB_PREV = OKB_CUSTOM_ACTION_PREFIX + 'tab-prev';
@@ -318,18 +935,57 @@ namespace VAICOM
     let drawModeDeadlineUtcMs = 0;
     let drawModeCountdownTimer = null;
     let customActionHandlerRegistered = false;
+    let dtcListCollapsed = false;
+    let fltPlanEtaStartBySelection = {};
+    let fltPlanPlanStateBySelection = {};
+    let fltPlanDtcPageBySelection = {};
+    let fltPlanDtcRouteBySelection = {};
+    let fltPlanMapViewBySelection = {};
+    let mapPanDrag = null;
+    let runtimeFlightPlanSnapshot = null;
+    let runtimeFlightPlanSnapshotMissionIdentity = '';
+    let lastMissionIdentity = '';
+    let lastMissionClockSeconds = NaN;
     const sessionCollapsedStorageKey = 'vaicom.okb.sessionCollapsed';
+    const dtcListCollapsedStorageKey = 'vaicom.okb.dtcListCollapsed';
     const tabKeywordsSplitStorageKey = 'vaicom.okb.tabKeywordsSplitByTab';
     const drawModeStorageKey = 'vaicom.okb.notesDrawMode';
     const nightModeStorageKey = 'vaicom.okb.nightMode';
+    const dlinkOnStorageKey = 'vaicom.okb.dlinkOn';
     const contentFontSizeStorageKey = 'vaicom.okb.contentFontSize';
     const drawModeTimeoutMs = 30000;
     let tabKeywordsSplitByTab = {};
     let nightModeEnabled = false;
+    let dlinkOnEnabled = true;
     let contentFontSizePx = 24;
 
     function clamp(v, min, max){
       return Math.max(min, Math.min(max, v));
+    }
+
+    function applyDtcListCollapsedState(collapsed){
+      dtcListCollapsed = !!collapsed;
+      const listEl = document.getElementById('dtcFileList');
+      const headerEl = document.getElementById('dtcSelectorHeader');
+      if (listEl) listEl.style.display = dtcListCollapsed ? 'none' : 'flex';
+      if (headerEl) headerEl.textContent = dtcListCollapsed ? 'FLT PLN Files ► (click to expand)' : 'FLT PLN Files ▼';
+    }
+
+    function readInitialDtcListCollapsed(){
+      try{
+        return window.localStorage && window.localStorage.getItem(dtcListCollapsedStorageKey) === '1';
+      }catch(_){
+        return false;
+      }
+    }
+
+    function persistDtcListCollapsedState(){
+      try{
+        if (window.localStorage){
+          window.localStorage.setItem(dtcListCollapsedStorageKey, dtcListCollapsed ? '1' : '0');
+        }
+      }catch(_){
+      }
     }
 
     function safe(v){ return (v === null || v === undefined || v === '') ? '-' : String(v); }
@@ -477,6 +1133,45 @@ namespace VAICOM
       }
     }
 
+    function readDlinkOnPreference(){
+      try{
+        if (!window.localStorage) return true;
+        const raw = window.localStorage.getItem(dlinkOnStorageKey);
+        if (raw === null || raw === undefined || raw === '') return true;
+        return raw === '1';
+      }catch(_){
+        return true;
+      }
+    }
+
+    function persistDlinkOnPreference(){
+      try{
+        if (window.localStorage){
+          window.localStorage.setItem(dlinkOnStorageKey, dlinkOnEnabled ? '1' : '0');
+        }
+      }catch(_){
+      }
+    }
+
+    function applyDlinkOnUi(){
+      const box = document.getElementById('dlinkOn');
+      if (box) box.checked = !!dlinkOnEnabled;
+    }
+
+    function hasAwacsAvailable(data){
+      const units = getMergedList(data && data.Units, 'AWACS');
+      const hasUnitLine = Array.isArray(units) && units.some(function(line){
+        return String(line || '').trim().length > 0;
+      });
+      if (hasUnitLine) return true;
+
+      const server = (data && data.Server) || {};
+      const assets = Array.isArray(server.FriendlyAssets) ? server.FriendlyAssets : [];
+      return assets.some(function(a){
+        return String((a && a.Category) || '').toUpperCase() === 'AWACS';
+      });
+    }
+
     function persistContentFontSizePreference(){
       try{
         if (window.localStorage){
@@ -507,7 +1202,9 @@ namespace VAICOM
     }
 
     function tabLabel(tab){
-      return tab === 'ATC' ? 'WX/ATC' : tab;
+      if (tab === 'ATC') return 'WX/ATC';
+      if (tab === 'DTC') return 'FLT PLN';
+      return tab;
     }
 
     function formatAiCrewPhaseLabel(phase){
@@ -808,6 +1505,14 @@ namespace VAICOM
     }
 
     function applyCurrentTabKeywordsSplit(){
+      if (selectedTab === 'DTC'){
+        const tabPanel = document.querySelector('.tabPanel');
+        const keywordPanel = document.getElementById('keywordPanel');
+        if (tabPanel) tabPanel.style.flex = '1 1 auto';
+        if (keywordPanel) keywordPanel.style.flex = '';
+        return;
+      }
+
       const ratio = getCurrentTabKeywordsSplitRatio();
       if (isFinite(ratio)){
         applyTabKeywordsSplitRatio(ratio, false);
@@ -1577,9 +2282,2438 @@ namespace VAICOM
 
     function formatKeywordReference(data, tab){
       if (tab === 'LOG') return 'No keyword reference for this tab.';
+      if (tab === 'DTC') return 'No keyword reference for this tab.';
       const phrases = getKeywordPhrasesForTab(data, tab);
       if (!phrases.length) return 'No keywords for this tab yet.';
       return phrases.join('\n');
+    }
+
+    function parseRteSelectionToken(value){
+      const text = String(value || '');
+      const prefix = 'RTE::';
+      if (text.indexOf(prefix) !== 0) return null;
+      const sep = text.indexOf('::', prefix.length);
+      if (sep < 0) return null;
+      const encodedRoute = text.substring(prefix.length, sep);
+      const filePath = text.substring(sep + 2);
+      let routeName = encodedRoute;
+      try{ routeName = decodeURIComponent(encodedRoute); }catch(_){ }
+      return { routeName: routeName, filePath: filePath };
+    }
+
+    function getPathFileName(path){
+      const norm = String(path || '').replace(/\\/g, '/');
+      const idx = norm.lastIndexOf('/');
+      return idx >= 0 ? norm.substring(idx + 1) : norm;
+    }
+
+    function getFltPlnPath(path){
+      const rte = parseRteSelectionToken(path);
+      return rte ? rte.filePath : String(path || '');
+    }
+
+    function getDtcDisplayName(path){
+      const text = String(path || '');
+      if (!text) return '-';
+      const rte = parseRteSelectionToken(text);
+      if (rte){
+        return String(rte.routeName || '-');
+      }
+      return getPathFileName(text);
+    }
+
+    function appendDtcRows(prefix, value, rows, depth){
+      if (rows.length >= 220) return;
+      if (depth > 8){
+        rows.push({ key: prefix, value: '[depth limit]' });
+        return;
+      }
+
+      if (value === null || value === undefined){
+        rows.push({ key: prefix, value: '-' });
+        return;
+      }
+
+      if (Array.isArray(value)){
+        if (!value.length){
+          rows.push({ key: prefix, value: '[]' });
+          return;
+        }
+
+        for (let i = 0; i < value.length; i++){
+          appendDtcRows(prefix + '[' + i + ']', value[i], rows, depth + 1);
+          if (rows.length >= 220) return;
+        }
+        return;
+      }
+
+      if (typeof value === 'object'){
+        const keys = Object.keys(value);
+        if (!keys.length){
+          rows.push({ key: prefix, value: '{}' });
+          return;
+        }
+
+        keys.forEach(function(k){
+          if (rows.length >= 220) return;
+          const nextPrefix = prefix ? (prefix + '.' + k) : k;
+          appendDtcRows(nextPrefix, value[k], rows, depth + 1);
+        });
+        return;
+      }
+
+      rows.push({ key: prefix, value: String(value) });
+    }
+
+    function findFirstObjectByKeyPattern(value, pattern, depth){
+      if (depth > 8 || value === null || value === undefined) return null;
+      if (Array.isArray(value)){
+        for (let i = 0; i < value.length; i++){
+          const found = findFirstObjectByKeyPattern(value[i], pattern, depth + 1);
+          if (found) return found;
+        }
+        return null;
+      }
+      if (typeof value !== 'object') return null;
+
+      const keys = Object.keys(value);
+      for (let i = 0; i < keys.length; i++){
+        const k = keys[i];
+        const v = value[k];
+        if (pattern.test(String(k)) && v && typeof v === 'object') return v;
+      }
+
+      for (let i = 0; i < keys.length; i++){
+        const found = findFirstObjectByKeyPattern(value[keys[i]], pattern, depth + 1);
+        if (found) return found;
+      }
+      return null;
+    }
+
+    function collectScalarRows(prefix, value, rows, depth, maxRows){
+      if (rows.length >= maxRows || depth > 8) return;
+      if (value === null || value === undefined){
+        rows.push({ key: prefix || '-', value: '-' });
+        return;
+      }
+      if (Array.isArray(value)){
+        for (let i = 0; i < value.length; i++){
+          collectScalarRows((prefix || 'item') + '[' + i + ']', value[i], rows, depth + 1, maxRows);
+          if (rows.length >= maxRows) return;
+        }
+        return;
+      }
+      if (typeof value === 'object'){
+        const keys = Object.keys(value);
+        if (!keys.length){ rows.push({ key: prefix || '-', value: '{}' }); return; }
+        keys.forEach(function(k){
+          if (rows.length >= maxRows) return;
+          const nextPrefix = prefix ? (prefix + '.' + k) : k;
+          collectScalarRows(nextPrefix, value[k], rows, depth + 1, maxRows);
+        });
+        return;
+      }
+      rows.push({ key: prefix || '-', value: String(value) });
+    }
+
+    function isNavPointObject(o){
+      if (!o || typeof o !== 'object') return false;
+      const hasXY = isFinite(Number(o.x)) && isFinite(Number(o.y));
+      const hasLatLon = (isFinite(Number(o.lat)) && isFinite(Number(o.lon)))
+        || (isFinite(Number(o.latitude)) && isFinite(Number(o.longitude)));
+      const hasWpMeta = o.type || o.action || o.name || o.ETA || o.alt;
+      return hasXY || hasLatLon || !!hasWpMeta;
+    }
+
+    function collectNavPoints(value, points, depth){
+      if (points.length >= 200 || depth > 9 || value === null || value === undefined) return;
+      if (Array.isArray(value)){
+        value.forEach(function(item){ if (points.length < 200) collectNavPoints(item, points, depth + 1); });
+        return;
+      }
+      if (typeof value !== 'object') return;
+      if (isNavPointObject(value)) points.push(value);
+      Object.keys(value).forEach(function(k){
+        if (points.length >= 200) return;
+        const child = value[k];
+        if (child && typeof child === 'object') collectNavPoints(child, points, depth + 1);
+      });
+    }
+
+    function formatDtcFocusedTable(root, selected){
+      const cmdsRoot = findFirstObjectByKeyPattern(root, /(cmds|countermeasures|countermeasure)/i, 0);
+      const navRoot = findFirstObjectByKeyPattern(root, /(nav|waypoint|waypoints|route|flight\s*plan|flightplan|steer)/i, 0);
+
+      const cmdRows = [];
+      if (cmdsRoot) collectScalarRows('CMDS', cmdsRoot, cmdRows, 0, 220);
+
+      const navPoints = [];
+      if (navRoot) collectNavPoints(navRoot, navPoints, 0);
+      if (!navPoints.length) collectNavPoints(root, navPoints, 0);
+
+      const lines = [];
+      lines.push('DTC FILE   : ' + getDtcDisplayName(selected));
+      lines.push('PATH       : ' + selected);
+      lines.push('');
+      lines.push('CMDS SUMMARY');
+      lines.push('------------');
+      if (!cmdRows.length){
+        lines.push('No CMDS data found.');
+      } else {
+        const maxKeyWidth = cmdRows.reduce(function(acc, r){ return Math.max(acc, String(r.key || '').length); }, 8);
+        const keyWidth = clamp(maxKeyWidth + 1, 20, 64);
+        cmdRows.forEach(function(r){
+          lines.push(String(r.key || '-').padEnd(keyWidth) + String(r.value || '-').replace(/\s+/g, ' ').trim());
+        });
+      }
+
+      lines.push('');
+      lines.push('NAV POINTS');
+      lines.push('----------');
+      lines.push('WP  NAME         TYPE           ALT      ETA       LAT/LON               X            Y');
+      lines.push('--- ------------ -------------- -------- -------- --------------------- ------------ ------------');
+      if (!navPoints.length){
+        lines.push('No nav points found.');
+      } else {
+        navPoints.slice(0, 200).forEach(function(p, idx){
+          const wp = String(idx + 1).padStart(2, '0');
+          const name = String(p.name || '').trim() || '-';
+          const type = String(p.type || p.action || 'WP').trim() || 'WP';
+          const alt = isFinite(Number(p.alt)) ? String(Math.round(Number(p.alt))) : '-';
+          const eta = formatEtaSeconds(p.ETA);
+          const lat = isFinite(Number(p.lat)) ? Number(p.lat) : (isFinite(Number(p.latitude)) ? Number(p.latitude) : NaN);
+          const lon = isFinite(Number(p.lon)) ? Number(p.lon) : (isFinite(Number(p.longitude)) ? Number(p.longitude) : NaN);
+          const latLon = (isFinite(lat) && isFinite(lon)) ? (lat.toFixed(5) + ', ' + lon.toFixed(5)) : '-';
+          const x = isFinite(Number(p.x)) ? String(Math.round(Number(p.x))) : '-';
+          const y = isFinite(Number(p.y)) ? String(Math.round(Number(p.y))) : '-';
+          lines.push(
+            wp + '  '
+            + name.substring(0, 12).padEnd(12, ' ') + ' '
+            + type.substring(0, 14).padEnd(14, ' ') + ' '
+            + alt.padStart(8, ' ') + ' '
+            + eta.padEnd(8, ' ') + ' '
+            + latLon.substring(0, 21).padEnd(21, ' ') + ' '
+            + x.padStart(12, ' ') + ' '
+            + y.padStart(12, ' ')
+          );
+        });
+      }
+
+      lines.push('');
+      lines.push('Note: LAT/LON requires DCS runtime map projection/origin if not provided directly by source data.');
+      return lines.join('\n');
+    }
+
+    function formatEtaSeconds(v){
+      const n = Number(v);
+      if (!isFinite(n) || n < 0) return '-';
+      const total = Math.floor(n);
+      const h = Math.floor(total / 3600);
+      const m = Math.floor((total % 3600) / 60);
+      const s = total % 60;
+      return String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+    }
+
+    function getTakeoffTimeBySelection(selected){
+      const key = getFlightPlanEtaStartKey(selected);
+      const value = Number(fltPlanEtaStartBySelection[key]);
+      return isFinite(value) ? value : NaN;
+    }
+
+    function hasTakeoffTimeBySelection(selected){
+      return isFinite(getTakeoffTimeBySelection(selected));
+    }
+
+    function getFlightPlanTimingDisplay(selected){
+      const takeoffSec = getTakeoffTimeBySelection(selected);
+      if (!isFinite(takeoffSec)){
+        return {
+          step: '-',
+          start: '-',
+          taxi: '-',
+          takeoff: '-',
+          tot: '-',
+        };
+      }
+
+      const planState = getFlightPlanPlanState(selected);
+      const totSec = isFinite(Number(planState.totSeconds)) ? Number(planState.totSeconds) : NaN;
+
+      return {
+        step: formatSecondsToClock(takeoffSec - (35 * 60)),
+        start: formatSecondsToClock(takeoffSec - (25 * 60)),
+        taxi: formatSecondsToClock(takeoffSec - (15 * 60)),
+        takeoff: formatSecondsToClock(takeoffSec),
+        tot: isFinite(totSec) ? formatSecondsToClock(totSec) : '-',
+      };
+    }
+
+    function getFlightPlanPlanState(selected){
+      const key = getFlightPlanEtaStartKey(selected);
+      if (!key) return { speedAdjustments: {}, altAdjustments: {}, typeOverrides: {}, lockedStep: '', totSeconds: NaN, lockedStart: null };
+      const existing = fltPlanPlanStateBySelection[key];
+      if (existing && typeof existing === 'object'){
+        if (!existing.speedAdjustments || typeof existing.speedAdjustments !== 'object') existing.speedAdjustments = {};
+        if (!existing.altAdjustments || typeof existing.altAdjustments !== 'object') existing.altAdjustments = {};
+        if (!existing.typeOverrides || typeof existing.typeOverrides !== 'object') existing.typeOverrides = {};
+        return existing;
+      }
+      const created = { speedAdjustments: {}, altAdjustments: {}, typeOverrides: {}, lockedStep: '', totSeconds: NaN, lockedStart: null };
+      fltPlanPlanStateBySelection[key] = created;
+      return created;
+    }
+
+    function lockStartPositionForSelection(selected, data){
+      const state = getFlightPlanPlanState(selected);
+      const server = (data && data.Server) || {};
+      const x = Number(server.PlayerPosX);
+      const y = Number(server.PlayerPosY);
+      const altFeet = Number(server.PlayerAltFeet);
+      if (!isFinite(x) || !isFinite(y)) return;
+      state.lockedStart = {
+        x: x,
+        y: y,
+        altFeet: isFinite(altFeet) ? altFeet : NaN,
+      };
+    }
+
+    function stepToKey(step){
+      return String(step || '').trim();
+    }
+
+    function changeWaypointSpeedAdjustment(selected, step, delta){
+      const state = getFlightPlanPlanState(selected);
+      const key = stepToKey(step);
+      if (!key) return;
+      const current = Number(state.speedAdjustments[key]);
+      const next = (isFinite(current) ? current : 0) + Number(delta || 0);
+      state.speedAdjustments[key] = clamp(next, -600, 600);
+    }
+
+    function getWaypointSpeedAdjustment(state, step){
+      const key = stepToKey(step);
+      if (!key || !state || !state.speedAdjustments) return 0;
+      const v = Number(state.speedAdjustments[key]);
+      return isFinite(v) ? v : 0;
+    }
+
+    function setLockedTotStep(selected, step, locked, etaSeconds){
+      const state = getFlightPlanPlanState(selected);
+      const key = stepToKey(step);
+      state.lockedStep = locked ? key : '';
+      if (locked){
+        const eta = Number(etaSeconds);
+        if (isFinite(eta)){
+          state.totSeconds = eta;
+        }
+      }
+    }
+
+    function setTotByMinutesDelta(selected, minutesDelta){
+      const state = getFlightPlanPlanState(selected);
+      let base = Number(state.totSeconds);
+      if (!isFinite(base)){
+        base = getCurrentFlightPlanClockSeconds();
+      }
+      const delta = Math.round(Number(minutesDelta || 0) * 60);
+      state.totSeconds = base + delta;
+    }
+
+    function setTotBySecondsDelta(selected, secondsDelta){
+      const state = getFlightPlanPlanState(selected);
+      let base = Number(state.totSeconds);
+      if (!isFinite(base)){
+        base = getCurrentFlightPlanClockSeconds();
+      }
+      const delta = Math.round(Number(secondsDelta || 0));
+      state.totSeconds = base + delta;
+    }
+
+    function abbreviateRouteType(type){
+      const raw = String(type || '').trim();
+      if (!raw) return 'WP';
+      const lower = raw.toLowerCase();
+      if (lower === 'turning point') return 'TP';
+      if (lower === 'waypoint') return 'WP';
+      if (lower === 'initial point') return 'IP';
+      if (lower === 'target') return 'TGT';
+      if (lower === 'hold') return 'HLD';
+      if (lower === 'aar' || lower.indexOf('air refuel') >= 0) return 'AAR';
+      if (lower === 'cap' || lower.indexOf('combat air patrol') >= 0) return 'CAP';
+      if (lower === 'tak' || lower === 'tko' || lower.indexOf('takeoff') >= 0 || lower.indexOf('take off') >= 0) return 'TKO';
+      if (lower === 'ldg' || lower === 'land' || lower.indexOf('landing') >= 0) return 'LDG';
+      if (lower === 'dvrt' || lower.indexOf('divert') >= 0 || lower.indexOf('diversion') >= 0) return 'DVRT';
+      const compact = raw.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+      if (compact === 'TAK' || compact.indexOf('TAKEOFF') === 0) return 'TKO';
+      if (!compact) return 'WP';
+      return compact.substring(0, 3);
+    }
+
+    function normalizeEditableWaypointType(type){
+      const norm = abbreviateRouteType(type);
+      const allowed = ['WP','TP','IP','TGT','AAR','CAP','HLD','TKO','LDG','DVRT'];
+      return allowed.indexOf(norm) >= 0 ? norm : 'WP';
+    }
+
+    function changeWaypointType(selected, step, delta, currentType){
+      const state = getFlightPlanPlanState(selected);
+      if (!state.typeOverrides || typeof state.typeOverrides !== 'object') state.typeOverrides = {};
+      const key = stepToKey(step);
+      if (!key) return;
+      const allowed = ['WP','TP','IP','TGT','AAR','CAP','HLD','TKO','LDG','DVRT'];
+      const baseline = state.typeOverrides[key] || currentType || 'WP';
+      const current = normalizeEditableWaypointType(baseline);
+      const idx = allowed.indexOf(current);
+      const d = Number(delta || 0);
+      const nextIndex = ((idx + (d >= 0 ? 1 : -1)) % allowed.length + allowed.length) % allowed.length;
+      state.typeOverrides[key] = allowed[nextIndex];
+    }
+
+    function applyTypeOverrides(rows, selected){
+      const list = Array.isArray(rows) ? rows : [];
+      const state = getFlightPlanPlanState(selected);
+      const overrides = (state && state.typeOverrides && typeof state.typeOverrides === 'object') ? state.typeOverrides : {};
+      list.forEach(function(wp){
+        if (!wp || wp.isStart) return;
+        const key = stepToKey(wp.step);
+        const rawOverride = String(overrides[key] || '').trim();
+        if (!rawOverride) return;
+        const override = normalizeEditableWaypointType(rawOverride);
+        wp.type = override;
+        wp.typeRaw = override;
+      });
+      return list;
+    }
+
+    function parseEtaToSeconds(etaText){
+      const text = String(etaText || '').trim();
+      const m = text.match(/^(\d{1,2}):(\d{2}):(\d{2})$/);
+      if (!m) return NaN;
+      const h = parseInt(m[1], 10);
+      const mm = parseInt(m[2], 10);
+      const s = parseInt(m[3], 10);
+      if (!isFinite(h) || !isFinite(mm) || !isFinite(s)) return NaN;
+      if (mm < 0 || mm > 59 || s < 0 || s > 59) return NaN;
+      return (h * 3600) + (mm * 60) + s;
+    }
+
+    function formatSecondsToClock(seconds){
+      let total = Number(seconds);
+      if (!isFinite(total)) return '-';
+      total = Math.round(total);
+      total = ((total % 86400) + 86400) % 86400;
+      const h = Math.floor(total / 3600);
+      const m = Math.floor((total % 3600) / 60);
+      const s = total % 60;
+      return String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+    }
+
+    function getMissionClockSeconds(data){
+      const server = (data && data.Server) || {};
+      const mission = Number(server.MissionTimeSeconds);
+      if (isFinite(mission) && mission >= 0) return mission;
+      return NaN;
+    }
+
+    function getSystemLocalClockSeconds(){
+      const now = new Date();
+      return (now.getHours() * 3600) + (now.getMinutes() * 60) + now.getSeconds();
+    }
+
+    function getCurrentFlightPlanClockSeconds(){
+      const mission = getMissionClockSeconds(latestData);
+      if (isFinite(mission)) return mission;
+      return getSystemLocalClockSeconds();
+    }
+
+    function getFlightPlanEtaStartKey(selected){
+      return String(selected || '');
+    }
+
+    function getActiveFlightPlanSelection(data){
+      const model = data || latestData || {};
+      const selected = String(model.DtcSelectedFile || '');
+      if (selected) return selected;
+      const runtimeWaypoints = getMissionRuntimeWaypoints(model);
+      if (runtimeWaypoints.length) return '__RUNTIME_PLAYER__';
+      return '';
+    }
+
+    function getMissionIdentity(data){
+      const server = (data && data.Server) || {};
+      return [
+        String(server.Theater || ''),
+        String(server.MissionTitle || ''),
+        String(server.Aircraft || ''),
+        String(server.PlayerCallsign || ''),
+        server.Multiplayer ? '1' : '0'
+      ].join('|');
+    }
+
+    function resetRuntimeFlightPlanState(){
+      const key = '__RUNTIME_PLAYER__';
+      delete fltPlanEtaStartBySelection[key];
+      delete fltPlanPlanStateBySelection[key];
+      delete fltPlanDtcPageBySelection[key];
+      delete fltPlanDtcRouteBySelection[key];
+      delete fltPlanMapViewBySelection[key];
+    }
+
+    function invalidateRuntimeFlightPlanSnapshot(){
+      runtimeFlightPlanSnapshot = null;
+      runtimeFlightPlanSnapshotMissionIdentity = '';
+    }
+
+    function maybeResetFlightPlanStateForMission(data){
+      const identity = getMissionIdentity(data);
+      const missionClock = getMissionClockSeconds(data);
+      const identityChanged = !!identity && !!lastMissionIdentity && identity !== lastMissionIdentity;
+      const missionClockRewound = isFinite(missionClock)
+        && isFinite(lastMissionClockSeconds)
+        && missionClock + 60 < lastMissionClockSeconds;
+
+      if (identityChanged || missionClockRewound){
+        resetRuntimeFlightPlanState();
+        invalidateRuntimeFlightPlanSnapshot();
+      }
+
+      if (identity){
+        lastMissionIdentity = identity;
+      }
+      if (isFinite(missionClock)){
+        lastMissionClockSeconds = missionClock;
+      }
+    }
+
+    function getDtcPageBySelection(selected){
+      const key = getFlightPlanEtaStartKey(selected);
+      const v = Number(fltPlanDtcPageBySelection[key]);
+      return (v === 2 || v === 3) ? v : 1;
+    }
+
+    function setDtcPageBySelection(selected, page){
+      const key = getFlightPlanEtaStartKey(selected);
+      if (!key) return;
+      const p = Number(page);
+      fltPlanDtcPageBySelection[key] = (p === 2 || p === 3) ? p : 1;
+    }
+
+    function getDtcRouteBySelection(selected){
+      const key = getFlightPlanEtaStartKey(selected);
+      const route = String(fltPlanDtcRouteBySelection[key] || '').toUpperCase();
+      return /^R[123]$/.test(route) ? route : 'R1';
+    }
+
+    function setDtcRouteBySelection(selected, route){
+      const key = getFlightPlanEtaStartKey(selected);
+      if (!key) return;
+      const r = String(route || '').toUpperCase();
+      fltPlanDtcRouteBySelection[key] = /^R[123]$/.test(r) ? r : 'R1';
+    }
+
+    function getMapViewBySelection(selected){
+      const key = getFlightPlanEtaStartKey(selected);
+      if (!key) return { zoom: 1, panX: 0, panY: 0 };
+      const existing = fltPlanMapViewBySelection[key];
+      if (existing && isFinite(Number(existing.zoom)) && isFinite(Number(existing.panX)) && isFinite(Number(existing.panY))){
+        return existing;
+      }
+      const state = { zoom: 1, panX: 0, panY: 0 };
+      fltPlanMapViewBySelection[key] = state;
+      return state;
+    }
+
+    function resetMapViewBySelection(selected){
+      const state = getMapViewBySelection(selected);
+      state.zoom = 1;
+      state.panX = 0;
+      state.panY = 0;
+    }
+
+    function zoomMapViewBySelection(selected, zoomFactor){
+      const state = getMapViewBySelection(selected);
+      const factor = Number(zoomFactor);
+      if (!isFinite(factor) || factor <= 0) return;
+      const current = isFinite(Number(state.zoom)) ? Number(state.zoom) : 1;
+      state.zoom = clamp(current * factor, 0.6, 4.0);
+    }
+
+    function computeLegDistanceNm(prevWp, currWp){
+      if (!prevWp || !currWp) return NaN;
+      const prevX = Number(prevWp.x);
+      const prevY = Number(prevWp.y);
+      const currX = Number(currWp.x);
+      const currY = Number(currWp.y);
+      if (!isFinite(prevX) || !isFinite(prevY) || !isFinite(currX) || !isFinite(currY)) return NaN;
+      const dx = currX - prevX;
+      const dy = currY - prevY;
+      const meters = Math.sqrt((dx * dx) + (dy * dy));
+      return meters / 1852.0;
+    }
+
+    function estimateLegSpeedKcas(distanceNm, legSeconds, altFeet){
+      const dt = Number(legSeconds);
+      if (!isFinite(dt) || dt <= 0) return '-';
+      const gsKnots = (Number(distanceNm) * 3600.0) / dt;
+      if (!isFinite(gsKnots) || gsKnots <= 0) return '-';
+      const altitude = Math.max(0, Number(altFeet) || 0);
+      const tasToCasFactor = 1.0 + (altitude / 100000.0);
+      const estCas = gsKnots / tasToCasFactor;
+      if (!isFinite(estCas) || estCas <= 0) return '-';
+      return String(Math.round(estCas));
+    }
+
+    function formatDistanceNm(distanceNm){
+      const d = Number(distanceNm);
+      if (!isFinite(d) || d < 0) return '-';
+      if (d < 10){
+        return d.toFixed(1);
+      }
+      return String(Math.round(d));
+    }
+
+    function normalizeHeadingDeg(deg){
+      let d = Number(deg);
+      if (!isFinite(d)) return NaN;
+      d = ((d % 360) + 360) % 360;
+      return d;
+    }
+
+    function formatHeadingDeg(deg){
+      const d = normalizeHeadingDeg(deg);
+      if (!isFinite(d)) return '-';
+      let rounded = Math.round(d);
+      if (rounded <= 0) rounded = 360;
+      if (rounded > 360) rounded = 360;
+      return String(rounded).padStart(3, '0');
+    }
+
+    function computeTrueHeadingDeg(fromWp, toWp){
+      if (!fromWp || !toWp) return NaN;
+      const north0 = Number(fromWp.x);
+      const east0 = Number(fromWp.y);
+      const north1 = Number(toWp.x);
+      const east1 = Number(toWp.y);
+      if (!isFinite(north0) || !isFinite(east0) || !isFinite(north1) || !isFinite(east1)) return NaN;
+
+      const dNorth = north1 - north0;
+      const dEast = east1 - east0;
+      if (Math.abs(dNorth) < 0.001 && Math.abs(dEast) < 0.001) return NaN;
+
+      const radians = Math.atan2(dEast, dNorth);
+      return normalizeHeadingDeg((radians * 180.0 / Math.PI));
+    }
+
+    function getApproxMagVariationDeg(theater){
+      const t = String(theater || '').toUpperCase();
+      if (t.indexOf('CAUCASUS') >= 0) return 6.0;
+      if (t.indexOf('MARIANA') >= 0) return 2.0;
+      if (t.indexOf('PERSIAN') >= 0) return 2.0;
+      if (t.indexOf('SYRIA') >= 0) return 5.0;
+      if (t.indexOf('SINAI') >= 0) return 4.0;
+      if (t.indexOf('NEVADA') >= 0) return 12.0;
+      if (t.indexOf('NORMANDY') >= 0) return 1.0;
+      if (t.indexOf('KOLA') >= 0) return 11.0;
+      if (t.indexOf('AFGHAN') >= 0) return 2.0;
+      if (t.indexOf('SOUTH ATLANTIC') >= 0) return -12.0;
+      return 0.0;
+    }
+
+    function isAltTypeAgl(altType){
+      const t = String(altType || '').toUpperCase();
+      return t.indexOf('AGL') >= 0;
+    }
+
+    function formatAltCellHtml(wp){
+      const altitude = escapeHtml(String((wp && wp.alt) || '-'));
+      if (wp && isAltTypeAgl(wp.altType)){
+        return altitude + '<span class=""fltPlanAltTag"">AGL</span>';
+      }
+      return altitude;
+    }
+
+    function truncateText(value, maxLen){
+      const text = String(value || '');
+      if (text.length <= maxLen) return text;
+      return text.substring(0, Math.max(0, maxLen - 1)) + '…';
+    }
+
+    function pickClosestLines(lines, maxRows){
+      const arr = Array.isArray(lines) ? lines : [];
+      const parsed = arr.map(function(line){
+        const text = String(line || '').trim();
+        const m = text.match(/\b(\d{1,3})\s*NM\b/i);
+        return { text: text, nm: m ? parseInt(m[1], 10) : 9999 };
+      });
+
+      parsed.sort(function(a,b){ return a.nm - b.nm; });
+      return parsed.slice(0, Math.max(0, maxRows || 0)).map(function(x){ return x.text; });
+    }
+
+    function extractFreqAndUnit(line){
+      const text = String(line || '').trim();
+      if (!text) return null;
+      if (/\bMETAR\b/i.test(text) || /^WEATHER:/i.test(text)) return null;
+
+      const fm = text.match(/(\d{2,3}\.\d{1,3}\s*(?:AM|FM)?)/i);
+      const freq = fm ? fm[1].replace(/\s+/g, ' ').trim().toUpperCase() : '';
+      const icaoMatch = text.match(/\b([A-Z]{4})\b/);
+
+      let unit = icaoMatch ? String(icaoMatch[1] || '').toUpperCase() : '';
+      if (!unit) unit = '-';
+
+      if (!freq) return null;
+      return { unit: unit, freq: freq };
+    }
+
+    function formatFrequenciesBlockHtml(data){
+      const atcRaw = pickClosestLines(getMergedList(data && data.Units, 'ATC'), 4);
+      const flightRaw = pickClosestLines(getMergedList(data && data.Units, 'FLIGHT'), 4);
+      const entries = atcRaw.concat(flightRaw)
+        .map(extractFreqAndUnit)
+        .filter(function(x){ return !!x; })
+        .slice(0, 6);
+
+      const rows = entries.map(function(e){
+        return '<tr><td style=""width:48%;"">' + escapeHtml(truncateText(e.unit, 34)) + '</td><td>' + escapeHtml(e.freq) + '</td></tr>';
+      });
+      if (!rows.length){ rows.push('<tr><td colspan=""2"">No frequency data.</td></tr>'); }
+
+      return '<div class=""fltPlanInfoBlock""><div class=""fltPlanInfoTitle"">FREQUENCIES</div><div class=""fltPlanInfoBody""><table class=""fltPlanInfoTable""><thead><tr><th>UNIT</th><th>UHF/VHF</th></tr></thead><tbody>' + rows.join('') + '</tbody></table></div></div>';
+    }
+
+    function formatAssetsBlockHtml(data){
+      const tanker = pickClosestLines(getMergedList(data && data.Units, 'TANKER'), 3);
+      const awacs = pickClosestLines(getMergedList(data && data.Units, 'AWACS'), 2);
+      const jtac = pickClosestLines(getMergedList(data && data.Units, 'JTAC'), 2);
+      const all = tanker.concat(awacs).concat(jtac).slice(0, 7);
+
+      const rows = all.map(function(line){
+        return '<tr><td>' + escapeHtml(truncateText(line, 88)) + '</td></tr>';
+      });
+      if (!rows.length){ rows.push('<tr><td>No asset data.</td></tr>'); }
+
+      return '<div class=""fltPlanInfoBlock""><div class=""fltPlanInfoTitle"">ASSETS</div><div class=""fltPlanInfoBody""><table class=""fltPlanInfoTable""><thead><tr><th>CALLSIGN / UNIT / FREQ / TACAN</th></tr></thead><tbody>' + rows.join('') + '</tbody></table></div></div>';
+    }
+
+    function formatMetarBlockHtml(data){
+      const server = (data && data.Server) || {};
+      const metars = server.AtcMetars || {};
+      const atcLines = pickClosestLines(getMergedList(data && data.Units, 'ATC'), 8);
+      const keys = [];
+      const seen = {};
+
+      atcLines.forEach(function(line){
+        const k = resolveAtcMetarKey(line, metars);
+        if (!k || seen[k]) return;
+        seen[k] = true;
+        keys.push(k);
+      });
+
+      if (keys.length < 4){
+        Object.keys(metars).forEach(function(k){
+          if (keys.length >= 4) return;
+          if (seen[k]) return;
+          seen[k] = true;
+          keys.push(k);
+        });
+      }
+
+      const rows = keys.map(function(k){
+        const text = String(metars[k] || '').trim();
+        return '<tr><td>' + escapeHtml(truncateText(text, 100)) + '</td></tr>';
+      });
+      if (!rows.length){ rows.push('<tr><td>No METAR data.</td></tr>'); }
+
+      return '<div class=""fltPlanInfoBlock""><div class=""fltPlanInfoTitle"">WX</div><div class=""fltPlanInfoBody""><table class=""fltPlanInfoTable""><thead><tr><th>METAR</th></tr></thead><tbody>' + rows.join('') + '</tbody></table></div></div>';
+    }
+
+    function estimateCruiseKcasForAltitude(altFeet){
+      const alt = Number(altFeet);
+      if (!isFinite(alt)) return 380;
+      if (alt > 28000){
+        const gs = 0.85 * 661.47;
+        const cas = gs / (1.0 + (alt / 100000.0));
+        return Math.max(200, Math.round(cas));
+      }
+      return 380;
+    }
+
+    function estimateRepresentativeGroundSpeedKnots(waypoints){
+      const rows = Array.isArray(waypoints) ? waypoints : [];
+      const samples = [];
+
+      for (let i = 1; i < rows.length; i++){
+        const prev = rows[i - 1];
+        const curr = rows[i];
+        const prevEta = parseEtaToSeconds(prev.eta);
+        const currEta = parseEtaToSeconds(curr.eta);
+        const legSeconds = (isFinite(currEta) && isFinite(prevEta)) ? (currEta - prevEta) : NaN;
+        if (!isFinite(legSeconds) || legSeconds <= 0) continue;
+
+        const legNm = computeLegDistanceNm(prev, curr);
+        if (!isFinite(legNm) || legNm <= 0) continue;
+
+        const gs = (legNm * 3600.0) / legSeconds;
+        if (isFinite(gs) && gs > 0) samples.push(gs);
+      }
+
+      if (!samples.length) return NaN;
+      const total = samples.reduce(function(acc, v){ return acc + v; }, 0);
+      return total / samples.length;
+    }
+
+    function estimateRepresentativeKcas(waypoints){
+      const rows = Array.isArray(waypoints) ? waypoints : [];
+      const samples = [];
+      rows.forEach(function(wp){
+        const v = Number(wp && wp.spd);
+        if (isFinite(v) && v > 0) samples.push(v);
+      });
+      if (!samples.length) return 300;
+      const total = samples.reduce(function(acc, x){ return acc + x; }, 0);
+      return Math.max(120, Math.min(750, total / samples.length));
+    }
+
+    function applySpeedAdjustmentsToWaypoints(waypoints, selected){
+      const rows = Array.isArray(waypoints) ? waypoints : [];
+      if (!rows.length) return rows;
+      const state = getFlightPlanPlanState(selected);
+
+      rows.forEach(function(wp){
+        const base = Number(wp.spd);
+        const adjustment = getWaypointSpeedAdjustment(state, wp.step);
+        if (!isFinite(base)){
+          wp.spd = '-';
+          return;
+        }
+        wp.spd = String(Math.max(80, Math.round(base + adjustment)));
+      });
+
+      return rows;
+    }
+
+    function applyLockedTotPlan(waypoints, selected){
+      const rows = Array.isArray(waypoints) ? waypoints : [];
+      if (!rows.length) return rows;
+
+      const state = getFlightPlanPlanState(selected);
+      const lockedStep = stepToKey(state.lockedStep);
+      const totSec = Number(state.totSeconds);
+      if (!lockedStep || !isFinite(totSec)) return rows;
+
+      const targetIndex = rows.findIndex(function(wp){ return stepToKey(wp.step) === lockedStep; });
+      if (targetIndex < 0) return rows;
+
+      const lockedEta = parseEtaToSeconds(rows[targetIndex].etaDisplay || rows[targetIndex].eta);
+      if (!isFinite(lockedEta)) return rows;
+
+      const delta = Math.round(totSec - lockedEta);
+      if (!isFinite(delta) || delta === 0) return rows;
+
+      for (let i = 0; i < rows.length; i++){
+        const curr = rows[i];
+        const eta = parseEtaToSeconds(curr.etaDisplay || curr.eta);
+        if (isFinite(eta)){
+          curr.etaDisplay = formatSecondsToClock(eta + delta);
+        }
+      }
+
+      const takeoffSec = getTakeoffTimeBySelection(selected);
+      if (isFinite(takeoffSec)){
+        const startKey = getFlightPlanEtaStartKey(selected);
+        if (startKey){
+          fltPlanEtaStartBySelection[startKey] = takeoffSec + delta;
+        }
+      }
+
+      return rows;
+    }
+
+    function applyStartLegPlan(startRow, waypoints){
+      if (!startRow || !Array.isArray(waypoints) || !waypoints.length) return;
+
+      const first = waypoints[0];
+      const wp1Eta = parseEtaToSeconds(first.etaDisplay || first.eta);
+      if (!isFinite(wp1Eta)) return;
+
+      const distanceNm = computeLegDistanceNm(startRow, first);
+      const representativeGs = estimateRepresentativeGroundSpeedKnots(waypoints);
+      if (!isFinite(distanceNm) || distanceNm <= 0 || !isFinite(representativeGs) || representativeGs <= 0) return;
+
+      const legSeconds = Math.max(1, Math.round((distanceNm * 3600.0) / representativeGs));
+      startRow.etaDisplay = formatSecondsToClock(wp1Eta - legSeconds);
+
+      const speedCas = estimateLegSpeedKcas(distanceNm, legSeconds, first.altFeet);
+      if (speedCas !== '-'){
+        startRow.spd = speedCas;
+        first.spd = speedCas;
+      }
+    }
+
+    function getRouteWaypoints(route){
+      const r = (route && typeof route === 'object') ? route : {};
+      const wpKeys = Object.keys(r)
+        .filter(function(k){ return /^\d+$/.test(String(k)); })
+        .sort(function(a,b){ return parseInt(a,10) - parseInt(b,10); });
+
+      return wpKeys.map(function(wk){
+        const wp = r[wk] || {};
+        const typeText = String(wp.type || wp.action || 'WP');
+        const altMeters = Number(wp.alt);
+        const altFeetRaw = isFinite(altMeters) ? (altMeters * 3.28084) : NaN;
+        const altValue = isFinite(altFeetRaw) ? (Math.round(altFeetRaw / 500) * 500) : NaN;
+        return {
+          step: String(wk),
+          type: abbreviateRouteType(typeText),
+          typeRaw: typeText,
+          name: String(wp.name || ''),
+          alt: isFinite(altValue) ? String(altValue) : '-',
+          altFeet: altValue,
+          altType: String(wp.alt_type || wp.altType || wp.alttype || ''),
+          eta: formatEtaSeconds(wp.ETA),
+          etaSourceSeconds: Number(wp.ETA),
+          x: isFinite(Number(wp.x)) ? String(Math.round(Number(wp.x))) : '-',
+          y: isFinite(Number(wp.y)) ? String(Math.round(Number(wp.y))) : '-',
+          xNum: Number(wp.x),
+          yNum: Number(wp.y)
+        };
+      });
+    }
+
+    function applyEtaPlanToWaypoints(waypoints, selected){
+      const rows = Array.isArray(waypoints) ? waypoints : [];
+      if (!rows.length) return rows;
+
+      rows.forEach(function(wp){
+        wp.spd = String(estimateCruiseKcasForAltitude(wp.altFeet));
+      });
+
+      return rows;
+    }
+
+    function applyRouteTimeline(rows, selected){
+      const list = Array.isArray(rows) ? rows : [];
+      if (!list.length) return list;
+
+      const etaMode = hasTakeoffTimeBySelection(selected);
+      const baseSeconds = etaMode ? getTakeoffTimeBySelection(selected) : 0;
+      let elapsed = 0;
+
+      list[0].etaDisplay = formatSecondsToClock(baseSeconds);
+
+      for (let i = 1; i < list.length; i++){
+        const prev = list[i - 1];
+        const curr = list[i];
+        const legNm = computeLegDistanceNm(prev, curr);
+        const legCas = Number(curr.spd);
+        const legAlt = isFinite(Number(curr.altFeet)) ? Number(curr.altFeet) : 0;
+        const legGs = isFinite(legCas) && legCas > 0 ? (legCas * (1.0 + (legAlt / 100000.0))) : NaN;
+        const legSeconds = (isFinite(legNm) && legNm > 0 && isFinite(legGs) && legGs > 0)
+          ? Math.max(1, Math.round((legNm * 3600.0) / legGs))
+          : 0;
+
+        elapsed += legSeconds;
+        curr.etaDisplay = formatSecondsToClock(baseSeconds + elapsed);
+      }
+
+      return list;
+    }
+
+    function applyHeadingPlan(rows, theater){
+      const list = Array.isArray(rows) ? rows : [];
+      if (!list.length) return list;
+
+      const magVar = Number(getApproxMagVariationDeg(theater));
+
+      for (let i = 0; i < list.length; i++){
+        const curr = list[i];
+        let trueHdg = NaN;
+
+        if (i === 0 && list.length > 1){
+          trueHdg = computeTrueHeadingDeg(curr, list[i + 1]);
+        } else if (i > 0){
+          trueHdg = computeTrueHeadingDeg(list[i - 1], curr);
+        }
+
+        const magnetic = isFinite(trueHdg) ? normalizeHeadingDeg(trueHdg - magVar) : NaN;
+        curr.hdg = formatHeadingDeg(magnetic);
+      }
+
+      return list;
+    }
+
+    function changeWaypointAltitude(selected, step, deltaFeet){
+      const state = getFlightPlanPlanState(selected);
+      if (!state.altAdjustments) state.altAdjustments = {};
+      const key = stepToKey(step);
+      if (!key) return;
+      const current = Number(state.altAdjustments[key]);
+      const next = (isFinite(current) ? current : 0) + Number(deltaFeet || 0);
+      state.altAdjustments[key] = clamp(next, -40000, 40000);
+    }
+
+    function applyAltitudeAdjustments(rows, selected){
+      const list = Array.isArray(rows) ? rows : [];
+      const state = getFlightPlanPlanState(selected);
+      const map = state.altAdjustments || {};
+      list.forEach(function(wp){
+        if (!wp || wp.isStart) return;
+        const key = stepToKey(wp.step);
+        const delta = Number(map[key]);
+        if (!isFinite(delta) || delta === 0) return;
+        const baseAlt = Number(wp.altFeet);
+        if (!isFinite(baseAlt)) return;
+        const nextAlt = Math.max(0, baseAlt + delta);
+        wp.altFeet = nextAlt;
+        wp.alt = String(Math.round(nextAlt));
+      });
+      return list;
+    }
+
+    function applyDistancePlan(rows){
+      const list = Array.isArray(rows) ? rows : [];
+      if (!list.length) return list;
+
+      list[0].dist = '-';
+      for (let i = 1; i < list.length; i++){
+        const prev = list[i - 1];
+        const curr = list[i];
+        curr.dist = formatDistanceNm(computeLegDistanceNm(prev, curr));
+      }
+
+      return list;
+    }
+
+    function setEtaStartNowForSelection(selected){
+      const key = getFlightPlanEtaStartKey(selected);
+      if (!key) return;
+      fltPlanEtaStartBySelection[key] = getCurrentFlightPlanClockSeconds();
+    }
+
+    function setTakeoffTimeByAnchorFromNow(selected, anchorType){
+      const key = getFlightPlanEtaStartKey(selected);
+      if (!key) return;
+
+      const anchor = String(anchorType || '').toUpperCase();
+      let addSeconds = 0;
+      if (anchor === 'STEP') addSeconds = 35 * 60;
+      else if (anchor === 'START') addSeconds = 25 * 60;
+      else if (anchor === 'TAXI') addSeconds = 15 * 60;
+      else addSeconds = 0;
+
+      lockStartPositionForSelection(selected, latestData);
+      fltPlanEtaStartBySelection[key] = getCurrentFlightPlanClockSeconds() + addSeconds;
+    }
+
+    function clearTakeoffTimeForSelection(selected){
+      const key = getFlightPlanEtaStartKey(selected);
+      if (!key) return;
+      delete fltPlanEtaStartBySelection[key];
+    }
+
+    function getFlightPlanStartRow(server, selected){
+      const s = server || {};
+      const key = getFlightPlanEtaStartKey(selected);
+      const state = getFlightPlanPlanState(key);
+      const locked = state && state.lockedStart ? state.lockedStart : null;
+      const x = Number(locked ? locked.x : s.PlayerPosX);
+      const y = Number(locked ? locked.y : s.PlayerPosY);
+      const altFeet = Number(locked ? locked.altFeet : s.PlayerAltFeet);
+
+      if (!isFinite(x) || !isFinite(y)) return null;
+
+      return {
+        step: '0',
+        type: 'ST',
+        name: 'CURRENT POS',
+        alt: isFinite(altFeet) ? String(Math.round(altFeet)) : '-',
+        etaDisplay: '-',
+        spd: '-',
+        x: String(Math.round(x)),
+        y: String(Math.round(y)),
+        isStart: true,
+      };
+    }
+
+    function findDtcWyptObject(value, depth){
+      if (depth > 10 || value === null || value === undefined) return null;
+      if (Array.isArray(value)){
+        for (let i = 0; i < value.length; i++){
+          const found = findDtcWyptObject(value[i], depth + 1);
+          if (found) return found;
+        }
+        return null;
+      }
+      if (typeof value !== 'object') return null;
+
+      if (Array.isArray(value.NAV_PTS)) return value;
+      if (value.WYPT && typeof value.WYPT === 'object' && Array.isArray(value.WYPT.NAV_PTS)) return value.WYPT;
+
+      const keys = Object.keys(value);
+      for (let i = 0; i < keys.length; i++){
+        const found = findDtcWyptObject(value[keys[i]], depth + 1);
+        if (found) return found;
+      }
+      return null;
+    }
+
+    function getDtcWaypoints(root){
+      const wypt = findDtcWyptObject(root, 0) || {};
+      const navPts = Array.isArray(wypt.NAV_PTS) ? wypt.NAV_PTS : [];
+      const navRoute = Array.isArray(wypt.NAV_ROUTE) ? wypt.NAV_ROUTE : [];
+      const primaryRoute = (navRoute.length && navRoute[0] && typeof navRoute[0] === 'object') ? navRoute[0] : {};
+
+      const routeById = {};
+      Object.keys(primaryRoute).forEach(function(k){
+        const point = primaryRoute[k];
+        if (!point || typeof point !== 'object') return;
+        routeById[String(k).toUpperCase()] = point;
+      });
+
+      if (navPts.length){
+        return navPts.slice(0, 200).map(function(p, idx){
+          const point = (p && typeof p === 'object') ? p : {};
+          const id = String(point.id || ('STPT' + String(idx + 1))).trim();
+          const routePoint = routeById[id.toUpperCase()] || {};
+
+          const etaNum = isFinite(Number(routePoint.ETA)) ? Number(routePoint.ETA) : (isFinite(Number(point.ETA)) ? Number(point.ETA) : Number(point.TOS));
+          const altNum = isFinite(Number(routePoint.alt)) ? Number(routePoint.alt) : (isFinite(Number(point.alt)) ? Number(point.alt) : (isFinite(Number(point.routeAltitude)) ? Number(point.routeAltitude) : Number(point.altitude)));
+          const xNum = isFinite(Number(point.x)) ? Number(point.x) : Number(point.posX);
+          const yNum = isFinite(Number(point.y)) ? Number(point.y) : Number(point.posY);
+          const stepNum = isFinite(Number(point.wypt_num)) ? Math.round(Number(point.wypt_num)) : (isFinite(Number(point.number)) ? Math.round(Number(point.number)) : (idx + 1));
+          const speed = isFinite(Number(routePoint.speed)) ? Math.round(Number(routePoint.speed)) : (isFinite(Number(point.speed)) ? Math.round(Number(point.speed)) : NaN);
+          const isTarget = !!routePoint.TGT;
+
+          const noteText = String(point.note || point.text_note || '').trim();
+
+          return {
+            step: String(stepNum),
+            type: abbreviateRouteType(isTarget ? 'TGT' : 'WP'),
+            typeRaw: isTarget ? 'TGT' : 'WP',
+            name: noteText || String(point.name || point.wp || point.waypoint || point.label || ''),
+            alt: isFinite(altNum) ? String(Math.round(altNum)) : '-',
+            altFeet: altNum,
+            altType: String(point.altitudeType || point.alt_type || point.altType || point.alttype || ''),
+            eta: formatEtaSeconds(etaNum),
+            etaSourceSeconds: etaNum,
+            spd: isFinite(speed) ? String(speed) : '-',
+            x: isFinite(xNum) ? String(Math.round(xNum)) : '-',
+            y: isFinite(yNum) ? String(Math.round(yNum)) : '-',
+            xNum: xNum,
+            yNum: yNum
+          };
+        });
+      }
+
+      const candidates = [];
+      collectNavPoints(root, candidates, 0);
+      const filtered = candidates.filter(function(p){
+        const point = (p && typeof p === 'object') ? p : {};
+        const hasXY = isFinite(Number(point.x)) && isFinite(Number(point.y));
+        const hasPointMeta = isFinite(Number(point.wypt_num)) || !!point.id || !!point.name || !!point.wp || !!point.waypoint || !!point.alt || !!point.altitude;
+        const looksLikeComm = point.freq !== undefined || point.frequency !== undefined || point.Channel !== undefined || point.channel !== undefined || point.modulation !== undefined;
+        return hasXY && hasPointMeta && !looksLikeComm;
+      });
+
+      filtered.sort(function(a, b){
+        const aw = Number(a && a.wypt_num);
+        const bw = Number(b && b.wypt_num);
+        if (isFinite(aw) && isFinite(bw) && aw !== bw) return aw - bw;
+        return 0;
+      });
+
+      return filtered.slice(0, 200).map(function(point, idx){
+        const etaNum = isFinite(Number(point.ETA)) ? Number(point.ETA) : (isFinite(Number(point.eta)) ? Number(point.eta) : Number(point.TOS));
+        const altNum = isFinite(Number(point.alt)) ? Number(point.alt) : (isFinite(Number(point.routeAltitude)) ? Number(point.routeAltitude) : Number(point.altitude));
+        const xNum = isFinite(Number(point.x)) ? Number(point.x) : Number(point.posX);
+        const yNum = isFinite(Number(point.y)) ? Number(point.y) : Number(point.posY);
+        const stepNum = isFinite(Number(point.wypt_num)) ? Math.round(Number(point.wypt_num)) : (isFinite(Number(point.number)) ? Math.round(Number(point.number)) : (idx + 1));
+        const noteText = String(point.note || point.text_note || '').trim();
+
+        return {
+          step: String(stepNum),
+          type: abbreviateRouteType(point.type || point.action || 'WP'),
+          typeRaw: String(point.type || point.action || 'WP'),
+          name: noteText || String(point.name || point.wp || point.waypoint || point.label || ''),
+          alt: isFinite(altNum) ? String(Math.round(altNum)) : '-',
+          altFeet: altNum,
+          altType: String(point.altitudeType || point.alt_type || point.altType || point.alttype || ''),
+          eta: formatEtaSeconds(etaNum),
+          etaSourceSeconds: etaNum,
+          spd: isFinite(Number(point.speed)) ? String(Math.round(Number(point.speed))) : '-',
+          x: isFinite(xNum) ? String(Math.round(xNum)) : '-',
+          y: isFinite(yNum) ? String(Math.round(yNum)) : '-',
+          xNum: xNum,
+          yNum: yNum
+        };
+      });
+    }
+
+    function formatDtcCmdsBlockHtml(root){
+      function collectCmdsSettings(value, depth, found){
+        if (depth > 10 || value === null || value === undefined) return;
+        if (Array.isArray(value)){
+          value.forEach(function(v){ collectCmdsSettings(v, depth + 1, found); });
+          return;
+        }
+        if (typeof value !== 'object') return;
+
+        Object.keys(value).forEach(function(k){
+          const v = value[k];
+          if (/^CMDSProgramSettings$/i.test(String(k)) && v && typeof v === 'object'){
+            found.push(v);
+          }
+          if (v && typeof v === 'object') collectCmdsSettings(v, depth + 1, found);
+        });
+      }
+
+      const foundCmds = [];
+      collectCmdsSettings(root, 0, foundCmds);
+      const cmds = foundCmds
+        .sort(function(a, b){
+          function score(obj){
+            return Object.keys(obj || {}).filter(function(k){ return /^(AUTO_?\d+|MAN_?\d+|BYP)$/i.test(String(k)); }).length;
+          }
+          return score(b) - score(a);
+        })[0];
+      if (!cmds || typeof cmds !== 'object') return '';
+
+      const preferredOrder = ['AUTO_1','AUTO1','AUTO_2','AUTO2','AUTO_3','AUTO3','BYP','MAN_1','MAN1','MAN_2','MAN2','MAN_3','MAN3','MAN_4','MAN4','MAN_5','MAN5','MAN_6','MAN6'];
+      const keys = [];
+      preferredOrder.forEach(function(k){
+        if (cmds[k] && typeof cmds[k] === 'object') keys.push(k);
+      });
+
+      Object.keys(cmds).forEach(function(k){
+        if (keys.indexOf(k) >= 0) return;
+        if (!cmds[k] || typeof cmds[k] !== 'object') return;
+        keys.push(k);
+      });
+
+      if (!keys.length) return '';
+
+      function modeShortLabel(k){
+        const key = String(k || '').toUpperCase();
+        const auto = key.match(/^AUTO_?(\d+)$/);
+        if (auto) return 'A' + auto[1];
+        const man = key.match(/^MAN_?(\d+)$/);
+        if (man) return 'M' + man[1];
+        if (key === 'BYP') return 'BYP';
+        return key;
+      }
+
+      function num(v, fallback){
+        const n = Number(v);
+        return isFinite(n) ? n : fallback;
+      }
+
+      const rowByKey = {};
+      keys.forEach(function(k){
+        const p = cmds[k] || {};
+        const chaff = (p.Chaff && typeof p.Chaff === 'object') ? p.Chaff : {};
+        const flare = (p.Flare && typeof p.Flare === 'object') ? p.Flare : {};
+        const other1 = (p.Other1 && typeof p.Other1 === 'object') ? p.Other1 : {};
+        const other2 = (p.Other2 && typeof p.Other2 === 'object') ? p.Other2 : {};
+
+        const cInt = num(chaff.Interval, num(chaff.SalvoInterval, num(chaff.BurstInterval, 0)));
+        const cQty = num(chaff.Quantity, num(chaff.BurstQuantity, num(chaff.SalvoQuantity, 0)));
+        const cRpt = num(chaff.Repeat, num(chaff.SalvoQuantity, 0));
+        const fQty = num(flare.Quantity, num(flare.BurstQuantity, num(flare.SalvoQuantity, 0)));
+        const o1Qty = num(other1.Quantity, num(other1.BurstQuantity, num(other1.SalvoQuantity, 0)));
+        const o2Qty = num(other2.Quantity, num(other2.BurstQuantity, num(other2.SalvoQuantity, 0)));
+
+        const modeLabel = modeShortLabel(k);
+        const line = '<strong>' + modeLabel + '</strong>'
+          + ' <strong>C</strong> Int' + cInt
+          + ' Qty' + cQty
+          + ' Rpt' + cRpt
+          + ' <strong>F</strong> Qty' + fQty
+          + ' <strong>O1</strong>' + (o1Qty > 0 ? (' Qty' + o1Qty) : '')
+          + ' <strong>O2</strong>' + (o2Qty > 0 ? (' Qty' + o2Qty) : '');
+
+        rowByKey[String(k).toUpperCase()] = line;
+      });
+
+      const leftModes = ['AUTO_1', 'AUTO1', 'AUTO_2', 'AUTO2', 'AUTO_3', 'AUTO3', 'BYP'];
+      const rightModes = ['MAN_1', 'MAN1', 'MAN_2', 'MAN2', 'MAN_3', 'MAN3', 'MAN_4', 'MAN4', 'MAN_5', 'MAN5', 'MAN_6', 'MAN6'];
+      const leftRows = leftModes
+        .map(function(k){ return rowByKey[String(k).toUpperCase()]; })
+        .filter(function(x){ return !!x; });
+      const rightRows = rightModes
+        .map(function(k){ return rowByKey[String(k).toUpperCase()]; })
+        .filter(function(x){ return !!x; });
+      const maxRows = Math.max(leftRows.length, rightRows.length);
+
+      const rows = [];
+      for (let i = 0; i < maxRows; i++){
+        const left = leftRows[i] || '';
+        const right = rightRows[i] || '';
+        rows.push('<tr><td style=""width:50%;"">' + left + '</td><td>' + right + '</td></tr>');
+      }
+
+      return '<div class=""fltPlanInfoBlock""><div class=""fltPlanInfoTitle"">CMDS</div><div class=""fltPlanInfoBody""><table class=""fltPlanInfoTable""><tbody>' + rows.join('') + '</tbody></table></div></div>';
+    }
+
+    function formatDtcCommPanelHtml(root){
+      const commRoot = findFirstObjectByKeyPattern(root, /^COMM$/i, 0) || {};
+
+      function formatCommFrequency(value){
+        const n = Number(value);
+        if (!isFinite(n)) return '-';
+        return n.toFixed(3);
+      }
+
+      function getCommRows(commObj){
+        if (!commObj || typeof commObj !== 'object') return [];
+        const rows = [];
+        Object.keys(commObj).forEach(function(k){
+          const o = commObj[k];
+          if (!o || typeof o !== 'object') return;
+          const fq = Number(o.frequency || o.Frequency || o.freq);
+          if (!isFinite(fq)) return;
+          const mod = Number(o.modulation);
+
+          const key = String(k || '');
+          const chMatch = key.match(/^Channel_(\d+)$/i);
+          const chNum = chMatch ? parseInt(chMatch[1], 10) : NaN;
+          const rawLabel = String(o.name || key.replace(/^Channel_/i, 'CH '));
+          const label = rawLabel.replace(/\s+/g, '');
+          rows.push({
+            label: label,
+            freq: formatCommFrequency(fq),
+            sortGroup: isFinite(chNum) ? 0 : 1,
+            sortValue: isFinite(chNum) ? chNum : 999,
+          });
+        });
+
+        rows.sort(function(a, b){
+          if (a.sortGroup !== b.sortGroup) return a.sortGroup - b.sortGroup;
+          if (a.sortValue !== b.sortValue) return a.sortValue - b.sortValue;
+          return String(a.label).localeCompare(String(b.label));
+        });
+
+        return rows;
+      }
+
+      const comm1 = commRoot.COMM1 || commRoot.Comm1 || commRoot.COMM_1 || {};
+      const comm2 = commRoot.COMM2 || commRoot.Comm2 || commRoot.COMM_2 || {};
+      const rows1 = getCommRows(comm1);
+      const rows2 = getCommRows(comm2);
+      const comm1Guard = !!comm1.Guard;
+      const comm2Guard = !!comm2.Guard;
+
+      const maxRows = Math.max(rows1.length, rows2.length);
+      if (!maxRows) return '<div class=""fltPlanPage2Section""><div class=""fltPlanPage2Title"">COMMS</div><div class=""fltPlanPage2Body"">No comm data.</div></div>';
+
+      const bodyRows = [];
+      for (let i = 0; i < maxRows; i++){
+        const a = rows1[i];
+        const b = rows2[i];
+        bodyRows.push('<tr><td>' + (a ? (escapeHtml(a.label) + ' ' + escapeHtml(String(a.freq))) : '') + '</td><td>' + (b ? (escapeHtml(b.label) + ' ' + escapeHtml(String(b.freq))) : '') + '</td></tr>');
+      }
+
+      return '<div class=""fltPlanPage2Section""><div class=""fltPlanPage2Title"">COMMS</div><div class=""fltPlanPage2Body""><table class=""fltPlanPage2Table""><thead><tr><th>COMM 1' + (comm1Guard ? ' (G)' : '') + '</th><th>COMM 2' + (comm2Guard ? ' (G)' : '') + '</th></tr></thead><tbody>' + bodyRows.join('') + '</tbody></table></div></div>';
+    }
+
+    function formatRuntimeCommPanelHtml(data){
+      const server = (data && data.Server) || {};
+      const radios = Array.isArray(server.Radios) ? server.Radios : [];
+      const diagnostics = (server && server.Diagnostics && typeof server.Diagnostics === 'object') ? server.Diagnostics : {};
+      const active = radios.filter(function(r){
+        return !!(r && typeof r === 'object' && !r.intercom);
+      });
+
+      if (!active.length){
+        return '<div class=""fltPlanPage2Section""><div class=""fltPlanPage2Title"">COMMS</div><div class=""fltPlanPage2Body"">No runtime comm data.</div></div>';
+      }
+
+      function fmtFreq(value){
+        const n = Number(value);
+        if (isFinite(n) && n > 0){
+          let mhz = n;
+          if (n >= 10000000){
+            mhz = n / 1000000.0;
+          } else if (n >= 100000){
+            mhz = n / 1000.0;
+          }
+
+          return mhz.toFixed(3);
+        }
+        const s = String(value || '').trim();
+        return s || '-';
+      }
+
+      function fmtRow(r){
+        const fq = fmtFreq(r.frequency);
+        const mod = String(r.modulation || '').trim().toUpperCase() || (r.FM && !r.AM ? 'FM' : 'AM');
+        const state = r.on ? 'ON' : 'OFF';
+        return state + ' ' + fq + ' ' + mod;
+      }
+
+      function parseMissionRadioChannelRow(line){
+        const text = String(line || '').trim();
+        if (!text) return null;
+        const map = {};
+        text.split('|').forEach(function(p){
+          const idx = p.indexOf('=');
+          if (idx <= 0) return;
+          const key = String(p.substring(0, idx)).trim().toLowerCase();
+          const value = String(p.substring(idx + 1)).trim();
+          if (!key) return;
+          map[key] = value;
+        });
+
+        const radioNum = Number(map.radio);
+        const channelNum = Number(map.ch);
+        if (!isFinite(radioNum) || !isFinite(channelNum)) return null;
+
+        const freqText = fmtFreq(map.freq);
+        const nameText = String(map.name || '').trim();
+        return {
+          radio: Math.round(radioNum),
+          channel: Math.round(channelNum),
+          label: 'CH ' + String(Math.round(channelNum)).padStart(2, '0'),
+          freq: freqText,
+          name: nameText
+        };
+      }
+
+      const missionChannelsRaw = Array.isArray(diagnostics.playerMissionRadioChannels) && diagnostics.playerMissionRadioChannels.length
+        ? diagnostics.playerMissionRadioChannels
+        : (Array.isArray(diagnostics.missionRadioChannels) ? diagnostics.missionRadioChannels : []);
+      const missionChannels = missionChannelsRaw
+        .map(parseMissionRadioChannelRow)
+        .filter(function(x){ return !!x; });
+
+      const dedupedMissionChannels = [];
+      const seenMissionChannels = {};
+      missionChannels.forEach(function(ch){
+        const key = String(ch.radio) + '|' + String(ch.channel) + '|' + String(ch.freq);
+        if (seenMissionChannels[key]) return;
+        seenMissionChannels[key] = true;
+        dedupedMissionChannels.push(ch);
+      });
+
+      if (dedupedMissionChannels.length){
+        const comm1 = dedupedMissionChannels.filter(function(x){ return x.radio === 1; });
+        const comm2 = dedupedMissionChannels.filter(function(x){ return x.radio === 2; });
+
+        function sortMissionRows(list){
+          list.sort(function(a, b){
+            if (a.channel !== b.channel) return a.channel - b.channel;
+            return String(a.name).localeCompare(String(b.name));
+          });
+        }
+        sortMissionRows(comm1);
+        sortMissionRows(comm2);
+
+        const maxRows = Math.max(comm1.length, comm2.length);
+        const bodyRows = [];
+        for (let i = 0; i < maxRows; i++){
+          const a = comm1[i];
+          const b = comm2[i];
+          const left = a ? (a.label + ' ' + a.freq + (a.name ? (' ' + a.name) : '')) : '';
+          const right = b ? (b.label + ' ' + b.freq + (b.name ? (' ' + b.name) : '')) : '';
+          bodyRows.push('<tr><td>' + escapeHtml(left) + '</td><td>' + escapeHtml(right) + '</td></tr>');
+        }
+
+        return '<div class=""fltPlanPage2Section""><div class=""fltPlanPage2Title"">COMMS</div><div class=""fltPlanPage2Body""><table class=""fltPlanPage2Table""><thead><tr><th>COMM 1 PRESETS</th><th>COMM 2 PRESETS</th></tr></thead><tbody>' + bodyRows.join('') + '</tbody></table></div></div>';
+      }
+
+      const comm1 = [];
+      const comm2 = [];
+      active.forEach(function(r){
+        const name = String(r.displayName || '').toUpperCase();
+        if (/\b1\b|COMM\s*1|UHF/.test(name)){
+          comm1.push(r);
+        } else if (/\b2\b|COMM\s*2|VHF/.test(name)){
+          comm2.push(r);
+        } else if (comm1.length <= comm2.length){
+          comm1.push(r);
+        } else {
+          comm2.push(r);
+        }
+      });
+
+      const maxRows = Math.max(comm1.length, comm2.length);
+      const bodyRows = [];
+      for (let i = 0; i < maxRows; i++){
+        const a = comm1[i];
+        const b = comm2[i];
+        bodyRows.push('<tr><td>' + (a ? escapeHtml(fmtRow(a)) : '') + '</td><td>' + (b ? escapeHtml(fmtRow(b)) : '') + '</td></tr>');
+      }
+
+      return '<div class=""fltPlanPage2Section""><div class=""fltPlanPage2Title"">COMMS</div><div class=""fltPlanPage2Body""><table class=""fltPlanPage2Table""><thead><tr><th>COMM 1</th><th>COMM 2</th></tr></thead><tbody>' + bodyRows.join('') + '</tbody></table></div></div>';
+    }
+
+    function formatRuntimeCmdsPanelHtml(data){
+      const server = (data && data.Server) || {};
+      const roots = [server.Payload, server.Diagnostics];
+      for (let i = 0; i < roots.length; i++){
+        const root = roots[i];
+        if (!root || typeof root !== 'object') continue;
+        const block = formatDtcCmdsBlockHtml(root);
+        if (block) return block;
+      }
+      return '<div class=""fltPlanPage2Section""><div class=""fltPlanPage2Title"">CMDS</div><div class=""fltPlanPage2Body"">No runtime CMDS data.</div></div>';
+    }
+
+    function formatRuntimeCmdsInfoBlockHtml(data){
+      const server = (data && data.Server) || {};
+      const roots = [server.Payload, server.Diagnostics];
+      for (let i = 0; i < roots.length; i++){
+        const root = roots[i];
+        if (!root || typeof root !== 'object') continue;
+        const block = formatDtcCmdsBlockHtml(root);
+        if (block) return block;
+      }
+      return '<div class=""fltPlanInfoBlock""><div class=""fltPlanInfoTitle"">CMDS</div><div class=""fltPlanInfoBody"">None</div></div>';
+    }
+
+    function formatRuntimePage2Html(data, pageSwitcherHtml){
+      let html = '<div class=""fltPlanBoard"">';
+      if (pageSwitcherHtml){
+        html += '<div style=""margin:4px 0 6px 0;"">' + pageSwitcherHtml + '</div>';
+      }
+      html += '<div class=""fltPlanPage2Grid"">';
+      html += formatRuntimeCommPanelHtml(data);
+      html += formatRuntimeCmdsPanelHtml(data);
+      html += '</div></div>';
+      return html;
+    }
+
+    function formatDtcRouteSummaryHtml(root, waypoints){
+      const wypt = findDtcWyptObject(root, 0) || {};
+      const navPts = Array.isArray(wypt.NAV_PTS) ? wypt.NAV_PTS : [];
+      const navRoute = Array.isArray(wypt.NAV_ROUTE) ? wypt.NAV_ROUTE : [];
+
+      function isRouteSelected(v){
+        if (v === true) return true;
+        if (v === false || v === null || v === undefined) return false;
+        if (typeof v === 'number') return v !== 0;
+        const s = String(v).trim().toLowerCase();
+        return s === 'true' || s === '1' || s === 'yes' || s === 'y';
+      }
+
+      const idToStep = {};
+      navPts.forEach(function(p, idx){
+        const id = String((p && p.id) || '').toUpperCase();
+        const step = isFinite(Number(p && p.wypt_num)) ? Math.round(Number(p.wypt_num)) : (idx + 1);
+        if (id) idToStep[id] = step;
+      });
+
+      function routeList(routeKey){
+        const orderKey = routeKey + '_order';
+        const points = navPts.filter(function(p){
+          return !!(p && typeof p === 'object' && isRouteSelected(p[routeKey]));
+        }).sort(function(a, b){
+          const ao = Number(a && a[orderKey]);
+          const bo = Number(b && b[orderKey]);
+          if (isFinite(ao) && isFinite(bo) && ao !== bo) return ao - bo;
+          const aw = Number(a && a.wypt_num);
+          const bw = Number(b && b.wypt_num);
+          if (isFinite(aw) && isFinite(bw) && aw !== bw) return aw - bw;
+          return 0;
+        });
+
+        const labels = points.map(function(p){
+          const n = isFinite(Number(p && p.wypt_num)) ? Number(p && p.wypt_num) : Number(p && p.number);
+          return isFinite(n) ? ('STP' + String(Math.round(n))) : '-';
+        });
+        if (labels.length) return labels.join(', ');
+
+        const routeIndex = routeKey === 'R1' ? 0 : (routeKey === 'R2' ? 1 : 2);
+        const routeObj = (navRoute.length > routeIndex && navRoute[routeIndex] && typeof navRoute[routeIndex] === 'object') ? navRoute[routeIndex] : {};
+        const routeKeys = Object.keys(routeObj);
+        if (routeKeys.length){
+          const routeSteps = routeKeys.map(function(k){
+            const rp = routeObj[k] || {};
+            const wn = Number(rp.wypt_num);
+            if (isFinite(wn)) return Math.round(wn);
+            const mapped = idToStep[String(k || '').toUpperCase()];
+            return isFinite(Number(mapped)) ? Number(mapped) : NaN;
+          }).filter(function(v){ return isFinite(v); }).sort(function(a,b){ return a-b; });
+          if (routeSteps.length){
+            return routeSteps.map(function(n){ return 'STP' + String(n); }).join(', ');
+          }
+        }
+
+        if (routeKey === 'R1' && Array.isArray(waypoints) && waypoints.length){
+          return waypoints.map(function(wp){ return 'STP' + String(wp.step || '-'); }).join(', ');
+        }
+
+        return '-';
+      }
+
+      const body = [
+        '<tr><td>R1</td><td>' + escapeHtml(routeList('R1')) + '</td></tr>',
+        '<tr><td>R2</td><td>' + escapeHtml(routeList('R2')) + '</td></tr>',
+        '<tr><td>R3</td><td>' + escapeHtml(routeList('R3')) + '</td></tr>'
+      ];
+
+      return '<div class=""fltPlanPage2Section""><div class=""fltPlanPage2Title"">ROUTES</div><div class=""fltPlanPage2Body""><table class=""fltPlanPage2Table""><thead><tr><th style=""width:56px;"">ROUTE</th><th>WAYPOINTS</th></tr></thead><tbody>' + body.join('') + '</tbody></table></div></div>';
+    }
+
+    function getDtcAvailableRoutes(root, waypoints){
+      const wypt = findDtcWyptObject(root, 0) || {};
+      const navPts = Array.isArray(wypt.NAV_PTS) ? wypt.NAV_PTS : [];
+      const navRoute = Array.isArray(wypt.NAV_ROUTE) ? wypt.NAV_ROUTE : [];
+
+      function hasRouteKey(routeKey){
+        if (navPts.some(function(p){ return !!(p && typeof p === 'object' && p[routeKey] === true); })) return true;
+        const idx = routeKey === 'R1' ? 0 : (routeKey === 'R2' ? 1 : 2);
+        const routeObj = (navRoute.length > idx && navRoute[idx] && typeof navRoute[idx] === 'object') ? navRoute[idx] : {};
+        if (Object.keys(routeObj).length > 0) return true;
+        if (routeKey === 'R1' && Array.isArray(waypoints) && waypoints.length > 0) return true;
+        return false;
+      }
+
+      const available = ['R1','R2','R3'].filter(hasRouteKey);
+      return available.length ? available : ['R1'];
+    }
+
+    function filterDtcWaypointsByRoute(root, waypoints, routeKey){
+      const route = String(routeKey || 'R1').toUpperCase();
+      if (!/^R[123]$/.test(route)) return Array.isArray(waypoints) ? waypoints : [];
+
+      const wypt = findDtcWyptObject(root, 0) || {};
+      const navPts = Array.isArray(wypt.NAV_PTS) ? wypt.NAV_PTS : [];
+      const navRoute = Array.isArray(wypt.NAV_ROUTE) ? wypt.NAV_ROUTE : [];
+      const list = Array.isArray(waypoints) ? waypoints : [];
+      if (!navPts.length || !list.length) return list;
+
+      const stepSet = {};
+      const routeOrder = {};
+      const orderKey = route + '_order';
+
+      navPts.forEach(function(p){
+        if (!p || typeof p !== 'object') return;
+        const selected = (p[route] === true) || (String(p[route] || '').toLowerCase() === 'true') || (Number(p[route]) === 1);
+        if (!selected) return;
+        const step = isFinite(Number(p.wypt_num)) ? Math.round(Number(p.wypt_num)) : (isFinite(Number(p.number)) ? Math.round(Number(p.number)) : NaN);
+        if (!isFinite(step)) return;
+        stepSet[step] = true;
+        const ord = Number(p[orderKey]);
+        if (isFinite(ord)) routeOrder[step] = ord;
+      });
+
+      if (!Object.keys(stepSet).length){
+        const idx = route === 'R1' ? 0 : (route === 'R2' ? 1 : 2);
+        const routeObj = (navRoute.length > idx && navRoute[idx] && typeof navRoute[idx] === 'object') ? navRoute[idx] : {};
+        const idToStep = {};
+        navPts.forEach(function(p){
+          const id = String((p && p.id) || '').toUpperCase();
+          const step = isFinite(Number(p && p.wypt_num)) ? Math.round(Number(p.wypt_num)) : (isFinite(Number(p && p.number)) ? Math.round(Number(p.number)) : NaN);
+          if (id && isFinite(step)) idToStep[id] = step;
+        });
+        Object.keys(routeObj).forEach(function(k){
+          const rp = routeObj[k] || {};
+          let step = Number(rp.wypt_num);
+          if (!isFinite(step)) step = Number(idToStep[String(k || '').toUpperCase()]);
+          if (!isFinite(step)) return;
+          step = Math.round(step);
+          stepSet[step] = true;
+          const ord = Number(rp[orderKey] || rp.route_num || rp.order);
+          if (isFinite(ord)) routeOrder[step] = ord;
+        });
+      }
+
+      if (!Object.keys(stepSet).length){
+        return route === 'R1' ? list : [];
+      }
+
+      return list
+        .filter(function(wp){ return !!stepSet[Number(wp.step)]; })
+        .sort(function(a, b){
+          const sa = Number(a && a.step);
+          const sb = Number(b && b.step);
+          const oa = routeOrder[sa];
+          const ob = routeOrder[sb];
+          if (isFinite(oa) && isFinite(ob) && oa !== ob) return oa - ob;
+          if (isFinite(oa) && !isFinite(ob)) return -1;
+          if (!isFinite(oa) && isFinite(ob)) return 1;
+          return sa - sb;
+        });
+    }
+
+    function formatDtcPage2Html(root, pageSwitcherHtml, waypoints){
+      let html = '<div class=""fltPlanBoard"">';
+      if (pageSwitcherHtml){
+        html += '<div style=""margin:4px 0 6px 0;"">' + pageSwitcherHtml + '</div>';
+      }
+      html += '<div class=""fltPlanPage2Grid"">';
+      html += formatDtcCommPanelHtml(root);
+      html += formatDtcRouteSummaryHtml(root, waypoints);
+      html += '</div></div>';
+      return html;
+    }
+
+    function getMudMapPointType(wp){
+      const typeRaw = String((wp && (wp.typeRaw || wp.type || '')) || '').toUpperCase();
+      const nameRaw = String((wp && (wp.name || '')) || '').toUpperCase();
+      const combined = typeRaw + ' ' + nameRaw;
+
+      if (combined.indexOf('AAR') >= 0 || combined.indexOf('AIR REFUEL') >= 0) return 'aar';
+      if (combined.indexOf('CAP') >= 0 || combined.indexOf('COMBAT AIR PATROL') >= 0) return 'cap';
+      if (combined.indexOf('HLD') >= 0 || combined.indexOf('HOLD') >= 0) return 'hld';
+      if (combined.indexOf('TGT') >= 0 || combined.indexOf('TARGET') >= 0) return 'tgt';
+      if (combined.indexOf('IP') >= 0 || combined.indexOf('INITIAL POINT') >= 0 || combined.indexOf('INBOUND POINT') >= 0) return 'ip';
+      if (combined.indexOf('DVRT') >= 0 || combined.indexOf('DIVERT') >= 0 || combined.indexOf('DIVERSION') >= 0) return 'dvrt';
+      if (combined.indexOf('TKO') >= 0 || combined.indexOf('TAK') >= 0 || combined.indexOf('TAKEOFF') >= 0 || combined.indexOf('TAKE OFF') >= 0) return 'tko';
+      if (combined.indexOf('LDG') >= 0 || combined.indexOf('LAND') >= 0) return 'ldg';
+      if (combined.indexOf('LAND') >= 0 || combined.indexOf('HOME') >= 0 || combined.indexOf('BASE') >= 0 || combined.indexOf('TAKEOFF') >= 0) return 'home';
+      return 'wp';
+    }
+
+    function getMudMapSegments(points){
+      const rows = Array.isArray(points) ? points : [];
+      const segs = [];
+      for (let i = 1; i < rows.length; i++){
+        const a = rows[i - 1];
+        const b = rows[i];
+        const aType = getMudMapPointType(a);
+        const bType = getMudMapPointType(b);
+        const fromHomeLike = (aType === 'home' || aType === 'ldg');
+        const toHomeLike = (bType === 'home' || bType === 'ldg');
+        const dashed = (fromHomeLike && !toHomeLike);
+        segs.push({ from: a, to: b, dashed: dashed });
+      }
+      return segs;
+    }
+
+    function getMudMapAssets(data){
+      const server = (data && data.Server) || {};
+      const rawAssets = Array.isArray(server.FriendlyAssets) ? server.FriendlyAssets : [];
+      return rawAssets
+        .map(function(a){
+          const northNum = Number(a && a.X);
+          const eastNum = Number(a && a.Y);
+          const xNum = isFinite(northNum) ? northNum : Number(a && a.X);
+          const yNum = isFinite(eastNum) ? eastNum : Number(a && a.Y);
+          if (!isFinite(xNum) || !isFinite(yNum)) return null;
+          return {
+            callsign: String((a && a.Callsign) || '').trim(),
+            name: String((a && a.Name) || '').trim(),
+            category: String((a && a.Category) || '').trim().toUpperCase(),
+            xNum: xNum,
+            yNum: yNum
+          };
+        })
+        .filter(function(a){ return !!a; });
+    }
+
+    function getMudMapAssetKind(asset){
+      const category = String((asset && asset.category) || '').toUpperCase();
+      const text = (category + ' ' + String((asset && asset.name) || '').toUpperCase());
+      if (text.indexOf('TANKER') >= 0 || text.indexOf('REFUEL') >= 0) return 'tanker';
+      if (text.indexOf('AWACS') >= 0) return 'awacs';
+      if (text.indexOf('JTAC') >= 0) return 'jtac';
+      if (text.indexOf('HELO') >= 0 || text.indexOf('HELICOPTER') >= 0 || text.indexOf('ROTOR') >= 0) return 'rotary';
+      return 'fixed';
+    }
+
+    function buildMudMapSvg(waypoints, data){
+      const rows = Array.isArray(waypoints) ? waypoints.filter(function(wp){
+        return isFinite(Number(wp && wp.xNum)) && isFinite(Number(wp && wp.yNum));
+      }) : [];
+
+      const isNight = !!nightModeEnabled;
+      const palette = isNight
+        ? {
+            bg: '#1a232c',
+            line: '#8ba5bf',
+            label: '#dbe8f5',
+            north: '#c8d8e8',
+            wpFill: '#3f79b4',
+            wpStroke: '#79a4cb',
+            ipFill: '#3f9a66',
+            ipStroke: '#7fc39f',
+            tgtFill: '#b45757',
+            tgtStroke: '#d48b8b',
+            homeRoof: '#8f7650',
+            homeBase: '#b79b67',
+            homeStroke: '#d9c29b',
+            tkoFill: '#2f9e56',
+            tkoStroke: '#86d2a1',
+            raceFill: '#1f2a35',
+            assetBlue: '#6eb1ff',
+            assetBlueDark: '#2f6fb3'
+          }
+        : {
+            bg: '#ffffff',
+            line: '#3d566e',
+            label: '#1f2e3d',
+            north: '#263748',
+            wpFill: '#3a6ea5',
+            wpStroke: '#244766',
+            ipFill: '#2f7f4f',
+            ipStroke: '#1e5535',
+            tgtFill: '#a33d3d',
+            tgtStroke: '#682626',
+            homeRoof: '#735c2f',
+            homeBase: '#b1945a',
+            homeStroke: '#4c3d1f',
+            tkoFill: '#2f9e56',
+            tkoStroke: '#1e6a39',
+            raceFill: '#ffffff',
+            assetBlue: '#2d8fe3',
+            assetBlueDark: '#1f5d93'
+          };
+
+      if (!rows.length){
+        return '<div class=""fltPlanMessage"">No mappable waypoint coordinates found.</div>';
+      }
+
+      const width = 920;
+      const height = 760;
+      const pad = 54;
+
+      const eastValues = rows.map(function(wp){ return Number(wp.yNum); });
+      const northValues = rows.map(function(wp){ return Number(wp.xNum); });
+      const minEast = Math.min.apply(null, eastValues);
+      const maxEast = Math.max.apply(null, eastValues);
+      const minNorth = Math.min.apply(null, northValues);
+      const maxNorth = Math.max.apply(null, northValues);
+
+      const spanEast = Math.max(1, maxEast - minEast);
+      const spanNorth = Math.max(1, maxNorth - minNorth);
+      const scaleX = (width - (pad * 2)) / spanEast;
+      const scaleY = (height - (pad * 2)) / spanNorth;
+      const scale = Math.min(scaleX, scaleY);
+      const drawW = spanEast * scale;
+      const drawH = spanNorth * scale;
+      const offsetX = (width - drawW) / 2;
+      const offsetY = (height - drawH) / 2;
+
+      function mapPt(wp){
+        const north = Number(wp.xNum);
+        const east = Number(wp.yNum);
+        const sx = offsetX + ((east - minEast) * scale);
+        const sy = offsetY + ((maxNorth - north) * scale);
+        return { x: sx, y: sy };
+      }
+
+      const mapped = rows.map(function(wp){
+        const p = mapPt(wp);
+        return { wp: wp, x: p.x, y: p.y, kind: getMudMapPointType(wp) };
+      });
+
+      const byStep = {};
+      mapped.forEach(function(m){ byStep[String(m.wp.step)] = m; });
+      const segments = getMudMapSegments(rows)
+        .map(function(seg){
+          return {
+            from: byStep[String(seg.from.step)],
+            to: byStep[String(seg.to.step)],
+            dashed: !!seg.dashed
+          };
+        })
+        .filter(function(seg){ return !!(seg.from && seg.to); });
+
+      const lineEls = segments.map(function(seg){
+        return '<line x1=""' + seg.from.x.toFixed(1) + '"" y1=""' + seg.from.y.toFixed(1) + '"" x2=""' + seg.to.x.toFixed(1) + '"" y2=""' + seg.to.y.toFixed(1) + '"" stroke=""' + palette.line + '"" stroke-width=""2""' + (seg.dashed ? ' stroke-dasharray=""8 6""' : '') + ' />';
+      });
+
+      function iconFor(m){
+        const x = m.x.toFixed(1);
+        const y = m.y.toFixed(1);
+        function racetrack(colorHex, label){
+          const w = 64;
+          const h = 32;
+          const rx = 14;
+          return '<g><rect x=""' + (m.x - (w / 2)).toFixed(1) + '"" y=""' + (m.y - (h / 2)).toFixed(1) + '"" width=""' + w + '"" height=""' + h + '"" rx=""' + rx + '"" ry=""' + rx + '"" fill=""' + palette.raceFill + '"" stroke=""' + colorHex + '"" stroke-width=""2.2"" /><text x=""' + x + '"" y=""' + (m.y + 5.5).toFixed(1) + '"" text-anchor=""middle"" font-size=""14"" fill=""' + colorHex + '"" font-weight=""700"">' + label + '</text></g>';
+        }
+        if (m.kind === 'aar') return racetrack('#111111', 'AAR');
+        if (m.kind === 'cap') return racetrack('#2f5fa7', 'CAP');
+        if (m.kind === 'hld') return racetrack('#2f7f4f', 'HLD');
+        if (m.kind === 'ip'){
+          const s = 9;
+          return '<rect x=""' + (m.x - s).toFixed(1) + '"" y=""' + (m.y - s).toFixed(1) + '"" width=""' + (s * 2) + '"" height=""' + (s * 2) + '"" fill=""' + palette.ipFill + '"" stroke=""' + palette.ipStroke + '"" stroke-width=""1.5"" />';
+        }
+        if (m.kind === 'tgt'){
+          const p1 = x + ',' + (m.y - 10).toFixed(1);
+          const p2 = (m.x - 10).toFixed(1) + ',' + (m.y + 8).toFixed(1);
+          const p3 = (m.x + 10).toFixed(1) + ',' + (m.y + 8).toFixed(1);
+          return '<polygon points=""' + p1 + ' ' + p2 + ' ' + p3 + '"" fill=""' + palette.tgtFill + '"" stroke=""' + palette.tgtStroke + '"" stroke-width=""1.5"" />';
+        }
+        if (m.kind === 'home' || m.kind === 'ldg'){
+          const r = 10;
+          const roofTop = x + ',' + (m.y - 12).toFixed(1);
+          const roofL = (m.x - r).toFixed(1) + ',' + (m.y - 2).toFixed(1);
+          const roofR = (m.x + r).toFixed(1) + ',' + (m.y - 2).toFixed(1);
+          const baseX = (m.x - 8).toFixed(1);
+          const baseY = (m.y - 2).toFixed(1);
+          return '<polygon points=""' + roofTop + ' ' + roofL + ' ' + roofR + '"" fill=""' + palette.homeRoof + '"" stroke=""' + palette.homeStroke + '"" stroke-width=""1.5"" /><rect x=""' + baseX + '"" y=""' + baseY + '"" width=""16"" height=""12"" fill=""' + palette.homeBase + '"" stroke=""' + palette.homeStroke + '"" stroke-width=""1.5"" />';
+        }
+        if (m.kind === 'tko'){
+          return '<circle cx=""' + x + '"" cy=""' + y + '"" r=""8"" fill=""' + palette.tkoFill + '"" stroke=""' + palette.tkoStroke + '"" stroke-width=""1.5"" />';
+        }
+        return '<circle cx=""' + x + '"" cy=""' + y + '"" r=""8"" fill=""' + palette.wpFill + '"" stroke=""' + palette.wpStroke + '"" stroke-width=""1.5"" />';
+      }
+
+      const pointEls = mapped.map(function(m){
+        const step = escapeHtml(String(m.wp.step || '-'));
+        const name = escapeHtml(String(m.wp.name || ''));
+        const label = name && name !== '-' ? ('STP ' + step + ' ' + name) : ('STP ' + step);
+        const tx = (m.x + (isFinite(Number(m.labelDx)) ? Number(m.labelDx) : 11)).toFixed(1);
+        const ty = (m.y + (isFinite(Number(m.labelDy)) ? Number(m.labelDy) : -11)).toFixed(1);
+        return iconFor(m)
+          + '<text x=""' + tx + '"" y=""' + ty + '"" font-size=""11"" fill=""' + palette.label + '"" font-weight=""700"">' + label + '</text>';
+      });
+
+      function assetIconFor(a){
+        const x = a.x;
+        const y = a.y;
+        const stroke = palette.assetBlueDark;
+        const fill = palette.assetBlue;
+        const category = String((a && a.asset && a.asset.category) || '').toUpperCase();
+        if (category === 'PLAYER'){
+          return '<g><circle cx=""' + x.toFixed(1) + '"" cy=""' + y.toFixed(1) + '"" r=""7.5"" fill=""#f2d76a"" stroke=""#7a6420"" stroke-width=""1.5"" /><line x1=""' + (x - 9).toFixed(1) + '"" y1=""' + y.toFixed(1) + '"" x2=""' + (x + 9).toFixed(1) + '"" y2=""' + y.toFixed(1) + '"" stroke=""#7a6420"" stroke-width=""1.2"" /><line x1=""' + x.toFixed(1) + '"" y1=""' + (y - 9).toFixed(1) + '"" x2=""' + x.toFixed(1) + '"" y2=""' + (y + 9).toFixed(1) + '"" stroke=""#7a6420"" stroke-width=""1.2"" /></g>';
+        }
+        const kind = getMudMapAssetKind(a.asset);
+        if (kind === 'awacs'){
+          return '<g><rect x=""' + (x - 8).toFixed(1) + '"" y=""' + (y - 6).toFixed(1) + '"" width=""16"" height=""12"" rx=""1.6"" fill=""' + fill + '"" stroke=""' + stroke + '"" stroke-width=""1.3"" /><line x1=""' + (x - 6).toFixed(1) + '"" y1=""' + y.toFixed(1) + '"" x2=""' + (x + 6).toFixed(1) + '"" y2=""' + y.toFixed(1) + '"" stroke=""' + stroke + '"" stroke-width=""1.2"" /><circle cx=""' + x.toFixed(1) + '"" cy=""' + (y - 9).toFixed(1) + '"" r=""2.4"" fill=""' + stroke + '"" /></g>';
+        }
+        if (kind === 'tanker'){
+          const p1 = (x - 8).toFixed(1) + ',' + y.toFixed(1);
+          const p2 = x.toFixed(1) + ',' + (y - 6).toFixed(1);
+          const p3 = (x + 8).toFixed(1) + ',' + y.toFixed(1);
+          const p4 = x.toFixed(1) + ',' + (y + 6).toFixed(1);
+          return '<polygon points=""' + p1 + ' ' + p2 + ' ' + p3 + ' ' + p4 + '"" fill=""' + fill + '"" stroke=""' + stroke + '"" stroke-width=""1.3"" />';
+        }
+        if (kind === 'jtac'){
+          const p1 = x.toFixed(1) + ',' + (y - 7).toFixed(1);
+          const p2 = (x - 7).toFixed(1) + ',' + (y + 7).toFixed(1);
+          const p3 = (x + 7).toFixed(1) + ',' + (y + 7).toFixed(1);
+          return '<polygon points=""' + p1 + ' ' + p2 + ' ' + p3 + '"" fill=""' + fill + '"" stroke=""' + stroke + '"" stroke-width=""1.3"" />';
+        }
+        if (kind === 'rotary'){
+          return '<g><circle cx=""' + x.toFixed(1) + '"" cy=""' + y.toFixed(1) + '"" r=""6"" fill=""' + fill + '"" stroke=""' + stroke + '"" stroke-width=""1.3"" /><line x1=""' + (x - 9).toFixed(1) + '"" y1=""' + y.toFixed(1) + '"" x2=""' + (x + 9).toFixed(1) + '"" y2=""' + y.toFixed(1) + '"" stroke=""' + stroke + '"" stroke-width=""1.2"" /><line x1=""' + x.toFixed(1) + '"" y1=""' + (y - 9).toFixed(1) + '"" x2=""' + x.toFixed(1) + '"" y2=""' + (y + 9).toFixed(1) + '"" stroke=""' + stroke + '"" stroke-width=""1.2"" /></g>';
+        }
+        return '<rect x=""' + (x - 7).toFixed(1) + '"" y=""' + (y - 5.5).toFixed(1) + '"" width=""14"" height=""11"" fill=""' + fill + '"" stroke=""' + stroke + '"" stroke-width=""1.3"" />';
+      }
+
+      const rawAssets = (dlinkOnEnabled ? getMudMapAssets((typeof data === 'undefined' ? null : data)) : []);
+      const mapAssets = rawAssets
+        .map(function(asset){
+          const north = Number(asset.xNum);
+          const east = Number(asset.yNum);
+          if (!isFinite(north) || !isFinite(east)) return null;
+          asset.xNum = north;
+          asset.yNum = east;
+          return asset;
+        })
+        .filter(function(asset){ return !!asset; })
+        .map(function(asset){
+          const p = mapPt(asset);
+          return { asset: asset, x: p.x, y: p.y };
+        })
+        .slice(0, 24);
+
+      const assetEls = mapAssets.map(function(m){
+        const label = escapeHtml(m.asset.callsign || m.asset.name || m.asset.category || 'ASSET');
+        const tx = (m.x + 10).toFixed(1);
+        const ty = (m.y + 4).toFixed(1);
+        return '<g>' + assetIconFor(m) + '<text x=""' + tx + '"" y=""' + ty + '"" font-size=""10"" fill=""' + palette.assetBlueDark + '"" font-weight=""700"">' + label + '</text></g>';
+      });
+
+      const northArrow = [
+        '<g transform=""translate(' + (width - 46) + ',44)"">',
+        '<line x1=""0"" y1=""18"" x2=""0"" y2=""-10"" stroke=""' + palette.north + '"" stroke-width=""2"" />',
+        '<polygon points=""0,-18 -6,-6 6,-6"" fill=""' + palette.north + '"" />',
+        '<text x=""0"" y=""32"" text-anchor=""middle"" font-size=""12"" fill=""' + palette.north + '"" font-weight=""700"">N</text>',
+        '</g>'
+      ].join('');
+
+      const selected = getActiveFlightPlanSelection((typeof data === 'undefined' ? null : data));
+      const mapView = getMapViewBySelection(selected);
+      const zoom = clamp(isFinite(Number(mapView.zoom)) ? Number(mapView.zoom) : 1, 0.6, 4.0);
+      const panX = isFinite(Number(mapView.panX)) ? Number(mapView.panX) : 0;
+      const panY = isFinite(Number(mapView.panY)) ? Number(mapView.panY) : 0;
+
+      return '<svg viewBox=""0 0 ' + width + ' ' + height + '"" class=""fltPlanPage3Canvas"" preserveAspectRatio=""xMidYMid meet"" data-map-canvas=""1"">'
+        + '<rect x=""0"" y=""0"" width=""' + width + '"" height=""' + height + '"" fill=""' + palette.bg + '"" />'
+        + '<g data-map-content=""1"" transform=""translate(' + panX.toFixed(1) + ' ' + panY.toFixed(1) + ') scale(' + zoom.toFixed(3) + ')"">'
+        + lineEls.join('')
+        + assetEls.join('')
+        + pointEls.join('')
+        + '</g>'
+        + northArrow
+        + '</svg>';
+    }
+
+    function formatDtcPage3Html(pageSwitcherHtml, waypoints, data, selected){
+      const mapRows = applyTypeOverrides(Array.isArray(waypoints) ? waypoints.slice() : [], selected);
+      let html = '<div class=""fltPlanBoard"">';
+      if (pageSwitcherHtml){
+        html += '<div style=""margin:4px 0 6px 0;"">' + pageSwitcherHtml + '</div>';
+      }
+      html += '<div class=""controls fltPlanControls"" style=""margin:0 0 6px 0;""><button type=""button"" class=""fltPlanPageBtn"" data-map-zoom=""in"">Map +</button><button type=""button"" class=""fltPlanPageBtn"" data-map-zoom=""out"">Map -</button><button type=""button"" class=""fltPlanPageBtn"" data-map-zoom=""reset"">Map Reset</button></div>';
+      html += '<div class=""fltPlanPage3Wrap"">';
+      html += buildMudMapSvg(mapRows, data);
+      html += '</div></div>';
+      return html;
+    }
+
+    function renderFlightPlanBoardHtml(selected, data, primaryRouteName, sourceLabel, sourceFileName, waypoints, cmdsBlockHtml, pageSwitcherHtml){
+      const rows = Array.isArray(waypoints) ? waypoints.slice() : [];
+      applyTypeOverrides(rows, selected);
+      applyAltitudeAdjustments(rows, selected);
+      applyEtaPlanToWaypoints(rows, selected);
+      const timing = getFlightPlanTimingDisplay(selected);
+
+      const server = (data && data.Server) || {};
+      const callsign = safe(server.PlayerCallsign);
+      const mission = safe(server.MissionTitle);
+      const config = safe(server.Aircraft);
+      const theatre = safe(server.Theater);
+      const startRow = getFlightPlanStartRow(server, selected);
+      const displayRows = startRow ? [startRow].concat(rows) : rows;
+      applySpeedAdjustmentsToWaypoints(displayRows, selected);
+      applyRouteTimeline(displayRows, selected);
+      applyLockedTotPlan(displayRows, selected);
+      applyDistancePlan(displayRows);
+      applyHeadingPlan(displayRows, theatre);
+      const etaHeading = hasTakeoffTimeBySelection(selected) ? 'ETA' : 'ETE';
+
+      let html = '';
+      html += '<div class=""fltPlanBoard"">';
+      html += '<div class=""fltPlanHeaderGrid"">';
+      html += '<div class=""fltPlanHeaderCell""><div class=""fltPlanHeaderCellLabel"">ROUTE</div><div class=""fltPlanHeaderCellValue"">' + escapeHtml(primaryRouteName) + '</div></div>';
+      html += '<div class=""fltPlanHeaderCell""><div class=""fltPlanHeaderCellLabel"">CALL SIGN</div><div class=""fltPlanHeaderCellValue"">' + escapeHtml(callsign) + '</div></div>';
+      html += '<div class=""fltPlanHeaderCell""><div class=""fltPlanHeaderCellLabel"">MISSION</div><div class=""fltPlanHeaderCellValue"">' + escapeHtml(mission) + '</div></div>';
+      html += '<div class=""fltPlanHeaderCell""><div class=""fltPlanHeaderCellLabel"">CONFIG</div><div class=""fltPlanHeaderCellValue"">' + escapeHtml(config) + '</div></div>';
+      html += '</div>';
+      html += '<div class=""fltPlanHeaderGrid"">';
+      html += '<div class=""fltPlanHeaderCell""><div class=""fltPlanHeaderCellLabel"">THEATRE</div><div class=""fltPlanHeaderCellValue"">' + escapeHtml(theatre) + '</div></div>';
+      html += '<div class=""fltPlanHeaderCell""><div class=""fltPlanHeaderCellLabel"">SOURCE</div><div class=""fltPlanHeaderCellValue"">' + escapeHtml(sourceLabel || '-') + '</div></div>';
+      html += '<div class=""fltPlanHeaderCell""><div class=""fltPlanHeaderCellLabel"">ROUTE FILE</div><div class=""fltPlanHeaderCellValue"">' + escapeHtml(sourceFileName || '-') + '</div></div>';
+      html += '<div class=""fltPlanHeaderCell""><div class=""fltPlanHeaderCellLabel"">WAYPOINTS</div><div class=""fltPlanHeaderCellValue"">' + escapeHtml(String(rows.length)) + '</div></div>';
+      html += '</div>';
+      if (pageSwitcherHtml){
+        html += '<div style=""margin:4px 0 2px 0;"">' + pageSwitcherHtml + '</div>';
+      }
+
+      html += '<div class=""fltPlanTimeGrid"">';
+      html += '<div class=""fltPlanTimeCell clickable"" data-tko-anchor=""STEP"" title=""Set STEP to current clock (Takeoff auto = STEP +35m)""><div class=""fltPlanTimeCellLabel"">STEP</div><div class=""fltPlanTimeCellValue"">' + escapeHtml(timing.step) + '</div></div>';
+      html += '<div class=""fltPlanTimeCell clickable"" data-tko-anchor=""START"" title=""Set START to current clock (Takeoff auto = START +25m)""><div class=""fltPlanTimeCellLabel"">START</div><div class=""fltPlanTimeCellValue"">' + escapeHtml(timing.start) + '</div></div>';
+      html += '<div class=""fltPlanTimeCell clickable"" data-tko-anchor=""TAXI"" title=""Set TAXI to current clock (Takeoff auto = TAXI +15m)""><div class=""fltPlanTimeCellLabel"">TAXI</div><div class=""fltPlanTimeCellValue"">' + escapeHtml(timing.taxi) + '</div></div>';
+      html += '<div class=""fltPlanTimeCell clickable"" data-tko-anchor=""TAKEOFF"" title=""Set TAKEOFF to current clock""><div class=""fltPlanTimeCellLabel"">TAKE OFF</div><div class=""fltPlanTimeCellValue"">' + escapeHtml(timing.takeoff) + '</div></div>';
+      html += '<div class=""fltPlanTimeCell""><div class=""fltPlanTimeCellLabel"">TOT</div><div class=""fltPlanTimeCellValue""><div class=""fltPlanAdjustCell""><button type=""button"" class=""fltPlanMiniBtn"" data-tot-adjust-sec=""-1"" title=""-1 second"">«</button><button type=""button"" class=""fltPlanMiniBtn"" data-tot-adjust=""-60"" title=""-1 minute"">◀</button><span class=""fltPlanSpdValue"">' + escapeHtml(timing.tot) + '</span><button type=""button"" class=""fltPlanMiniBtn"" data-tot-adjust=""60"" title=""+1 minute"">▶</button><button type=""button"" class=""fltPlanMiniBtn"" data-tot-adjust-sec=""1"" title=""+1 second"">»</button></div></div></div>';
+      html += '</div>';
+
+      html += '<div class=""fltPlanWpWrap"">';
+      html += '<div class=""fltPlanWpTitle"">Route: ' + escapeHtml(primaryRouteName) + '</div>';
+      html += '<div class=""fltPlanWpTableWrap"">';
+      html += '<table class=""fltPlanWpTable"">';
+      html += '<thead><tr><th style=""width:48px;"">STP</th><th style=""width:68px;"">TYPE</th><th style=""width:118px;"">NAME</th><th style=""width:78px;"">ALT</th><th style=""width:56px;"">HDG</th><th style=""width:86px;"">SPD KCAS</th><th style=""width:64px;"">DIST</th><th class=""fltPlanEtaHeader"" style=""width:90px;"" data-eta-header=""1"" title=""Click to set ETA start from current time"">' + etaHeading + '</th><th style=""width:150px;"">X / Y</th></tr></thead>';
+      html += '<tbody>';
+
+      if (!displayRows.length){
+        html += '<tr><td colspan=""9"">No waypoints found.</td></tr>';
+      } else {
+        displayRows.forEach(function(wp){
+          const stepKey = stepToKey(wp.step);
+          const lockChecked = !wp.isStart && stepKey && (stepKey === stepToKey(getFlightPlanPlanState(selected).lockedStep)) ? ' checked' : '';
+          html += '<tr>';
+          html += '<td class=""fltPlanCellNum"">' + escapeHtml(wp.step) + '</td>';
+          if (wp.isStart){
+            html += '<td>' + escapeHtml(wp.type) + '</td>';
+          } else {
+            html += '<td><div class=""fltPlanAdjustCell""><button type=""button"" class=""fltPlanMiniBtn"" data-type-step=""' + escapeHtml(stepKey) + '"" data-type-current=""' + escapeHtml(wp.type) + '"" data-type-delta=""-1"">◀</button><span class=""fltPlanSpdValue"">' + escapeHtml(wp.type) + '</span><button type=""button"" class=""fltPlanMiniBtn"" data-type-step=""' + escapeHtml(stepKey) + '"" data-type-current=""' + escapeHtml(wp.type) + '"" data-type-delta=""1"">▶</button></div></td>';
+          }
+          html += '<td>' + escapeHtml(wp.name || '-') + '</td>';
+          if (wp.isStart){
+            html += '<td class=""fltPlanCellNum"">' + formatAltCellHtml(wp) + '</td>';
+          } else {
+            html += '<td class=""fltPlanCellNum""><div class=""fltPlanAdjustCell""><button type=""button"" class=""fltPlanMiniBtn"" data-alt-step=""' + escapeHtml(stepKey) + '"" data-alt-delta=""-500"">◀</button><span class=""fltPlanSpdValue"">' + formatAltCellHtml(wp) + '</span><button type=""button"" class=""fltPlanMiniBtn"" data-alt-step=""' + escapeHtml(stepKey) + '"" data-alt-delta=""500"">▶</button></div></td>';
+          }
+          if (wp.isStart){
+            html += '<td class=""fltPlanCellNum"">' + escapeHtml(wp.hdg || '-') + '</td>';
+            html += '<td class=""fltPlanCellNum"">' + escapeHtml(wp.spd || '-') + '</td>';
+          } else {
+            html += '<td class=""fltPlanCellNum"">' + escapeHtml(wp.hdg || '-') + '</td>';
+            html += '<td class=""fltPlanCellNum""><div class=""fltPlanAdjustCell""><button type=""button"" class=""fltPlanMiniBtn"" data-spd-step=""' + escapeHtml(stepKey) + '"" data-spd-delta=""-20"">◀</button><span class=""fltPlanSpdValue"">' + escapeHtml(wp.spd || '-') + '</span><button type=""button"" class=""fltPlanMiniBtn"" data-spd-step=""' + escapeHtml(stepKey) + '"" data-spd-delta=""20"">▶</button></div></td>';
+          }
+          html += '<td class=""fltPlanCellNum"">' + escapeHtml(wp.dist || '-') + '</td>';
+          if (wp.isStart){
+            html += '<td class=""fltPlanCellNum"">' + escapeHtml(wp.etaDisplay || wp.eta) + '</td>';
+          } else {
+            html += '<td class=""fltPlanCellNum""><span class=""fltPlanEtaWrap""><input type=""checkbox"" data-tot-lock-step=""' + escapeHtml(stepKey) + '""' + lockChecked + '><span>' + escapeHtml(wp.etaDisplay || wp.eta) + '</span></span></td>';
+          }
+          html += '<td class=""fltPlanCellNum"">' + escapeHtml((wp.x || '-') + ' / ' + (wp.y || '-')) + '</td>';
+          html += '</tr>';
+        });
+      }
+
+      html += '</tbody></table></div></div>';
+      html += '<div class=""fltPlanBottomGrid"">';
+      html += '<div class=""fltPlanInfoFreqWrap"">' + formatFrequenciesBlockHtml(data) + '</div>';
+      if (cmdsBlockHtml){
+        html += '<div class=""fltPlanInfoCmdsWrap"">' + cmdsBlockHtml + '</div>';
+      }
+      html += '<div class=""fltPlanInfoAssetsWrap"">' + formatAssetsBlockHtml(data) + '</div>';
+      html += '<div class=""fltPlanInfoWxWrap"">' + formatMetarBlockHtml(data) + '</div>';
+      html += '</div>';
+      html += '</div>';
+      return html;
+    }
+
+    function formatRouteToolTableHtml(root, selected, data){
+      const presets = (root && typeof root === 'object') ? root : null;
+      if (!presets) return '';
+
+      const routeNames = Object.keys(presets);
+      if (!routeNames.length) return '';
+
+      routeNames.sort(function(a,b){ return String(a).localeCompare(String(b)); });
+      const primaryRouteName = String(routeNames[0] || getDtcDisplayName(selected) || '-');
+      const primaryRoute = presets[primaryRouteName] || {};
+      const waypoints = getRouteWaypoints(primaryRoute);
+      const page = getDtcPageBySelection(selected);
+
+      const routeRows = routeNames.map(function(routeName){
+        const routeObj = presets[routeName] || {};
+        const count = getRouteWaypoints(routeObj).length;
+        const name = String(routeName || '-');
+        return '<tr><td style=""width:56px;"">' + (name === primaryRouteName ? '<strong>' + escapeHtml(name) + '</strong>' : escapeHtml(name)) + '</td><td>' + escapeHtml(String(count)) + '</td></tr>';
+      });
+      const routeSummaryHtml = '<div class=""fltPlanPage2Section""><div class=""fltPlanPage2Title"">ROUTES</div><div class=""fltPlanPage2Body""><table class=""fltPlanPage2Table""><thead><tr><th style=""width:56px;"">ROUTE</th><th>WAYPOINTS</th></tr></thead><tbody>' + routeRows.join('') + '</tbody></table></div></div>';
+      const pageSwitcherHtml = '<span class=""fltPlanPageSwitcher""><button type=""button"" class=""fltPlanPageBtn' + (page === 1 ? ' active' : '') + '"" data-dtc-page=""1"">NAVLOG</button><button type=""button"" class=""fltPlanPageBtn' + (page === 2 ? ' active' : '') + '"" data-dtc-page=""2"">COM/ROUTE</button><button type=""button"" class=""fltPlanPageBtn' + (page === 3 ? ' active' : '') + '"" data-dtc-page=""3"">MAP</button></span>';
+
+      if (page === 3){
+        return formatDtcPage3Html(pageSwitcherHtml, waypoints, data, selected);
+      }
+
+      if (page === 2){
+        let html = '<div class=""fltPlanBoard"">';
+        html += '<div style=""margin:4px 0 6px 0;"">' + pageSwitcherHtml + '</div>';
+        html += '<div class=""fltPlanPage2Grid"">';
+        html += formatRuntimeCommPanelHtml(data);
+        html += routeSummaryHtml;
+        html += '</div></div>';
+        return html;
+      }
+
+      return renderFlightPlanBoardHtml(selected, data, primaryRouteName, 'ROUTE TOOL', getPathFileName(getFltPlnPath(selected)), waypoints, formatRuntimeCmdsInfoBlockHtml(data), pageSwitcherHtml);
+    }
+
+    function parseMissionRuntimeWaypointSample(line){
+      const text = String(line || '').trim();
+      if (!text) return null;
+
+      const parts = text.split('|');
+      if (!parts.length) return null;
+
+      const groupPart = String(parts[1] || '');
+      const groupMatch = groupPart.match(/^group=(.*)$/i);
+      const groupName = groupMatch ? String(groupMatch[1] || '').trim() : '';
+
+      const map = {};
+      parts.forEach(function(p){
+        const idx = p.indexOf('=');
+        if (idx <= 0) return;
+        const key = String(p.substring(0, idx)).trim().toLowerCase();
+        const value = String(p.substring(idx + 1)).trim();
+        if (!key) return;
+        map[key] = value;
+      });
+
+      const pt = Number(map.pt);
+      const x = Number(map.x);
+      const y = Number(map.y);
+      const altMeters = Number(map.alt);
+      const spdMs = Number(map.spd);
+      const etaSeconds = Number(map.eta);
+      const task = String(map.task || '').trim();
+
+      if (!isFinite(pt) || !isFinite(x) || !isFinite(y)) return null;
+
+      const altFeetRaw = isFinite(altMeters) ? (altMeters * 3.28084) : NaN;
+      const altFeet = isFinite(altFeetRaw) ? (Math.round(altFeetRaw / 500) * 500) : NaN;
+      const speedKnots = isFinite(spdMs) ? Math.round(spdMs * 1.94384449) : NaN;
+
+      return {
+        groupName: groupName,
+        step: String(Math.round(pt)),
+        type: abbreviateRouteType(task || 'WP'),
+        typeRaw: task || 'WP',
+        name: '-',
+        alt: isFinite(altFeet) ? String(altFeet) : '-',
+        altFeet: altFeet,
+        altType: '',
+        eta: formatEtaSeconds(etaSeconds),
+        etaSourceSeconds: etaSeconds,
+        spd: isFinite(speedKnots) ? String(speedKnots) : '-',
+        x: String(Math.round(x)),
+        y: String(Math.round(y)),
+        xNum: x,
+        yNum: y
+      };
+    }
+
+    function cloneRuntimeWaypoints(rows){
+      const list = Array.isArray(rows) ? rows : [];
+      return list.map(function(wp){
+        return wp && typeof wp === 'object' ? Object.assign({}, wp) : wp;
+      });
+    }
+
+    function readMissionRuntimeWaypointsFromDiagnostics(data){
+      const server = (data && data.Server) || {};
+      const diagnostics = (server && server.Diagnostics) || {};
+      const playerRows = Array.isArray(diagnostics.playerGroupWaypoints) ? diagnostics.playerGroupWaypoints : [];
+      const rows = playerRows.length
+        ? playerRows
+        : (Array.isArray(diagnostics.waypointSamples) ? diagnostics.waypointSamples : []);
+      const parsed = rows
+        .map(parseMissionRuntimeWaypointSample)
+        .filter(function(x){ return !!x; });
+
+      if (!parsed.length) return [];
+
+      const playerGroup = String(diagnostics.playerGroup || '').trim();
+      const effective = playerGroup
+        ? parsed.filter(function(wp){ return String(wp.groupName || '').trim() === playerGroup; })
+        : parsed;
+
+      if (!effective.length) return [];
+
+      return effective
+        .sort(function(a, b){ return Number(a.step) - Number(b.step); })
+        .map(function(wp){
+          const clone = Object.assign({}, wp);
+          delete clone.groupName;
+          return clone;
+        });
+    }
+
+    function getMissionRuntimeWaypoints(data){
+      const model = data || latestData || {};
+      const selected = String(model.DtcSelectedFile || '');
+      const missionIdentity = getMissionIdentity(model);
+
+      if (selected){
+        return readMissionRuntimeWaypointsFromDiagnostics(model);
+      }
+
+      const live = readMissionRuntimeWaypointsFromDiagnostics(model);
+      if (live.length){
+        runtimeFlightPlanSnapshot = cloneRuntimeWaypoints(live);
+        runtimeFlightPlanSnapshotMissionIdentity = missionIdentity;
+      }
+
+      if (runtimeFlightPlanSnapshot
+        && runtimeFlightPlanSnapshot.length
+        && runtimeFlightPlanSnapshotMissionIdentity === missionIdentity){
+        return cloneRuntimeWaypoints(runtimeFlightPlanSnapshot);
+      }
+
+      return live;
+    }
+
+    function formatMissionRuntimeFlightPlanHtml(data, waypoints){
+      const rows = applyTypeOverrides(Array.isArray(waypoints) ? waypoints.slice() : [], '__RUNTIME_PLAYER__');
+      const server = (data && data.Server) || {};
+      const diagnostics = (server && server.Diagnostics) || {};
+      const groupName = String(diagnostics.playerGroup || '').trim();
+      const routeName = groupName ? ('PLAYER ROUTE (' + groupName + ')') : 'PLAYER ROUTE';
+      const selected = '__RUNTIME_PLAYER__';
+      const page = getDtcPageBySelection(selected);
+      const pageSwitcherHtml = '<span class=""fltPlanPageSwitcher""><button type=""button"" class=""fltPlanPageBtn' + (page === 1 ? ' active' : '') + '"" data-dtc-page=""1"">NAVLOG</button><button type=""button"" class=""fltPlanPageBtn' + (page === 2 ? ' active' : '') + '"" data-dtc-page=""2"">COM/ROUTE</button><button type=""button"" class=""fltPlanPageBtn' + (page === 3 ? ' active' : '') + '"" data-dtc-page=""3"">MAP</button></span>';
+      if (page === 2){
+        return formatRuntimePage2Html(data, pageSwitcherHtml);
+      }
+      if (page === 3){
+        return formatDtcPage3Html(pageSwitcherHtml, rows, data, selected);
+      }
+      return renderFlightPlanBoardHtml(selected, data, routeName, 'MISSION RUNTIME', '-', rows, formatRuntimeCmdsInfoBlockHtml(data), pageSwitcherHtml);
+    }
+
+    function formatDtcTableHtml(root, selected, data){
+      const allWaypoints = getDtcWaypoints(root);
+      const availableRoutes = getDtcAvailableRoutes(root, allWaypoints);
+      let routeKey = getDtcRouteBySelection(selected);
+      if (availableRoutes.indexOf(routeKey) < 0){
+        routeKey = availableRoutes[0] || 'R1';
+        setDtcRouteBySelection(selected, routeKey);
+      }
+      const waypoints = applyTypeOverrides(filterDtcWaypointsByRoute(root, allWaypoints, routeKey), selected);
+      const cmdsBlockHtml = formatDtcCmdsBlockHtml(root);
+      const page = getDtcPageBySelection(selected);
+      const routeButtons = availableRoutes.map(function(r){
+        return '<button type=""button"" class=""fltPlanPageBtn' + (routeKey === r ? ' active' : '') + '"" data-dtc-route=""' + r + '"">' + r + '</button>';
+      }).join('');
+      const pageSwitcherHtml = '<span class=""fltPlanPageSwitcher""><button type=""button"" class=""fltPlanPageBtn' + (page === 1 ? ' active' : '') + '"" data-dtc-page=""1"">NAVLOG</button><button type=""button"" class=""fltPlanPageBtn' + (page === 2 ? ' active' : '') + '"" data-dtc-page=""2"">COM/ROUTE</button><button type=""button"" class=""fltPlanPageBtn' + (page === 3 ? ' active' : '') + '"" data-dtc-page=""3"">MAP</button></span><span class=""fltPlanPageSwitcher"">' + routeButtons + '</span>';
+      if (page === 3){
+        return formatDtcPage3Html(pageSwitcherHtml, waypoints, data, selected);
+      }
+      if (page === 2){
+        return formatDtcPage2Html(root, pageSwitcherHtml, waypoints);
+      }
+      return renderFlightPlanBoardHtml(selected, data, getDtcDisplayName(selected) + ' ' + routeKey, 'DTC JSON', getPathFileName(selected), waypoints, cmdsBlockHtml, pageSwitcherHtml);
+    }
+
+    function formatRouteToolTable(root, selected){
+      const presets = (root && typeof root === 'object') ? root : null;
+      if (!presets) return '';
+
+      const routeNames = Object.keys(presets);
+      if (!routeNames.length) return '';
+
+      const lines = [];
+      lines.push('ROUTE NAME : ' + getDtcDisplayName(selected));
+      lines.push('ROUTE FILE : ' + getPathFileName(getFltPlnPath(selected)));
+      lines.push('PATH       : ' + getFltPlnPath(selected));
+      lines.push('');
+
+      routeNames.sort(function(a,b){ return String(a).localeCompare(String(b)); });
+      routeNames.forEach(function(routeName){
+        const route = presets[routeName] || {};
+        const wpKeys = Object.keys(route)
+          .filter(function(k){ return /^\d+$/.test(String(k)); })
+          .sort(function(a,b){ return parseInt(a,10) - parseInt(b,10); });
+
+        lines.push('ROUTE: ' + routeName);
+        lines.push('WP  TYPE           ALT(ft)   ETA       X             Y');
+        lines.push('--- -------------- -------- -------- ------------ ------------');
+
+        if (!wpKeys.length){
+          lines.push('No waypoints found.');
+          lines.push('');
+          return;
+        }
+
+        wpKeys.forEach(function(wk){
+          const wp = route[wk] || {};
+          const wpNum = String(wk).padStart(2, '0');
+          const type = String(wp.type || wp.action || 'WP').substring(0, 14).padEnd(14, ' ');
+          const alt = isFinite(Number(wp.alt)) ? String(Math.round(Number(wp.alt))).padStart(8, ' ') : '       -';
+          const eta = formatEtaSeconds(wp.ETA).padEnd(8, ' ');
+          const x = isFinite(Number(wp.x)) ? String(Math.round(Number(wp.x))).padStart(12, ' ') : '           -';
+          const y = isFinite(Number(wp.y)) ? String(Math.round(Number(wp.y))).padStart(12, ' ') : '           -';
+          lines.push(wpNum + '  ' + type + ' ' + alt + ' ' + eta + ' ' + x + ' ' + y);
+        });
+
+        lines.push('');
+      });
+
+      lines.push('Note: X/Y are mission map coordinates. LAT/LON conversion needs map-projection/origin data from DCS runtime.');
+      return lines.join('\n');
+    }
+
+    function formatDtcTabContentHtml(data){
+      try{
+        const files = Array.isArray(data.DtcFiles) ? data.DtcFiles : [];
+        const selected = String(data.DtcSelectedFile || '');
+        const jsonText = String(data.DtcJson || '').trim();
+        const sourceType = String(data.DtcSourceType || '').toUpperCase();
+        const runtimeWaypoints = getMissionRuntimeWaypoints(data);
+
+        if ((!files.length || !selected) && runtimeWaypoints.length){
+          return formatMissionRuntimeFlightPlanHtml(data, runtimeWaypoints);
+        }
+
+        if (!files.length){
+          return '<div class=""fltPlanMessage"">No valid FLT PLN files found in Saved Games/DCS*/DTC (DTC) or Saved Games/DCS*/Config/RouteToolPresets/&lt;ActiveTerrain&gt;.lua (RouteTool).\n\nExport DTC or save RouteTool presets, then click Refresh FLT PLN.</div>';
+        }
+
+        if (!selected){
+          return '<div class=""fltPlanMessage"">Select a FLT PLN file from the file list to load data.</div>';
+        }
+
+        if (!jsonText){
+          return '<div class=""fltPlanMessage"">Selected FLT PLN file is valid but has no loadable content.</div>';
+        }
+
+        let parsed;
+        try{
+          parsed = JSON.parse(jsonText);
+        }catch(_){
+          return '<div class=""fltPlanMessage"">Failed to parse selected FLT PLN payload.</div>';
+        }
+
+        const root = (parsed && parsed.data && typeof parsed.data === 'object') ? parsed.data : parsed;
+        if (sourceType === 'RTE') {
+          const rteHtml = formatRouteToolTableHtml(root, selected, data);
+          if (rteHtml) return rteHtml;
+        }
+        if (sourceType === 'DTC') {
+          const dtcHtml = formatDtcTableHtml(root, selected, data);
+          if (dtcHtml) return dtcHtml;
+        }
+
+        return '<pre class=""fltPlanPlain"">' + escapeHtml(formatDtcTabContent(data)) + '</pre>';
+      }catch(ex){
+        const msg = (ex && ex.message) ? String(ex.message) : 'Unknown FLT PLN render error';
+        return '<div class=""fltPlanMessage"">FLT PLN render error: ' + escapeHtml(msg) + '</div>';
+      }
+    }
+
+    function formatDtcTabContent(data){
+      const files = Array.isArray(data.DtcFiles) ? data.DtcFiles : [];
+      const selected = String(data.DtcSelectedFile || '');
+      const jsonText = String(data.DtcJson || '').trim();
+      const sourceType = String(data.DtcSourceType || '').toUpperCase();
+
+      if (!files.length){
+        return 'No valid FLT PLN files found in Saved Games/DCS*/DTC (DTC) or Saved Games/DCS*/Config/RouteToolPresets/<ActiveTerrain>.lua (RouteTool).\n\nExport DTC or save RouteTool presets, then click Refresh FLT PLN.';
+      }
+
+      if (!selected){
+        return 'Select a FLT PLN file from the file list to load data.';
+      }
+
+      if (!jsonText){
+        return 'Selected FLT PLN file is valid but has no loadable content.';
+      }
+
+      let parsed;
+      try{
+        parsed = JSON.parse(jsonText);
+      }catch(_){
+        return 'Failed to parse selected FLT PLN payload.';
+      }
+
+      const root = (parsed && parsed.data && typeof parsed.data === 'object') ? parsed.data : parsed;
+      if (sourceType === 'RTE') {
+        const rteText = formatRouteToolTable(root, selected);
+        if (rteText) return rteText;
+      }
+
+      if (sourceType === 'DTC') {
+        return formatDtcFocusedTable(root, selected);
+      }
+
+      const rows = [];
+      appendDtcRows('', root, rows, 0);
+
+      if (!rows.length){
+        return 'Selected FLT PLN file contains no tabular fields.';
+      }
+
+      const maxKeyWidth = rows.reduce(function(acc, r){ return Math.max(acc, String(r.key || '').length); }, 8);
+      const keyWidth = clamp(maxKeyWidth + 1, 16, 56);
+      const lines = [];
+      const sourceLabel = sourceType === 'RTE' ? 'ROUTE FILE' : 'DTC FILE';
+      lines.push(sourceLabel + ' : ' + getDtcDisplayName(selected));
+      lines.push('PATH     : ' + selected);
+      lines.push('');
+      lines.push('FIELD'.padEnd(keyWidth) + 'VALUE');
+      lines.push('-'.repeat(keyWidth) + '-----');
+      rows.forEach(function(r){
+        const key = String(r.key || '-');
+        const value = String(r.value || '-').replace(/\s+/g, ' ').trim();
+        lines.push(key.padEnd(keyWidth) + value);
+      });
+
+      if (rows.length >= 220){
+        lines.push('');
+        lines.push('... output truncated ...');
+      }
+
+      return lines.join('\n');
     }
 
     function escapeHtml(text){
@@ -1641,6 +4775,10 @@ namespace VAICOM
       if (tab === 'NOTES'){
         const notes = String(data.NotesBuffer || '').trim();
         return notes || 'No notes yet.';
+      }
+
+      if (tab === 'DTC'){
+        return formatDtcTabContent(data);
       }
 
       if (tab === 'AI CREW'){
@@ -1838,6 +4976,7 @@ namespace VAICOM
 
     function render(data){
       latestData = data;
+      maybeResetFlightPlanStateForMission(data);
       const server = data && data.Server ? data.Server : {};
       const haveMission = !!(server.Aircraft || server.MissionTitle || server.Theater);
       const debugMode = !!server.DebugMode;
@@ -1856,6 +4995,12 @@ namespace VAICOM
 
       setStatus(statusText, statusLevel);
 
+      const dlinkBox = document.getElementById('dlinkOn');
+      if (dlinkBox){
+        dlinkBox.disabled = false;
+        dlinkBox.checked = !!dlinkOnEnabled;
+      }
+
       document.getElementById('session').textContent = [
         'Active Category : ' + safe(normalizeActiveCategory(data.ActiveCategory, data)),
         'Updated (UTC)   : ' + formatUtcToSeconds(data.UpdatedUtc),
@@ -1869,15 +5014,24 @@ namespace VAICOM
       ].join('\n');
 
       renderTabs(data);
+      updateDtcControls(data);
       applyCurrentTabKeywordsSplit();
       document.body.classList.toggle('notes-tab', selectedTab === 'NOTES');
+      document.body.classList.toggle('flt-plan-tab', selectedTab === 'DTC');
       if (selectedTab !== 'NOTES' || !drawModeEnabled){
         setDrawInteractionInNotes(false);
         clearDrawModeDisableTimer();
       }
       updateDrawModeToggleUi();
       document.getElementById('tabTitle').textContent = 'Tab: ' + tabLabel(selectedTab);
-      document.getElementById('tabBody').textContent = formatTabContent(data, selectedTab);
+      const tabBody = document.getElementById('tabBody');
+      if (selectedTab === 'DTC'){
+        tabBody.className = 'content mainContent fltPlanContent';
+        tabBody.innerHTML = formatDtcTabContentHtml(data);
+      } else {
+        tabBody.className = 'content mainContent';
+        tabBody.textContent = formatTabContent(data, selectedTab);
+      }
       updateCursorModeForTab();
       const tabBodyEl = document.getElementById('tabBody');
       const hasMetar = selectedTab === 'ATC' && /\bMETAR\s+[A-Z]{4}\b/i.test(tabBodyEl.textContent || '');
@@ -1891,8 +5045,14 @@ namespace VAICOM
       const aiCrewPhaseSuffix = selectedTab === 'AI CREW'
         ? formatAiCrewPhaseLabel(data.AiCrewPhase)
         : '';
-      document.getElementById('keywordTitle').textContent = 'Keywords: ' + tabLabel(selectedTab) + aiCrewPhaseSuffix;
-      document.getElementById('keywordBody').innerHTML = formatKeywordReferenceHtml(data, selectedTab);
+      const keywordPanelEl = document.getElementById('keywordPanel');
+      if (selectedTab === 'DTC'){
+        if (keywordPanelEl) keywordPanelEl.style.display = 'none';
+      } else {
+        if (keywordPanelEl) keywordPanelEl.style.display = 'flex';
+        document.getElementById('keywordTitle').textContent = 'Keywords: ' + tabLabel(selectedTab) + aiCrewPhaseSuffix;
+        document.getElementById('keywordBody').innerHTML = formatKeywordReferenceHtml(data, selectedTab);
+      }
 
       const showRawWrap = document.getElementById('showRawWrap');
       if (showRawWrap){
@@ -1926,11 +5086,66 @@ namespace VAICOM
       }
     }
 
+    function updateDtcControls(data){
+      const wrap = document.getElementById('dtcControls');
+      const selector = document.getElementById('dtcSelector');
+      const listEl = document.getElementById('dtcFileList');
+      const selectedLabel = document.getElementById('dtcSelectedFileLabel');
+      if (!wrap || !selector || !listEl || !selectedLabel) return;
+
+      const visible = selectedTab === 'DTC';
+      wrap.className = visible ? 'controls fltPlanControls' : 'controls fltPlanControls hidden';
+      selector.className = visible ? 'panel dtcSelector' : 'panel dtcSelector hidden';
+      if (!visible) return;
+
+      const files = Array.isArray(data.DtcFiles) ? data.DtcFiles : [];
+      const selected = String(data.DtcSelectedFile || '');
+      selectedLabel.textContent = selected ? ('Selected: ' + getDtcDisplayName(selected)) : 'No FLT PLN selected';
+
+      if (!files.length){
+        listEl.innerHTML = 'No FLT PLN files found.';
+        applyDtcListCollapsedState(dtcListCollapsed);
+        return;
+      }
+
+      const rows = [];
+      files.forEach(function(filePath){
+        const fp = String(filePath || '');
+        const active = selected && fp === selected;
+        const type = (fp.indexOf('RTE::') === 0 || /\.(rte|lua)$/i.test(fp)) ? 'RTE' : 'DTC';
+        rows.push('<button type=""button"" class=""dtcFileItem' + (active ? ' active' : '') + '"" data-file=""' + encodeURIComponent(fp) + '""><span>' + escapeHtml(getDtcDisplayName(fp)) + '</span><span class=""dtcFileMeta"">' + type + '</span></button>');
+      });
+      listEl.innerHTML = rows.join('');
+      applyDtcListCollapsedState(dtcListCollapsed);
+    }
+
     async function setServerMessageCapture(enabled){
       try{
         await fetch('dev/servermessages?enabled=' + (enabled ? '1' : '0'), { method: 'POST', cache: 'no-store' });
       }catch(e){
       }
+    }
+
+    async function refreshDtcFiles(){
+      invalidateRuntimeFlightPlanSnapshot();
+      resetRuntimeFlightPlanState();
+      try{
+        await fetch('/okb/dtc/select?file=', { method: 'POST', cache: 'no-store' });
+      }catch(_){
+      }
+      try{
+        await fetch('/okb/dtc/list', { method: 'POST', cache: 'no-store' });
+      }catch(_){
+      }
+      await tick();
+    }
+
+    async function selectDtcFile(filePath){
+      try{
+        await fetch('/okb/dtc/select?file=' + encodeURIComponent(filePath || ''), { method: 'POST', cache: 'no-store' });
+      }catch(_){
+      }
+      await tick();
     }
 
     async function configureOpenKneeboard(){
@@ -1967,7 +5182,12 @@ namespace VAICOM
       try{
         const r = await fetch('state', { cache: 'no-store' });
         const j = await r.json();
-        render(j);
+        try{
+          render(j);
+        }catch(e){
+          const msg = (e && e.message) ? String(e.message) : 'Unknown render error';
+          setStatus('Render error: ' + msg, 'warning');
+        }
       }catch(e){
         setStatus('Waiting for VAICOM connection...', '');
       }
@@ -1993,6 +5213,12 @@ namespace VAICOM
       contentFontSizePx = clamp(parseInt(ev.target.value, 10) || 24, 18, 34);
       applyContentFontSizeUi();
       persistContentFontSizePreference();
+    });
+
+    document.getElementById('dlinkOn').addEventListener('change', function(ev){
+      dlinkOnEnabled = !!ev.target.checked;
+      persistDlinkOnPreference();
+      if (latestData && selectedTab === 'DTC') render(latestData);
     });
 
     document.getElementById('drawModeToggle').addEventListener('click', function(){
@@ -2042,6 +5268,124 @@ namespace VAICOM
     });
 
     document.getElementById('tabBody').addEventListener('click', function(ev){
+      if (selectedTab === 'DTC' && latestData){
+        let node = ev.target;
+        while (node && node !== this){
+          if (node.getAttribute && node.getAttribute('data-spd-step')){
+            const selected = getActiveFlightPlanSelection(latestData);
+            const step = String(node.getAttribute('data-spd-step') || '');
+            const delta = Number(node.getAttribute('data-spd-delta') || 0);
+            if (selected && step && isFinite(delta) && delta !== 0){
+              changeWaypointSpeedAdjustment(selected, step, delta);
+              render(latestData);
+            }
+            return;
+          }
+          if (node.getAttribute && node.getAttribute('data-alt-step')){
+            const selected = getActiveFlightPlanSelection(latestData);
+            const step = String(node.getAttribute('data-alt-step') || '');
+            const delta = Number(node.getAttribute('data-alt-delta') || 0);
+            if (selected && step && isFinite(delta) && delta !== 0){
+              changeWaypointAltitude(selected, step, delta);
+              render(latestData);
+            }
+            return;
+          }
+          if (node.getAttribute && node.getAttribute('data-type-step')){
+            const selected = getActiveFlightPlanSelection(latestData);
+            const step = String(node.getAttribute('data-type-step') || '');
+            const delta = Number(node.getAttribute('data-type-delta') || 0);
+            const currentType = String(node.getAttribute('data-type-current') || '');
+            if (selected && step && isFinite(delta) && delta !== 0){
+              changeWaypointType(selected, step, delta, currentType);
+              render(latestData);
+            }
+            return;
+          }
+          if (node.getAttribute && node.getAttribute('data-tot-adjust')){
+            const selected = getActiveFlightPlanSelection(latestData);
+            const seconds = Number(node.getAttribute('data-tot-adjust') || 0);
+            if (selected && isFinite(seconds) && seconds !== 0){
+              setTotByMinutesDelta(selected, seconds / 60.0);
+              render(latestData);
+            }
+            return;
+          }
+          if (node.getAttribute && node.getAttribute('data-tot-adjust-sec')){
+            const selected = getActiveFlightPlanSelection(latestData);
+            const seconds = Number(node.getAttribute('data-tot-adjust-sec') || 0);
+            if (selected && isFinite(seconds) && seconds !== 0){
+              setTotBySecondsDelta(selected, seconds);
+              render(latestData);
+            }
+            return;
+          }
+          if (node.getAttribute && node.getAttribute('data-dtc-page')){
+            const selected = getActiveFlightPlanSelection(latestData);
+            const page = Number(node.getAttribute('data-dtc-page') || 1);
+            if (selected){
+              setDtcPageBySelection(selected, page);
+              render(latestData);
+            }
+            return;
+          }
+          if (node.getAttribute && node.getAttribute('data-dtc-route')){
+            const selected = getActiveFlightPlanSelection(latestData);
+            const route = String(node.getAttribute('data-dtc-route') || 'R1');
+            if (selected){
+              setDtcRouteBySelection(selected, route);
+              render(latestData);
+            }
+            return;
+          }
+          if (node.getAttribute && node.getAttribute('data-map-zoom')){
+            const selected = getActiveFlightPlanSelection(latestData);
+            const action = String(node.getAttribute('data-map-zoom') || '').toLowerCase();
+            if (selected){
+              if (action === 'in') zoomMapViewBySelection(selected, 1.2);
+              else if (action === 'out') zoomMapViewBySelection(selected, 1 / 1.2);
+              else if (action === 'reset') resetMapViewBySelection(selected);
+              render(latestData);
+            }
+            return;
+          }
+          if (node.getAttribute && node.getAttribute('data-tot-lock-step')){
+            const selected = getActiveFlightPlanSelection(latestData);
+            const step = String(node.getAttribute('data-tot-lock-step') || '');
+            const checked = !!node.checked;
+            if (selected && step){
+              let etaSeconds = NaN;
+              try{
+                const row = node.closest ? node.closest('tr') : null;
+                const etaCell = row ? row.cells[7] : null;
+                etaSeconds = parseEtaToSeconds((etaCell && etaCell.textContent) ? etaCell.textContent : '');
+              }catch(_){ }
+              setLockedTotStep(selected, step, checked, etaSeconds);
+              render(latestData);
+            }
+            return;
+          }
+          if (node.getAttribute && node.getAttribute('data-tko-anchor')){
+            const selected = getActiveFlightPlanSelection(latestData);
+            const anchor = String(node.getAttribute('data-tko-anchor') || '');
+            if (selected && anchor){
+              setTakeoffTimeByAnchorFromNow(selected, anchor);
+              render(latestData);
+            }
+            return;
+          }
+          if (node.getAttribute && node.getAttribute('data-eta-header')){
+            const selected = getActiveFlightPlanSelection(latestData);
+            if (selected){
+              setEtaStartNowForSelection(selected);
+              render(latestData);
+            }
+            return;
+          }
+          node = node.parentNode;
+        }
+      }
+
       if (selectedTab !== 'ATC' || !latestData) return;
       const text = this.textContent || '';
       const selection = window.getSelection ? window.getSelection() : null;
@@ -2088,10 +5432,75 @@ namespace VAICOM
       render(latestData);
     });
 
+    document.getElementById('tabBody').addEventListener('pointerdown', function(ev){
+      if (!latestData || selectedTab !== 'DTC') return;
+      const selected = getActiveFlightPlanSelection(latestData);
+      if (!selected || getDtcPageBySelection(selected) !== 3) return;
+
+      let node = ev.target;
+      let onMap = false;
+      while (node && node !== this){
+        if (node.getAttribute && node.getAttribute('data-map-canvas')){ onMap = true; break; }
+        node = node.parentNode;
+      }
+      if (!onMap) return;
+
+      const state = getMapViewBySelection(selected);
+      mapPanDrag = {
+        pointerId: ev.pointerId,
+        selected: selected,
+        startX: ev.clientX,
+        startY: ev.clientY,
+        basePanX: Number(state.panX) || 0,
+        basePanY: Number(state.panY) || 0,
+      };
+      try{ if (ev.target && ev.target.setPointerCapture) ev.target.setPointerCapture(ev.pointerId); }catch(_){ }
+      ev.preventDefault();
+    });
+
+    document.getElementById('tabBody').addEventListener('pointermove', function(ev){
+      if (!mapPanDrag || mapPanDrag.pointerId !== ev.pointerId || !latestData) return;
+      const state = getMapViewBySelection(mapPanDrag.selected);
+      state.panX = mapPanDrag.basePanX + (ev.clientX - mapPanDrag.startX);
+      state.panY = mapPanDrag.basePanY + (ev.clientY - mapPanDrag.startY);
+      render(latestData);
+      ev.preventDefault();
+    });
+
+    function stopMapPanDrag(ev){
+      if (!mapPanDrag) return;
+      if (ev && mapPanDrag.pointerId !== ev.pointerId) return;
+      mapPanDrag = null;
+    }
+
+    document.getElementById('tabBody').addEventListener('pointerup', stopMapPanDrag);
+    document.getElementById('tabBody').addEventListener('pointercancel', stopMapPanDrag);
+    document.getElementById('tabBody').addEventListener('pointerleave', stopMapPanDrag);
+
     document.getElementById('showServer').addEventListener('change', function(ev){
       showServerMessages = ev.target.checked;
       document.getElementById('serverMessages').className = showServerMessages ? '' : 'hidden';
       setServerMessageCapture(showServerMessages);
+    });
+
+    document.getElementById('dtcRefresh').addEventListener('click', function(){
+      refreshDtcFiles();
+    });
+
+    document.getElementById('dtcFileList').addEventListener('click', function(ev){
+      let node = ev.target;
+      while (node && node !== this && !node.getAttribute('data-file')){
+        node = node.parentNode;
+      }
+      if (!node || node === this) return;
+      const encoded = String(node.getAttribute('data-file') || '');
+      const file = decodeURIComponent(encoded);
+      selectDtcFile(file);
+    });
+
+    document.getElementById('dtcSelectorHeader').addEventListener('click', function(){
+      applyDtcListCollapsedState(!dtcListCollapsed);
+      persistDtcListCollapsedState();
     });
 
     document.getElementById('sessionHeader').addEventListener('click', function(){
@@ -2099,9 +5508,12 @@ namespace VAICOM
       persistSessionCollapsedState();
     });
 
+    applyDtcListCollapsedState(readInitialDtcListCollapsed());
     applySessionCollapsedState(readInitialSessionCollapsed());
     nightModeEnabled = readNightModePreference();
     applyNightModeUi();
+    dlinkOnEnabled = readDlinkOnPreference();
+    applyDlinkOnUi();
     contentFontSizePx = readContentFontSizePreference();
     applyContentFontSizeUi();
     drawModeEnabled = readDrawModePreference();
@@ -2134,6 +5546,7 @@ namespace VAICOM
                 public static void Initialize()
                 {
                     ResetSnapshot();
+                    RefreshDtcFilesSnapshot();
                     SetPluginRegistration(State.activeconfig != null && State.activeconfig.OpenKneeboard_Out);
                     StartWebHost();
                 }
@@ -2650,6 +6063,8 @@ namespace VAICOM
                     {
                         snapshot = new OpenKneeboardSnapshot();
                     }
+
+                    RefreshDtcFilesSnapshot();
                 }
 
                 public static void UpdateActiveCategory(string category)
@@ -2932,9 +6347,12 @@ namespace VAICOM
                         }
                         else if (moduleId.Equals("F-4E-45MC", StringComparison.OrdinalIgnoreCase))
                         {
-                            foreach (string key in Extensions.WSO.Aliases.aicommands.Keys)
+                            foreach (KeyValuePair<string, string> alias in Database.Aliases.aicommands)
                             {
-                                keywords.Add(key);
+                                if (alias.Value != null && alias.Value.StartsWith("wMsgWSO_", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    keywords.Add(alias.Key);
+                                }
                             }
 
                             foreach (string key in GetF4EManualAiCrewKeywords())
@@ -3091,6 +6509,26 @@ namespace VAICOM
                         return;
                     }
 
+                    if (path == "/okb/dtc/list")
+                    {
+                        RefreshDtcFilesSnapshot();
+                        WriteJson(context.Response, BuildSnapshotJson());
+                        return;
+                    }
+
+                    if (path == "/okb/dtc/select")
+                    {
+                        string file = WebUtility.UrlDecode(context.Request.QueryString["file"] ?? "");
+                        bool ok = SelectDtcFileSnapshot(file);
+                        if (!ok)
+                        {
+                            context.Response.StatusCode = 400;
+                        }
+
+                        WriteJson(context.Response, BuildSnapshotJson());
+                        return;
+                    }
+
                     if (path == "/okb/logo.png")
                     {
                         byte[] logo = GetLogoBytes();
@@ -3119,7 +6557,52 @@ namespace VAICOM
                         responseModel = snapshot.Clone();
                     }
 
-                    return JsonConvert.SerializeObject(responseModel, Formatting.Indented);
+                    try
+                    {
+                        return JsonConvert.SerializeObject(responseModel, Formatting.Indented);
+                    }
+                    catch
+                    {
+                        var fallback = new
+                        {
+                            ActiveCategory = responseModel.ActiveCategory,
+                            NotesBuffer = responseModel.NotesBuffer,
+                            AiCrewPhase = responseModel.AiCrewPhase,
+                            UpdatedUtc = responseModel.UpdatedUtc,
+                            Server = new
+                            {
+                                Theater = responseModel.Server?.Theater ?? "",
+                                DcsLocation = responseModel.Server?.DcsLocation ?? "",
+                                Aircraft = responseModel.Server?.Aircraft ?? "",
+                                PlayerCallsign = responseModel.Server?.PlayerCallsign ?? "",
+                                MissionTitle = responseModel.Server?.MissionTitle ?? "",
+                                MissionBriefing = responseModel.Server?.MissionBriefing ?? "",
+                                MissionDetails = responseModel.Server?.MissionDetails ?? "",
+                                MissionTimeSeconds = responseModel.Server?.MissionTimeSeconds ?? 0,
+                                PlayerPosX = responseModel.Server?.PlayerPosX ?? 0,
+                                PlayerPosY = responseModel.Server?.PlayerPosY ?? 0,
+                                PlayerAltFeet = responseModel.Server?.PlayerAltFeet ?? 0,
+                                Multiplayer = responseModel.Server?.Multiplayer ?? false,
+                                DebugMode = responseModel.Server?.DebugMode ?? false,
+                                AtcMetars = responseModel.Server?.AtcMetars ?? new Dictionary<string, string>(),
+                                Diagnostics = (object)null,
+                            },
+                            Status = responseModel.Status,
+                            AiCrewKeywords = responseModel.AiCrewKeywords,
+                            RawServerMessages = responseModel.RawServerMessages,
+                            Logs = responseModel.Logs,
+                            Units = responseModel.Units,
+                            UnitDetails = responseModel.UnitDetails,
+                            AliasesChunk0 = responseModel.AliasesChunk0,
+                            AliasesChunk1 = responseModel.AliasesChunk1,
+                            DtcFiles = responseModel.DtcFiles,
+                            DtcSelectedFile = responseModel.DtcSelectedFile,
+                            DtcJson = responseModel.DtcJson,
+                            DtcSourceType = responseModel.DtcSourceType,
+                        };
+
+                        return JsonConvert.SerializeObject(fallback, Formatting.Indented);
+                    }
                 }
 
                 private static void WriteJson(HttpListenerResponse response, string payload)
@@ -3240,6 +6723,688 @@ namespace VAICOM
                     return result;
                 }
 
+                private static void RefreshDtcFilesSnapshot()
+                {
+                    try
+                    {
+                        List<string> files = GetAvailableDtcFiles();
+
+                        lock (Sync)
+                        {
+                            snapshot.DtcFiles = files;
+
+                            if (!string.IsNullOrWhiteSpace(snapshot.DtcSelectedFile))
+                            {
+                                string selected = FindMatchingFlightPlanSelection(snapshot.DtcSelectedFile, files);
+                                if (string.IsNullOrWhiteSpace(selected))
+                                {
+                                    snapshot.DtcSelectedFile = "";
+                                    snapshot.DtcJson = "";
+                                }
+                                else
+                                {
+                                    snapshot.DtcSelectedFile = selected;
+                                    if (TryReadValidatedFlightPlan(selected, out string json, out string sourceType))
+                                    {
+                                        snapshot.DtcJson = json;
+                                        snapshot.DtcSourceType = sourceType;
+                                    }
+                                }
+                            }
+
+                            snapshot.UpdatedUtc = DateTime.UtcNow;
+                        }
+                    }
+                    catch
+                    {
+                    }
+                }
+
+                private static bool SelectDtcFileSnapshot(string file)
+                {
+                    lock (Sync)
+                    {
+                        if (string.IsNullOrWhiteSpace(file))
+                        {
+                            snapshot.DtcSelectedFile = "";
+                            snapshot.DtcJson = "";
+                            snapshot.DtcSourceType = "";
+                            snapshot.UpdatedUtc = DateTime.UtcNow;
+                            return true;
+                        }
+
+                        string selected = FindMatchingFlightPlanSelection(file, snapshot.DtcFiles ?? new List<string>());
+
+                        if (string.IsNullOrWhiteSpace(selected))
+                        {
+                            return false;
+                        }
+
+                        if (!TryReadValidatedFlightPlan(selected, out string json, out string sourceType))
+                        {
+                            return false;
+                        }
+
+                        snapshot.DtcSelectedFile = selected;
+                        snapshot.DtcJson = json;
+                        snapshot.DtcSourceType = sourceType;
+                        snapshot.UpdatedUtc = DateTime.UtcNow;
+                        return true;
+                    }
+                }
+
+                private static string FindMatchingFlightPlanSelection(string requested, List<string> candidates)
+                {
+                    try
+                    {
+                        List<string> list = candidates ?? new List<string>();
+                        string req = requested ?? "";
+
+                        string direct = list.FirstOrDefault(f => string.Equals(f, req, StringComparison.OrdinalIgnoreCase));
+                        if (!string.IsNullOrWhiteSpace(direct))
+                        {
+                            return direct;
+                        }
+
+                        string reqPath;
+                        string reqRoute;
+                        if (TryParseRouteSelectionToken(req, out reqPath, out reqRoute))
+                        {
+                            foreach (string c in list)
+                            {
+                                string cPath;
+                                string cRoute;
+                                if (!TryParseRouteSelectionToken(c, out cPath, out cRoute))
+                                {
+                                    continue;
+                                }
+
+                                if (string.Equals(reqRoute, cRoute, StringComparison.OrdinalIgnoreCase)
+                                    && string.Equals(Path.GetFullPath(reqPath ?? ""), Path.GetFullPath(cPath ?? ""), StringComparison.OrdinalIgnoreCase))
+                                {
+                                    return c;
+                                }
+                            }
+                        }
+
+                        if (req.IndexOf(RouteSelectionPrefix, StringComparison.Ordinal) < 0)
+                        {
+                            string reqFull = Path.GetFullPath(req);
+                            string pathMatch = list.FirstOrDefault(c =>
+                            {
+                                try { return string.Equals(Path.GetFullPath(c ?? ""), reqFull, StringComparison.OrdinalIgnoreCase); }
+                                catch { return false; }
+                            });
+                            if (!string.IsNullOrWhiteSpace(pathMatch))
+                            {
+                                return pathMatch;
+                            }
+                        }
+                    }
+                    catch
+                    {
+                    }
+
+                    return "";
+                }
+
+                private static List<string> GetAvailableDtcFiles()
+                {
+                    List<string> files = new List<string>();
+
+                    foreach (string dtcDir in GetSavedGamesDtcFolders())
+                    {
+                        try
+                        {
+                            if (!Directory.Exists(dtcDir))
+                            {
+                                continue;
+                            }
+
+                            foreach (string candidate in Directory.EnumerateFiles(dtcDir, "*.*", SearchOption.AllDirectories))
+                            {
+                                if (!IsDtcExtension(candidate))
+                                {
+                                    continue;
+                                }
+
+                                if (!IsPathUnderDirectory(candidate, dtcDir))
+                                {
+                                    continue;
+                                }
+
+                                if (!TryReadValidatedFlightPlan(candidate, out _, out _))
+                                {
+                                    continue;
+                                }
+
+                                files.Add(Path.GetFullPath(candidate));
+                                if (files.Count >= 250)
+                                {
+                                    break;
+                                }
+                            }
+                        }
+                        catch
+                        {
+                        }
+
+                        if (files.Count >= 250)
+                        {
+                            break;
+                        }
+                    }
+
+                    foreach (string missionsDir in GetSavedGamesMissionFolders())
+                    {
+                        try
+                        {
+                            if (!Directory.Exists(missionsDir))
+                            {
+                                continue;
+                            }
+
+                            foreach (string routeCandidate in Directory.EnumerateFiles(missionsDir, "*.rte", SearchOption.AllDirectories))
+                            {
+                                if (!IsPathUnderDirectory(routeCandidate, missionsDir))
+                                {
+                                    continue;
+                                }
+
+                                if (!TryReadValidatedFlightPlan(routeCandidate, out _, out _))
+                                {
+                                    continue;
+                                }
+
+                                files.Add(Path.GetFullPath(routeCandidate));
+                                if (files.Count >= 250)
+                                {
+                                    break;
+                                }
+                            }
+                        }
+                        catch
+                        {
+                        }
+
+                        if (files.Count >= 250)
+                        {
+                            break;
+                        }
+                    }
+
+                    foreach (string routeToolFile in GetRouteToolPresetFiles())
+                    {
+                        try
+                        {
+                            if (string.IsNullOrWhiteSpace(routeToolFile) || !File.Exists(routeToolFile))
+                            {
+                                continue;
+                            }
+
+                            List<string> routeNames = ExtractRouteNamesFromLua(routeToolFile);
+                            if (routeNames.Count == 0)
+                            {
+                                continue;
+                            }
+
+                            foreach (string routeName in routeNames)
+                            {
+                                string token = RouteSelectionPrefix + Uri.EscapeDataString(routeName) + "::" + Path.GetFullPath(routeToolFile);
+                                files.Add(token);
+                                if (files.Count >= 250)
+                                {
+                                    break;
+                                }
+                            }
+
+                            if (files.Count >= 250)
+                            {
+                                break;
+                            }
+                        }
+                        catch
+                        {
+                        }
+
+                        if (files.Count >= 250)
+                        {
+                            break;
+                        }
+                    }
+
+                    return files
+                        .Distinct(StringComparer.OrdinalIgnoreCase)
+                        .OrderByDescending(p =>
+                        {
+                            try
+                            {
+                                string routePath;
+                                string routeName;
+                                if (TryParseRouteSelectionToken(p, out routePath, out routeName))
+                                {
+                                    return File.GetLastWriteTimeUtc(routePath);
+                                }
+
+                                return File.GetLastWriteTimeUtc(p);
+                            }
+                            catch { return DateTime.MinValue; }
+                        })
+                        .ThenBy(p => p, StringComparer.OrdinalIgnoreCase)
+                        .ToList();
+                }
+
+                private static List<string> GetSavedGamesDtcFolders()
+                {
+                    List<string> roots = new List<string>();
+
+                    try
+                    {
+                        string userProfile = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+                        if (string.IsNullOrWhiteSpace(userProfile))
+                        {
+                            return roots;
+                        }
+
+                        string savedGames = Path.Combine(userProfile, "Saved Games");
+                        if (!Directory.Exists(savedGames))
+                        {
+                            return roots;
+                        }
+
+                        foreach (string dcsRoot in Directory.EnumerateDirectories(savedGames, "DCS*", SearchOption.TopDirectoryOnly))
+                        {
+                            try
+                            {
+                                string name = Path.GetFileName(dcsRoot);
+                                if (string.IsNullOrWhiteSpace(name) || !name.StartsWith("DCS", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    continue;
+                                }
+
+                                roots.Add(Path.Combine(dcsRoot, "DTC"));
+                            }
+                            catch
+                            {
+                            }
+                        }
+                    }
+                    catch
+                    {
+                    }
+
+                    return roots
+                        .Distinct(StringComparer.OrdinalIgnoreCase)
+                        .ToList();
+                }
+
+                private static List<string> GetRouteToolPresetFiles()
+                {
+                    List<string> files = new List<string>();
+
+                    try
+                    {
+                        string userProfile = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+                        if (string.IsNullOrWhiteSpace(userProfile))
+                        {
+                            return files;
+                        }
+
+                        string savedGames = Path.Combine(userProfile, "Saved Games");
+                        if (!Directory.Exists(savedGames))
+                        {
+                            return files;
+                        }
+
+                        foreach (string dcsRoot in Directory.EnumerateDirectories(savedGames, "DCS*", SearchOption.TopDirectoryOnly))
+                        {
+                            try
+                            {
+                                string name = Path.GetFileName(dcsRoot);
+                                if (string.IsNullOrWhiteSpace(name) || !name.StartsWith("DCS", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    continue;
+                                }
+
+                                string routeDir = Path.Combine(dcsRoot, "Config", "RouteToolPresets");
+                                if (!Directory.Exists(routeDir))
+                                {
+                                    continue;
+                                }
+
+                                string activeTheater = string.IsNullOrWhiteSpace(State.currentstate == null ? "" : State.currentstate.theatre)
+                                    ? ""
+                                    : State.currentstate.theatre.Trim();
+
+                                if (!string.IsNullOrWhiteSpace(activeTheater))
+                                {
+                                    string activeFile = Path.Combine(routeDir, activeTheater + ".lua");
+                                    if (File.Exists(activeFile))
+                                    {
+                                        files.Add(Path.GetFullPath(activeFile));
+                                        continue;
+                                    }
+                                }
+
+                                foreach (string fallback in Directory.EnumerateFiles(routeDir, "*.lua", SearchOption.TopDirectoryOnly))
+                                {
+                                    files.Add(Path.GetFullPath(fallback));
+                                }
+                            }
+                            catch
+                            {
+                            }
+                        }
+                    }
+                    catch
+                    {
+                    }
+
+                    return files
+                        .Distinct(StringComparer.OrdinalIgnoreCase)
+                        .OrderBy(p => p, StringComparer.OrdinalIgnoreCase)
+                        .ToList();
+                }
+
+                private static List<string> GetSavedGamesMissionFolders()
+                {
+                    List<string> roots = new List<string>();
+
+                    try
+                    {
+                        string userProfile = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+                        if (string.IsNullOrWhiteSpace(userProfile))
+                        {
+                            return roots;
+                        }
+
+                        string savedGames = Path.Combine(userProfile, "Saved Games");
+                        if (!Directory.Exists(savedGames))
+                        {
+                            return roots;
+                        }
+
+                        foreach (string dcsRoot in Directory.EnumerateDirectories(savedGames, "DCS*", SearchOption.TopDirectoryOnly))
+                        {
+                            try
+                            {
+                                string name = Path.GetFileName(dcsRoot);
+                                if (string.IsNullOrWhiteSpace(name) || !name.StartsWith("DCS", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    continue;
+                                }
+
+                                roots.Add(Path.Combine(dcsRoot, "Missions"));
+                            }
+                            catch
+                            {
+                            }
+                        }
+                    }
+                    catch
+                    {
+                    }
+
+                    return roots
+                        .Distinct(StringComparer.OrdinalIgnoreCase)
+                        .ToList();
+                }
+
+                private static bool IsDtcExtension(string path)
+                {
+                    try
+                    {
+                        string ext = Path.GetExtension(path);
+                        return DtcFileExtensions.Any(x => string.Equals(x, ext, StringComparison.OrdinalIgnoreCase));
+                    }
+                    catch
+                    {
+                        return false;
+                    }
+                }
+
+                private static bool IsPathUnderDirectory(string filePath, string rootDirectory)
+                {
+                    try
+                    {
+                        string fullFile = Path.GetFullPath(filePath ?? "");
+                        string fullRoot = Path.GetFullPath(rootDirectory ?? "").TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)
+                            + Path.DirectorySeparatorChar;
+
+                        return fullFile.StartsWith(fullRoot, StringComparison.OrdinalIgnoreCase);
+                    }
+                    catch
+                    {
+                        return false;
+                    }
+                }
+
+                private static bool TryReadValidatedFlightPlan(string filePath, out string json, out string sourceType)
+                {
+                    json = "";
+                    sourceType = "";
+
+                    try
+                    {
+                        string routeSelectionPath;
+                        string routeSelectionName;
+                        if (TryParseRouteSelectionToken(filePath, out routeSelectionPath, out routeSelectionName))
+                        {
+                            return TryReadRouteSelection(routeSelectionPath, routeSelectionName, out json, out sourceType);
+                        }
+
+                        if (string.IsNullOrWhiteSpace(filePath) || !File.Exists(filePath))
+                        {
+                            return false;
+                        }
+
+                        string raw = File.ReadAllText(filePath);
+                        if (string.IsNullOrWhiteSpace(raw))
+                        {
+                            return false;
+                        }
+
+                        string ext = Path.GetExtension(filePath ?? "");
+                        if (string.Equals(ext, ".rte", StringComparison.OrdinalIgnoreCase)
+                            || string.Equals(ext, ".lua", StringComparison.OrdinalIgnoreCase))
+                        {
+                            if (!TryConvertRouteToolLuaToJson(raw, out string rteJson))
+                            {
+                                return false;
+                            }
+
+                            JObject rteParsed = JObject.Parse(rteJson);
+                            json = rteParsed.ToString(Formatting.None);
+                            sourceType = "RTE";
+                            return true;
+                        }
+
+                        JObject parsed = JObject.Parse(raw);
+                        if (parsed == null)
+                        {
+                            return false;
+                        }
+
+                        JToken dataToken;
+                        if (parsed.TryGetValue("data", StringComparison.OrdinalIgnoreCase, out dataToken))
+                        {
+                            if (dataToken == null || dataToken.Type != JTokenType.Object)
+                            {
+                                return false;
+                            }
+                        }
+
+                        json = parsed.ToString(Formatting.None);
+                        sourceType = "DTC";
+                        return true;
+                    }
+                    catch
+                    {
+                        return false;
+                    }
+                }
+
+                private static bool TryReadRouteSelection(string luaFilePath, string routeName, out string json, out string sourceType)
+                {
+                    json = "";
+                    sourceType = "";
+
+                    try
+                    {
+                        if (string.IsNullOrWhiteSpace(luaFilePath) || !File.Exists(luaFilePath))
+                        {
+                            return false;
+                        }
+
+                        string raw = File.ReadAllText(luaFilePath);
+                        if (!TryConvertRouteToolLuaToJson(raw, out string rteJson))
+                        {
+                            return false;
+                        }
+
+                        JObject parsed = JObject.Parse(rteJson);
+                        JObject data = parsed["data"] as JObject;
+                        if (data == null)
+                        {
+                            return false;
+                        }
+
+                        JToken selectedRoute;
+                        if (!data.TryGetValue(routeName ?? "", StringComparison.OrdinalIgnoreCase, out selectedRoute))
+                        {
+                            return false;
+                        }
+
+                        JObject wrapped = new JObject();
+                        JObject routeContainer = new JObject();
+                        routeContainer[routeName] = selectedRoute;
+                        wrapped["data"] = routeContainer;
+
+                        json = wrapped.ToString(Formatting.None);
+                        sourceType = "RTE";
+                        return true;
+                    }
+                    catch
+                    {
+                        return false;
+                    }
+                }
+
+                private static bool TryParseRouteSelectionToken(string token, out string luaFilePath, out string routeName)
+                {
+                    luaFilePath = "";
+                    routeName = "";
+
+                    try
+                    {
+                        string text = token ?? "";
+                        if (!text.StartsWith(RouteSelectionPrefix, StringComparison.Ordinal))
+                        {
+                            return false;
+                        }
+
+                        int sep = text.IndexOf("::", RouteSelectionPrefix.Length, StringComparison.Ordinal);
+                        if (sep < 0)
+                        {
+                            return false;
+                        }
+
+                        string encodedRoute = text.Substring(RouteSelectionPrefix.Length, sep - RouteSelectionPrefix.Length);
+                        routeName = Uri.UnescapeDataString(encodedRoute ?? "");
+                        luaFilePath = text.Substring(sep + 2);
+
+                        return !string.IsNullOrWhiteSpace(routeName) && !string.IsNullOrWhiteSpace(luaFilePath);
+                    }
+                    catch
+                    {
+                        return false;
+                    }
+                }
+
+                private static List<string> ExtractRouteNamesFromLua(string luaFilePath)
+                {
+                    List<string> routes = new List<string>();
+
+                    try
+                    {
+                        if (string.IsNullOrWhiteSpace(luaFilePath) || !File.Exists(luaFilePath))
+                        {
+                            return routes;
+                        }
+
+                        string raw = File.ReadAllText(luaFilePath);
+                        if (!TryConvertRouteToolLuaToJson(raw, out string rteJson))
+                        {
+                            return routes;
+                        }
+
+                        JObject parsed = JObject.Parse(rteJson);
+                        JObject data = parsed["data"] as JObject;
+                        if (data == null)
+                        {
+                            return routes;
+                        }
+
+                        routes = data.Properties()
+                            .Select(p => p.Name)
+                            .Where(n => !string.IsNullOrWhiteSpace(n))
+                            .Distinct(StringComparer.OrdinalIgnoreCase)
+                            .OrderBy(n => n, StringComparer.OrdinalIgnoreCase)
+                            .ToList();
+                    }
+                    catch
+                    {
+                    }
+
+                    return routes;
+                }
+
+                private static bool TryConvertRouteToolLuaToJson(string luaText, out string json)
+                {
+                    json = "";
+
+                    try
+                    {
+                        if (string.IsNullOrWhiteSpace(luaText))
+                        {
+                            return false;
+                        }
+
+                        string s = luaText;
+                        s = Regex.Replace(s, @"--.*?$", "", RegexOptions.Multiline);
+                        s = Regex.Replace(s, @"\bend of\b[\s\S]*$", "", RegexOptions.IgnoreCase);
+                        s = Regex.Replace(s, @"\bpresets\s*=", "", RegexOptions.IgnoreCase);
+                        s = s.Replace("\r", " ").Replace("\n", " ");
+                        s = Regex.Replace(s, @"\s+", " ");
+
+                        s = Regex.Replace(s, @"\[(\d+)\]\s*=", "\"$1\":");
+                        s = Regex.Replace(s, @"\[\s*""((?:\\.|[^""\\])*)""\s*\]\s*=", "\"$1\":");
+                        s = Regex.Replace(s, @"\b([A-Za-z_][A-Za-z0-9_]*)\s*=", "\"$1\":");
+
+                        s = s.Replace("'", "\"");
+                        s = Regex.Replace(s, @",\s*([}\]])", "$1");
+                        s = s.Trim();
+
+                        if (!s.StartsWith("{", StringComparison.Ordinal))
+                        {
+                            return false;
+                        }
+
+                        JToken parsed = JToken.Parse(s);
+                        JObject wrapped = new JObject
+                        {
+                            ["data"] = parsed
+                        };
+
+                        json = wrapped.ToString(Formatting.None);
+                        return true;
+                    }
+                    catch
+                    {
+                        return false;
+                    }
+                }
+
                 private static OpenKneeboardServerSnapshot BuildServerSnapshot()
                 {
                     OpenKneeboardServerSnapshot server = new OpenKneeboardServerSnapshot();
@@ -3259,11 +7424,31 @@ namespace VAICOM
                             server.MissionTitle = State.currentstate.missiontitle;
                             server.MissionBriefing = State.currentstate.missionbriefing;
                             server.MissionDetails = State.currentstate.missiondetails;
+                            double missionStartSeconds = 0;
+                            double missionElapsedSeconds = State.currentstate.timer;
+                            bool hasMissionStart = double.TryParse(State.currentstate.sortie ?? "", out missionStartSeconds);
+                            if (hasMissionStart && missionElapsedSeconds >= 0)
+                            {
+                                server.MissionTimeSeconds = missionStartSeconds + missionElapsedSeconds;
+                            }
+                            else
+                            {
+                                server.MissionTimeSeconds = State.currentstate.tod;
+                            }
+                            server.PlayerPosX = State.currentstate.bpos == null ? 0 : State.currentstate.bpos.x;
+                            server.PlayerPosY = State.currentstate.bpos == null ? 0 : State.currentstate.bpos.z;
+                            server.PlayerAltFeet = State.currentstate.bpos == null ? 0 : (State.currentstate.bpos.y * 3.28084);
                             server.Multiplayer = State.currentstate.multiplayer;
                             server.DebugMode = State.activeconfig.Debugmode;
+                            server.Payload = State.currentstate.payload;
+                            server.Radios = State.currentstate.radios == null
+                                ? new List<Servers.Server.RadioDevice>()
+                                : new List<Servers.Server.RadioDevice>(State.currentstate.radios);
                             server.AtcMetars = State.currentstate.atcmetars == null
                                 ? new Dictionary<string, string>()
                                 : new Dictionary<string, string>(State.currentstate.atcmetars);
+                            server.Diagnostics = State.currentstate.diagnostics;
+                            server.FriendlyAssets = BuildFriendlyAssetsSnapshot();
                         }
                     }
                     catch
@@ -3271,6 +7456,113 @@ namespace VAICOM
                     }
 
                     return server;
+                }
+
+                private static List<OpenKneeboardFriendlyAsset> BuildFriendlyAssetsSnapshot()
+                {
+                    List<OpenKneeboardFriendlyAsset> assets = new List<OpenKneeboardFriendlyAsset>();
+
+                    try
+                    {
+                        if (State.currentstate == null || State.currentstate.availablerecipients == null)
+                        {
+                            return assets;
+                        }
+
+                        string playerCoalition = (State.currentstate.playercoalition ?? string.Empty).Trim();
+                        string[] categories = new[] { "Player", "Flight", "Tanker", "AWACS", "JTAC" };
+                        HashSet<string> seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+                        if (State.currentstate.bpos != null)
+                        {
+                            double playerNorth = State.currentstate.bpos.x;
+                            double playerEast = State.currentstate.bpos.z;
+                            if (!double.IsNaN(playerNorth) && !double.IsInfinity(playerNorth) && !double.IsNaN(playerEast) && !double.IsInfinity(playerEast))
+                            {
+                                string playerCallsign = string.IsNullOrWhiteSpace(State.currentstate.playercallsign) ? "PLAYER" : State.currentstate.playercallsign;
+                                string playerName = string.IsNullOrWhiteSpace(State.currentstate.id) ? "PLAYER" : State.currentstate.id;
+                                string playerKey = string.Format("{0}|{1}|{2}|{3}", playerCallsign, playerName, Math.Round(playerNorth), Math.Round(playerEast));
+                                seen.Add(playerKey);
+                                assets.Add(new OpenKneeboardFriendlyAsset
+                                {
+                                    Callsign = playerCallsign,
+                                    Name = playerName,
+                                    Category = "PLAYER",
+                                    RawLine = string.Empty,
+                                    X = playerNorth,
+                                    Y = playerEast,
+                                });
+                            }
+                        }
+
+                        foreach (string category in categories)
+                        {
+                            List<Servers.Server.DcsUnit> units;
+                            if (!State.currentstate.availablerecipients.TryGetValue(category, out units) || units == null)
+                            {
+                                continue;
+                            }
+
+                            foreach (Servers.Server.DcsUnit unit in units)
+                            {
+                                if (unit == null || unit.pos == null)
+                                {
+                                    continue;
+                                }
+
+                                if (category.Equals("Flight", StringComparison.OrdinalIgnoreCase) && !unit.ishuman)
+                                {
+                                    continue;
+                                }
+
+                                if (!string.IsNullOrWhiteSpace(playerCoalition))
+                                {
+                                    string unitCoalition = (unit.coalition ?? string.Empty).Trim();
+                                    if (!string.IsNullOrWhiteSpace(unitCoalition)
+                                        && !playerCoalition.Equals(unitCoalition, StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        continue;
+                                    }
+                                }
+
+                                double x = unit.pos.x;
+                                double y = unit.pos.z;
+                                if (double.IsNaN(x) || double.IsInfinity(x) || double.IsNaN(y) || double.IsInfinity(y))
+                                {
+                                    continue;
+                                }
+
+                                string callsign = string.IsNullOrWhiteSpace(unit.callsign) ? unit.fullname : unit.callsign;
+                                string name = string.IsNullOrWhiteSpace(unit.fullname) ? unit.callsign : unit.fullname;
+                                string dedupeKey = string.Format("{0}|{1}|{2}|{3}", callsign ?? "", name ?? "", Math.Round(x), Math.Round(y));
+                                if (seen.Contains(dedupeKey))
+                                {
+                                    continue;
+                                }
+                                seen.Add(dedupeKey);
+
+                                assets.Add(new OpenKneeboardFriendlyAsset
+                                {
+                                    Callsign = callsign ?? "",
+                                    Name = name ?? "",
+                                    Category = category.ToUpperInvariant(),
+                                    RawLine = string.Empty,
+                                    X = x,
+                                    Y = y,
+                                });
+
+                                if (assets.Count >= 64)
+                                {
+                                    return assets;
+                                }
+                            }
+                        }
+                    }
+                    catch
+                    {
+                    }
+
+                    return assets;
                 }
             }
 
@@ -3289,6 +7581,10 @@ namespace VAICOM
                 public Dictionary<string, List<string>> UnitDetails { get; set; } = new Dictionary<string, List<string>>();
                 public Dictionary<string, Dictionary<string, List<string>>> AliasesChunk0 { get; set; } = new Dictionary<string, Dictionary<string, List<string>>>();
                 public Dictionary<string, Dictionary<string, List<string>>> AliasesChunk1 { get; set; } = new Dictionary<string, Dictionary<string, List<string>>>();
+                public List<string> DtcFiles { get; set; } = new List<string>();
+                public string DtcSelectedFile { get; set; } = "";
+                public string DtcJson { get; set; } = "";
+                public string DtcSourceType { get; set; } = "";
 
                 public OpenKneeboardSnapshot Clone()
                 {
@@ -3307,6 +7603,10 @@ namespace VAICOM
                         UnitDetails = CloneListMap(UnitDetails),
                         AliasesChunk0 = CloneAliasMap(AliasesChunk0),
                         AliasesChunk1 = CloneAliasMap(AliasesChunk1),
+                        DtcFiles = new List<string>(DtcFiles ?? new List<string>()),
+                        DtcSelectedFile = DtcSelectedFile,
+                        DtcJson = DtcJson,
+                        DtcSourceType = DtcSourceType,
                     };
 
                     return clone;
@@ -3369,9 +7669,17 @@ namespace VAICOM
                 public string MissionTitle { get; set; } = "";
                 public string MissionBriefing { get; set; } = "";
                 public string MissionDetails { get; set; } = "";
+                public double MissionTimeSeconds { get; set; }
+                public double PlayerPosX { get; set; }
+                public double PlayerPosY { get; set; }
+                public double PlayerAltFeet { get; set; }
                 public bool Multiplayer { get; set; }
                 public bool DebugMode { get; set; }
+                public object Payload { get; set; } = null;
+                public List<Servers.Server.RadioDevice> Radios { get; set; } = new List<Servers.Server.RadioDevice>();
                 public Dictionary<string, string> AtcMetars { get; set; } = new Dictionary<string, string>();
+                public List<OpenKneeboardFriendlyAsset> FriendlyAssets { get; set; } = new List<OpenKneeboardFriendlyAsset>();
+                public object Diagnostics { get; set; } = null;
 
                 public OpenKneeboardServerSnapshot Clone()
                 {
@@ -3384,9 +7692,42 @@ namespace VAICOM
                         MissionTitle = MissionTitle,
                         MissionBriefing = MissionBriefing,
                         MissionDetails = MissionDetails,
+                        MissionTimeSeconds = MissionTimeSeconds,
+                        PlayerPosX = PlayerPosX,
+                        PlayerPosY = PlayerPosY,
+                        PlayerAltFeet = PlayerAltFeet,
                         Multiplayer = Multiplayer,
                         DebugMode = DebugMode,
+                        Payload = Payload,
+                        Radios = Radios == null ? new List<Servers.Server.RadioDevice>() : new List<Servers.Server.RadioDevice>(Radios),
                         AtcMetars = new Dictionary<string, string>(AtcMetars ?? new Dictionary<string, string>()),
+                        FriendlyAssets = FriendlyAssets == null
+                            ? new List<OpenKneeboardFriendlyAsset>()
+                            : FriendlyAssets.ConvertAll(functionAsset => functionAsset == null ? null : functionAsset.Clone()).FindAll(functionAsset => functionAsset != null),
+                        Diagnostics = Diagnostics,
+                    };
+                }
+            }
+
+            public class OpenKneeboardFriendlyAsset
+            {
+                public string Callsign { get; set; } = "";
+                public string Name { get; set; } = "";
+                public string Category { get; set; } = "";
+                public string RawLine { get; set; } = "";
+                public double X { get; set; }
+                public double Y { get; set; }
+
+                public OpenKneeboardFriendlyAsset Clone()
+                {
+                    return new OpenKneeboardFriendlyAsset
+                    {
+                        Callsign = Callsign,
+                        Name = Name,
+                        Category = Category,
+                        RawLine = RawLine,
+                        X = X,
+                        Y = Y,
                     };
                 }
             }

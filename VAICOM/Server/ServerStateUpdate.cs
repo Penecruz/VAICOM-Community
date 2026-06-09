@@ -365,6 +365,7 @@ namespace VAICOM
                 {
                     State.currentstate.metar = serverMessage.metar;
                     State.currentstate.atcmetars = serverMessage.atcmetars ?? new Dictionary<string, string>();
+                    State.currentstate.diagnostics = serverMessage.diagnostics;
                 }
                 catch (Exception e)
                 {
