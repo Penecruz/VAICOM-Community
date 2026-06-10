@@ -745,6 +745,7 @@ namespace VAICOM
     .fltPlanTimeCellValue { font-size: 16px; font-weight: 700; color: #111; }
     .fltPlanTimeCell.clickable { cursor: pointer; }
     .fltPlanTimeCell.clickable:hover { background: #dce8f2; }
+    .fltPlanPostFlightCell { grid-column: 2 / span 3; display: flex; align-items: center; justify-content: flex-end; }
     .fltPlanWpWrap { border: 1px solid #8b96a1; background: #ffffff; flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
     .fltPlanWpTitle { padding: 4px 6px; border-bottom: 1px solid #8b96a1; font-size: 16px; font-weight: 700; text-transform: uppercase; }
     .fltPlanWpTable { width: 100%; border-collapse: collapse; table-layout: fixed; }
@@ -760,6 +761,8 @@ namespace VAICOM
     .fltPlanAdjustCell { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 2px; }
     .fltPlanEtaWrap { display: inline-flex; align-items: center; justify-content: center; gap: 4px; }
     .fltPlanEtaWrap input { margin: 0; }
+    .fltPlanEtaValue { cursor: pointer; }
+    .fltPlanAtaValue { color: #2d66c3; font-weight: 700; cursor: pointer; }
     .fltPlanCellNum { text-align: center; }
     .fltPlanBottomGrid { display: grid; grid-template-columns: 0.85fr 0.64fr 0.635fr; grid-template-areas: 'freq cmds cmds' 'assets wx wx'; gap: 8px; margin-top: 8px; }
     .fltPlanInfoFreqWrap { grid-area: freq; }
@@ -820,6 +823,7 @@ namespace VAICOM
     body.night-mode .fltPlanTimeCellLabel { color: #9eb3c8; }
     body.night-mode .fltPlanTimeCellValue { color: #e2eaf4; }
     body.night-mode .fltPlanTimeCell.clickable:hover { background: #31404f; }
+    body.night-mode .fltPlanPostFlightCell { background: transparent; border: 0; }
     body.night-mode .fltPlanWpWrap { background: #212a34; border-color: #5c6d7f; }
     body.night-mode .fltPlanWpTitle { border-bottom-color: #5c6d7f; color: #dfe8f2; }
     body.night-mode .fltPlanWpTable th,
@@ -827,6 +831,7 @@ namespace VAICOM
     body.night-mode .fltPlanWpTable th { background: #2a3541; }
     body.night-mode .fltPlanWpTable th.fltPlanEtaHeader:hover { background: #334253; }
     body.night-mode .fltPlanAltTag { color: #9fb5ca; }
+    body.night-mode .fltPlanAtaValue { color: #74a8ff; }
     body.night-mode .fltPlanMiniBtn { background: #2b3541; color: #e2eaf4; border-color: #5f7184; }
     body.night-mode .fltPlanMiniBtn:hover { background: #364453; }
     body.night-mode .fltPlanInfoBlock,
@@ -2520,12 +2525,129 @@ namespace VAICOM
       return isFinite(value) ? value : NaN;
     }
 
+    const stepToStartSeconds = 10 * 60;
+    const startToTaxiSeconds = 10 * 60;
+    const taxiToTakeoffSeconds = 15 * 60;
+
+    function buildTimingFromTakeoff(takeoffSec){
+      const t = Number(takeoffSec);
+      if (!isFinite(t)){
+        return { step: NaN, start: NaN, taxi: NaN, takeoff: NaN };
+      }
+
+      return {
+        step: t - (stepToStartSeconds + startToTaxiSeconds + taxiToTakeoffSeconds),
+        start: t - (startToTaxiSeconds + taxiToTakeoffSeconds),
+        taxi: t - taxiToTakeoffSeconds,
+        takeoff: t,
+      };
+    }
+
+    function getResolvedTimingMarks(selected){
+      const state = getFlightPlanPlanState(selected);
+      const defaults = buildTimingFromTakeoff(getTakeoffTimeBySelection(selected));
+      const marks = (state && state.timeMarks && typeof state.timeMarks === 'object') ? state.timeMarks : {};
+
+      function pick(name){
+        const fromState = Number(marks[name]);
+        if (isFinite(fromState)) return fromState;
+        return Number(defaults[name]);
+      }
+
+      return {
+        step: pick('step'),
+        start: pick('start'),
+        taxi: pick('taxi'),
+        takeoff: pick('takeoff'),
+      };
+    }
+
+    function appendTimingLog(selected, anchor, timing){
+      const state = getFlightPlanPlanState(selected);
+      if (!Array.isArray(state.timingLog)) state.timingLog = [];
+
+      const eventUtc = new Date();
+      const eventClock = formatSecondsToClock(getCurrentFlightPlanClockSeconds());
+      const text = eventUtc.toISOString()
+        + ' | ' + String(anchor || '').toUpperCase()
+        + ' set=' + eventClock
+        + ' | STEP ' + (isFinite(Number(timing.step)) ? formatSecondsToClock(Number(timing.step)) : '-')
+        + ' START ' + (isFinite(Number(timing.start)) ? formatSecondsToClock(Number(timing.start)) : '-')
+        + ' TAXI ' + (isFinite(Number(timing.taxi)) ? formatSecondsToClock(Number(timing.taxi)) : '-')
+        + ' TAKEOFF ' + (isFinite(Number(timing.takeoff)) ? formatSecondsToClock(Number(timing.takeoff)) : '-');
+
+      state.timingLog.push(text);
+      if (state.timingLog.length > 12){
+        state.timingLog = state.timingLog.slice(state.timingLog.length - 12);
+      }
+    }
+
+    function formatSignedDeltaSeconds(deltaSeconds){
+      const n = Number(deltaSeconds);
+      if (!isFinite(n)) return '';
+      const sign = n >= 0 ? '+' : '-';
+      const abs = Math.abs(Math.round(n));
+      const h = Math.floor(abs / 3600);
+      const m = Math.floor((abs % 3600) / 60);
+      const s = abs % 60;
+      return sign + String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+    }
+
+    function togglePostFlightOpen(selected){
+      const state = getFlightPlanPlanState(selected);
+      state.postFlightOpen = !state.postFlightOpen;
+    }
+
+    function toggleWaypointAta(selected, step, plannedEtaText){
+      const state = getFlightPlanPlanState(selected);
+      if (!state.ataByStep || typeof state.ataByStep !== 'object') state.ataByStep = {};
+      if (!Array.isArray(state.timingLog)) state.timingLog = [];
+
+      const key = stepToKey(step);
+      if (!key) return;
+
+      if (state.ataByStep[key]){
+        delete state.ataByStep[key];
+        return;
+      }
+
+      const planned = parseEtaToSeconds(plannedEtaText);
+      const actual = getCurrentFlightPlanClockSeconds();
+      if (!isFinite(planned) || !isFinite(actual)) return;
+
+      state.ataByStep[key] = {
+        actualSeconds: actual,
+        plannedSeconds: planned,
+      };
+
+      const keys = Object.keys(state.ataByStep)
+        .map(function(k){ return String(k); })
+        .sort(function(a, b){ return Number(a) - Number(b); });
+
+      const parts = keys.map(function(k){
+        const entry = state.ataByStep[k] || {};
+        const actualSec = Number(entry.actualSeconds);
+        const plannedSec = Number(entry.plannedSeconds);
+        if (!isFinite(actualSec) || !isFinite(plannedSec)) return '';
+        return 'STP' + String(k) + ' ' + formatSignedDeltaSeconds(actualSec - plannedSec);
+      }).filter(function(x){ return !!x; });
+
+      if (parts.length){
+        const row = new Date().toISOString() + ' | ATA ' + parts.join(' ');
+        state.timingLog.push(row);
+        if (state.timingLog.length > 12){
+          state.timingLog = state.timingLog.slice(state.timingLog.length - 12);
+        }
+      }
+    }
+
     function hasTakeoffTimeBySelection(selected){
       return isFinite(getTakeoffTimeBySelection(selected));
     }
 
     function getFlightPlanTimingDisplay(selected){
-      const takeoffSec = getTakeoffTimeBySelection(selected);
+      const timing = getResolvedTimingMarks(selected);
+      const takeoffSec = Number(timing.takeoff);
       if (!isFinite(takeoffSec)){
         return {
           step: '-',
@@ -2540,25 +2662,30 @@ namespace VAICOM
       const totSec = isFinite(Number(planState.totSeconds)) ? Number(planState.totSeconds) : NaN;
 
       return {
-        step: formatSecondsToClock(takeoffSec - (35 * 60)),
-        start: formatSecondsToClock(takeoffSec - (25 * 60)),
-        taxi: formatSecondsToClock(takeoffSec - (15 * 60)),
-        takeoff: formatSecondsToClock(takeoffSec),
+        step: formatSecondsToClock(timing.step),
+        start: formatSecondsToClock(timing.start),
+        taxi: formatSecondsToClock(timing.taxi),
+        takeoff: formatSecondsToClock(timing.takeoff),
         tot: isFinite(totSec) ? formatSecondsToClock(totSec) : '-',
       };
     }
 
     function getFlightPlanPlanState(selected){
       const key = getFlightPlanEtaStartKey(selected);
-      if (!key) return { speedAdjustments: {}, altAdjustments: {}, typeOverrides: {}, lockedStep: '', totSeconds: NaN, lockedStart: null };
+      if (!key) return { speedAdjustments: {}, speedDisplayModes: {}, altAdjustments: {}, typeOverrides: {}, lockedStep: '', totSeconds: NaN, lockedStart: null, timeMarks: {}, timingLog: [], postFlightOpen: false, ataByStep: {} };
       const existing = fltPlanPlanStateBySelection[key];
       if (existing && typeof existing === 'object'){
         if (!existing.speedAdjustments || typeof existing.speedAdjustments !== 'object') existing.speedAdjustments = {};
+        if (!existing.speedDisplayModes || typeof existing.speedDisplayModes !== 'object') existing.speedDisplayModes = {};
         if (!existing.altAdjustments || typeof existing.altAdjustments !== 'object') existing.altAdjustments = {};
         if (!existing.typeOverrides || typeof existing.typeOverrides !== 'object') existing.typeOverrides = {};
+        if (!existing.timeMarks || typeof existing.timeMarks !== 'object') existing.timeMarks = {};
+        if (!Array.isArray(existing.timingLog)) existing.timingLog = [];
+        if (typeof existing.postFlightOpen !== 'boolean') existing.postFlightOpen = false;
+        if (!existing.ataByStep || typeof existing.ataByStep !== 'object') existing.ataByStep = {};
         return existing;
       }
-      const created = { speedAdjustments: {}, altAdjustments: {}, typeOverrides: {}, lockedStep: '', totSeconds: NaN, lockedStart: null };
+      const created = { speedAdjustments: {}, speedDisplayModes: {}, altAdjustments: {}, typeOverrides: {}, lockedStep: '', totSeconds: NaN, lockedStart: null, timeMarks: {}, timingLog: [], postFlightOpen: false, ataByStep: {} };
       fltPlanPlanStateBySelection[key] = created;
       return created;
     }
@@ -2588,6 +2715,65 @@ namespace VAICOM
       const current = Number(state.speedAdjustments[key]);
       const next = (isFinite(current) ? current : 0) + Number(delta || 0);
       state.speedAdjustments[key] = clamp(next, -600, 600);
+    }
+
+    function canUseMachDisplay(altFeet){
+      return isFinite(Number(altFeet)) && Number(altFeet) > 28000;
+    }
+
+    function getWaypointSpeedDisplayMode(state, step, altFeet){
+      const key = stepToKey(step);
+      const safeState = state || {};
+      const map = (safeState.speedDisplayModes && typeof safeState.speedDisplayModes === 'object') ? safeState.speedDisplayModes : {};
+      let mode = String(map[key] || 'KCAS').toUpperCase();
+      if (mode !== 'MACH') mode = 'KCAS';
+      if (mode === 'MACH' && !canUseMachDisplay(altFeet)) mode = 'KCAS';
+      return mode;
+    }
+
+    function toggleWaypointSpeedDisplayMode(selected, step, altFeet){
+      const state = getFlightPlanPlanState(selected);
+      const key = stepToKey(step);
+      if (!key || !state.speedDisplayModes) return;
+
+      if (!canUseMachDisplay(altFeet)){
+        state.speedDisplayModes[key] = 'KCAS';
+        return;
+      }
+
+      const current = getWaypointSpeedDisplayMode(state, key, altFeet);
+      state.speedDisplayModes[key] = (current === 'MACH') ? 'KCAS' : 'MACH';
+    }
+
+    function changeWaypointSpeedAdjustmentByDirection(selected, step, direction, altFeet){
+      const dir = Number(direction);
+      if (!isFinite(dir) || dir === 0) return;
+
+      const state = getFlightPlanPlanState(selected);
+      const mode = getWaypointSpeedDisplayMode(state, step, altFeet);
+
+      let deltaKcas = 10 * (dir >= 0 ? 1 : -1);
+      if (mode === 'MACH' && canUseMachDisplay(altFeet)){
+        const conversion = 661.47 / (1.0 + (Math.max(0, Number(altFeet) || 0) / 100000.0));
+        deltaKcas = 0.01 * conversion * (dir >= 0 ? 1 : -1);
+      }
+
+      changeWaypointSpeedAdjustment(selected, step, deltaKcas);
+    }
+
+    function formatWaypointSpeedDisplay(speedKcasText, mode, altFeet){
+      const kcas = Number(speedKcasText);
+      if (!isFinite(kcas) || kcas <= 0) return '-';
+
+      if (mode === 'MACH' && canUseMachDisplay(altFeet)){
+        const cas = Math.max(0, kcas);
+        const tas = cas * (1.0 + (Math.max(0, Number(altFeet) || 0) / 100000.0));
+        const mach = tas / 661.47;
+        if (!isFinite(mach) || mach <= 0) return '-';
+        return 'M ' + mach.toFixed(2);
+      }
+
+      return String(Math.round(kcas));
     }
 
     function getWaypointSpeedAdjustment(state, step){
@@ -3253,6 +3439,37 @@ namespace VAICOM
       state.altAdjustments[key] = clamp(next, -40000, 40000);
     }
 
+    function getAltitudeAdjustmentStep(altFeet){
+      const alt = Number(altFeet);
+      if (!isFinite(alt)) return 500;
+      return alt < 1000 ? 100 : 500;
+    }
+
+    function changeWaypointAltitudeByDirection(selected, step, direction, currentAltFeet){
+      const dir = Number(direction);
+      if (!isFinite(dir) || dir === 0) return;
+      const stepSize = getAltitudeAdjustmentStep(currentAltFeet);
+      const baseAlt = Number(currentAltFeet);
+      if (!isFinite(baseAlt)){
+        changeWaypointAltitude(selected, step, (dir >= 0 ? 1 : -1) * stepSize);
+        return;
+      }
+
+      const lower = Math.floor(baseAlt / stepSize) * stepSize;
+      const upper = Math.ceil(baseAlt / stepSize) * stepSize;
+      const isAligned = Math.abs(baseAlt - Math.round(baseAlt / stepSize) * stepSize) < 0.0001;
+
+      let nextAlt = baseAlt;
+      if (dir >= 0){
+        nextAlt = isAligned ? (baseAlt + stepSize) : upper;
+      } else {
+        nextAlt = isAligned ? (baseAlt - stepSize) : lower;
+      }
+
+      nextAlt = Math.max(0, Math.round(nextAlt));
+      changeWaypointAltitude(selected, step, nextAlt - baseAlt);
+    }
+
     function applyAltitudeAdjustments(rows, selected){
       const list = Array.isArray(rows) ? rows : [];
       const state = getFlightPlanPlanState(selected);
@@ -3296,20 +3513,49 @@ namespace VAICOM
       if (!key) return;
 
       const anchor = String(anchorType || '').toUpperCase();
-      let addSeconds = 0;
-      if (anchor === 'STEP') addSeconds = 35 * 60;
-      else if (anchor === 'START') addSeconds = 25 * 60;
-      else if (anchor === 'TAXI') addSeconds = 15 * 60;
-      else addSeconds = 0;
+      const now = getCurrentFlightPlanClockSeconds();
+      const state = getFlightPlanPlanState(selected);
+      const marks = getResolvedTimingMarks(selected);
+
+      if (anchor === 'STEP'){
+        marks.step = now;
+        marks.start = now + stepToStartSeconds;
+        marks.taxi = marks.start + startToTaxiSeconds;
+        marks.takeoff = marks.taxi + taxiToTakeoffSeconds;
+      } else if (anchor === 'START'){
+        marks.start = now;
+        marks.taxi = now + startToTaxiSeconds;
+        marks.takeoff = marks.taxi + taxiToTakeoffSeconds;
+      } else if (anchor === 'TAXI'){
+        marks.taxi = now;
+        marks.takeoff = now + taxiToTakeoffSeconds;
+      } else {
+        marks.takeoff = now;
+      }
+
+      state.timeMarks = {
+        step: marks.step,
+        start: marks.start,
+        taxi: marks.taxi,
+        takeoff: marks.takeoff,
+      };
 
       lockStartPositionForSelection(selected, latestData);
-      fltPlanEtaStartBySelection[key] = getCurrentFlightPlanClockSeconds() + addSeconds;
+      if (isFinite(Number(marks.takeoff))){
+        fltPlanEtaStartBySelection[key] = Number(marks.takeoff);
+      }
+      appendTimingLog(selected, anchor, marks);
     }
 
     function clearTakeoffTimeForSelection(selected){
       const key = getFlightPlanEtaStartKey(selected);
       if (!key) return;
+      const state = getFlightPlanPlanState(selected);
       delete fltPlanEtaStartBySelection[key];
+      state.timeMarks = {};
+      state.timingLog = [];
+      state.ataByStep = {};
+      state.postFlightOpen = false;
     }
 
     function getFlightPlanStartRow(server, selected){
@@ -4276,6 +4522,11 @@ namespace VAICOM
       applyDistancePlan(displayRows);
       applyHeadingPlan(displayRows, theatre);
       const etaHeading = hasTakeoffTimeBySelection(selected) ? 'ETA' : 'ETE';
+      const planState = getFlightPlanPlanState(selected);
+      const timingLogRows = (planState && Array.isArray(planState.timingLog))
+        ? planState.timingLog.slice()
+        : [];
+      const postFlightOpen = !!(planState && planState.postFlightOpen);
 
       let html = '';
       html += '<div class=""fltPlanBoard"">';
@@ -4302,12 +4553,19 @@ namespace VAICOM
       html += '<div class=""fltPlanTimeCell clickable"" data-tko-anchor=""TAKEOFF"" title=""Set TAKEOFF to current clock""><div class=""fltPlanTimeCellLabel"">TAKE OFF</div><div class=""fltPlanTimeCellValue"">' + escapeHtml(timing.takeoff) + '</div></div>';
       html += '<div class=""fltPlanTimeCell""><div class=""fltPlanTimeCellLabel"">TOT</div><div class=""fltPlanTimeCellValue""><div class=""fltPlanAdjustCell""><button type=""button"" class=""fltPlanMiniBtn"" data-tot-adjust-sec=""-1"" title=""-1 second"">«</button><button type=""button"" class=""fltPlanMiniBtn"" data-tot-adjust=""-60"" title=""-1 minute"">◀</button><span class=""fltPlanSpdValue"">' + escapeHtml(timing.tot) + '</span><button type=""button"" class=""fltPlanMiniBtn"" data-tot-adjust=""60"" title=""+1 minute"">▶</button><button type=""button"" class=""fltPlanMiniBtn"" data-tot-adjust-sec=""1"" title=""+1 second"">»</button></div></div></div>';
       html += '</div>';
+      html += '<div class=""controls fltPlanControls"" style=""margin:4px 0 8px 0;""><button type=""button"" class=""fltPlanPageBtn"" data-postflight-toggle=""1"">' + (postFlightOpen ? 'Hide Post Flight' : 'Post Flight') + '</button></div>';
+      if (postFlightOpen){
+        html += '<div class=""fltPlanInfoBlock"" style=""min-height:0; margin-bottom:8px;"">';
+        html += '<div class=""fltPlanInfoTitle"">POST FLIGHT SUMMARY</div>';
+        html += '<div class=""fltPlanInfoBody"" style=""font-size:12px; line-height:1.2; max-height:150px;"">' + (timingLogRows.length ? timingLogRows.map(escapeHtml).join('<br>') : 'No events recorded yet.') + '</div>';
+        html += '</div>';
+      }
 
       html += '<div class=""fltPlanWpWrap"">';
       html += '<div class=""fltPlanWpTitle"">Route: ' + escapeHtml(primaryRouteName) + '</div>';
       html += '<div class=""fltPlanWpTableWrap"">';
       html += '<table class=""fltPlanWpTable"">';
-      html += '<thead><tr><th style=""width:48px;"">STP</th><th style=""width:68px;"">TYPE</th><th style=""width:118px;"">NAME</th><th style=""width:78px;"">ALT</th><th style=""width:56px;"">HDG</th><th style=""width:86px;"">SPD KCAS</th><th style=""width:64px;"">DIST</th><th class=""fltPlanEtaHeader"" style=""width:90px;"" data-eta-header=""1"" title=""Click to set ETA start from current time"">' + etaHeading + '</th><th style=""width:150px;"">X / Y</th></tr></thead>';
+      html += '<thead><tr><th style=""width:48px;"">STP</th><th style=""width:68px;"">TYPE</th><th style=""width:118px;"">NAME</th><th style=""width:78px;"">ALT</th><th style=""width:56px;"">HDG</th><th style=""width:86px;"">SPD</th><th style=""width:64px;"">DIST</th><th class=""fltPlanEtaHeader"" style=""width:90px;"" data-eta-header=""1"" title=""Click to set ETA start from current time"">' + etaHeading + '</th><th style=""width:150px;"">X / Y</th></tr></thead>';
       html += '<tbody>';
 
       if (!displayRows.length){
@@ -4315,7 +4573,15 @@ namespace VAICOM
       } else {
         displayRows.forEach(function(wp){
           const stepKey = stepToKey(wp.step);
-          const lockChecked = !wp.isStart && stepKey && (stepKey === stepToKey(getFlightPlanPlanState(selected).lockedStep)) ? ' checked' : '';
+          const lockChecked = !wp.isStart && stepKey && (stepKey === stepToKey(planState.lockedStep)) ? ' checked' : '';
+          const speedMode = getWaypointSpeedDisplayMode(planState, stepKey, wp.altFeet);
+          const speedDisplay = formatWaypointSpeedDisplay(wp.spd, speedMode, wp.altFeet);
+          const speedClickTitle = canUseMachDisplay(wp.altFeet)
+            ? 'Click to toggle KCAS/MACH display'
+            : 'KCAS only below FL280';
+          const speedStepTitle = (speedMode === 'MACH' && canUseMachDisplay(wp.altFeet))
+            ? 'Adjust by 0.01 Mach'
+            : 'Adjust by 10 KCAS';
           html += '<tr>';
           html += '<td class=""fltPlanCellNum"">' + escapeHtml(wp.step) + '</td>';
           if (wp.isStart){
@@ -4327,20 +4593,26 @@ namespace VAICOM
           if (wp.isStart){
             html += '<td class=""fltPlanCellNum"">' + formatAltCellHtml(wp) + '</td>';
           } else {
-            html += '<td class=""fltPlanCellNum""><div class=""fltPlanAdjustCell""><button type=""button"" class=""fltPlanMiniBtn"" data-alt-step=""' + escapeHtml(stepKey) + '"" data-alt-delta=""-500"">◀</button><span class=""fltPlanSpdValue"">' + formatAltCellHtml(wp) + '</span><button type=""button"" class=""fltPlanMiniBtn"" data-alt-step=""' + escapeHtml(stepKey) + '"" data-alt-delta=""500"">▶</button></div></td>';
+            html += '<td class=""fltPlanCellNum""><div class=""fltPlanAdjustCell""><button type=""button"" class=""fltPlanMiniBtn"" data-alt-step=""' + escapeHtml(stepKey) + '"" data-alt-dir=""-1"" data-alt-current=""' + escapeHtml(String(wp.altFeet)) + '"" title=""Adjust altitude"">◀</button><span class=""fltPlanSpdValue"">' + formatAltCellHtml(wp) + '</span><button type=""button"" class=""fltPlanMiniBtn"" data-alt-step=""' + escapeHtml(stepKey) + '"" data-alt-dir=""1"" data-alt-current=""' + escapeHtml(String(wp.altFeet)) + '"" title=""Adjust altitude"">▶</button></div></td>';
           }
           if (wp.isStart){
             html += '<td class=""fltPlanCellNum"">' + escapeHtml(wp.hdg || '-') + '</td>';
             html += '<td class=""fltPlanCellNum"">' + escapeHtml(wp.spd || '-') + '</td>';
           } else {
             html += '<td class=""fltPlanCellNum"">' + escapeHtml(wp.hdg || '-') + '</td>';
-            html += '<td class=""fltPlanCellNum""><div class=""fltPlanAdjustCell""><button type=""button"" class=""fltPlanMiniBtn"" data-spd-step=""' + escapeHtml(stepKey) + '"" data-spd-delta=""-20"">◀</button><span class=""fltPlanSpdValue"">' + escapeHtml(wp.spd || '-') + '</span><button type=""button"" class=""fltPlanMiniBtn"" data-spd-step=""' + escapeHtml(stepKey) + '"" data-spd-delta=""20"">▶</button></div></td>';
+            html += '<td class=""fltPlanCellNum""><div class=""fltPlanAdjustCell""><button type=""button"" class=""fltPlanMiniBtn"" data-spd-step=""' + escapeHtml(stepKey) + '"" data-spd-dir=""-1"" data-spd-alt=""' + escapeHtml(String(wp.altFeet)) + '"" title=""' + escapeHtml(speedStepTitle) + '"">◀</button><span class=""fltPlanSpdValue"" data-speed-mode-step=""' + escapeHtml(stepKey) + '"" data-speed-alt=""' + escapeHtml(String(wp.altFeet)) + '"" title=""' + escapeHtml(speedClickTitle) + '"">' + escapeHtml(speedDisplay) + '</span><button type=""button"" class=""fltPlanMiniBtn"" data-spd-step=""' + escapeHtml(stepKey) + '"" data-spd-dir=""1"" data-spd-alt=""' + escapeHtml(String(wp.altFeet)) + '"" title=""' + escapeHtml(speedStepTitle) + '"">▶</button></div></td>';
           }
           html += '<td class=""fltPlanCellNum"">' + escapeHtml(wp.dist || '-') + '</td>';
           if (wp.isStart){
             html += '<td class=""fltPlanCellNum"">' + escapeHtml(wp.etaDisplay || wp.eta) + '</td>';
           } else {
-            html += '<td class=""fltPlanCellNum""><span class=""fltPlanEtaWrap""><input type=""checkbox"" data-tot-lock-step=""' + escapeHtml(stepKey) + '""' + lockChecked + '><span>' + escapeHtml(wp.etaDisplay || wp.eta) + '</span></span></td>';
+            const ataEntry = (planState && planState.ataByStep && planState.ataByStep[stepKey]) ? planState.ataByStep[stepKey] : null;
+            const plannedEtaText = String(wp.etaDisplay || wp.eta || '-');
+            const ataShown = ataEntry && isFinite(Number(ataEntry.actualSeconds));
+            const etaClass = ataShown ? 'fltPlanAtaValue' : 'fltPlanEtaValue';
+            const etaText = ataShown ? formatSecondsToClock(Number(ataEntry.actualSeconds)) : plannedEtaText;
+            const etaTitle = ataShown ? 'ATA active - click to return to ETA' : 'ETA - click to mark ATA at current mission time';
+            html += '<td class=""fltPlanCellNum""><span class=""fltPlanEtaWrap""><input type=""checkbox"" data-tot-lock-step=""' + escapeHtml(stepKey) + '""' + lockChecked + '><span class=""' + etaClass + '"" data-eta-step=""' + escapeHtml(stepKey) + '"" data-eta-planned=""' + escapeHtml(plannedEtaText) + '"" title=""' + escapeHtml(etaTitle) + '"">' + escapeHtml(etaText) + '</span></span></td>';
           }
           html += '<td class=""fltPlanCellNum"">' + escapeHtml((wp.x || '-') + ' / ' + (wp.y || '-')) + '</td>';
           html += '</tr>';
@@ -5274,9 +5546,20 @@ namespace VAICOM
           if (node.getAttribute && node.getAttribute('data-spd-step')){
             const selected = getActiveFlightPlanSelection(latestData);
             const step = String(node.getAttribute('data-spd-step') || '');
-            const delta = Number(node.getAttribute('data-spd-delta') || 0);
-            if (selected && step && isFinite(delta) && delta !== 0){
-              changeWaypointSpeedAdjustment(selected, step, delta);
+            const direction = Number(node.getAttribute('data-spd-dir') || 0);
+            const altFeet = Number(node.getAttribute('data-spd-alt') || NaN);
+            if (selected && step && isFinite(direction) && direction !== 0){
+              changeWaypointSpeedAdjustmentByDirection(selected, step, direction, altFeet);
+              render(latestData);
+            }
+            return;
+          }
+          if (node.getAttribute && node.getAttribute('data-speed-mode-step')){
+            const selected = getActiveFlightPlanSelection(latestData);
+            const step = String(node.getAttribute('data-speed-mode-step') || '');
+            const altFeet = Number(node.getAttribute('data-speed-alt') || NaN);
+            if (selected && step){
+              toggleWaypointSpeedDisplayMode(selected, step, altFeet);
               render(latestData);
             }
             return;
@@ -5284,9 +5567,10 @@ namespace VAICOM
           if (node.getAttribute && node.getAttribute('data-alt-step')){
             const selected = getActiveFlightPlanSelection(latestData);
             const step = String(node.getAttribute('data-alt-step') || '');
-            const delta = Number(node.getAttribute('data-alt-delta') || 0);
-            if (selected && step && isFinite(delta) && delta !== 0){
-              changeWaypointAltitude(selected, step, delta);
+            const direction = Number(node.getAttribute('data-alt-dir') || 0);
+            const currentAlt = Number(node.getAttribute('data-alt-current') || NaN);
+            if (selected && step && isFinite(direction) && direction !== 0){
+              changeWaypointAltitudeByDirection(selected, step, direction, currentAlt);
               render(latestData);
             }
             return;
@@ -5325,6 +5609,24 @@ namespace VAICOM
             const page = Number(node.getAttribute('data-dtc-page') || 1);
             if (selected){
               setDtcPageBySelection(selected, page);
+              render(latestData);
+            }
+            return;
+          }
+          if (node.getAttribute && node.getAttribute('data-postflight-toggle')){
+            const selected = getActiveFlightPlanSelection(latestData);
+            if (selected){
+              togglePostFlightOpen(selected);
+              render(latestData);
+            }
+            return;
+          }
+          if (node.getAttribute && node.getAttribute('data-eta-step')){
+            const selected = getActiveFlightPlanSelection(latestData);
+            const step = String(node.getAttribute('data-eta-step') || '');
+            const planned = String(node.getAttribute('data-eta-planned') || '');
+            if (selected && step){
+              toggleWaypointAta(selected, step, planned);
               render(latestData);
             }
             return;
