@@ -50,6 +50,29 @@ namespace VAICOM
     h3 { margin: 0; font-size: 28px; color: #111; }
     .logo { width: 36px; height: 36px; object-fit: contain; }
     .meta { margin: 2px 0 8px 0; color: #444; font-size: 19px; }
+    .simControls {
+      margin: 0 0 6px 0;
+      padding: 4px 6px;
+      border: 1px solid #8b96a1;
+      background: #eef2f6;
+      color: #1b2a36;
+      font-size: 15px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .simControls button {
+      font-family: inherit;
+      font-size: 14px;
+      border: 1px solid #7c8692;
+      background: #ffffff;
+      color: #111;
+      cursor: pointer;
+      padding: 1px 7px;
+      min-height: 22px;
+    }
+    .simControls .simRate { font-weight: 700; min-width: 56px; text-align: center; }
     .status {
       padding: 6px;
       border: 1px solid #8e8e8e;
@@ -763,6 +786,17 @@ namespace VAICOM
     .fltPlanEtaWrap input { margin: 0; }
     .fltPlanEtaValue { cursor: pointer; }
     .fltPlanAtaValue { color: #2d66c3; font-weight: 700; cursor: pointer; }
+    @keyframes fltPlanRecFlash {
+      0% { color: #b21f1f; }
+      50% { color: #ff4a4a; }
+      100% { color: #b21f1f; }
+    }
+    .fltPlanRecSpeed {
+      color: #b21f1f;
+      font-weight: 800;
+      cursor: pointer;
+      animation: fltPlanRecFlash 1.05s linear infinite;
+    }
     .fltPlanCellNum { text-align: center; }
     .fltPlanBottomGrid { display: grid; grid-template-columns: 0.85fr 0.64fr 0.635fr; grid-template-areas: 'freq cmds cmds' 'assets wx wx'; gap: 8px; margin-top: 8px; }
     .fltPlanInfoFreqWrap { grid-area: freq; }
@@ -800,6 +834,8 @@ namespace VAICOM
     body.night-mode .sheet { background: #1b2129; border-color: #4b5663; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05); }
     body.night-mode h3 { color: #e9f0f8; }
     body.night-mode .meta { color: #a9b8c7; }
+    body.night-mode .simControls { background: #26303a; border-color: #5c6d7f; color: #d7e3ee; }
+    body.night-mode .simControls button { background: #2b3541; color: #e2eaf2; border-color: #607183; }
     body.night-mode .status { background: #27313b; border-color: #516070; color: #dce6f0; }
     body.night-mode .panel { background: #232c35; border-color: #556678; }
     body.night-mode .panel h4 { color: #e5edf6; border-bottom-color: #556678; }
@@ -832,6 +868,7 @@ namespace VAICOM
     body.night-mode .fltPlanWpTable th.fltPlanEtaHeader:hover { background: #334253; }
     body.night-mode .fltPlanAltTag { color: #9fb5ca; }
     body.night-mode .fltPlanAtaValue { color: #74a8ff; }
+    body.night-mode .fltPlanRecSpeed { color: #ff7c7c; }
     body.night-mode .fltPlanMiniBtn { background: #2b3541; color: #e2eaf4; border-color: #5f7184; }
     body.night-mode .fltPlanMiniBtn:hover { background: #364453; }
     body.night-mode .fltPlanInfoBlock,
@@ -865,6 +902,16 @@ namespace VAICOM
     </div>
 
     <div id='status' class='status'><span id='statusIndicator' class='statusIndicator'></span><span id='statusText'>Loading...</span></div>
+
+    <div id='fakeMissionControls' class='simControls hidden'>
+      <strong>SIM TEST</strong>
+      <span id='fakeMissionInfo'>OFF</span>
+      <span id='fakeMissionClock'>--:--:--</span>
+      <button id='fakeMissionSlower' type='button'>- Rate</button>
+      <span id='fakeMissionRate' class='simRate'>x1.0</span>
+      <button id='fakeMissionFaster' type='button'>+ Rate</button>
+      <button id='fakeMissionStop' type='button'>Stop</button>
+    </div>
 
     <div class='kneeLayout'>
       <div class='leftColumn'>
@@ -951,6 +998,12 @@ namespace VAICOM
     let runtimeFlightPlanSnapshotMissionIdentity = '';
     let lastMissionIdentity = '';
     let lastMissionClockSeconds = NaN;
+    let fakeMissionEnabled = false;
+    let fakeMissionState = null;
+    let fakeMissionSpeed = 1.0;
+    let fakeMissionTimer = null;
+    let fakeMissionLastRealMs = 0;
+    let fakeMissionLastRenderMs = 0;
     const sessionCollapsedStorageKey = 'vaicom.okb.sessionCollapsed';
     const dtcListCollapsedStorageKey = 'vaicom.okb.dtcListCollapsed';
     const tabKeywordsSplitStorageKey = 'vaicom.okb.tabKeywordsSplitByTab';
@@ -959,6 +1012,9 @@ namespace VAICOM
     const dlinkOnStorageKey = 'vaicom.okb.dlinkOn';
     const contentFontSizeStorageKey = 'vaicom.okb.contentFontSize';
     const drawModeTimeoutMs = 30000;
+    const speedRecommendationTimeoutMs = 30000;
+    const fakeMissionSpeedMin = 0.25;
+    const fakeMissionSpeedMax = 8.0;
     let tabKeywordsSplitByTab = {};
     let nightModeEnabled = false;
     let dlinkOnEnabled = true;
@@ -1194,6 +1250,398 @@ namespace VAICOM
       if (slider) slider.value = String(safeSize);
       const value = document.getElementById('fontSizeValue');
       if (value) value.textContent = String(safeSize);
+    }
+
+    function updateFakeMissionControlsUi(){
+      const wrap = document.getElementById('fakeMissionControls');
+      const info = document.getElementById('fakeMissionInfo');
+      const clock = document.getElementById('fakeMissionClock');
+      const rate = document.getElementById('fakeMissionRate');
+      const slower = document.getElementById('fakeMissionSlower');
+      const faster = document.getElementById('fakeMissionFaster');
+      const stop = document.getElementById('fakeMissionStop');
+      if (!wrap || !info || !clock || !rate || !slower || !faster || !stop) return;
+
+      wrap.className = fakeMissionEnabled ? 'simControls' : 'simControls hidden';
+      info.textContent = fakeMissionEnabled ? 'ACTIVE' : 'OFF';
+      clock.textContent = (fakeMissionEnabled && fakeMissionState)
+        ? formatSecondsToClock(Number(fakeMissionState.simMissionSeconds || 0))
+        : '--:--:--';
+      rate.textContent = 'x' + Number(fakeMissionSpeed).toFixed(2);
+      slower.disabled = !fakeMissionEnabled || fakeMissionSpeed <= fakeMissionSpeedMin + 0.0001;
+      faster.disabled = !fakeMissionEnabled || fakeMissionSpeed >= fakeMissionSpeedMax - 0.0001;
+      stop.disabled = !fakeMissionEnabled;
+    }
+
+    function stopFakeMissionTimer(){
+      if (!fakeMissionTimer) return;
+      clearInterval(fakeMissionTimer);
+      fakeMissionTimer = null;
+    }
+
+    function randomInRange(min, max){
+      return min + (Math.random() * (max - min));
+    }
+
+    function makeFakeAsset(callsign, category, x, y, headingDeg, speedMps){
+      return {
+        Callsign: callsign,
+        Name: callsign,
+        Category: category,
+        RawLine: '',
+        X: x,
+        Y: y,
+        headingDeg: headingDeg,
+        speedMps: speedMps,
+      };
+    }
+
+    function createFakeMissionStateFromData(data){
+      const source = data || latestData || {};
+      const server = (source && source.Server) || {};
+      const selected = getActiveFlightPlanSelection(source);
+      const routeRows = getPlanWaypointsForRecommendations(selected)
+        .filter(function(wp){ return isFinite(Number(wp && wp.xNum)) && isFinite(Number(wp && wp.yNum)); });
+
+      const simStartOffsetMeters = 5 * 1852;
+
+      const routeStartX = routeRows.length ? Number(routeRows[0].xNum) : NaN;
+      const routeStartY = routeRows.length ? Number(routeRows[0].yNum) : NaN;
+      let baseX = isFinite(routeStartX)
+        ? routeStartX
+        : (isFinite(Number(server.PlayerPosX)) ? Number(server.PlayerPosX) : 170000);
+      let baseY = isFinite(routeStartY)
+        ? routeStartY
+        : (isFinite(Number(server.PlayerPosY)) ? Number(server.PlayerPosY) : 105000);
+
+      if (routeRows.length >= 2){
+        const wp1 = routeRows[0];
+        const wp2 = routeRows[1];
+        const x1 = Number(wp1.xNum);
+        const y1 = Number(wp1.yNum);
+        const x2 = Number(wp2.xNum);
+        const y2 = Number(wp2.yNum);
+        const dx = x2 - x1;
+        const dy = y2 - y1;
+        const mag = Math.sqrt((dx * dx) + (dy * dy));
+        if (isFinite(mag) && mag > 0.01){
+          const ux = dx / mag;
+          const uy = dy / mag;
+          baseX = x1 - (ux * simStartOffsetMeters);
+          baseY = y1 - (uy * simStartOffsetMeters);
+        }
+      }
+      const startMission = isFinite(Number(server.MissionTimeSeconds)) ? Number(server.MissionTimeSeconds) : 8 * 3600;
+
+      const routeRowsForMotion = routeRows.length
+        ? ([{
+            step: '0',
+            xNum: baseX,
+            yNum: baseY,
+            altFeet: routeRows.length ? Number(routeRows[0].altFeet || 0) : Number(server.PlayerAltFeet || 0)
+          }]).concat(routeRows)
+        : routeRows;
+
+      return {
+        startMissionSeconds: startMission,
+        simMissionSeconds: startMission,
+        playerX: baseX,
+        playerY: baseY,
+        playerAltFeet: isFinite(Number(server.PlayerAltFeet)) ? Number(server.PlayerAltFeet) : 15000,
+        ownshipStarted: false,
+        routeRows: routeRowsForMotion,
+        playerRouteIndex: 0,
+        playerRouteProgressMeters: 0,
+        playerSpeedMps: 185,
+        assets: [
+          makeFakeAsset('PLAYER', 'PLAYER', baseX, baseY, 0, 0),
+          makeFakeAsset('TEXACO11', 'TANKER', baseX + 30000, baseY + 22000, 235, 210),
+          makeFakeAsset('OVERLORD1', 'AWACS', baseX - 45000, baseY + 26000, 095, 205),
+          makeFakeAsset('AXEMAN11', 'JTAC', baseX + 14000, baseY - 22000, 330, 0),
+          makeFakeAsset('VIPER12', 'FLIGHT', baseX - 18000, baseY - 12000, 025, 230),
+          makeFakeAsset('COLT21', 'FLIGHT', baseX + 8000, baseY + 16000, 290, 220),
+        ],
+      };
+    }
+
+    function updateFakeOwnshipStartedState(){
+      if (!fakeMissionEnabled || !fakeMissionState) return;
+      const selected = getActiveFlightPlanSelection(latestData);
+      if (!selected){
+        fakeMissionState.ownshipStarted = false;
+        return;
+      }
+
+      const timing = getResolvedTimingMarks(selected);
+      const takeoff = Number(timing && timing.takeoff);
+      if (!isFinite(takeoff)){
+        fakeMissionState.ownshipStarted = false;
+        return;
+      }
+
+      fakeMissionState.ownshipStarted = Number(fakeMissionState.simMissionSeconds) >= takeoff;
+    }
+
+    function syncFakeMissionRouteRowsFromPlan(){
+      if (!fakeMissionEnabled || !fakeMissionState || !latestData) return;
+      const selected = getActiveFlightPlanSelection(latestData);
+      if (!selected) return;
+
+      const plannedRows = getPlanWaypointsForRecommendations(selected);
+      if (!Array.isArray(plannedRows) || !plannedRows.length) return;
+
+      const byStep = {};
+      plannedRows.forEach(function(wp){
+        const key = stepToKey(wp && wp.step);
+        if (!key) return;
+        byStep[key] = wp;
+      });
+
+      const rows = Array.isArray(fakeMissionState.routeRows) ? fakeMissionState.routeRows : [];
+      for (let i = 1; i < rows.length; i++){
+        const row = rows[i];
+        const key = stepToKey(row && row.step);
+        if (!key || !byStep[key]) continue;
+        const src = byStep[key];
+        row.spd = src.spd;
+        row.altFeet = src.altFeet;
+        row.xNum = src.xNum;
+        row.yNum = src.yNum;
+      }
+    }
+
+    function advanceFakeOwnshipAlongRoute(state, dt){
+      if (!state) return;
+      const rows = Array.isArray(state.routeRows) ? state.routeRows : [];
+      if (rows.length < 2) return;
+
+      function legSpeedMpsFor(toWp){
+        const cas = Number(toWp && toWp.spd);
+        const altFeet = isFinite(Number(toWp && toWp.altFeet)) ? Number(toWp.altFeet) : 0;
+        const gsKnots = isFinite(cas) && cas > 0 ? (cas * (1.0 + (Math.max(0, altFeet) / 100000.0))) : NaN;
+        const mps = isFinite(gsKnots) && gsKnots > 0 ? (gsKnots * 0.514444) : NaN;
+        if (isFinite(mps) && mps > 0) return mps;
+        return Math.max(0, Number(state.playerSpeedMps) || 185);
+      }
+
+      let remainingSeconds = Math.max(0, Number(dt) || 0);
+      if (remainingSeconds <= 0) return;
+
+      while (remainingSeconds > 0){
+        let i = Number(state.playerRouteIndex);
+        if (!isFinite(i) || i < 0) i = 0;
+        if (i >= rows.length - 1) i = rows.length - 2;
+
+        const a = rows[i];
+        const b = rows[i + 1];
+        const ax = Number(a && a.xNum);
+        const ay = Number(a && a.yNum);
+        const bx = Number(b && b.xNum);
+        const by = Number(b && b.yNum);
+        if (!isFinite(ax) || !isFinite(ay) || !isFinite(bx) || !isFinite(by)) break;
+
+        const dx = bx - ax;
+        const dy = by - ay;
+        const legMeters = Math.sqrt((dx * dx) + (dy * dy));
+        if (!isFinite(legMeters) || legMeters < 1){
+          state.playerRouteIndex = i + 1;
+          state.playerRouteProgressMeters = 0;
+          continue;
+        }
+
+        let progress = Number(state.playerRouteProgressMeters);
+        if (!isFinite(progress) || progress < 0) progress = 0;
+
+        const leftOnLeg = Math.max(0, legMeters - progress);
+        const speedMps = legSpeedMpsFor(b);
+        if (!isFinite(speedMps) || speedMps <= 0) break;
+        const leftSeconds = leftOnLeg / speedMps;
+
+        if (remainingSeconds < leftSeconds){
+          progress += (remainingSeconds * speedMps);
+          remainingSeconds = 0;
+          state.playerRouteProgressMeters = progress;
+        } else {
+          remainingSeconds -= leftSeconds;
+          if (i + 1 >= rows.length - 1){
+            state.playerRouteIndex = 0;
+            state.playerRouteProgressMeters = 0;
+          } else {
+            state.playerRouteIndex = i + 1;
+            state.playerRouteProgressMeters = 0;
+          }
+          continue;
+        }
+
+        const t = legMeters > 0 ? (progress / legMeters) : 0;
+        state.playerX = ax + (dx * t);
+        state.playerY = ay + (dy * t);
+
+        const playerAsset = (state.assets || []).find(function(a){ return String((a && a.Category) || '').toUpperCase() === 'PLAYER'; });
+        if (playerAsset){
+          playerAsset.X = state.playerX;
+          playerAsset.Y = state.playerY;
+          const hdg = normalizeHeadingDeg((Math.atan2(dy, dx) * 180.0 / Math.PI) + 90);
+          playerAsset.headingDeg = isFinite(hdg) ? hdg : 0;
+        }
+
+        break;
+      }
+    }
+
+    function stepFakeMissionState(deltaRealSeconds){
+      if (!fakeMissionEnabled || !fakeMissionState) return;
+      const dt = Math.max(0, Number(deltaRealSeconds) || 0) * fakeMissionSpeed;
+      if (dt <= 0) return;
+
+      fakeMissionState.simMissionSeconds += dt;
+      syncFakeMissionRouteRowsFromPlan();
+      updateFakeOwnshipStartedState();
+      if (fakeMissionState.ownshipStarted){
+        advanceFakeOwnshipAlongRoute(fakeMissionState, dt);
+      }
+      const bounds = 70000;
+      const baseX = fakeMissionState.playerX;
+      const baseY = fakeMissionState.playerY;
+
+      fakeMissionState.assets.forEach(function(asset, idx){
+        if (!asset || String(asset.Category).toUpperCase() === 'PLAYER') return;
+
+        const speed = Math.max(0, Number(asset.speedMps) || 0);
+        let heading = Number(asset.headingDeg);
+        if (!isFinite(heading)) heading = randomInRange(0, 360);
+
+        heading += randomInRange(-4.5, 4.5);
+        heading = ((heading % 360) + 360) % 360;
+        asset.headingDeg = heading;
+
+        const rad = heading * Math.PI / 180.0;
+        const dx = Math.sin(rad) * speed * dt;
+        const dy = Math.cos(rad) * speed * dt;
+        asset.X = Number(asset.X || baseX) + dx;
+        asset.Y = Number(asset.Y || baseY) + dy;
+
+        const offX = asset.X - baseX;
+        const offY = asset.Y - baseY;
+        if (Math.abs(offX) > bounds || Math.abs(offY) > bounds){
+          asset.headingDeg = ((heading + 180 + randomInRange(-20, 20)) % 360 + 360) % 360;
+        }
+
+        if (idx % 2 === 0 && Math.random() < 0.03){
+          asset.speedMps = clamp(speed + randomInRange(-8, 8), 120, 280);
+        }
+      });
+    }
+
+    function getDisplayData(data){
+      const original = data || latestData || {};
+      if (!fakeMissionEnabled || !fakeMissionState) return original;
+
+      let clone;
+      try{
+        clone = JSON.parse(JSON.stringify(original || {}));
+      }catch(_){
+        clone = {};
+      }
+      if (!clone.Server || typeof clone.Server !== 'object') clone.Server = {};
+      if (!clone.Status || typeof clone.Status !== 'object') clone.Status = {};
+      const server = clone.Server;
+      server.MissionTimeSeconds = Number(fakeMissionState.simMissionSeconds);
+      server.PlayerPosX = Number(fakeMissionState.playerX);
+      server.PlayerPosY = Number(fakeMissionState.playerY);
+      server.PlayerAltFeet = Number(fakeMissionState.playerAltFeet);
+      clone.UpdatedUtc = new Date().toISOString();
+      clone.Status.Text = 'SIM TEST MODE ACTIVE';
+      clone.Status.Level = 'warning';
+      clone.Status.UpdatedUtc = clone.UpdatedUtc;
+      server.Diagnostics = server.Diagnostics || {};
+      if (!Array.isArray(server.Diagnostics.playerGroupWaypoints)){
+        server.Diagnostics.playerGroupWaypoints = [];
+      }
+      server.Diagnostics.playerGroup = String(server.Diagnostics.playerGroup || 'SIM-FLIGHT');
+
+      if (!Array.isArray(server.Diagnostics.playerGroupWaypoints) || !server.Diagnostics.playerGroupWaypoints.length){
+        const sel = getActiveFlightPlanSelection(clone);
+        const routeRows = getPlanWaypointsForRecommendations(sel).filter(function(wp){
+          return isFinite(Number(wp && wp.xNum)) && isFinite(Number(wp && wp.yNum));
+        });
+        server.Diagnostics.playerGroupWaypoints = routeRows.map(function(wp, i){
+          return 'RT|group=SIM-FLIGHT|pt=' + String(i + 1)
+            + '|x=' + String(Math.round(Number(wp.xNum)))
+            + '|y=' + String(Math.round(Number(wp.yNum)))
+            + '|alt=' + String(Math.round(((Number(wp.altFeet) || 10000) / 3.28084)))
+            + '|spd=180|eta=' + String(parseEtaToSeconds(wp.etaDisplay || wp.eta) || 0)
+            + '|task=' + encodeURIComponent(String(wp.typeRaw || wp.type || 'WP'));
+        });
+      }
+
+      server.FriendlyAssets = fakeMissionState.assets.map(function(a){
+        return {
+          Callsign: String(a.Callsign || ''),
+          Name: String(a.Name || ''),
+          Category: String(a.Category || ''),
+          RawLine: String(a.RawLine || ''),
+          X: Number(a.X || 0),
+          Y: Number(a.Y || 0),
+        };
+      });
+      return clone;
+    }
+
+    function startFakeMissionMode(){
+      fakeMissionEnabled = true;
+      fakeMissionSpeed = 1.0;
+      fakeMissionState = createFakeMissionStateFromData(latestData);
+      const selected = getActiveFlightPlanSelection(latestData);
+      if (selected && fakeMissionState){
+        const state = getFlightPlanPlanState(selected);
+        state.lockedStart = {
+          x: Number(fakeMissionState.playerX),
+          y: Number(fakeMissionState.playerY),
+          altFeet: Number(fakeMissionState.playerAltFeet),
+        };
+      }
+      dlinkOnEnabled = true;
+      applyDlinkOnUi();
+      fakeMissionLastRealMs = Date.now();
+      fakeMissionLastRenderMs = 0;
+      stopFakeMissionTimer();
+      fakeMissionTimer = setInterval(function(){
+        const now = Date.now();
+        const delta = (now - fakeMissionLastRealMs) / 1000.0;
+        fakeMissionLastRealMs = now;
+        stepFakeMissionState(delta);
+        if (latestData && selectedTab === 'DTC'){
+          const shouldRender = (now - fakeMissionLastRenderMs) >= 350;
+          if (shouldRender){
+            fakeMissionLastRenderMs = now;
+            render(latestData);
+          } else {
+            updateFakeMissionControlsUi();
+          }
+        } else {
+          updateFakeMissionControlsUi();
+        }
+      }, 120);
+      updateFakeMissionControlsUi();
+      if (latestData) render(latestData);
+    }
+
+    function stopFakeMissionMode(){
+      fakeMissionEnabled = false;
+      fakeMissionState = null;
+      fakeMissionSpeed = 1.0;
+      stopFakeMissionTimer();
+      updateFakeMissionControlsUi();
+      if (latestData) render(latestData);
+    }
+
+    function adjustFakeMissionSpeed(factor){
+      if (!fakeMissionEnabled) return;
+      const f = Number(factor);
+      if (!isFinite(f) || f <= 0) return;
+      fakeMissionSpeed = clamp(fakeMissionSpeed * f, fakeMissionSpeedMin, fakeMissionSpeedMax);
+      updateFakeMissionControlsUi();
     }
 
     function mergeUnique(dest, src){
@@ -2593,6 +3041,212 @@ namespace VAICOM
       return sign + String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
     }
 
+    function clearSpeedRecommendations(selected){
+      const state = getFlightPlanPlanState(selected);
+      state.speedRecommendations = {};
+    }
+
+    function pruneExpiredSpeedRecommendations(state){
+      if (!state || !state.speedRecommendations || typeof state.speedRecommendations !== 'object') return;
+      const now = Date.now();
+      Object.keys(state.speedRecommendations).forEach(function(k){
+        const rec = state.speedRecommendations[k] || {};
+        const expires = Number(rec.expiresUtcMs);
+        if (isFinite(expires) && expires > 0 && now > expires){
+          delete state.speedRecommendations[k];
+        }
+      });
+    }
+
+    function getPlanWaypointsForRecommendations(selected){
+      try{
+        if (!latestData) return [];
+
+        const sourceType = String((latestData.DtcSourceType || '')).toUpperCase();
+        const dtcJson = String(latestData.DtcJson || '').trim();
+        let rows = [];
+
+        if (selected === '__RUNTIME_PLAYER__'){
+          rows = getMissionRuntimeWaypoints(latestData);
+        } else if (dtcJson){
+          let parsed;
+          try{ parsed = JSON.parse(dtcJson); }catch(_){ parsed = null; }
+          const root = (parsed && parsed.data && typeof parsed.data === 'object') ? parsed.data : parsed;
+          if (root){
+            if (sourceType === 'DTC'){
+              const route = getDtcRouteBySelection(selected);
+              const all = getDtcWaypoints(root);
+              rows = filterDtcWaypointsByRoute(root, all, route);
+            } else if (sourceType === 'RTE'){
+              const names = Object.keys(root || {}).sort(function(a,b){ return String(a).localeCompare(String(b)); });
+              const routeName = String(names[0] || '');
+              rows = routeName ? getRouteWaypoints(root[routeName] || {}) : [];
+            }
+          }
+        }
+
+        rows = applyTypeOverrides(Array.isArray(rows) ? rows.slice() : [], selected);
+        rows = applyAltitudeAdjustments(rows, selected);
+        rows = applyEtaPlanToWaypoints(rows, selected);
+        rows = applySpeedAdjustmentsToWaypoints(rows, selected);
+        rows = applyRouteTimeline(rows, selected);
+        rows = applyLockedTotPlan(rows, selected);
+        return rows;
+      }catch(_){
+        return [];
+      }
+    }
+
+    function computeRequiredKcasForLeg(fromWp, toWp, fromTimeSec, targetTimeSec){
+      const distNm = computeLegDistanceNm(fromWp, toWp);
+      if (!isFinite(distNm) || distNm <= 0) return NaN;
+
+      const dt = Number(targetTimeSec) - Number(fromTimeSec);
+      if (!isFinite(dt) || dt <= 0) return NaN;
+
+      const gs = (distNm * 3600.0) / dt;
+      if (!isFinite(gs) || gs <= 0) return NaN;
+
+      const alt = isFinite(Number(toWp && toWp.altFeet)) ? Number(toWp.altFeet) : 0;
+      const kcas = gs / (1.0 + (Math.max(0, alt) / 100000.0));
+      return isFinite(kcas) ? kcas : NaN;
+    }
+
+    function getRecommendationMinKcas(altFeet){
+      const alt = Math.max(0, Number(altFeet) || 0);
+      const machMinKcas = (0.52 * 661.47) / (1.0 + (alt / 100000.0));
+      return Math.max(220, machMinKcas);
+    }
+
+    function getRecommendationMaxKcas(altFeet){
+      const alt = Math.max(0, Number(altFeet) || 0);
+      const machMaxKcas = (0.98 * 661.47) / (1.0 + (alt / 100000.0));
+      return Math.min(700, machMaxKcas);
+    }
+
+    function isKcasWithinRecommendationLimits(kcas, altFeet){
+      const v = Number(kcas);
+      if (!isFinite(v) || v <= 0) return false;
+      const min = getRecommendationMinKcas(altFeet);
+      const max = getRecommendationMaxKcas(altFeet);
+      if (!isFinite(min) || !isFinite(max) || max < min) return false;
+      if (v < min || v > max) return false;
+
+      return true;
+    }
+
+    function roundRecommendedKcas(kcas){
+      const n = Number(kcas);
+      if (!isFinite(n)) return NaN;
+      return Math.max(80, Math.round(n / 10) * 10);
+    }
+
+    function normalizeRecommendedKcas(kcas, altFeet){
+      const rounded = roundRecommendedKcas(kcas);
+      if (!isFinite(rounded)) return NaN;
+      const min = getRecommendationMinKcas(altFeet);
+      const max = getRecommendationMaxKcas(altFeet);
+      if (!isFinite(min) || !isFinite(max) || max < min) return NaN;
+      const adjusted = Math.max(min, rounded);
+      return adjusted <= max ? adjusted : NaN;
+    }
+
+    function setSpeedRecommendation(state, step, recommendedKcas, useRed){
+      if (!state || !state.speedRecommendations) return;
+      const key = stepToKey(step);
+      const rk = Number(recommendedKcas);
+      if (!key || !isFinite(rk) || rk <= 0) return;
+      state.speedRecommendations[key] = {
+        kcas: rk,
+        red: !!useRed,
+        expiresUtcMs: Date.now() + speedRecommendationTimeoutMs,
+      };
+    }
+
+    function buildSpeedRecommendationsForAta(selected, ataStep){
+      const state = getFlightPlanPlanState(selected);
+      if (!state || !state.speedRecommendations) return;
+      state.speedRecommendations = {};
+
+      const rows = getPlanWaypointsForRecommendations(selected);
+      if (!rows.length) return;
+
+      const idx = rows.findIndex(function(wp){ return stepToKey(wp && wp.step) === stepToKey(ataStep); });
+      if (idx < 0 || idx + 1 >= rows.length) return;
+
+      const ata = state.ataByStep && state.ataByStep[stepToKey(ataStep)] ? state.ataByStep[stepToKey(ataStep)] : null;
+      const fromTime = ata ? Number(ata.actualSeconds) : NaN;
+      if (!isFinite(fromTime)) return;
+
+      let fromPoint = rows[idx];
+      if (fakeMissionEnabled && fakeMissionState && fakeMissionState.ownshipStarted){
+        const ownX = Number(fakeMissionState.playerX);
+        const ownY = Number(fakeMissionState.playerY);
+        if (isFinite(ownX) && isFinite(ownY)){
+          fromPoint = {
+            x: ownX,
+            y: ownY,
+            xNum: ownX,
+            yNum: ownY,
+            altFeet: isFinite(Number(rows[idx] && rows[idx].altFeet)) ? Number(rows[idx].altFeet) : 0,
+          };
+        }
+      }
+
+      const nextWp = rows[idx + 1];
+      const nextTarget = parseEtaToSeconds(nextWp && (nextWp.etaDisplay || nextWp.eta));
+      const reqNext = computeRequiredKcasForLeg(fromPoint, nextWp, fromTime, nextTarget);
+      const reqNextRounded = normalizeRecommendedKcas(reqNext, nextWp && nextWp.altFeet);
+      if (isKcasWithinRecommendationLimits(reqNextRounded, nextWp && nextWp.altFeet)){
+        setSpeedRecommendation(state, nextWp.step, reqNextRounded, true);
+        return;
+      }
+
+      if (idx + 2 >= rows.length) return;
+
+      const wpA = rows[idx + 1];
+      const wpB = rows[idx + 2];
+      const targetB = parseEtaToSeconds(wpB && (wpB.etaDisplay || wpB.eta));
+      const legA = computeLegDistanceNm(fromPoint, wpA);
+      const legB = computeLegDistanceNm(wpA, wpB);
+      if (!isFinite(legA) || !isFinite(legB) || legA <= 0 || legB <= 0) return;
+
+      const totalDt = Number(targetB) - Number(fromTime);
+      if (!isFinite(totalDt) || totalDt <= 0) return;
+
+      const dtA = totalDt * (legA / (legA + legB));
+      const dtB = totalDt - dtA;
+
+      const reqA = normalizeRecommendedKcas(computeRequiredKcasForLeg(fromPoint, wpA, fromTime, fromTime + dtA), wpA && wpA.altFeet);
+      const reqB = normalizeRecommendedKcas(computeRequiredKcasForLeg(wpA, wpB, fromTime + dtA, targetB), wpB && wpB.altFeet);
+      if (!isKcasWithinRecommendationLimits(reqA, wpA && wpA.altFeet)) return;
+      if (!isKcasWithinRecommendationLimits(reqB, wpB && wpB.altFeet)) return;
+
+      setSpeedRecommendation(state, wpA.step, reqA, true);
+      setSpeedRecommendation(state, wpB.step, reqB, true);
+    }
+
+    function acceptSpeedRecommendation(selected, step){
+      const state = getFlightPlanPlanState(selected);
+      if (!state || !state.speedRecommendations) return false;
+      pruneExpiredSpeedRecommendations(state);
+      const key = stepToKey(step);
+      const rec = state.speedRecommendations[key];
+      if (!rec) return false;
+
+      const rows = getPlanWaypointsForRecommendations(selected);
+      const wp = rows.find(function(r){ return stepToKey(r && r.step) === key; });
+      if (!wp) return false;
+
+      const current = Number(wp.spd);
+      const target = Number(rec.kcas);
+      if (!isFinite(current) || !isFinite(target)) return false;
+
+      changeWaypointSpeedAdjustment(selected, key, target - current);
+      delete state.speedRecommendations[key];
+      return true;
+    }
+
     function togglePostFlightOpen(selected){
       const state = getFlightPlanPlanState(selected);
       state.postFlightOpen = !state.postFlightOpen;
@@ -2608,6 +3262,7 @@ namespace VAICOM
 
       if (state.ataByStep[key]){
         delete state.ataByStep[key];
+        clearSpeedRecommendations(selected);
         return;
       }
 
@@ -2639,6 +3294,8 @@ namespace VAICOM
           state.timingLog = state.timingLog.slice(state.timingLog.length - 12);
         }
       }
+
+      buildSpeedRecommendationsForAta(selected, key);
     }
 
     function hasTakeoffTimeBySelection(selected){
@@ -2672,7 +3329,7 @@ namespace VAICOM
 
     function getFlightPlanPlanState(selected){
       const key = getFlightPlanEtaStartKey(selected);
-      if (!key) return { speedAdjustments: {}, speedDisplayModes: {}, altAdjustments: {}, typeOverrides: {}, lockedStep: '', totSeconds: NaN, lockedStart: null, timeMarks: {}, timingLog: [], postFlightOpen: false, ataByStep: {} };
+      if (!key) return { speedAdjustments: {}, speedDisplayModes: {}, altAdjustments: {}, typeOverrides: {}, lockedStep: '', totSeconds: NaN, lockedStart: null, timeMarks: {}, timingLog: [], postFlightOpen: false, ataByStep: {}, speedRecommendations: {} };
       const existing = fltPlanPlanStateBySelection[key];
       if (existing && typeof existing === 'object'){
         if (!existing.speedAdjustments || typeof existing.speedAdjustments !== 'object') existing.speedAdjustments = {};
@@ -2683,9 +3340,10 @@ namespace VAICOM
         if (!Array.isArray(existing.timingLog)) existing.timingLog = [];
         if (typeof existing.postFlightOpen !== 'boolean') existing.postFlightOpen = false;
         if (!existing.ataByStep || typeof existing.ataByStep !== 'object') existing.ataByStep = {};
+        if (!existing.speedRecommendations || typeof existing.speedRecommendations !== 'object') existing.speedRecommendations = {};
         return existing;
       }
-      const created = { speedAdjustments: {}, speedDisplayModes: {}, altAdjustments: {}, typeOverrides: {}, lockedStep: '', totSeconds: NaN, lockedStart: null, timeMarks: {}, timingLog: [], postFlightOpen: false, ataByStep: {} };
+      const created = { speedAdjustments: {}, speedDisplayModes: {}, altAdjustments: {}, typeOverrides: {}, lockedStep: '', totSeconds: NaN, lockedStart: null, timeMarks: {}, timingLog: [], postFlightOpen: false, ataByStep: {}, speedRecommendations: {} };
       fltPlanPlanStateBySelection[key] = created;
       return created;
     }
@@ -2693,9 +3351,10 @@ namespace VAICOM
     function lockStartPositionForSelection(selected, data){
       const state = getFlightPlanPlanState(selected);
       const server = (data && data.Server) || {};
-      const x = Number(server.PlayerPosX);
-      const y = Number(server.PlayerPosY);
-      const altFeet = Number(server.PlayerAltFeet);
+      const simActive = !!(fakeMissionEnabled && fakeMissionState);
+      const x = Number(simActive ? fakeMissionState.playerX : server.PlayerPosX);
+      const y = Number(simActive ? fakeMissionState.playerY : server.PlayerPosY);
+      const altFeet = Number(simActive ? fakeMissionState.playerAltFeet : server.PlayerAltFeet);
       if (!isFinite(x) || !isFinite(y)) return;
       state.lockedStart = {
         x: x,
@@ -2907,6 +3566,9 @@ namespace VAICOM
     }
 
     function getCurrentFlightPlanClockSeconds(){
+      if (fakeMissionEnabled && fakeMissionState && isFinite(Number(fakeMissionState.simMissionSeconds))){
+        return Number(fakeMissionState.simMissionSeconds);
+      }
       const mission = getMissionClockSeconds(latestData);
       if (isFinite(mission)) return mission;
       return getSystemLocalClockSeconds();
@@ -3545,6 +4207,10 @@ namespace VAICOM
         fltPlanEtaStartBySelection[key] = Number(marks.takeoff);
       }
       appendTimingLog(selected, anchor, marks);
+
+      if (fakeMissionEnabled){
+        updateFakeOwnshipStartedState();
+      }
     }
 
     function clearTakeoffTimeForSelection(selected){
@@ -3555,6 +4221,7 @@ namespace VAICOM
       state.timeMarks = {};
       state.timingLog = [];
       state.ataByStep = {};
+      state.speedRecommendations = {};
       state.postFlightOpen = false;
     }
 
@@ -4454,8 +5121,7 @@ namespace VAICOM
         .map(function(asset){
           const p = mapPt(asset);
           return { asset: asset, x: p.x, y: p.y };
-        })
-        .slice(0, 24);
+        });
 
       const assetEls = mapAssets.map(function(m){
         const label = escapeHtml(m.asset.callsign || m.asset.name || m.asset.category || 'ASSET');
@@ -4523,6 +5189,7 @@ namespace VAICOM
       applyHeadingPlan(displayRows, theatre);
       const etaHeading = hasTakeoffTimeBySelection(selected) ? 'ETA' : 'ETE';
       const planState = getFlightPlanPlanState(selected);
+      pruneExpiredSpeedRecommendations(planState);
       const timingLogRows = (planState && Array.isArray(planState.timingLog))
         ? planState.timingLog.slice()
         : [];
@@ -4575,7 +5242,10 @@ namespace VAICOM
           const stepKey = stepToKey(wp.step);
           const lockChecked = !wp.isStart && stepKey && (stepKey === stepToKey(planState.lockedStep)) ? ' checked' : '';
           const speedMode = getWaypointSpeedDisplayMode(planState, stepKey, wp.altFeet);
-          const speedDisplay = formatWaypointSpeedDisplay(wp.spd, speedMode, wp.altFeet);
+          const speedRec = (!wp.isStart && planState && planState.speedRecommendations) ? planState.speedRecommendations[stepKey] : null;
+          const speedDisplay = speedRec
+            ? formatWaypointSpeedDisplay(speedRec.kcas, speedMode, wp.altFeet)
+            : formatWaypointSpeedDisplay(wp.spd, speedMode, wp.altFeet);
           const speedClickTitle = canUseMachDisplay(wp.altFeet)
             ? 'Click to toggle KCAS/MACH display'
             : 'KCAS only below FL280';
@@ -4600,7 +5270,7 @@ namespace VAICOM
             html += '<td class=""fltPlanCellNum"">' + escapeHtml(wp.spd || '-') + '</td>';
           } else {
             html += '<td class=""fltPlanCellNum"">' + escapeHtml(wp.hdg || '-') + '</td>';
-            html += '<td class=""fltPlanCellNum""><div class=""fltPlanAdjustCell""><button type=""button"" class=""fltPlanMiniBtn"" data-spd-step=""' + escapeHtml(stepKey) + '"" data-spd-dir=""-1"" data-spd-alt=""' + escapeHtml(String(wp.altFeet)) + '"" title=""' + escapeHtml(speedStepTitle) + '"">◀</button><span class=""fltPlanSpdValue"" data-speed-mode-step=""' + escapeHtml(stepKey) + '"" data-speed-alt=""' + escapeHtml(String(wp.altFeet)) + '"" title=""' + escapeHtml(speedClickTitle) + '"">' + escapeHtml(speedDisplay) + '</span><button type=""button"" class=""fltPlanMiniBtn"" data-spd-step=""' + escapeHtml(stepKey) + '"" data-spd-dir=""1"" data-spd-alt=""' + escapeHtml(String(wp.altFeet)) + '"" title=""' + escapeHtml(speedStepTitle) + '"">▶</button></div></td>';
+            html += '<td class=""fltPlanCellNum""><div class=""fltPlanAdjustCell""><button type=""button"" class=""fltPlanMiniBtn"" data-spd-step=""' + escapeHtml(stepKey) + '"" data-spd-dir=""-1"" data-spd-alt=""' + escapeHtml(String(wp.altFeet)) + '"" title=""' + escapeHtml(speedStepTitle) + '"">◀</button><span class=""fltPlanSpdValue' + (speedRec ? ' fltPlanRecSpeed' : '') + '"" data-speed-mode-step=""' + escapeHtml(stepKey) + '"" data-speed-alt=""' + escapeHtml(String(wp.altFeet)) + '""' + (speedRec ? ' data-speed-rec-step=""' + escapeHtml(stepKey) + '""' : '') + ' title=""' + escapeHtml(speedRec ? 'Recommended speed: click to accept' : speedClickTitle) + '"">' + escapeHtml(speedDisplay) + '</span><button type=""button"" class=""fltPlanMiniBtn"" data-spd-step=""' + escapeHtml(stepKey) + '"" data-spd-dir=""1"" data-spd-alt=""' + escapeHtml(String(wp.altFeet)) + '"" title=""' + escapeHtml(speedStepTitle) + '"">▶</button></div></td>';
           }
           html += '<td class=""fltPlanCellNum"">' + escapeHtml(wp.dist || '-') + '</td>';
           if (wp.isStart){
@@ -5248,21 +5918,28 @@ namespace VAICOM
 
     function render(data){
       latestData = data;
+      updateFakeMissionControlsUi();
+      const displayData = getDisplayData(data);
       maybeResetFlightPlanStateForMission(data);
-      const server = data && data.Server ? data.Server : {};
+      const server = displayData && displayData.Server ? displayData.Server : {};
       const haveMission = !!(server.Aircraft || server.MissionTitle || server.Theater);
       const debugMode = !!server.DebugMode;
       const defaultStatusText = haveMission ? 'Live session detected.' : 'Waiting for mission data...';
       let statusText = defaultStatusText;
       let statusLevel = '';
 
-      if (data && data.Status && data.Status.Text) {
-        const updated = data.Status.UpdatedUtc ? Date.parse(data.Status.UpdatedUtc) : NaN;
+      if (displayData && displayData.Status && displayData.Status.Text) {
+        const updated = displayData.Status.UpdatedUtc ? Date.parse(displayData.Status.UpdatedUtc) : NaN;
         const fresh = isFinite(updated) ? ((Date.now() - updated) < 10000) : true;
         if (fresh) {
-          statusText = String(data.Status.Text);
-          statusLevel = String(data.Status.Level || '').toLowerCase();
+          statusText = String(displayData.Status.Text);
+          statusLevel = String(displayData.Status.Level || '').toLowerCase();
         }
+      }
+
+      if (fakeMissionEnabled){
+        statusText = 'SIM TEST MODE ACTIVE';
+        statusLevel = 'warning';
       }
 
       setStatus(statusText, statusLevel);
@@ -5274,8 +5951,8 @@ namespace VAICOM
       }
 
       document.getElementById('session').textContent = [
-        'Active Category : ' + safe(normalizeActiveCategory(data.ActiveCategory, data)),
-        'Updated (UTC)   : ' + formatUtcToSeconds(data.UpdatedUtc),
+        'Active Category : ' + safe(normalizeActiveCategory(displayData.ActiveCategory, displayData)),
+        'Updated (UTC)   : ' + formatUtcToSeconds(displayData.UpdatedUtc),
         '',
         'Theater         : ' + safe(server.Theater),
         'DCS Location    : ' + safe(server.DcsLocation || server.DcsVersion),
@@ -5285,8 +5962,8 @@ namespace VAICOM
         'Multiplayer     : ' + (server.Multiplayer ? 'Yes' : 'No')
       ].join('\n');
 
-      renderTabs(data);
-      updateDtcControls(data);
+      renderTabs(displayData);
+      updateDtcControls(displayData);
       applyCurrentTabKeywordsSplit();
       document.body.classList.toggle('notes-tab', selectedTab === 'NOTES');
       document.body.classList.toggle('flt-plan-tab', selectedTab === 'DTC');
@@ -5299,10 +5976,10 @@ namespace VAICOM
       const tabBody = document.getElementById('tabBody');
       if (selectedTab === 'DTC'){
         tabBody.className = 'content mainContent fltPlanContent';
-        tabBody.innerHTML = formatDtcTabContentHtml(data);
+        tabBody.innerHTML = formatDtcTabContentHtml(displayData);
       } else {
         tabBody.className = 'content mainContent';
-        tabBody.textContent = formatTabContent(data, selectedTab);
+        tabBody.textContent = formatTabContent(displayData, selectedTab);
       }
       updateCursorModeForTab();
       const tabBodyEl = document.getElementById('tabBody');
@@ -5315,7 +5992,7 @@ namespace VAICOM
         tabBodyEl.title = '';
       }
       const aiCrewPhaseSuffix = selectedTab === 'AI CREW'
-        ? formatAiCrewPhaseLabel(data.AiCrewPhase)
+        ? formatAiCrewPhaseLabel(displayData.AiCrewPhase)
         : '';
       const keywordPanelEl = document.getElementById('keywordPanel');
       if (selectedTab === 'DTC'){
@@ -5323,7 +6000,7 @@ namespace VAICOM
       } else {
         if (keywordPanelEl) keywordPanelEl.style.display = 'flex';
         document.getElementById('keywordTitle').textContent = 'Keywords: ' + tabLabel(selectedTab) + aiCrewPhaseSuffix;
-        document.getElementById('keywordBody').innerHTML = formatKeywordReferenceHtml(data, selectedTab);
+        document.getElementById('keywordBody').innerHTML = formatKeywordReferenceHtml(displayData, selectedTab);
       }
 
       const showRawWrap = document.getElementById('showRawWrap');
@@ -5337,11 +6014,11 @@ namespace VAICOM
         document.getElementById('json').className = 'hidden';
       }
 
-      document.getElementById('json').textContent = JSON.stringify(data, null, 2);
+      document.getElementById('json').textContent = JSON.stringify(displayData, null, 2);
 
       const serverMessagesEl = document.getElementById('serverMessages');
       if (serverMessagesEl){
-        const rows = Array.isArray(data.RawServerMessages) ? data.RawServerMessages : [];
+        const rows = Array.isArray(displayData.RawServerMessages) ? displayData.RawServerMessages : [];
         serverMessagesEl.textContent = rows.length ? rows.join('\n') : 'No server messages captured yet.';
       }
 
@@ -5558,6 +6235,13 @@ namespace VAICOM
             const selected = getActiveFlightPlanSelection(latestData);
             const step = String(node.getAttribute('data-speed-mode-step') || '');
             const altFeet = Number(node.getAttribute('data-speed-alt') || NaN);
+            const recStep = String(node.getAttribute('data-speed-rec-step') || '');
+            if (selected && recStep){
+              if (acceptSpeedRecommendation(selected, recStep)){
+                render(latestData);
+              }
+              return;
+            }
             if (selected && step){
               toggleWaypointSpeedDisplayMode(selected, step, altFeet);
               render(latestData);
@@ -5805,6 +6489,59 @@ namespace VAICOM
       persistDtcListCollapsedState();
     });
 
+    (function(){
+      const logo = document.querySelector('.logo');
+      if (!logo) return;
+      logo.title = 'Hidden test mode: Shift+Click or Triple-Click';
+
+      let logoClickCount = 0;
+      let logoClickResetTimer = null;
+
+      function toggleFakeMissionMode(){
+        if (fakeMissionEnabled){
+          stopFakeMissionMode();
+        } else {
+          startFakeMissionMode();
+        }
+      }
+
+      logo.addEventListener('click', function(ev){
+        if (ev && ev.shiftKey){
+          toggleFakeMissionMode();
+          return;
+        }
+
+        logoClickCount++;
+        if (logoClickResetTimer){
+          clearTimeout(logoClickResetTimer);
+          logoClickResetTimer = null;
+        }
+
+        if (logoClickCount >= 3){
+          logoClickCount = 0;
+          toggleFakeMissionMode();
+          return;
+        }
+
+        logoClickResetTimer = setTimeout(function(){
+          logoClickCount = 0;
+          logoClickResetTimer = null;
+        }, 1200);
+      });
+    })();
+
+    document.getElementById('fakeMissionSlower').addEventListener('click', function(){
+      adjustFakeMissionSpeed(1 / 1.4);
+    });
+
+    document.getElementById('fakeMissionFaster').addEventListener('click', function(){
+      adjustFakeMissionSpeed(1.4);
+    });
+
+    document.getElementById('fakeMissionStop').addEventListener('click', function(){
+      stopFakeMissionMode();
+    });
+
     document.getElementById('sessionHeader').addEventListener('click', function(){
       applySessionCollapsedState(!sessionCollapsed);
       persistSessionCollapsedState();
@@ -5828,6 +6565,7 @@ namespace VAICOM
       applyCurrentTabKeywordsSplit();
     });
     configureOpenKneeboard();
+    updateFakeMissionControlsUi();
     tick();
     setInterval(tick, 1000);
   </script>
