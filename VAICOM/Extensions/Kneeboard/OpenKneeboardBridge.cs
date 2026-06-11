@@ -225,6 +225,7 @@ namespace VAICOM
     .controls { margin: 8px 0; color: #222; font-size: 19px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
     .controls.fltPlanControls { margin: 0 0 8px 0; }
     .fltPlanSelected { font-size: 17px; color: #22303d; }
+    .missionClockLabel { margin-left: auto; font-size: 17px; color: #22303d; white-space: nowrap; }
     .controls label { white-space: nowrap; }
     .controls select {
       font-family: inherit;
@@ -848,6 +849,7 @@ namespace VAICOM
     body.night-mode .controls { color: #d1dce8; }
     body.night-mode .controls button { background: #2b3541; color: #e2eaf2; border-color: #607183; }
     body.night-mode .fltPlanSelected { color: #9fb6cb; }
+    body.night-mode .missionClockLabel { color: #9fb6cb; }
     body.night-mode .dtcFileItem { background: #1f2731; color: #e2eaf4; border-color: #5a6b7c; }
     body.night-mode .dtcFileItem:hover { background: #2a3440; }
     body.night-mode .dtcFileMeta { color: #9eb2c6; }
@@ -918,6 +920,7 @@ namespace VAICOM
         <div id='dtcControls' class='controls fltPlanControls hidden'>
           <button id='dtcRefresh' type='button'>Refresh FLT PLN</button>
           <span id='dtcSelectedFileLabel' class='fltPlanSelected'>No FLT PLN selected</span>
+          <span id='missionClockLabel' class='missionClockLabel'>Mission Time - (- UTC)</span>
         </div>
 
         <div id='dtcSelector' class='panel hidden'>
@@ -998,6 +1001,10 @@ namespace VAICOM
     let runtimeFlightPlanSnapshotMissionIdentity = '';
     let lastMissionIdentity = '';
     let lastMissionClockSeconds = NaN;
+    let missionClockAnchorSeconds = NaN;
+    let missionClockAnchorSystemMs = 0;
+    let missionClockAnchorIdentity = '';
+    let clockTickTimer = null;
     let fakeMissionEnabled = false;
     let fakeMissionState = null;
     let fakeMissionSpeed = 1.0;
@@ -1618,9 +1625,11 @@ namespace VAICOM
             render(latestData);
           } else {
             updateFakeMissionControlsUi();
+            updateMissionClockLabel(latestData);
           }
         } else {
           updateFakeMissionControlsUi();
+          updateMissionClockLabel(latestData);
         }
       }, 120);
       updateFakeMissionControlsUi();
@@ -3565,13 +3574,73 @@ namespace VAICOM
       return (now.getHours() * 3600) + (now.getMinutes() * 60) + now.getSeconds();
     }
 
+    function getTheaterUtcOffsetHours(theater){
+      const t = String(theater || '').toUpperCase();
+      if (t.indexOf('CAUCASUS') >= 0) return 4;
+      if (t.indexOf('MARIANA') >= 0) return 10;
+      if (t.indexOf('PERSIAN') >= 0) return 4;
+      if (t.indexOf('SYRIA') >= 0) return 3;
+      if (t.indexOf('SINAI') >= 0) return 2;
+      if (t.indexOf('NEVADA') >= 0) return -8;
+      if (t.indexOf('NORMANDY') >= 0) return 1;
+      if (t.indexOf('KOLA') >= 0) return 2;
+      if (t.indexOf('AFGHAN') >= 0) return 4.5;
+      if (t.indexOf('SOUTH ATLANTIC') >= 0) return -3;
+      return NaN;
+    }
+
+    function missionToUtcSeconds(missionSeconds, theater){
+      const mission = Number(missionSeconds);
+      const offset = Number(getTheaterUtcOffsetHours(theater));
+      if (!isFinite(mission) || !isFinite(offset)) return NaN;
+      return mission - (offset * 3600);
+    }
+
+    function updateMissionClockLabel(data){
+      const label = document.getElementById('missionClockLabel');
+      if (!label) return;
+
+      const model = data || latestData || {};
+      const server = (model && model.Server) || {};
+      const mission = getCurrentFlightPlanClockSeconds();
+      if (!isFinite(mission)){
+        label.textContent = 'Mission Time - (- UTC)';
+        return;
+      }
+
+      const utcSeconds = missionToUtcSeconds(mission, server.Theater);
+      const utcText = isFinite(utcSeconds) ? formatSecondsToClock(utcSeconds) : '-';
+      label.textContent = 'Mission Time ' + formatSecondsToClock(mission) + ' (' + utcText + ' UTC)';
+    }
+
     function getCurrentFlightPlanClockSeconds(){
       if (fakeMissionEnabled && fakeMissionState && isFinite(Number(fakeMissionState.simMissionSeconds))){
         return Number(fakeMissionState.simMissionSeconds);
       }
+
+      if (isFinite(Number(missionClockAnchorSeconds)) && missionClockAnchorSystemMs > 0){
+        const elapsed = (Date.now() - missionClockAnchorSystemMs) / 1000.0;
+        if (isFinite(elapsed)){
+          return Number(missionClockAnchorSeconds) + Math.max(0, elapsed);
+        }
+      }
+
       const mission = getMissionClockSeconds(latestData);
       if (isFinite(mission)) return mission;
       return getSystemLocalClockSeconds();
+    }
+
+    function setMissionClockAnchor(missionSeconds, systemNowMs){
+      const m = Number(missionSeconds);
+      if (!isFinite(m) || m < 0) return;
+      missionClockAnchorSeconds = m;
+      missionClockAnchorSystemMs = isFinite(Number(systemNowMs)) ? Number(systemNowMs) : Date.now();
+    }
+
+    function resetMissionClockAnchor(){
+      missionClockAnchorSeconds = NaN;
+      missionClockAnchorSystemMs = 0;
+      missionClockAnchorIdentity = '';
     }
 
     function getFlightPlanEtaStartKey(selected){
@@ -3605,6 +3674,9 @@ namespace VAICOM
       delete fltPlanDtcPageBySelection[key];
       delete fltPlanDtcRouteBySelection[key];
       delete fltPlanMapViewBySelection[key];
+      if (!fakeMissionEnabled){
+        resetMissionClockAnchor();
+      }
     }
 
     function invalidateRuntimeFlightPlanSnapshot(){
@@ -3623,6 +3695,7 @@ namespace VAICOM
       if (identityChanged || missionClockRewound){
         resetRuntimeFlightPlanState();
         invalidateRuntimeFlightPlanSnapshot();
+        resetMissionClockAnchor();
       }
 
       if (identity){
@@ -4207,6 +4280,10 @@ namespace VAICOM
         fltPlanEtaStartBySelection[key] = Number(marks.takeoff);
       }
       appendTimingLog(selected, anchor, marks);
+
+      if (anchor === 'TAKEOFF' && isFinite(Number(marks.takeoff)) && !fakeMissionEnabled){
+        setMissionClockAnchor(Number(marks.takeoff), Date.now());
+      }
 
       if (fakeMissionEnabled){
         updateFakeOwnshipStartedState();
@@ -6040,12 +6117,16 @@ namespace VAICOM
       const selector = document.getElementById('dtcSelector');
       const listEl = document.getElementById('dtcFileList');
       const selectedLabel = document.getElementById('dtcSelectedFileLabel');
+      const missionClockLabel = document.getElementById('missionClockLabel');
       if (!wrap || !selector || !listEl || !selectedLabel) return;
 
       const visible = selectedTab === 'DTC';
       wrap.className = visible ? 'controls fltPlanControls' : 'controls fltPlanControls hidden';
       selector.className = visible ? 'panel dtcSelector' : 'panel dtcSelector hidden';
+      if (missionClockLabel) missionClockLabel.style.display = visible ? 'inline-block' : 'none';
       if (!visible) return;
+
+      updateMissionClockLabel(data);
 
       const files = Array.isArray(data.DtcFiles) ? data.DtcFiles : [];
       const selected = String(data.DtcSelectedFile || '');
@@ -6139,6 +6220,31 @@ namespace VAICOM
         }
       }catch(e){
         setStatus('Waiting for VAICOM connection...', '');
+      }
+    }
+
+    async function clockTick(){
+      if (fakeMissionEnabled) return;
+      try{
+        const requestStartedMs = Date.now();
+        const r = await fetch('clock', { cache: 'no-store' });
+        const j = await r.json();
+        const missionClock = Number(j && j.MissionTimeSeconds);
+        const identity = String((j && j.MissionIdentity) || '');
+        if (!isFinite(missionClock) || missionClock < 0) return;
+
+        if (missionClockAnchorIdentity && identity && missionClockAnchorIdentity !== identity){
+          resetMissionClockAnchor();
+        }
+
+        missionClockAnchorIdentity = identity || missionClockAnchorIdentity;
+
+        const hasAnchor = isFinite(Number(missionClockAnchorSeconds)) && missionClockAnchorSystemMs > 0;
+        if (!hasAnchor){
+          // Lock to first reliable mission-time sample, then run locally from system elapsed time.
+          setMissionClockAnchor(missionClock, requestStartedMs);
+        }
+      }catch(_){
       }
     }
 
@@ -6567,6 +6673,8 @@ namespace VAICOM
     configureOpenKneeboard();
     updateFakeMissionControlsUi();
     tick();
+    clockTick();
+    clockTickTimer = setInterval(clockTick, 250);
     setInterval(tick, 1000);
   </script>
 </body>
@@ -7539,6 +7647,12 @@ namespace VAICOM
                         return;
                     }
 
+                    if (path == "/okb/clock")
+                    {
+                        WriteJson(context.Response, BuildClockJson());
+                        return;
+                    }
+
                     if (path == "/okb/dev/servermessages")
                     {
                         bool enable = string.Equals(context.Request.QueryString["enabled"], "1", StringComparison.OrdinalIgnoreCase)
@@ -7643,6 +7757,52 @@ namespace VAICOM
 
                         return JsonConvert.SerializeObject(fallback, Formatting.Indented);
                     }
+                }
+
+                private static string BuildClockJson()
+                {
+                    double missionTimeSeconds = 0;
+                    string missionIdentity = "";
+                    DateTime sourceUtc = DateTime.UtcNow;
+
+                    try
+                    {
+                        if (State.currentstate != null)
+                        {
+                            double missionStartSeconds = 0;
+                            double missionElapsedSeconds = State.currentstate.timer;
+                            bool hasMissionStart = double.TryParse(State.currentstate.sortie ?? "", out missionStartSeconds);
+                            if (hasMissionStart && missionElapsedSeconds >= 0)
+                            {
+                                missionTimeSeconds = missionStartSeconds + missionElapsedSeconds;
+                            }
+                            else
+                            {
+                                missionTimeSeconds = State.currentstate.tod;
+                            }
+
+                            missionIdentity = string.Join("|", new[]
+                            {
+                                State.currentstate.theatre ?? "",
+                                State.currentstate.missiontitle ?? "",
+                                State.currentstate.id ?? "",
+                                State.currentstate.playercallsign ?? "",
+                                State.currentstate.multiplayer ? "1" : "0"
+                            });
+                        }
+                    }
+                    catch
+                    {
+                    }
+
+                    var payload = new
+                    {
+                        MissionTimeSeconds = missionTimeSeconds,
+                        SourceUtc = sourceUtc,
+                        MissionIdentity = missionIdentity,
+                    };
+
+                    return JsonConvert.SerializeObject(payload, Formatting.None);
                 }
 
                 private static void WriteJson(HttpListenerResponse response, string payload)
