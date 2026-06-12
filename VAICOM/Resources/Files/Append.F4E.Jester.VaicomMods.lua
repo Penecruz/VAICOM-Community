@@ -1,5 +1,9 @@
 -- VAICOM auto-installed Jester mods
 -- Custom VAICOM behaviors for F-4E WSO.
+-- All rights to this Jester Mod are reserved by the original author of the jester AI, HeatBlur Simulations, CC BY-NC-ND 4.0 licensed and not to be reproduced or shared without permission.
+-- to mod your own Jester you can find their code here:https://github.com/Heatblur-Simulations/jester-modding
+-- Disclaimer: This file is provided as-is and may not be compatible with future versions of the Jester AI or VAICOM. Use at your own risk, and always back up your Jester configuration before making changes.
+-- This file is intended to be auto-installed by VAICOM, and should not be used as a template for general Jester modding. It may contain hardcoded logic specific to the F-4E WSO and VAICOM's interaction with it.
 
 local Class      = require('base.Class')
 local Behavior   = require('base.Behavior')

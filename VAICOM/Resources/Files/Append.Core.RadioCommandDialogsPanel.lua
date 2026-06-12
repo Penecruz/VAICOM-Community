@@ -3082,9 +3082,7 @@ base.vaicom.state = {
 						weatherSummary = {},
 					}
 
-					if not base.vaicom.state.debugmode then
-						return probe
-					end
+					local diagnosticsDebug = base.vaicom.state and base.vaicom.state.debugmode
 
 					local function tryget(fn)
 						local ok, value = base.pcall(fn)
