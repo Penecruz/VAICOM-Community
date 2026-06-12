@@ -486,10 +486,182 @@ namespace VAICOM
       return 'fixed';
     }
 
-    function buildMudMapSvg(waypoints, data){
+    function getDtcMpdRoot(root){
+      if (!root || typeof root !== 'object') return null;
+      if (root.MPD && typeof root.MPD === 'object') return root.MPD;
+      return findFirstObjectByKeyPattern(root, /^MPD$/i, 0);
+    }
+
+    function getDtcMapOverlays(root, routeKey){
+      const mpd = getDtcMpdRoot(root);
+      const sa = (root && typeof root === 'object' && root.SA && typeof root.SA === 'object')
+        ? root.SA
+        : findFirstObjectByKeyPattern(root, /^SA$/i, 0);
+      if ((!mpd || typeof mpd !== 'object') && (!sa || typeof sa !== 'object')){
+        return {
+          geolines: [],
+          threatPoints: [],
+          destinationPoints: [],
+          faorLines: [],
+          flotLines: [],
+          capPoints: [],
+          corridors: []
+        };
+      }
+
+      const allGeoLines = Array.isArray(mpd.GEO_LINES) ? mpd.GEO_LINES : [];
+      const geoLines = allGeoLines
+        .filter(function(p){
+          if (!p || typeof p !== 'object') return false;
+          return isFinite(Number(p.x)) && isFinite(Number(p.y));
+        })
+        .map(function(p){
+          const xNum = Number(p && p.x);
+          const yNum = Number(p && p.y);
+          if (!isFinite(xNum) || !isFinite(yNum)) return null;
+          const lineFlags = [];
+          if (p && p.L1) lineFlags.push('L1');
+          if (p && p.L2) lineFlags.push('L2');
+          if (p && p.L3) lineFlags.push('L3');
+          if (p && p.L4) lineFlags.push('L4');
+          return {
+            xNum: xNum,
+            yNum: yNum,
+            number: Number(p && p.number),
+            label: String((p && p.id) || (p && p.note) || '').trim(),
+            lineFlags: lineFlags
+          };
+        })
+        .filter(function(p){ return !!p; })
+        .sort(function(a, b){
+          const an = Number(a && a.number);
+          const bn = Number(b && b.number);
+          if (isFinite(an) && isFinite(bn) && an !== bn) return an - bn;
+          return 0;
+        });
+
+      const threatPoints = (Array.isArray(mpd && mpd.THREAT_PTS) ? mpd.THREAT_PTS : [])
+        .map(function(p){
+          const xNum = Number(p && p.x);
+          const yNum = Number(p && p.y);
+          if (!isFinite(xNum) || !isFinite(yNum)) return null;
+          const radiusMeters = Number(p && p.radius);
+          return {
+            xNum: xNum,
+            yNum: yNum,
+            radiusMeters: isFinite(radiusMeters) && radiusMeters > 0 ? radiusMeters : 0,
+            ring: !!(p && p.ring),
+            label: String((p && p.text) || (p && p.threatName) || '').trim()
+          };
+        })
+        .filter(function(p){ return !!p; });
+
+      const mezThreatPoints = (Array.isArray(sa && sa.MEZ_THRTS) ? sa.MEZ_THRTS : [])
+        .map(function(p){
+          const xNum = Number(p && p.x);
+          const yNum = Number(p && p.y);
+          if (!isFinite(xNum) || !isFinite(yNum)) return null;
+          const rawRadius = Number(p && p.threat_ring_radius);
+          const radiusMeters = isFinite(rawRadius) && rawRadius > 0
+            ? (rawRadius > 1000 ? rawRadius : (rawRadius * 1852))
+            : 0;
+          return {
+            xNum: xNum,
+            yNum: yNum,
+            radiusMeters: radiusMeters,
+            ring: radiusMeters > 0,
+            label: String((p && p.text) || (p && p.threat_type) || (p && p.id) || '').trim()
+          };
+        })
+        .filter(function(p){ return !!p; });
+
+      const destinationPoints = (Array.isArray(mpd && mpd.DEST) ? mpd.DEST : [])
+        .map(function(p){
+          const xNum = Number(p && p.x);
+          const yNum = Number(p && p.y);
+          if (!isFinite(xNum) || !isFinite(yNum)) return null;
+          return {
+            xNum: xNum,
+            yNum: yNum,
+            label: String((p && p.text) || (p && p.note) || (p && p.id) || '').trim()
+          };
+        })
+        .filter(function(p){ return !!p; });
+
+      function parseLineCollection(items){
+        const rows = Array.isArray(items) ? items : [];
+        return rows.map(function(line){
+          const points = (Array.isArray(line && line.points) ? line.points : [])
+            .map(function(pt){
+              const xNum = Number(pt && pt.x);
+              const yNum = Number(pt && pt.y);
+              if (!isFinite(xNum) || !isFinite(yNum)) return null;
+              return {
+                xNum: xNum,
+                yNum: yNum,
+                number: Number(pt && pt.num),
+                label: String((pt && pt.id) || '').trim()
+              };
+            })
+            .filter(function(pt){ return !!pt; });
+          return {
+            id: String((line && line.id) || '').trim(),
+            number: Number(line && line.num),
+            label: String((line && line.note) || (line && line.id) || '').trim(),
+            points: points
+          };
+        }).filter(function(line){ return line && line.points && line.points.length > 0; });
+      }
+
+      const faorRoot = sa && sa.FAOR_FLOT && typeof sa.FAOR_FLOT === 'object' ? sa.FAOR_FLOT : null;
+      const faorLines = parseLineCollection(faorRoot && faorRoot.FAOR);
+      const flotLines = parseLineCollection(faorRoot && faorRoot.FLOT);
+
+      const capPoints = (Array.isArray(sa && sa.CAP_PTS) ? sa.CAP_PTS : [])
+        .map(function(p){
+          const xNum = Number(p && p.x);
+          const yNum = Number(p && p.y);
+          if (!isFinite(xNum) || !isFinite(yNum)) return null;
+          return {
+            xNum: xNum,
+            yNum: yNum,
+            number: Number(p && p.num),
+            label: String((p && p.note) || (p && p.id) || '').trim(),
+            course: Number(p && p.course),
+            lengthMeters: Number(p && p.length),
+            diameterMeters: Number(p && p.diameter),
+            turnDirection: String((p && p.turn_direction) || '').trim()
+          };
+        })
+        .filter(function(p){ return !!p; });
+
+      const corridors = parseLineCollection(sa && sa.CORRIDORS);
+
+      return {
+        geolines: geoLines,
+        threatPoints: threatPoints.concat(mezThreatPoints),
+        destinationPoints: destinationPoints,
+        faorLines: faorLines,
+        flotLines: flotLines,
+        capPoints: capPoints,
+        corridors: corridors
+      };
+    }
+
+    function buildMudMapSvg(waypoints, data, overlays){
       const rows = Array.isArray(waypoints) ? waypoints.filter(function(wp){
         return isFinite(Number(wp && wp.xNum)) && isFinite(Number(wp && wp.yNum));
       }) : [];
+      const mapOverlays = overlays && typeof overlays === 'object'
+        ? overlays
+        : { geolines: [], threatPoints: [], destinationPoints: [], faorLines: [], flotLines: [], capPoints: [], corridors: [] };
+      const geolines = Array.isArray(mapOverlays.geolines) ? mapOverlays.geolines : [];
+      const threatPoints = Array.isArray(mapOverlays.threatPoints) ? mapOverlays.threatPoints : [];
+      const destinationPoints = Array.isArray(mapOverlays.destinationPoints) ? mapOverlays.destinationPoints : [];
+      const faorLines = Array.isArray(mapOverlays.faorLines) ? mapOverlays.faorLines : [];
+      const flotLines = Array.isArray(mapOverlays.flotLines) ? mapOverlays.flotLines : [];
+      const capPoints = Array.isArray(mapOverlays.capPoints) ? mapOverlays.capPoints : [];
+      const corridors = Array.isArray(mapOverlays.corridors) ? mapOverlays.corridors : [];
 
       if (!rows.length){
         return '<div class=""fltPlanMessage"">No mappable waypoint coordinates found.</div>';
@@ -4545,7 +4717,7 @@ namespace VAICOM
       return '<div class=""fltPlanInfoBlock""><div class=""fltPlanInfoTitle"">CMDS</div><div class=""fltPlanInfoBody""><table class=""fltPlanInfoTable""><tbody>' + rows.join('') + '</tbody></table></div></div>';
     }
 
-    function formatDtcCommPanelHtml(root){
+    function formatDtcCommPanelHtml(root, emptyWhenMissing){
       const commRoot = findFirstObjectByKeyPattern(root, /^COMM$/i, 0) || {};
 
       function formatCommFrequency(value){
@@ -4567,11 +4739,14 @@ namespace VAICOM
           const key = String(k || '');
           const chMatch = key.match(/^Channel_(\d+)$/i);
           const chNum = chMatch ? parseInt(chMatch[1], 10) : NaN;
+          const hasCustomName = String(o.name || '').trim() !== '';
           const rawLabel = String(o.name || key.replace(/^Channel_/i, 'CH '));
           const label = rawLabel.replace(/\s+/g, '');
           rows.push({
             label: label,
             freq: formatCommFrequency(fq),
+            modulation: isFinite(mod) ? mod : NaN,
+            hasCustomName: hasCustomName,
             sortGroup: isFinite(chNum) ? 0 : 1,
             sortValue: isFinite(chNum) ? chNum : 999,
           });
@@ -4586,15 +4761,61 @@ namespace VAICOM
         return rows;
       }
 
+      function looksLikeDefaultMirrorRows(rows){
+        if (!Array.isArray(rows) || rows.length !== 20) return false;
+
+        const seen = {};
+        for (let i = 0; i < rows.length; i++){
+          const r = rows[i] || {};
+          const m = String(r.label || '').match(/^CH\s*(\d{1,2})$/i);
+          if (!m) return false;
+          const ch = Number(m[1]);
+          if (!isFinite(ch) || ch < 1 || ch > 20) return false;
+          seen[ch] = true;
+
+          const fq = Number(r.freq);
+          if (!isFinite(fq)) return false;
+          if (Math.abs(fq - Math.round(fq)) > 0.0001) return false;
+
+          const mod = Number(r.modulation);
+          if (isFinite(mod) && Math.round(mod) !== 1) return false;
+
+          if (r.hasCustomName) return false;
+        }
+
+        for (let ch = 1; ch <= 20; ch++){
+          if (!seen[ch]) return false;
+        }
+
+        return true;
+      }
+
       const comm1 = commRoot.COMM1 || commRoot.Comm1 || commRoot.COMM_1 || {};
       const comm2 = commRoot.COMM2 || commRoot.Comm2 || commRoot.COMM_2 || {};
       const rows1 = getCommRows(comm1);
       const rows2 = getCommRows(comm2);
       const comm1Guard = !!comm1.Guard;
       const comm2Guard = !!comm2.Guard;
+      const mirror1 = !!commRoot.mirror_COMM1;
+      const mirror2 = !!commRoot.mirror_COMM2;
+
+      const looksLikeDefaultMirrors = mirror1
+        && mirror2
+        && looksLikeDefaultMirrorRows(rows1)
+        && looksLikeDefaultMirrorRows(rows2);
+
+      if (looksLikeDefaultMirrors){
+        return emptyWhenMissing
+          ? ''
+          : '<div class=""fltPlanPage2Section""><div class=""fltPlanPage2Title"">COMMS</div><div class=""fltPlanPage2Body"">No comm data.</div></div>';
+      }
 
       const maxRows = Math.max(rows1.length, rows2.length);
-      if (!maxRows) return '<div class=""fltPlanPage2Section""><div class=""fltPlanPage2Title"">COMMS</div><div class=""fltPlanPage2Body"">No comm data.</div></div>';
+      if (!maxRows){
+        return emptyWhenMissing
+          ? ''
+          : '<div class=""fltPlanPage2Section""><div class=""fltPlanPage2Title"">COMMS</div><div class=""fltPlanPage2Body"">No comm data.</div></div>';
+      }
 
       const bodyRows = [];
       for (let i = 0; i < maxRows; i++){
@@ -4927,13 +5148,14 @@ namespace VAICOM
         });
     }
 
-    function formatDtcPage2Html(root, pageSwitcherHtml, waypoints){
+    function formatDtcPage2Html(root, pageSwitcherHtml, waypoints, data){
       let html = '<div class=""fltPlanBoard"">';
       if (pageSwitcherHtml){
         html += '<div style=""margin:4px 0 6px 0;"">' + pageSwitcherHtml + '</div>';
       }
+      const dtcCommHtml = formatDtcCommPanelHtml(root, true);
       html += '<div class=""fltPlanPage2Grid"">';
-      html += formatDtcCommPanelHtml(root);
+      html += dtcCommHtml || formatRuntimeCommPanelHtml(data);
       html += formatDtcRouteSummaryHtml(root, waypoints);
       html += '</div></div>';
       return html;
@@ -5003,10 +5225,182 @@ namespace VAICOM
       return 'fixed';
     }
 
-    function buildMudMapSvg(waypoints, data){
+    function getDtcMpdRoot(root){
+      if (!root || typeof root !== 'object') return null;
+      if (root.MPD && typeof root.MPD === 'object') return root.MPD;
+      return findFirstObjectByKeyPattern(root, /^MPD$/i, 0);
+    }
+
+    function getDtcMapOverlays(root, routeKey){
+      const mpd = getDtcMpdRoot(root);
+      const sa = (root && typeof root === 'object' && root.SA && typeof root.SA === 'object')
+        ? root.SA
+        : findFirstObjectByKeyPattern(root, /^SA$/i, 0);
+      if ((!mpd || typeof mpd !== 'object') && (!sa || typeof sa !== 'object')){
+        return {
+          geolines: [],
+          threatPoints: [],
+          destinationPoints: [],
+          faorLines: [],
+          flotLines: [],
+          capPoints: [],
+          corridors: []
+        };
+      }
+
+      const allGeoLines = Array.isArray(mpd && mpd.GEO_LINES) ? mpd.GEO_LINES : [];
+      const geoLines = allGeoLines
+        .filter(function(p){
+          if (!p || typeof p !== 'object') return false;
+          return isFinite(Number(p.x)) && isFinite(Number(p.y));
+        })
+        .map(function(p){
+          const xNum = Number(p && p.x);
+          const yNum = Number(p && p.y);
+          if (!isFinite(xNum) || !isFinite(yNum)) return null;
+          const lineFlags = [];
+          if (p && p.L1) lineFlags.push('L1');
+          if (p && p.L2) lineFlags.push('L2');
+          if (p && p.L3) lineFlags.push('L3');
+          if (p && p.L4) lineFlags.push('L4');
+          return {
+            xNum: xNum,
+            yNum: yNum,
+            number: Number(p && p.number),
+            label: String((p && p.id) || (p && p.note) || '').trim(),
+            lineFlags: lineFlags
+          };
+        })
+        .filter(function(p){ return !!p; })
+        .sort(function(a, b){
+          const an = Number(a && a.number);
+          const bn = Number(b && b.number);
+          if (isFinite(an) && isFinite(bn) && an !== bn) return an - bn;
+          return 0;
+        });
+
+      const threatPoints = (Array.isArray(mpd && mpd.THREAT_PTS) ? mpd.THREAT_PTS : [])
+        .map(function(p){
+          const xNum = Number(p && p.x);
+          const yNum = Number(p && p.y);
+          if (!isFinite(xNum) || !isFinite(yNum)) return null;
+          const radiusMeters = Number(p && p.radius);
+          return {
+            xNum: xNum,
+            yNum: yNum,
+            radiusMeters: isFinite(radiusMeters) && radiusMeters > 0 ? radiusMeters : 0,
+            ring: !!(p && p.ring),
+            label: String((p && p.text) || (p && p.threatName) || '').trim()
+          };
+        })
+        .filter(function(p){ return !!p; });
+
+      const mezThreatPoints = (Array.isArray(sa && sa.MEZ_THRTS) ? sa.MEZ_THRTS : [])
+        .map(function(p){
+          const xNum = Number(p && p.x);
+          const yNum = Number(p && p.y);
+          if (!isFinite(xNum) || !isFinite(yNum)) return null;
+          const rawRadius = Number(p && p.threat_ring_radius);
+          const radiusMeters = isFinite(rawRadius) && rawRadius > 0
+            ? (rawRadius > 1000 ? rawRadius : (rawRadius * 1852))
+            : 0;
+          return {
+            xNum: xNum,
+            yNum: yNum,
+            radiusMeters: radiusMeters,
+            ring: radiusMeters > 0,
+            label: String((p && p.text) || (p && p.threat_type) || (p && p.id) || '').trim()
+          };
+        })
+        .filter(function(p){ return !!p; });
+
+      const destinationPoints = (Array.isArray(mpd && mpd.DEST) ? mpd.DEST : [])
+        .map(function(p){
+          const xNum = Number(p && p.x);
+          const yNum = Number(p && p.y);
+          if (!isFinite(xNum) || !isFinite(yNum)) return null;
+          return {
+            xNum: xNum,
+            yNum: yNum,
+            label: String((p && p.text) || (p && p.note) || (p && p.id) || '').trim()
+          };
+        })
+        .filter(function(p){ return !!p; });
+
+      function parseLineCollection(items){
+        const rows = Array.isArray(items) ? items : [];
+        return rows.map(function(line){
+          const points = (Array.isArray(line && line.points) ? line.points : [])
+            .map(function(pt){
+              const xNum = Number(pt && pt.x);
+              const yNum = Number(pt && pt.y);
+              if (!isFinite(xNum) || !isFinite(yNum)) return null;
+              return {
+                xNum: xNum,
+                yNum: yNum,
+                number: Number(pt && pt.num),
+                label: String((pt && pt.id) || '').trim()
+              };
+            })
+            .filter(function(pt){ return !!pt; });
+          return {
+            id: String((line && line.id) || '').trim(),
+            number: Number(line && line.num),
+            label: String((line && line.note) || (line && line.id) || '').trim(),
+            points: points
+          };
+        }).filter(function(line){ return line && line.points && line.points.length > 0; });
+      }
+
+      const faorRoot = sa && sa.FAOR_FLOT && typeof sa.FAOR_FLOT === 'object' ? sa.FAOR_FLOT : null;
+      const faorLines = parseLineCollection(faorRoot && faorRoot.FAOR);
+      const flotLines = parseLineCollection(faorRoot && faorRoot.FLOT);
+
+      const capPoints = (Array.isArray(sa && sa.CAP_PTS) ? sa.CAP_PTS : [])
+        .map(function(p){
+          const xNum = Number(p && p.x);
+          const yNum = Number(p && p.y);
+          if (!isFinite(xNum) || !isFinite(yNum)) return null;
+          return {
+            xNum: xNum,
+            yNum: yNum,
+            number: Number(p && p.num),
+            label: String((p && p.note) || (p && p.id) || '').trim(),
+            course: Number(p && p.course),
+            lengthMeters: Number(p && p.length),
+            diameterMeters: Number(p && p.diameter),
+            turnDirection: String((p && p.turn_direction) || '').trim()
+          };
+        })
+        .filter(function(p){ return !!p; });
+
+      const corridors = parseLineCollection(sa && sa.CORRIDORS);
+
+      return {
+        geolines: geoLines,
+        threatPoints: threatPoints.concat(mezThreatPoints),
+        destinationPoints: destinationPoints,
+        faorLines: faorLines,
+        flotLines: flotLines,
+        capPoints: capPoints,
+        corridors: corridors
+      };
+    }
+
+    function buildMudMapSvg(waypoints, data, overlays){
       const rows = Array.isArray(waypoints) ? waypoints.filter(function(wp){
         return isFinite(Number(wp && wp.xNum)) && isFinite(Number(wp && wp.yNum));
       }) : [];
+      const mapOverlays = overlays && typeof overlays === 'object'
+        ? overlays
+        : { geolines: [], threatPoints: [], destinationPoints: [], faorLines: [], flotLines: [], capPoints: [], corridors: [] };
+      const geolines = Array.isArray(mapOverlays.geolines) ? mapOverlays.geolines : [];
+      const threatPoints = Array.isArray(mapOverlays.threatPoints) ? mapOverlays.threatPoints : [];
+      const destinationPoints = Array.isArray(mapOverlays.destinationPoints) ? mapOverlays.destinationPoints : [];
+      const faorLines = Array.isArray(mapOverlays.faorLines) ? mapOverlays.faorLines : [];
+      const flotLines = Array.isArray(mapOverlays.flotLines) ? mapOverlays.flotLines : [];
+      const capPoints = Array.isArray(mapOverlays.capPoints) ? mapOverlays.capPoints : [];
+      const corridors = Array.isArray(mapOverlays.corridors) ? mapOverlays.corridors : [];
 
       const isNight = !!nightModeEnabled;
       const palette = isNight
@@ -5028,7 +5422,19 @@ namespace VAICOM
             tkoStroke: '#86d2a1',
             raceFill: '#1f2a35',
             assetBlue: '#6eb1ff',
-            assetBlueDark: '#2f6fb3'
+            assetBlueDark: '#2f6fb3',
+            geoLine: '#bb8cff',
+            geoLineLabel: '#dec7ff',
+            faorLine: '#64d6ff',
+            flotLine: '#ff8f8f',
+            corridorLine: '#9cc8ff',
+            capLine: '#7eb9ff',
+            threatStroke: '#ff7b7b',
+            threatFill: '#ff7b7b',
+            threatLabel: '#ffd3d3',
+            destFill: '#ffd37a',
+            destStroke: '#8a6a21',
+            destLabel: '#ffe5af'
           }
         : {
             bg: '#ffffff',
@@ -5048,10 +5454,22 @@ namespace VAICOM
             tkoStroke: '#1e6a39',
             raceFill: '#ffffff',
             assetBlue: '#2d8fe3',
-            assetBlueDark: '#1f5d93'
+            assetBlueDark: '#1f5d93',
+            geoLine: '#7a57b3',
+            geoLineLabel: '#5a3d89',
+            faorLine: '#1f9fd0',
+            flotLine: '#c74b4b',
+            corridorLine: '#3c7cc0',
+            capLine: '#2f5fa7',
+            threatStroke: '#bc3e3e',
+            threatFill: '#bc3e3e',
+            threatLabel: '#8b2d2d',
+            destFill: '#d4a42f',
+            destStroke: '#7a5a14',
+            destLabel: '#6a4f16'
           };
 
-      if (!rows.length){
+      if (!rows.length && !threatPoints.length && !destinationPoints.length && !geolines.length && !faorLines.length && !flotLines.length && !capPoints.length && !corridors.length){
         return '<div class=""fltPlanMessage"">No mappable waypoint coordinates found.</div>';
       }
 
@@ -5059,8 +5477,26 @@ namespace VAICOM
       const height = 760;
       const pad = 54;
 
-      const eastValues = rows.map(function(wp){ return Number(wp.yNum); });
-      const northValues = rows.map(function(wp){ return Number(wp.xNum); });
+      const overlayPoints = [];
+      geolines.forEach(function(p){ overlayPoints.push(p); });
+      threatPoints.forEach(function(p){ overlayPoints.push(p); });
+      destinationPoints.forEach(function(p){ overlayPoints.push(p); });
+      capPoints.forEach(function(p){ overlayPoints.push(p); });
+      function pushLineGroupPoints(lineGroups){
+        (Array.isArray(lineGroups) ? lineGroups : []).forEach(function(group){
+          (Array.isArray(group && group.points) ? group.points : []).forEach(function(p){ overlayPoints.push(p); });
+        });
+      }
+      pushLineGroupPoints(faorLines);
+      pushLineGroupPoints(flotLines);
+      pushLineGroupPoints(corridors);
+
+      const allPoints = rows.concat(overlayPoints);
+      const eastValues = allPoints.map(function(wp){ return Number(wp.yNum); }).filter(function(v){ return isFinite(v); });
+      const northValues = allPoints.map(function(wp){ return Number(wp.xNum); }).filter(function(v){ return isFinite(v); });
+      if (!eastValues.length || !northValues.length){
+        return '<div class=""fltPlanMessage"">No mappable waypoint coordinates found.</div>';
+      }
       const minEast = Math.min.apply(null, eastValues);
       const maxEast = Math.max.apply(null, eastValues);
       const minNorth = Math.min.apply(null, northValues);
@@ -5103,6 +5539,179 @@ namespace VAICOM
 
       const lineEls = segments.map(function(seg){
         return '<line x1=""' + seg.from.x.toFixed(1) + '"" y1=""' + seg.from.y.toFixed(1) + '"" x2=""' + seg.to.x.toFixed(1) + '"" y2=""' + seg.to.y.toFixed(1) + '"" stroke=""' + palette.line + '"" stroke-width=""2""' + (seg.dashed ? ' stroke-dasharray=""8 6""' : '') + ' />';
+      });
+
+      const geoMapped = geolines.map(function(p){
+        const m = mapPt(p);
+        return { p: p, x: m.x, y: m.y };
+      });
+      const geoLineKeys = ['L1', 'L2', 'L3', 'L4'];
+      const geoLineEls = [];
+      geoLineKeys.forEach(function(lineKey){
+        const group = geoMapped
+          .filter(function(m){
+            const flags = (m && m.p && Array.isArray(m.p.lineFlags)) ? m.p.lineFlags : [];
+            return flags.indexOf(lineKey) >= 0;
+          })
+          .sort(function(a, b){
+            const an = Number(a && a.p && a.p.number);
+            const bn = Number(b && b.p && b.p.number);
+            if (isFinite(an) && isFinite(bn) && an !== bn) return an - bn;
+            return 0;
+          });
+        for (let i = 1; i < group.length; i++){
+          const a = group[i - 1];
+          const b = group[i];
+          geoLineEls.push('<line x1=""' + a.x.toFixed(1) + '"" y1=""' + a.y.toFixed(1) + '"" x2=""' + b.x.toFixed(1) + '"" y2=""' + b.y.toFixed(1) + '"" stroke=""' + palette.geoLine + '"" stroke-width=""2.2"" stroke-dasharray=""5 4"" />');
+        }
+      });
+      const geoPointEls = geoMapped.map(function(m){
+        return '<circle cx=""' + m.x.toFixed(1) + '"" cy=""' + m.y.toFixed(1) + '"" r=""3.8"" fill=""' + palette.geoLine + '"" />';
+      });
+
+      function renderLineGroups(lineGroups, strokeColor, dashPattern, strokeWidth){
+        const els = [];
+        (Array.isArray(lineGroups) ? lineGroups : []).forEach(function(group){
+          const mappedGroup = (Array.isArray(group && group.points) ? group.points : [])
+            .map(function(p){
+              const m = mapPt(p);
+              return { p: p, x: m.x, y: m.y };
+            })
+            .sort(function(a, b){
+              const an = Number(a && a.p && a.p.number);
+              const bn = Number(b && b.p && b.p.number);
+              if (isFinite(an) && isFinite(bn) && an !== bn) return an - bn;
+              return 0;
+            });
+          for (let i = 1; i < mappedGroup.length; i++){
+            const a = mappedGroup[i - 1];
+            const b = mappedGroup[i];
+            els.push('<line x1=""' + a.x.toFixed(1) + '"" y1=""' + a.y.toFixed(1) + '"" x2=""' + b.x.toFixed(1) + '"" y2=""' + b.y.toFixed(1) + '"" stroke=""' + strokeColor + '"" stroke-width=""' + strokeWidth + '""' + (dashPattern ? (' stroke-dasharray=""' + dashPattern + '""') : '') + ' />');
+          }
+        });
+        return els;
+      }
+
+      function renderCorridorBounds(corridorGroups){
+        const els = [];
+        const corridorHalfWidthMeters = 5000;
+        (Array.isArray(corridorGroups) ? corridorGroups : []).forEach(function(group){
+          const pts = (Array.isArray(group && group.points) ? group.points : [])
+            .map(function(p){
+              return {
+                xNum: Number(p && p.xNum),
+                yNum: Number(p && p.yNum),
+                number: Number(p && p.number)
+              };
+            })
+            .filter(function(p){ return isFinite(p.xNum) && isFinite(p.yNum); })
+            .sort(function(a, b){
+              if (isFinite(a.number) && isFinite(b.number) && a.number !== b.number) return a.number - b.number;
+              return 0;
+            });
+          if (pts.length < 2) return;
+
+          const left = [];
+          const right = [];
+          for (let i = 0; i < pts.length; i++){
+            const prev = pts[Math.max(0, i - 1)];
+            const next = pts[Math.min(pts.length - 1, i + 1)];
+            const dNorth = Number(next.xNum) - Number(prev.xNum);
+            const dEast = Number(next.yNum) - Number(prev.yNum);
+            const len = Math.sqrt((dNorth * dNorth) + (dEast * dEast));
+            if (!isFinite(len) || len <= 0){
+              left.push({ xNum: pts[i].xNum, yNum: pts[i].yNum });
+              right.push({ xNum: pts[i].xNum, yNum: pts[i].yNum });
+              continue;
+            }
+            const unitEast = dEast / len;
+            const unitNorth = dNorth / len;
+            const leftNorth = pts[i].xNum + ((-unitEast) * corridorHalfWidthMeters);
+            const leftEast = pts[i].yNum + (unitNorth * corridorHalfWidthMeters);
+            const rightNorth = pts[i].xNum - ((-unitEast) * corridorHalfWidthMeters);
+            const rightEast = pts[i].yNum - (unitNorth * corridorHalfWidthMeters);
+            left.push({ xNum: leftNorth, yNum: leftEast });
+            right.push({ xNum: rightNorth, yNum: rightEast });
+          }
+
+          function makePolyline(points){
+            const mappedPts = points.map(function(p){ return mapPt(p); });
+            return mappedPts.map(function(p){ return p.x.toFixed(1) + ',' + p.y.toFixed(1); }).join(' ');
+          }
+
+          els.push('<polyline points=""' + makePolyline(left) + '"" fill=""none"" stroke=""' + palette.corridorLine + '"" stroke-width=""1.9"" stroke-dasharray=""8 5"" />');
+          els.push('<polyline points=""' + makePolyline(right) + '"" fill=""none"" stroke=""' + palette.corridorLine + '"" stroke-width=""1.9"" stroke-dasharray=""8 5"" />');
+        });
+        return els;
+      }
+
+      const faorEls = renderLineGroups(faorLines, palette.faorLine, '6 4', '2.2');
+      const flotEls = renderLineGroups(flotLines, palette.flotLine, '6 4', '2.2');
+      const corridorEls = renderCorridorBounds(corridors);
+
+      const capEls = capPoints.map(function(cap){
+        const anchor = mapPt(cap);
+        const courseDeg = isFinite(Number(cap && cap.course)) ? Number(cap.course) : 0;
+        const courseRad = courseDeg * (Math.PI / 180);
+        const capLengthMeters = Math.max(4000, isFinite(Number(cap && cap.lengthMeters)) ? Number(cap.lengthMeters) : 12000);
+        const capDiameterMeters = Math.max(2000, isFinite(Number(cap && cap.diameterMeters)) ? Number(cap && cap.diameterMeters) : 6000);
+        const widthPx = (capLengthMeters + capDiameterMeters) * scale;
+        const heightPx = capDiameterMeters * scale;
+        const radiusPx = heightPx / 2;
+        const turnDir = String((cap && cap.turnDirection) || '').trim().toUpperCase();
+        const isRightPattern = turnDir.indexOf('RIGHT') >= 0;
+        const angleDeg = (courseDeg - 90) + (isRightPattern ? 0 : 180);
+        const angleRad = angleDeg * (Math.PI / 180);
+
+        const localAnchorX = isRightPattern ? ((widthPx / 2) - radiusPx) : (-(widthPx / 2) + radiusPx);
+        const localAnchorY = -(heightPx / 2);
+        const rotAnchorX = (localAnchorX * Math.cos(angleRad)) - (localAnchorY * Math.sin(angleRad));
+        const rotAnchorY = (localAnchorX * Math.sin(angleRad)) + (localAnchorY * Math.cos(angleRad));
+        const centerX = anchor.x - rotAnchorX;
+        const centerY = anchor.y - rotAnchorY;
+
+        const label = escapeHtml(String((cap && cap.label) || ('CAP ' + String((cap && cap.number) || ''))));
+        const tx = (anchor.x + (Math.sin(courseRad) * 10)).toFixed(1);
+        const ty = (anchor.y - (Math.cos(courseRad) * 10)).toFixed(1);
+
+        return '<g>'
+          + '<rect x=""' + (centerX - (widthPx / 2)).toFixed(1) + '"" y=""' + (centerY - (heightPx / 2)).toFixed(1) + '"" width=""' + widthPx.toFixed(1) + '"" height=""' + heightPx.toFixed(1) + '"" rx=""' + radiusPx.toFixed(1) + '"" ry=""' + radiusPx.toFixed(1) + '"" fill=""none"" stroke=""' + palette.capLine + '"" stroke-width=""2.0"" transform=""rotate(' + angleDeg.toFixed(1) + ' ' + centerX.toFixed(1) + ' ' + centerY.toFixed(1) + ')"" />'
+          + '<circle cx=""' + anchor.x.toFixed(1) + '"" cy=""' + anchor.y.toFixed(1) + '"" r=""2.9"" fill=""' + palette.capLine + '"" />'
+          + '<text x=""' + tx + '"" y=""' + ty + '"" font-size=""10"" fill=""' + palette.capLine + '"" font-weight=""700"">' + label + '</text>'
+          + '</g>';
+      });
+
+      const threatMapped = threatPoints.map(function(p){
+        const m = mapPt(p);
+        return {
+          p: p,
+          x: m.x,
+          y: m.y,
+          radiusPx: Math.max(4, (Number(p.radiusMeters) || 0) * scale)
+        };
+      });
+      const threatEls = threatMapped.map(function(m){
+        const label = escapeHtml(String((m && m.p && m.p.label) || 'THR'));
+        const ring = (m && m.p && m.p.ring && m.radiusPx > 0)
+          ? ('<circle cx=""' + m.x.toFixed(1) + '"" cy=""' + m.y.toFixed(1) + '"" r=""' + m.radiusPx.toFixed(1) + '"" fill=""none"" stroke=""' + palette.threatStroke + '"" stroke-width=""1.4"" stroke-dasharray=""7 5"" />')
+          : '';
+        const cross = '<line x1=""' + (m.x - 7).toFixed(1) + '"" y1=""' + m.y.toFixed(1) + '"" x2=""' + (m.x + 7).toFixed(1) + '"" y2=""' + m.y.toFixed(1) + '"" stroke=""' + palette.threatStroke + '"" stroke-width=""1.6"" />'
+          + '<line x1=""' + m.x.toFixed(1) + '"" y1=""' + (m.y - 7).toFixed(1) + '"" x2=""' + m.x.toFixed(1) + '"" y2=""' + (m.y + 7).toFixed(1) + '"" stroke=""' + palette.threatStroke + '"" stroke-width=""1.6"" />';
+        const txt = '<text x=""' + (m.x + 9).toFixed(1) + '"" y=""' + (m.y + 4).toFixed(1) + '"" font-size=""10"" fill=""' + palette.threatLabel + '"" font-weight=""700"">' + label + '</text>';
+        return '<g>' + ring + cross + txt + '</g>';
+      });
+
+      const destinationMapped = destinationPoints.map(function(p){
+        const m = mapPt(p);
+        return { p: p, x: m.x, y: m.y };
+      });
+      const destinationEls = destinationMapped.map(function(m){
+        const label = escapeHtml(String((m && m.p && m.p.label) || 'DEST'));
+        const p1 = m.x.toFixed(1) + ',' + (m.y - 7).toFixed(1);
+        const p2 = (m.x - 7).toFixed(1) + ',' + m.y.toFixed(1);
+        const p3 = m.x.toFixed(1) + ',' + (m.y + 7).toFixed(1);
+        const p4 = (m.x + 7).toFixed(1) + ',' + m.y.toFixed(1);
+        return '<g><polygon points=""' + p1 + ' ' + p2 + ' ' + p3 + ' ' + p4 + '"" fill=""' + palette.destFill + '"" stroke=""' + palette.destStroke + '"" stroke-width=""1.5"" /><text x=""' + (m.x + 9).toFixed(1) + '"" y=""' + (m.y + 4).toFixed(1) + '"" font-size=""10"" fill=""' + palette.destLabel + '"" font-weight=""700"">' + label + '</text></g>';
       });
 
       function iconFor(m){
@@ -5224,15 +5833,23 @@ namespace VAICOM
       return '<svg viewBox=""0 0 ' + width + ' ' + height + '"" class=""fltPlanPage3Canvas"" preserveAspectRatio=""xMidYMid meet"" data-map-canvas=""1"">'
         + '<rect x=""0"" y=""0"" width=""' + width + '"" height=""' + height + '"" fill=""' + palette.bg + '"" />'
         + '<g data-map-content=""1"" transform=""translate(' + panX.toFixed(1) + ' ' + panY.toFixed(1) + ') scale(' + zoom.toFixed(3) + ')"">'
+        + corridorEls.join('')
         + lineEls.join('')
+        + geoLineEls.join('')
+        + faorEls.join('')
+        + flotEls.join('')
+        + capEls.join('')
+        + threatEls.join('')
+        + destinationEls.join('')
         + assetEls.join('')
         + pointEls.join('')
+        + geoPointEls.join('')
         + '</g>'
         + northArrow
         + '</svg>';
     }
 
-    function formatDtcPage3Html(pageSwitcherHtml, waypoints, data, selected){
+    function formatDtcPage3Html(pageSwitcherHtml, waypoints, data, selected, overlays){
       const mapRows = applyTypeOverrides(Array.isArray(waypoints) ? waypoints.slice() : [], selected);
       let html = '<div class=""fltPlanBoard"">';
       if (pageSwitcherHtml){
@@ -5240,7 +5857,7 @@ namespace VAICOM
       }
       html += '<div class=""controls fltPlanControls"" style=""margin:0 0 6px 0;""><button type=""button"" class=""fltPlanPageBtn"" data-map-zoom=""in"">Map +</button><button type=""button"" class=""fltPlanPageBtn"" data-map-zoom=""out"">Map -</button><button type=""button"" class=""fltPlanPageBtn"" data-map-zoom=""reset"">Map Reset</button></div>';
       html += '<div class=""fltPlanPage3Wrap"">';
-      html += buildMudMapSvg(mapRows, data);
+      html += buildMudMapSvg(mapRows, data, overlays);
       html += '</div></div>';
       return html;
     }
@@ -5558,6 +6175,7 @@ namespace VAICOM
         routeKey = availableRoutes[0] || 'R1';
         setDtcRouteBySelection(selected, routeKey);
       }
+      const mapOverlays = getDtcMapOverlays(root, routeKey);
       const waypoints = applyTypeOverrides(filterDtcWaypointsByRoute(root, allWaypoints, routeKey), selected);
       const cmdsBlockHtml = formatDtcCmdsBlockHtml(root);
       const page = getDtcPageBySelection(selected);
@@ -5566,10 +6184,10 @@ namespace VAICOM
       }).join('');
       const pageSwitcherHtml = '<span class=""fltPlanPageSwitcher""><button type=""button"" class=""fltPlanPageBtn' + (page === 1 ? ' active' : '') + '"" data-dtc-page=""1"">NAVLOG</button><button type=""button"" class=""fltPlanPageBtn' + (page === 2 ? ' active' : '') + '"" data-dtc-page=""2"">COM/ROUTE</button><button type=""button"" class=""fltPlanPageBtn' + (page === 3 ? ' active' : '') + '"" data-dtc-page=""3"">MAP</button></span><span class=""fltPlanPageSwitcher"">' + routeButtons + '</span>';
       if (page === 3){
-        return formatDtcPage3Html(pageSwitcherHtml, waypoints, data, selected);
+        return formatDtcPage3Html(pageSwitcherHtml, waypoints, data, selected, mapOverlays);
       }
       if (page === 2){
-        return formatDtcPage2Html(root, pageSwitcherHtml, waypoints);
+        return formatDtcPage2Html(root, pageSwitcherHtml, waypoints, data);
       }
       return renderFlightPlanBoardHtml(selected, data, getDtcDisplayName(selected) + ' ' + routeKey, 'DTC JSON', getPathFileName(selected), waypoints, cmdsBlockHtml, pageSwitcherHtml);
     }
