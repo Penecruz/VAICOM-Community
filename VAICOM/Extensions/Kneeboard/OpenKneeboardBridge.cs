@@ -3222,6 +3222,16 @@ namespace VAICOM
       return sign + String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
     }
 
+    function formatElapsedSeconds(seconds){
+      const n = Number(seconds);
+      if (!isFinite(n) || n < 0) return '-';
+      const total = Math.round(n);
+      const h = Math.floor(total / 3600);
+      const m = Math.floor((total % 3600) / 60);
+      const s = total % 60;
+      return String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+    }
+
     function clearSpeedRecommendations(selected){
       const state = getFlightPlanPlanState(selected);
       state.speedRecommendations = {};
@@ -3510,7 +3520,7 @@ namespace VAICOM
 
     function getFlightPlanPlanState(selected){
       const key = getFlightPlanEtaStartKey(selected);
-      if (!key) return { speedAdjustments: {}, speedDisplayModes: {}, altAdjustments: {}, typeOverrides: {}, lockedStep: '', totSeconds: NaN, lockedStart: null, timeMarks: {}, timingLog: [], postFlightOpen: false, ataByStep: {}, speedRecommendations: {} };
+      if (!key) return { speedAdjustments: {}, speedDisplayModes: {}, altAdjustments: {}, typeOverrides: {}, lockedStep: '', totSeconds: NaN, lockedStart: null, timeMarks: {}, timingLog: [], postFlightOpen: false, ataByStep: {}, speedRecommendations: {}, totPerformanceByStep: {}, lastOwnshipPos: null };
       const existing = fltPlanPlanStateBySelection[key];
       if (existing && typeof existing === 'object'){
         if (!existing.speedAdjustments || typeof existing.speedAdjustments !== 'object') existing.speedAdjustments = {};
@@ -3522,9 +3532,11 @@ namespace VAICOM
         if (typeof existing.postFlightOpen !== 'boolean') existing.postFlightOpen = false;
         if (!existing.ataByStep || typeof existing.ataByStep !== 'object') existing.ataByStep = {};
         if (!existing.speedRecommendations || typeof existing.speedRecommendations !== 'object') existing.speedRecommendations = {};
+        if (!existing.totPerformanceByStep || typeof existing.totPerformanceByStep !== 'object') existing.totPerformanceByStep = {};
+        if (!existing.lastOwnshipPos || typeof existing.lastOwnshipPos !== 'object') existing.lastOwnshipPos = null;
         return existing;
       }
-      const created = { speedAdjustments: {}, speedDisplayModes: {}, altAdjustments: {}, typeOverrides: {}, lockedStep: '', totSeconds: NaN, lockedStart: null, timeMarks: {}, timingLog: [], postFlightOpen: false, ataByStep: {}, speedRecommendations: {} };
+      const created = { speedAdjustments: {}, speedDisplayModes: {}, altAdjustments: {}, typeOverrides: {}, lockedStep: '', totSeconds: NaN, lockedStart: null, timeMarks: {}, timingLog: [], postFlightOpen: false, ataByStep: {}, speedRecommendations: {}, totPerformanceByStep: {}, lastOwnshipPos: null };
       fltPlanPlanStateBySelection[key] = created;
       return created;
     }
@@ -3643,6 +3655,208 @@ namespace VAICOM
       }
       const delta = Math.round(Number(minutesDelta || 0) * 60);
       state.totSeconds = base + delta;
+    }
+
+    function setTakeoffBySecondsDelta(selected, secondsDelta){
+      const key = getFlightPlanEtaStartKey(selected);
+      if (!key) return;
+
+      const delta = Math.round(Number(secondsDelta || 0));
+      if (!isFinite(delta) || delta === 0) return;
+
+      const state = getFlightPlanPlanState(selected);
+      const marks = getResolvedTimingMarks(selected);
+      if (!isFinite(Number(marks.takeoff))){
+        const now = getCurrentFlightPlanClockSeconds();
+        const defaults = buildTimingFromTakeoff(now);
+        marks.step = defaults.step;
+        marks.start = defaults.start;
+        marks.taxi = defaults.taxi;
+        marks.takeoff = defaults.takeoff;
+      }
+
+      marks.step = Number(marks.step) + delta;
+      marks.start = Number(marks.start) + delta;
+      marks.taxi = Number(marks.taxi) + delta;
+      marks.takeoff = Number(marks.takeoff) + delta;
+
+      state.timeMarks = {
+        step: marks.step,
+        start: marks.start,
+        taxi: marks.taxi,
+        takeoff: marks.takeoff,
+      };
+
+      if (isFinite(Number(marks.takeoff))){
+        fltPlanEtaStartBySelection[key] = Number(marks.takeoff);
+      }
+
+      appendTimingLog(selected, 'TAKEOFF', marks);
+    }
+
+    function setTakeoffByMinutesDelta(selected, minutesDelta){
+      const delta = Math.round(Number(minutesDelta || 0) * 60);
+      setTakeoffBySecondsDelta(selected, delta);
+    }
+
+    function resolveWaypointNorthEast(wp){
+      if (!wp || typeof wp !== 'object') return { north: NaN, east: NaN };
+      const north = Number(isFinite(Number(wp.xNum)) ? wp.xNum : wp.x);
+      const east = Number(isFinite(Number(wp.yNum)) ? wp.yNum : wp.y);
+      return { north: north, east: east };
+    }
+
+    function distancePointToSegmentMeters(px, py, ax, ay, bx, by){
+      const vx = bx - ax;
+      const vy = by - ay;
+      const wx = px - ax;
+      const wy = py - ay;
+      const vv = (vx * vx) + (vy * vy);
+      if (!isFinite(vv) || vv <= 0){
+        const dx = px - ax;
+        const dy = py - ay;
+        return Math.sqrt((dx * dx) + (dy * dy));
+      }
+      let t = ((wx * vx) + (wy * vy)) / vv;
+      t = clamp(t, 0, 1);
+      const cx = ax + (vx * t);
+      const cy = ay + (vy * t);
+      const dx = px - cx;
+      const dy = py - cy;
+      return Math.sqrt((dx * dx) + (dy * dy));
+    }
+
+    function getOwnshipNorthEast(){
+      if (fakeMissionEnabled && fakeMissionState){
+        return { north: Number(fakeMissionState.playerX), east: Number(fakeMissionState.playerY) };
+      }
+
+      const server = (latestData && latestData.Server) || {};
+      return { north: Number(server.PlayerPosX), east: Number(server.PlayerPosY) };
+    }
+
+    function updateTotOverflyCapture(selected, rows){
+      const list = Array.isArray(rows) ? rows : [];
+      if (!list.length) return;
+
+      const state = getFlightPlanPlanState(selected);
+      if (!state.totPerformanceByStep || typeof state.totPerformanceByStep !== 'object') state.totPerformanceByStep = {};
+      if (!Array.isArray(state.timingLog)) state.timingLog = [];
+
+      const lockedStep = stepToKey(state.lockedStep);
+      const totSec = Number(state.totSeconds);
+      if (!lockedStep || !isFinite(totSec)) return;
+
+      if (state.totPerformanceByStep[lockedStep]) return;
+
+      const target = list.find(function(wp){
+        return wp && !wp.isStart && stepToKey(wp.step) === lockedStep;
+      });
+      if (!target) return;
+
+      if (String(target.type || '').toUpperCase() !== 'TGT') return;
+
+      const own = getOwnshipNorthEast();
+      const wpPos = resolveWaypointNorthEast(target);
+      if (!isFinite(own.north) || !isFinite(own.east) || !isFinite(wpPos.north) || !isFinite(wpPos.east)) return;
+
+      const prevOwn = state.lastOwnshipPos && isFinite(Number(state.lastOwnshipPos.north)) && isFinite(Number(state.lastOwnshipPos.east))
+        ? { north: Number(state.lastOwnshipPos.north), east: Number(state.lastOwnshipPos.east) }
+        : null;
+      state.lastOwnshipPos = { north: own.north, east: own.east };
+
+      const dNorth = wpPos.north - own.north;
+      const dEast = wpPos.east - own.east;
+      const distanceMeters = Math.sqrt((dNorth * dNorth) + (dEast * dEast));
+      const overflyThresholdMeters = 1 * 1852;
+      let crossedWithinThreshold = isFinite(distanceMeters) && distanceMeters <= overflyThresholdMeters;
+      if (!crossedWithinThreshold && prevOwn){
+        const segDistance = distancePointToSegmentMeters(
+          wpPos.north,
+          wpPos.east,
+          prevOwn.north,
+          prevOwn.east,
+          own.north,
+          own.east
+        );
+        crossedWithinThreshold = isFinite(segDistance) && segDistance <= overflyThresholdMeters;
+      }
+      if (!crossedWithinThreshold) return;
+
+      const actualSec = getCurrentFlightPlanClockSeconds();
+      if (!isFinite(actualSec)) return;
+
+      state.totPerformanceByStep[lockedStep] = {
+        plannedSeconds: totSec,
+        actualSeconds: actualSec,
+        capturedUtc: new Date().toISOString(),
+      };
+
+      const perf = state.totPerformanceByStep[lockedStep];
+      const row = (perf.capturedUtc || new Date().toISOString())
+        + ' | TOT PERF STP' + lockedStep
+        + ' ETA ' + formatSecondsToClock(Number(perf.plannedSeconds))
+        + ' ATA ' + formatSecondsToClock(Number(perf.actualSeconds))
+        + ' ' + formatSignedDeltaSeconds(Number(perf.actualSeconds) - Number(perf.plannedSeconds));
+      state.timingLog.push(row);
+      if (state.timingLog.length > 16){
+        state.timingLog = state.timingLog.slice(state.timingLog.length - 16);
+      }
+    }
+
+    function buildPostFlightSummaryRows(selected, rows, timing){
+      const state = getFlightPlanPlanState(selected);
+      const list = Array.isArray(rows) ? rows : [];
+      const out = [];
+
+      out.push('TIMING STEP ' + safe(timing && timing.step)
+        + ' START ' + safe(timing && timing.start)
+        + ' TAXI ' + safe(timing && timing.taxi)
+        + ' TAKEOFF ' + safe(timing && timing.takeoff));
+
+      let prevEtaSec = NaN;
+      list.forEach(function(wp){
+        if (!wp || wp.isStart) return;
+
+        const step = stepToKey(wp.step);
+        const etaText = String(wp.etaDisplay || wp.eta || '-');
+        const etaSec = parseEtaToSeconds(etaText);
+        const eteText = isFinite(prevEtaSec) && isFinite(etaSec)
+          ? formatElapsedSeconds(etaSec - prevEtaSec)
+          : '-';
+
+        const ataEntry = (state && state.ataByStep && state.ataByStep[step]) ? state.ataByStep[step] : null;
+        const ataSec = ataEntry ? Number(ataEntry.actualSeconds) : NaN;
+        const ataText = isFinite(ataSec) ? formatSecondsToClock(ataSec) : '-';
+        const ataDelta = (isFinite(ataSec) && isFinite(etaSec))
+          ? formatSignedDeltaSeconds(ataSec - etaSec)
+          : '';
+
+        out.push('STP ' + step
+          + ' ETE ' + eteText
+          + ' ETA ' + etaText
+          + ' ATA ' + ataText
+          + (ataDelta ? (' ' + ataDelta) : ''));
+
+        if (isFinite(etaSec)) prevEtaSec = etaSec;
+      });
+
+      const lockedStep = stepToKey(state && state.lockedStep);
+      const perf = lockedStep && state && state.totPerformanceByStep ? state.totPerformanceByStep[lockedStep] : null;
+      if (lockedStep && isFinite(Number(state && state.totSeconds))){
+        if (perf && isFinite(Number(perf.actualSeconds))){
+          out.push('TOT PERF STP ' + lockedStep
+            + ' ETA ' + formatSecondsToClock(Number(perf.plannedSeconds))
+            + ' ATA ' + formatSecondsToClock(Number(perf.actualSeconds))
+            + ' ' + formatSignedDeltaSeconds(Number(perf.actualSeconds) - Number(perf.plannedSeconds)));
+        } else {
+          out.push('TOT PERF STP ' + lockedStep
+            + ' ETA ' + formatSecondsToClock(Number(state.totSeconds))
+            + ' ATA -');
+        }
+      }
+
+      return out;
     }
 
     function setTotBySecondsDelta(selected, secondsDelta){
@@ -4471,6 +4685,8 @@ namespace VAICOM
       state.timingLog = [];
       state.ataByStep = {};
       state.speedRecommendations = {};
+      state.totPerformanceByStep = {};
+      state.lastOwnshipPos = null;
       state.postFlightOpen = false;
     }
 
@@ -5881,6 +6097,7 @@ namespace VAICOM
       applyLockedTotPlan(displayRows, selected);
       applyDistancePlan(displayRows);
       applyHeadingPlan(displayRows, theatre);
+      updateTotOverflyCapture(selected, displayRows);
       const etaHeading = hasTakeoffTimeBySelection(selected) ? 'ETA' : 'ETE';
       const planState = getFlightPlanPlanState(selected);
       pruneExpiredSpeedRecommendations(planState);
@@ -5888,6 +6105,7 @@ namespace VAICOM
         ? planState.timingLog.slice()
         : [];
       const postFlightOpen = !!(planState && planState.postFlightOpen);
+      const postFlightSummaryRows = buildPostFlightSummaryRows(selected, displayRows, timing);
 
       let html = '';
       html += '<div class=""fltPlanBoard"">';
@@ -5911,14 +6129,14 @@ namespace VAICOM
       html += '<div class=""fltPlanTimeCell clickable"" data-tko-anchor=""STEP"" title=""Set STEP to current clock (Takeoff auto = STEP +35m)""><div class=""fltPlanTimeCellLabel"">STEP</div><div class=""fltPlanTimeCellValue"">' + escapeHtml(timing.step) + '</div></div>';
       html += '<div class=""fltPlanTimeCell clickable"" data-tko-anchor=""START"" title=""Set START to current clock (Takeoff auto = START +25m)""><div class=""fltPlanTimeCellLabel"">START</div><div class=""fltPlanTimeCellValue"">' + escapeHtml(timing.start) + '</div></div>';
       html += '<div class=""fltPlanTimeCell clickable"" data-tko-anchor=""TAXI"" title=""Set TAXI to current clock (Takeoff auto = TAXI +15m)""><div class=""fltPlanTimeCellLabel"">TAXI</div><div class=""fltPlanTimeCellValue"">' + escapeHtml(timing.taxi) + '</div></div>';
-      html += '<div class=""fltPlanTimeCell clickable"" data-tko-anchor=""TAKEOFF"" title=""Set TAKEOFF to current clock""><div class=""fltPlanTimeCellLabel"">TAKE OFF</div><div class=""fltPlanTimeCellValue"">' + escapeHtml(timing.takeoff) + '</div></div>';
+      html += '<div class=""fltPlanTimeCell clickable"" data-tko-anchor=""TAKEOFF"" title=""Set TAKEOFF to current clock""><div class=""fltPlanTimeCellLabel"">TAKEOFF</div><div class=""fltPlanTimeCellValue""><div class=""fltPlanAdjustCell""><button type=""button"" class=""fltPlanMiniBtn"" data-tko-adjust-sec=""-1"" title=""-1 second"">«</button><button type=""button"" class=""fltPlanMiniBtn"" data-tko-adjust=""-60"" title=""-1 minute"">◀</button><span class=""fltPlanSpdValue"">' + escapeHtml(timing.takeoff) + '</span><button type=""button"" class=""fltPlanMiniBtn"" data-tko-adjust=""60"" title=""+1 minute"">▶</button><button type=""button"" class=""fltPlanMiniBtn"" data-tko-adjust-sec=""1"" title=""+1 second"">»</button></div></div></div>';
       html += '<div class=""fltPlanTimeCell""><div class=""fltPlanTimeCellLabel"">TOT</div><div class=""fltPlanTimeCellValue""><div class=""fltPlanAdjustCell""><button type=""button"" class=""fltPlanMiniBtn"" data-tot-adjust-sec=""-1"" title=""-1 second"">«</button><button type=""button"" class=""fltPlanMiniBtn"" data-tot-adjust=""-60"" title=""-1 minute"">◀</button><span class=""fltPlanSpdValue"">' + escapeHtml(timing.tot) + '</span><button type=""button"" class=""fltPlanMiniBtn"" data-tot-adjust=""60"" title=""+1 minute"">▶</button><button type=""button"" class=""fltPlanMiniBtn"" data-tot-adjust-sec=""1"" title=""+1 second"">»</button></div></div></div>';
       html += '</div>';
-      html += '<div class=""controls fltPlanControls"" style=""margin:4px 0 8px 0;""><button type=""button"" class=""fltPlanPageBtn"" data-postflight-toggle=""1"">' + (postFlightOpen ? 'Hide Post Flight' : 'Post Flight') + '</button></div>';
+      html += '<div class=""controls fltPlanControls"" style=""margin:4px 0 8px 0;""><button type=""button"" class=""fltPlanPageBtn"" data-postflight-toggle=""1"">' + (postFlightOpen ? 'Hide POST FLT' : 'POST FLT') + '</button></div>';
       if (postFlightOpen){
         html += '<div class=""fltPlanInfoBlock"" style=""min-height:0; margin-bottom:8px;"">';
-        html += '<div class=""fltPlanInfoTitle"">POST FLIGHT SUMMARY</div>';
-        html += '<div class=""fltPlanInfoBody"" style=""font-size:12px; line-height:1.2; max-height:150px;"">' + (timingLogRows.length ? timingLogRows.map(escapeHtml).join('<br>') : 'No events recorded yet.') + '</div>';
+        html += '<div class=""fltPlanInfoTitle"">POST FLT</div>';
+        html += '<div class=""fltPlanInfoBody"" style=""font-size:12px; line-height:1.2; max-height:220px;"">' + (postFlightSummaryRows.length ? postFlightSummaryRows.map(escapeHtml).join('<br>') : 'No events recorded yet.') + '</div>';
         html += '</div>';
       }
 
@@ -7008,6 +7226,24 @@ namespace VAICOM
             const seconds = Number(node.getAttribute('data-tot-adjust-sec') || 0);
             if (selected && isFinite(seconds) && seconds !== 0){
               setTotBySecondsDelta(selected, seconds);
+              render(latestData);
+            }
+            return;
+          }
+          if (node.getAttribute && node.getAttribute('data-tko-adjust')){
+            const selected = getActiveFlightPlanSelection(latestData);
+            const seconds = Number(node.getAttribute('data-tko-adjust') || 0);
+            if (selected && isFinite(seconds) && seconds !== 0){
+              setTakeoffByMinutesDelta(selected, seconds / 60.0);
+              render(latestData);
+            }
+            return;
+          }
+          if (node.getAttribute && node.getAttribute('data-tko-adjust-sec')){
+            const selected = getActiveFlightPlanSelection(latestData);
+            const seconds = Number(node.getAttribute('data-tko-adjust-sec') || 0);
+            if (selected && isFinite(seconds) && seconds !== 0){
+              setTakeoffBySecondsDelta(selected, seconds);
               render(latestData);
             }
             return;
