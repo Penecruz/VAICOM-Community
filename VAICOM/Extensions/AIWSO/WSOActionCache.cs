@@ -462,7 +462,14 @@ namespace VAICOM
 
                 private static bool TryGetRecipientByAsset(string asset, out string recipient)
                 {
+                    int longest = 0;
                     recipient = "";
+
+                    // The Jester wheel contains Krasnodar-Pashkovs instead of Krasnodar-Pashkovsky
+                    if (string.Equals(asset, "Krasnodar-Pashkovs", StringComparison.OrdinalIgnoreCase))
+                    {
+                        asset = "Krasnodar-Pashkovsky";
+                    }
 
                     // Search the recipients for one which matches the asset name. This allows us to use
                     // aliases in commands and still map them back to the actual cache entry.
@@ -472,8 +479,11 @@ namespace VAICOM
                         // Check for recipients value, or if there are other aliased values.
                         if (asset.StartsWith(set.Value, StringComparison.OrdinalIgnoreCase) || asset.StartsWith(set.Key, StringComparison.OrdinalIgnoreCase))
                         {
-                            recipient = set.Value;
-                            return true;
+                            if (set.Value.Length > longest)
+                            {
+                                longest = set.Value.Length;
+                                recipient = set.Value;
+                            }
                         }
                     }
                     // Search through any imported ATCs
@@ -482,9 +492,17 @@ namespace VAICOM
                         // Check for recipients value, or if there are other aliased values.
                         if (asset.StartsWith(set.Value, StringComparison.OrdinalIgnoreCase) || asset.StartsWith(set.Key, StringComparison.OrdinalIgnoreCase))
                         {
-                            recipient = set.Value;
-                            return true;
+                            if (set.Value.Length > longest)
+                            {
+                                longest = set.Value.Length;
+                                recipient = set.Value;
+                            }
                         }
+                    }
+
+                    if (!string.IsNullOrEmpty(recipient))
+                    {
+                        return true;
                     }
 
                     return false;
