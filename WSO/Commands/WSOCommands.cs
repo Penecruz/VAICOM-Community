@@ -136,6 +136,9 @@ namespace VAICOM.Extensions.WSO
             { "wMsgWSO_Ground_StabAugCheck", new CommandInfo { uniqueid = 24620, category = CommandCategories.WSO, name = "wMsgWSO_Ground_StabAugCheck", displayname = Labels.aicommands["wMsgWSO_Ground_StabAugCheck"], enabled = true } },
             { "wMsgWSO_Ground_TrimCheck", new CommandInfo { uniqueid = 24621, category = CommandCategories.WSO, name = "wMsgWSO_Ground_TrimCheck", displayname = Labels.aicommands["wMsgWSO_Ground_TrimCheck"], enabled = true } },
             { "wMsgWSO_Ground_Cancel", new CommandInfo { uniqueid = 24622, category = CommandCategories.WSO, name = "wMsgWSO_Ground_Cancel", displayname = Labels.aicommands["wMsgWSO_Ground_Cancel"], enabled = true } },
+            { "wMsgWSO_Ground_CMS_ChaffSingle", new CommandInfo { uniqueid = 24623, category = CommandCategories.WSO, name = "wMsgWSO_Ground_CMS_ChaffSingle", displayname = Labels.aicommands["wMsgWSO_Ground_CMS_ChaffSingle"], enabled = true } },
+            { "wMsgWSO_Ground_CMS_ChaffDouble", new CommandInfo { uniqueid = 24624, category = CommandCategories.WSO, name = "wMsgWSO_Ground_CMS_ChaffDouble", displayname = Labels.aicommands["wMsgWSO_Ground_CMS_ChaffDouble"], enabled = true } },
+            { "wMsgWSO_Ground_IFF_InsertM4Codes", new CommandInfo { uniqueid = 24625, category = CommandCategories.WSO, name = "wMsgWSO_Ground_IFF_InsertM4Codes", displayname = Labels.aicommands["wMsgWSO_Ground_IFF_InsertM4Codes"], enabled = true } },
 
             // Miscellaneous
             { "wMsgWSO_Systems_AVTR_Record", new CommandInfo { uniqueid = 24700, category = CommandCategories.WSO, name = "wMsgWSO_Systems_AVTR_Record", displayname = Labels.aicommands["wMsgWSO_Systems_AVTR_Record"], enabled = true } },
