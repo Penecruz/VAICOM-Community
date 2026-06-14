@@ -1762,6 +1762,49 @@ base.vaicom.objects = {
 	localAllies = function(getside)
 		local Collection = {}
 			Collection = base.coalition.getPlayers and base.coalition.getPlayers(getside)
+
+		local function addUniqueUnit(unit)
+			if unit == nil then return end
+			local uid = unit.id_
+			if uid == nil then
+				base.table.insert(Collection, unit)
+				return
+			end
+			for _, existing in base.pairs(Collection) do
+				if existing ~= nil and existing.id_ == uid then
+					return
+				end
+			end
+			base.table.insert(Collection, unit)
+		end
+
+		local function addGroupUnits(group)
+			if group == nil then return end
+			local okUnits, units = base.pcall(function() return group:getUnits() end)
+			if okUnits and units ~= nil and base.type(units) == "table" then
+				for _, u in base.pairs(units) do
+					addUniqueUnit(u)
+				end
+			end
+		end
+
+		local okPlaneGroups, planeGroups = base.pcall(function()
+			return base.coalition.getGroups and base.coalition.getGroups(getside, base.Group.Category.AIRPLANE)
+		end)
+		if okPlaneGroups and planeGroups ~= nil and base.type(planeGroups) == "table" then
+			for _, g in base.pairs(planeGroups) do
+				addGroupUnits(g)
+			end
+		end
+
+		local okHeliGroups, heliGroups = base.pcall(function()
+			return base.coalition.getGroups and base.coalition.getGroups(getside, base.Group.Category.HELICOPTER)
+		end)
+		if okHeliGroups and heliGroups ~= nil and base.type(heliGroups) == "table" then
+			for _, g in base.pairs(heliGroups) do
+				addGroupUnits(g)
+			end
+		end
 		return Collection
 	end,	
    localOpposition = function(getside)
@@ -3096,6 +3139,17 @@ base.vaicom.state = {
 					base.table.insert(target, base.tostring(value))
 				end
 
+				local function copyStringList(src)
+					local result = {}
+					if base.type(src) ~= "table" then
+						return result
+					end
+					for i, v in base.pairs(src) do
+						result[i] = base.tostring(v)
+					end
+					return result
+				end
+
 				local function tryCallMethod(obj, methodName, arg)
 					if obj == nil then return nil end
 					local fn = tryget(function() return obj[methodName] end)
@@ -3352,15 +3406,88 @@ base.vaicom.state = {
 						end
 					end
 
-					collectRuntimeRadioProbe()
-					collectRuntimeCmdsProbe()
+					local diagCache = base.vaicom.state and base.vaicom.state.okb_diagcache
+					if base.type(diagCache) ~= "table" then
+						diagCache = {}
+						if base.vaicom.state then
+							base.vaicom.state.okb_diagcache = diagCache
+						end
+					end
+
+					local nowTick = base.tonumber(base.vaicom.state and base.vaicom.state.timer) or 0
+					local shouldRefreshStatic = nowTick - (diagCache.staticAt or -10000) >= 86400
+					local missionRef = base.tostring(missionObj)
+					if diagCache.missionRef ~= missionRef then
+						diagCache.missionRef = missionRef
+						diagCache.staticAt = -10000
+						diagCache.payloadAt = -10000
+						diagCache.waypointAt = -10000
+						diagCache.radioAt = -10000
+						diagCache.weatherAt = -10000
+						diagCache.runtimeRadioDevices = {}
+						diagCache.runtimeRadioChannels = {}
+						diagCache.payloadKeys = {}
+						diagCache.runtimeCmdsHits = {}
+						diagCache.missionKeys = {}
+						diagCache.beaconEntries = {}
+						diagCache.keyHits = {}
+						diagCache.tankerTaskEntries = {}
+						diagCache.waypointSamples = {}
+						diagCache.playerGroupWaypoints = {}
+						diagCache.missionRadioChannels = {}
+						diagCache.playerMissionRadioChannels = {}
+						diagCache.weatherType = "nil"
+						diagCache.weatherKeys = {}
+						diagCache.weatherSummary = {}
+						diagCache.playerGroup = ""
+						diagCache.playerUnitId = 0
+						diagCache.playerUnitName = ""
+						diagCache.playerCallsign = ""
+						diagCache.playerGroupMatchReason = ""
+						diagCache.playerGroupRouteFound = false
+					end
+
+					if shouldRefreshStatic then
+						probe.runtimeRadioDevices = {}
+						probe.runtimeRadioChannels = {}
+						probe.missionKeys = {}
+						probe.beaconEntries = {}
+						probe.keyHits = {}
+						probe.tankerTaskEntries = {}
+
+						collectRuntimeRadioProbe()
+
+						diagCache.runtimeRadioDevices = copyStringList(probe.runtimeRadioDevices)
+						diagCache.runtimeRadioChannels = copyStringList(probe.runtimeRadioChannels)
+					else
+						probe.runtimeRadioDevices = copyStringList(diagCache.runtimeRadioDevices)
+						probe.runtimeRadioChannels = copyStringList(diagCache.runtimeRadioChannels)
+					end
+
+					local payloadIntervalSec = 1.0
+					if nowTick - (diagCache.payloadAt or -10000) >= payloadIntervalSec then
+						probe.payloadKeys = {}
+						probe.runtimeCmdsHits = {}
+						collectRuntimeCmdsProbe()
+						diagCache.payloadAt = nowTick
+						diagCache.payloadKeys = copyStringList(probe.payloadKeys)
+						diagCache.runtimeCmdsHits = copyStringList(probe.runtimeCmdsHits)
+					else
+						probe.payloadKeys = copyStringList(diagCache.payloadKeys)
+						probe.runtimeCmdsHits = copyStringList(diagCache.runtimeCmdsHits)
+					end
 
                     if base.type(missionObj) == "table" then
-                       local missionKeyCount = 0
-						for k,_ in base.pairs(missionObj) do
-							missionKeyCount = missionKeyCount + 1
-							if missionKeyCount > 20 then break end
-							base.table.insert(probe.missionKeys, base.tostring(k))
+						if shouldRefreshStatic then
+							local missionKeyCount = 0
+							for k,_ in base.pairs(missionObj) do
+								missionKeyCount = missionKeyCount + 1
+								if missionKeyCount > 20 then break end
+								base.table.insert(probe.missionKeys, base.tostring(k))
+							end
+							diagCache.missionKeys = copyStringList(probe.missionKeys)
+						else
+							probe.missionKeys = copyStringList(diagCache.missionKeys)
 						end
 
 						local function scan(obj, path, depth)
@@ -3709,15 +3836,33 @@ base.vaicom.state = {
 							end
 						end
 
-						scan(missionObj, "mission", 0)
-                     scanKeys(missionObj, "mission", 0)
-						collectTankerTasks(missionObj)
-						collectMissionWaypointSamples(missionObj)
-						collectMissionRadioChannelLists(missionObj)
+						if shouldRefreshStatic then
+							scan(missionObj, "mission", 0)
+							scanKeys(missionObj, "mission", 0)
+							collectTankerTasks(missionObj)
+							diagCache.beaconEntries = copyStringList(probe.beaconEntries)
+							diagCache.keyHits = copyStringList(probe.keyHits)
+							diagCache.tankerTaskEntries = copyStringList(probe.tankerTaskEntries)
+						else
+							probe.beaconEntries = copyStringList(diagCache.beaconEntries)
+							probe.keyHits = copyStringList(diagCache.keyHits)
+							probe.tankerTaskEntries = copyStringList(diagCache.tankerTaskEntries)
+						end
 
-						local weather = missionObj.weather
-						probe.weatherType = base.type(weather)
-						if base.type(weather) == "table" then
+						if shouldRefreshStatic then
+							diagCache.staticAt = nowTick
+						end
+
+						local function collectWeatherSummary(root)
+							probe.weatherType = "nil"
+							probe.weatherKeys = {}
+							probe.weatherSummary = {}
+							local weather = root and root.weather
+							probe.weatherType = base.type(weather)
+							if base.type(weather) ~= "table" then
+								return
+							end
+
 							local wk = 0
 							for k,_ in base.pairs(weather) do
 								wk = wk + 1
@@ -3755,6 +3900,54 @@ base.vaicom.state = {
 							addWeather("mission.weather.enable_dust", weather.enable_dust)
 							addWeather("mission.weather.dust_density", weather.dust_density)
 							addWeather("mission.weather.groundTurbulence", weather.groundTurbulence)
+						end
+
+						local waypointIntervalSec = 1.0
+						if nowTick - (diagCache.waypointAt or -10000) >= waypointIntervalSec then
+							collectMissionWaypointSamples(missionObj)
+							diagCache.waypointAt = nowTick
+							diagCache.waypointSamples = copyStringList(probe.waypointSamples)
+							diagCache.playerGroupWaypoints = copyStringList(probe.playerGroupWaypoints)
+							diagCache.playerGroup = probe.playerGroup or ""
+							diagCache.playerUnitId = probe.playerUnitId or 0
+							diagCache.playerUnitName = probe.playerUnitName or ""
+							diagCache.playerCallsign = probe.playerCallsign or ""
+							diagCache.playerGroupMatchReason = probe.playerGroupMatchReason or ""
+							diagCache.playerGroupRouteFound = probe.playerGroupRouteFound and true or false
+						else
+							probe.waypointSamples = copyStringList(diagCache.waypointSamples)
+							probe.playerGroupWaypoints = copyStringList(diagCache.playerGroupWaypoints)
+							probe.playerGroup = diagCache.playerGroup or ""
+							probe.playerUnitId = diagCache.playerUnitId or 0
+							probe.playerUnitName = diagCache.playerUnitName or ""
+							probe.playerCallsign = diagCache.playerCallsign or ""
+							probe.playerGroupMatchReason = diagCache.playerGroupMatchReason or ""
+							probe.playerGroupRouteFound = diagCache.playerGroupRouteFound and true or false
+						end
+
+						local radioIntervalSec = 1.0
+						if nowTick - (diagCache.radioAt or -10000) >= radioIntervalSec then
+							probe.missionRadioChannels = {}
+							probe.playerMissionRadioChannels = {}
+							collectMissionRadioChannelLists(missionObj)
+							diagCache.radioAt = nowTick
+							diagCache.missionRadioChannels = copyStringList(probe.missionRadioChannels)
+							diagCache.playerMissionRadioChannels = copyStringList(probe.playerMissionRadioChannels)
+						else
+							probe.missionRadioChannels = copyStringList(diagCache.missionRadioChannels)
+							probe.playerMissionRadioChannels = copyStringList(diagCache.playerMissionRadioChannels)
+						end
+
+						if nowTick - (diagCache.weatherAt or -10000) >= 86400 then
+							collectWeatherSummary(missionObj)
+							diagCache.weatherAt = nowTick
+							diagCache.weatherType = probe.weatherType
+							diagCache.weatherKeys = copyStringList(probe.weatherKeys)
+							diagCache.weatherSummary = copyStringList(probe.weatherSummary)
+						else
+							probe.weatherType = diagCache.weatherType or "nil"
+							probe.weatherKeys = copyStringList(diagCache.weatherKeys)
+							probe.weatherSummary = copyStringList(diagCache.weatherSummary)
 						end
 					end
 

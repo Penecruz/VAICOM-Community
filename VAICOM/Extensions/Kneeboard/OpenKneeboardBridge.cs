@@ -9524,7 +9524,7 @@ namespace VAICOM
                         }
 
                         string playerCoalition = (State.currentstate.playercoalition ?? string.Empty).Trim();
-                        string[] categories = new[] { "Player", "Flight", "Tanker", "AWACS", "JTAC" };
+                        string[] categories = new[] { "Player", "Flight", "Tanker", "AWACS", "JTAC", "Allies" };
                         HashSet<string> seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
                         if (State.currentstate.bpos != null)
@@ -9560,11 +9560,6 @@ namespace VAICOM
                             foreach (Servers.Server.DcsUnit unit in units)
                             {
                                 if (unit == null || unit.pos == null)
-                                {
-                                    continue;
-                                }
-
-                                if (category.Equals("Flight", StringComparison.OrdinalIgnoreCase) && !unit.ishuman)
                                 {
                                     continue;
                                 }
