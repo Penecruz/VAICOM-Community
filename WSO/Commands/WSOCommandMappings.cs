@@ -157,10 +157,10 @@ namespace VAICOM.WSO
             
             // Jester fuel dialog responses.
             { "wMsgWSO_Fuel_FuelIsGood",                                        (InterfaceType.Dialog, "action", "fuel_good", "", false) },
-            { "wMsgWSO_Fuel_FuelIsLow",                                         (InterfaceType.Dialog, "select_option", "select_dialog_option", "Fuel is low", true) },
+            { "wMsgWSO_Fuel_FuelIsLow",                                         (InterfaceType.Dialog, "more", "select_dialog_option", "Fuel is low", true) },
             { "wMsgWSO_Fuel_RemainOnMission",                                   (InterfaceType.Dialog, "action", "fuel_remain_on_mission", "", false) },
-            { "wMsgWSO_Fuel_AirfieldOptions",                                   (InterfaceType.Dialog, "select_option", "show_dialog_options", "Divert to Airfield", true) },
-            { "wMsgWSO_Fuel_TankerOptions",                                     (InterfaceType.Dialog, "select_option", "show_dialog_options", "Rejoin with Tanker", true) },
+            { "wMsgWSO_Fuel_AirfieldOptions",                                   (InterfaceType.Dialog, "more", "show_dialog_options", "Divert to Airfield", true) },
+            { "wMsgWSO_Fuel_TankerOptions",                                     (InterfaceType.Dialog, "more", "show_dialog_options", "Rejoin with Tanker", true) },
             { "wMsgWSO_Fuel_RefuelAtAirfield",                                  (InterfaceType.Dialog, "action", "", "", false) },
 
             // Jester Contextual Menu response commands

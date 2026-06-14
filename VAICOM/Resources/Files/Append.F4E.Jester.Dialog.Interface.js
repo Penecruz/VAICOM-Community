@@ -6,9 +6,9 @@ let socket;
 
 // For wrapping the HB state object for dialogs.
 let proxiedState = {
-  dialog_queue: dialog_queue,
-  dialog: {},
-  dialog_index: -1,
+  dialog_queue: state.dialog_queue,
+  dialog: state.dialog,
+  dialog_index: state.dialog_index,
 };
 
 // Create WebSocket connection and event listeners.
@@ -33,7 +33,7 @@ function openSocketConnection() {
       if (action !== null && command !== null) {
         if (action === "action") {
           doDialogAction(action, command);
-        } else if (action === "select_option" && state.dialog_queue.length > 0) {
+        } else if (action === "more" && state.dialog_queue.length > 0) {
           // This is for the case where we are wanting to select options
           // nested further down in the dialog tree, e.g. for displaying to
           // the user before performing an actual action.
@@ -98,7 +98,11 @@ function closeDialog() {
   // Cleanup the dialog state
   state.dialog = {};
   state.dialog_index = -1;
-  state.dialog_queue = [];
+  // Keep the original proxied array but just delete all entries from it.
+  // The hb code also uses a splice on the array so aligns with this.
+  if (state.dialog_queue.length > 0) {
+    state.dialog_queue.splice(0);
+  }
 
   // Close the dialog with a timeout
   setTimeout(() => hb_send_proxy("misc", "close"), 200);
@@ -126,41 +130,44 @@ function checkSocketStatus() {
 }
 
 function sendSocketMessage(data) {
-  if (isSocketOpen()) {
-    socket.send(data);
-  } else {
-    checkSocketStatus();
+  try {
+    if (isSocketOpen()) {
+      socket.send(data);
+    } else {
+      checkSocketStatus();
+    }
+  } catch (e) {
+    console.log("Error sending websocket message", e);
   }
 }
 
 // Handler for when properties are set or retrieved from the HB state object.
 // The "get" handler is only needed so that we can add a proxy to the nested properties.
-// The "set" handler is used for debugging purposes to see what is being set into state.
+// The "set" handler is used for for sending the dialog options to VAICOM.
 const stateProxyHandler = {
-  get(target, key) {
+  get(target, key, receiver) {
+    // Check if this a proxy object so we aren't wrapping multiple times
     if (key == "isProxy") return true;
 
     const prop = target[key];
-
-    // return if property not found
     if (typeof prop == "undefined") return;
 
-    // set value as proxy if object
+    // If this is an object then wrap it with a proxy as well
     if (!prop.isProxy && typeof prop === "object")
       target[key] = new Proxy(prop, stateProxyHandler);
 
-    return target[key];
+    return Reflect.get(target, key, receiver);
   },
-  set(target, key, value) {
-    target[key] = value;
+  set(target, key, value, receiver) {
+    const success = Reflect.set(target, key, value, receiver);
 
     // Send the current/updated state of the dialog and options to VAICOM
-    // Ignore the timer as this updates thousands of times and is for the expiry
+    // Ignore the timers used for expiry as these updates thousands of times
     if (key !== "timer" && key !== "timing_s") {
       sendSocketMessage(`${JSON.stringify(state)}`);
     }
 
-    return true;
+    return success;
   },
 };
 
@@ -169,17 +176,23 @@ const stateProxyHandler = {
 state = new Proxy(proxiedState, stateProxyHandler);
 
 function hb_send_proxy(action, command = "") {
-  if (typeof window.edQuery === "function") {
-    sendSocketMessage(`Jester 2.0 Dialog: ${action}|${command}`);
-
-    window.edQuery({
-      request: `${action}|${command}`,
-      persistent: false,
-      onSuccess: function (response) {},
-      onFailure: function (error_code, error_message) {},
-    });
-  } else {
-    console.log(action + ": " + command);
+  try {
+    if (typeof window.edQuery === "function") {
+      sendSocketMessage(`Jester 2.0 Dialog: ${action}|${command}`);
+  
+      window.edQuery({
+        request: `${action}|${command}`,
+        persistent: false,
+        onSuccess: function (response) {},
+        onFailure: function (error_code, error_message) {
+            console.log(`error_code: ${error_code}, error_message: ${error_message}`);
+        },
+      });
+    } else {
+      console.log(action + ": " + command);
+    }
+  } catch (e) {
+    console.log(`error in send proxy: ${e}`, e);
   }
 }
 

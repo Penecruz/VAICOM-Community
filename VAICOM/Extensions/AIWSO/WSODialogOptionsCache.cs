@@ -50,6 +50,7 @@ namespace VAICOM
                             Log.Write($"WSO dialog options have been updated so rebuilding caches", Colors.Text);
                             ActionToOptionCache = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
                             OptionToActionCache = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+                            cacheCount = 0;
                         }
 
                         foreach (JObject dialog in dialogs)
