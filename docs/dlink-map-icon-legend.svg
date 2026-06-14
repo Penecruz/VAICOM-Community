@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="520" viewBox="0 0 1400 520" role="img" aria-label="VAICOM OpenKneeboard DLink Map Icon Legend">
+  <defs>
+	<style>
+	  .title { font: 700 28px Consolas, monospace; fill: #1a1a1a; }
+	  .subtitle { font: 400 16px Consolas, monospace; fill: #3a3a3a; }
+	  .label { font: 700 20px Consolas, monospace; fill: #1f5d93; }
+	  .note { font: 400 14px Consolas, monospace; fill: #444; }
+	  .panel { fill: #f7f9fc; stroke: #b7c7d8; stroke-width: 1.5; }
+	</style>
+  </defs>
+
+  <rect x="0" y="0" width="1400" height="520" fill="#ffffff"/>
+  <text x="28" y="42" class="title">VAICOM OpenKneeboard DLink Map Icons (FLT PLN)</text>
+  <text x="28" y="68" class="subtitle">Source: OpenKneeboardBridge assetIconFor/getMudMapAssetKind. Shapes below match in-app drawings.</text>
+
+  <rect x="24" y="92" width="1352" height="396" rx="10" class="panel"/>
+
+  <!-- PLAYER -->
+  <g transform="translate(120,180)">
+	<circle cx="0" cy="0" r="38" fill="#f2d76a" stroke="#7a6420" stroke-width="6"/>
+	<line x1="-46" y1="0" x2="46" y2="0" stroke="#7a6420" stroke-width="5"/>
+	<line x1="0" y1="-46" x2="0" y2="46" stroke="#7a6420" stroke-width="5"/>
+	<text x="0" y="82" text-anchor="middle" class="label">PLAYER</text>
+	<text x="0" y="104" text-anchor="middle" class="note">Yellow circle + crosshair</text>
+  </g>
+
+  <!-- AWACS -->
+  <g transform="translate(360,180)">
+	<rect x="-46" y="-34" width="92" height="68" rx="9" fill="#2d8fe3" stroke="#1f5d93" stroke-width="5"/>
+	<line x1="-34" y1="0" x2="34" y2="0" stroke="#1f5d93" stroke-width="4"/>
+	<circle cx="0" cy="-50" r="12" fill="#1f5d93"/>
+	<text x="0" y="82" text-anchor="middle" class="label">AWACS</text>
+	<text x="0" y="104" text-anchor="middle" class="note">Rounded fuselage + dome</text>
+  </g>
+
+  <!-- TANKER -->
+  <g transform="translate(600,180)">
+	<polygon points="-46,0 0,-34 46,0 0,34" fill="#2d8fe3" stroke="#1f5d93" stroke-width="5"/>
+	<text x="0" y="82" text-anchor="middle" class="label">TANKER</text>
+	<text x="0" y="104" text-anchor="middle" class="note">Diamond (4-point)</text>
+  </g>
+
+  <!-- JTAC -->
+  <g transform="translate(840,180)">
+	<polygon points="0,-40 -40,40 40,40" fill="#2d8fe3" stroke="#1f5d93" stroke-width="5"/>
+	<text x="0" y="82" text-anchor="middle" class="label">JTAC</text>
+	<text x="0" y="104" text-anchor="middle" class="note">Triangle</text>
+  </g>
+
+  <!-- ROTARY -->
+  <g transform="translate(1080,180)">
+	<circle cx="0" cy="0" r="30" fill="#2d8fe3" stroke="#1f5d93" stroke-width="5"/>
+	<line x1="-46" y1="0" x2="46" y2="0" stroke="#1f5d93" stroke-width="4"/>
+	<line x1="0" y1="-46" x2="0" y2="46" stroke="#1f5d93" stroke-width="4"/>
+	<text x="0" y="82" text-anchor="middle" class="label">ROTARY</text>
+	<text x="0" y="104" text-anchor="middle" class="note">Blue circle + crosshair</text>
+  </g>
+
+  <!-- FIXED -->
+  <g transform="translate(600,350)">
+	<rect x="-40" y="-28" width="80" height="56" fill="#2d8fe3" stroke="#1f5d93" stroke-width="5"/>
+	<text x="0" y="82" text-anchor="middle" class="label">FIXED (DEFAULT)</text>
+	<text x="0" y="104" text-anchor="middle" class="note">Blue rectangle</text>
+  </g>
+
+  <text x="28" y="502" class="note">Classifier rules: TANKER/REFUEL → Tanker, AWACS → Awacs, JTAC → Jtac, HELO/HELICOPTER/ROTOR → Rotary, else → Fixed.</text>
+</svg>

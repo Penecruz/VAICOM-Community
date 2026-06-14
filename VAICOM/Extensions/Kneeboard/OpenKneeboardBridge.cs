@@ -3288,6 +3288,108 @@ namespace VAICOM
       }
     }
 
+    function parseWindBandsFromDiagnostics(data){
+      const server = (data && data.Server) || {};
+      const diagnostics = (server && server.Diagnostics && typeof server.Diagnostics === 'object') ? server.Diagnostics : {};
+      const rows = Array.isArray(diagnostics.weatherSummary) ? diagnostics.weatherSummary : [];
+      if (!rows.length) return null;
+
+      const bands = {
+        ground: { speedMs: NaN, dirDeg: NaN },
+        a2000: { speedMs: NaN, dirDeg: NaN },
+        a8000: { speedMs: NaN, dirDeg: NaN },
+      };
+
+      rows.forEach(function(row){
+        const text = String(row || '').trim();
+        if (!text) return;
+        const idx = text.indexOf('=');
+        if (idx <= 0) return;
+        const key = String(text.substring(0, idx)).trim().toLowerCase();
+        const val = Number(text.substring(idx + 1));
+        if (!isFinite(val)) return;
+
+        if (key === 'mission.weather.wind.atground.speed') bands.ground.speedMs = val;
+        if (key === 'mission.weather.wind.atground.dir') bands.ground.dirDeg = val;
+        if (key === 'mission.weather.wind.at2000.speed') bands.a2000.speedMs = val;
+        if (key === 'mission.weather.wind.at2000.dir') bands.a2000.dirDeg = val;
+        if (key === 'mission.weather.wind.at8000.speed') bands.a8000.speedMs = val;
+        if (key === 'mission.weather.wind.at8000.dir') bands.a8000.dirDeg = val;
+      });
+
+      return bands;
+    }
+
+    function lerp(a, b, t){
+      const av = Number(a);
+      const bv = Number(b);
+      const tv = Number(t);
+      if (!isFinite(av) || !isFinite(bv) || !isFinite(tv)) return NaN;
+      return av + ((bv - av) * tv);
+    }
+
+    function clamp01(v){
+      const n = Number(v);
+      if (!isFinite(n)) return 0;
+      if (n < 0) return 0;
+      if (n > 1) return 1;
+      return n;
+    }
+
+    function sampleWindAtAltitude(bands, altFeet){
+      if (!bands || typeof bands !== 'object'){
+        return { speedMs: NaN, dirDeg: NaN };
+      }
+
+      const alt = Math.max(0, Number(altFeet) || 0);
+      if (alt <= 2000){
+        const t = clamp01(alt / 2000.0);
+        return {
+          speedMs: lerp(bands.ground && bands.ground.speedMs, bands.a2000 && bands.a2000.speedMs, t),
+          dirDeg: lerp(bands.ground && bands.ground.dirDeg, bands.a2000 && bands.a2000.dirDeg, t),
+        };
+      }
+
+      if (alt <= 8000){
+        const t = clamp01((alt - 2000.0) / 6000.0);
+        return {
+          speedMs: lerp(bands.a2000 && bands.a2000.speedMs, bands.a8000 && bands.a8000.speedMs, t),
+          dirDeg: lerp(bands.a2000 && bands.a2000.dirDeg, bands.a8000 && bands.a8000.dirDeg, t),
+        };
+      }
+
+      return {
+        speedMs: Number(bands.a8000 && bands.a8000.speedMs),
+        dirDeg: Number(bands.a8000 && bands.a8000.dirDeg),
+      };
+    }
+
+    function getAlongTrackWindKnots(fromWp, toWp, sampleAltFeet){
+      const trackDeg = computeTrueHeadingDeg(fromWp, toWp);
+      if (!isFinite(trackDeg)) return 0;
+
+      const windBands = parseWindBandsFromDiagnostics(latestData);
+      const wind = sampleWindAtAltitude(windBands, sampleAltFeet);
+      const speedMs = Number(wind && wind.speedMs);
+      const dirFromDeg = Number(wind && wind.dirDeg);
+      if (!isFinite(speedMs) || speedMs <= 0 || !isFinite(dirFromDeg)) return 0;
+
+      const speedKnots = speedMs * 1.9438444924406;
+      if (!isFinite(speedKnots) || speedKnots <= 0) return 0;
+
+      const dirToDeg = normalizeHeadingDeg(dirFromDeg + 180.0);
+      const windRad = (dirToDeg * Math.PI) / 180.0;
+      const trackRad = (trackDeg * Math.PI) / 180.0;
+
+      const windNorth = Math.cos(windRad) * speedKnots;
+      const windEast = Math.sin(windRad) * speedKnots;
+      const trackNorth = Math.cos(trackRad);
+      const trackEast = Math.sin(trackRad);
+
+      const along = (windNorth * trackNorth) + (windEast * trackEast);
+      return isFinite(along) ? along : 0;
+    }
+
     function computeRequiredKcasForLeg(fromWp, toWp, fromTimeSec, targetTimeSec){
       const distNm = computeLegDistanceNm(fromWp, toWp);
       if (!isFinite(distNm) || distNm <= 0) return NaN;
@@ -3298,8 +3400,15 @@ namespace VAICOM
       const gs = (distNm * 3600.0) / dt;
       if (!isFinite(gs) || gs <= 0) return NaN;
 
+      const fromAlt = isFinite(Number(fromWp && fromWp.altFeet)) ? Number(fromWp.altFeet) : 0;
+      const toAlt = isFinite(Number(toWp && toWp.altFeet)) ? Number(toWp.altFeet) : fromAlt;
+      const sampleAlt = (fromAlt + toAlt) / 2.0;
+      const alongWind = getAlongTrackWindKnots(fromWp, toWp, sampleAlt);
+      const requiredTas = gs - alongWind;
+      if (!isFinite(requiredTas) || requiredTas <= 0) return NaN;
+
       const alt = isFinite(Number(toWp && toWp.altFeet)) ? Number(toWp.altFeet) : 0;
-      const kcas = gs / (1.0 + (Math.max(0, alt) / 100000.0));
+      const kcas = requiredTas / (1.0 + (Math.max(0, alt) / 100000.0));
       return isFinite(kcas) ? kcas : NaN;
     }
 
