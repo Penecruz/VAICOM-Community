@@ -70,6 +70,7 @@
     <None Include="DevPipe\Jester 2.0 Lua API Instructions" />
     <None Include="DevPipe\Jester2_Actions_Catalog.md" />
     <None Include="DevPipe\jester_action_catalog.csv" />
+    <None Include="DevPipe\Moose.lua" />
     <None Include="DevPipe\properties_snapshot.json" />
     <None Include="DevPipe\TimeOverTarget.lua" />
     <None Include="packages.config" />

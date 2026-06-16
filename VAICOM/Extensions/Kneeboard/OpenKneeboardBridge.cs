@@ -9,6 +9,7 @@ using System.Net;
 using System.Text.RegularExpressions;
 using System.Text;
 using System.Threading;
+using System.Runtime.InteropServices;
 using System.Windows;
 using VAICOM.Static;
 
@@ -50,6 +51,8 @@ namespace VAICOM
     h3 { margin: 0; font-size: 28px; color: #111; }
     .logo { width: 36px; height: 36px; object-fit: contain; }
     .meta { margin: 2px 0 8px 0; color: #444; font-size: 19px; }
+    .meta.liveRefreshToggle { cursor: pointer; user-select: none; }
+    .meta.liveRefreshToggle.liveRefreshOn { color: #1f6f43; font-weight: 700; }
     .simControls {
       margin: 0 0 6px 0;
       padding: 4px 6px;
@@ -942,6 +945,12 @@ namespace VAICOM
     .fltPlanTimeCell.clickable { cursor: pointer; }
     .fltPlanTimeCell.clickable:hover { background: #dce8f2; }
     .fltPlanPostFlightCell { grid-column: 2 / span 3; display: flex; align-items: center; justify-content: flex-end; }
+    .fltPlanCrewWrap { border: 1px solid #8b96a1; background: #f8fafc; margin-bottom: 8px; }
+    .fltPlanCrewTable { width: 100%; border-collapse: collapse; table-layout: fixed; }
+    .fltPlanCrewTable th, .fltPlanCrewTable td { border: 1px solid #a3adb6; padding: 3px 5px; font-size: 14px; line-height: 1.15; text-align: left; }
+    .fltPlanCrewTable th { background: #e4e8ec; font-weight: 700; }
+    .fltPlanCrewTable td.fltPlanCrewJet { width: 80px; text-align: center; font-weight: 700; }
+    .fltPlanCrewTable td.fltPlanCrewPilot { width: auto; }
     .fltPlanWpWrap { border: 1px solid #8b96a1; background: #ffffff; flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
     .fltPlanWpTitle { padding: 4px 6px; border-bottom: 1px solid #8b96a1; font-size: 16px; font-weight: 700; text-transform: uppercase; }
     .fltPlanWpTable { width: 100%; border-collapse: collapse; table-layout: fixed; }
@@ -985,6 +994,9 @@ namespace VAICOM
     .fltPlanInfoTable th { background: #edf1f5; }
     .fltPlanInfoWxWrap .fltPlanInfoTable td { white-space: normal; overflow: visible; text-overflow: clip; word-break: break-word; }
     .fltPlanPageSwitcher { margin-left: 8px; display: inline-flex; gap: 4px; vertical-align: middle; }
+    .fltPlanToolbar { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 4px 0 2px 0; }
+    .fltPlanToolbarLeft { display: inline-flex; align-items: center; flex-wrap: wrap; }
+    .fltPlanToolbarRight { margin-left: auto; display: inline-flex; align-items: center; }
     .fltPlanPageBtn { font-size: 12px; border: 1px solid #8b96a1; background: #eceff3; padding: 2px 9px; cursor: pointer; min-height: 22px; }
     .fltPlanPageBtn.active { background: #d3dae2; font-weight: 700; }
     .fltPlanPage2Grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
@@ -1019,6 +1031,7 @@ namespace VAICOM
     body.night-mode .kwGroup { background: #2a3340; border-color: #5f6f80; }
     body.night-mode .kwGroupTitle { color: #b8d1ea; }
     body.night-mode .controls { color: #d1dce8; }
+    body.night-mode .meta.liveRefreshToggle.liveRefreshOn { color: #8ccaa5; }
     body.night-mode .controls button { background: #2b3541; color: #e2eaf2; border-color: #607183; }
     body.night-mode .fltPlanSelected { color: #9fb6cb; }
     body.night-mode .missionClockLabel { color: #9fb6cb; }
@@ -1034,6 +1047,9 @@ namespace VAICOM
     body.night-mode .fltPlanTimeCellValue { color: #e2eaf4; }
     body.night-mode .fltPlanTimeCell.clickable:hover { background: #31404f; }
     body.night-mode .fltPlanPostFlightCell { background: transparent; border: 0; }
+    body.night-mode .fltPlanCrewWrap { background: #202a34; border-color: #5c6d7f; }
+    body.night-mode .fltPlanCrewTable th, body.night-mode .fltPlanCrewTable td { border-color: #5a6c7f; color: #dfe8f2; }
+    body.night-mode .fltPlanCrewTable th { background: #2a3541; }
     body.night-mode .fltPlanWpWrap { background: #212a34; border-color: #5c6d7f; }
     body.night-mode .fltPlanWpTitle { border-bottom-color: #5c6d7f; color: #dfe8f2; }
     body.night-mode .fltPlanWpTable th,
@@ -1070,7 +1086,7 @@ namespace VAICOM
     <div class='headerRow'>
       <div>
         <h3>VAICOM KNEEBOARD</h3>
-        <div class='meta'>Live export from VAICOM</div>
+        <div id='liveExportMeta' class='meta liveRefreshToggle' title='Hidden dev tool: click to toggle dashboard auto-refresh (30s)'>Live export from VAICOM</div>
       </div>
       <img class='logo' src='logo.png' alt='VAICOM Logo'>
     </div>
@@ -1183,10 +1199,13 @@ namespace VAICOM
     let fakeMissionTimer = null;
     let fakeMissionLastRealMs = 0;
     let fakeMissionLastRenderMs = 0;
+    let liveRefreshEnabled = false;
+    let liveRefreshTimer = null;
     const sessionCollapsedStorageKey = 'vaicom.okb.sessionCollapsed';
     const dtcListCollapsedStorageKey = 'vaicom.okb.dtcListCollapsed';
     const tabKeywordsSplitStorageKey = 'vaicom.okb.tabKeywordsSplitByTab';
     const drawModeStorageKey = 'vaicom.okb.notesDrawMode';
+    const liveRefreshStorageKey = 'vaicom.okb.liveRefreshEnabled';
     const nightModeStorageKey = 'vaicom.okb.nightMode';
     const dlinkOnStorageKey = 'vaicom.okb.dlinkOn';
     const contentFontSizeStorageKey = 'vaicom.okb.contentFontSize';
@@ -1292,10 +1311,39 @@ namespace VAICOM
       return '';
     }
 
+    function getCustomActionIdFromEvent(ev, detail){
+      const d = detail || {};
+      const candidates = [
+        d.id,
+        d.actionId,
+        d.customActionId,
+        d.action && d.action.id,
+        ev && ev.id,
+        ev && ev.actionId
+      ];
+
+      for (let i = 0; i < candidates.length; i++){
+        const value = candidates[i];
+        if (typeof value === 'string' && value.length){
+          return value;
+        }
+      }
+
+      return '';
+    }
+
+    function getCustomActionExtraData(detail){
+      const d = detail || {};
+      if (d.extraData !== undefined) return d.extraData;
+      if (d.extra !== undefined) return d.extra;
+      if (d.data !== undefined) return d.data;
+      return undefined;
+    }
+
     function handleCustomActionEvent(ev){
       const detail = (ev && ev.detail) ? ev.detail : {};
-      const id = String((detail && detail.id) || '');
-      const extraData = detail ? detail.extraData : undefined;
+      const id = getCustomActionIdFromEvent(ev, detail);
+      const extraData = getCustomActionExtraData(detail);
 
       if (!id || id.indexOf(OKB_CUSTOM_ACTION_PREFIX) !== 0) return;
 
@@ -1332,6 +1380,7 @@ namespace VAICOM
         if (!t || !t.addEventListener) continue;
         try{
           t.addEventListener('plugin/tab/customAction', handleCustomActionEvent);
+          t.addEventListener('plugin/tab/custom-action', handleCustomActionEvent);
           customActionHandlerRegistered = true;
         }catch(_){
         }
@@ -1933,6 +1982,62 @@ namespace VAICOM
       }catch(_){
         return false;
       }
+    }
+
+    function readLiveRefreshPreference(){
+      try{
+        return window.localStorage && window.localStorage.getItem(liveRefreshStorageKey) === '1';
+      }catch(_){
+        return false;
+      }
+    }
+
+    function persistLiveRefreshPreference(){
+      try{
+        if (window.localStorage){
+          window.localStorage.setItem(liveRefreshStorageKey, liveRefreshEnabled ? '1' : '0');
+        }
+      }catch(_){
+      }
+    }
+
+    function updateLiveRefreshUi(){
+      const meta = document.getElementById('liveExportMeta');
+      if (!meta) return;
+      const base = 'Live export from VAICOM';
+      meta.classList.toggle('liveRefreshOn', !!liveRefreshEnabled);
+      meta.textContent = liveRefreshEnabled ? (base + ' • Auto refresh ON') : base;
+      meta.title = liveRefreshEnabled
+        ? 'Hidden dev tool active: auto-refreshing dashboard data every 30 seconds (click to disable)'
+        : 'Hidden dev tool: click to toggle dashboard auto-refresh (30s)';
+    }
+
+    async function requestLiveDashboardRefresh(){
+      try{
+        await fetch('dev/refresh', { method: 'POST', cache: 'no-store' });
+      }catch(_){
+      }
+    }
+
+    function stopLiveRefreshTimer(){
+      if (!liveRefreshTimer) return;
+      clearInterval(liveRefreshTimer);
+      liveRefreshTimer = null;
+    }
+
+    function applyLiveRefreshState(enabled){
+      liveRefreshEnabled = !!enabled;
+      stopLiveRefreshTimer();
+
+      if (liveRefreshEnabled){
+        requestLiveDashboardRefresh();
+        liveRefreshTimer = setInterval(function(){
+          requestLiveDashboardRefresh();
+        }, 30000);
+      }
+
+      persistLiveRefreshPreference();
+      updateLiveRefreshUi();
     }
 
     function persistDrawModePreference(){
@@ -6187,6 +6292,108 @@ namespace VAICOM
       return html;
     }
 
+    function extractJetFromCallsign(callsign){
+      const text = String(callsign || '').trim();
+      if (!text) return 0;
+
+      let m = text.match(/(\d{2})\s*$/);
+      if (m){
+        const pair = String(m[1] || '');
+        const jet = parseInt(pair.charAt(pair.length - 1), 10);
+        if (isFinite(jet) && jet > 0 && jet <= 9) return jet;
+      }
+
+      m = text.match(/(\d)\s*$/);
+      if (m){
+        const jet = parseInt(String(m[1] || ''), 10);
+        if (isFinite(jet) && jet > 0 && jet <= 9) return jet;
+      }
+
+      return 0;
+    }
+
+    function buildFlightRosterRows(data){
+      const server = (data && data.Server) || {};
+      const pilotName = String(server.PlayerUsername || '').trim();
+      const pilotCallsign = String(server.PlayerCallsign || '').trim();
+      const source = Array.isArray(server.FlightMembers) ? server.FlightMembers : [];
+      const rows = [];
+      const seen = {};
+
+      function makeKey(callsign, pilot){
+        const c = String(callsign || '').trim().toUpperCase();
+        if (c) return c;
+        return ('P:' + String(pilot || '').trim().toUpperCase());
+      }
+
+      function upsert(callsign, pilot, jet){
+        const safeCall = String(callsign || '').trim();
+        const safePilot = String(pilot || '').trim();
+        const safeJet = isFinite(Number(jet)) ? Math.round(Number(jet)) : 0;
+        if (!safeCall && !safePilot) return;
+
+        const key = makeKey(safeCall, safePilot);
+        if (!key) return;
+        if (!seen[key]){
+          seen[key] = { callsign: safeCall, pilot: safePilot, jet: safeJet };
+          rows.push(seen[key]);
+          return;
+        }
+
+        if (!seen[key].pilot && safePilot) seen[key].pilot = safePilot;
+        if (!seen[key].callsign && safeCall) seen[key].callsign = safeCall;
+        if ((!seen[key].jet || seen[key].jet <= 0) && safeJet > 0) seen[key].jet = safeJet;
+      }
+
+      if (pilotName || pilotCallsign){
+        upsert(pilotCallsign, pilotName || 'PLAYER', extractJetFromCallsign(pilotCallsign) || 1);
+      }
+
+      source.forEach(function(member){
+        if (!member || typeof member !== 'object') return;
+        const callsign = String(member.Callsign || '').trim();
+        const pilot = String(member.Pilot || '').trim();
+        const jet = Number(member.Jet);
+        upsert(callsign, pilot, isFinite(jet) ? Math.round(jet) : extractJetFromCallsign(callsign));
+      });
+
+      const usedJets = {};
+      rows.forEach(function(r){
+        if (isFinite(r.jet) && r.jet > 0) usedJets[r.jet] = true;
+      });
+      let fallbackJet = 1;
+      rows.forEach(function(r){
+        if (isFinite(r.jet) && r.jet > 0) return;
+        while (usedJets[fallbackJet]) fallbackJet++;
+        r.jet = fallbackJet;
+        usedJets[fallbackJet] = true;
+      });
+
+      rows.sort(function(a, b){
+        const aj = Number(a.jet) || 99;
+        const bj = Number(b.jet) || 99;
+        if (aj !== bj) return aj - bj;
+        return String(a.callsign || '').localeCompare(String(b.callsign || ''));
+      });
+
+      return rows.slice(0, 8);
+    }
+
+    function formatFlightRosterHtml(data){
+      const rows = buildFlightRosterRows(data);
+      let html = '<div class=""fltPlanCrewWrap""><table class=""fltPlanCrewTable""><thead><tr><th>PILOT</th><th style=""width:80px;"">JET</th></tr></thead><tbody>';
+      if (!rows.length){
+        html += '<tr><td class=""fltPlanCrewPilot"">No flight members detected.</td><td class=""fltPlanCrewJet"">-</td></tr>';
+      } else {
+        rows.forEach(function(r){
+          const pilot = String(r.pilot || '').trim() || (String(r.callsign || '').trim() ? ('AI / ' + String(r.callsign || '').trim()) : '-');
+          html += '<tr><td class=""fltPlanCrewPilot"">' + escapeHtml(pilot) + '</td><td class=""fltPlanCrewJet"">' + escapeHtml(String(r.jet || '-')) + '</td></tr>';
+        });
+      }
+      html += '</tbody></table></div>';
+      return html;
+    }
+
     function renderFlightPlanBoardHtml(selected, data, primaryRouteName, sourceLabel, sourceFileName, waypoints, cmdsBlockHtml, pageSwitcherHtml){
       const rows = Array.isArray(waypoints) ? waypoints.slice() : [];
       applyTypeOverrides(rows, selected);
@@ -6231,7 +6438,9 @@ namespace VAICOM
       html += '<div class=""fltPlanHeaderCell""><div class=""fltPlanHeaderCellLabel"">WAYPOINTS</div><div class=""fltPlanHeaderCellValue"">' + escapeHtml(String(rows.length)) + '</div></div>';
       html += '</div>';
       if (pageSwitcherHtml){
-        html += '<div style=""margin:4px 0 2px 0;"">' + pageSwitcherHtml + '</div>';
+        html += '<div class=""fltPlanToolbar""><span class=""fltPlanToolbarLeft"">' + pageSwitcherHtml + '</span><span class=""fltPlanToolbarRight""><button type=""button"" class=""fltPlanPageBtn"" data-postflight-toggle=""1"">' + (postFlightOpen ? 'Hide POST FLT' : 'POST FLT') + '</button></span></div>';
+      } else {
+        html += '<div class=""fltPlanToolbar""><span class=""fltPlanToolbarLeft""></span><span class=""fltPlanToolbarRight""><button type=""button"" class=""fltPlanPageBtn"" data-postflight-toggle=""1"">' + (postFlightOpen ? 'Hide POST FLT' : 'POST FLT') + '</button></span></div>';
       }
 
       html += '<div class=""fltPlanTimeGrid"">';
@@ -6241,13 +6450,14 @@ namespace VAICOM
       html += '<div class=""fltPlanTimeCell clickable"" data-tko-anchor=""TAKEOFF"" title=""Set TAKEOFF to current clock""><div class=""fltPlanTimeCellLabel"">TAKEOFF</div><div class=""fltPlanTimeCellValue""><div class=""fltPlanAdjustCell""><button type=""button"" class=""fltPlanMiniBtn"" data-tko-adjust-sec=""-1"" title=""-1 second"">«</button><button type=""button"" class=""fltPlanMiniBtn"" data-tko-adjust=""-60"" title=""-1 minute"">◀</button><span class=""fltPlanSpdValue"">' + escapeHtml(timing.takeoff) + '</span><button type=""button"" class=""fltPlanMiniBtn"" data-tko-adjust=""60"" title=""+1 minute"">▶</button><button type=""button"" class=""fltPlanMiniBtn"" data-tko-adjust-sec=""1"" title=""+1 second"">»</button></div></div></div>';
       html += '<div class=""fltPlanTimeCell""><div class=""fltPlanTimeCellLabel"">TOT</div><div class=""fltPlanTimeCellValue""><div class=""fltPlanAdjustCell""><button type=""button"" class=""fltPlanMiniBtn"" data-tot-adjust-sec=""-1"" title=""-1 second"">«</button><button type=""button"" class=""fltPlanMiniBtn"" data-tot-adjust=""-60"" title=""-1 minute"">◀</button><span class=""fltPlanSpdValue"">' + escapeHtml(timing.tot) + '</span><button type=""button"" class=""fltPlanMiniBtn"" data-tot-adjust=""60"" title=""+1 minute"">▶</button><button type=""button"" class=""fltPlanMiniBtn"" data-tot-adjust-sec=""1"" title=""+1 second"">»</button></div></div></div>';
       html += '</div>';
-      html += '<div class=""controls fltPlanControls"" style=""margin:4px 0 8px 0;""><button type=""button"" class=""fltPlanPageBtn"" data-postflight-toggle=""1"">' + (postFlightOpen ? 'Hide POST FLT' : 'POST FLT') + '</button></div>';
       if (postFlightOpen){
         html += '<div class=""fltPlanInfoBlock"" style=""min-height:0; margin-bottom:8px;"">';
         html += '<div class=""fltPlanInfoTitle"">POST FLT</div>';
         html += '<div class=""fltPlanInfoBody"" style=""font-size:12px; line-height:1.2; max-height:220px;"">' + (postFlightSummaryRows.length ? postFlightSummaryRows.map(escapeHtml).join('<br>') : 'No events recorded yet.') + '</div>';
         html += '</div>';
       }
+
+      html += formatFlightRosterHtml(data);
 
       html += '<div class=""fltPlanWpWrap"">';
       html += '<div class=""fltPlanWpTitle"">Route: ' + escapeHtml(primaryRouteName) + '</div>';
@@ -6979,6 +7189,7 @@ namespace VAICOM
         'Theater         : ' + safe(server.Theater),
         'DCS Location    : ' + safe(server.DcsLocation || server.DcsVersion),
         'Aircraft        : ' + safe(server.Aircraft),
+        'Player Name     : ' + safe(server.PlayerUsername),
         'Callsign        : ' + safe(server.PlayerCallsign),
         'Mission         : ' + safe(server.MissionTitle),
         'Multiplayer     : ' + (server.Multiplayer ? 'Yes' : 'No')
@@ -7558,6 +7769,10 @@ namespace VAICOM
       persistDtcListCollapsedState();
     });
 
+    document.getElementById('liveExportMeta').addEventListener('click', function(){
+      applyLiveRefreshState(!liveRefreshEnabled);
+    });
+
     (function(){
       const logo = document.querySelector('.logo');
       if (!logo) return;
@@ -7626,6 +7841,11 @@ namespace VAICOM
     applyContentFontSizeUi();
     drawModeEnabled = readDrawModePreference();
     updateDrawModeToggleUi();
+    liveRefreshEnabled = readLiveRefreshPreference();
+    updateLiveRefreshUi();
+    if (liveRefreshEnabled){
+      applyLiveRefreshState(true);
+    }
     tabKeywordsSplitByTab = readTabKeywordsSplitRatioByTab();
     initTabKeywordsDivider();
     applyCurrentTabKeywordsSplit();
@@ -7646,6 +7866,10 @@ namespace VAICOM
                 private static HttpListener listener;
                 private static Thread listenerThread;
                 private static bool isRunning;
+                private static readonly Guid SavedGamesFolderId = new Guid("4C5C32FF-BB9D-43B0-B5B4-2D72E54EAAA4");
+
+                [DllImport("shell32.dll")]
+                private static extern int SHGetKnownFolderPath([MarshalAs(UnmanagedType.LPStruct)] Guid rfid, uint dwFlags, IntPtr hToken, out IntPtr ppszPath);
 
                 private const int DefaultOpenKneeboardOutPort = 7779;
                 private const string OpenKneeboardPluginsRegistryKey = @"SOFTWARE\Fred Emmott\OpenKneeboard\Plugins\v1";
@@ -8442,6 +8666,31 @@ namespace VAICOM
                     }
                 }
 
+                public static void ForceRefreshOutDashboardData()
+                {
+                    UpdateServerData();
+                    RefreshUnitsForCategory("ATC");
+                    RefreshUnitsForCategory("AWACS");
+                    RefreshUnitsForCategory("Tanker");
+                }
+
+                private static void RefreshUnitsForCategory(string category)
+                {
+                    if (string.IsNullOrWhiteSpace(category))
+                    {
+                        return;
+                    }
+
+                    try
+                    {
+                        KneeboardUnitsData units = new KneeboardUnitsData(category, false);
+                        UpdateUnits(category, units.unitslist);
+                    }
+                    catch
+                    {
+                    }
+                }
+
                 private static List<string> BuildAiCrewKeywords()
                 {
                     try
@@ -8626,6 +8875,13 @@ namespace VAICOM
                         return;
                     }
 
+                    if (path == "/okb/dev/refresh")
+                    {
+                        ForceRefreshOutDashboardData();
+                        WriteJson(context.Response, "{\"ok\":true}");
+                        return;
+                    }
+
                     if (path == "/okb/dtc/list")
                     {
                         RefreshDtcFilesSnapshot();
@@ -8691,6 +8947,7 @@ namespace VAICOM
                                 Theater = responseModel.Server?.Theater ?? "",
                                 DcsLocation = responseModel.Server?.DcsLocation ?? "",
                                 Aircraft = responseModel.Server?.Aircraft ?? "",
+                                PlayerUsername = responseModel.Server?.PlayerUsername ?? "",
                                 PlayerCallsign = responseModel.Server?.PlayerCallsign ?? "",
                                 MissionTitle = responseModel.Server?.MissionTitle ?? "",
                                 MissionBriefing = responseModel.Server?.MissionBriefing ?? "",
@@ -8702,6 +8959,7 @@ namespace VAICOM
                                 Multiplayer = responseModel.Server?.Multiplayer ?? false,
                                 DebugMode = responseModel.Server?.DebugMode ?? false,
                                 AtcMetars = responseModel.Server?.AtcMetars ?? new Dictionary<string, string>(),
+                                FlightMembers = responseModel.Server?.FlightMembers ?? new List<OpenKneeboardFlightMember>(),
                                 Diagnostics = (object)null,
                             },
                             Status = responseModel.Status,
@@ -9163,32 +9421,28 @@ namespace VAICOM
 
                     try
                     {
-                        string userProfile = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
-                        if (string.IsNullOrWhiteSpace(userProfile))
+                        foreach (string savedGames in GetSavedGamesRoots())
                         {
-                            return roots;
-                        }
-
-                        string savedGames = Path.Combine(userProfile, "Saved Games");
-                        if (!Directory.Exists(savedGames))
-                        {
-                            return roots;
-                        }
-
-                        foreach (string dcsRoot in Directory.EnumerateDirectories(savedGames, "DCS*", SearchOption.TopDirectoryOnly))
-                        {
-                            try
+                            if (!Directory.Exists(savedGames))
                             {
-                                string name = Path.GetFileName(dcsRoot);
-                                if (string.IsNullOrWhiteSpace(name) || !name.StartsWith("DCS", StringComparison.OrdinalIgnoreCase))
-                                {
-                                    continue;
-                                }
-
-                                roots.Add(Path.Combine(dcsRoot, "DTC"));
+                                continue;
                             }
-                            catch
+
+                            foreach (string dcsRoot in Directory.EnumerateDirectories(savedGames, "DCS*", SearchOption.TopDirectoryOnly))
                             {
+                                try
+                                {
+                                    string name = Path.GetFileName(dcsRoot);
+                                    if (string.IsNullOrWhiteSpace(name) || !name.StartsWith("DCS", StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        continue;
+                                    }
+
+                                    roots.Add(Path.Combine(dcsRoot, "DTC"));
+                                }
+                                catch
+                                {
+                                }
                             }
                         }
                     }
@@ -9207,55 +9461,51 @@ namespace VAICOM
 
                     try
                     {
-                        string userProfile = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
-                        if (string.IsNullOrWhiteSpace(userProfile))
+                        foreach (string savedGames in GetSavedGamesRoots())
                         {
-                            return files;
-                        }
-
-                        string savedGames = Path.Combine(userProfile, "Saved Games");
-                        if (!Directory.Exists(savedGames))
-                        {
-                            return files;
-                        }
-
-                        foreach (string dcsRoot in Directory.EnumerateDirectories(savedGames, "DCS*", SearchOption.TopDirectoryOnly))
-                        {
-                            try
+                            if (!Directory.Exists(savedGames))
                             {
-                                string name = Path.GetFileName(dcsRoot);
-                                if (string.IsNullOrWhiteSpace(name) || !name.StartsWith("DCS", StringComparison.OrdinalIgnoreCase))
-                                {
-                                    continue;
-                                }
+                                continue;
+                            }
 
-                                string routeDir = Path.Combine(dcsRoot, "Config", "RouteToolPresets");
-                                if (!Directory.Exists(routeDir))
+                            foreach (string dcsRoot in Directory.EnumerateDirectories(savedGames, "DCS*", SearchOption.TopDirectoryOnly))
+                            {
+                                try
                                 {
-                                    continue;
-                                }
-
-                                string activeTheater = string.IsNullOrWhiteSpace(State.currentstate == null ? "" : State.currentstate.theatre)
-                                    ? ""
-                                    : State.currentstate.theatre.Trim();
-
-                                if (!string.IsNullOrWhiteSpace(activeTheater))
-                                {
-                                    string activeFile = Path.Combine(routeDir, activeTheater + ".lua");
-                                    if (File.Exists(activeFile))
+                                    string name = Path.GetFileName(dcsRoot);
+                                    if (string.IsNullOrWhiteSpace(name) || !name.StartsWith("DCS", StringComparison.OrdinalIgnoreCase))
                                     {
-                                        files.Add(Path.GetFullPath(activeFile));
                                         continue;
                                     }
-                                }
 
-                                foreach (string fallback in Directory.EnumerateFiles(routeDir, "*.lua", SearchOption.TopDirectoryOnly))
-                                {
-                                    files.Add(Path.GetFullPath(fallback));
+                                    string routeDir = Path.Combine(dcsRoot, "Config", "RouteToolPresets");
+                                    if (!Directory.Exists(routeDir))
+                                    {
+                                        continue;
+                                    }
+
+                                    string activeTheater = string.IsNullOrWhiteSpace(State.currentstate == null ? "" : State.currentstate.theatre)
+                                        ? ""
+                                        : State.currentstate.theatre.Trim();
+
+                                    if (!string.IsNullOrWhiteSpace(activeTheater))
+                                    {
+                                        string activeFile = Path.Combine(routeDir, activeTheater + ".lua");
+                                        if (File.Exists(activeFile))
+                                        {
+                                            files.Add(Path.GetFullPath(activeFile));
+                                            continue;
+                                        }
+                                    }
+
+                                    foreach (string fallback in Directory.EnumerateFiles(routeDir, "*.lua", SearchOption.TopDirectoryOnly))
+                                    {
+                                        files.Add(Path.GetFullPath(fallback));
+                                    }
                                 }
-                            }
-                            catch
-                            {
+                                catch
+                                {
+                                }
                             }
                         }
                     }
@@ -9275,32 +9525,28 @@ namespace VAICOM
 
                     try
                     {
-                        string userProfile = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
-                        if (string.IsNullOrWhiteSpace(userProfile))
+                        foreach (string savedGames in GetSavedGamesRoots())
                         {
-                            return roots;
-                        }
-
-                        string savedGames = Path.Combine(userProfile, "Saved Games");
-                        if (!Directory.Exists(savedGames))
-                        {
-                            return roots;
-                        }
-
-                        foreach (string dcsRoot in Directory.EnumerateDirectories(savedGames, "DCS*", SearchOption.TopDirectoryOnly))
-                        {
-                            try
+                            if (!Directory.Exists(savedGames))
                             {
-                                string name = Path.GetFileName(dcsRoot);
-                                if (string.IsNullOrWhiteSpace(name) || !name.StartsWith("DCS", StringComparison.OrdinalIgnoreCase))
-                                {
-                                    continue;
-                                }
-
-                                roots.Add(Path.Combine(dcsRoot, "Missions"));
+                                continue;
                             }
-                            catch
+
+                            foreach (string dcsRoot in Directory.EnumerateDirectories(savedGames, "DCS*", SearchOption.TopDirectoryOnly))
                             {
+                                try
+                                {
+                                    string name = Path.GetFileName(dcsRoot);
+                                    if (string.IsNullOrWhiteSpace(name) || !name.StartsWith("DCS", StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        continue;
+                                    }
+
+                                    roots.Add(Path.Combine(dcsRoot, "Missions"));
+                                }
+                                catch
+                                {
+                                }
                             }
                         }
                     }
@@ -9311,6 +9557,67 @@ namespace VAICOM
                     return roots
                         .Distinct(StringComparer.OrdinalIgnoreCase)
                         .ToList();
+                }
+
+                private static List<string> GetSavedGamesRoots()
+                {
+                    List<string> roots = new List<string>();
+
+                    try
+                    {
+                        string knownFolderPath = GetKnownFolderPath(SavedGamesFolderId);
+                        if (!string.IsNullOrWhiteSpace(knownFolderPath))
+                        {
+                            roots.Add(Path.GetFullPath(knownFolderPath));
+                        }
+                    }
+                    catch
+                    {
+                    }
+
+                    try
+                    {
+                        string userProfile = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+                        if (!string.IsNullOrWhiteSpace(userProfile))
+                        {
+                            roots.Add(Path.GetFullPath(Path.Combine(userProfile, "Saved Games")));
+                        }
+                    }
+                    catch
+                    {
+                    }
+
+                    return roots
+                        .Where(p => !string.IsNullOrWhiteSpace(p))
+                        .Distinct(StringComparer.OrdinalIgnoreCase)
+                        .ToList();
+                }
+
+                private static string GetKnownFolderPath(Guid folderId)
+                {
+                    IntPtr outPath = IntPtr.Zero;
+
+                    try
+                    {
+                        int hr = SHGetKnownFolderPath(folderId, 0, IntPtr.Zero, out outPath);
+                        if (hr != 0 || outPath == IntPtr.Zero)
+                        {
+                            return "";
+                        }
+
+                        return Marshal.PtrToStringUni(outPath) ?? "";
+                    }
+                    catch
+                    {
+                        return "";
+                    }
+                    finally
+                    {
+                        if (outPath != IntPtr.Zero)
+                        {
+                            Marshal.FreeCoTaskMem(outPath);
+                        }
+                    }
                 }
 
                 private static bool IsDtcExtension(string path)
@@ -9583,6 +9890,7 @@ namespace VAICOM
                                     ? State.currentstate.clientversion
                                     : State.currentstate.root);
                             server.Aircraft = State.currentstate.id;
+                            server.PlayerUsername = State.currentstate.playerusername;
                             server.PlayerCallsign = State.currentstate.playercallsign;
                             server.MissionTitle = State.currentstate.missiontitle;
                             server.MissionBriefing = State.currentstate.missionbriefing;
@@ -9611,6 +9919,7 @@ namespace VAICOM
                                 ? new Dictionary<string, string>()
                                 : new Dictionary<string, string>(State.currentstate.atcmetars);
                             server.Diagnostics = State.currentstate.diagnostics;
+                            server.FlightMembers = BuildFlightMemberSnapshot();
                             server.FriendlyAssets = BuildFriendlyAssetsSnapshot();
                         }
                     }
@@ -9619,6 +9928,198 @@ namespace VAICOM
                     }
 
                     return server;
+                }
+
+                private static List<OpenKneeboardFlightMember> BuildFlightMemberSnapshot()
+                {
+                    List<OpenKneeboardFlightMember> members = new List<OpenKneeboardFlightMember>();
+
+                    try
+                    {
+                        if (State.currentstate == null)
+                        {
+                            return members;
+                        }
+
+                        string playerCallsign = string.IsNullOrWhiteSpace(State.currentstate.playercallsign) ? "" : State.currentstate.playercallsign.Trim();
+                        string playerName = string.IsNullOrWhiteSpace(State.currentstate.playerusername) ? "" : State.currentstate.playerusername.Trim();
+                        int playerJet = ParseJetPositionFromCallsign(playerCallsign);
+
+                        if (!string.IsNullOrWhiteSpace(playerCallsign) || !string.IsNullOrWhiteSpace(playerName))
+                        {
+                            members.Add(new OpenKneeboardFlightMember
+                            {
+                                Callsign = playerCallsign,
+                                Pilot = playerName,
+                                Jet = playerJet > 0 ? playerJet : 1,
+                            });
+                        }
+
+                        List<Servers.Server.DcsUnit> flightUnits = null;
+                        if (State.currentstate.availablerecipients != null)
+                        {
+                            State.currentstate.availablerecipients.TryGetValue("Flight", out flightUnits);
+                        }
+
+                        if (flightUnits != null)
+                        {
+                            foreach (Servers.Server.DcsUnit unit in flightUnits
+                                .Where(u => u != null)
+                                .OrderBy(u => u.range)
+                                .ThenBy(u => u.callsign, StringComparer.OrdinalIgnoreCase))
+                            {
+                                string callsign = string.IsNullOrWhiteSpace(unit.callsign)
+                                    ? (unit.fullname ?? "")
+                                    : unit.callsign.Trim();
+
+                                string pilot = "";
+                                if (unit.ishuman)
+                                {
+                                    pilot = string.IsNullOrWhiteSpace(unit.playerid) ? "" : unit.playerid.Trim();
+                                }
+
+                                int jet = ParseJetPositionFromCallsign(callsign);
+                                UpsertFlightMember(members, callsign, pilot, jet);
+                            }
+                        }
+
+                        FillMissingFlightJets(members);
+
+                        members = members
+                            .Where(m => !string.IsNullOrWhiteSpace(m.Callsign) || !string.IsNullOrWhiteSpace(m.Pilot))
+                            .OrderBy(m => m.Jet <= 0 ? 99 : m.Jet)
+                            .ThenBy(m => m.Callsign, StringComparer.OrdinalIgnoreCase)
+                            .Take(8)
+                            .ToList();
+                    }
+                    catch
+                    {
+                    }
+
+                    return members;
+                }
+
+                private static void UpsertFlightMember(List<OpenKneeboardFlightMember> members, string callsign, string pilot, int jet)
+                {
+                    if (members == null)
+                    {
+                        return;
+                    }
+
+                    string safeCallsign = string.IsNullOrWhiteSpace(callsign) ? "" : callsign.Trim();
+                    string safePilot = string.IsNullOrWhiteSpace(pilot) ? "" : pilot.Trim();
+                    if (string.IsNullOrWhiteSpace(safeCallsign) && string.IsNullOrWhiteSpace(safePilot))
+                    {
+                        return;
+                    }
+
+                    OpenKneeboardFlightMember existing = null;
+                    if (!string.IsNullOrWhiteSpace(safeCallsign))
+                    {
+                        existing = members.FirstOrDefault(m => string.Equals(m.Callsign, safeCallsign, StringComparison.OrdinalIgnoreCase));
+                    }
+
+                    if (existing == null)
+                    {
+                        existing = new OpenKneeboardFlightMember
+                        {
+                            Callsign = safeCallsign,
+                            Pilot = safePilot,
+                            Jet = jet > 0 ? jet : 0,
+                        };
+                        members.Add(existing);
+                        return;
+                    }
+
+                    if (string.IsNullOrWhiteSpace(existing.Pilot) && !string.IsNullOrWhiteSpace(safePilot))
+                    {
+                        existing.Pilot = safePilot;
+                    }
+
+                    if (string.IsNullOrWhiteSpace(existing.Callsign) && !string.IsNullOrWhiteSpace(safeCallsign))
+                    {
+                        existing.Callsign = safeCallsign;
+                    }
+
+                    if ((existing.Jet <= 0) && jet > 0)
+                    {
+                        existing.Jet = jet;
+                    }
+                }
+
+                private static int ParseJetPositionFromCallsign(string callsign)
+                {
+                    try
+                    {
+                        string text = (callsign ?? "").Trim();
+                        if (text.Length == 0)
+                        {
+                            return 0;
+                        }
+
+                        Match pair = Regex.Match(text, @"(\d{2})\s*$");
+                        if (pair.Success)
+                        {
+                            string value = pair.Groups[1].Value;
+                            if (value.Length >= 2)
+                            {
+                                int jet;
+                                if (int.TryParse(value.Substring(value.Length - 1, 1), out jet) && jet > 0 && jet <= 9)
+                                {
+                                    return jet;
+                                }
+                            }
+                        }
+
+                        Match single = Regex.Match(text, @"(\d)\s*$");
+                        if (single.Success)
+                        {
+                            int jet;
+                            if (int.TryParse(single.Groups[1].Value, out jet) && jet > 0 && jet <= 9)
+                            {
+                                return jet;
+                            }
+                        }
+                    }
+                    catch
+                    {
+                    }
+
+                    return 0;
+                }
+
+                private static void FillMissingFlightJets(List<OpenKneeboardFlightMember> members)
+                {
+                    if (members == null || members.Count == 0)
+                    {
+                        return;
+                    }
+
+                    HashSet<int> used = new HashSet<int>();
+                    foreach (OpenKneeboardFlightMember member in members)
+                    {
+                        if (member != null && member.Jet > 0)
+                        {
+                            used.Add(member.Jet);
+                        }
+                    }
+
+                    int fallback = 1;
+                    foreach (OpenKneeboardFlightMember member in members)
+                    {
+                        if (member == null || member.Jet > 0)
+                        {
+                            continue;
+                        }
+
+                        while (used.Contains(fallback))
+                        {
+                            fallback++;
+                        }
+
+                        member.Jet = fallback;
+                        used.Add(fallback);
+                    }
                 }
 
                 private static List<OpenKneeboardFriendlyAsset> BuildFriendlyAssetsSnapshot()
@@ -9823,6 +10324,7 @@ namespace VAICOM
                 public string Theater { get; set; } = "";
                 public string DcsLocation { get; set; } = "";
                 public string Aircraft { get; set; } = "";
+                public string PlayerUsername { get; set; } = "";
                 public string PlayerCallsign { get; set; } = "";
                 public string MissionTitle { get; set; } = "";
                 public string MissionBriefing { get; set; } = "";
@@ -9836,6 +10338,7 @@ namespace VAICOM
                 public object Payload { get; set; } = null;
                 public List<Servers.Server.RadioDevice> Radios { get; set; } = new List<Servers.Server.RadioDevice>();
                 public Dictionary<string, string> AtcMetars { get; set; } = new Dictionary<string, string>();
+                public List<OpenKneeboardFlightMember> FlightMembers { get; set; } = new List<OpenKneeboardFlightMember>();
                 public List<OpenKneeboardFriendlyAsset> FriendlyAssets { get; set; } = new List<OpenKneeboardFriendlyAsset>();
                 public object Diagnostics { get; set; } = null;
 
@@ -9846,6 +10349,7 @@ namespace VAICOM
                         Theater = Theater,
                         DcsLocation = DcsLocation,
                         Aircraft = Aircraft,
+                        PlayerUsername = PlayerUsername,
                         PlayerCallsign = PlayerCallsign,
                         MissionTitle = MissionTitle,
                         MissionBriefing = MissionBriefing,
@@ -9859,10 +10363,30 @@ namespace VAICOM
                         Payload = Payload,
                         Radios = Radios == null ? new List<Servers.Server.RadioDevice>() : new List<Servers.Server.RadioDevice>(Radios),
                         AtcMetars = new Dictionary<string, string>(AtcMetars ?? new Dictionary<string, string>()),
+                        FlightMembers = FlightMembers == null
+                            ? new List<OpenKneeboardFlightMember>()
+                            : FlightMembers.ConvertAll(member => member == null ? null : member.Clone()).FindAll(member => member != null),
                         FriendlyAssets = FriendlyAssets == null
                             ? new List<OpenKneeboardFriendlyAsset>()
                             : FriendlyAssets.ConvertAll(functionAsset => functionAsset == null ? null : functionAsset.Clone()).FindAll(functionAsset => functionAsset != null),
                         Diagnostics = Diagnostics,
+                    };
+                }
+            }
+
+            public class OpenKneeboardFlightMember
+            {
+                public string Pilot { get; set; } = "";
+                public string Callsign { get; set; } = "";
+                public int Jet { get; set; }
+
+                public OpenKneeboardFlightMember Clone()
+                {
+                    return new OpenKneeboardFlightMember
+                    {
+                        Pilot = Pilot,
+                        Callsign = Callsign,
+                        Jet = Jet,
                     };
                 }
             }
