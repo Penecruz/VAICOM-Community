@@ -4,6 +4,7 @@ using NAudio.Wave.SampleProviders;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Reflection;
 using System.Windows.Forms;
 using VAICOM.Database;
 using VAICOM.PushToTalk;
@@ -18,6 +19,8 @@ namespace VAICOM
 
             public static partial class Processor
             {
+                private static Delegate ttsPlaybackStoppedHandler;
+
                 public class AudioDeviceObject
                 {
                     public int number;
@@ -44,6 +47,68 @@ namespace VAICOM
                         }
                     }
                     return value;
+                }
+
+                private static void TryAttachPlaybackStoppedHandler()
+                {
+                    try
+                    {
+                        if (State.ttsoutput == null)
+                        {
+                            return;
+                        }
+
+                        EventInfo evt = State.ttsoutput.GetType().GetEvent("PlaybackStopped");
+                        if (evt == null || evt.EventHandlerType == null)
+                        {
+                            return;
+                        }
+
+                        MethodInfo method = typeof(Processor).GetMethod("audioOutput_PlaybackStopped", BindingFlags.Public | BindingFlags.Static);
+                        if (method == null)
+                        {
+                            return;
+                        }
+
+                        Delegate handler = Delegate.CreateDelegate(evt.EventHandlerType, method, false);
+                        if (handler == null)
+                        {
+                            return;
+                        }
+
+                        evt.AddEventHandler(State.ttsoutput, handler);
+                        ttsPlaybackStoppedHandler = handler;
+                    }
+                    catch
+                    {
+                    }
+                }
+
+                private static void TryDetachPlaybackStoppedHandler()
+                {
+                    try
+                    {
+                        if (State.ttsoutput == null || ttsPlaybackStoppedHandler == null)
+                        {
+                            return;
+                        }
+
+                        EventInfo evt = State.ttsoutput.GetType().GetEvent("PlaybackStopped");
+                        if (evt == null)
+                        {
+                            ttsPlaybackStoppedHandler = null;
+                            return;
+                        }
+
+                        evt.RemoveEventHandler(State.ttsoutput, ttsPlaybackStoppedHandler);
+                    }
+                    catch
+                    {
+                    }
+                    finally
+                    {
+                        ttsPlaybackStoppedHandler = null;
+                    }
                 }
 
                 public static void InsertResourcesForPlayback(List<string> resourcelist)
@@ -247,7 +312,7 @@ namespace VAICOM
                         else
                         {
                             State.ttsoutput.Init(merged);
-                            State.ttsoutput.PlaybackStopped += new EventHandler<StoppedEventArgs>(Processor.audioOutput_PlaybackStopped);
+                            TryAttachPlaybackStoppedHandler();
                             State.ttsoutput.Play();
                         }
                     }
@@ -382,23 +447,35 @@ namespace VAICOM
 
                 public static void InitTTSPlaybackStream()
                 {
-                    int devicecount = WaveOut.DeviceCount;
-
-                    LoadAudioDevicesSafe();
-
-                    State.ttsoutput = new NAudio.Wave.WaveOut();
-
-                    State.ttsoutput.DeviceNumber = State.activeconfig.AudioDeviceNumber;
-                    State.ttsoutput.NumberOfBuffers = 2;
-                    State.ttsoutput.DesiredLatency = 100;
-
                     try
                     {
+                        int devicecount = WaveOut.DeviceCount;
+
+                        LoadAudioDevicesSafe();
+
+                        if (State.ttsoutput != null)
+                        {
+                            try
+                            {
+                                TryDetachPlaybackStoppedHandler();
+                                State.ttsoutput.Dispose();
+                            }
+                            catch
+                            {
+                            }
+                        }
+
+                        State.ttsoutput = new NAudio.Wave.WaveOut();
+                        State.ttsoutput.DeviceNumber = State.activeconfig.AudioDeviceNumber;
+                        State.ttsoutput.NumberOfBuffers = 2;
+                        State.ttsoutput.DesiredLatency = 100;
+
                         State.ttsmixer = new MixingSampleProvider(WaveFormat.CreateIeeeFloatWaveFormat(22050, 2));
                         State.ttsmixer.ReadFully = true;
 
                         State.ttsoutput.Init(State.ttsmixer);
                         State.ttsoutput.Play();
+                        TryAttachPlaybackStoppedHandler();
                         State.currentaudiodevicevalid = true;
 
                         //Log.Write("Initialized new stream for device " + State.activeconfig.AudioDeviceNumber, Colors.Warning);
@@ -406,19 +483,37 @@ namespace VAICOM
                     }
                     catch (Exception e)
                     {
+                        string deviceName = "Default audio device";
+                        int configuredDevice = State.activeconfig.AudioDeviceNumber;
+                        if (configuredDevice >= 0 && configuredDevice < State.audiodeviceobjects.Count)
+                        {
+                            deviceName = State.audiodeviceobjects[configuredDevice].name;
+                        }
 
-                        Log.Write("Device " + State.audiodeviceobjects[State.activeconfig.AudioDeviceNumber].name + " could not be initialized..", Colors.Text);
+                        Log.Write("Device " + deviceName + " could not be initialized: " + e.Message, Colors.Text);
                         State.currentaudiodevicevalid = false;
-                    }
 
-                    State.ttsoutput.PlaybackStopped += new EventHandler<StoppedEventArgs>(audioOutput_PlaybackStopped);
+                        try
+                        {
+                            if (State.ttsoutput != null)
+                            {
+                                State.ttsoutput.Dispose();
+                            }
+                        }
+                        catch
+                        {
+                        }
+
+                        State.ttsoutput = null;
+                        State.ttsmixer = null;
+                    }
                 }
 
                 public static void CloseTTSPlaybackStream()
                 {
                     try
                     {
-                        State.ttsoutput.PlaybackStopped -= new EventHandler<StoppedEventArgs>(audioOutput_PlaybackStopped);
+                        TryDetachPlaybackStoppedHandler();
                         State.ttsoutput.Dispose();
                     }
                     catch
@@ -566,9 +661,40 @@ namespace VAICOM
                 {
                     try
                     {
+                        if (!State.activeconfig.Redirect_World_Speech)
+                        {
+                            State.currentaudiodevicevalid = false;
+                            return;
+                        }
 
-                        State.ttsoutput.Stop();
-                        State.ttsoutput.Dispose();
+                        if (State.ttsmixer == null)
+                        {
+                            State.currentaudiodevicevalid = false;
+                            Log.Write("World audio redirect unavailable: playback mixer is not initialized.", Colors.Warning);
+                            return;
+                        }
+
+                        if (State.ttsoutput != null)
+                        {
+                            try
+                            {
+                                State.ttsoutput.Stop();
+                            }
+                            catch
+                            {
+                            }
+
+                            try
+                            {
+                                TryDetachPlaybackStoppedHandler();
+                                State.ttsoutput.Dispose();
+                            }
+                            catch
+                            {
+                            }
+                        }
+
+                        State.ttsoutput = new NAudio.Wave.WaveOut();
 
                         //Log.Write("Starting new output at device number " + State.activeconfig.AudioDeviceNumber, Static.Colors.Critical);
                         string devname = MMDeviceName(State.activeconfig.AudioDeviceNumber);
@@ -589,18 +715,26 @@ namespace VAICOM
 
                         State.ttsoutput.DeviceNumber = targetdevicenum;
                         State.ttsoutput.Init(State.ttsmixer);
+                        TryAttachPlaybackStoppedHandler();
                         State.ttsoutput.Play();
                         State.currentaudiodevicevalid = true;
                     }
                     catch (Exception e)
                     {
+                        string deviceName = "Default audio device";
                         try
                         {
-                            Log.Write("Device " + State.audiodeviceobjects[1 + State.activeconfig.AudioDeviceNumber].name + " could not be initialized.", Colors.Text);
+                            int configuredDevice = State.activeconfig.AudioDeviceNumber;
+                            if (configuredDevice >= 0 && configuredDevice < State.audiodeviceobjects.Count)
+                            {
+                                deviceName = State.audiodeviceobjects[configuredDevice].name;
+                            }
                         }
                         catch
                         {
                         }
+
+                        Log.Write("Device " + deviceName + " could not be initialized: " + e.Message, Colors.Text);
                         State.currentaudiodevicevalid = false;
                     }
 

@@ -396,9 +396,14 @@ namespace VAICOM
                     updaterequest.forcedcallsigns = Languages.localization.languages[State.activeconfig.CallsignsLanguage];
                     updaterequest.operatedial = State.activeconfig.OperateDial;
                     updaterequest.redirect_world_speech = State.activeconfig.Redirect_World_Speech;
-                    updaterequest.fc3 = State.currentmodule.IsFC;
-                    updaterequest.AIRIO = State.currentmodule.Equals(Products.DCSmodules.LookupTable[State.riomod]);
+                    updaterequest.fc3 = State.currentmodule != null && State.currentmodule.IsFC;
+                    updaterequest.AIRIO = State.currentmodule != null && State.currentmodule.Equals(Products.DCSmodules.LookupTable[State.riomod]);
                     updaterequest.carriersuppressauto = State.activeconfig.CarrierSuppressAuto;
+
+                    if (State.SendSocket == null || State.SendIpEndPoint == null)
+                    {
+                        return "";
+                    }
 
                     string formatmessage = JsonConvert.SerializeObject(updaterequest);
                     byte[] sendbuffer = Encoding.UTF8.GetBytes(formatmessage);

@@ -127,6 +127,11 @@ namespace VAICOM
             {
                 try
                 {
+                    if (!State.activeconfig.Redirect_World_Speech)
+                    {
+                        return;
+                    }
+
                     int currentdevicenumber = State.activeconfig.AudioDeviceNumber;
                     int newvalue = AudioDevice_Selector.SelectedIndex - 1;
 

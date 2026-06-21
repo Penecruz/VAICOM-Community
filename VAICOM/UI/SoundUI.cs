@@ -13,12 +13,23 @@ namespace VAICOM
 
             public static void AddSoundToMixer(object playbackfile)
             {
-                Stream fragment = (Stream)playbackfile;
-                WaveFileReader reader = new WaveFileReader(fragment);
-                var upsampler = new WaveFormatConversionStream(new WaveFormat(22050, 16, 2), reader);
-                var vol = new NAudio.Wave.SampleProviders.VolumeSampleProvider(upsampler.ToSampleProvider());
-                vol.Volume = 1.0f;
-                State.ttsmixer.AddMixerInput(vol);
+                try
+                {
+                    if (State.ttsmixer == null || !State.currentaudiodevicevalid)
+                    {
+                        return;
+                    }
+
+                    Stream fragment = (Stream)playbackfile;
+                    WaveFileReader reader = new WaveFileReader(fragment);
+                    var upsampler = new WaveFormatConversionStream(new WaveFormat(22050, 16, 2), reader);
+                    var vol = new NAudio.Wave.SampleProviders.VolumeSampleProvider(upsampler.ToSampleProvider());
+                    vol.Volume = 1.0f;
+                    State.ttsmixer.AddMixerInput(vol);
+                }
+                catch
+                {
+                }
             }
 
             public static void TestNoise()

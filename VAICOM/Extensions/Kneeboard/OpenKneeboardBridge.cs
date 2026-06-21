@@ -481,10 +481,10 @@ namespace VAICOM
 
     function getMudMapAssetKind(asset){
       const category = String((asset && asset.category) || '').toUpperCase();
-      const text = (category + ' ' + String((asset && asset.name) || '').toUpperCase());
-      if (text.indexOf('TANKER') >= 0 || text.indexOf('REFUEL') >= 0) return 'tanker';
-      if (text.indexOf('AWACS') >= 0) return 'awacs';
-      if (text.indexOf('JTAC') >= 0) return 'jtac';
+      if (category === 'TANKER') return 'tanker';
+      if (category === 'AWACS') return 'awacs';
+      if (category === 'JTAC') return 'jtac';
+      const text = String((asset && asset.name) || '').toUpperCase();
       if (text.indexOf('HELO') >= 0 || text.indexOf('HELICOPTER') >= 0 || text.indexOf('ROTOR') >= 0) return 'rotary';
       return 'fixed';
     }
@@ -957,6 +957,15 @@ namespace VAICOM
     .fltPlanWpTableWrap { flex: 1 1 auto; min-height: 0; overflow: auto; }
     .fltPlanWpTable th, .fltPlanWpTable td { border: 1px solid #a3adb6; padding: 3px 4px; font-size: 15px; line-height: 1.15; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: center; vertical-align: middle; }
     .fltPlanWpTable th { background: #e4e8ec; font-weight: 700; }
+    .fltPlanWpRowSkipped { opacity: 0.45; background: #eef1f4; }
+    .fltPlanWpRowDirectSource td { box-shadow: inset 0 0 0 1px rgba(31, 111, 67, 0.55); }
+    .fltPlanWpRowDirectTarget td { box-shadow: inset 0 0 0 1px rgba(46, 110, 184, 0.55); }
+    .fltPlanWpRowTargetCandidate { cursor: pointer; }
+    .fltPlanWpRowTargetCandidate:hover td { background: #e8f2fd; }
+    .fltPlanStepCellWrap { display: flex; align-items: center; justify-content: center; gap: 4px; }
+    .fltPlanRowActionBtn { display: none; font-family: inherit; font-size: 10px; line-height: 1; padding: 1px 4px; border: 1px solid #6f7f90; background: #f5f7f9; color: #102030; cursor: pointer; }
+    .fltPlanWpRowActionDir .fltPlanRowActionBtn.dir { display: inline-block; }
+    .fltPlanWpRowActionDel .fltPlanRowActionBtn.del { display: inline-block; }
     .fltPlanWpTable th.fltPlanEtaHeader { cursor: pointer; }
     .fltPlanWpTable th.fltPlanEtaHeader:hover { background: #d7e4ef; }
     .fltPlanAltTag { font-size: 11px; margin-left: 4px; color: #455869; }
@@ -1055,6 +1064,9 @@ namespace VAICOM
     body.night-mode .fltPlanWpTable th,
     body.night-mode .fltPlanWpTable td { border-color: #5a6c7f; color: #dfe8f2; }
     body.night-mode .fltPlanWpTable th { background: #2a3541; }
+    body.night-mode .fltPlanWpRowSkipped { background: #2a3440; }
+    body.night-mode .fltPlanWpRowTargetCandidate:hover td { background: #334355; }
+    body.night-mode .fltPlanRowActionBtn { background: #2b3541; color: #e2eaf4; border-color: #5f7184; }
     body.night-mode .fltPlanWpTable th.fltPlanEtaHeader:hover { background: #334253; }
     body.night-mode .fltPlanAltTag { color: #9fb5ca; }
     body.night-mode .fltPlanAtaValue { color: #74a8ff; }
@@ -1185,6 +1197,7 @@ namespace VAICOM
     let fltPlanDtcRouteBySelection = {};
     let fltPlanMapViewBySelection = {};
     let mapPanDrag = null;
+    let navlogRowDrag = null;
     let runtimeFlightPlanSnapshot = null;
     let runtimeFlightPlanSnapshotMissionIdentity = '';
     let lastMissionIdentity = '';
@@ -2482,6 +2495,85 @@ namespace VAICOM
       return list;
     }
 
+    function getDeletedStepSet(state){
+      const s = state || {};
+      const deleted = (s.deletedSteps && typeof s.deletedSteps === 'object') ? s.deletedSteps : {};
+      const set = {};
+      Object.keys(deleted).forEach(function(k){
+        const key = stepToKey(k);
+        if (!key) return;
+        if (!!deleted[k]) set[key] = true;
+      });
+      return set;
+    }
+
+    function getEffectiveRouteRows(rows, state){
+      const list = Array.isArray(rows) ? rows : [];
+      const deletedSet = getDeletedStepSet(state);
+      return list.filter(function(wp){
+        if (!wp || wp.isStart) return false;
+        const key = stepToKey(wp.step);
+        if (!key) return false;
+        return !deletedSet[key];
+      });
+    }
+
+    function clearInvalidDirectToState(state){
+      if (!state || typeof state !== 'object') return;
+      state.directToSourceStep = '';
+      state.directToTargetStep = '';
+    }
+
+    function getDirectToSpanInfo(rows, state){
+      const activeRows = getEffectiveRouteRows(rows, state);
+      const sourceStep = stepToKey(state && state.directToSourceStep);
+      const targetStep = stepToKey(state && state.directToTargetStep);
+      if (!sourceStep || !targetStep || !activeRows.length) return null;
+
+      const sourceIdx = activeRows.findIndex(function(wp){ return stepToKey(wp.step) === sourceStep; });
+      const targetIdx = activeRows.findIndex(function(wp){ return stepToKey(wp.step) === targetStep; });
+      if (sourceIdx < 0 || targetIdx < 0 || targetIdx <= sourceIdx) return null;
+
+      return {
+        activeRows: activeRows,
+        sourceIdx: sourceIdx,
+        targetIdx: targetIdx,
+      };
+    }
+
+    function ensureDirectToStateValid(rows, state){
+      if (!state || typeof state !== 'object') return;
+      const sourceStep = stepToKey(state.directToSourceStep);
+      const targetStep = stepToKey(state.directToTargetStep);
+      if (!sourceStep || !targetStep){
+        if (!sourceStep || !targetStep){
+          if (!sourceStep) state.directToSourceStep = '';
+          if (!targetStep) state.directToTargetStep = '';
+        }
+        return;
+      }
+
+      const span = getDirectToSpanInfo(rows, state);
+      if (!span){
+        clearInvalidDirectToState(state);
+      }
+    }
+
+    function getSkippedStepSet(rows, state){
+      const skipped = {};
+      const span = getDirectToSpanInfo(rows, state);
+      if (!span) return skipped;
+
+      for (let i = span.sourceIdx + 1; i < span.targetIdx; i++){
+        const wp = span.activeRows[i];
+        const key = stepToKey(wp && wp.step);
+        if (!key) continue;
+        skipped[key] = true;
+      }
+
+      return skipped;
+    }
+
     function textHasAny(text, terms){
       const source = String(text || '').toLowerCase();
       for (let i = 0; i < terms.length; i++){
@@ -3657,6 +3749,77 @@ namespace VAICOM
       state.postFlightOpen = !state.postFlightOpen;
     }
 
+    function clearNavlogRowAction(selected){
+      const state = getFlightPlanPlanState(selected);
+      state.rowActionStep = '';
+      state.rowActionMode = '';
+    }
+
+    function setNavlogRowAction(selected, step, mode){
+      const state = getFlightPlanPlanState(selected);
+      const key = stepToKey(step);
+      const actionMode = String(mode || '').toLowerCase();
+      if (!key || (actionMode !== 'dir' && actionMode !== 'del')){
+        clearNavlogRowAction(selected);
+        return;
+      }
+      if (state.rowActionStep === key && state.rowActionMode === actionMode){
+        clearNavlogRowAction(selected);
+        return;
+      }
+      state.rowActionStep = key;
+      state.rowActionMode = actionMode;
+    }
+
+    function deleteNavlogStep(selected, step){
+      const state = getFlightPlanPlanState(selected);
+      const key = stepToKey(step);
+      if (!key) return;
+      if (!state.deletedSteps || typeof state.deletedSteps !== 'object') state.deletedSteps = {};
+      state.deletedSteps[key] = true;
+      if (stepToKey(state.lockedStep) === key) state.lockedStep = '';
+      if (state.speedAdjustments && typeof state.speedAdjustments === 'object') delete state.speedAdjustments[key];
+      if (state.altAdjustments && typeof state.altAdjustments === 'object') delete state.altAdjustments[key];
+      if (state.typeOverrides && typeof state.typeOverrides === 'object') delete state.typeOverrides[key];
+      if (state.ataByStep && typeof state.ataByStep === 'object') delete state.ataByStep[key];
+      if (state.speedRecommendations && typeof state.speedRecommendations === 'object') delete state.speedRecommendations[key];
+      if (state.totPerformanceByStep && typeof state.totPerformanceByStep === 'object') delete state.totPerformanceByStep[key];
+      if (state.rowActionStep === key){
+        state.rowActionStep = '';
+        state.rowActionMode = '';
+      }
+      ensureDirectToStateValid(getPlanWaypointsForRecommendations(selected), state);
+      clearSpeedRecommendations(selected);
+    }
+
+    function setNavlogDirectToSource(selected, step){
+      const state = getFlightPlanPlanState(selected);
+      const key = stepToKey(step);
+      if (!key) return;
+      state.directToSourceStep = key;
+      state.directToTargetStep = '';
+      clearSpeedRecommendations(selected);
+    }
+
+    function setNavlogDirectToTarget(selected, step){
+      const state = getFlightPlanPlanState(selected);
+      const targetKey = stepToKey(step);
+      const sourceKey = stepToKey(state.directToSourceStep);
+      if (!sourceKey || !targetKey || sourceKey === targetKey) return false;
+      state.directToTargetStep = targetKey;
+      const rows = getPlanWaypointsForRecommendations(selected);
+      ensureDirectToStateValid(rows, state);
+      if (!stepToKey(state.directToTargetStep)) return false;
+      clearSpeedRecommendations(selected);
+      return true;
+    }
+
+    function clearNavlogDirectTo(selected){
+      const state = getFlightPlanPlanState(selected);
+      clearInvalidDirectToState(state);
+      clearSpeedRecommendations(selected);
+    }
+
     function toggleWaypointAta(selected, step, plannedEtaText){
       const state = getFlightPlanPlanState(selected);
       if (!state.ataByStep || typeof state.ataByStep !== 'object') state.ataByStep = {};
@@ -3734,7 +3897,7 @@ namespace VAICOM
 
     function getFlightPlanPlanState(selected){
       const key = getFlightPlanEtaStartKey(selected);
-      if (!key) return { speedAdjustments: {}, speedDisplayModes: {}, altAdjustments: {}, typeOverrides: {}, lockedStep: '', totSeconds: NaN, lockedStart: null, timeMarks: {}, timingLog: [], postFlightOpen: false, ataByStep: {}, speedRecommendations: {}, totPerformanceByStep: {}, lastOwnshipPos: null };
+      if (!key) return { speedAdjustments: {}, speedDisplayModes: {}, altAdjustments: {}, typeOverrides: {}, lockedStep: '', totSeconds: NaN, lockedStart: null, timeMarks: {}, timingLog: [], postFlightOpen: false, ataByStep: {}, speedRecommendations: {}, totPerformanceByStep: {}, lastOwnshipPos: null, deletedSteps: {}, directToSourceStep: '', directToTargetStep: '', rowActionStep: '', rowActionMode: '' };
       const existing = fltPlanPlanStateBySelection[key];
       if (existing && typeof existing === 'object'){
         if (!existing.speedAdjustments || typeof existing.speedAdjustments !== 'object') existing.speedAdjustments = {};
@@ -3748,9 +3911,14 @@ namespace VAICOM
         if (!existing.speedRecommendations || typeof existing.speedRecommendations !== 'object') existing.speedRecommendations = {};
         if (!existing.totPerformanceByStep || typeof existing.totPerformanceByStep !== 'object') existing.totPerformanceByStep = {};
         if (!existing.lastOwnshipPos || typeof existing.lastOwnshipPos !== 'object') existing.lastOwnshipPos = null;
+        if (!existing.deletedSteps || typeof existing.deletedSteps !== 'object') existing.deletedSteps = {};
+        if (typeof existing.directToSourceStep !== 'string') existing.directToSourceStep = '';
+        if (typeof existing.directToTargetStep !== 'string') existing.directToTargetStep = '';
+        if (typeof existing.rowActionStep !== 'string') existing.rowActionStep = '';
+        if (typeof existing.rowActionMode !== 'string') existing.rowActionMode = '';
         return existing;
       }
-      const created = { speedAdjustments: {}, speedDisplayModes: {}, altAdjustments: {}, typeOverrides: {}, lockedStep: '', totSeconds: NaN, lockedStart: null, timeMarks: {}, timingLog: [], postFlightOpen: false, ataByStep: {}, speedRecommendations: {}, totPerformanceByStep: {}, lastOwnshipPos: null };
+      const created = { speedAdjustments: {}, speedDisplayModes: {}, altAdjustments: {}, typeOverrides: {}, lockedStep: '', totSeconds: NaN, lockedStart: null, timeMarks: {}, timingLog: [], postFlightOpen: false, ataByStep: {}, speedRecommendations: {}, totPerformanceByStep: {}, lastOwnshipPos: null, deletedSteps: {}, directToSourceStep: '', directToTargetStep: '', rowActionStep: '', rowActionMode: '' };
       fltPlanPlanStateBySelection[key] = created;
       return created;
     }
@@ -4717,15 +4885,35 @@ namespace VAICOM
       const list = Array.isArray(rows) ? rows : [];
       if (!list.length) return list;
 
+      const state = getFlightPlanPlanState(selected);
+      ensureDirectToStateValid(list, state);
+      const skippedSet = getSkippedStepSet(list, state);
+      const routeRows = getEffectiveRouteRows(list, state).filter(function(wp){
+        const key = stepToKey(wp && wp.step);
+        return key && !skippedSet[key];
+      });
+
       const etaMode = hasTakeoffTimeBySelection(selected);
       const baseSeconds = etaMode ? getTakeoffTimeBySelection(selected) : 0;
       let elapsed = 0;
 
       list[0].etaDisplay = formatSecondsToClock(baseSeconds);
 
-      for (let i = 1; i < list.length; i++){
-        const prev = list[i - 1];
-        const curr = list[i];
+      list.forEach(function(wp, idx){
+        if (!wp || idx === 0 || wp.isStart) return;
+        wp.etaDisplay = '-';
+      });
+
+      let prev = (list[0] && list[0].isStart) ? list[0] : null;
+      let routeStartIndex = 0;
+      if (!prev && routeRows.length){
+        routeRows[0].etaDisplay = formatSecondsToClock(baseSeconds);
+        prev = routeRows[0];
+        routeStartIndex = 1;
+      }
+
+      for (let i = routeStartIndex; i < routeRows.length; i++){
+        const curr = routeRows[i];
         const legNm = computeLegDistanceNm(prev, curr);
         const legCas = Number(curr.spd);
         const legAlt = isFinite(Number(curr.altFeet)) ? Number(curr.altFeet) : 0;
@@ -4736,25 +4924,52 @@ namespace VAICOM
 
         elapsed += legSeconds;
         curr.etaDisplay = formatSecondsToClock(baseSeconds + elapsed);
+        prev = curr;
       }
 
       return list;
     }
 
-    function applyHeadingPlan(rows, theater){
+    function applyHeadingPlan(rows, theater, selected){
       const list = Array.isArray(rows) ? rows : [];
       if (!list.length) return list;
 
+      const state = getFlightPlanPlanState(selected);
+      ensureDirectToStateValid(list, state);
+      const skippedSet = getSkippedStepSet(list, state);
+      const routeRows = getEffectiveRouteRows(list, state).filter(function(wp){
+        const key = stepToKey(wp && wp.step);
+        return key && !skippedSet[key];
+      });
+
+      list.forEach(function(wp, idx){
+        if (!wp || idx === 0 || wp.isStart) return;
+        wp.hdg = '-';
+      });
+
+      if (!routeRows.length) return list;
+
       const magVar = Number(getApproxMagVariationDeg(theater));
 
-      for (let i = 0; i < list.length; i++){
-        const curr = list[i];
+      const includeStart = !!(list[0] && list[0].isStart);
+      if (includeStart && routeRows.length > 0){
+        const firstHdg = computeTrueHeadingDeg(list[0], routeRows[0]);
+        const firstMag = isFinite(firstHdg) ? normalizeHeadingDeg(firstHdg - magVar) : NaN;
+        list[0].hdg = formatHeadingDeg(firstMag);
+      }
+
+      for (let i = 0; i < routeRows.length; i++){
+        const curr = routeRows[i];
         let trueHdg = NaN;
 
-        if (i === 0 && list.length > 1){
-          trueHdg = computeTrueHeadingDeg(curr, list[i + 1]);
-        } else if (i > 0){
-          trueHdg = computeTrueHeadingDeg(list[i - 1], curr);
+        if (i === 0){
+          if (includeStart){
+            trueHdg = computeTrueHeadingDeg(list[0], curr);
+          } else if (routeRows.length > 1){
+            trueHdg = computeTrueHeadingDeg(curr, routeRows[i + 1]);
+          }
+        } else {
+          trueHdg = computeTrueHeadingDeg(routeRows[i - 1], curr);
         }
 
         const magnetic = isFinite(trueHdg) ? normalizeHeadingDeg(trueHdg - magVar) : NaN;
@@ -4823,15 +5038,35 @@ namespace VAICOM
       return list;
     }
 
-    function applyDistancePlan(rows){
+    function applyDistancePlan(rows, selected){
       const list = Array.isArray(rows) ? rows : [];
       if (!list.length) return list;
 
+      const state = getFlightPlanPlanState(selected);
+      ensureDirectToStateValid(list, state);
+      const skippedSet = getSkippedStepSet(list, state);
+      const routeRows = getEffectiveRouteRows(list, state).filter(function(wp){
+        const key = stepToKey(wp && wp.step);
+        return key && !skippedSet[key];
+      });
+
       list[0].dist = '-';
-      for (let i = 1; i < list.length; i++){
-        const prev = list[i - 1];
-        const curr = list[i];
+
+      list.forEach(function(wp, idx){
+        if (!wp || idx === 0 || wp.isStart) return;
+        wp.dist = '-';
+      });
+
+      let prev = (list[0] && list[0].isStart) ? list[0] : null;
+      for (let i = 0; i < routeRows.length; i++){
+        const curr = routeRows[i];
+        if (!prev){
+          curr.dist = '-';
+          prev = curr;
+          continue;
+        }
         curr.dist = formatDistanceNm(computeLegDistanceNm(prev, curr));
+        prev = curr;
       }
 
       return list;
@@ -5647,10 +5882,10 @@ namespace VAICOM
 
     function getMudMapAssetKind(asset){
       const category = String((asset && asset.category) || '').toUpperCase();
-      const text = (category + ' ' + String((asset && asset.name) || '').toUpperCase());
-      if (text.indexOf('TANKER') >= 0 || text.indexOf('REFUEL') >= 0) return 'tanker';
-      if (text.indexOf('AWACS') >= 0) return 'awacs';
-      if (text.indexOf('JTAC') >= 0) return 'jtac';
+      if (category === 'TANKER') return 'tanker';
+      if (category === 'AWACS') return 'awacs';
+      if (category === 'JTAC') return 'jtac';
+      const text = String((asset && asset.name) || '').toUpperCase();
       if (text.indexOf('HELO') >= 0 || text.indexOf('HELICOPTER') >= 0 || text.indexOf('ROTOR') >= 0) return 'rotary';
       return 'fixed';
     }
@@ -6240,7 +6475,8 @@ namespace VAICOM
         });
 
       const assetEls = mapAssets.map(function(m){
-        const label = escapeHtml(m.asset.callsign || m.asset.name || m.asset.category || 'ASSET');
+        const callsignLabel = String(m.asset.callsign || '').replace(/([A-Za-z])(\d)/g, '$1 $2').replace(/\s{2,}/g, ' ').trim();
+        const label = escapeHtml(callsignLabel || m.asset.name || m.asset.category || 'ASSET');
         const tx = (m.x + 10).toFixed(1);
         const ty = (m.y + 4).toFixed(1);
         return '<g>' + assetIconFor(m) + '<text x=""' + tx + '"" y=""' + ty + '"" font-size=""10"" fill=""' + palette.assetBlueDark + '"" font-weight=""700"">' + label + '</text></g>';
@@ -6280,7 +6516,18 @@ namespace VAICOM
     }
 
     function formatDtcPage3Html(pageSwitcherHtml, waypoints, data, selected, overlays){
-      const mapRows = applyTypeOverrides(Array.isArray(waypoints) ? waypoints.slice() : [], selected);
+      let mapRows = applyTypeOverrides(Array.isArray(waypoints) ? waypoints.slice() : [], selected);
+      const planState = getFlightPlanPlanState(selected);
+      ensureDirectToStateValid(mapRows, planState);
+      const deletedSet = getDeletedStepSet(planState);
+      const skippedSet = getSkippedStepSet(mapRows, planState);
+      mapRows = mapRows.filter(function(wp){
+        const key = stepToKey(wp && wp.step);
+        if (!key) return true;
+        if (deletedSet[key]) return false;
+        if (skippedSet[key]) return false;
+        return true;
+      });
       let html = '<div class=""fltPlanBoard"">';
       if (pageSwitcherHtml){
         html += '<div style=""margin:4px 0 6px 0;"">' + pageSwitcherHtml + '</div>';
@@ -6411,11 +6658,18 @@ namespace VAICOM
       applySpeedAdjustmentsToWaypoints(displayRows, selected);
       applyRouteTimeline(displayRows, selected);
       applyLockedTotPlan(displayRows, selected);
-      applyDistancePlan(displayRows);
-      applyHeadingPlan(displayRows, theatre);
+      applyDistancePlan(displayRows, selected);
+      applyHeadingPlan(displayRows, theatre, selected);
       updateTotOverflyCapture(selected, displayRows);
       const etaHeading = hasTakeoffTimeBySelection(selected) ? 'ETA' : 'ETE';
       const planState = getFlightPlanPlanState(selected);
+      ensureDirectToStateValid(displayRows, planState);
+      const deletedSet = getDeletedStepSet(planState);
+      const skippedSet = getSkippedStepSet(displayRows, planState);
+      const directSourceKey = stepToKey(planState.directToSourceStep);
+      const directTargetKey = stepToKey(planState.directToTargetStep);
+      const rowActionKey = stepToKey(planState.rowActionStep);
+      const rowActionMode = String(planState.rowActionMode || '').toLowerCase();
       pruneExpiredSpeedRecommendations(planState);
       const timingLogRows = (planState && Array.isArray(planState.timingLog))
         ? planState.timingLog.slice()
@@ -6471,7 +6725,27 @@ namespace VAICOM
       } else {
         displayRows.forEach(function(wp){
           const stepKey = stepToKey(wp.step);
-          const lockChecked = !wp.isStart && stepKey && (stepKey === stepToKey(planState.lockedStep)) ? ' checked' : '';
+          const isStart = !!wp.isStart;
+          const isDeleted = !!(stepKey && deletedSet[stepKey]);
+          if (isDeleted) return;
+          const isSkipped = !!(stepKey && skippedSet[stepKey]);
+          const isDirectSource = !!(stepKey && directSourceKey && stepKey === directSourceKey);
+          const isDirectTarget = !!(stepKey && directTargetKey && stepKey === directTargetKey);
+          const isTargetCandidate = !!(rowActionMode === 'dir' && rowActionKey && stepKey && stepKey !== rowActionKey && !isStart);
+          const rowClasses = [];
+          if (isSkipped) rowClasses.push('fltPlanWpRowSkipped');
+          if (isDirectSource) rowClasses.push('fltPlanWpRowDirectSource');
+          if (isDirectTarget) rowClasses.push('fltPlanWpRowDirectTarget');
+          if (isTargetCandidate) rowClasses.push('fltPlanWpRowTargetCandidate');
+          if (!isStart){
+            if (rowActionMode === 'dir' && rowActionKey === stepKey) rowClasses.push('fltPlanWpRowActionDir');
+            if (rowActionMode === 'del' && rowActionKey === stepKey) rowClasses.push('fltPlanWpRowActionDel');
+          }
+          const rowClassAttr = rowClasses.length ? ' class=""' + rowClasses.join(' ') + '""' : '';
+          const rowDataAttrs = !isStart
+            ? ' data-navlog-step=""' + escapeHtml(stepKey) + '"" data-navlog-row=""1""'
+            : '';
+          const lockChecked = !isStart && stepKey && (stepKey === stepToKey(planState.lockedStep)) ? ' checked' : '';
           const speedMode = getWaypointSpeedDisplayMode(planState, stepKey, wp.altFeet);
           const speedRec = (!wp.isStart && planState && planState.speedRecommendations) ? planState.speedRecommendations[stepKey] : null;
           const speedDisplay = speedRec
@@ -6483,8 +6757,12 @@ namespace VAICOM
           const speedStepTitle = (speedMode === 'MACH' && canUseMachDisplay(wp.altFeet))
             ? 'Adjust by 0.01 Mach'
             : 'Adjust by 10 KCAS';
-          html += '<tr>';
-          html += '<td class=""fltPlanCellNum"">' + escapeHtml(wp.step) + '</td>';
+          html += '<tr' + rowClassAttr + rowDataAttrs + '>';
+          if (isStart){
+            html += '<td class=""fltPlanCellNum"">' + escapeHtml(wp.step) + '</td>';
+          } else {
+            html += '<td class=""fltPlanCellNum""><span class=""fltPlanStepCellWrap""><span>' + escapeHtml(wp.step) + '</span><button type=""button"" class=""fltPlanRowActionBtn dir"" data-row-action=""dir"" data-row-step=""' + escapeHtml(stepKey) + '"">DIR TO</button><button type=""button"" class=""fltPlanRowActionBtn del"" data-row-action=""del"" data-row-step=""' + escapeHtml(stepKey) + '"">DEL STP</button></span></td>';
+          }
           if (wp.isStart){
             html += '<td>' + escapeHtml(wp.type) + '</td>';
           } else {
@@ -7532,6 +7810,48 @@ namespace VAICOM
             }
             return;
           }
+          if (node.getAttribute && node.getAttribute('data-row-action')){
+            const selected = getActiveFlightPlanSelection(latestData);
+            const action = String(node.getAttribute('data-row-action') || '').toLowerCase();
+            const step = String(node.getAttribute('data-row-step') || '');
+            if (selected && step){
+              if (action === 'dir'){
+                setNavlogRowAction(selected, step, 'dir');
+                setNavlogDirectToSource(selected, step);
+                render(latestData);
+              } else if (action === 'del'){
+                deleteNavlogStep(selected, step);
+                clearNavlogRowAction(selected);
+                render(latestData);
+              }
+            }
+            return;
+          }
+          if (node.getAttribute && node.getAttribute('data-navlog-row')){
+            const selected = getActiveFlightPlanSelection(latestData);
+            const step = String(node.getAttribute('data-navlog-step') || '');
+            if (selected && step){
+              const state = getFlightPlanPlanState(selected);
+              const rowActionStep = stepToKey(state.rowActionStep);
+              const rowActionMode = String(state.rowActionMode || '').toLowerCase();
+              if (rowActionMode === 'dir' && rowActionStep && rowActionStep !== step){
+                if (setNavlogDirectToTarget(selected, step)){
+                  clearNavlogRowAction(selected);
+                  render(latestData);
+                }
+                return;
+              }
+              if (rowActionMode === 'dir' && rowActionStep === step){
+                clearNavlogDirectTo(selected);
+                clearNavlogRowAction(selected);
+                render(latestData);
+                return;
+              }
+              clearNavlogRowAction(selected);
+              render(latestData);
+            }
+            return;
+          }
           if (node.getAttribute && node.getAttribute('data-tot-adjust')){
             const selected = getActiveFlightPlanSelection(latestData);
             const seconds = Number(node.getAttribute('data-tot-adjust') || 0);
@@ -7701,7 +8021,25 @@ namespace VAICOM
     document.getElementById('tabBody').addEventListener('pointerdown', function(ev){
       if (!latestData || selectedTab !== 'DTC') return;
       const selected = getActiveFlightPlanSelection(latestData);
-      if (!selected || getDtcPageBySelection(selected) !== 3) return;
+      if (!selected) return;
+
+      const page = getDtcPageBySelection(selected);
+      if (page === 1){
+        const row = ev.target && ev.target.closest ? ev.target.closest('tr[data-navlog-row=""1""]') : null;
+        if (row){
+          navlogRowDrag = {
+            pointerId: ev.pointerId,
+            selected: selected,
+            step: String(row.getAttribute('data-navlog-step') || ''),
+            startX: ev.clientX,
+            startY: ev.clientY,
+            moved: false,
+          };
+          return;
+        }
+      }
+
+      if (page !== 3) return;
 
       let node = ev.target;
       let onMap = false;
@@ -7725,6 +8063,21 @@ namespace VAICOM
     });
 
     document.getElementById('tabBody').addEventListener('pointermove', function(ev){
+      if (navlogRowDrag && navlogRowDrag.pointerId === ev.pointerId && latestData){
+        const dx = ev.clientX - navlogRowDrag.startX;
+        const dy = ev.clientY - navlogRowDrag.startY;
+        if (Math.abs(dx) >= 28 && Math.abs(dx) > Math.abs(dy)){
+          const step = stepToKey(navlogRowDrag.step);
+          if (step){
+            const mode = dx > 0 ? 'dir' : 'del';
+            setNavlogRowAction(navlogRowDrag.selected, step, mode);
+            render(latestData);
+          }
+          navlogRowDrag = null;
+          ev.preventDefault();
+          return;
+        }
+      }
       if (!mapPanDrag || mapPanDrag.pointerId !== ev.pointerId || !latestData) return;
       const state = getMapViewBySelection(mapPanDrag.selected);
       state.panX = mapPanDrag.basePanX + (ev.clientX - mapPanDrag.startX);
@@ -7739,9 +8092,24 @@ namespace VAICOM
       mapPanDrag = null;
     }
 
-    document.getElementById('tabBody').addEventListener('pointerup', stopMapPanDrag);
-    document.getElementById('tabBody').addEventListener('pointercancel', stopMapPanDrag);
-    document.getElementById('tabBody').addEventListener('pointerleave', stopMapPanDrag);
+    function stopNavlogRowDrag(ev){
+      if (!navlogRowDrag) return;
+      if (ev && navlogRowDrag.pointerId !== ev.pointerId) return;
+      navlogRowDrag = null;
+    }
+
+    document.getElementById('tabBody').addEventListener('pointerup', function(ev){
+      stopNavlogRowDrag(ev);
+      stopMapPanDrag(ev);
+    });
+    document.getElementById('tabBody').addEventListener('pointercancel', function(ev){
+      stopNavlogRowDrag(ev);
+      stopMapPanDrag(ev);
+    });
+    document.getElementById('tabBody').addEventListener('pointerleave', function(ev){
+      stopNavlogRowDrag(ev);
+      stopMapPanDrag(ev);
+    });
 
     document.getElementById('showServer').addEventListener('change', function(ev){
       showServerMessages = ev.target.checked;
@@ -8891,7 +9259,7 @@ namespace VAICOM
 
                     if (path == "/okb/dtc/select")
                     {
-                        string file = WebUtility.UrlDecode(context.Request.QueryString["file"] ?? "");
+                        string file = context.Request.QueryString["file"] ?? "";
                         bool ok = SelectDtcFileSnapshot(file);
                         if (!ok)
                         {
@@ -10122,6 +10490,34 @@ namespace VAICOM
                     }
                 }
 
+                private static bool IsLikelyAwacsUnit(Servers.Server.DcsUnit unit)
+                {
+                    if (unit == null)
+                    {
+                        return false;
+                    }
+
+                    string callsign = (unit.callsign ?? "").Trim();
+                    bool isKnownAwacsCallsign = callsign.IndexOf("Darkstar", StringComparison.OrdinalIgnoreCase) >= 0
+                        || callsign.IndexOf("Focus", StringComparison.OrdinalIgnoreCase) >= 0
+                        || callsign.IndexOf("Magic", StringComparison.OrdinalIgnoreCase) >= 0
+                        || callsign.IndexOf("Overlord", StringComparison.OrdinalIgnoreCase) >= 0
+                        || callsign.IndexOf("Wizard", StringComparison.OrdinalIgnoreCase) >= 0;
+
+                    string typeSource = ((unit.typename ?? "") + " " + (unit.fullname ?? "")).ToUpperInvariant();
+                    bool isAwacsType = typeSource.Contains("HAWKEYE")
+                        || typeSource.Contains("SENTRY")
+                        || typeSource.Contains("WEDGETAIL")
+                        || Regex.IsMatch(typeSource, @"(^|[^A-Z0-9])E[-\s]?2[A-Z]?([^A-Z0-9]|$)")
+                        || Regex.IsMatch(typeSource, @"(^|[^A-Z0-9])E[-\s]?3[A-Z]?([^A-Z0-9]|$)")
+                        || Regex.IsMatch(typeSource, @"(^|[^A-Z0-9])E[-\s]?7[A-Z]?([^A-Z0-9]|$)")
+                        || Regex.IsMatch(typeSource, @"(^|[^A-Z0-9])A[-\s]?50([^A-Z0-9]|$)")
+                        || Regex.IsMatch(typeSource, @"(^|[^A-Z0-9])KJ[-\s]?2000([^A-Z0-9]|$)")
+                        || Regex.IsMatch(typeSource, @"(^|[^A-Z0-9])KJ[-\s]?500([^A-Z0-9]|$)");
+
+                    return isKnownAwacsCallsign || isAwacsType;
+                }
+
                 private static List<OpenKneeboardFriendlyAsset> BuildFriendlyAssetsSnapshot()
                 {
                     List<OpenKneeboardFriendlyAsset> assets = new List<OpenKneeboardFriendlyAsset>();
@@ -10200,11 +10596,18 @@ namespace VAICOM
                                 }
                                 seen.Add(dedupeKey);
 
+                                string normalizedCategory = category.ToUpperInvariant();
+                                if (normalizedCategory.Equals("AWACS", StringComparison.OrdinalIgnoreCase)
+                                    && !IsLikelyAwacsUnit(unit))
+                                {
+                                    normalizedCategory = "FLIGHT";
+                                }
+
                                 assets.Add(new OpenKneeboardFriendlyAsset
                                 {
                                     Callsign = callsign ?? "",
                                     Name = name ?? "",
-                                    Category = category.ToUpperInvariant(),
+                                    Category = normalizedCategory,
                                     RawLine = string.Empty,
                                     X = x,
                                     Y = y,

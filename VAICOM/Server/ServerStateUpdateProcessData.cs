@@ -143,14 +143,14 @@ namespace VAICOM
                             return false;
                         }
 
-                        string unitName = (unit.callsign ?? string.Empty) + " " + (unit.fullname ?? string.Empty);
+                        string callsign = unit.callsign ?? string.Empty;
                         string typeName = unit.typename ?? string.Empty;
 
-                        bool isKnownAwacsCallsign = unitName.IndexOf("Darkstar", StringComparison.OrdinalIgnoreCase) >= 0
-                            || unitName.IndexOf("Focus", StringComparison.OrdinalIgnoreCase) >= 0
-                            || unitName.IndexOf("Magic", StringComparison.OrdinalIgnoreCase) >= 0
-                            || unitName.IndexOf("Overlord", StringComparison.OrdinalIgnoreCase) >= 0
-                            || unitName.IndexOf("Wizard", StringComparison.OrdinalIgnoreCase) >= 0;
+                        bool isKnownAwacsCallsign = callsign.IndexOf("Darkstar", StringComparison.OrdinalIgnoreCase) >= 0
+                            || callsign.IndexOf("Focus", StringComparison.OrdinalIgnoreCase) >= 0
+                            || callsign.IndexOf("Magic", StringComparison.OrdinalIgnoreCase) >= 0
+                            || callsign.IndexOf("Overlord", StringComparison.OrdinalIgnoreCase) >= 0
+                            || callsign.IndexOf("Wizard", StringComparison.OrdinalIgnoreCase) >= 0;
 
                         bool isHawkeyeType = typeName.IndexOf("E-2D", StringComparison.OrdinalIgnoreCase) >= 0
                             || typeName.IndexOf("E-2C", StringComparison.OrdinalIgnoreCase) >= 0

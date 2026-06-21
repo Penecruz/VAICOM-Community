@@ -437,6 +437,48 @@ namespace VAICOM
                 vaProxy.State.SetListeningEnabled(State.activeconfig.ReleaseHot);
             }
 
+            private static void LogNAudioAssemblyDiagnostics(string context)
+            {
+                try
+                {
+                    bool found = false;
+                    foreach (Assembly asm in AppDomain.CurrentDomain.GetAssemblies())
+                    {
+                        if (asm == null || asm.GetName() == null)
+                        {
+                            continue;
+                        }
+
+                        string name = asm.GetName().Name ?? "";
+                        if (!name.StartsWith("NAudio", StringComparison.OrdinalIgnoreCase))
+                        {
+                            continue;
+                        }
+
+                        found = true;
+                        string location = "(dynamic)";
+                        try
+                        {
+                            location = string.IsNullOrWhiteSpace(asm.Location) ? "(in-memory)" : asm.Location;
+                        }
+                        catch
+                        {
+                        }
+
+                        Log.Write("NAudio binding [" + context + "]: " + asm.FullName + " @ " + location, Colors.Inline);
+                    }
+
+                    if (!found)
+                    {
+                        Log.Write("NAudio binding [" + context + "]: no NAudio assemblies currently loaded.", Colors.Inline);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Log.Write("NAudio binding diagnostics failed [" + context + "]: " + ex.Message, Colors.Warning);
+                }
+            }
+
             public static void Initialize(dynamic vaProxy)
             {
                 State.startup = true;
@@ -476,7 +518,19 @@ namespace VAICOM
                     CheckUpdates(vaProxy);
                     LogVersionData(vaProxy);
                     ResetStateValues(vaProxy);
-                    Processor.InitTTSPlaybackStream();
+                    try
+                    {
+                        LogNAudioAssemblyDiagnostics("before TTS init");
+                        Processor.InitTTSPlaybackStream();
+                        LogNAudioAssemblyDiagnostics("after TTS init");
+                    }
+                    catch (Exception ex)
+                    {
+                        State.currentaudiodevicevalid = false;
+                        State.activeconfig.Redirect_World_Speech = false;
+                        Log.Write("World audio initialization failed; continuing startup with Redirect World Speech disabled. " + ex.Message, Colors.Warning);
+                        LogNAudioAssemblyDiagnostics("TTS init failure");
+                    }
                     ResetPTTConfig(vaProxy);
                     InstallLuaFiles(vaProxy);
                     FileHandler.Root.CheckProfile(false);

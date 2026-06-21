@@ -98,9 +98,11 @@ namespace VAICOM
                         }
                         else
                         {
-                            State.ttsoutput.Init(pan);
-                            State.ttsoutput.PlaybackStopped += new EventHandler<StoppedEventArgs>(Processor.audioOutput_PlaybackStopped);
-                            State.ttsoutput.Play();
+                            if (State.ttsoutput != null)
+                            {
+                                State.ttsoutput.Init(pan);
+                                State.ttsoutput.Play();
+                            }
                         }
 
 
