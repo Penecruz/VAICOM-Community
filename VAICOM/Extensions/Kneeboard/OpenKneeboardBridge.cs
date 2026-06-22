@@ -1271,6 +1271,8 @@ namespace VAICOM
     let navlogRowDrag = null;
     let runtimeFlightPlanSnapshot = null;
     let runtimeFlightPlanSnapshotMissionIdentity = '';
+    let runtimeFlightPlanSnapshotGroupName = '';
+    let lastKnownPlayerCallsign = '';
     let lastMissionIdentity = '';
     let lastMissionClockSeconds = NaN;
     let missionClockAnchorSeconds = NaN;
@@ -4497,11 +4499,16 @@ namespace VAICOM
 
     function getMissionIdentity(data){
       const server = (data && data.Server) || {};
+      const rawCallsign = String(server.PlayerCallsign || '').trim();
+      if (rawCallsign){
+        lastKnownPlayerCallsign = rawCallsign;
+      }
+      const stableCallsign = rawCallsign || lastKnownPlayerCallsign;
       return [
         String(server.Theater || ''),
         String(server.MissionTitle || ''),
         String(server.Aircraft || ''),
-        String(server.PlayerCallsign || ''),
+        String(stableCallsign || ''),
         server.Multiplayer ? '1' : '0'
       ].join('|');
     }
@@ -4513,6 +4520,7 @@ namespace VAICOM
       delete fltPlanDtcPageBySelection[key];
       delete fltPlanDtcRouteBySelection[key];
       delete fltPlanMapViewBySelection[key];
+      delete fltPlanMapSelectedAssetKeyBySelection[key];
       if (!fakeMissionEnabled){
         resetMissionClockAnchor();
       }
@@ -4521,6 +4529,7 @@ namespace VAICOM
     function invalidateRuntimeFlightPlanSnapshot(){
       runtimeFlightPlanSnapshot = null;
       runtimeFlightPlanSnapshotMissionIdentity = '';
+      runtimeFlightPlanSnapshotGroupName = '';
     }
 
     function maybeResetFlightPlanStateForMission(data){
@@ -4613,12 +4622,16 @@ namespace VAICOM
     function makeMapAssetSelectionKey(asset){
       if (!asset || typeof asset !== 'object') return '';
       const callsign = String(asset.callsign || '').trim().toUpperCase();
+      const name = String(asset.name || '').trim().toUpperCase();
       const category = String(asset.category || '').trim().toUpperCase();
       const x = Number(asset.xNum);
       const y = Number(asset.yNum);
+      if (callsign || name){
+        return [callsign, name, category].join('|');
+      }
       const xKey = isFinite(x) ? String(Math.round(x)) : '';
       const yKey = isFinite(y) ? String(Math.round(y)) : '';
-      return [callsign, category, xKey, yKey].join('|');
+      return ['POS', category, xKey, yKey].join('|');
     }
 
     function getPlayerMapPoint(data){
@@ -7239,15 +7252,22 @@ namespace VAICOM
       const model = data || latestData || {};
       const selected = String(model.DtcSelectedFile || '');
       const missionIdentity = getMissionIdentity(model);
+      const diagnostics = ((model && model.Server) || {}).Diagnostics || {};
+      const liveGroupName = String(diagnostics.playerGroup || '').trim();
 
       if (selected){
         return readMissionRuntimeWaypointsFromDiagnostics(model);
       }
 
       const live = readMissionRuntimeWaypointsFromDiagnostics(model);
-      if (live.length){
+      const hasSnapshot = !!(runtimeFlightPlanSnapshot && runtimeFlightPlanSnapshot.length);
+      const snapshotMatchesMission = runtimeFlightPlanSnapshotMissionIdentity === missionIdentity;
+      if (live.length && (!hasSnapshot || !snapshotMatchesMission)){
         runtimeFlightPlanSnapshot = cloneRuntimeWaypoints(live);
         runtimeFlightPlanSnapshotMissionIdentity = missionIdentity;
+        runtimeFlightPlanSnapshotGroupName = liveGroupName;
+      } else if (liveGroupName && snapshotMatchesMission && !runtimeFlightPlanSnapshotGroupName){
+        runtimeFlightPlanSnapshotGroupName = liveGroupName;
       }
 
       if (runtimeFlightPlanSnapshot
@@ -7263,7 +7283,10 @@ namespace VAICOM
       const rows = applyTypeOverrides(Array.isArray(waypoints) ? waypoints.slice() : [], '__RUNTIME_PLAYER__');
       const server = (data && data.Server) || {};
       const diagnostics = (server && server.Diagnostics) || {};
-      const groupName = String(diagnostics.playerGroup || '').trim();
+      const missionIdentity = getMissionIdentity(data);
+      const groupName = (runtimeFlightPlanSnapshotMissionIdentity === missionIdentity && runtimeFlightPlanSnapshotGroupName)
+        ? String(runtimeFlightPlanSnapshotGroupName || '').trim()
+        : String(diagnostics.playerGroup || '').trim();
       const routeName = groupName ? ('PLAYER ROUTE (' + groupName + ')') : 'PLAYER ROUTE';
       const selected = '__RUNTIME_PLAYER__';
       const page = getDtcPageBySelection(selected);

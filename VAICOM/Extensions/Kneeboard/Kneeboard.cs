@@ -250,10 +250,6 @@ namespace VAICOM
                         DateTime nowUtc = DateTime.UtcNow;
                         if (nowUtc >= NextFriendlyAssetsRefreshUtc)
                         {
-                            if (!State.currentstate.id.Equals("UH-1H"))
-                            {
-                                DcsClient.SendUpdateRequest();
-                            }
                             OpenKneeboardBridge.ForceRefreshFriendlyAssetsData();
                             NextFriendlyAssetsRefreshUtc = nowUtc.AddSeconds(5);
                         }
