@@ -36,7 +36,12 @@ namespace VAICOM
   <title>VAICOM Kneeboard 1.0</title>
   <style>
     html, body { width: 100%; height: 100%; margin: 0; }
-    body { font-family: Consolas, monospace; background: transparent; color: #151515; letter-spacing: 0.1px; font-size: 23px; --contentFontSize: 24px; }
+    body { font-family: Consolas, monospace; background: transparent; color: #151515; letter-spacing: 0.1px; font-size: 23px; --contentFontSize: 24px; -webkit-user-select: none; -ms-user-select: none; user-select: none; }
+    .sheet, .sheet * {
+      -webkit-user-select: none !important;
+      -ms-user-select: none !important;
+      user-select: none !important;
+    }
     .sheet {
       width: 100%;
       height: 100%;
@@ -208,6 +213,12 @@ namespace VAICOM
     body.notes-tab .keywordsPanel { flex: 1 1 auto; min-height: 110px; }
     body.notes-tab .keywordsContent { max-height: 140px; }
     .mainContent { font-size: var(--contentFontSize); line-height: 1.32; }
+    .mainContent.fltPlanContent,
+    .mainContent.fltPlanContent * {
+      -webkit-user-select: none;
+      -ms-user-select: none;
+      user-select: none;
+    }
     .keywordsContent { font-size: var(--contentFontSize); line-height: 1.32; }
     .keywordsGroups { display: flex; flex-direction: column; gap: 8px; }
     .kwGroup {
@@ -1032,6 +1043,7 @@ namespace VAICOM
     .fltPlanWpRowTargetCandidate:hover td { background: #e8f2fd; }
     .fltPlanStepCellWrap { display: flex; align-items: center; justify-content: center; gap: 4px; }
     .fltPlanRowActionBtn { display: none; font-family: inherit; font-size: 10px; line-height: 1; padding: 1px 4px; border: 1px solid #6f7f90; background: #f5f7f9; color: #102030; cursor: pointer; }
+    .fltPlanRowActionBtn.armed { background: #2d66c3; color: #ffffff; border-color: #1f4c92; }
     .fltPlanWpRowActionDir .fltPlanRowActionBtn.dir { display: inline-block; }
     .fltPlanWpRowActionDel .fltPlanRowActionBtn.del { display: inline-block; }
     .fltPlanWpTable th.fltPlanEtaHeader { cursor: pointer; }
@@ -1136,6 +1148,7 @@ namespace VAICOM
     body.night-mode .fltPlanWpRowSkipped { background: #2a3440; }
     body.night-mode .fltPlanWpRowTargetCandidate:hover td { background: #334355; }
     body.night-mode .fltPlanRowActionBtn { background: #2b3541; color: #e2eaf4; border-color: #5f7184; }
+    body.night-mode .fltPlanRowActionBtn.armed { background: #4d86e0; color: #f7fbff; border-color: #7aa5ea; }
     body.night-mode .fltPlanWpTable th.fltPlanEtaHeader:hover { background: #334253; }
     body.night-mode .fltPlanAltTag { color: #9fb5ca; }
     body.night-mode .fltPlanAtaValue { color: #74a8ff; }
@@ -1238,6 +1251,14 @@ namespace VAICOM
   </div>
 
   <script>
+    document.addEventListener('selectstart', function(ev){
+      if (ev && ev.preventDefault) ev.preventDefault();
+    }, true);
+
+    document.addEventListener('dragstart', function(ev){
+      if (ev && ev.preventDefault) ev.preventDefault();
+    }, true);
+
     const TABS = ['LOG','DTC','ATC','AWACS','JTAC','TANKER','AOCS','FLIGHT','AI CREW','GND CREW','NOTES'];
     const OKB_TAB_TYPE_ID = 'VAICOM-Community;okb-out';
     const OKB_CUSTOM_ACTION_PREFIX = OKB_TAB_TYPE_ID + ';';
@@ -3828,6 +3849,28 @@ namespace VAICOM
       state.rowActionMode = '';
     }
 
+    function clearNavlogRowReveal(selected){
+      const state = getFlightPlanPlanState(selected);
+      state.rowRevealStep = '';
+      state.rowRevealMode = '';
+    }
+
+    function setNavlogRowReveal(selected, step, mode){
+      const state = getFlightPlanPlanState(selected);
+      const key = stepToKey(step);
+      const revealMode = String(mode || '').toLowerCase();
+      if (!key || (revealMode !== 'dir' && revealMode !== 'del')){
+        clearNavlogRowReveal(selected);
+        return;
+      }
+      if (state.rowRevealStep === key && state.rowRevealMode === revealMode){
+        clearNavlogRowReveal(selected);
+        return;
+      }
+      state.rowRevealStep = key;
+      state.rowRevealMode = revealMode;
+    }
+
     function setNavlogRowAction(selected, step, mode){
       const state = getFlightPlanPlanState(selected);
       const key = stepToKey(step);
@@ -3842,6 +3885,15 @@ namespace VAICOM
       }
       state.rowActionStep = key;
       state.rowActionMode = actionMode;
+    }
+
+    function isNavlogRowActionArmed(selected, step, mode){
+      const state = getFlightPlanPlanState(selected);
+      const key = stepToKey(step);
+      const actionMode = String(mode || '').toLowerCase();
+      if (!key || (actionMode !== 'dir' && actionMode !== 'del')) return false;
+      return stepToKey(state.rowActionStep) === key
+        && String(state.rowActionMode || '').toLowerCase() === actionMode;
     }
 
     function deleteNavlogStep(selected, step){
@@ -3860,6 +3912,10 @@ namespace VAICOM
       if (state.rowActionStep === key){
         state.rowActionStep = '';
         state.rowActionMode = '';
+      }
+      if (state.rowRevealStep === key){
+        state.rowRevealStep = '';
+        state.rowRevealMode = '';
       }
       ensureDirectToStateValid(getPlanWaypointsForRecommendations(selected), state);
       clearSpeedRecommendations(selected);
@@ -3970,7 +4026,7 @@ namespace VAICOM
 
     function getFlightPlanPlanState(selected){
       const key = getFlightPlanEtaStartKey(selected);
-      if (!key) return { speedAdjustments: {}, speedDisplayModes: {}, altAdjustments: {}, typeOverrides: {}, lockedStep: '', totSeconds: NaN, lockedStart: null, timeMarks: {}, timingLog: [], postFlightOpen: false, ataByStep: {}, speedRecommendations: {}, totPerformanceByStep: {}, lastOwnshipPos: null, deletedSteps: {}, directToSourceStep: '', directToTargetStep: '', rowActionStep: '', rowActionMode: '' };
+      if (!key) return { speedAdjustments: {}, speedDisplayModes: {}, altAdjustments: {}, typeOverrides: {}, lockedStep: '', totSeconds: NaN, lockedStart: null, timeMarks: {}, timingLog: [], postFlightOpen: false, ataByStep: {}, speedRecommendations: {}, totPerformanceByStep: {}, lastOwnshipPos: null, deletedSteps: {}, directToSourceStep: '', directToTargetStep: '', rowActionStep: '', rowActionMode: '', rowRevealStep: '', rowRevealMode: '' };
       const existing = fltPlanPlanStateBySelection[key];
       if (existing && typeof existing === 'object'){
         if (!existing.speedAdjustments || typeof existing.speedAdjustments !== 'object') existing.speedAdjustments = {};
@@ -3989,9 +4045,11 @@ namespace VAICOM
         if (typeof existing.directToTargetStep !== 'string') existing.directToTargetStep = '';
         if (typeof existing.rowActionStep !== 'string') existing.rowActionStep = '';
         if (typeof existing.rowActionMode !== 'string') existing.rowActionMode = '';
+        if (typeof existing.rowRevealStep !== 'string') existing.rowRevealStep = '';
+        if (typeof existing.rowRevealMode !== 'string') existing.rowRevealMode = '';
         return existing;
       }
-      const created = { speedAdjustments: {}, speedDisplayModes: {}, altAdjustments: {}, typeOverrides: {}, lockedStep: '', totSeconds: NaN, lockedStart: null, timeMarks: {}, timingLog: [], postFlightOpen: false, ataByStep: {}, speedRecommendations: {}, totPerformanceByStep: {}, lastOwnshipPos: null, deletedSteps: {}, directToSourceStep: '', directToTargetStep: '', rowActionStep: '', rowActionMode: '' };
+      const created = { speedAdjustments: {}, speedDisplayModes: {}, altAdjustments: {}, typeOverrides: {}, lockedStep: '', totSeconds: NaN, lockedStart: null, timeMarks: {}, timingLog: [], postFlightOpen: false, ataByStep: {}, speedRecommendations: {}, totPerformanceByStep: {}, lastOwnshipPos: null, deletedSteps: {}, directToSourceStep: '', directToTargetStep: '', rowActionStep: '', rowActionMode: '', rowRevealStep: '', rowRevealMode: '' };
       fltPlanPlanStateBySelection[key] = created;
       return created;
     }
@@ -6978,6 +7036,8 @@ namespace VAICOM
       const directTargetKey = stepToKey(planState.directToTargetStep);
       const rowActionKey = stepToKey(planState.rowActionStep);
       const rowActionMode = String(planState.rowActionMode || '').toLowerCase();
+      const rowRevealKey = stepToKey(planState.rowRevealStep);
+      const rowRevealMode = String(planState.rowRevealMode || '').toLowerCase();
       pruneExpiredSpeedRecommendations(planState);
       const timingLogRows = (planState && Array.isArray(planState.timingLog))
         ? planState.timingLog.slice()
@@ -7046,8 +7106,10 @@ namespace VAICOM
           if (isDirectTarget) rowClasses.push('fltPlanWpRowDirectTarget');
           if (isTargetCandidate) rowClasses.push('fltPlanWpRowTargetCandidate');
           if (!isStart){
-            if (rowActionMode === 'dir' && rowActionKey === stepKey) rowClasses.push('fltPlanWpRowActionDir');
-            if (rowActionMode === 'del' && rowActionKey === stepKey) rowClasses.push('fltPlanWpRowActionDel');
+            const showDir = (rowActionMode === 'dir' && rowActionKey === stepKey) || (rowRevealMode === 'dir' && rowRevealKey === stepKey);
+            const showDel = (rowActionMode === 'del' && rowActionKey === stepKey) || (rowRevealMode === 'del' && rowRevealKey === stepKey);
+            if (showDir) rowClasses.push('fltPlanWpRowActionDir');
+            if (showDel) rowClasses.push('fltPlanWpRowActionDel');
           }
           const rowClassAttr = rowClasses.length ? ' class=""' + rowClasses.join(' ') + '""' : '';
           const rowDataAttrs = !isStart
@@ -7069,7 +7131,9 @@ namespace VAICOM
           if (isStart){
             html += '<td class=""fltPlanCellNum"">' + escapeHtml(wp.step) + '</td>';
           } else {
-            html += '<td class=""fltPlanCellNum""><span class=""fltPlanStepCellWrap""><span>' + escapeHtml(wp.step) + '</span><button type=""button"" class=""fltPlanRowActionBtn dir"" data-row-action=""dir"" data-row-step=""' + escapeHtml(stepKey) + '"">DIR TO</button><button type=""button"" class=""fltPlanRowActionBtn del"" data-row-action=""del"" data-row-step=""' + escapeHtml(stepKey) + '"">DEL STP</button></span></td>';
+            const dirArmedClass = isNavlogRowActionArmed(selected, stepKey, 'dir') ? ' armed' : '';
+            const delArmedClass = isNavlogRowActionArmed(selected, stepKey, 'del') ? ' armed' : '';
+            html += '<td class=""fltPlanCellNum""><span class=""fltPlanStepCellWrap""><span>' + escapeHtml(wp.step) + '</span><button type=""button"" class=""fltPlanRowActionBtn dir' + dirArmedClass + '"" data-row-action=""dir"" data-row-step=""' + escapeHtml(stepKey) + '"">DIR TO</button><button type=""button"" class=""fltPlanRowActionBtn del' + delArmedClass + '"" data-row-action=""del"" data-row-step=""' + escapeHtml(stepKey) + '"">DEL STP</button></span></td>';
           }
           if (wp.isStart){
             html += '<td>' + escapeHtml(wp.type) + '</td>';
@@ -8133,13 +8197,13 @@ namespace VAICOM
             const action = String(node.getAttribute('data-row-action') || '').toLowerCase();
             const step = String(node.getAttribute('data-row-step') || '');
             if (selected && step){
+              clearNavlogRowReveal(selected);
               if (action === 'dir'){
                 setNavlogRowAction(selected, step, 'dir');
                 setNavlogDirectToSource(selected, step);
                 render(latestData);
               } else if (action === 'del'){
-                deleteNavlogStep(selected, step);
-                clearNavlogRowAction(selected);
+                setNavlogRowAction(selected, step, 'del');
                 render(latestData);
               }
             }
@@ -8152,20 +8216,35 @@ namespace VAICOM
               const state = getFlightPlanPlanState(selected);
               const rowActionStep = stepToKey(state.rowActionStep);
               const rowActionMode = String(state.rowActionMode || '').toLowerCase();
-              if (rowActionMode === 'dir' && rowActionStep && rowActionStep !== step){
-                if (setNavlogDirectToTarget(selected, step)){
-                  clearNavlogRowAction(selected);
-                  render(latestData);
-                }
-                return;
-              }
-              if (rowActionMode === 'dir' && rowActionStep === step){
-                clearNavlogDirectTo(selected);
+              if (rowActionMode === 'dir' && rowActionStep && rowActionStep === step){
                 clearNavlogRowAction(selected);
                 render(latestData);
                 return;
               }
+              if (rowActionMode === 'dir' && rowActionStep && rowActionStep !== step){
+                if (setNavlogDirectToTarget(selected, step)){
+                  clearNavlogRowAction(selected);
+                  clearNavlogRowReveal(selected);
+                  render(latestData);
+                }
+                return;
+              }
+              if (rowActionMode === 'del' && rowActionStep && rowActionStep === step){
+                deleteNavlogStep(selected, step);
+                clearNavlogRowAction(selected);
+                clearNavlogRowReveal(selected);
+                render(latestData);
+                return;
+              }
+              if (rowActionMode === 'del' && rowActionStep && rowActionStep !== step){
+                deleteNavlogStep(selected, step);
+                clearNavlogRowAction(selected);
+                clearNavlogRowReveal(selected);
+                render(latestData);
+                return;
+              }
               clearNavlogRowAction(selected);
+              clearNavlogRowReveal(selected);
               render(latestData);
             }
             return;
@@ -8427,7 +8506,8 @@ namespace VAICOM
           const step = stepToKey(navlogRowDrag.step);
           if (step){
             const mode = dx > 0 ? 'dir' : 'del';
-            setNavlogRowAction(navlogRowDrag.selected, step, mode);
+            clearNavlogRowAction(navlogRowDrag.selected);
+            setNavlogRowReveal(navlogRowDrag.selected, step, mode);
             render(latestData);
           }
           navlogRowDrag = null;
