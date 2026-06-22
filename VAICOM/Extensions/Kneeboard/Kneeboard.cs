@@ -13,6 +13,7 @@ namespace VAICOM
 
             public static class KneeboardUpdater
             {
+                private static DateTime NextFriendlyAssetsRefreshUtc = DateTime.MinValue;
 
                 // updates kneeboard for incoming messsages
                 public static void UpdateFromReceivedMessage(Server.ServerCommsMessage message)
@@ -245,6 +246,17 @@ namespace VAICOM
                         }
 
                         Client.DcsClient.SendKneeboardMessage(msg);
+
+                        DateTime nowUtc = DateTime.UtcNow;
+                        if (nowUtc >= NextFriendlyAssetsRefreshUtc)
+                        {
+                            if (!State.currentstate.id.Equals("UH-1H"))
+                            {
+                                DcsClient.SendUpdateRequest();
+                            }
+                            OpenKneeboardBridge.ForceRefreshFriendlyAssetsData();
+                            NextFriendlyAssetsRefreshUtc = nowUtc.AddSeconds(5);
+                        }
 
                     }
                     catch

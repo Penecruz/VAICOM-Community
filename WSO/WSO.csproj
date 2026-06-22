@@ -66,6 +66,8 @@
   <ItemGroup>
     <None Include="DevPipe\ExampleMod.lua" />
     <None Include="DevPipe\F-16CM - Vaicom WIP.dtc" />
+    <None Include="DevPipe\F-16C_50_LAWOS_STD.dtc" />
+    <None Include="DevPipe\F-16C_50_LAWOS_STD_M7.dtc" />
     <None Include="DevPipe\FA-18C Vaicom WIP.dtc" />
     <None Include="DevPipe\Jester 2.0 Lua API Instructions" />
     <None Include="DevPipe\Jester2_Actions_Catalog.md" />

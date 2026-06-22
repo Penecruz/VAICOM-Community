@@ -3120,6 +3120,10 @@ base.vaicom.state = {
 						playerGroupMatchReason = "",
 						playerGroupWaypoints = {},
 						playerGroupRouteFound = false,
+						bullseyeX = 0,
+						bullseyeY = 0,
+						bullseyeCoalition = "",
+						bullseyeValid = false,
                        weatherType = "nil",
 						weatherKeys = {},
 						weatherSummary = {},
@@ -3424,6 +3428,7 @@ base.vaicom.state = {
 						diagCache.waypointAt = -10000
 						diagCache.radioAt = -10000
 						diagCache.weatherAt = -10000
+						diagCache.bullseyeAt = -10000
 						diagCache.runtimeRadioDevices = {}
 						diagCache.runtimeRadioChannels = {}
 						diagCache.payloadKeys = {}
@@ -3445,6 +3450,65 @@ base.vaicom.state = {
 						diagCache.playerCallsign = ""
 						diagCache.playerGroupMatchReason = ""
 						diagCache.playerGroupRouteFound = false
+						diagCache.bullseyeX = 0
+						diagCache.bullseyeY = 0
+						diagCache.bullseyeCoalition = ""
+						diagCache.bullseyeValid = false
+					end
+
+					local function mapCoalitionSideToText(side)
+						if side == (base.coalition and base.coalition.side and base.coalition.side.BLUE) then return "blue" end
+						if side == (base.coalition and base.coalition.side and base.coalition.side.RED) then return "red" end
+						if side == (base.coalition and base.coalition.side and base.coalition.side.NEUTRAL) then return "neutral" end
+						return ""
+					end
+
+					local function resolvePlayerCoalitionSide()
+						local side = tryget(function()
+							if base.DCS and base.DCS.getPlayerCoalition then
+								return base.DCS.getPlayerCoalition()
+							end
+							return nil
+						end)
+						if base.type(side) == "number" and side > 0 then
+							return side
+						end
+
+						local stateCoal = base.vaicom and base.vaicom.state and base.vaicom.state.playercoalition
+						if base.type(stateCoal) == "number" and stateCoal > 0 then
+							return stateCoal
+						end
+
+						local text = base.string.upper(base.tostring(stateCoal or ""))
+						if text == "BLUE" then return base.coalition and base.coalition.side and base.coalition.side.BLUE end
+						if text == "RED" then return base.coalition and base.coalition.side and base.coalition.side.RED end
+						if text == "NEUTRAL" then return base.coalition and base.coalition.side and base.coalition.side.NEUTRAL end
+						return nil
+					end
+
+					local function collectBullseyePoint()
+						probe.bullseyeX = 0
+						probe.bullseyeY = 0
+						probe.bullseyeCoalition = ""
+						probe.bullseyeValid = false
+
+						local side = resolvePlayerCoalitionSide()
+						probe.bullseyeCoalition = mapCoalitionSideToText(side)
+						if side == nil then return end
+						if base.coalition == nil or base.coalition.getMainRefPoint == nil then return end
+
+						local bulls = tryget(function()
+							return base.coalition.getMainRefPoint(side)
+						end)
+						if base.type(bulls) ~= "table" then return end
+
+						local bx = base.tonumber(bulls.x)
+						local by = base.tonumber(bulls.z)
+						if bx == nil or by == nil then return end
+
+						probe.bullseyeX = bx
+						probe.bullseyeY = by
+						probe.bullseyeValid = true
 					end
 
 					if shouldRefreshStatic then
@@ -3462,6 +3526,28 @@ base.vaicom.state = {
 					else
 						probe.runtimeRadioDevices = copyStringList(diagCache.runtimeRadioDevices)
 						probe.runtimeRadioChannels = copyStringList(diagCache.runtimeRadioChannels)
+					end
+
+					if diagCache.bullseyeValid then
+						probe.bullseyeX = base.tonumber(diagCache.bullseyeX) or 0
+						probe.bullseyeY = base.tonumber(diagCache.bullseyeY) or 0
+						probe.bullseyeCoalition = base.tostring(diagCache.bullseyeCoalition or "")
+						probe.bullseyeValid = true
+					else
+						local bullseyeIntervalSec = 1.0
+						if nowTick - (diagCache.bullseyeAt or -10000) >= bullseyeIntervalSec then
+							collectBullseyePoint()
+							diagCache.bullseyeAt = nowTick
+							diagCache.bullseyeX = probe.bullseyeX or 0
+							diagCache.bullseyeY = probe.bullseyeY or 0
+							diagCache.bullseyeCoalition = base.tostring(probe.bullseyeCoalition or "")
+							diagCache.bullseyeValid = probe.bullseyeValid and true or false
+						else
+							probe.bullseyeX = base.tonumber(diagCache.bullseyeX) or 0
+							probe.bullseyeY = base.tonumber(diagCache.bullseyeY) or 0
+							probe.bullseyeCoalition = base.tostring(diagCache.bullseyeCoalition or "")
+							probe.bullseyeValid = diagCache.bullseyeValid and true or false
+						end
 					end
 
 					local payloadIntervalSec = 1.0
