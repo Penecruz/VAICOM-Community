@@ -25,6 +25,7 @@ namespace VAICOM
             public void UpdateAllbugs()
             {
                 Changechatterbug();
+                ChangeOKHostbug();
                 Changetransmitbug();
                 Changedatabug();
                 ChangeS2Mbug();
@@ -170,6 +171,48 @@ namespace VAICOM
                 else
                 {
                     Chatterbug.Visibility = Visibility.Hidden;
+                }
+            }
+
+            private void SetOKHostbug(object sender, EventArgs e)
+            {
+                ChangeOKHostbug();
+            }
+            public void ChangeOKHostbug()
+            {
+                if (State.activeconfig.OpenKneeboard_Out && Extensions.Kneeboard.OpenKneeboardBridge.IsHostRunning)
+                {
+                    OK_Host.Visibility = Visibility.Visible;
+                    OK_Host.Text = "OKB";
+                }
+                else
+                {
+                    OK_Host.Visibility = Visibility.Hidden;
+                    OK_Host.Text = "OKB";
+                }
+            }
+
+            public void AlternateOKHostbug()
+            {
+                if (!(State.activeconfig.OpenKneeboard_Out && Extensions.Kneeboard.OpenKneeboardBridge.IsHostRunning))
+                {
+                    OK_Host.Text = "OKB";
+                    return;
+                }
+
+                if (Extensions.Kneeboard.OpenKneeboardBridge.HasActiveConnection)
+                {
+                    OK_Host.Text = "OKB";
+                    return;
+                }
+
+                if (OK_Host.Text.Equals(""))
+                {
+                    OK_Host.Text = "OKB";
+                }
+                else
+                {
+                    OK_Host.Text = "";
                 }
             }
 

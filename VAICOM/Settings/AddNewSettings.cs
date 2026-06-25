@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using System;
 using System.IO;
 using VAICOM.Database;
 using VAICOM.Languages;
@@ -34,7 +35,7 @@ namespace VAICOM
                         State.activeconfig.HideF4EDialog = false;
                     }
 
-                    if (!State.activeconfig.RIO_MiniWheel_Enabled && State.activeconfig.RIO_Enabled)
+                    if (!ConfigContainsProperty("RIO_MiniWheel_Enabled"))
                     {
                         State.activeconfig.RIO_MiniWheel_Enabled = true;
                     }
@@ -64,6 +65,10 @@ namespace VAICOM
                     if (State.activeconfig.OpenKneeboard_Out.Equals(null))
                     {
                         State.activeconfig.OpenKneeboard_Out = false;
+                    }
+                    if (!ConfigContainsProperty("OpenKneeboard_AutoBrowse"))
+                    {
+                        State.activeconfig.OpenKneeboard_AutoBrowse = State.activeconfig.KneeboardlinkPTT;
                     }
                     if (State.activeconfig.OpenKneeboard_Out_Port <= 0 || State.activeconfig.OpenKneeboard_Out_Port > 65535)
                     {
@@ -374,6 +379,36 @@ namespace VAICOM
                 }
 
                 return (ReturnObject);
+            }
+
+            private static bool ConfigContainsProperty(string propertyName)
+            {
+                try
+                {
+                    string filename;
+                    if (State.databaseencrypted)
+                    { filename = Aliases.scrambleddbfilenames["config"]; }
+                    else
+                    { filename = "config" + ".json"; }
+
+                    string path = State.VA_APPS + "\\" + AppData.RootFolder + "\\" + AppData.SubFolders["config"] + "\\" + filename;
+                    if (!File.Exists(path))
+                    {
+                        return false;
+                    }
+
+                    string content = File.ReadAllText(path);
+                    if (State.databaseencrypted)
+                    {
+                        content = Helpers.Crypto.Decrypt(content);
+                    }
+
+                    return content.IndexOf("\"" + propertyName + "\"", StringComparison.OrdinalIgnoreCase) >= 0;
+                }
+                catch
+                {
+                    return false;
+                }
             }
 
         }

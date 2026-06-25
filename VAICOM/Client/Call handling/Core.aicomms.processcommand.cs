@@ -835,7 +835,10 @@ namespace VAICOM
                         // switch kneeboard page if autobrowse on
                         try
                         {
-                            if (State.activeconfig.KneeboardlinkPTT)
+                            bool dcsKneeboardAutoBrowse = State.activeconfig.KneeboardlinkPTT && State.activeconfig.Kneeboard_Enabled;
+                            bool openKneeboardAutoBrowse = State.activeconfig.OpenKneeboard_AutoBrowse && State.activeconfig.OpenKneeboard_Out;
+
+                            if (dcsKneeboardAutoBrowse || openKneeboardAutoBrowse)
                             {
                                 string cat = "";
 
@@ -854,7 +857,14 @@ namespace VAICOM
 
                                 if (!string.IsNullOrWhiteSpace(cat))
                                 {
-                                    KneeboardUpdater.SwitchPage(cat);
+                                    if (dcsKneeboardAutoBrowse)
+                                    {
+                                        KneeboardUpdater.SwitchPage(cat);
+                                    }
+                                    else
+                                    {
+                                        OpenKneeboardBridge.UpdateActiveCategory(cat);
+                                    }
                                 }
                             }
                         }

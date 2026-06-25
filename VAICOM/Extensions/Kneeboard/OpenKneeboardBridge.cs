@@ -8671,6 +8671,7 @@ namespace VAICOM
                 private static HttpListener listener;
                 private static Thread listenerThread;
                 private static bool isRunning;
+                private static long lastClientRequestUtcTicks;
                 private static readonly Guid SavedGamesFolderId = new Guid("4C5C32FF-BB9D-43B0-B5B4-2D72E54EAAA4");
 
                 [DllImport("shell32.dll")]
@@ -8708,6 +8709,31 @@ namespace VAICOM
                     else
                     {
                         StopWebHost();
+                    }
+                }
+
+                public static bool IsHostRunning
+                {
+                    get { return isRunning; }
+                }
+
+                public static bool HasActiveConnection
+                {
+                    get
+                    {
+                        if (!isRunning)
+                        {
+                            return false;
+                        }
+
+                        long ticks = Interlocked.Read(ref lastClientRequestUtcTicks);
+                        if (ticks <= 0)
+                        {
+                            return false;
+                        }
+
+                        DateTime lastRequestUtc = new DateTime(ticks, DateTimeKind.Utc);
+                        return (DateTime.UtcNow - lastRequestUtc) <= TimeSpan.FromSeconds(3);
                     }
                 }
 
@@ -9589,9 +9615,21 @@ namespace VAICOM
                         listener.Prefixes.Add(prefix);
                         listener.Start();
 
+                        Interlocked.Exchange(ref lastClientRequestUtcTicks, 0);
                         isRunning = true;
                         listenerThread = new Thread(ListenLoop) { IsBackground = true, Name = "OpenKneeboardWebHost" };
                         listenerThread.Start();
+
+                        try
+                        {
+                            State.configurationwindow?.Dispatcher.BeginInvoke((Action)delegate
+                            {
+                                State.configurationwindow.ChangeOKHostbug();
+                            });
+                        }
+                        catch
+                        {
+                        }
 
                         Log.Write("OpenKneeboard dashboard host started at " + prefix, Colors.Text);
                     }
@@ -9615,6 +9653,17 @@ namespace VAICOM
                         listener?.Stop();
                         listener?.Close();
                         listener = null;
+
+                        try
+                        {
+                            State.configurationwindow?.Dispatcher.BeginInvoke((Action)delegate
+                            {
+                                State.configurationwindow.ChangeOKHostbug();
+                            });
+                        }
+                        catch
+                        {
+                        }
                     }
                     catch
                     {
@@ -9647,6 +9696,7 @@ namespace VAICOM
 
                 private static void HandleContext(HttpListenerContext context)
                 {
+                    Interlocked.Exchange(ref lastClientRequestUtcTicks, DateTime.UtcNow.Ticks);
                     string path = context.Request.Url.AbsolutePath.ToLowerInvariant();
 
                     if (path == "/okb")

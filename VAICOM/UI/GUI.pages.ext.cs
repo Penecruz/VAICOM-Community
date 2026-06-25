@@ -309,12 +309,14 @@ namespace VAICOM
             {
                 State.activeconfig.OpenKneeboard_Out = true;
                 Extensions.Kneeboard.OpenKneeboardBridge.SetEnabled(true);
+                ChangeOKHostbug();
             }
 
             private void OpenKneeboardOutOff(object sender, RoutedEventArgs e)
             {
                 State.activeconfig.OpenKneeboard_Out = false;
                 Extensions.Kneeboard.OpenKneeboardBridge.SetEnabled(false);
+                ChangeOKHostbug();
             }
 
             private void SetCurrentValueOpenKneeboardOut(object sender, EventArgs e)
@@ -324,6 +326,18 @@ namespace VAICOM
                 {
                     checkbox.IsEnabled = true;
                     checkbox.IsChecked = State.activeconfig.OpenKneeboard_Out;
+                }
+            }
+
+            private void OpenKneeboardAutoBrowseOn(object sender, RoutedEventArgs e) { State.activeconfig.OpenKneeboard_AutoBrowse = true; }
+            private void OpenKneeboardAutoBrowseOff(object sender, RoutedEventArgs e) { State.activeconfig.OpenKneeboard_AutoBrowse = false; }
+            private void SetCurrentValueOpenKneeboardAutoBrowse(object sender, EventArgs e)
+            {
+                CheckBox checkbox = sender as CheckBox;
+                if (checkbox != null)
+                {
+                    checkbox.IsEnabled = true;
+                    checkbox.IsChecked = State.activeconfig.OpenKneeboard_AutoBrowse;
                 }
             }
 
