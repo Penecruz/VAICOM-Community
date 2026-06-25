@@ -56,6 +56,7 @@ namespace VAICOM
             // RIO
 
             public bool RIO_Enabled;
+            public bool RIO_MiniWheel_Enabled;
             public bool RIO_Messages;
             public bool RIO_Hints_Only;
             public bool ICShotmic;
@@ -240,6 +241,7 @@ namespace VAICOM
 
                 RIO_Messages = true,
                 RIO_Enabled = true,
+                RIO_MiniWheel_Enabled = true,
                 RIO_Hints_Only = false,
                 ICShotmic = false,
                 ICShotmic_useswitch = false,

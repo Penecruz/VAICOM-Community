@@ -59,15 +59,15 @@ namespace VAICOM
             public void AIRIO_restart_popup()
             {
                 RIO_Enable_Box.IsEnabled = false;
-                string caption = "AIRIO setting changed";
-                string message = "AIRIO setting changed:\nRestart VoiceAttack and DCS.";
+                string caption = "Jester Mini Wheel setting changed";
+                string message = "Jester Mini Wheel setting changed:\nRestart VoiceAttack and DCS.";
                 MessageBox.Show(message, caption, MessageBoxButton.OK, MessageBoxImage.Information);
             }
 
             // Left column:        
 
-            private void SetConfigEnableRIO_Enable(object sender, RoutedEventArgs e) { if (State.allowairioswitching) { if (!State.activeconfig.RIO_Enabled) { } State.activeconfig.RIO_Enabled = true; FileHandler.Lua.LuaFiles_Install(false, true); } else { RIO_Enable_Box.IsEnabled = false; } } // State.activeconfig.RIO_Enabled = false; 
-            private void SetConfigDisableRIO_Enable(object sender, RoutedEventArgs e) { if (State.allowairioswitching) { if (State.activeconfig.RIO_Enabled) { } State.activeconfig.RIO_Enabled = false; FileHandler.Lua.LuaFiles_Install(false, true); } else { RIO_Enable_Box.IsEnabled = false; } } // State.activeconfig.RIO_Enabled = false;
+            private void SetConfigEnableRIO_Enable(object sender, RoutedEventArgs e) { if (State.allowairioswitching) { State.activeconfig.RIO_Enabled = true; State.activeconfig.RIO_MiniWheel_Enabled = true; FileHandler.Lua.LuaFiles_Install(false, true); } else { RIO_Enable_Box.IsEnabled = false; } }
+            private void SetConfigDisableRIO_Enable(object sender, RoutedEventArgs e) { if (State.allowairioswitching) { State.activeconfig.RIO_Enabled = true; State.activeconfig.RIO_MiniWheel_Enabled = false; FileHandler.Lua.LuaFiles_Install(false, true); } else { RIO_Enable_Box.IsEnabled = false; } }
 
             private void SetCurrentValueRIO_Enable(object sender, EventArgs e)
             {
@@ -80,7 +80,8 @@ namespace VAICOM
                     RIO_Enable_Box.Visibility = Visibility.Hidden;
                 }
                 RIO_Enable_Box.IsEnabled = true;
-                RIO_Enable_Box.IsChecked = State.activeconfig.RIO_Enabled;
+                State.activeconfig.RIO_Enabled = true;
+                RIO_Enable_Box.IsChecked = State.activeconfig.RIO_MiniWheel_Enabled;
             }
 
             private void SetConfigEnableRIO_Disable_Rose(object sender, RoutedEventArgs e) { State.activeconfig.RIO_Messages = true; }

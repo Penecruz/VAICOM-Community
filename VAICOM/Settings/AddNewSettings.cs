@@ -34,6 +34,13 @@ namespace VAICOM
                         State.activeconfig.HideF4EDialog = false;
                     }
 
+                    if (!State.activeconfig.RIO_MiniWheel_Enabled && State.activeconfig.RIO_Enabled)
+                    {
+                        State.activeconfig.RIO_MiniWheel_Enabled = true;
+                    }
+
+                    State.activeconfig.RIO_Enabled = true;
+
                     // added 2.5.25
                     if (State.activeconfig.MP_UseTXLink.Equals(null))
                     {
