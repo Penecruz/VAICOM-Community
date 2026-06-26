@@ -10,6 +10,7 @@ using System.Text.RegularExpressions;
 using System.Text;
 using System.Threading;
 using System.Runtime.InteropServices;
+using System.Reflection;
 using System.Windows;
 using VAICOM.Static;
 
@@ -23,11 +24,16 @@ namespace VAICOM
             {
                 private static readonly object Sync = new object();
                 private static readonly object RawServerLogSync = new object();
+                private static readonly object StoreLookupSync = new object();
                 private static OpenKneeboardSnapshot snapshot = new OpenKneeboardSnapshot();
                 private static string lastAiCrewCommand = "";
                 private static bool captureRawServerMessages;
                 private static readonly string[] DtcFileExtensions = new[] { ".dtc", ".json" };
                 private const string RouteSelectionPrefix = "RTE::";
+                private const string StoreLookupJsonPlaceholder = "__VAICOM_STORE_LOOKUP_JSON__";
+                private static string storeLookupResolvedPath = "";
+                private static DateTime storeLookupLastWriteUtc = DateTime.MinValue;
+                private static string storeLookupMapJson = "{}";
                 private static readonly string IndexHtml = @"<!doctype html>
 <html>
 <head>
@@ -1099,6 +1105,12 @@ namespace VAICOM
     .fltPlanPage3Legend { display: none; }
     .fltPlanPage3Canvas { border: 1px solid #8b96a1; background: #ffffff; width: 100%; height: 860px; box-sizing: border-box; }
     .fltPlanPage3BraReadout { margin-top: 6px; border: 1px solid #8b96a1; background: #ffffff; color: #1f2e3d; min-height: 28px; padding: 4px 8px; font-size: 18px; line-height: 1.2; font-weight: 700; box-sizing: border-box; }
+    .fltPlanStoresWrap { border: 1px solid #8b96a1; background: #f7f9fb; margin-top: 8px; padding: 6px; }
+    .fltPlanStoresGrid { width: 100%; border-collapse: collapse; table-layout: fixed; background: #ffffff; }
+    .fltPlanStoresGrid th, .fltPlanStoresGrid td { border: 1px solid #aeb7c0; font-size: 18px; padding: 3px 5px; text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .fltPlanStoresGrid th { background: #edf1f5; }
+    .fltPlanStoresStation { width: 72px; text-align: center; }
+    .fltPlanStoresEmpty { color: #7a858f; }
     .fltPlanMessage { white-space: pre-wrap; font-size: 18px; line-height: 1.2; }
     .fltPlanPlain { margin: 0; background: #ffffff; border: 1px solid #b7b7b7; padding: 10px; white-space: pre; word-break: normal; font-size: 16px; line-height: 1.2; min-height: 100%; box-sizing: border-box; overflow: auto; }
     pre { background: #ffffff; border: 1px solid #b7b7b7; padding: 10px; white-space: pre-wrap; word-break: break-word; font-size: 18px; color:#111; max-height: 190px; overflow: auto; }
@@ -4615,14 +4627,14 @@ namespace VAICOM
     function getDtcPageBySelection(selected){
       const key = getFlightPlanEtaStartKey(selected);
       const v = Number(fltPlanDtcPageBySelection[key]);
-      return (v === 2 || v === 3) ? v : 1;
+      return (v === 2 || v === 3 || v === 4) ? v : 1;
     }
 
     function setDtcPageBySelection(selected, page){
       const key = getFlightPlanEtaStartKey(selected);
       if (!key) return;
       const p = Number(page);
-      fltPlanDtcPageBySelection[key] = (p === 2 || p === 3) ? p : 1;
+      fltPlanDtcPageBySelection[key] = (p === 2 || p === 3 || p === 4) ? p : 1;
     }
 
     function getDtcRouteBySelection(selected){
@@ -5889,6 +5901,70 @@ namespace VAICOM
       html += formatRuntimeCommPanelHtml(data);
       html += formatRuntimeCmdsPanelHtml(data);
       html += '</div></div>';
+      return html;
+    }
+
+    const STORE_CLSID_LOOKUP = __VAICOM_STORE_LOOKUP_JSON__;
+
+    function getStoreFriendlyName(clsid){
+      const raw = String(clsid || '').trim();
+      if (!raw) return 'EMPTY';
+      const normalized = (raw.length > 2 && raw[0] === '{' && raw[raw.length - 1] === '}')
+        ? raw.substring(1, raw.length - 1).trim()
+        : raw;
+      const upper = normalized.toUpperCase();
+
+      if (STORE_CLSID_LOOKUP && STORE_CLSID_LOOKUP[upper]) return STORE_CLSID_LOOKUP[upper];
+      const rawUpper = raw.toUpperCase();
+      if (STORE_CLSID_LOOKUP && STORE_CLSID_LOOKUP[rawUpper]) return STORE_CLSID_LOOKUP[rawUpper];
+
+      const knownFallback = {
+        'F376DBEE-4CAE-41BA-ADD9-B2910AC95DEC': 'Fuel tank 370 gal'
+      };
+      if (knownFallback[upper]) return knownFallback[upper];
+
+      const rackMk = upper.match(/\*\s*(MK-\d+[A-Z0-9\-]*)/);
+      if (rackMk && rackMk[1]) return String(rackMk[1]);
+
+      if (upper.indexOf('EMPTY') >= 0) return 'EMPTY';
+      if (upper.indexOf('ALQ_184') >= 0 || upper.indexOf('ALQ-184') >= 0) return 'ALQ-184';
+      if (upper.indexOf('MK-82') >= 0) return 'MK-82';
+      if (upper.indexOf('AIM-120') >= 0 || upper.indexOf('AMRAAM') >= 0) return 'AIM-120';
+      if (upper.indexOf('AIM-9') >= 0 || upper.indexOf('SIDEWINDER') >= 0) return 'AIM-9';
+      if (upper.indexOf('LANTIRN') >= 0 || upper.indexOf('SNIPER') >= 0 || upper.indexOf('LITENING') >= 0 || upper.indexOf('TARGET') >= 0) return 'TGP';
+      if (upper.indexOf('TANK') >= 0 || upper.indexOf('GAL') >= 0 || upper.indexOf('FUEL') >= 0) return 'FUEL TANK';
+
+      return raw;
+    }
+
+    function formatStoresPageHtml(pageSwitcherHtml, data){
+      const server = (data && data.Server) || {};
+      const payload = (server && server.Payload) || {};
+      const stations = Array.isArray(payload.Stations) ? payload.Stations : [];
+
+      let html = '<div class=""fltPlanBoard"">';
+      if (pageSwitcherHtml){
+        html += '<div style=""margin:4px 0 6px 0;"">' + pageSwitcherHtml + '</div>';
+      }
+
+      html += '<div class=""fltPlanStoresWrap"">';
+      html += '<table class=""fltPlanStoresGrid"">';
+      html += '<thead><tr><th class=""fltPlanStoresStation"">STN</th><th>STORE</th></tr></thead><tbody>';
+
+      if (!stations.length){
+        html += '<tr><td class=""fltPlanStoresStation"">-</td><td class=""fltPlanStoresEmpty"">No payload station data.</td></tr>';
+      } else {
+        for (let i = 0; i < stations.length; i++){
+          const station = stations[i] || {};
+          const clsid = String(station.CLSID || '').trim();
+          const count = Number(station.count || 0);
+          const empty = !clsid || count <= 0;
+          const name = empty ? 'EMPTY' : getStoreFriendlyName(clsid);
+          html += '<tr><td class=""fltPlanStoresStation"">' + String(i + 1) + '</td><td' + (empty ? ' class=""fltPlanStoresEmpty""' : '') + '>' + escapeHtml(name) + '</td></tr>';
+        }
+      }
+
+      html += '</tbody></table></div></div>';
       return html;
     }
 
@@ -7203,9 +7279,13 @@ namespace VAICOM
         return '<tr><td style=""width:56px;"">' + (name === primaryRouteName ? '<strong>' + escapeHtml(name) + '</strong>' : escapeHtml(name)) + '</td><td>' + escapeHtml(String(count)) + '</td></tr>';
       });
       const routeSummaryHtml = '<div class=""fltPlanPage2Section""><div class=""fltPlanPage2Title"">ROUTES</div><div class=""fltPlanPage2Body""><table class=""fltPlanPage2Table""><thead><tr><th style=""width:56px;"">ROUTE</th><th>WAYPOINTS</th></tr></thead><tbody>' + routeRows.join('') + '</tbody></table></div></div>';
-      const pageSwitcherHtml = '<span class=""fltPlanPageSwitcher""><button type=""button"" class=""fltPlanPageBtn' + (page === 1 ? ' active' : '') + '"" data-dtc-page=""1"">NAVLOG</button><button type=""button"" class=""fltPlanPageBtn' + (page === 2 ? ' active' : '') + '"" data-dtc-page=""2"">COM/ROUTE</button><button type=""button"" class=""fltPlanPageBtn' + (page === 3 ? ' active' : '') + '"" data-dtc-page=""3"">MAP</button></span>';
+      const pageSwitcherHtml = '<span class=""fltPlanPageSwitcher""><button type=""button"" class=""fltPlanPageBtn' + (page === 1 ? ' active' : '') + '"" data-dtc-page=""1"">NAVLOG</button><button type=""button"" class=""fltPlanPageBtn' + (page === 2 ? ' active' : '') + '"" data-dtc-page=""2"">COM/ROUTE</button><button type=""button"" class=""fltPlanPageBtn' + (page === 3 ? ' active' : '') + '"" data-dtc-page=""3"">STORES</button><button type=""button"" class=""fltPlanPageBtn' + (page === 4 ? ' active' : '') + '"" data-dtc-page=""4"">MAP</button></span>';
 
       if (page === 3){
+        return formatStoresPageHtml(pageSwitcherHtml, data);
+      }
+
+      if (page === 4){
         return formatDtcPage3Html(pageSwitcherHtml, waypoints, data, selected, null, root);
       }
 
@@ -7354,11 +7434,14 @@ namespace VAICOM
       const routeName = groupName ? ('PLAYER ROUTE (' + groupName + ')') : 'PLAYER ROUTE';
       const selected = '__RUNTIME_PLAYER__';
       const page = getDtcPageBySelection(selected);
-      const pageSwitcherHtml = '<span class=""fltPlanPageSwitcher""><button type=""button"" class=""fltPlanPageBtn' + (page === 1 ? ' active' : '') + '"" data-dtc-page=""1"">NAVLOG</button><button type=""button"" class=""fltPlanPageBtn' + (page === 2 ? ' active' : '') + '"" data-dtc-page=""2"">COM/ROUTE</button><button type=""button"" class=""fltPlanPageBtn' + (page === 3 ? ' active' : '') + '"" data-dtc-page=""3"">MAP</button></span>';
+      const pageSwitcherHtml = '<span class=""fltPlanPageSwitcher""><button type=""button"" class=""fltPlanPageBtn' + (page === 1 ? ' active' : '') + '"" data-dtc-page=""1"">NAVLOG</button><button type=""button"" class=""fltPlanPageBtn' + (page === 2 ? ' active' : '') + '"" data-dtc-page=""2"">COM/ROUTE</button><button type=""button"" class=""fltPlanPageBtn' + (page === 3 ? ' active' : '') + '"" data-dtc-page=""3"">STORES</button><button type=""button"" class=""fltPlanPageBtn' + (page === 4 ? ' active' : '') + '"" data-dtc-page=""4"">MAP</button></span>';
       if (page === 2){
         return formatRuntimePage2Html(data, pageSwitcherHtml);
       }
       if (page === 3){
+        return formatStoresPageHtml(pageSwitcherHtml, data);
+      }
+      if (page === 4){
         return formatDtcPage3Html(pageSwitcherHtml, rows, data, selected);
       }
       return renderFlightPlanBoardHtml(selected, data, routeName, 'MISSION RUNTIME', '-', rows, formatRuntimeCmdsInfoBlockHtml(data), pageSwitcherHtml);
@@ -7379,8 +7462,11 @@ namespace VAICOM
       const routeButtons = availableRoutes.map(function(r){
         return '<button type=""button"" class=""fltPlanPageBtn' + (routeKey === r ? ' active' : '') + '"" data-dtc-route=""' + r + '"">' + r + '</button>';
       }).join('');
-      const pageSwitcherHtml = '<span class=""fltPlanPageSwitcher""><button type=""button"" class=""fltPlanPageBtn' + (page === 1 ? ' active' : '') + '"" data-dtc-page=""1"">NAVLOG</button><button type=""button"" class=""fltPlanPageBtn' + (page === 2 ? ' active' : '') + '"" data-dtc-page=""2"">COM/ROUTE</button><button type=""button"" class=""fltPlanPageBtn' + (page === 3 ? ' active' : '') + '"" data-dtc-page=""3"">MAP</button></span><span class=""fltPlanPageSwitcher"">' + routeButtons + '</span>';
+      const pageSwitcherHtml = '<span class=""fltPlanPageSwitcher""><button type=""button"" class=""fltPlanPageBtn' + (page === 1 ? ' active' : '') + '"" data-dtc-page=""1"">NAVLOG</button><button type=""button"" class=""fltPlanPageBtn' + (page === 2 ? ' active' : '') + '"" data-dtc-page=""2"">COM/ROUTE</button><button type=""button"" class=""fltPlanPageBtn' + (page === 3 ? ' active' : '') + '"" data-dtc-page=""3"">STORES</button><button type=""button"" class=""fltPlanPageBtn' + (page === 4 ? ' active' : '') + '"" data-dtc-page=""4"">MAP</button></span><span class=""fltPlanPageSwitcher"">' + routeButtons + '</span>';
       if (page === 3){
+        return formatStoresPageHtml(pageSwitcherHtml, data);
+      }
+      if (page === 4){
         return formatDtcPage3Html(pageSwitcherHtml, waypoints, data, selected, mapOverlays, root);
       }
       if (page === 2){
@@ -9709,7 +9795,7 @@ namespace VAICOM
 
                     if (path == "/okb/" || path == "/okb/index.html")
                     {
-                        WriteText(context.Response, IndexHtml, "text/html; charset=utf-8");
+                        WriteText(context.Response, GetIndexHtmlWithStoreLookup(), "text/html; charset=utf-8");
                         return;
                     }
 
@@ -9779,6 +9865,151 @@ namespace VAICOM
 
                     context.Response.StatusCode = 404;
                     context.Response.Close();
+                }
+
+                private static string GetIndexHtmlWithStoreLookup()
+                {
+                    try
+                    {
+                        return IndexHtml.Replace(StoreLookupJsonPlaceholder, GetStoreLookupMapJson());
+                    }
+                    catch
+                    {
+                        return IndexHtml.Replace(StoreLookupJsonPlaceholder, "{}");
+                    }
+                }
+
+                private static string GetStoreLookupMapJson()
+                {
+                    lock (StoreLookupSync)
+                    {
+                        try
+                        {
+                            string path = ResolveStoreLookupPath();
+                            string raw = "";
+
+                            if (!string.IsNullOrWhiteSpace(path) && File.Exists(path))
+                            {
+                                DateTime lastWrite = File.GetLastWriteTimeUtc(path);
+                                bool refresh = !string.Equals(path, storeLookupResolvedPath, StringComparison.OrdinalIgnoreCase)
+                                    || lastWrite != storeLookupLastWriteUtc;
+
+                                if (!refresh)
+                                {
+                                    return storeLookupMapJson;
+                                }
+
+                                raw = File.ReadAllText(path);
+                                storeLookupResolvedPath = path;
+                                storeLookupLastWriteUtc = lastWrite;
+                            }
+                            else
+                            {
+                                if (!TryReadEmbeddedStoreLookupJson(out raw))
+                                {
+                                    return storeLookupMapJson;
+                                }
+
+                                storeLookupResolvedPath = "<embedded>";
+                                storeLookupLastWriteUtc = DateTime.MinValue;
+                            }
+
+                            JObject parsed = JObject.Parse(raw);
+
+                            JToken mapToken = null;
+                            JProperty mapProperty = parsed.Properties()
+                                .FirstOrDefault(p => string.Equals(p.Name, "map", StringComparison.OrdinalIgnoreCase));
+
+                            if (mapProperty != null && mapProperty.Value != null && mapProperty.Value.Type == JTokenType.Object)
+                            {
+                                mapToken = mapProperty.Value;
+                            }
+                            else
+                            {
+                                mapToken = parsed;
+                            }
+
+                            storeLookupMapJson = mapToken.ToString(Formatting.None);
+
+                        }
+                        catch
+                        {
+                            if (string.IsNullOrWhiteSpace(storeLookupMapJson))
+                            {
+                                storeLookupMapJson = "{}";
+                            }
+                        }
+
+                        return string.IsNullOrWhiteSpace(storeLookupMapJson) ? "{}" : storeLookupMapJson;
+                    }
+                }
+
+                private static string ResolveStoreLookupPath()
+                {
+                    try
+                    {
+                        string baseDir = AppDomain.CurrentDomain.BaseDirectory;
+                        if (string.IsNullOrWhiteSpace(baseDir))
+                        {
+                            return "";
+                        }
+
+                        string[] candidates = new[]
+                        {
+                            Path.Combine(baseDir, "Helpers", "StoreClsidLookup.json"),
+                            Path.Combine(baseDir, "StoreClsidLookup.json")
+                        };
+
+                        foreach (string candidate in candidates)
+                        {
+                            if (!string.IsNullOrWhiteSpace(candidate) && File.Exists(candidate))
+                            {
+                                return candidate;
+                            }
+                        }
+                    }
+                    catch
+                    {
+                    }
+
+                    return "";
+                }
+
+                private static bool TryReadEmbeddedStoreLookupJson(out string rawJson)
+                {
+                    rawJson = "";
+
+                    try
+                    {
+                        Assembly asm = typeof(OpenKneeboardBridge).Assembly;
+                        string resourceName = asm
+                            .GetManifestResourceNames()
+                            .FirstOrDefault(n => n.EndsWith("Helpers.StoreClsidLookup.json", StringComparison.OrdinalIgnoreCase));
+
+                        if (string.IsNullOrWhiteSpace(resourceName))
+                        {
+                            return false;
+                        }
+
+                        using (Stream stream = asm.GetManifestResourceStream(resourceName))
+                        {
+                            if (stream == null)
+                            {
+                                return false;
+                            }
+
+                            using (StreamReader reader = new StreamReader(stream))
+                            {
+                                rawJson = reader.ReadToEnd();
+                            }
+                        }
+
+                        return !string.IsNullOrWhiteSpace(rawJson);
+                    }
+                    catch
+                    {
+                        return false;
+                    }
                 }
 
                 private static string BuildSnapshotJson()

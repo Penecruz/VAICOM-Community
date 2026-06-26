@@ -203,6 +203,11 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Fonts\MS33558.ttf" />
+    <EmbeddedResource Include="Helpers\StoreClsidLookup.json">
+      <LogicalName>VAICOM.Helpers.StoreClsidLookup.json</LogicalName>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <None Include="Helpers\StoreClsidLookup.README.txt" />
     <EmbeddedResource Include="Resources\Files\base-menu-window" />
     <EmbeddedResource Include="Resources\Files\Debug_chunk.lua" />
     <EmbeddedResource Include="Resources\Files\entry.lua" />

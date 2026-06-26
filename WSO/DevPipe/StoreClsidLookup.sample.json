@@ -1,0 +1,131 @@
+﻿{
+    "generatedUtc":  "2026-06-25T23:32:12.6304462Z",
+    "sourceFile":  "C:\\Users\\matth\\source\\repos\\VAICOM-Community\\WSO\\DevPipe\\StoreClsidSource.sample.txt",
+    "filterNonAircraft":  true,
+    "uniqueEntries":  8,
+    "parsedRows":  8,
+    "map":  {
+                "40EF17B7-F508-45DE-8566-6FFECC0C1AB8":  "AIM-120C-5 AMRAAM",
+                "5CE2FF2A-645A-4197-B48D-8720AC69394F":  "AIM-9X Sidewinder IR AAM",
+                "A111396E-D3E8-4B9C-8AC9-2432489304D5":  "AN/AAQ-28 LITENING",
+                "ALQ_184":  "ALQ-184",
+                "DB769D48-67D7-42ED-A2BE-108D566C8B1E":  "GBU-12",
+                "F376DBEE-4CAE-41BA-ADD9-B2910AC95DEC":  "Fuel tank 370 gal",
+                "GBU-38":  "GBU-38",
+                "SEASPARROW":  "SEASPARROW"
+            },
+    "entries":  [
+                    {
+                        "clsidNormalized":  "40EF17B7-F508-45DE-8566-6FFECC0C1AB8",
+                        "shortName":  "AIM-120C-5 AMRAAM",
+                        "preferredName":  "AIM-120C-5 AMRAAM - Active Rdr AAM",
+                        "clsidSamples":  [
+                                             "{40EF17B7-F508-45de-8566-6FFECC0C1AB8}"
+                                         ],
+                        "aliases":  [
+                                        "AIM-120C-5 AMRAAM - Active Rdr AAM"
+                                    ],
+                        "weightSamples":  [
+                                              "161.5"
+                                          ]
+                    },
+                    {
+                        "clsidNormalized":  "5CE2FF2A-645A-4197-B48D-8720AC69394F",
+                        "shortName":  "AIM-9X Sidewinder IR AAM",
+                        "preferredName":  "AIM-9X Sidewinder IR AAM",
+                        "clsidSamples":  [
+                                             "{5CE2FF2A-645A-4197-B48D-8720AC69394F}"
+                                         ],
+                        "aliases":  [
+                                        "AIM-9X Sidewinder IR AAM"
+                                    ],
+                        "weightSamples":  [
+                                              "84.46"
+                                          ]
+                    },
+                    {
+                        "clsidNormalized":  "A111396E-D3E8-4B9C-8AC9-2432489304D5",
+                        "shortName":  "AN/AAQ-28 LITENING",
+                        "preferredName":  "AN/AAQ-28 LITENING - Targeting Pod",
+                        "clsidSamples":  [
+                                             "{A111396E-D3E8-4b9c-8AC9-2432489304D5}"
+                                         ],
+                        "aliases":  [
+                                        "AN/AAQ-28 LITENING - Targeting Pod"
+                                    ],
+                        "weightSamples":  [
+                                              "208"
+                                          ]
+                    },
+                    {
+                        "clsidNormalized":  "ALQ_184",
+                        "shortName":  "ALQ-184",
+                        "preferredName":  "ALQ-184 - ECM Pod",
+                        "clsidSamples":  [
+                                             "ALQ_184"
+                                         ],
+                        "aliases":  [
+                                        "ALQ-184 - ECM Pod"
+                                    ],
+                        "weightSamples":  [
+                                              "215"
+                                          ]
+                    },
+                    {
+                        "clsidNormalized":  "DB769D48-67D7-42ED-A2BE-108D566C8B1E",
+                        "shortName":  "GBU-12",
+                        "preferredName":  "GBU-12 - 500lb Laser Guided Bomb",
+                        "clsidSamples":  [
+                                             "{DB769D48-67D7-42ED-A2BE-108D566C8B1E}"
+                                         ],
+                        "aliases":  [
+                                        "GBU-12 - 500lb Laser Guided Bomb"
+                                    ],
+                        "weightSamples":  [
+                                              "277"
+                                          ]
+                    },
+                    {
+                        "clsidNormalized":  "F376DBEE-4CAE-41BA-ADD9-B2910AC95DEC",
+                        "shortName":  "Fuel tank 370 gal",
+                        "preferredName":  "Fuel tank 370 gal",
+                        "clsidSamples":  [
+                                             "{F376DBEE-4CAE-41BA-ADD9-B2910AC95DEC}"
+                                         ],
+                        "aliases":  [
+                                        "Fuel tank 370 gal"
+                                    ],
+                        "weightSamples":  [
+                                              "1338.1101068"
+                                          ]
+                    },
+                    {
+                        "clsidNormalized":  "GBU-38",
+                        "shortName":  "GBU-38",
+                        "preferredName":  "GBU-38 - JDAM, 500lb GPS Guided Bomb",
+                        "clsidSamples":  [
+                                             "{GBU-38}"
+                                         ],
+                        "aliases":  [
+                                        "GBU-38 - JDAM, 500lb GPS Guided Bomb"
+                                    ],
+                        "weightSamples":  [
+                                              "241"
+                                          ]
+                    },
+                    {
+                        "clsidNormalized":  "SEASPARROW",
+                        "shortName":  "SEASPARROW",
+                        "preferredName":  "SEASPARROW",
+                        "clsidSamples":  [
+                                             "SEASPARROW"
+                                         ],
+                        "aliases":  [
+                                        "SEASPARROW"
+                                    ],
+                        "weightSamples":  [
+                                              "None"
+                                          ]
+                    }
+                ]
+}
