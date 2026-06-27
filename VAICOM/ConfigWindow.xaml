@@ -123,7 +123,8 @@
             <Setter Property="Background" Value="{DynamicResource UiTabItemBackgroundBrush}"/>
             <Setter Property="Foreground" Value="{DynamicResource UiTabItemForegroundBrush}"/>
             <Setter Property="BorderBrush" Value="{DynamicResource UiTabControlBorderBrush}"/>
-            <Setter Property="Padding" Value="4,1"/>
+            <Setter Property="Padding" Value="6,0"/>
+            <Setter Property="FontSize" Value="21"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="{x:Type TabItem}">
@@ -158,19 +159,20 @@
     <Border BorderBrush="{DynamicResource UiTabControlBorderBrush}" BorderThickness="1" Background="{DynamicResource UiWindowBackgroundBrush}">
         <Grid DataContext="{Binding Source={StaticResource AliasList}}">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="59*"/>
-                <ColumnDefinition Width="106*"/>
+                <ColumnDefinition Width="177*"/>
+                <ColumnDefinition Width="217*"/>
+                <ColumnDefinition Width="101*"/>
             </Grid.ColumnDefinitions>
             <TabControl x:Name="tabControl"
                         HorizontalAlignment="Left"
                         Height="295"
                         VerticalAlignment="Center"
                         Width="485"
-                        Grid.ColumnSpan="2"
+                        Grid.ColumnSpan="3"
                         Background="{DynamicResource UiTabControlBackgroundBrush}"
                         BorderBrush="{DynamicResource UiTabControlBorderBrush}">
 
-                <TabItem x:Name="PTTpage" Header="PTT" FontSize="13">
+                <TabItem x:Name="PTTpage" Header="PTT" FontSize="10">
                     <Grid Background="{DynamicResource UiWindowBackgroundBrush}" >
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="154*"/>
@@ -214,6 +216,7 @@
                         <TextBlock x:Name="Dialbug" HorizontalAlignment="Left" Margin="106,83,0,0"  VerticalAlignment="Top" FontSize="10" Foreground="#FF397863" Text="DIAL" Width="42" TextAlignment="Center" Initialized="SetDialbug" Grid.Column="1" />
                         <TextBlock x:Name="SRSbug" HorizontalAlignment="Left" Margin="48,83,0,0"  VerticalAlignment="Top" FontSize="10" Foreground="#FF397863" Text="SRS" Width="42" TextAlignment="Center" Initialized="SetSRSbug" Grid.Column="1" />
                         <TextBlock x:Name="EasyCommsInfo" HorizontalAlignment="Left" Margin="146,64,0,0"  VerticalAlignment="Top" FontSize="12" Foreground="#FF397863" Text="Easy Communication: ---" Width="235" Initialized="setEasyCommsText" TextAlignment="Center" Grid.ColumnSpan="3"/>
+                        <TextBlock x:Name="OK_Host" HorizontalAlignment="Left" Margin="170,21,0,0" VerticalAlignment="Top" FontSize="10" Foreground="#FF397863" Text="OKB" Width="28" TextAlignment="Right" Initialized="SetOKHostbug"  Grid.Column="1" />
                         <TextBlock x:Name="Chatterbug" HorizontalAlignment="Left" Margin="196,21,0,0"  VerticalAlignment="Top" FontSize="10" Foreground="#FF397863" Text="CHTR" Width="31" TextAlignment="Right" Initialized="Setchatterbug" Grid.Column="1" Grid.ColumnSpan="2" />
                         <TextBlock x:Name="Databug" HorizontalAlignment="Left" Margin="146,21,0,0"  VerticalAlignment="Top" FontSize="10" Foreground="#FF397863" Text="SP | DP | X.X.X" Width="65" Initialized="Setdatabug" Height="13" Grid.ColumnSpan="2" />
                         <TextBlock x:Name="Transmitbug" HorizontalAlignment="Left" Margin="137,21,0,0"  VerticalAlignment="Top" FontSize="10" Foreground="#FF397863" Text="XMIT" Width="32" Initialized="Settransmitbug" TextAlignment="Center" Grid.Column="1" />
@@ -272,11 +275,10 @@
                         <Image x:Name="Hotmic_Sw_Up" Margin="153,127,98,16" Source="Resources/Images/Hotmic_ON.png" Stretch="None" MouseDown="Hotmic_Sw_to_Dn" Initialized="Hotmic_Sw_Up_init" Visibility="Hidden" Grid.Column="1" Grid.ColumnSpan="2" />
                         <Image x:Name="Vox_Relay_Hot" Margin="162,108,98,99" Source="Resources/Images/Vox_Relay_Hot.png" Stretch="None" Visibility="Hidden" Grid.Column="1" Grid.ColumnSpan="2"/>
                         <Image x:Name="Vox_Relay_Cold" Margin="162,108,98,99" Source="Resources/Images/Vox_Relay_Cold.png" Stretch="None" Grid.Column="1" Grid.ColumnSpan="2"  />
-
                     </Grid>
                 </TabItem>
 
-                <TabItem x:Name="Prefspage" Header="Preferences" FontSize="13">
+                <TabItem x:Name="Prefspage" Header="Preferences" FontSize="10">
                     <Grid Background="{DynamicResource UiWindowBackgroundBrush}">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="23*"/>
@@ -315,7 +317,7 @@
                     </Grid>
                 </TabItem>
 
-                <TabItem x:Name="MPPrefs" Header="MP" FontSize="13">
+                <TabItem x:Name="MPPrefs" Header="MP" FontSize="10">
                     <Grid Background="{DynamicResource UiWindowBackgroundBrush}">
                         <Image HorizontalAlignment="Left" VerticalAlignment="Top" Source="Resources/Images/UI_2511_BG_Prefs.png" Stretch="Fill"/>
                         <Image x:Name="Sidebar10" HorizontalAlignment="Left" Height="118" VerticalAlignment="Center" Width="42" Source="Resources/Images/Sidetitle-Prefs.png" Stretch="None" Margin="6,74,0,72"/>
@@ -353,11 +355,13 @@
                     </Grid>
                 </TabItem>
 
-                <TabItem x:Name="ExtPrefs" Header="EX" FontSize="13" Height="21" VerticalAlignment="Top">
+                <TabItem x:Name="ExtPrefs" Header="EX" FontSize="10" Height="21" VerticalAlignment="Top">
                     <Grid Background="{DynamicResource UiWindowBackgroundBrush}">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="76*"/>
-                            <ColumnDefinition Width="185*"/>
+                            <ColumnDefinition Width="83*"/>
+                            <ColumnDefinition Width="36*"/>
+                            <ColumnDefinition Width="66*"/>
                             <ColumnDefinition Width="11*"/>
                             <ColumnDefinition Width="207*"/>
                         </Grid.ColumnDefinitions>
@@ -365,26 +369,26 @@
                             <RowDefinition Height="79*"/>
                             <RowDefinition Height="187*"/>
                         </Grid.RowDefinitions>
-                        <Image HorizontalAlignment="Left" VerticalAlignment="Top" Source="Resources/Images/UI_2511_BG_Prefs.png" Stretch="Fill" Panel.ZIndex="-1" RenderTransformOrigin="0.446,0.852" Grid.RowSpan="2" Grid.ColumnSpan="4"/>
+                        <Image HorizontalAlignment="Left" VerticalAlignment="Top" Source="Resources/Images/UI_2511_BG_Prefs.png" Stretch="Fill" Panel.ZIndex="-1" RenderTransformOrigin="0.446,0.852" Grid.RowSpan="2" Grid.ColumnSpan="6"/>
                         <Image x:Name="Sidebar8" HorizontalAlignment="Left" Height="118" VerticalAlignment="Top" Width="42" Source="Resources/Images/Sidetitle-Prefs.png" Stretch="None" Margin="6,75,0,0" Grid.RowSpan="2"/>
-                        <Label x:Name="labelsub8" Content=""  HorizontalContentAlignment="Center" Foreground="#FF686868" FontStyle ="Normal" FontSize="10"  HorizontalAlignment="Left" Margin="0,152,0,0" VerticalAlignment="Top" Height="37" Width="479" Initialized="setversionnumber8" Grid.Row="1" Grid.ColumnSpan="4"/>
+                        <Label x:Name="labelsub8" Content=""  HorizontalContentAlignment="Center" Foreground="#FF686868" FontStyle ="Normal" FontSize="10"  HorizontalAlignment="Left" Margin="0,152,0,0" VerticalAlignment="Top" Height="37" Width="479" Initialized="setversionnumber8" Grid.Row="1" Grid.ColumnSpan="6"/>
 
-                        <CheckBox x:Name="RIO_Hints" Content="Crew Messages" Foreground="#D0D0D0" FontSize="12" HorizontalAlignment="Left" Margin="50,13,0,0" VerticalAlignment="Top" Checked="SetConfigEnableRIO_Disable_Rose" Unchecked="SetConfigDisableRIO_Disable_Rose" Click="ConfigUpdate" Initialized="SetCurrentValueRIO_Disable_Rose" BorderThickness="2" Width="147" ToolTip="Show on-screen feedback" Grid.Row="1" Grid.ColumnSpan="2"/>
-                        <CheckBox x:Name="RIO_Hints_Only" Content="Hints Only" Foreground="#D0D0D0" FontSize="12" HorizontalAlignment="Left" Margin="71,32,0,0" VerticalAlignment="Top" Checked="SetConfigEnableRIO_Hints_Only" Unchecked="SetConfigDisableRIO_Hints_Only" Click="ConfigUpdate" Initialized="SetCurrentValueRIO_Hints_Only" BorderThickness="2" Width="105" Grid.Row="1" ToolTip="Display only options messages" Grid.ColumnSpan="2"/>
-                        <CheckBox x:Name="RIO_Enable_Box" Content="Jester Enable*" Foreground="#D0D0D0" FontSize="12" HorizontalAlignment="Left" Margin="50,72,0,0" VerticalAlignment="Top" Checked="SetConfigEnableRIO_Enable" Unchecked="SetConfigDisableRIO_Enable" Click="ConfigUpdate" Initialized="SetCurrentValueRIO_Enable" BorderThickness="2" Width="147" BorderBrush="#FF8C9AA4" ToolTip="Uncheck to disable AI RIO" Grid.RowSpan="2" Grid.ColumnSpan="2" />
-                        <CheckBox x:Name="RIO_ICShotmic_useswitch" Content="Use ICS Hot Mic" Foreground="#D0D0D0" FontSize="12" HorizontalAlignment="Left" Margin="50,54,0,0" VerticalAlignment="Top" Checked="SetConfigEnableRIO_ICShotmic_useswitch" Unchecked="SetConfigDisableRIO_ICShotmic_useswitch" Click="ConfigUpdate" Initialized="SetCurrentValueRIO_ICShotmic_useswitch" BorderThickness="2" Width="147" ToolTip="Use Open Mic for F-14 Intercom" Grid.Row="1" Grid.ColumnSpan="2"/>
-                        <CheckBox x:Name="HideF4EDialog" Content="Hide F-4E Dialog" Foreground="#D0D0D0" FontSize="12" HorizontalAlignment="Left" Margin="50,75,0,0" VerticalAlignment="Top" Checked="SetConfigEnableHideF4EDialog" Unchecked="SetConfigDisableHideF4EDialog" Click="ConfigUpdate" Initialized="SetCurrentValueHideF4EDialog" BorderThickness="2" Width="147" ToolTip="Hide F-4E Jester dialog UI while keeping dialog logic active" Grid.Row="1" Grid.ColumnSpan="2"/>
-                        <CheckBox x:Name="RIO_ICShotmic" Content="Internal Hot Mic" Foreground="#D0D0D0" FontSize="12" HorizontalAlignment="Left" Margin="20,73,0,0" VerticalAlignment="Top" Checked="SetConfigEnableRIO_ICShotmic" Unchecked="SetConfigDisableRIO_ICShotmic" Click="ConfigUpdate" Initialized="SetCurrentValueRIO_ICShotmic" BorderThickness="2" Width="133" Grid.Row="1" Visibility="Hidden" Grid.Column="1"/>
+                        <CheckBox x:Name="RIO_Hints" Content="Crew Messages" Foreground="#D0D0D0" FontSize="12" HorizontalAlignment="Left" Margin="50,72,0,0" VerticalAlignment="Top" Checked="SetConfigEnableRIO_Disable_Rose" Unchecked="SetConfigDisableRIO_Disable_Rose" Click="ConfigUpdate" Initialized="SetCurrentValueRIO_Disable_Rose" BorderThickness="2" Width="147" ToolTip="Show on-screen feedback" Grid.ColumnSpan="4" Grid.RowSpan="2"/>
+                        <CheckBox x:Name="RIO_Hints_Only" Content="Hints Only" Foreground="#D0D0D0" FontSize="12" HorizontalAlignment="Left" Margin="69,14,0,0" VerticalAlignment="Top" Checked="SetConfigEnableRIO_Hints_Only" Unchecked="SetConfigDisableRIO_Hints_Only" Click="ConfigUpdate" Initialized="SetCurrentValueRIO_Hints_Only" BorderThickness="2" Width="105" Grid.Row="1" ToolTip="Display only options messages" Grid.ColumnSpan="3"/>
+                        <CheckBox x:Name="RIO_Enable_Box" Content="F-14 Mini Wheel*" Foreground="#D0D0D0" FontSize="12" HorizontalAlignment="Left" Margin="50,79,0,0" VerticalAlignment="Top" Checked="SetConfigEnableRIO_Enable" Unchecked="SetConfigDisableRIO_Enable" Click="ConfigUpdate" Initialized="SetCurrentValueRIO_Enable" BorderThickness="2" Width="147" BorderBrush="#FF8C9AA4" ToolTip="Enable/disable F-14 Jester mini wheel Lua patching (AIRIO remains enabled)." Grid.ColumnSpan="4" Grid.Row="1" />
+                        <CheckBox x:Name="RIO_ICShotmic_useswitch" Content="Use ICS Hot Mic" Foreground="#D0D0D0" FontSize="12" HorizontalAlignment="Left" Margin="50,35,0,0" VerticalAlignment="Top" Checked="SetConfigEnableRIO_ICShotmic_useswitch" Unchecked="SetConfigDisableRIO_ICShotmic_useswitch" Click="ConfigUpdate" Initialized="SetCurrentValueRIO_ICShotmic_useswitch" BorderThickness="2" Width="147" ToolTip="Use Open Mic for F-14 Intercom" Grid.Row="1" Grid.ColumnSpan="4"/>
+                        <CheckBox x:Name="HideF4EDialog" Content="Hide F-4E Dialog" Foreground="#D0D0D0" FontSize="12" HorizontalAlignment="Left" Margin="50,57,0,0" VerticalAlignment="Top" Checked="SetConfigEnableHideF4EDialog" Unchecked="SetConfigDisableHideF4EDialog" Click="ConfigUpdate" Initialized="SetCurrentValueHideF4EDialog" BorderThickness="2" Width="147" ToolTip="Hide F-4E Jester dialog UI while keeping dialog logic active" Grid.Row="1" Grid.ColumnSpan="4"/>
+                        <CheckBox x:Name="RIO_ICShotmic" Content="Internal Hot Mic" Foreground="#D0D0D0" FontSize="12" HorizontalAlignment="Left" Margin="20,73,0,0" VerticalAlignment="Top" Checked="SetConfigEnableRIO_ICShotmic" Unchecked="SetConfigDisableRIO_ICShotmic" Click="ConfigUpdate" Initialized="SetCurrentValueRIO_ICShotmic" BorderThickness="2" Width="133" Grid.Row="1" Visibility="Hidden" Grid.Column="1" Grid.ColumnSpan="3"/>
 
-                        <TextBlock x:Name="RIO_Dll_missing" FontSize="10" Foreground="#EEE" HorizontalAlignment="Left" Margin="6,31,0,0" TextWrapping="Wrap" Text="AIRIO.dll not loaded!" VerticalAlignment="Top" Width="147" TextAlignment="Center" Initialized="InitRIODllWarning" Grid.Row="1" Visibility="Hidden" Grid.Column="1"/>
-                        <Image x:Name="RIO_Dll_missing_Pic" HorizontalAlignment="Left" Height="24" Margin="72,7,0,0" VerticalAlignment="Top" Width="25" Source="Resources/Images/hazard-sign-images-general_warning.png" Initialized="Init_RIO_Dll_missing_Pic" Grid.Row="1" Visibility="Hidden" Grid.Column="1"/>
-                        <TextBlock x:Name="labelextmdts" FontSize="12" Foreground="#FFEEEEEE" HorizontalAlignment="Left" Margin="86,46,0,0" TextWrapping="Wrap" Text="AOCS" VerticalAlignment="Top" Width="130" TextAlignment="Center" Height="16" Grid.Column="1" Grid.ColumnSpan="3"/>
-                        <TextBlock x:Name="labelrio" FontSize="12" Foreground="#FFEEEEEE" HorizontalAlignment="Left" Margin="33,46,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="131" TextAlignment="Center" Height="16" RenderTransformOrigin="0.5,0.5" Grid.ColumnSpan="2"><Run Text="AI"/><Run Language="en-au" Text=" CREW"/></TextBlock>
+                        <TextBlock x:Name="RIO_Dll_missing" FontSize="10" Foreground="#EEE" HorizontalAlignment="Left" Margin="6,31,0,0" TextWrapping="Wrap" Text="AIRIO.dll not loaded!" VerticalAlignment="Top" Width="147" TextAlignment="Center" Initialized="InitRIODllWarning" Grid.Row="1" Visibility="Hidden" Grid.Column="1" Grid.ColumnSpan="3"/>
+                        <Image x:Name="RIO_Dll_missing_Pic" HorizontalAlignment="Left" Height="24" Margin="72,7,0,0" VerticalAlignment="Top" Width="25" Source="Resources/Images/hazard-sign-images-general_warning.png" Initialized="Init_RIO_Dll_missing_Pic" Grid.Row="1" Visibility="Hidden" Grid.Column="1" Grid.ColumnSpan="2"/>
+                        <TextBlock x:Name="labelextmdts" FontSize="12" Foreground="#FFEEEEEE" HorizontalAlignment="Center" Margin="0,46,0,0" TextWrapping="Wrap" Text="AOCS" VerticalAlignment="Top" Width="130" TextAlignment="Center" Height="16" Grid.Column="3"/>
+                        <TextBlock x:Name="labelrio" FontSize="12" Foreground="#FFEEEEEE" HorizontalAlignment="Left" Margin="33,46,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="131" TextAlignment="Center" Height="16" RenderTransformOrigin="0.5,0.5" Grid.ColumnSpan="3"><Run Text="AI"/><Run Language="en-au" Text=" CREW"/></TextBlock>
 
-                        <Slider x:Name="KneeboardOpacity" IsSnapToTickEnabled = "true" HorizontalAlignment="Left" Margin="77,13,0,0" VerticalAlignment="Top" Maximum="1" Width="32" Cursor="Hand"  Initialized="SetCurrentValueKneeboardOpacity" ValueChanged="KneeboardOpacity_Change" LargeChange="0.05" Value="0.6" Orientation="Vertical" Height="121" TickFrequency="0.05" Grid.Row="1" Grid.Column="3" />
-                        <TextBlock x:Name="OpacityLabel1" HorizontalAlignment="Left" Margin="96,19,0,0"  VerticalAlignment="Top" FontSize="7" Foreground="#999" Text="BRT" Width="38" Grid.Row="1" Grid.Column="3"/>
-                        <TextBlock x:Name="OpacityLabel2" HorizontalAlignment="Left" Margin="96,119,0,0"  VerticalAlignment="Top" FontSize="7" Foreground="#999" Text="DIM" Width="39" Grid.Row="1" Grid.Column="3"/>
-                        <TextBlock x:Name="KneeboardLabel" HorizontalAlignment="Center" Margin="0,46,0,0"  VerticalAlignment="Top" FontSize="12" Foreground="#FFEEEEEE" Text="KNEEBOARD" Width="72" RenderTransformOrigin="0.5,0.5" Grid.Column="3">
+                        <Slider x:Name="KneeboardOpacity" IsSnapToTickEnabled = "true" HorizontalAlignment="Left" Margin="77,13,0,0" VerticalAlignment="Top" Maximum="1" Width="32" Cursor="Hand"  Initialized="SetCurrentValueKneeboardOpacity" ValueChanged="KneeboardOpacity_Change" LargeChange="0.05" Value="0.6" Orientation="Vertical" Height="121" TickFrequency="0.05" Grid.Row="1" Grid.Column="5" />
+                        <TextBlock x:Name="OpacityLabel1" HorizontalAlignment="Left" Margin="101,17,0,0"  VerticalAlignment="Top" FontSize="7" Foreground="#999" Text="BRT" Width="38" Grid.Row="1" Grid.Column="5"/>
+                        <TextBlock x:Name="OpacityLabel2" HorizontalAlignment="Left" Margin="101,134,0,0"  VerticalAlignment="Top" FontSize="7" Foreground="#999" Text="DIM" Width="39" Grid.Row="1" Grid.Column="5"/>
+                        <TextBlock x:Name="KneeboardLabel" HorizontalAlignment="Left" Margin="47,46,0,0"  VerticalAlignment="Top" FontSize="12" Foreground="#FFEEEEEE" Width="93" RenderTransformOrigin="0.5,0.5" Grid.Column="5">
                             <TextBlock.RenderTransform>
                                 <TransformGroup>
                                     <ScaleTransform ScaleY="1" ScaleX="1"/>
@@ -392,44 +396,64 @@
                                     <RotateTransform Angle="0"/>
                                     <TranslateTransform/>
                                 </TransformGroup>
-                            </TextBlock.RenderTransform>
-                        </TextBlock>
+                            </TextBlock.RenderTransform><Run Language="en-au" Text="DCS "/><Run Text="KNEEBOARD"/></TextBlock>
 
-                        <TextBlock x:Name="labelextchatter" FontSize="12" Foreground="#FFEEEEEE" HorizontalAlignment="Left" Margin="93,55,0,0" TextWrapping="Wrap" Text="CHATTER" VerticalAlignment="Top" Width="130" TextAlignment="Center" Height="16" Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="3"/>
-                        <CheckBox x:Name="ChatterAutostart" Content="Auto-start" Foreground="#D0D0D0" FontSize="12" HorizontalAlignment="Left" Margin="121,115,0,0" VerticalAlignment="Top" Checked="ChatterAutostartOn" Unchecked="ChatterAutostartOff" Initialized="SetCurrentValueChatterAutostart" Click="ConfigUpdate" ToolTip="Start Chatter sound immediately on plugin startup" BorderThickness="2" BorderBrush="#FF8C9AA4" Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="3"/>
-                        <TextBlock x:Name="ChatterThemeLabel" HorizontalAlignment="Left" Margin="142,132,0,0"  VerticalAlignment="Top" FontSize="12" Foreground="#D0D0D0" Text="Theme" Width="39" Grid.Row="1" RenderTransformOrigin="-1.093,0.456" Grid.Column="1"/>
+                        <TextBlock x:Name="labelextchatter" FontSize="12" Foreground="#FFEEEEEE" HorizontalAlignment="Left" Margin="10,55,0,0" TextWrapping="Wrap" Text="CHATTER" VerticalAlignment="Top" Width="130" TextAlignment="Center" Height="16" Grid.Row="1" Grid.Column="2" Grid.ColumnSpan="4"/>
+                        <CheckBox x:Name="ChatterAutostart" Content="Auto-start" Foreground="#D0D0D0" FontSize="12" HorizontalAlignment="Left" Margin="2,115,0,0" VerticalAlignment="Top" Checked="ChatterAutostartOn" Unchecked="ChatterAutostartOff" Initialized="SetCurrentValueChatterAutostart" Click="ConfigUpdate" ToolTip="Start Chatter sound immediately on plugin startup" BorderThickness="2" BorderBrush="#FF8C9AA4" Grid.Row="1" Grid.Column="3" Grid.ColumnSpan="3"/>
+                        <TextBlock x:Name="ChatterThemeLabel" HorizontalAlignment="Left" Margin="23,132,0,0"  VerticalAlignment="Top" FontSize="12" Foreground="#D0D0D0" Text="Theme" Width="39" Grid.Row="1" RenderTransformOrigin="-1.093,0.456" Grid.Column="3"/>
 
-                        <ComboBox x:Name="ChatterTheme" FontSize="12" ItemsSource="{Binding Source = {StaticResource ChatterThemes}}" SelectedValuePath="Key" DisplayMemberPath="Key" HorizontalAlignment="Left" Margin="1,132,0,0" VerticalAlignment="Top" Width="81" Height="22" RenderTransformOrigin="0.052,-1.19" IsSynchronizedWithCurrentItem="False" Initialized="ChatterFolderInitialValue" SelectionChanged="UpdateChatterFolder" ToolTip="Select Chatter theme to be used" BorderThickness="2" BorderBrush="#FF8C9AA4" Grid.Row="1" Grid.Column="2" Grid.ColumnSpan="2" Style="{StaticResource VaicomThemedComboBoxStyle}"/>
-                        <CheckBox x:Name="ChatterSilentOffline" Content="Req Radio On &amp; Freq" Foreground="#D0D0D0" FontSize="12" HorizontalAlignment="Left" Margin="121,95,0,0" VerticalAlignment="Top" Checked="ChatterSilentOfflineOn" Unchecked="ChatterSilentOfflineOff" Initialized="SetCurrentValueChatterSilentOffline" Click="ConfigUpdate" ToolTip="Online only: chatter muted when no DCS mission running" BorderThickness="2" BorderBrush="#FF8C9AA4" Width="147" Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="3"/>
+                        <ComboBox x:Name="ChatterTheme" FontSize="12" ItemsSource="{Binding Source = {StaticResource ChatterThemes}}" SelectedValuePath="Key" DisplayMemberPath="Key" HorizontalAlignment="Left" Margin="1,132,0,0" VerticalAlignment="Top" Width="81" Height="22" RenderTransformOrigin="0.052,-1.19" IsSynchronizedWithCurrentItem="False" Initialized="ChatterFolderInitialValue" SelectionChanged="UpdateChatterFolder" ToolTip="Select Chatter theme to be used" BorderThickness="2" BorderBrush="#FF8C9AA4" Grid.Row="1" Grid.Column="4" Grid.ColumnSpan="2" Style="{StaticResource VaicomThemedComboBoxStyle}"/>
+                        <CheckBox x:Name="ChatterSilentOffline" Content="Req Radio On &amp; Freq" Foreground="#D0D0D0" FontSize="12" HorizontalAlignment="Left" Margin="2,95,0,0" VerticalAlignment="Top" Checked="ChatterSilentOfflineOn" Unchecked="ChatterSilentOfflineOff" Initialized="SetCurrentValueChatterSilentOffline" Click="ConfigUpdate" ToolTip="Online only: chatter muted when no DCS mission running" BorderThickness="2" BorderBrush="#FF8C9AA4" Width="147" Grid.Row="1" Grid.Column="3" Grid.ColumnSpan="3"/>
                         <CheckBox x:Name="xx2" Content="xx" Foreground="#D0D0D0" FontSize="12" HorizontalAlignment="Left" Margin="6,13,0,0" VerticalAlignment="Top" Checked="SetConfigDisablePlayerVoice" Unchecked="SetConfigEnablePlayerVoice" Initialized="SetCurrentValueDisablePlayerVoice" ToolTip="Disable the in-game pilot voice." Click="ConfigAndServerUpdate" BorderThickness="2" BorderBrush="#FF8C9AA4" Visibility="Hidden" Grid.Row="1" Grid.Column="1"/>
                         <CheckBox x:Name="xx3" Content="xx" Foreground="#D0D0D0" FontSize="12" HorizontalAlignment="Left" Margin="6,33,0,0" VerticalAlignment="Top" Checked="SetConfigHideMenus" Unchecked="SetConfigShowMenus" Initialized="SetCurrentValueHideMenus" ToolTip="Disable the in-game communications menus." Click="ConfigAndServerUpdate" BorderThickness="2" BorderBrush="#FF8C9AA4" Visibility="Hidden" Grid.Row="1" Grid.Column="1"/>
                         <CheckBox x:Name="xx4" Content="xx" Foreground="#D0D0D0" FontSize="12" HorizontalAlignment="Left" Margin="6,53,0,0" VerticalAlignment="Top" Checked="EnforceProtocolNATOOn" Initialized="SetCurrentValueProtocolNATO" Unchecked="EnforceProtocolNATOOff" ToolTip="Force NATO naming consistency for ATCs." Click="ConfigAndServerUpdate" BorderThickness="2" BorderBrush="#FF8C9AA4" Visibility="Hidden" Grid.Row="1" Grid.Column="1"/>
                         <CheckBox x:Name="xx5" Content="xx" Foreground="#D0D0D0" FontSize="12" HorizontalAlignment="Left" Margin="6,73,0,0" VerticalAlignment="Top" Checked="EnforceCallsignsOn" Unchecked="EnforceCallsignsOff" Initialized="SetCurrentValueEnforceCallsigns" ToolTip="Force use of NATO (i.e. non-numerical) callsigns always." Click="ConfigAndServerUpdate" BorderThickness="2" BorderBrush="#FF8C9AA4" Visibility="Hidden" Grid.Row="1" Grid.Column="1"/>
                         <CheckBox x:Name="xx6" Content="xx" Foreground="#D0D0D0" FontSize="12" HorizontalAlignment="Left" Margin="6,93,0,0" VerticalAlignment="Top" Checked="UseInstantSelectOn" Unchecked="UseInstantSelectOff" Initialized="SetCurrentValueUseInstantSelect" ToolTip="Allows for instant recipient switching without involving the Select command." Click="ConfigUpdate" BorderThickness="2" BorderBrush="#FF8C9AA4" Visibility="Hidden" Grid.Row="1" Grid.Column="1"/>
-                        <CheckBox x:Name="xx7" Content="xx" Foreground="#D0D0D0" FontSize="12" HorizontalAlignment="Left" Margin="165,53,0,0" VerticalAlignment="Top" Checked="UIaddhintsOn" Initialized="SetCurrentValueUIaddhints" Unchecked="UIaddhintsOff" ToolTip="Get additional audio feedback" Click="ConfigUpdate" BorderThickness="2" BorderBrush="#FF8C9AA4" Visibility="Hidden" Grid.Column="1" Grid.ColumnSpan="3"/>
-                        <CheckBox x:Name="xx8" Content="xx" Foreground="#D0D0D0" FontSize="12" HorizontalAlignment="Left" Margin="165,53,0,0" VerticalAlignment="Top" Click="ConfigUpdate" Checked="AllowAddCommandsOn" Unchecked="AllowAddCommandsOff" Initialized="SetCurrentValueAllowAddCommands" ToolTip="Enables cross-module commands not listed in menus" BorderThickness="2" BorderBrush="#FF8C9AA4" Visibility="Hidden" Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="3"/>
-                        <CheckBox x:Name="deepinterrogate" Content="Deep Interrogate" Foreground="#D0D0D0" FontSize="12" HorizontalAlignment="Left" Margin="121,33,0,0" VerticalAlignment="Top" Checked="DeepInterrogateOn" Click="ConfigUpdate" Initialized="SetCurrentValueDeepInterrogate" Unchecked="DeepInterrogateOff" ToolTip="Provide detailed units information" BorderThickness="2" BorderBrush="#FF8C9AA4" Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="3"/>
-                        <CheckBox x:Name="xy1" Content="xx" Foreground="#D0D0D0" FontSize="12" HorizontalAlignment="Left" Margin="6,72,0,0" VerticalAlignment="Top" Checked="SetConfigEnableMP_AOCS" Unchecked="SetConfigDisableMP_AOCS" Click="ConfigUpdate" Initialized="SetCurrentValueMP_AOCS" ToolTip="Enable use in Multiplayer mode" BorderThickness="2" Width="167" BorderBrush="#FF8C9AA4" Visibility="Hidden" Grid.RowSpan="2" Grid.Column="1"/>
-                        <CheckBox x:Name="autobrief" Content="Auto Brief" Foreground="#D0D0D0" FontSize="12" HorizontalAlignment="Left" Margin="121,72,0,0" VerticalAlignment="Top" Initialized="SetCurrentValueAutoBrief" Checked="AutoBriefOn" Unchecked="AutoBriefOff" Click="ConfigUpdate" ToolTip="Automatic briefing read on mission start" BorderThickness="2" BorderBrush="#FF8C9AA4" Grid.RowSpan="2" Grid.Column="1" Grid.ColumnSpan="2"/>
+                        <CheckBox x:Name="xx7" Content="xx" Foreground="#D0D0D0" FontSize="12" HorizontalAlignment="Left" Margin="46,53,0,0" VerticalAlignment="Top" Checked="UIaddhintsOn" Initialized="SetCurrentValueUIaddhints" Unchecked="UIaddhintsOff" ToolTip="Get additional audio feedback" Click="ConfigUpdate" BorderThickness="2" BorderBrush="#FF8C9AA4" Visibility="Hidden" Grid.Column="3" Grid.ColumnSpan="3"/>
+                        <CheckBox x:Name="xx8" Content="xx" Foreground="#D0D0D0" FontSize="12" HorizontalAlignment="Left" Margin="46,53,0,0" VerticalAlignment="Top" Click="ConfigUpdate" Checked="AllowAddCommandsOn" Unchecked="AllowAddCommandsOff" Initialized="SetCurrentValueAllowAddCommands" ToolTip="Enables cross-module commands not listed in menus" BorderThickness="2" BorderBrush="#FF8C9AA4" Visibility="Hidden" Grid.Row="1" Grid.Column="3" Grid.ColumnSpan="3"/>
+                        <CheckBox x:Name="deepinterrogate" Content="Deep Interrogate" Foreground="#D0D0D0" FontSize="12" HorizontalAlignment="Left" Margin="2,33,0,0" VerticalAlignment="Top" Checked="DeepInterrogateOn" Click="ConfigUpdate" Initialized="SetCurrentValueDeepInterrogate" Unchecked="DeepInterrogateOff" ToolTip="Provide detailed units information" BorderThickness="2" BorderBrush="#FF8C9AA4" Grid.Row="1" Grid.Column="3" Grid.ColumnSpan="3"/>
+                        <CheckBox x:Name="xy1" Content="xx" Foreground="#D0D0D0" FontSize="12" HorizontalAlignment="Left" Margin="6,72,0,0" VerticalAlignment="Top" Checked="SetConfigEnableMP_AOCS" Unchecked="SetConfigDisableMP_AOCS" Click="ConfigUpdate" Initialized="SetCurrentValueMP_AOCS" ToolTip="Enable use in Multiplayer mode" BorderThickness="2" Width="167" BorderBrush="#FF8C9AA4" Visibility="Hidden" Grid.RowSpan="2" Grid.Column="1" Grid.ColumnSpan="3"/>
+                        <CheckBox x:Name="autobrief" Content="Auto Brief" Foreground="#D0D0D0" FontSize="12" HorizontalAlignment="Left" Margin="2,72,0,0" VerticalAlignment="Top" Initialized="SetCurrentValueAutoBrief" Checked="AutoBriefOn" Unchecked="AutoBriefOff" Click="ConfigUpdate" ToolTip="Automatic briefing read on mission start" BorderThickness="2" BorderBrush="#FF8C9AA4" Grid.RowSpan="2" Grid.Column="3" Grid.ColumnSpan="2"/>
                         <CheckBox x:Name="xy4" Content="xx" Foreground="#D0D0D0" FontSize="12" HorizontalAlignment="Left" Margin="6,113,0,0" VerticalAlignment="Top" ToolTip="Switch UI feedback sounds on or off" Unchecked="UIsoundsOff" Checked="UIsoundsOn" Initialized="SetCurrentValueUIsounds" Click="ConfigUpdate" BorderThickness="2" BorderBrush="#FF8C9AA4" Visibility="Hidden" Grid.Row="1" Grid.Column="1"/>
-                        <CheckBox x:Name="briefconcise" Content="Concise" Foreground="#D0D0D0" FontSize="12" HorizontalAlignment="Left" Margin="121,13,0,0" VerticalAlignment="Top" Initialized="SetCurrentValueBriefConcise" Checked="BriefConciseOn" Unchecked="BriefConciseOff" Click="ConfigUpdate" ToolTip="Keep briefings short." BorderThickness="2" BorderBrush="#FF8C9AA4" Width="130" Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="3"/>
-                        <CheckBox x:Name="xy6" Content="xx" Foreground="#D0D0D0" FontSize="12" HorizontalAlignment="Left" Margin="6,53,0,0" VerticalAlignment="Top" Checked="SetConfigEnableImportOtherMenu" Unchecked="SetConfigDisableImportOtherMenu" Click="ConfigUpdate" Initialized="SetCurrentValueImportOtherMenu" ToolTip="Collect F10 menu commands (updates database)" BorderThickness="2" Width="167" BorderBrush="#FF8C9AA4" Visibility="Hidden" Grid.Column="1"/>
-                        <CheckBox x:Name="xy7" Content="Radio link" Foreground="#D0D0D0" FontSize="12" HorizontalAlignment="Left" Margin="42,33,0,0" VerticalAlignment="Top" ToolTip="Disable PTT radio noise burst" Unchecked="DisableSquelchOff" Checked="DisableSquelchOn" Initialized="SetCurrentValueDisableSquelch" Click="UpdateSquelch" BorderThickness="2" BorderBrush="#FF8C9AA4" Width="147" Visibility="Hidden" Grid.Row="1" Grid.Column="3"/>
-                        <TextBlock x:Name="labelcarrier" FontSize="12" Foreground="#FFEEEEEE" HorizontalAlignment="Left" Margin="45,92,0,0" TextWrapping="Wrap" Text="REALISTIC ATC" VerticalAlignment="Top" Width="130" TextAlignment="Center" Height="16" Grid.Row="1" Grid.ColumnSpan="2"/>
-                        <CheckBox x:Name="CarrierComms" Content="Carrier Comms" Foreground="#D0D0D0" FontSize="12" HorizontalAlignment="Left" Margin="71,137,0,0" VerticalAlignment="Top" Checked="CarrierCommsOn" Unchecked="CarrierCommsOff" Initialized="SetCurrentValueCarrierComms" Click="ConfigUpdate" ToolTip="" BorderThickness="2" BorderBrush="#FF8C9AA4" Grid.Row="1" IsEnabled="False" Cursor="None" Grid.ColumnSpan="2"/>
-                        <CheckBox x:Name="CarrierSuppressAuto" Content="Suppress Auto" Foreground="#D0D0D0" FontSize="12" HorizontalAlignment="Left" Margin="71,115,0,0" VerticalAlignment="Top" Checked="CarrierSuppressAutoOn" Unchecked="CarrierSuppressAutoOff" Initialized="SetCurrentValueCarrierSuppressAuto" Click="ConfigAndServerUpdate" ToolTip="Disable auto-generation of player messages by DCS" BorderThickness="2" BorderBrush="#FF8C9AA4" Grid.Row="1" IsEnabled="False" Grid.ColumnSpan="2"/>
-                        <CheckBox x:Name="KneeboardlinkPTT" Content="" HorizontalAlignment="Left" Margin="122,22,0,0" Grid.Row="1" VerticalAlignment="Top" Click="ConfigAndServerUpdate" Checked="KneeboardlinkPTTOn" Unchecked="KneeboardlinkPTTOff" Initialized="SetCurrentValueKneeboardlinkPTT" Foreground="#FF999999" FontSize="8" Width="75" Grid.Column="3"/>
-                        <TextBlock x:Name="BrowseLabel" HorizontalAlignment="Left" Margin="140,24,0,0"  VerticalAlignment="Top" FontSize="7" Foreground="#999" Text="AUTO BROWSE" Width="49" Grid.Row="1" Grid.Column="3"/>
-                        <CheckBox x:Name="CHAT_Enable_Box" Content="Enable" Foreground="#D0D0D0" FontSize="12" HorizontalAlignment="Left" Margin="121,76,0,0" VerticalAlignment="Top" Checked="SetConfigEnableCHATOn" Unchecked="SetConfigDisableCHATOff" Click="ConfigUpdate" Initialized="SetCurrentValueCHAT" BorderThickness="2" Width="147" BorderBrush="#FF8C9AA4" ToolTip="Uncheck to disable Chatter Extension" Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="3" />
-                        <CheckBox x:Name="KNEE_Enable_Box" Content="Enable*" Foreground="#D0D0D0" FontSize="12" HorizontalAlignment="Left" Margin="77,72,0,0" VerticalAlignment="Top" Checked="SetConfigEnableKNEEOn" Unchecked="SetConfigDisableKNEEOff" Click="ConfigUpdate" Initialized="SetCurrentValueKNEE" BorderThickness="2" Width="147" BorderBrush="#FF8C9AA4" ToolTip="Uncheck to disable Kneeboard Extension" Grid.RowSpan="2" Grid.Column="3" />
-                        <TextBlock x:Name="Warning_label1" HorizontalAlignment="Left" Margin="132,60,0,0"  VerticalAlignment="Top" FontSize="8" Foreground="#999" Text="WARNING:" Width="38" Grid.Row="1" RenderTransformOrigin="-0.187,0.652" Grid.Column="3"/>
-                        <TextBlock x:Name="Warning_label2" HorizontalAlignment="Left" Margin="104,0,0,0"  VerticalAlignment="Center" FontSize="7" Foreground="#999" Width="94" Grid.Row="1" Height="42" TextWrapping="Wrap" TextAlignment="Center" Grid.Column="3"><Run Text="Use of "/><Run Language="en-au" Text="Jester"/><Run Text=" and KNEEBOARD will not pass the DCS integrity Check (IC) on MP Servers that require pure client scripts"/></TextBlock>
-                        <TextBlock x:Name="OpacityLabel1_Copy" HorizontalAlignment="Left" Margin="111,111,0,0"  VerticalAlignment="Top" FontSize="7" Foreground="#999" Text="* DCS Restart Required" Width="81" Grid.Column="3" TextWrapping="Wrap" RenderTransformOrigin="0.523,-0.347" Grid.Row="1"/>
-                        <CheckBox x:Name="OpenKeeboard_Out" Content="OKB Out" HorizontalAlignment="Left" Margin="122,39,0,0" Grid.Row="1" VerticalAlignment="Top" Click="ConfigAndServerUpdate" Checked="OpenKneeboardOutOn" Unchecked="OpenKneeboardOutOff" Initialized="SetCurrentValueOpenKneeboardOut" Foreground="#FF999999" FontSize="8" Width="75" Grid.Column="3"/>
+                        <CheckBox x:Name="briefconcise" Content="Concise" Foreground="#D0D0D0" FontSize="12" HorizontalAlignment="Left" Margin="2,13,0,0" VerticalAlignment="Top" Initialized="SetCurrentValueBriefConcise" Checked="BriefConciseOn" Unchecked="BriefConciseOff" Click="ConfigUpdate" ToolTip="Keep briefings short." BorderThickness="2" BorderBrush="#FF8C9AA4" Width="130" Grid.Row="1" Grid.Column="3" Grid.ColumnSpan="3"/>
+                        <CheckBox x:Name="xy6" Content="xx" Foreground="#D0D0D0" FontSize="12" HorizontalAlignment="Left" Margin="6,53,0,0" VerticalAlignment="Top" Checked="SetConfigEnableImportOtherMenu" Unchecked="SetConfigDisableImportOtherMenu" Click="ConfigUpdate" Initialized="SetCurrentValueImportOtherMenu" ToolTip="Collect F10 menu commands (updates database)" BorderThickness="2" Width="167" BorderBrush="#FF8C9AA4" Visibility="Hidden" Grid.Column="1" Grid.ColumnSpan="3"/>
+                        <CheckBox x:Name="xy7" Content="Radio link" Foreground="#D0D0D0" FontSize="12" HorizontalAlignment="Left" Margin="42,33,0,0" VerticalAlignment="Top" ToolTip="Disable PTT radio noise burst" Unchecked="DisableSquelchOff" Checked="DisableSquelchOn" Initialized="SetCurrentValueDisableSquelch" Click="UpdateSquelch" BorderThickness="2" BorderBrush="#FF8C9AA4" Width="147" Visibility="Hidden" Grid.Row="1" Grid.Column="5"/>
+                        <TextBlock x:Name="labelcarrier" FontSize="12" Foreground="#FFEEEEEE" HorizontalAlignment="Left" Margin="50,97,0,0" TextWrapping="Wrap" Text="REALISTIC ATC" VerticalAlignment="Top" Width="130" TextAlignment="Center" Height="16" Grid.Row="1" Grid.ColumnSpan="3"/>
+                        <CheckBox x:Name="CarrierComms" Content="Carrier Comms" Foreground="#D0D0D0" FontSize="12" HorizontalAlignment="Left" Margin="71,137,0,0" VerticalAlignment="Top" Checked="CarrierCommsOn" Unchecked="CarrierCommsOff" Initialized="SetCurrentValueCarrierComms" Click="ConfigUpdate" ToolTip="" BorderThickness="2" BorderBrush="#FF8C9AA4" Grid.Row="1" IsEnabled="False" Cursor="None" Grid.ColumnSpan="3"/>
+                        <CheckBox x:Name="CarrierSuppressAuto" Content="Suppress Auto" Foreground="#D0D0D0" FontSize="12" HorizontalAlignment="Left" Margin="71,115,0,0" VerticalAlignment="Top" Checked="CarrierSuppressAutoOn" Unchecked="CarrierSuppressAutoOff" Initialized="SetCurrentValueCarrierSuppressAuto" Click="ConfigAndServerUpdate" ToolTip="Disable auto-generation of player messages by DCS" BorderThickness="2" BorderBrush="#FF8C9AA4" Grid.Row="1" IsEnabled="False" Grid.ColumnSpan="3"/>
+                        <CheckBox x:Name="KneeboardlinkPTT" Content="" HorizontalAlignment="Left" Margin="122,22,0,0" Grid.Row="1" VerticalAlignment="Top" Click="ConfigAndServerUpdate" Checked="KneeboardlinkPTTOn" Unchecked="KneeboardlinkPTTOff" Initialized="SetCurrentValueKneeboardlinkPTT" Foreground="#FF999999" FontSize="8" Width="75" Grid.Column="5"/>
+                        <TextBlock x:Name="BrowseLabel" HorizontalAlignment="Left" Margin="140,24,0,0"  VerticalAlignment="Top" FontSize="7" Foreground="#999" Text="AUTO BROWSE" Width="49" Grid.Row="1" Grid.Column="5"/>
+                        <CheckBox x:Name="CHAT_Enable_Box" Content="Enable" Foreground="#D0D0D0" FontSize="12" HorizontalAlignment="Left" Margin="2,76,0,0" VerticalAlignment="Top" Checked="SetConfigEnableCHATOn" Unchecked="SetConfigDisableCHATOff" Click="ConfigUpdate" Initialized="SetCurrentValueCHAT" BorderThickness="2" Width="147" BorderBrush="#FF8C9AA4" ToolTip="Uncheck to disable Chatter Extension" Grid.Row="1" Grid.Column="3" Grid.ColumnSpan="3" />
+                        <CheckBox x:Name="KNEE_Enable_Box" Content="Enable*" Foreground="#D0D0D0" FontSize="12" HorizontalAlignment="Left" Margin="77,72,0,0" VerticalAlignment="Top" Checked="SetConfigEnableKNEEOn" Unchecked="SetConfigDisableKNEEOff" Click="ConfigUpdate" Initialized="SetCurrentValueKNEE" BorderThickness="2" Width="147" BorderBrush="#FF8C9AA4" ToolTip="Uncheck to disable Kneeboard Extension" Grid.RowSpan="2" Grid.Column="5" />
+                        <TextBlock x:Name="Warning_label1" HorizontalAlignment="Left" Margin="137,63,0,0"  VerticalAlignment="Top" FontSize="8" Foreground="#999" Text="WARNING:" Width="38" Grid.Row="1" RenderTransformOrigin="-0.187,0.652" Grid.Column="5"/>
+                        <TextBlock x:Name="Warning_label2" HorizontalAlignment="Left" Margin="109,79,0,0"  VerticalAlignment="Top" FontSize="7" Foreground="#999" Width="94" Grid.Row="1" Height="42" TextWrapping="Wrap" TextAlignment="Center" Grid.Column="5"><Run Text="* "/><Run Text="Use of "/><Run Language="en-au" Text="these f"/><Run Text="eatures"/><Run Text=" will not pass the DCS integrity Check (IC) on MP Servers that require pure client scripts"/></TextBlock>
                     </Grid>
                 </TabItem>
 
-                <TabItem x:Name="Configpage" Header="Config" FontSize="13">
+                <TabItem x:Name="OKBOutPage" Header="OKB Out" FontSize="10">
+                    <Grid Background="{DynamicResource UiWindowBackgroundBrush}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="76*"/>
+                            <ColumnDefinition Width="119*"/>
+                            <ColumnDefinition Width="66*"/>
+                            <ColumnDefinition Width="11*"/>
+                            <ColumnDefinition Width="207*"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="79*"/>
+                            <RowDefinition Height="187*"/>
+                        </Grid.RowDefinitions>
+                        <Image HorizontalAlignment="Left" VerticalAlignment="Top" Source="Resources/Images/UI_2511_BG_Prefs.png" Stretch="Fill" Panel.ZIndex="-1" RenderTransformOrigin="0.446,0.852" Grid.RowSpan="2" Grid.ColumnSpan="5"/>
+                        <Image x:Name="Sidebar11" HorizontalAlignment="Left" Height="118" VerticalAlignment="Top" Width="42" Source="Resources/Images/Sidetitle-Prefs.png" Stretch="None" Margin="6,75,0,0" Grid.RowSpan="2"/>
+                        <TextBlock x:Name="OKBOutHeader" FontSize="12" Foreground="#FFEEEEEE" HorizontalAlignment="Left" Margin="26,54,0,0" TextWrapping="Wrap" Text="OPENKNEEBOARD OUT" VerticalAlignment="Top" Width="160" TextAlignment="Center" Height="16" Grid.ColumnSpan="2"/>
+                        <CheckBox x:Name="OpenKeeboard_Out" Content="Enable" HorizontalAlignment="Left" Margin="53,75,0,0" VerticalAlignment="Top" Click="ConfigAndServerUpdate" Checked="OpenKneeboardOutOn" Unchecked="OpenKneeboardOutOff" Initialized="SetCurrentValueOpenKneeboardOut" Foreground="#D0D0D0" FontSize="12" Width="147" BorderThickness="2" BorderBrush="#FF8C9AA4" ToolTip="Enable OpenKneeboard Out broadcast." Grid.ColumnSpan="3" Grid.RowSpan="2"/>
+                        <CheckBox x:Name="OpenKneeboardAutoBrowse" Content="Auto Browse" HorizontalAlignment="Left" Margin="53,58,0,0" VerticalAlignment="Top" Click="ConfigAndServerUpdate" Checked="OpenKneeboardAutoBrowseOn" Unchecked="OpenKneeboardAutoBrowseOff" Initialized="SetCurrentValueOpenKneeboardAutoBrowse" Foreground="#D0D0D0" FontSize="12" Width="147" BorderThickness="2" BorderBrush="#FF8C9AA4" ToolTip="Enable automatic category/tab switching for OpenKneeboard Out." Grid.ColumnSpan="3" Grid.Row="1"/>
+                        <TextBlock x:Name="OpenKneeboardOutPortLabel" HorizontalAlignment="Center" Margin="0,18,0,0" Grid.Row="1" VerticalAlignment="Top" FontSize="10" Foreground="#999" Text="OKB Broadcast Port" Width="120" Grid.Column="1"/>
+                        <TextBox x:Name="OpenKneeboardOutPort" HorizontalAlignment="Left" Height="20" Margin="74,33,0,0" Grid.Row="1" TextWrapping="NoWrap" Text="7779" VerticalAlignment="Top" Width="52" FontSize="10" Initialized="OpenKneeboardOutPortInit" PreviewTextInput="OpenKneeboardOutPortPreviewTextInput" DataObject.Pasting="OpenKneeboardOutPortPasting" LostFocus="OpenKneeboardOutPortLostFocus" MaxLength="5" BorderBrush="#FF666666" Background="#1f2526" Foreground="#FF999999" ToolTip="Restart OpenKneeboard after changing port." Grid.ColumnSpan="2"/>
+                    </Grid>
+                </TabItem>
+
+                <TabItem x:Name="Configpage" Header="Config" FontSize="10">
                     <Grid Background="{DynamicResource UiWindowBackgroundBrush}">
                         <Image HorizontalAlignment="Left" VerticalAlignment="Top" Source="Resources/Images/UI_2511_BG_Config.png" Stretch="Fill" Panel.ZIndex="-1" IsEnabled="False"/>
                         <Label x:Name="labelconfiguration" Content="CONFIGURATION" HorizontalContentAlignment ="Center" Foreground="#D0D0D0" FontStyle ="Normal" FontWeight="ExtraLight" FontSize="24"  HorizontalAlignment="Left" Margin="0,12,0,0" VerticalAlignment="Top" Width="479" IsEnabled="False" Height="54" Visibility="Hidden"/>
@@ -470,7 +494,7 @@
                     </Grid>
                 </TabItem>
 
-                <TabItem x:Name="Audiopage" Header="Audio" FontSize="13">
+                <TabItem x:Name="Audiopage" Header="Audio" FontSize="10">
                     <Grid Background="{DynamicResource UiWindowBackgroundBrush}">
                         <Image x:Name="Sidebar9" HorizontalAlignment="Left" Height="118" VerticalAlignment="Center" Width="42" Source="Resources/Images/Sidetitle-Config.png" Stretch="None" Margin="6,74,0,72"/>
                         <Image HorizontalAlignment="Left" VerticalAlignment="Top" Source="Resources/Images/UI_2511_BG_Config.png" Stretch="Fill" Panel.ZIndex="-1" IsEnabled="False"/>
@@ -560,7 +584,7 @@
                     </Grid>
                 </TabItem>
 
-                <TabItem x:Name="Editorpage" Header="Editor" FontSize="13">
+                <TabItem x:Name="Editorpage" Header="Editor" FontSize="10">
                     <Grid Background="{DynamicResource UiWindowBackgroundBrush}">
                         <Image HorizontalAlignment="Left" VerticalAlignment="Top" Source="Resources/Images/UI_2511_BG_Edit.png" Stretch="Fill" Panel.ZIndex="-1"/>
                         <Label x:Name="labeleditor" Content="KEYWORDS EDITOR" HorizontalContentAlignment ="Center" Foreground="#D0D0D0" FontStyle ="Normal" FontWeight="ExtraLight" FontSize="24"  HorizontalAlignment="Left" Margin="0,12,0,0" VerticalAlignment="Top" Width="479" IsEnabled="False" Height="54" Visibility="Hidden"/>
@@ -603,7 +627,7 @@
                     </Grid>
                 </TabItem>
 
-                <TabItem x:Name="Helppage" Header="Help" FontSize="13">
+                <TabItem x:Name="Helppage" Header="Help" FontSize="10">
                     <Grid Background="{DynamicResource UiWindowBackgroundBrush}" >
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="357*"/>
@@ -637,7 +661,7 @@
                     </Grid>
                 </TabItem>
 
-                <TabItem x:Name="Aboutpage" Header="About" FontSize="13">
+                <TabItem x:Name="Aboutpage" Header="About" FontSize="10">
                     <Grid Background="{DynamicResource UiWindowBackgroundBrush}">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="19*"/>
@@ -665,7 +689,7 @@
                     </Grid>
                 </TabItem>
 
-                <TabItem x:Name="Resetpage" Header="Reset" FontSize="13">
+                <TabItem x:Name="Resetpage" Header="Reset" FontSize="10">
                     <Grid Background="{DynamicResource UiWindowBackgroundBrush}" >
                         <Image HorizontalAlignment="Left" VerticalAlignment="Top" Source="Resources/Images/UI_2511_BG_Reset.png" Stretch="Fill" Panel.ZIndex="-1"/>
                         <TextBlock x:Name="includelabel" HorizontalAlignment="Left" Margin="91,33,0,0"  VerticalAlignment="Top" FontSize="12" Foreground="#FFA0ABAC" Text="CLEAR:" Width="75" Visibility="Hidden"/>
@@ -689,7 +713,7 @@
                     </Grid>
                 </TabItem>
 
-                <TabItem x:Name="debugpage" Header="*" FontSize="13" Initialized="InitDebugTab">
+                <TabItem x:Name="debugpage" Header="*" FontSize="10" Initialized="InitDebugTab">
                     <Grid Background="{DynamicResource UiWindowBackgroundBrush}" >
                         <Button x:Name="SendButton" Content="" HorizontalAlignment="Left" Margin="437,211,0,0" VerticalAlignment="Top" Width="26" FontSize="9" Cursor="Hand" Height="26" Click="SendDebugCode" ToolTip="Reset the selected items." BorderBrush="White" Background="#FF333333" Panel.ZIndex="255" Initialized="InitDebugBtn"/>
                         <TextBox x:Name="CodeBlock" TextWrapping="Wrap" AcceptsReturn="True" HorizontalAlignment="Left" Height="246" Margin="10,10,0,0" Text="TextBox" VerticalAlignment="Top" Width="414" Foreground="{DynamicResource UiWindowForegroundBrush}" Initialized="InitCodeBlock"/>

@@ -71,7 +71,7 @@ namespace VAICOM
                             {
                                 File.WriteAllText(path, jsonstring);
                             }
-                        }                        
+                        }
                     }
                     catch (Exception e)
                     {
@@ -145,6 +145,8 @@ namespace VAICOM
                         }
                     }
 
+                    EnsureAiCrewPageRecipientAliases(ref warncounter);
+
                     Aliases.appendiceswpn = Aliases.reference["aiappendiceswpn"];
                     Aliases.appendicesdir = Aliases.reference["aiappendicesdir"];
                     Aliases.aicues = Aliases.reference["aicues"];
@@ -183,6 +185,35 @@ namespace VAICOM
                     }                 
 
                     Log.Write("Keywords database loaded successfully.", Colors.Text);
+                }
+
+                private static void EnsureAiCrewPageRecipientAliases(ref int warncounter)
+                {
+                    if (!Aliases.reference.ContainsKey("airecipients"))
+                    {
+                        return;
+                    }
+
+                    Dictionary<string, string> recipients = Aliases.reference["airecipients"];
+                    var requiredAliases = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+                    {
+                        { "Boots", "crew" },
+                        { "Jester", "crew" },
+                        { "Iceman", "crew" },
+                        { "George", "crew" },
+                        { "WSO", "crew" },
+                        { "RIO", "crew" },
+                    };
+
+                    foreach (KeyValuePair<string, string> alias in requiredAliases)
+                    {
+                        if (!recipients.ContainsKey(alias.Key))
+                        {
+                            recipients.Add(alias.Key, alias.Value);
+                            warncounter++;
+                            Log.Write("   -> " + alias.Key, Colors.Text);
+                        }
+                    }
                 }
             }
         }

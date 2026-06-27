@@ -432,6 +432,18 @@ namespace VAICOM
                                     case "wMsgShowKneeboardTab":
                                         try
                                         {
+                                            string recipientKey = State.have["recipient"] ? State.currentkey["recipient"] : "";
+                                            string recipientAlias = State.have["recipient"] ? State.usedalias["recipient"] : "";
+                                            if (IsAiCrewPageRequest(recipientKey, recipientAlias, State.currentfullsentence))
+                                            {
+                                                if (State.activeconfig.OpenKneeboard_Out)
+                                                {
+                                                    OpenKneeboardBridge.UpdateActiveCategory("AI CREW");
+                                                }
+                                                UI.Playsound.Commandcomplete();
+                                                break;
+                                            }
+
                                             string cat = Database.Recipients.Table[State.currentkey["recipient"]].RecipientClass().Name;
                                             KneeboardUpdater.SwitchPage(cat);
                                             UI.Playsound.Commandcomplete();
@@ -584,6 +596,47 @@ namespace VAICOM
                     KneeboardUpdater.SwitchPage(cat);
                 }
 
+                private static bool IsAiCrewPageRequest(string recipientKey, string recipientAlias, string fullSentence)
+                {
+                    string key = string.IsNullOrWhiteSpace(recipientKey) ? "" : recipientKey.Trim().ToLowerInvariant();
+                    if (key.Equals("jester")
+                        || key.Equals("boots")
+                        || key.Equals("george")
+                        || key.Equals("iceman")
+                        || key.Equals("rio")
+                        || key.Equals("wso")
+                        || key.Equals("ai")
+                        || key.Equals("aicrew")
+                        || key.Equals("ai crew"))
+                    {
+                        return true;
+                    }
+
+                    string alias = string.IsNullOrWhiteSpace(recipientAlias) ? "" : recipientAlias.Trim().ToLowerInvariant();
+                    if (alias.Equals("jester")
+                        || alias.Equals("boots")
+                        || alias.Equals("george")
+                        || alias.Equals("iceman")
+                        || alias.Equals("rio")
+                        || alias.Equals("wso")
+                        || alias.Equals("ai crew"))
+                    {
+                        return true;
+                    }
+
+                    string spoken = string.IsNullOrWhiteSpace(fullSentence)
+                        ? ""
+                        : fullSentence.ToLowerInvariant();
+
+                    return spoken.Contains("ai crew")
+                        || spoken.Contains("jester")
+                        || spoken.Contains("boots")
+                        || spoken.Contains("george")
+                        || spoken.Contains("iceman")
+                        || spoken.Contains("rio")
+                        || spoken.Contains("wso");
+                }
+
                 public static void SwapSRSListeningStates()
                 {
                     if (State.activeconfig.MP_VoIPUseSwitch)
@@ -601,12 +654,51 @@ namespace VAICOM
                     return State.currentcommand.isState() && State.activeconfig.DeepInterrogate && Server.tunedforAOCS;
                 }
 
+                private static bool TryProcessOfflineKneeboardCommand()
+                {
+                    try
+                    {
+                        getinputsentence();
+                        scanforkeywords();
+                        correctforimportedobjects();
+
+                        State.haveinputscomplete = setcommand();
+                        if (!State.haveinputscomplete || State.currentcommand == null)
+                        {
+                            return false;
+                        }
+
+                        bool isKneeboardCommand = State.currentcommand.isKneeboard()
+                            || State.currentcommand.uniqueid.Equals(23004)
+                            || State.currentcommand.uniqueid.Equals(23005);
+
+                        if (!isKneeboardCommand)
+                        {
+                            return false;
+                        }
+
+                        sendvoid();
+                        RefreshKneeboardSnapshotAfterCommand();
+                        State.MessageReset();
+                        return true;
+                    }
+                    catch
+                    {
+                        return false;
+                    }
+                }
+
                 // processes voice command, called directly from plugin
                 public static bool processcommand()
                 {
                     // Check if DCS is running
                     if (!State.dcsrunning)
                     {
+                        if (TryProcessOfflineKneeboardCommand())
+                        {
+                            return true;
+                        }
+
                         Log.Write("DCS is not connected. Command processing is disabled.", Colors.Warning);
                         UI.Playsound.Error();
                         return false;
@@ -658,7 +750,8 @@ namespace VAICOM
 
                         State.currentrecipientclass = getrecipientclass();
 
-                        bool intercomOnlyHotMic = !State.transmitting && State.IsCrewHotMicActive();
+                        bool intercomOnlyHotMic = !State.transmitting
+                            && (State.IsCrewHotMicActiveOnIntercomTX() || State.IntercomHotMicLatched);
                         bool isIntercomRecipientClass = State.currentrecipientclass.Equals(Recipientclasses.Crew)
                             || State.currentrecipientclass.Equals(Recipientclasses.RIO)
                             || State.currentrecipientclass.Equals(Recipientclasses.AI_pilot)
@@ -666,7 +759,10 @@ namespace VAICOM
                         bool isGeorgeCommand = State.currentcommand != null
                             && !string.IsNullOrEmpty(State.currentcommand.dcsid)
                             && State.currentcommand.dcsid.StartsWith("wMsgGeorge", StringComparison.OrdinalIgnoreCase);
+                        bool isAirioCommand = State.currentcommand != null
+                            && State.currentcommand.isRIO();
                         bool isHotMicAllowedCommand = isIntercomRecipientClass
+                            || isAirioCommand
                             || isGeorgeCommand
                             || State.currentcommand.isKneeboard()
                             || State.currentcommand.isOptions()
@@ -739,7 +835,10 @@ namespace VAICOM
                         // switch kneeboard page if autobrowse on
                         try
                         {
-                            if (State.activeconfig.KneeboardlinkPTT)
+                            bool dcsKneeboardAutoBrowse = State.activeconfig.KneeboardlinkPTT && State.activeconfig.Kneeboard_Enabled;
+                            bool openKneeboardAutoBrowse = State.activeconfig.OpenKneeboard_AutoBrowse && State.activeconfig.OpenKneeboard_Out;
+
+                            if (dcsKneeboardAutoBrowse || openKneeboardAutoBrowse)
                             {
                                 string cat = "";
 
@@ -758,7 +857,14 @@ namespace VAICOM
 
                                 if (!string.IsNullOrWhiteSpace(cat))
                                 {
-                                    KneeboardUpdater.SwitchPage(cat);
+                                    if (dcsKneeboardAutoBrowse)
+                                    {
+                                        KneeboardUpdater.SwitchPage(cat);
+                                    }
+                                    else
+                                    {
+                                        OpenKneeboardBridge.UpdateActiveCategory(cat);
+                                    }
                                 }
                             }
                         }
@@ -803,9 +909,16 @@ namespace VAICOM
                         else
                         {
                             bool immediateHotMicSend = !State.transmitting && State.IsCrewHotMicActiveOnIntercomTX();
+                            bool deferSendUntilReleaseInVoiceModes = (State.activeconfig.MP_VoIPUseSwitch || State.activeconfig.MP_VoIPParallel)
+                                && State.transmitting
+                                && !riocommand
+                                && !selectcommand
+                                && !optionscommand
+                                && !menucommand
+                                && !immediateHotMicSend;
 
-                            if (riocommand || selectcommand || optionscommand || menucommand || immediateHotMicSend ||
-                                !((State.activeconfig.MP_VoIPUseSwitch || State.activeconfig.MP_VoIPParallel) && State.activeconfig.MP_DelayTransmit)) //  || !State.currentTXnode.tunedforhuman 
+                            if (!deferSendUntilReleaseInVoiceModes && (riocommand || selectcommand || optionscommand || menucommand || immediateHotMicSend ||
+                                !((State.activeconfig.MP_VoIPUseSwitch || State.activeconfig.MP_VoIPParallel) && State.activeconfig.MP_DelayTransmit))) //  || !State.currentTXnode.tunedforhuman 
                             {
                                 sendmessage();
                             }
@@ -824,6 +937,8 @@ namespace VAICOM
                                 Extensions.RIO.helper.showingjestermenu = false;
                             }
                         }
+
+                        RefreshKneeboardSnapshotAfterCommand();
 
                         if (dospeech())
                         {
@@ -861,6 +976,27 @@ namespace VAICOM
                     return true;
                 }
 
+                private static void RefreshKneeboardSnapshotAfterCommand()
+                {
+                    try
+                    {
+                        if (State.activeconfig == null)
+                        {
+                            return;
+                        }
+
+                        if (!State.activeconfig.OpenKneeboard_Out && !State.activeconfig.Kneeboard_Enabled)
+                        {
+                            return;
+                        }
+
+                        KneeboardUpdater.UpdateServerData();
+                    }
+                    catch
+                    {
+                    }
+                }
+
                 public static bool TryResolveDynamicWsoValue(string commandId, string action, string mappedValue, out string resolvedValue)
                 {
                     resolvedValue = mappedValue ?? "";
@@ -877,7 +1013,31 @@ namespace VAICOM
                         return true;
                     }
 
+                    if (IsDirectRadarTargetCommand(commandId))
+                    {
+
+                        if (WSOActionCache.TryGetByActionAndIndex(action, "1", out string firstContactValue)
+                            && !string.IsNullOrWhiteSpace(firstContactValue))
+                        {
+                            resolvedValue = firstContactValue;
+                            Log.Write($"WSO command '{commandId}' defaulted to first radar contact [idx=1] => {firstContactValue}", Colors.Text);
+                            return true;
+                        }
+                        else
+                        {
+                            Log.Write("No radar targets currently available.", Colors.Warning);
+                            UI.Playsound.Recipientna();
+                            return false;
+                        }
+                    }
+
                     return true;
+                }
+
+                private static bool IsDirectRadarTargetCommand(string commandId)
+                {
+                    return commandId.Equals("wMsgWSO_Radar_FocusTarget_Direct", StringComparison.OrdinalIgnoreCase)
+                        || commandId.Equals("wMsgWSO_Radar_LockTarget_Direct", StringComparison.OrdinalIgnoreCase);
                 }
 
                 private static bool TryResolveValueFromActionCache(string action, string sentence, out string resolvedValue, out string cacheKey)
@@ -1193,8 +1353,16 @@ namespace VAICOM
 
                             if (type == WSOCommandMappings.InterfaceType.Dialog)
                             {
-                                // Construct the command string in the format "category|action"
-                                string dialogCommandString = $"{category}|{action}";
+                                if (commandId.Equals("wMsgWSO_Fuel_RefuelAtAirfield") &&
+                                    !WSODialogOptionsCache.TryGetActionByRecipient(State.currentkey["wsocmdrecipient"], out action))
+                                {
+                                    Log.Write($"{State.currentkey["wsocmdrecipient"]} is not an available option.", Colors.Warning);
+                                    UI.Playsound.Recipientna();
+                                    return;
+                                }
+
+                                // Construct the command string in the format "category|action|value"
+                                string dialogCommandString = $"{category}|{action}|{value}";
 
                                 // Create a new CommsMessage for the Jester API command
                                 State.currentmessage = new Message.CommsMessage
@@ -1206,7 +1374,7 @@ namespace VAICOM
                                 };
 
                                 // Send the command to the Jester 2.0 API using hb_send_proxy fields
-                                HbSendProxyCommand.SendDialogCommand(State.WsoDialogClient, category, action);
+                                HbSendProxyCommand.SendDialogCommand(State.WsoDialogClient, category, action, value);
                                 Log.Write($"Sending command '{commandId}' to Jester 2.0 dialog API...", Colors.Text);
 
                                 return;

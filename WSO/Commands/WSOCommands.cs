@@ -66,8 +66,6 @@ namespace VAICOM.Extensions.WSO
             { "wMsgWSO_Radar_ScanType_25Narrow", new CommandInfo { uniqueid = 24223, category = CommandCategories.WSO, name = "wMsgWSO_Radar_ScanType_25Narrow", displayname = Labels.aicommands["wMsgWSO_Radar_ScanType_25Narrow"], enabled = true } },
             { "wMsgWSO_Radar_ScanType_50Wide", new CommandInfo { uniqueid = 24224, category = CommandCategories.WSO, name = "wMsgWSO_Radar_ScanType_50Wide", displayname = Labels.aicommands["wMsgWSO_Radar_ScanType_50Wide"], enabled = true } },
             { "wMsgWSO_Radar_ScanType_50Narrow", new CommandInfo { uniqueid = 24225, category = CommandCategories.WSO, name = "wMsgWSO_Radar_ScanType_50Narrow", displayname = Labels.aicommands["wMsgWSO_Radar_ScanType_50Narrow"], enabled = true } },
-            { "wMsgWSO_Radar_FocusTarget", new CommandInfo { uniqueid = 24226, category = CommandCategories.WSO, name = "wMsgWSO_Radar_FocusTarget", displayname = Labels.aicommands["wMsgWSO_Radar_FocusTarget"], enabled = true } },
-            { "wMsgWSO_Radar_LockTarget", new CommandInfo { uniqueid = 24227, category = CommandCategories.WSO, name = "wMsgWSO_Radar_LockTarget", displayname = Labels.aicommands["wMsgWSO_Radar_LockTarget"], enabled = true } },
             { "wMsgWSO_Radar_UnlockTarget", new CommandInfo { uniqueid = 24228, category = CommandCategories.WSO, name = "wMsgWSO_Radar_UnlockTarget", displayname = Labels.aicommands["wMsgWSO_Radar_UnlockTarget"], enabled = true } },
             { "wMsgWSO_Radar_FocusTarget_Direct", new CommandInfo { uniqueid = 24229, category = CommandCategories.WSO, name = "wMsgWSO_Radar_FocusTarget_Direct", displayname = Labels.aicommands["wMsgWSO_Radar_FocusTarget_Direct"], enabled = true } },
             { "wMsgWSO_Radar_LockTarget_Direct", new CommandInfo { uniqueid = 24230, category = CommandCategories.WSO, name = "wMsgWSO_Radar_LockTarget_Direct", displayname = Labels.aicommands["wMsgWSO_Radar_LockTarget_Direct"], enabled = true } },
@@ -106,6 +104,13 @@ namespace VAICOM.Extensions.WSO
             { "wMsgWSO_Crew_Countermeasures_Manual", new CommandInfo { uniqueid = 24508, category = CommandCategories.WSO, name = "wMsgWSO_Crew_Countermeasures_Manual", displayname = Labels.aicommands["wMsgWSO_Crew_Countermeasures_Manual"], enabled = true } },
             { "wMsgWSO_Crew_Countermeasures_Jester", new CommandInfo { uniqueid = 24509, category = CommandCategories.WSO, name = "wMsgWSO_Crew_Countermeasures_Jester", displayname = Labels.aicommands["wMsgWSO_Crew_Countermeasures_Jester"], enabled = true } },
             { "wMsgWSO_Crew_StartAlignment", new CommandInfo { uniqueid = 24510, category = CommandCategories.WSO, name = "wMsgWSO_Crew_StartAlignment", displayname = Labels.aicommands["wMsgWSO_Crew_StartAlignment"], enabled = true } },
+            { "wMsgWSO_Crew_Shutdown", new CommandInfo { uniqueid = 24511, category = CommandCategories.WSO, name = "wMsgWSO_Crew_Shutdown", displayname = Labels.aicommands["wMsgWSO_Crew_Shutdown"], enabled = true } },
+            { "wMsgWSO_Crew_AltitudeMonitor_500", new CommandInfo { uniqueid = 24512, category = CommandCategories.WSO, name = "wMsgWSO_Crew_AltitudeMonitor_500", displayname = Labels.aicommands["wMsgWSO_Crew_AltitudeMonitor_500"], enabled = true } },
+            { "wMsgWSO_Crew_AltitudeMonitor_300", new CommandInfo { uniqueid = 24513, category = CommandCategories.WSO, name = "wMsgWSO_Crew_AltitudeMonitor_300", displayname = Labels.aicommands["wMsgWSO_Crew_AltitudeMonitor_300"], enabled = true } },
+            { "wMsgWSO_Crew_AltitudeMonitor_200", new CommandInfo { uniqueid = 24514, category = CommandCategories.WSO, name = "wMsgWSO_Crew_AltitudeMonitor_200", displayname = Labels.aicommands["wMsgWSO_Crew_AltitudeMonitor_200"], enabled = true } },
+            { "wMsgWSO_Crew_AltitudeMonitor_100", new CommandInfo { uniqueid = 24515, category = CommandCategories.WSO, name = "wMsgWSO_Crew_AltitudeMonitor_100", displayname = Labels.aicommands["wMsgWSO_Crew_AltitudeMonitor_100"], enabled = true } },
+            { "wMsgWSO_Crew_AltitudeMonitor_50", new CommandInfo { uniqueid = 24516, category = CommandCategories.WSO, name = "wMsgWSO_Crew_AltitudeMonitor_50", displayname = Labels.aicommands["wMsgWSO_Crew_AltitudeMonitor_50"], enabled = true } },
+            { "wMsgWSO_Crew_AltitudeMonitor_Off", new CommandInfo { uniqueid = 24517, category = CommandCategories.WSO, name = "wMsgWSO_Crew_AltitudeMonitor_Off", displayname = Labels.aicommands["wMsgWSO_Crew_AltitudeMonitor_Off"], enabled = true } },
             
             // Ground Crew commands
             { "wMsgWSO_Ground_WheelChocks_Place", new CommandInfo { uniqueid = 24600, category = CommandCategories.WSO, name = "wMsgWSO_Ground_WheelChocks_Place", displayname = Labels.aicommands["wMsgWSO_Ground_WheelChocks_Place"], enabled = true } },
@@ -131,6 +136,9 @@ namespace VAICOM.Extensions.WSO
             { "wMsgWSO_Ground_StabAugCheck", new CommandInfo { uniqueid = 24620, category = CommandCategories.WSO, name = "wMsgWSO_Ground_StabAugCheck", displayname = Labels.aicommands["wMsgWSO_Ground_StabAugCheck"], enabled = true } },
             { "wMsgWSO_Ground_TrimCheck", new CommandInfo { uniqueid = 24621, category = CommandCategories.WSO, name = "wMsgWSO_Ground_TrimCheck", displayname = Labels.aicommands["wMsgWSO_Ground_TrimCheck"], enabled = true } },
             { "wMsgWSO_Ground_Cancel", new CommandInfo { uniqueid = 24622, category = CommandCategories.WSO, name = "wMsgWSO_Ground_Cancel", displayname = Labels.aicommands["wMsgWSO_Ground_Cancel"], enabled = true } },
+            { "wMsgWSO_Ground_CMS_ChaffSingle", new CommandInfo { uniqueid = 24623, category = CommandCategories.WSO, name = "wMsgWSO_Ground_CMS_ChaffSingle", displayname = Labels.aicommands["wMsgWSO_Ground_CMS_ChaffSingle"], enabled = true } },
+            { "wMsgWSO_Ground_CMS_ChaffDouble", new CommandInfo { uniqueid = 24624, category = CommandCategories.WSO, name = "wMsgWSO_Ground_CMS_ChaffDouble", displayname = Labels.aicommands["wMsgWSO_Ground_CMS_ChaffDouble"], enabled = true } },
+            { "wMsgWSO_Ground_IFF_InsertM4Codes", new CommandInfo { uniqueid = 24625, category = CommandCategories.WSO, name = "wMsgWSO_Ground_IFF_InsertM4Codes", displayname = Labels.aicommands["wMsgWSO_Ground_IFF_InsertM4Codes"], enabled = true } },
 
             // Miscellaneous
             { "wMsgWSO_Systems_AVTR_Record", new CommandInfo { uniqueid = 24700, category = CommandCategories.WSO, name = "wMsgWSO_Systems_AVTR_Record", displayname = Labels.aicommands["wMsgWSO_Systems_AVTR_Record"], enabled = true } },
@@ -154,6 +162,11 @@ namespace VAICOM.Extensions.WSO
 
             // Jester fuel responses
             { "wMsgWSO_Fuel_FuelIsGood", new CommandInfo { uniqueid = 24770, category = CommandCategories.WSO, name = "wMsgWSO_Fuel_FuelIsGood", displayname = Labels.aicommands["wMsgWSO_Fuel_FuelIsGood"], enabled = true } },
+            { "wMsgWSO_Fuel_FuelIsLow", new CommandInfo { uniqueid = 24771, category = CommandCategories.WSO, name = "wMsgWSO_Fuel_FuelIsLow", displayname = Labels.aicommands["wMsgWSO_Fuel_FuelIsLow"], enabled = true } },
+            { "wMsgWSO_Fuel_RemainOnMission", new CommandInfo { uniqueid = 24772, category = CommandCategories.WSO, name = "wMsgWSO_Fuel_RemainOnMission", displayname = Labels.aicommands["wMsgWSO_Fuel_RemainOnMission"], enabled = true } },
+            { "wMsgWSO_Fuel_AirfieldOptions", new CommandInfo { uniqueid = 24773, category = CommandCategories.WSO, name = "wMsgWSO_Fuel_AirfieldOptions", displayname = Labels.aicommands["wMsgWSO_Fuel_AirfieldOptions"], enabled = true } },
+            { "wMsgWSO_Fuel_TankerOptions", new CommandInfo { uniqueid = 24774, category = CommandCategories.WSO, name = "wMsgWSO_Fuel_TankerOptions", displayname = Labels.aicommands["wMsgWSO_Fuel_TankerOptions"], enabled = true } },
+            { "wMsgWSO_Fuel_RefuelAtAirfield", new CommandInfo { uniqueid = 24775, category = CommandCategories.WSO, name = "wMsgWSO_Fuel_RefuelAtAirfield", displayname = Labels.aicommands["wMsgWSO_Fuel_RefuelAtAirfield"], enabled = true } },
 
             // Context response commands
             { "wMsgWSO_Context_Short", new CommandInfo { uniqueid = 24800, category = CommandCategories.WSO, name = "wMsgWSO_Context_Short", displayname = Labels.aicommands["wMsgWSO_Context_Short"], enabled = true } },
@@ -166,7 +179,8 @@ namespace VAICOM.Extensions.WSO
         {
             "wMsgWSO_Navigation_Divert_LatLong",
             "wMsgWSO_Navigation_TACAN_TuneAsset",
-            "wMsgWSO_Radio_TuneATC"
+            "wMsgWSO_Radio_TuneATC",
+            "wMsgWSO_Fuel_RefuelAtAirfield"
         };
 
     }    

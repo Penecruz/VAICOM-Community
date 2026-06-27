@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using VAICOM.FileManager;
 using VAICOM.Static;
 
@@ -12,6 +14,8 @@ namespace VAICOM
         public partial class ConfigWindow : Window
         {
             // ------------  EXTENSIONS PAGE -----------------------------
+
+            private static readonly Regex OpenKneeboardOutPortDigitsOnlyRegex = new Regex("^[0-9]+$");
 
             // Pene edits Kneeboard Activate/deactivate Box
 
@@ -55,15 +59,15 @@ namespace VAICOM
             public void AIRIO_restart_popup()
             {
                 RIO_Enable_Box.IsEnabled = false;
-                string caption = "AIRIO setting changed";
-                string message = "AIRIO setting changed:\nRestart VoiceAttack and DCS.";
+                string caption = "Jester Mini Wheel setting changed";
+                string message = "Jester Mini Wheel setting changed:\nRestart VoiceAttack and DCS.";
                 MessageBox.Show(message, caption, MessageBoxButton.OK, MessageBoxImage.Information);
             }
 
             // Left column:        
 
-            private void SetConfigEnableRIO_Enable(object sender, RoutedEventArgs e) { if (State.allowairioswitching) { if (!State.activeconfig.RIO_Enabled) { } State.activeconfig.RIO_Enabled = true; FileHandler.Lua.LuaFiles_Install(false, true); } else { RIO_Enable_Box.IsEnabled = false; } } // State.activeconfig.RIO_Enabled = false; 
-            private void SetConfigDisableRIO_Enable(object sender, RoutedEventArgs e) { if (State.allowairioswitching) { if (State.activeconfig.RIO_Enabled) { } State.activeconfig.RIO_Enabled = false; FileHandler.Lua.LuaFiles_Install(false, true); } else { RIO_Enable_Box.IsEnabled = false; } } // State.activeconfig.RIO_Enabled = false;
+            private void SetConfigEnableRIO_Enable(object sender, RoutedEventArgs e) { if (State.allowairioswitching) { State.activeconfig.RIO_Enabled = true; State.activeconfig.RIO_MiniWheel_Enabled = true; FileHandler.Lua.LuaFiles_Install(false, true); } else { RIO_Enable_Box.IsEnabled = false; } }
+            private void SetConfigDisableRIO_Enable(object sender, RoutedEventArgs e) { if (State.allowairioswitching) { State.activeconfig.RIO_Enabled = true; State.activeconfig.RIO_MiniWheel_Enabled = false; FileHandler.Lua.LuaFiles_Install(false, true); } else { RIO_Enable_Box.IsEnabled = false; } }
 
             private void SetCurrentValueRIO_Enable(object sender, EventArgs e)
             {
@@ -76,7 +80,8 @@ namespace VAICOM
                     RIO_Enable_Box.Visibility = Visibility.Hidden;
                 }
                 RIO_Enable_Box.IsEnabled = true;
-                RIO_Enable_Box.IsChecked = State.activeconfig.RIO_Enabled;
+                State.activeconfig.RIO_Enabled = true;
+                RIO_Enable_Box.IsChecked = State.activeconfig.RIO_MiniWheel_Enabled;
             }
 
             private void SetConfigEnableRIO_Disable_Rose(object sender, RoutedEventArgs e) { State.activeconfig.RIO_Messages = true; }
@@ -304,12 +309,14 @@ namespace VAICOM
             {
                 State.activeconfig.OpenKneeboard_Out = true;
                 Extensions.Kneeboard.OpenKneeboardBridge.SetEnabled(true);
+                ChangeOKHostbug();
             }
 
             private void OpenKneeboardOutOff(object sender, RoutedEventArgs e)
             {
                 State.activeconfig.OpenKneeboard_Out = false;
                 Extensions.Kneeboard.OpenKneeboardBridge.SetEnabled(false);
+                ChangeOKHostbug();
             }
 
             private void SetCurrentValueOpenKneeboardOut(object sender, EventArgs e)
@@ -320,6 +327,86 @@ namespace VAICOM
                     checkbox.IsEnabled = true;
                     checkbox.IsChecked = State.activeconfig.OpenKneeboard_Out;
                 }
+            }
+
+            private void OpenKneeboardAutoBrowseOn(object sender, RoutedEventArgs e) { State.activeconfig.OpenKneeboard_AutoBrowse = true; }
+            private void OpenKneeboardAutoBrowseOff(object sender, RoutedEventArgs e) { State.activeconfig.OpenKneeboard_AutoBrowse = false; }
+            private void SetCurrentValueOpenKneeboardAutoBrowse(object sender, EventArgs e)
+            {
+                CheckBox checkbox = sender as CheckBox;
+                if (checkbox != null)
+                {
+                    checkbox.IsEnabled = true;
+                    checkbox.IsChecked = State.activeconfig.OpenKneeboard_AutoBrowse;
+                }
+            }
+
+            private void OpenKneeboardOutPortInit(object sender, EventArgs e)
+            {
+                TextBox textBox = sender as TextBox;
+                if (textBox == null)
+                {
+                    return;
+                }
+
+                int configuredPort = State.activeconfig.OpenKneeboard_Out_Port;
+                if (configuredPort <= 0 || configuredPort > 65535)
+                {
+                    configuredPort = 7779;
+                    State.activeconfig.OpenKneeboard_Out_Port = configuredPort;
+                }
+
+                textBox.Text = configuredPort.ToString();
+            }
+
+            private void OpenKneeboardOutPortPreviewTextInput(object sender, TextCompositionEventArgs e)
+            {
+                e.Handled = !OpenKneeboardOutPortDigitsOnlyRegex.IsMatch(e.Text);
+            }
+
+            private void OpenKneeboardOutPortPasting(object sender, DataObjectPastingEventArgs e)
+            {
+                if (!e.DataObject.GetDataPresent(typeof(string)))
+                {
+                    e.CancelCommand();
+                    return;
+                }
+
+                string pastedText = (string)e.DataObject.GetData(typeof(string));
+                if (string.IsNullOrWhiteSpace(pastedText) || !OpenKneeboardOutPortDigitsOnlyRegex.IsMatch(pastedText))
+                {
+                    e.CancelCommand();
+                }
+            }
+
+            private void OpenKneeboardOutPortLostFocus(object sender, RoutedEventArgs e)
+            {
+                TextBox textBox = sender as TextBox;
+                if (textBox == null)
+                {
+                    return;
+                }
+
+                int parsedPort;
+                if (!int.TryParse(textBox.Text, out parsedPort) || parsedPort <= 0 || parsedPort > 65535)
+                {
+                    textBox.Text = State.activeconfig.OpenKneeboard_Out_Port.ToString();
+                    return;
+                }
+
+                if (State.activeconfig.OpenKneeboard_Out_Port != parsedPort)
+                {
+                    State.activeconfig.OpenKneeboard_Out_Port = parsedPort;
+                    Settings.ConfigFile.WriteConfigToFile(true);
+
+                    if (State.activeconfig.OpenKneeboard_Out)
+                    {
+                        Extensions.Kneeboard.OpenKneeboardBridge.SetEnabled(false);
+                        Extensions.Kneeboard.OpenKneeboardBridge.SetEnabled(true);
+                    }
+                }
+
+                textBox.Text = State.activeconfig.OpenKneeboard_Out_Port.ToString();
             }
 
 

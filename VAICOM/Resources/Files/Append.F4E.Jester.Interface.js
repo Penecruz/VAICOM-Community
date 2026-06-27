@@ -70,7 +70,9 @@ function collectActionCacheEntries(menu, path, entries, all = false) {
 	const allowedActions = [
 		"divert_tgt1_lat_lon", "hold_flightplan_1", "hold_flightplan_2",
 		"resume_flightplan_1", "resume_flightplan_2", "radio_tune_atc",
-		"nav_tacan_tr", "designate_wpt"
+     "nav_tacan_tr", "designate_wpt",
+		"radar_focus_targets_thinking", "radar_lock_targets_thinking",
+		"radar_focus_target", "radar_lock_target", "radar_unlock_tgt"
 	];
 
 	for (let i = 0; i < menu.items.length; i++) {
@@ -89,6 +91,7 @@ function collectActionCacheEntries(menu, path, entries, all = false) {
 				action,
 				name: itemName,
 				value: action_value,
+              idx: (i + 1).toString(),
 				path: itemPath.join(" > ")
 			});
 		}
@@ -113,8 +116,8 @@ function sendActionCacheSnapshot(reason) {
 			return;
 		}
 
-		const entries = [];
-		collectActionCacheEntries(main_menu, ["Main Menu"], entries);
+     const entries = [];
+		collectActionCacheEntries(main_menu, ["Main Menu"], entries, true);
 
 		sendSocketMessage(JSON.stringify({
 			type: "action_cache_bulk",

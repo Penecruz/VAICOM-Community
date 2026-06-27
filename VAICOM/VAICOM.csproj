@@ -7,12 +7,7 @@
     <Description>Interactive Voice Control for DCS World</Description>
     <AssemblyVersion>0.0.0.0</AssemblyVersion>
     <FileVersion>0.0.0.0</FileVersion>
-    <PreBuildEvent>TASKKILL /FI "STATUS eq RUNNING" /F /IM VoiceAttack.exe
-TASKKILL /FI "STATUS eq RUNNING" /F /IM XDesProc.exe</PreBuildEvent>
-    <PreBuildEvent>TASKKILL /FI "STATUS eq RUNNING" /F /IM VoiceAttack.exe
-TASKKILL /FI "STATUS eq RUNNING" /F /IM XDesProc.exe</PreBuildEvent>
-    <PreBuildEvent>TASKKILL /FI "STATUS eq RUNNING" /F /IM VoiceAttack.exe
-TASKKILL /FI "STATUS eq RUNNING" /F /IM XDesProc.exe</PreBuildEvent>
+    <PreBuildEvent>TASKKILL /F /IM VoiceAttack.exe &gt;NUL 2&gt;&amp;1 &amp; TASKKILL /F /IM XDesProc.exe &gt;NUL 2&gt;&amp;1 &amp; EXIT /B 0</PreBuildEvent>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugType>full</DebugType>
@@ -40,10 +35,7 @@ TASKKILL /FI "STATUS eq RUNNING" /F /IM XDesProc.exe</PreBuildEvent>
     <DebugType>pdbonly</DebugType>
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
-  <PropertyGroup>
-    <PreBuildEvent>TASKKILL /FI "STATUS eq RUNNING" /F /IM VoiceAttack.exe
-TASKKILL /FI "STATUS eq RUNNING" /F /IM XDesProc.exe</PreBuildEvent>
-  </PropertyGroup>
+  <PropertyGroup />
   <PropertyGroup />
   <ItemGroup>
     <Compile Remove="Resources\AH-64D Temp\**" />
@@ -211,6 +203,11 @@ TASKKILL /FI "STATUS eq RUNNING" /F /IM XDesProc.exe</PreBuildEvent>
   </ItemGroup>
   <ItemGroup>
     <None Include="Fonts\MS33558.ttf" />
+    <EmbeddedResource Include="Helpers\StoreClsidLookup.json">
+      <LogicalName>VAICOM.Helpers.StoreClsidLookup.json</LogicalName>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <None Include="Helpers\StoreClsidLookup.README.txt" />
     <EmbeddedResource Include="Resources\Files\base-menu-window" />
     <EmbeddedResource Include="Resources\Files\Debug_chunk.lua" />
     <EmbeddedResource Include="Resources\Files\entry.lua" />

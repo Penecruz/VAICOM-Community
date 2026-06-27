@@ -170,6 +170,7 @@ namespace VAICOM
                         State.configurationwindow.Dispatcher.BeginInvoke((MethodInvoker)delegate
                         {
                             State.configurationwindow.Alternatebeaconbug();
+                            State.configurationwindow.AlternateOKHostbug();
                             State.configurationwindow.Alternateupdatebug();
                             State.configurationwindow.AlternateWorldLight();
                         });

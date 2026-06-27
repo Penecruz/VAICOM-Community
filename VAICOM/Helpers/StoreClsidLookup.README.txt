@@ -1,0 +1,13 @@
+Store CLSID Lookup
+==================
+
+This file maps normalized DCS payload CLSIDs to friendly store names used by the VAICOM STORES page.
+
+Generated from mined DCS Lua exporter launcher data. Many thanks to Quaggles for his lua data minning tool.
+
+How to regenerate:
+- PowerShell:
+  powershell -ExecutionPolicy Bypass -File "WSO/DevPipe/Generate-StoreLookupFromDcsLuaExporter.ps1" -RootPath "WSO/DevPipe/DCS.Lua.Exporter" -OutputPath "VAICOM/Helpers/StoreClsidLookup.json"
+
+Optional metadata output (for troubleshooting only):
+- Add: -IncludeMetadata

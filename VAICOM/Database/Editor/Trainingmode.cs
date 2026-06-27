@@ -32,11 +32,27 @@ namespace VAICOM
             {
                 public static SpeechRecognizer trainer;
                 private static bool usingVoiceAccess = false;
+                private static bool? previousVALIsteningState;
 
                 public static void Start()
                 {
                     try
                     {
+                        try
+                        {
+                            if (State.Proxy != null)
+                            {
+                                previousVALIsteningState = State.Proxy.State.GetListeningEnabled();
+                                if (previousVALIsteningState.Value)
+                                {
+                                    State.Proxy.State.SetListeningEnabled(false);
+                                }
+                            }
+                        }
+                        catch
+                        {
+                        }
+
                         if (usingVoiceAccess)
                         {
                             Log.Write("Voice Access is running.", Colors.System);
@@ -102,6 +118,21 @@ namespace VAICOM
                         }
 
                         State.trainerrunning = false;
+
+                        try
+                        {
+                            if (State.Proxy != null && previousVALIsteningState.HasValue)
+                            {
+                                State.Proxy.State.SetListeningEnabled(previousVALIsteningState.Value);
+                            }
+                        }
+                        catch
+                        {
+                        }
+                        finally
+                        {
+                            previousVALIsteningState = null;
+                        }
 
                         // Log exit messages and reset PTT
                         Log.Write("Keyword training finished.", Colors.Message);

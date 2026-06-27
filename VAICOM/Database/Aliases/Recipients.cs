@@ -692,12 +692,14 @@ namespace VAICOM
                 { "Navy One",               "Navy One"              },
                 { "Nearest Tanker",         "nearesttanker"         },
 
-                   // crew
+                // crew
 
                 { "Crew",                   "crew"                   },
                 { "Chief",                  "crew"                   },
                 { "Sarge",                  "crew"                   },
                 { "Ground",                 "crew"                   },
+                { "AI Crew",                "aicrew"                 },
+                { "AI Crew Page",           "aicrew"                 },
 
                 // AOCS
 
@@ -715,7 +717,6 @@ namespace VAICOM
 
                 { "Kneeboard",              "kneeboard"              },
                 { "Show Kneeboard",         "kneeboard"              },
-
             };
 
         }

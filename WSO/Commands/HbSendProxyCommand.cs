@@ -24,11 +24,13 @@ namespace VAICOM.WSO
     {
         public string action;
         public string command;
+        public string value;
 
-        public WsoDialogMessage(string action, string command)
+        public WsoDialogMessage(string action, string command, string value)
         {
             this.action = action;
             this.command = command;
+            this.value = value;
         }
     }
 
@@ -117,11 +119,15 @@ namespace VAICOM.WSO
         /// <param name="webSocket">The WebSocket to send the command to.</param>
         /// <param name="action">The action, will generally be hardcoded to "action".</param>
         /// <param name="command">The command for the selected dialog option.</param>
-        public static async void SendDialogCommand(WebSocket webSocket, string action, string command)
+        /// <param name="value">An optional value that can be sent when accessing nested options in the dialog.</param>
+        public static async void SendDialogCommand(WebSocket webSocket, string action, string command, string value)
         {
+            // Ensure value is not null or undefined
+            value = value ?? "";
+
             if (webSocket != null && webSocket.State == WebSocketState.Open)
             {
-                WsoDialogMessage wsoMessage = new WsoDialogMessage(action, command);
+                WsoDialogMessage wsoMessage = new WsoDialogMessage(action, command, value);
                 string message = JsonConvert.SerializeObject(wsoMessage);
                 byte[] messageBuffer = Encoding.UTF8.GetBytes(message);
                 Console.WriteLine($"Sending dialog message to web socket client: {message}");

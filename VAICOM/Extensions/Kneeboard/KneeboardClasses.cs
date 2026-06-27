@@ -151,6 +151,8 @@ namespace VAICOM
 
             public class KneeboardUnitsData
             {
+                private static readonly Dictionary<string, int> LastLoggedUnitsCountByCategory = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+
                 private static string WrapForKneeboard(string text, int maxLineLength)
                 {
                     if (string.IsNullOrWhiteSpace(text) || maxLineLength < 8)
@@ -224,6 +226,34 @@ namespace VAICOM
                     }
 
                     return "";
+                }
+
+                private static bool IsLikelyAwacsUnit(Server.DcsUnit unit)
+                {
+                    if (unit == null)
+                    {
+                        return false;
+                    }
+
+                    string callsign = (unit.callsign ?? "").Trim();
+                    bool isKnownAwacsCallsign = callsign.IndexOf("Darkstar", StringComparison.OrdinalIgnoreCase) >= 0
+                        || callsign.IndexOf("Focus", StringComparison.OrdinalIgnoreCase) >= 0
+                        || callsign.IndexOf("Magic", StringComparison.OrdinalIgnoreCase) >= 0
+                        || callsign.IndexOf("Overlord", StringComparison.OrdinalIgnoreCase) >= 0
+                        || callsign.IndexOf("Wizard", StringComparison.OrdinalIgnoreCase) >= 0;
+
+                    string typeSource = ((unit.typename ?? "") + " " + (unit.fullname ?? "")).ToUpperInvariant();
+                    bool isAwacsType = typeSource.Contains("HAWKEYE")
+                        || typeSource.Contains("SENTRY")
+                        || typeSource.Contains("WEDGETAIL")
+                        || Regex.IsMatch(typeSource, @"(^|[^A-Z0-9])E[-\s]?2[A-Z]?([^A-Z0-9]|$)")
+                        || Regex.IsMatch(typeSource, @"(^|[^A-Z0-9])E[-\s]?3[A-Z]?([^A-Z0-9]|$)")
+                        || Regex.IsMatch(typeSource, @"(^|[^A-Z0-9])E[-\s]?7[A-Z]?([^A-Z0-9]|$)")
+                        || Regex.IsMatch(typeSource, @"(^|[^A-Z0-9])A[-\s]?50([^A-Z0-9]|$)")
+                        || Regex.IsMatch(typeSource, @"(^|[^A-Z0-9])KJ[-\s]?2000([^A-Z0-9]|$)")
+                        || Regex.IsMatch(typeSource, @"(^|[^A-Z0-9])KJ[-\s]?500([^A-Z0-9]|$)");
+
+                    return isKnownAwacsCallsign || isAwacsType;
                 }
 
                 private static bool IsOppositionAircraftThreat(Server.DcsUnit unit)
@@ -301,6 +331,18 @@ namespace VAICOM
                     return unit.callsign;
                 }
 
+                private static string FormatDisplayCallsign(string callsign)
+                {
+                    string value = (callsign ?? "").Trim();
+                    if (value.Length == 0)
+                    {
+                        return value;
+                    }
+
+                    value = Regex.Replace(value, @"([A-Za-z])(\d)", "$1 $2");
+                    return Regex.Replace(value, @"\s{2,}", " ");
+                }
+
                 private static string GetOppositionTypeKey(Server.DcsUnit unit)
                 {
                     return ((unit?.typename ?? unit?.fullname ?? "unknown").Trim()).ToUpperInvariant();
@@ -342,20 +384,28 @@ namespace VAICOM
 
                     if (cat.Equals("AWACS", StringComparison.OrdinalIgnoreCase))
                     {
-                        bool awacsAvailable = State.currentstate.availablerecipients.ContainsKey("AWACS")
-                            && State.currentstate.availablerecipients["AWACS"] != null
-                            && State.currentstate.availablerecipients["AWACS"].Count > 0;
+                        List<Server.DcsUnit> awacsUnits = new List<Server.DcsUnit>();
+                        if (State.currentstate.availablerecipients.ContainsKey("AWACS")
+                            && State.currentstate.availablerecipients["AWACS"] != null)
+                        {
+                            awacsUnits = State.currentstate.availablerecipients["AWACS"]
+                                .Where(IsLikelyAwacsUnit)
+                                .OrderBy(u => u.range)
+                                .ToList();
+                        }
+
+                        bool awacsAvailable = awacsUnits.Count > 0;
 
                         unitslist.Add("AWACS:");
 
                         if (awacsAvailable)
                         {
-                            foreach (Server.DcsUnit awacs in State.currentstate.availablerecipients["AWACS"].OrderBy(u => u.range))
+                            foreach (Server.DcsUnit awacs in awacsUnits)
                             {
-                                string awacsLine = awacs.getfreqstr() + " " + awacs.callsign + " " + awacs.getbearingstr() + "/" + awacs.getrangestr() + "/" + awacs.getaltstr();
+                                string awacsLine = awacs.getfreqstr() + " " + FormatDisplayCallsign(awacs.callsign) + " " + awacs.getbearingstr() + "/" + awacs.getrangestr() + "/" + awacs.getaltstr();
                                 if (!string.IsNullOrWhiteSpace(awacs.tacan))
                                 {
-                                    awacsLine += " TACAN " + awacs.tacan;
+                                    awacsLine += " " + awacs.tacan;
                                 }
                                 unitslist.Add(awacsLine);
                             }
@@ -568,7 +618,7 @@ namespace VAICOM
                                 || cat.Equals("AWACS", StringComparison.OrdinalIgnoreCase)
                                 || cat.Equals("Flight", StringComparison.OrdinalIgnoreCase)))
                             {
-                                tacanInfo = " TACAN " + descr.tacan;
+                                tacanInfo = " " + descr.tacan;
                             }
 
                             string tankerTypeInfo = "";
@@ -581,10 +631,20 @@ namespace VAICOM
                                 }
                             }
 
+                            bool isTanker = cat.Equals("Tanker", StringComparison.OrdinalIgnoreCase);
+                            string callsignDisplay = cat.Equals("ATC", StringComparison.OrdinalIgnoreCase)
+                                ? ResolveAtcDisplayCallsign(unit)
+                                : descr.callsign;
+
+                            callsignDisplay = FormatDisplayCallsign(callsignDisplay);
+
+                            string prefix = isTanker
+                                ? (descr.istuned ?? "")
+                                : ("[" + descr.alias + "]" + descr.istuned + " ");
+
                             string lineitem = descr.frq + (descr.frq2 != null ? " / " + descr.frq2 : "") + " " +
-                                              "[" + descr.alias + "]" + descr.istuned + " " +
-                                              (cat.Equals("ATC", StringComparison.OrdinalIgnoreCase) ? ResolveAtcDisplayCallsign(unit) : descr.callsign) + tankerTypeInfo + " " + descr.bearing + "/" +
-                                               descr.range + "/" + descr.alt + " " + altfreqs + tacanInfo;
+                                              prefix + callsignDisplay + tankerTypeInfo + " " + descr.bearing + "/" +
+                                              descr.range + "/" + descr.alt + " " + altfreqs + tacanInfo;
 
                             if (cat.Equals("ATC", StringComparison.OrdinalIgnoreCase)
                                 && !string.IsNullOrWhiteSpace(State.currentstate.metar)
@@ -603,7 +663,16 @@ namespace VAICOM
                         }
                     }
 
-                    Log.Write($"Sending {unitslist.Count} Flight units to kneeboard.", Colors.Text);
+                    string logCategory = string.IsNullOrWhiteSpace(cat) ? "Unknown" : cat;
+
+                    int currentCount = unitslist.Count;
+                    int lastLoggedCount;
+                    bool hadLastCount = LastLoggedUnitsCountByCategory.TryGetValue(logCategory, out lastLoggedCount);
+                    if (!hadLastCount || lastLoggedCount != currentCount)
+                    {
+                        Log.Write($"Sending {currentCount} {logCategory} units to kneeboard.", Colors.Text);
+                        LastLoggedUnitsCountByCategory[logCategory] = currentCount;
+                    }
                 }
             }
 

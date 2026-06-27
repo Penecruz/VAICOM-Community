@@ -56,6 +56,7 @@ namespace VAICOM
             // RIO
 
             public bool RIO_Enabled;
+            public bool RIO_MiniWheel_Enabled;
             public bool RIO_Messages;
             public bool RIO_Hints_Only;
             public bool ICShotmic;
@@ -87,6 +88,8 @@ namespace VAICOM
             public bool KneeboardlinkPTT;
             public bool Kneeboard_Enabled;
             public bool OpenKneeboard_Out;
+            public bool OpenKneeboard_AutoBrowse;
+            public int OpenKneeboard_Out_Port;
 
             // multiplayer page
 
@@ -239,6 +242,7 @@ namespace VAICOM
 
                 RIO_Messages = true,
                 RIO_Enabled = true,
+                RIO_MiniWheel_Enabled = true,
                 RIO_Hints_Only = false,
                 ICShotmic = false,
                 ICShotmic_useswitch = false,
@@ -286,6 +290,8 @@ namespace VAICOM
                 KneeboardOpacity = 128,
                 Kneeboard_Enabled = true,
                 OpenKneeboard_Out = false,
+                OpenKneeboard_AutoBrowse = false,
+                OpenKneeboard_Out_Port = 7779,
 
                 // multiplayer page
 

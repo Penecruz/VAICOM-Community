@@ -303,7 +303,17 @@ namespace VAICOM
                                         }
                                         else // to Saved Games
                                         {
-                                            basepath = UserSavedGamesFolder + "\\" + Server.dcsversion[set.Key] + "\\" + thisfile.installfolder;
+                                            bool isJesterModInstall = !string.IsNullOrWhiteSpace(thisfile.installfolder)
+                                                && thisfile.installfolder.StartsWith("jester\\mods", StringComparison.OrdinalIgnoreCase);
+
+                                            if (isJesterModInstall)
+                                            {
+                                                basepath = UserSavedGamesFolder + "\\DCS_F4E\\" + thisfile.installfolder;
+                                            }
+                                            else
+                                            {
+                                                basepath = UserSavedGamesFolder + "\\" + Server.dcsversion[set.Key] + "\\" + thisfile.installfolder;
+                                            }
                                         }
 
                                         // Validate basepath
@@ -335,7 +345,10 @@ namespace VAICOM
                                         {
                                             // ----- remove the file first (unless string replace type) ----
 
-                                            if (State.luahardreset && thisfile.hardreset && !thisfile.stringreplace)
+                                            bool isJesterModInstall = !string.IsNullOrWhiteSpace(thisfile.installfolder)
+                                                && thisfile.installfolder.StartsWith("jester\\mods", StringComparison.OrdinalIgnoreCase);
+
+                                            if ((State.luahardreset || isJesterModInstall) && thisfile.hardreset && !thisfile.stringreplace)
                                             {
                                                 if (File.Exists(path))
                                                 {
@@ -360,6 +373,17 @@ namespace VAICOM
 
                                             if (thisfile.AIRIO) // 
                                             {
+                                                bool isF14JesterMiniWheelFile =
+                                                    !string.IsNullOrWhiteSpace(thisfile.installfolder)
+                                                    && thisfile.installfolder.Equals("Mods\\aircraft\\F14\\Cockpit\\Scripts\\JesterAI", StringComparison.OrdinalIgnoreCase)
+                                                    && (thisfile.filename.Equals("JesterAI_Page.lua", StringComparison.OrdinalIgnoreCase)
+                                                        || thisfile.filename.Equals("init.lua", StringComparison.OrdinalIgnoreCase));
+
+                                                bool airioFeatureEnabledForFile = State.dll_installed_rio
+                                                    && (isF14JesterMiniWheelFile
+                                                        ? State.activeconfig.RIO_MiniWheel_Enabled
+                                                        : State.activeconfig.RIO_Enabled);
+
                                                 if (thisfile.stringreplace)
                                                 {
                                                     // repair if left in legacy state
@@ -380,7 +404,7 @@ namespace VAICOM
                                                 else // normal i.e. not string findreplace: Jester page
                                                 {
 
-                                                    if (!(State.dll_installed_rio && State.activeconfig.RIO_Enabled) || restore)
+                                                    if (!airioFeatureEnabledForFile || restore)
                                                     {
                                                         // AIRIO disabled: reset functions to original
                                                         writestring = effectiveOrig; // <-- this is used when RIO not enabled

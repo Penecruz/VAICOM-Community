@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Net.WebSockets;
+using Newtonsoft.Json.Linq;
 using VAICOM.Extensions.Kneeboard;
 using VAICOM.PushToTalk;
 using VAICOM.Static;
@@ -271,6 +273,139 @@ namespace VAICOM
                     CommandCompleted("Pave Spike Laser Code", new List<string> { laserCode });
                         
                     HbSendProxyCommand.SendWsoCommand(State.WsoWheelClient, "wMsgWSO_A2G_PaveSpike_LaserCode", laserCode);
+                }
+
+                public static void RadarFocusTarget()
+                {
+                    List<string> focusTargetCacheKeys = new List<string> { "radar_focus_target" };
+
+                    string focusTargetCommandKey = "wMsgWSO_Radar_FocusTarget";
+
+                    string focusTargetNumber = GetNumberFromCommand();
+
+                    focusTargetCacheKeys.Add(focusTargetNumber);
+                    string focusTargetCacheKey = String.Join("|", focusTargetCacheKeys);
+
+                    CommandCompleted("Radar Focus Target", new List<string> { $"Target {focusTargetNumber}" });
+
+                    if (WSOActionCache.TryGetByActionAndIndex(focusTargetCacheKey, out string resolvedTarget)
+                            && !string.IsNullOrWhiteSpace(resolvedTarget))
+                    {
+                        HbSendProxyCommand.SendWsoCommand(State.WsoWheelClient, focusTargetCommandKey, resolvedTarget);
+                    }
+                    else
+                    {
+                        Log.Write($"Target not found for target {focusTargetNumber}", Colors.Warning);
+                        UI.Playsound.Recipientna();
+                    }
+                }
+
+                public static void RadarLockTarget()
+                {
+                    List<string> lockTargetCacheKeys = new List<string> { "radar_lock_target" };
+
+                    string lockTargetCommandKey = "wMsgWSO_Radar_LockTarget";
+
+                    string lockTargetNumber = GetNumberFromCommand();
+
+                    lockTargetCacheKeys.Add(lockTargetNumber);
+                    string lockTargetCacheKey = String.Join("|", lockTargetCacheKeys);
+
+                    CommandCompleted("Radar Lock Target", new List<string> { $"Target {lockTargetNumber}" });
+
+                    if (WSOActionCache.TryGetByActionAndIndex(lockTargetCacheKey, out string resolvedTarget)
+                            && !string.IsNullOrWhiteSpace(resolvedTarget))
+                    {
+                        HbSendProxyCommand.SendWsoCommand(State.WsoWheelClient, lockTargetCommandKey, resolvedTarget);
+                    }
+                    else
+                    {
+                        Log.Write($"Target not found for target {lockTargetNumber}", Colors.Warning);
+                        UI.Playsound.Recipientna();
+                    }
+                }
+
+                public static void RejoinWithTanker()
+                {
+                    string tankerNumber = GetNumberFromCommand();
+                    string divertToTanker = $"divert_tanker_{tankerNumber}";
+
+                    if (WSODialogOptionsCache.TryGetOptionByAction(divertToTanker, out string tanker))
+                    {
+                        CommandCompleted("Rejoin With Tanker", new List<string> { $"Tanker {tankerNumber}", tanker });
+                        HbSendProxyCommand.SendDialogCommand(State.WsoDialogClient, "action", divertToTanker, "");
+
+                        // Automatically tune tacan and radio frequency if we have cached values for them
+                        if (WSOActionCache.TryGetByActionAndAsset("nav_tacan_tr", tanker, out string tacan))
+                        { 
+                            HbSendProxyCommand.SendWsoCommand(State.WsoWheelClient, "wMsgWSO_Navigation_TACAN_TuneAsset", tacan);
+                        }
+                        if (WSOActionCache.TryGetByActionAndAsset("radio_tune_atc", tanker, out string frequency))
+                        {
+                            HbSendProxyCommand.SendWsoCommand(State.WsoWheelClient, "wMsgWSO_Radio_TuneATC", frequency);
+                        }
+
+                    }
+                    else
+                    {
+                        CommandCompleted("Rejoin With Tanker", new List<string> { $"Tanker {tankerNumber}" });
+                        Log.Write($"Tanker {tankerNumber} not available", Colors.Warning);
+                        UI.Playsound.Recipientna();
+                    }
+                }
+
+                public static void JesterWheelModProxy()
+                {
+                    string name = State.Proxy.GetText("Name");
+                    string category = State.Proxy.GetText("Category");
+                    string action = State.Proxy.GetText("Action");
+                    string value = State.Proxy.GetText("Value");
+                    List<string> messageParams = new List<string>();
+
+                    if (string.IsNullOrEmpty(name))
+                    {
+                        Log.Write($"Missing required name for command", Colors.Warning);
+                        UI.Playsound.Error();
+                        return;
+                    }
+                    else
+                    {
+                        name = name.Trim();
+                    }
+                    
+                    // In almost all cases for actions on the wheel this will be "select".
+                    // There are some items though that use "misc", primarily for operation
+                    // of the wheel, e.g. "misc" for focusing the text field and closing the wheel.
+                    if (string.IsNullOrEmpty(category))
+                    {
+                        category = "select";
+                    }
+
+                    if (string.IsNullOrEmpty(action))
+                    {
+                        Log.Write($"Missing required action for command {name}", Colors.Warning);
+                        UI.Playsound.Error();
+                        return;
+                    }
+                    else
+                    {
+                        action = action.Trim();
+                    }
+                    // Users should set this to any empty string in VoiceAttack even if their action does not
+                    // require a value. This is due to VoiceAttack remembering what the last value was
+                    // that was set, so will reuse that value even if one is not specified.
+                    if (string.IsNullOrEmpty(value))
+                    {
+                        value = "";
+                    }
+                    else
+                    {
+                        value = value.Trim();
+                        messageParams.Add(value);
+                    }
+
+                    CommandCompleted(name, messageParams);
+                    HbSendProxyCommand.SendWheelCommand(State.WsoWheelClient, category, action, value);
                 }
 
                 public static bool IsWSO()

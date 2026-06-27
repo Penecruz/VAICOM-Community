@@ -6,11 +6,11 @@
       "isbeta": false,
       "isdev": false,
       "productid": 1,
-      "releasedate": 20260523,
-      "version": 3130,
-      "versionstring": "3.1.3.0",
-      "downloadurl": "https://github.com/Penecruz/VAICOM-Community/releases/download/v3.1.3.0/VAICOMPRO.zip",
-      "releasenotes": "Release 3.1.3.0\n- Add ‘Boots’ AIWSO for the F-4E Phantom II our jester 2.0 implementation.\n- Add OpenKneeboard OUT a vaicom Web Console for the amazing OpenKneeboard application.\n- Add new Vaicom HTML Keywords reference system, with plugin for OpenKneeboard.\n- Add F-100D Super Sabre as supported module.\n- Add new F10 menu handling to eliminate connection issues on servers with large logistic menu systems e.g. Foothold missions.\n- Remove all Pro licencing code from Vaicom and any graphical reference in the UI.\n- Add ICS Hot Mic logic for AH-64D Apache and F-4E Phantom II.\n- Add new Hot Mic listening state handler for all supported AI CREW modules.\n- Add common AI CREW UI interfaces and adopt shared code.\n- Fixes F-14 Tomcat “Jester Options” mini wheel not exiting cleanly after message sent.\n- Adds F-14 Tomcat Pilot/RIO monitoring on Vaicom UI to reflect connection.\n- Adds F-4E Phantom II Pilot/WSO monitoring on Vaicom UI to reflect connection.\n- Adds E-7A as supported AWACS recipient and Kneeboard unit.\n- Adds BRA to Kneeboard units and airfields.\n- Adds TACAN information to Kneeboard Tankers and AWACS.\n- Many small bug fixes and enhancements"
+      "releasedate": 202606027,
+      "version": 31411,
+      "versionstring": "3.1.4.11",
+      "downloadurl": "https://github.com/Penecruz/VAICOM-Community/releases/download/v3.1.4.11/VAICOMPRO.zip",
+      "releasenotes": "Release 3.1.4.11\n\nNew\n- Added F-4E WSO additional Ground commands.\n- Added OpenKneeboard connection notifier on the VAICOM PTT tab.\n- Added OKB Out tab to the VAICOM UI and moved related features from the Expansion tab.\n- Added OKB Out FLT PLN STORES page to show runtime aircraft stores.\n- Added SA MAP B/E marker support with D-Link asset bugging for B/E and BRA readout.\n- Added NAVLOG DIR TO and DEL step actions.\n- Added flight pilot list view for Single Player / Multiplayer in FLT PLN (WIP).\n- Added multiplayer-safe F-14 AIRIO handling for servers requiring pure client scripts (mini wheel unavailable in this mode).\n\nImproved\n- Improved OKB FLT PLN tab behavior and client display name detection.\n- Improved DTC import handling for F-16C in OKB Out FLT PLN.\n- Improved D-Link target labels and asset validation in OKB Out.\n- Improved DIR TO / DEL STP action robustness with armed-state handling and clearer row highlighting.\n- Improved Saved Games folder discovery for OKB flight plan files.\n- Improved logging and snapshot update efficiency to reduce unnecessary server-process updates (performance).\n- Improved Auto Browse behavior by decoupling DCS kneeboard and OKB Out settings.\n\nFixed\n- Fixed Krasnodar-Pashkovsky airbase name truncation.\n- Fixed F-4E dialog visibility issue.\n- Fixed Execute external plugin OKB commands when auto-browse is disabled.\n- Fixed minor NAVLOG refresh loop caused by player callsign updates.\n- Fixed text selection/highlighting with stylus in OKB Out.\n- Fixed Jester Mini Wheel checkbox persistence (now remembers configuration)."
     }
   ]
 }
