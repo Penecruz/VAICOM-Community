@@ -77,36 +77,36 @@ Flashing Comms Menu after DCS World update is a known issue and can be resolved 
 This update adds more functionality for OpenKneeboard Out and fixes some errors in the previous version, it also introduces the FLT PLN Tab Stores Page to OpenKneeboard Out, that will list the stores loaded on the aircraft by station number in real time. It expands the FLT PLN Tab SA Map capabilities and update rate including the ability to bug a D-Link target and receive BRA and Bullseye information for the bugged unit. Lots of Fixes and backend refinements.
 
 New
-• Added F-4E WSO additional Ground commands.
-• Added OpenKneeboard connection notifier on the VAICOM PTT tab.
-• Added OKB Out tab to the VAICOM UI and moved related features from the Expansion tab.
-• Added OKB Out FLT PLN STORES page to show runtime aircraft stores.
-• Added SA MAP B/E marker support with D-Link asset bugging for B/E and BRA readout.
-• Added NAVLOG DIR TO and DEL step actions.
-• Added flight pilot list view for Single Player / Multiplayer in FLT PLN (WIP).
-• Added multiplayer-safe F-14 AIRIO handling for servers requiring pure client scripts (mini wheel unavailable in this mode).
+- Added F-4E WSO additional Ground commands.
+- Added OpenKneeboard connection notifier on the VAICOM PTT tab.
+- Added OKB Out tab to the VAICOM UI and moved related features from the Expansion tab.
+- Added OKB Out FLT PLN STORES page to show runtime aircraft stores.
+- Added SA MAP B/E marker support with D-Link asset bugging for B/E and BRA readout.
+- Added NAVLOG DIR TO and DEL step actions.
+- Added flight pilot list view for Single Player / Multiplayer in FLT PLN (WIP).
+- Added multiplayer-safe F-14 AIRIO handling for servers requiring pure client scripts (mini wheel unavailable in this mode).
 
 Improved
-• Improved OKB FLT PLN tab behavior and client display name detection.
-• Improved DTC import handling for F-16C in OKB Out FLT PLN.
-• Improved D-Link target labels and asset validation in OKB Out.
-• Improved DIR TO / DEL STP action robustness with armed-state handling and clearer row highlighting.
-• Improved Saved Games folder discovery for OKB flight plan files.
-• Improved logging and snapshot update efficiency to reduce unnecessary server-process updates (performance).
-• Improved Auto Browse behavior by decoupling DCS kneeboard and OKB Out settings.
+- Improved OKB FLT PLN tab behavior and client display name detection.
+- Improved DTC import handling for F-16C in OKB Out FLT PLN.
+- Improved D-Link target labels and asset validation in OKB Out.
+- Improved DIR TO / DEL STP action robustness with armed-state handling and clearer row highlighting.
+- Improved Saved Games folder discovery for OKB flight plan files.
+- Improved logging and snapshot update efficiency to reduce unnecessary server-process updates (performance).
+- Improved Auto Browse behavior by decoupling DCS kneeboard and OKB Out settings.
 
 Fixed
-• Fixed Krasnodar-Pashkovsky airbase name truncation.
-• Fixed F-4E dialog visibility issue.
-• Fixed Execute external plugin OKB commands when auto-browse is disabled.
-• Fixed minor NAVLOG refresh loop caused by player callsign updates.
-• Fixed text selection/highlighting with stylus in OKB Out.
-• Fixed Jester Mini Wheel checkbox persistence (now remembers configuration).
+- Fixed Krasnodar-Pashkovsky airbase name truncation.
+- Fixed F-4E dialog visibility issue.
+- Fixed Execute external plugin OKB commands when auto-browse is disabled.
+- Fixed minor NAVLOG refresh loop caused by player callsign updates.
+- Fixed text selection/highlighting with stylus in OKB Out.
+- Fixed Jester Mini Wheel checkbox persistence (now remembers configuration).
 
 Known Issues
 
-• C-130J Select Tunes radio command will tune radio but not change AMU or CNI-MU display.
-• George AI the AH-64D M299_EMPTY racks if loaded with other missiles break direct weapon selection (still working a fix for this).
+- C-130J Select Tunes radio command will tune radio but not change AMU or CNI-MU display.
+- George AI the AH-64D M299_EMPTY racks if loaded with other missiles break direct weapon selection (still working a fix for this).
 
 ## Community Team
 
