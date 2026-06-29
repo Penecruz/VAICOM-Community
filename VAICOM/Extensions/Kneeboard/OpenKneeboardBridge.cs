@@ -8539,7 +8539,7 @@ namespace VAICOM
         }
       }
 
-      if (page !== 3) return;
+      if (page !== 4) return;
 
       let assetNode = ev.target;
       while (assetNode && assetNode !== this){
@@ -8557,8 +8557,9 @@ namespace VAICOM
             setMapSelectedAssetKeyBySelection(selected, current === assetKey ? '' : assetKey);
             render(latestData);
             ev.preventDefault();
+            return;
           }
-          return;
+          break;
         }
         assetNode = assetNode.parentNode;
       }
