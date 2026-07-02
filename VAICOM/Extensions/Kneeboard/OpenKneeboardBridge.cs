@@ -9684,7 +9684,8 @@ namespace VAICOM
                         "Tune TACAN station [Alpha-Zulu] [Alpha-Zulu] [Alpha-Zulu]",
                         "Set/Select TACAN [channel] [zero;0;1] [0..9] [0..9] [X-ray;Yankee]",
                         "Radar Focus Target [1..20]",
-                        "Radar Lock Target [1..20]"
+                        "Radar Lock Target [1..20]",
+                        "On Station For [15; 30; 45; 60] Minutes"
                     };
                 }
 

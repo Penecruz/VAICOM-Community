@@ -498,6 +498,13 @@ namespace VAICOM
                         }
                         break;
 
+                    case "wso.cap.time":
+                        if (WSOCommandHandler.IsWSO())
+                        {
+                            WSOCommandHandler.OnCapStationTime();
+                        }
+                        break;
+
                     case "wso.mod.jesterwheel":
                         if (WSOCommandHandler.IsWSO())
                         {
