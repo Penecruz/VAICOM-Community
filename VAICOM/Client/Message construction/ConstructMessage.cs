@@ -1090,6 +1090,7 @@ namespace VAICOM
 
                                     if (jesterCloseSelection)
                                     {
+                                        State.showingoptions = false;
                                         Extensions.RIO.helper.showingjestermenu = false;
                                     }
                                 }

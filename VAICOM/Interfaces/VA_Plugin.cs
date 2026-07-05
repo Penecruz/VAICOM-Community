@@ -123,11 +123,18 @@ namespace VAICOM
                     case "alias.aicomms":
                         try
                         {
+                            bool hadDcsOptionsOpen = State.showingoptions;
+                            bool hadJesterMenuOpen = VAICOM.Extensions.RIO.helper.showingjestermenu;
                             bool _complete = DcsClient.Message.processcommand();
-                            if (PTT.TXLinkApply && _complete)
+
+                            bool keepTxLinkListeningForMenuFlow = State.showingoptions || VAICOM.Extensions.RIO.helper.showingjestermenu;
+                            bool menuFlowClosedThisCommand = (hadDcsOptionsOpen || hadJesterMenuOpen) && !keepTxLinkListeningForMenuFlow;
+                            bool shouldAutoSuspend = menuFlowClosedThisCommand || (_complete && !keepTxLinkListeningForMenuFlow);
+
+                            if (PTT.TXLinkApply && shouldAutoSuspend)
                             {
                                 Thread.Sleep(200);
-                                PTT.PTT_Handler(State.Proxy, State.currentTXnode, false, false);
+                                PTT.PTT_ForceSuspendListeningAfterCommand();
                             }
                         }
                         catch (Exception)
