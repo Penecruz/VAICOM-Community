@@ -354,6 +354,14 @@ namespace VAICOM
                     }
                 }
 
+                public static void OnCapStationTime()
+                {
+                    string capTime = GetNumberFromCommand();
+                    CommandCompleted("On CAP Station Time", new List<string> { $"{capTime} Minutes" });
+
+                    HbSendProxyCommand.SendDialogCommand(State.WsoDialogClient, "action", $"cap_{capTime}min", "");
+                }
+
                 public static void JesterWheelModProxy()
                 {
                     string name = State.Proxy.GetText("Name");
