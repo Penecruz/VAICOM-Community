@@ -7,11 +7,11 @@
       "isbeta": false,
       "isdev": false,
       "productid": 1,
-      "releasedate": 20260629,
-      "version": 314012,
-      "versionstring": "3.1.4.12",
+      "releasedate": 20260705,
+      "version": 314013,
+      "versionstring": "3.1.4.13",
       "downloadurl": "https://raw.githubusercontent.com/Penecruz/VAICOM-Community/Development/VAICOM_Installer/Resources/VAICOMPRO.zip",
-      "releasenotes": "BETA 3.1.4.12 \n- Fix FLT PLN Tab Mape not draggable \n- Fix Hold AI Transmission checkbox defualting to on and not working tuning off (dybamic Switching and Broadcast Parallel) \n- Fix TX Link with Hot Mic off not waiting for Options command sequence. "
+      "releasenotes": "BETA 3.1.4.13 \n- Fix FLT PLN Tab Mape not draggable \n- Fix Hold AI Transmission checkbox defualting to on and not working tuning off (dybamic Switching and Broadcast Parallel) \n- Fix TX Link with Hot Mic off not waiting for Options command sequence attempt 2. \n- F-4E WSO code tidy up and CAP time command "
     }
   ]
 }
