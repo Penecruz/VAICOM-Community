@@ -1096,12 +1096,14 @@ namespace VAICOM
     .fltPlanPageBtn { font-size: 12px; border: 1px solid #8b96a1; background: #eceff3; padding: 2px 9px; cursor: pointer; min-height: 22px; }
     .fltPlanPageBtn.active { background: #d3dae2; font-weight: 700; }
     .fltPlanPage2Grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
+    .fltPlanPage2Stack { display: flex; flex-direction: column; gap: 8px; min-height: 0; }
     .fltPlanPage2Section { border: 1px solid #8b96a1; background: #f7f9fb; }
     .fltPlanPage2Title { border-bottom: 1px solid #8b96a1; background: #e4e8ec; font-size: 13px; font-weight: 700; padding: 3px 6px; }
     .fltPlanPage2Body { padding: 4px 6px; }
     .fltPlanPage2Table { width: 100%; border-collapse: collapse; table-layout: fixed; }
     .fltPlanPage2Table th, .fltPlanPage2Table td { border: 1px solid #aeb7c0; font-size: 12px; padding: 2px 3px; text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .fltPlanPage2Table th { background: #edf1f5; }
+    .fltPlanPage2MarkerTable td { white-space: normal; overflow: visible; text-overflow: clip; word-break: break-word; vertical-align: top; }
     .fltPlanPage3Wrap { border: 1px solid #8b96a1; background: #f7f9fb; margin-top: 8px; padding: 4px; }
     .fltPlanPage3Legend { display: none; }
     .fltPlanPage3Canvas { border: 1px solid #8b96a1; background: #ffffff; width: 100%; height: 860px; box-sizing: border-box; }
@@ -6175,14 +6177,17 @@ namespace VAICOM
       return '<div class=""fltPlanInfoBlock""><div class=""fltPlanInfoTitle"">CMDS</div><div class=""fltPlanInfoBody"">None</div></div>';
     }
 
-    function formatRuntimePage2Html(data, pageSwitcherHtml){
+    function formatRuntimePage2Html(data, pageSwitcherHtml, selected){
       let html = '<div class=""fltPlanBoard"">';
       if (pageSwitcherHtml){
         html += '<div style=""margin:4px 0 6px 0;"">' + pageSwitcherHtml + '</div>';
       }
       html += '<div class=""fltPlanPage2Grid"">';
       html += formatRuntimeCommPanelHtml(data);
+      html += '<div class=""fltPlanPage2Stack"">';
       html += formatRuntimeCmdsPanelHtml(data);
+      html += formatMapMarkersPanelHtml(selected, data);
+      html += '</div>';
       html += '</div></div>';
       return html;
     }
@@ -6323,6 +6328,48 @@ namespace VAICOM
       return '<div class=""fltPlanPage2Section""><div class=""fltPlanPage2Title"">ROUTES</div><div class=""fltPlanPage2Body""><table class=""fltPlanPage2Table""><thead><tr><th style=""width:56px;"">ROUTE</th><th>WAYPOINTS</th></tr></thead><tbody>' + body.join('') + '</tbody></table></div></div>';
     }
 
+    function formatMapMarkersPanelHtml(selected, data){
+      const server = (data && data.Server) || {};
+      const rawMarkers = Array.isArray(server.MapMarkers) ? server.MapMarkers : [];
+      const theatre = String(server.Theater || '').trim();
+      const coordDisplayMode = getNavlogCoordDisplayMode(selected);
+      const coordHeaderText = (function(){
+        if (coordDisplayMode === 'dms') return 'DMS';
+        if (coordDisplayMode === 'ddm') return 'DDM';
+        if (coordDisplayMode === 'mgrs') return 'MGRS';
+        return 'X / Y';
+      })();
+
+      const markers = rawMarkers
+        .map(function(m, idx){
+          const north = Number(m && m.X);
+          const east = Number(m && m.Z);
+          if (!isFinite(north) || !isFinite(east)) return null;
+          const rawId = Number(m && m.Id);
+          const id = (isFinite(rawId) && rawId > 0) ? Math.round(rawId) : (idx + 1);
+          const text = String((m && m.Text) || '').trim();
+          const coordText = getNavlogCoordinateDisplayText({ xNum: north, yNum: east }, theatre, coordDisplayMode);
+          return {
+            id: id,
+            text: text || '-',
+            coordText: coordText
+          };
+        })
+        .filter(function(m){ return !!m; })
+        .sort(function(a, b){ return Number(a.id) - Number(b.id); });
+
+      if (!markers.length){
+        return '<div class=""fltPlanPage2Section""><div class=""fltPlanPage2Title"">MAP MARKERS</div><div class=""fltPlanPage2Body"">No runtime map markers.</div></div>';
+      }
+
+      const rows = markers.map(function(m, i){
+        const displayId = i + 1;
+        return '<tr><td style=""width:54px;"">' + escapeHtml(String(displayId)) + '</td><td>' + escapeHtml(m.text) + '</td><td style=""width:220px;"">' + escapeHtml(m.coordText) + '</td></tr>';
+      });
+
+      return '<div class=""fltPlanPage2Section""><div class=""fltPlanPage2Title"">MAP MARKERS</div><div class=""fltPlanPage2Body""><table class=""fltPlanPage2Table fltPlanPage2MarkerTable""><thead><tr><th style=""width:54px;"">ID</th><th>TEXT</th><th class=""fltPlanEtaHeader"" style=""width:220px;"" data-navlog-coord-cycle=""1"" title=""Click to cycle X/Y → DMS → DDM → MGRS"">POS ' + escapeHtml(coordHeaderText) + '</th></tr></thead><tbody>' + rows.join('') + '</tbody></table></div></div>';
+    }
+
     function getDtcAvailableRoutes(root, waypoints){
       const wypt = findDtcWyptObject(root, 0) || {};
       const navPts = Array.isArray(wypt.NAV_PTS) ? wypt.NAV_PTS : [];
@@ -6405,7 +6452,7 @@ namespace VAICOM
         });
     }
 
-    function formatDtcPage2Html(root, pageSwitcherHtml, waypoints, data){
+    function formatDtcPage2Html(root, pageSwitcherHtml, waypoints, data, selected){
       let html = '<div class=""fltPlanBoard"">';
       if (pageSwitcherHtml){
         html += '<div style=""margin:4px 0 6px 0;"">' + pageSwitcherHtml + '</div>';
@@ -6413,7 +6460,10 @@ namespace VAICOM
       const dtcCommHtml = formatDtcCommPanelHtml(root, true);
       html += '<div class=""fltPlanPage2Grid"">';
       html += dtcCommHtml || formatRuntimeCommPanelHtml(data);
+      html += '<div class=""fltPlanPage2Stack"">';
       html += formatDtcRouteSummaryHtml(root, waypoints);
+      html += formatMapMarkersPanelHtml(selected, data);
+      html += '</div>';
       html += '</div></div>';
       return html;
     }
@@ -6451,10 +6501,11 @@ namespace VAICOM
       return segs;
     }
 
-    function getMudMapAssets(data){
+    function getMudMapAssets(data, includeDlinkAssets){
       const server = (data && data.Server) || {};
-      const rawAssets = Array.isArray(server.FriendlyAssets) ? server.FriendlyAssets : [];
-      return rawAssets
+      const includeDlink = (includeDlinkAssets !== false);
+      const rawAssets = includeDlink && Array.isArray(server.FriendlyAssets) ? server.FriendlyAssets : [];
+      const mappedAssets = rawAssets
         .map(function(a){
           const northNum = Number(a && a.X);
           const eastNum = Number(a && a.Y);
@@ -6466,15 +6517,56 @@ namespace VAICOM
             name: String((a && a.Name) || '').trim(),
             category: String((a && a.Category) || '').trim().toUpperCase(),
             altFeet: Number(a && a.AltFeet),
+            markerId: 0,
+            markerDisplayId: 0,
+            markerText: '',
             xNum: xNum,
             yNum: yNum
           };
         })
         .filter(function(a){ return !!a; });
+
+      const rawMarkers = Array.isArray(server.MapMarkers) ? server.MapMarkers : [];
+      const mappedMarkers = rawMarkers
+        .map(function(m){
+          const northNum = Number(m && m.X);
+          const eastNum = Number(m && m.Z);
+          if (!isFinite(northNum) || !isFinite(eastNum)) return null;
+          const markerId = Number(m && m.Id);
+          const markerText = String((m && m.Text) || '').trim();
+          const markerAuthor = String((m && m.Author) || '').trim();
+          return {
+            callsign: 'MKR',
+            name: markerText,
+            category: 'MAP_MARKER',
+            altFeet: 0,
+            markerId: isFinite(markerId) ? Math.round(markerId) : 0,
+            markerDisplayId: 0,
+            markerText: markerText,
+            markerAuthor: markerAuthor,
+            xNum: northNum,
+            yNum: eastNum
+          };
+        })
+        .filter(function(m){ return !!m; })
+        .sort(function(a, b){
+          const aid = Number(a && a.markerId);
+          const bid = Number(b && b.markerId);
+          if (isFinite(aid) && isFinite(bid) && aid !== bid) return aid - bid;
+          return 0;
+        })
+        .map(function(m, i){
+          m.markerDisplayId = i + 1;
+          m.callsign = 'MKR ' + String(m.markerDisplayId);
+          return m;
+        });
+
+      return mappedAssets.concat(mappedMarkers);
     }
 
     function getMudMapAssetKind(asset){
       const category = String((asset && asset.category) || '').toUpperCase();
+      if (category === 'MAP_MARKER') return 'marker';
       if (category === 'TANKER') return 'tanker';
       if (category === 'AWACS') return 'awacs';
       if (category === 'JTAC') return 'jtac';
@@ -6751,6 +6843,9 @@ namespace VAICOM
             raceFill: '#1f2a35',
             assetBlue: '#6eb1ff',
             assetBlueDark: '#2f6fb3',
+            markerFill: '#35223d',
+            markerStroke: '#d79cff',
+            markerLabel: '#d79cff',
             geoLine: '#bb8cff',
             geoLineLabel: '#dec7ff',
             faorLine: '#64d6ff',
@@ -6786,6 +6881,9 @@ namespace VAICOM
             raceFill: '#ffffff',
             assetBlue: '#2d8fe3',
             assetBlueDark: '#1f5d93',
+            markerFill: '#f7edf8',
+            markerStroke: '#8a2f99',
+            markerLabel: '#8a2f99',
             geoLine: '#7a57b3',
             geoLineLabel: '#5a3d89',
             faorLine: '#1f9fd0',
@@ -7151,11 +7249,14 @@ namespace VAICOM
         if (kind === 'rotary'){
           return '<g><circle cx=""' + x.toFixed(1) + '"" cy=""' + y.toFixed(1) + '"" r=""6"" fill=""' + fill + '"" stroke=""' + stroke + '"" stroke-width=""1.3"" /><line x1=""' + (x - 9).toFixed(1) + '"" y1=""' + y.toFixed(1) + '"" x2=""' + (x + 9).toFixed(1) + '"" y2=""' + y.toFixed(1) + '"" stroke=""' + stroke + '"" stroke-width=""1.2"" /><line x1=""' + x.toFixed(1) + '"" y1=""' + (y - 9).toFixed(1) + '"" x2=""' + x.toFixed(1) + '"" y2=""' + (y + 9).toFixed(1) + '"" stroke=""' + stroke + '"" stroke-width=""1.2"" /></g>';
         }
+        if (kind === 'marker'){
+          return '<g><circle cx=""' + x.toFixed(1) + '"" cy=""' + y.toFixed(1) + '"" r=""6.5"" fill=""' + palette.markerFill + '"" stroke=""' + palette.markerStroke + '"" stroke-width=""1.4"" /><line x1=""' + (x - 8).toFixed(1) + '"" y1=""' + y.toFixed(1) + '"" x2=""' + (x + 8).toFixed(1) + '"" y2=""' + y.toFixed(1) + '"" stroke=""' + palette.markerStroke + '"" stroke-width=""1.2"" /><line x1=""' + x.toFixed(1) + '"" y1=""' + (y - 8).toFixed(1) + '"" x2=""' + x.toFixed(1) + '"" y2=""' + (y + 8).toFixed(1) + '"" stroke=""' + palette.markerStroke + '"" stroke-width=""1.2"" /></g>';
+        }
         return '<rect x=""' + (x - 7).toFixed(1) + '"" y=""' + (y - 5.5).toFixed(1) + '"" width=""14"" height=""11"" fill=""' + fill + '"" stroke=""' + stroke + '"" stroke-width=""1.3"" />';
       }
 
       const selected = getActiveFlightPlanSelection((typeof data === 'undefined' ? null : data));
-      const rawAssets = (dlinkOnEnabled ? getMudMapAssets((typeof data === 'undefined' ? null : data)) : []);
+      const rawAssets = getMudMapAssets((typeof data === 'undefined' ? null : data), dlinkOnEnabled);
       const selectedAssetKey = getMapSelectedAssetKeyBySelection(selected);
       const mapAssets = rawAssets
         .map(function(asset){
@@ -7180,8 +7281,17 @@ namespace VAICOM
         });
 
       const assetEls = mapAssets.map(function(m){
+        const isMapMarker = String((m.asset && m.asset.category) || '').toUpperCase() === 'MAP_MARKER';
         const callsignLabel = String(m.asset.callsign || '').replace(/([A-Za-z])(\d)/g, '$1 $2').replace(/\s{2,}/g, ' ').trim();
-        const label = escapeHtml(callsignLabel || m.asset.name || m.asset.category || 'ASSET');
+        const markerText = String(m.asset.markerText || '').trim();
+        const markerDisplayId = Number(m.asset.markerDisplayId);
+        const markerPrefix = isMapMarker
+          ? (markerDisplayId > 0 ? ('MKR ' + String(markerDisplayId)) : 'MKR')
+          : '';
+        const markerLabel = isMapMarker
+          ? (markerText ? (markerPrefix + ': ' + markerText) : markerPrefix)
+          : '';
+        const label = escapeHtml(markerLabel || callsignLabel || m.asset.name || m.asset.category || 'ASSET');
         const tx = (m.x + 10).toFixed(1);
         const ty = (m.y + 4).toFixed(1);
         const selectionKey = String(m.selectionKey || '');
@@ -7189,10 +7299,11 @@ namespace VAICOM
         const selectedRing = m.isSelected
           ? ('<circle cx=""' + m.x.toFixed(1) + '"" cy=""' + m.y.toFixed(1) + '"" r=""11"" fill=""none"" stroke=""#c94444"" stroke-width=""2.4"" />')
           : '';
+        const labelColor = isMapMarker ? palette.markerLabel : palette.assetBlueDark;
         return '<g data-map-asset-key=""' + selectionKeyEncoded + '"" data-map-asset-category=""' + escapeHtml(String(m.asset.category || '')) + '"" style=""cursor:pointer"">'
           + selectedRing
           + assetIconFor(m)
-          + '<text x=""' + tx + '"" y=""' + ty + '"" font-size=""10"" fill=""' + palette.assetBlueDark + '"" font-weight=""700"">' + label + '</text></g>';
+          + '<text x=""' + tx + '"" y=""' + ty + '"" font-size=""10"" fill=""' + labelColor + '"" font-weight=""700"">' + label + '</text></g>';
       });
 
       const northArrow = [
@@ -7248,7 +7359,10 @@ namespace VAICOM
       html += '<div class=""controls fltPlanControls"" style=""margin:0 0 6px 0;""><button type=""button"" class=""fltPlanPageBtn"" data-map-zoom=""in"">Map +</button><button type=""button"" class=""fltPlanPageBtn"" data-map-zoom=""out"">Map -</button><button type=""button"" class=""fltPlanPageBtn"" data-map-zoom=""reset"">Map Reset</button></div>';
       const bullseyePoint = getMapBullseyePoint(root, mapRows, overlays, data);
       const selectedAssetKey = getMapSelectedAssetKeyBySelection(selected);
-      const rawAssets = dlinkOnEnabled ? getMudMapAssets(data) : [];
+      const rawAssets = getMudMapAssets(data, dlinkOnEnabled);
+      const markerCount = rawAssets
+        .filter(function(a){ return String((a && a.category) || '').toUpperCase() === 'MAP_MARKER'; })
+        .length;
       let selectedAsset = null;
       if (selectedAssetKey){
         selectedAsset = rawAssets.find(function(a){ return makeMapAssetSelectionKey(a) === selectedAssetKey; }) || null;
@@ -7259,7 +7373,11 @@ namespace VAICOM
 
       html += '<div class=""fltPlanPage3Wrap"">';
       html += buildMudMapSvg(mapRows, data, overlays, bullseyePoint);
-      html += '<div class=""fltPlanPage3BraReadout"">' + escapeHtml(formatMapBraReadout(data, selectedAsset, bullseyePoint)) + '</div>';
+      let readout = formatMapBraReadout(data, selectedAsset, bullseyePoint);
+      if (markerCount > 0){
+        readout += '   MKR ' + String(markerCount);
+      }
+      html += '<div class=""fltPlanPage3BraReadout"">' + escapeHtml(readout) + '</div>';
       html += '</div></div>';
       return html;
     }
@@ -7585,7 +7703,10 @@ namespace VAICOM
         html += '<div style=""margin:4px 0 6px 0;"">' + pageSwitcherHtml + '</div>';
         html += '<div class=""fltPlanPage2Grid"">';
         html += formatRuntimeCommPanelHtml(data);
+        html += '<div class=""fltPlanPage2Stack"">';
         html += routeSummaryHtml;
+        html += formatMapMarkersPanelHtml(selected, data);
+        html += '</div>';
         html += '</div></div>';
         return html;
       }
@@ -7727,7 +7848,7 @@ namespace VAICOM
       const page = getDtcPageBySelection(selected);
       const pageSwitcherHtml = '<span class=""fltPlanPageSwitcher""><button type=""button"" class=""fltPlanPageBtn' + (page === 1 ? ' active' : '') + '"" data-dtc-page=""1"">NAVLOG</button><button type=""button"" class=""fltPlanPageBtn' + (page === 2 ? ' active' : '') + '"" data-dtc-page=""2"">COM/ROUTE</button><button type=""button"" class=""fltPlanPageBtn' + (page === 3 ? ' active' : '') + '"" data-dtc-page=""3"">STORES</button><button type=""button"" class=""fltPlanPageBtn' + (page === 4 ? ' active' : '') + '"" data-dtc-page=""4"">MAP</button></span>';
       if (page === 2){
-        return formatRuntimePage2Html(data, pageSwitcherHtml);
+        return formatRuntimePage2Html(data, pageSwitcherHtml, selected);
       }
       if (page === 3){
         return formatStoresPageHtml(pageSwitcherHtml, data);
@@ -7761,7 +7882,7 @@ namespace VAICOM
         return formatDtcPage3Html(pageSwitcherHtml, waypoints, data, selected, mapOverlays, root);
       }
       if (page === 2){
-        return formatDtcPage2Html(root, pageSwitcherHtml, waypoints, data);
+        return formatDtcPage2Html(root, pageSwitcherHtml, waypoints, data, selected);
       }
       return renderFlightPlanBoardHtml(selected, data, getDtcDisplayName(selected) + ' ' + routeKey, 'DTC JSON', getPathFileName(selected), waypoints, cmdsBlockHtml, pageSwitcherHtml);
     }
@@ -11313,6 +11434,7 @@ namespace VAICOM
                             server.Diagnostics = State.currentstate.diagnostics;
                             server.FlightMembers = BuildFlightMemberSnapshot();
                             server.FriendlyAssets = BuildFriendlyAssetsSnapshot();
+                            server.MapMarkers = BuildMapMarkerSnapshot();
                         }
                     }
                     catch
@@ -11540,6 +11662,58 @@ namespace VAICOM
                         || Regex.IsMatch(typeSource, @"(^|[^A-Z0-9])KJ[-\s]?500([^A-Z0-9]|$)");
 
                     return isKnownAwacsCallsign || isAwacsType;
+                }
+
+                private static List<OpenKneeboardMapMarker> BuildMapMarkerSnapshot()
+                {
+                    List<OpenKneeboardMapMarker> markers = new List<OpenKneeboardMapMarker>();
+
+                    try
+                    {
+                        if (State.currentstate == null
+                            || State.currentstate.riostate == null
+                            || State.currentstate.riostate.markerdetails == null)
+                        {
+                            return markers;
+                        }
+
+                        foreach (Servers.Server.MapMarkerState marker in State.currentstate.riostate.markerdetails)
+                        {
+                            if (marker == null)
+                            {
+                                continue;
+                            }
+
+                            if (double.IsNaN(marker.x)
+                                || double.IsInfinity(marker.x)
+                                || double.IsNaN(marker.z)
+                                || double.IsInfinity(marker.z))
+                            {
+                                continue;
+                            }
+
+                            markers.Add(new OpenKneeboardMapMarker
+                            {
+                                Id = marker.id,
+                                Text = marker.text ?? string.Empty,
+                                Author = marker.author ?? string.Empty,
+                                Coalition = marker.coalition,
+                                X = marker.x,
+                                Y = marker.y,
+                                Z = marker.z,
+                            });
+
+                            if (markers.Count >= 64)
+                            {
+                                break;
+                            }
+                        }
+                    }
+                    catch
+                    {
+                    }
+
+                    return markers;
                 }
 
                 private static List<OpenKneeboardFriendlyAsset> BuildFriendlyAssetsSnapshot()
@@ -11770,6 +11944,7 @@ namespace VAICOM
                 public List<OpenKneeboardFlightMember> FlightMembers { get; set; } = new List<OpenKneeboardFlightMember>();
                 public List<OpenKneeboardFriendlyAsset> FriendlyAssets { get; set; } = new List<OpenKneeboardFriendlyAsset>();
                 public object Diagnostics { get; set; } = null;
+                public List<OpenKneeboardMapMarker> MapMarkers { get; set; } = new List<OpenKneeboardMapMarker>();
 
                 public OpenKneeboardServerSnapshot Clone()
                 {
@@ -11798,7 +11973,35 @@ namespace VAICOM
                         FriendlyAssets = FriendlyAssets == null
                             ? new List<OpenKneeboardFriendlyAsset>()
                             : FriendlyAssets.ConvertAll(functionAsset => functionAsset == null ? null : functionAsset.Clone()).FindAll(functionAsset => functionAsset != null),
+                        MapMarkers = MapMarkers == null
+                            ? new List<OpenKneeboardMapMarker>()
+                            : MapMarkers.ConvertAll(marker => marker == null ? null : marker.Clone()).FindAll(marker => marker != null),
                         Diagnostics = Diagnostics,
+                    };
+                }
+            }
+
+            public class OpenKneeboardMapMarker
+            {
+                public int Id { get; set; }
+                public string Text { get; set; } = "";
+                public string Author { get; set; } = "";
+                public int Coalition { get; set; }
+                public double X { get; set; }
+                public double Y { get; set; }
+                public double Z { get; set; }
+
+                public OpenKneeboardMapMarker Clone()
+                {
+                    return new OpenKneeboardMapMarker
+                    {
+                        Id = Id,
+                        Text = Text,
+                        Author = Author,
+                        Coalition = Coalition,
+                        X = X,
+                        Y = Y,
+                        Z = Z,
                     };
                 }
             }

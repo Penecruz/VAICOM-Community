@@ -13,6 +13,9 @@
 - Support both LAT/LON decimal and DMS display formats.
 - Do not rely on DevPipe file at runtime; use it only as source data to build internal helpers.
 
+## DCS Map Marker Panel
+- DCS map marker panel entries in this project are expected to look like `{ idx, time, initiator, coalition, groupID, text, pos=vec3 }`, with `pos` as the runtime coordinate source.
+
 ## F-4E ICS Implementation
 - For F-4E ICS hot mic implementation, ignore WSO ICS state entirely and use only pilot ICS switch state because WSO seat occupancy disables WSO functions.
 

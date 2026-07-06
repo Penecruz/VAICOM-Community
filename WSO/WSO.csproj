@@ -77,6 +77,7 @@
     <None Include="DevPipe\Moose.lua" />
     <None Include="DevPipe\properties_snapshot.json" />
     <None Include="DevPipe\TimeOverTarget.lua" />
+    <None Include="DevPipe\Utils.lua" />
     <None Include="packages.config" />
     <None Include="Temp\ANZUS_NTTR_2025_5.0.zip" />
     <None Include="Temp\Caucasus.lua" />

@@ -216,7 +216,19 @@ namespace VAICOM
                 public bool AM182;
                 public bool ejsn;
                 public int markers;
+                public List<MapMarkerState> markerdetails;
 
+            }
+
+            public class MapMarkerState
+            {
+                public int id;
+                public string text;
+                public string author;
+                public int coalition;
+                public double x;
+                public double y;
+                public double z;
             }
 
             public class payloadcannon
