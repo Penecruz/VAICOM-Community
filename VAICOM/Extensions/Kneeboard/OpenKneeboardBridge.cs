@@ -1063,6 +1063,7 @@ namespace VAICOM
     .fltPlanEtaWrap input { margin: 0; }
     .fltPlanEtaValue { cursor: pointer; }
     .fltPlanAtaValue { color: #2d66c3; font-weight: 700; cursor: pointer; }
+    .fltPlanCoordValue { cursor: pointer; }
     @keyframes fltPlanRecFlash {
       0% { color: #b21f1f; }
       50% { color: #ff4a4a; }
@@ -1183,6 +1184,12 @@ namespace VAICOM
     body.night-mode .fltPlanPage3Legend { color: #b7c9db; }
     body.night-mode .fltPlanPage3Canvas { background: #1a232c; border-color: #5c6d7f; }
     body.night-mode .fltPlanPage3BraReadout { background: #202933; border-color: #5c6d7f; color: #dfe8f2; }
+    body.night-mode .fltPlanStoresWrap { background: #202933; border-color: #5c6d7f; }
+    body.night-mode .fltPlanStoresGrid { background: #212a34; }
+    body.night-mode .fltPlanStoresGrid th,
+    body.night-mode .fltPlanStoresGrid td { border-color: #5a6c7f; color: #dfe8f2; }
+    body.night-mode .fltPlanStoresGrid th { background: #2f3b48; }
+    body.night-mode .fltPlanStoresEmpty { color: #9fb3c8; }
     body.night-mode .fltPlanPlain { background: #202a34; color: #dde7f2; border-color: #5d6f81; }
     body.night-mode pre { background: #202a34; color: #dde7f2; border-color: #5d6f81; }
   </style>
@@ -4038,7 +4045,7 @@ namespace VAICOM
 
     function getFlightPlanPlanState(selected){
       const key = getFlightPlanEtaStartKey(selected);
-      if (!key) return { speedAdjustments: {}, speedDisplayModes: {}, altAdjustments: {}, typeOverrides: {}, lockedStep: '', totSeconds: NaN, lockedStart: null, timeMarks: {}, timingLog: [], postFlightOpen: false, ataByStep: {}, speedRecommendations: {}, totPerformanceByStep: {}, lastOwnshipPos: null, deletedSteps: {}, directToSourceStep: '', directToTargetStep: '', rowActionStep: '', rowActionMode: '', rowRevealStep: '', rowRevealMode: '' };
+      if (!key) return { speedAdjustments: {}, speedDisplayModes: {}, altAdjustments: {}, typeOverrides: {}, lockedStep: '', totSeconds: NaN, lockedStart: null, timeMarks: {}, timingLog: [], postFlightOpen: false, ataByStep: {}, speedRecommendations: {}, totPerformanceByStep: {}, lastOwnshipPos: null, deletedSteps: {}, directToSourceStep: '', directToTargetStep: '', rowActionStep: '', rowActionMode: '', rowRevealStep: '', rowRevealMode: '', coordDisplayMode: 'xy' };
       const existing = fltPlanPlanStateBySelection[key];
       if (existing && typeof existing === 'object'){
         if (!existing.speedAdjustments || typeof existing.speedAdjustments !== 'object') existing.speedAdjustments = {};
@@ -4059,9 +4066,10 @@ namespace VAICOM
         if (typeof existing.rowActionMode !== 'string') existing.rowActionMode = '';
         if (typeof existing.rowRevealStep !== 'string') existing.rowRevealStep = '';
         if (typeof existing.rowRevealMode !== 'string') existing.rowRevealMode = '';
+        if (typeof existing.coordDisplayMode !== 'string') existing.coordDisplayMode = 'xy';
         return existing;
       }
-      const created = { speedAdjustments: {}, speedDisplayModes: {}, altAdjustments: {}, typeOverrides: {}, lockedStep: '', totSeconds: NaN, lockedStart: null, timeMarks: {}, timingLog: [], postFlightOpen: false, ataByStep: {}, speedRecommendations: {}, totPerformanceByStep: {}, lastOwnshipPos: null, deletedSteps: {}, directToSourceStep: '', directToTargetStep: '', rowActionStep: '', rowActionMode: '', rowRevealStep: '', rowRevealMode: '' };
+      const created = { speedAdjustments: {}, speedDisplayModes: {}, altAdjustments: {}, typeOverrides: {}, lockedStep: '', totSeconds: NaN, lockedStart: null, timeMarks: {}, timingLog: [], postFlightOpen: false, ataByStep: {}, speedRecommendations: {}, totPerformanceByStep: {}, lastOwnshipPos: null, deletedSteps: {}, directToSourceStep: '', directToTargetStep: '', rowActionStep: '', rowActionMode: '', rowRevealStep: '', rowRevealMode: '', coordDisplayMode: 'xy' };
       fltPlanPlanStateBySelection[key] = created;
       return created;
     }
@@ -4854,6 +4862,281 @@ namespace VAICOM
         return altitude + '<span class=""fltPlanAltTag"">AGL</span>';
       }
       return altitude;
+    }
+
+    function getNavlogCoordDisplayMode(selected){
+      const state = getFlightPlanPlanState(selected);
+      const mode = String(state && state.coordDisplayMode || 'xy').toLowerCase();
+      if (mode === 'dms' || mode === 'ddm' || mode === 'mgrs') return mode;
+      return 'xy';
+    }
+
+    function cycleNavlogCoordDisplayMode(selected){
+      const state = getFlightPlanPlanState(selected);
+      const order = ['xy', 'dms', 'ddm', 'mgrs'];
+      const current = getNavlogCoordDisplayMode(selected);
+      const idx = order.indexOf(current);
+      state.coordDisplayMode = order[(idx + 1) % order.length];
+    }
+
+    function getNavlogCoordinateDisplayText(wp, theatre, mode){
+      const north = Number(wp && wp.xNum);
+      const east = Number(wp && wp.yNum);
+      if (!isFinite(north) || !isFinite(east)) return '- / -';
+
+      const displayMode = String(mode || 'xy').toLowerCase();
+      if (displayMode === 'xy'){
+        return String(Math.round(north)) + ' / ' + String(Math.round(east));
+      }
+
+      const ll = convertDcsXYToLatLon(theatre, north, east);
+      if (!ll) return String(Math.round(north)) + ' / ' + String(Math.round(east));
+
+      if (displayMode === 'dms'){
+        return formatLatLonDms(ll.lat, ll.lon);
+      }
+      if (displayMode === 'ddm'){
+        return formatLatLonDdm(ll.lat, ll.lon);
+      }
+      if (displayMode === 'mgrs'){
+        return formatLatLonMgrs(ll.lat, ll.lon);
+      }
+
+      return String(Math.round(north)) + ' / ' + String(Math.round(east));
+    }
+
+    function convertDcsXYToLatLon(theatre, dcsX, dcsY){
+      const projection = getMapProjectionByTheatre(theatre);
+      if (!projection) return null;
+
+      const easting = Number(dcsY);
+      const northing = Number(dcsX);
+      if (!isFinite(easting) || !isFinite(northing)) return null;
+
+      try{
+        return inverseTransverseMercator(easting, northing, projection);
+      }catch(_){
+        return null;
+      }
+    }
+
+    function getMapProjectionByTheatre(theatre){
+      const t = String(theatre || '').trim();
+      if (!t) return null;
+      return mapProjectionCatalog[t] || null;
+    }
+
+    const mapProjectionCatalog = {
+      PersianGulf: { centralMeridianDeg: 57, falseEastingMeters: 75755.99999999645, falseNorthingMeters: -2894933.0000000377, scaleFactor: 0.9996 },
+      Falklands: { centralMeridianDeg: -57, falseEastingMeters: 147639.99999997593, falseNorthingMeters: 5815417.000000032, scaleFactor: 0.9996 },
+      Caucasus: { centralMeridianDeg: 33, falseEastingMeters: -99516.99999997323, falseNorthingMeters: -4998114.999999984, scaleFactor: 0.9996 },
+      MarianaIslands: { centralMeridianDeg: 147, falseEastingMeters: 238417.99999989968, falseNorthingMeters: -1491840.000000048, scaleFactor: 0.9996 },
+      Nevada: { centralMeridianDeg: -117, falseEastingMeters: -193996.80999964548, falseNorthingMeters: -4410028.063999966, scaleFactor: 0.9996 },
+      Normandy: { centralMeridianDeg: -3, falseEastingMeters: -195526.00000000204, falseNorthingMeters: -5484812.999999951, scaleFactor: 0.9996 },
+      Syria: { centralMeridianDeg: 39, falseEastingMeters: 282801.00000003993, falseNorthingMeters: -3879865.9999999935, scaleFactor: 0.9996 },
+      SinaiMap: { centralMeridianDeg: 33, falseEastingMeters: 169221.9999999585, falseNorthingMeters: -3325312.9999999693, scaleFactor: 0.9996 },
+      TheChannel: { centralMeridianDeg: 21, falseEastingMeters: -62702, falseNorthingMeters: -7543624.99999998, scaleFactor: 0.9996 },
+      Afghanistan: { centralMeridianDeg: 63, falseEastingMeters: -300150.032879, falseNorthingMeters: -3759656.99243, scaleFactor: 0.9996 },
+      Kola: { centralMeridianDeg: 21, falseEastingMeters: -62711, falseNorthingMeters: -7543616, scaleFactor: 0.9996 },
+      GermanyCW: { centralMeridianDeg: 21, falseEastingMeters: 35444.045, falseNorthingMeters: -6061632.212, scaleFactor: 0.9996 },
+      Iraq: { centralMeridianDeg: 45, falseEastingMeters: 72292, falseNorthingMeters: -3680040, scaleFactor: 0.9996 },
+    };
+
+    function inverseTransverseMercator(easting, northing, projection){
+      const semiMajorAxis = 6378137.0;
+      const flattening = 1.0 / 298.257223563;
+      const eccentricitySquared = flattening * (2.0 - flattening);
+
+      const x = Number(easting) - Number(projection.falseEastingMeters);
+      const y = Number(northing) - Number(projection.falseNorthingMeters);
+      const scaleFactor = Number(projection.scaleFactor) || 0.9996;
+
+      const ePrimeSquared = eccentricitySquared / (1.0 - eccentricitySquared);
+      const m = y / scaleFactor;
+      const mu = m / (semiMajorAxis * (1.0
+        - (eccentricitySquared / 4.0)
+        - (3.0 * Math.pow(eccentricitySquared, 2.0) / 64.0)
+        - (5.0 * Math.pow(eccentricitySquared, 3.0) / 256.0)));
+
+      const e1 = (1.0 - Math.sqrt(1.0 - eccentricitySquared)) / (1.0 + Math.sqrt(1.0 - eccentricitySquared));
+      const j1 = (3.0 * e1 / 2.0) - (27.0 * Math.pow(e1, 3.0) / 32.0);
+      const j2 = (21.0 * Math.pow(e1, 2.0) / 16.0) - (55.0 * Math.pow(e1, 4.0) / 32.0);
+      const j3 = (151.0 * Math.pow(e1, 3.0) / 96.0);
+      const j4 = (1097.0 * Math.pow(e1, 4.0) / 512.0);
+
+      const fp = mu
+        + j1 * Math.sin(2.0 * mu)
+        + j2 * Math.sin(4.0 * mu)
+        + j3 * Math.sin(6.0 * mu)
+        + j4 * Math.sin(8.0 * mu);
+
+      const sinFp = Math.sin(fp);
+      const cosFp = Math.cos(fp);
+      const tanFp = Math.tan(fp);
+      const c1 = ePrimeSquared * Math.pow(cosFp, 2.0);
+      const t1 = Math.pow(tanFp, 2.0);
+      const n1 = semiMajorAxis / Math.sqrt(1.0 - eccentricitySquared * Math.pow(sinFp, 2.0));
+      const r1 = (semiMajorAxis * (1.0 - eccentricitySquared))
+        / Math.pow(1.0 - eccentricitySquared * Math.pow(sinFp, 2.0), 1.5);
+      const d = x / (n1 * scaleFactor);
+
+      const latRad = fp - (n1 * tanFp / r1)
+        * ((Math.pow(d, 2.0) / 2.0)
+           - ((5.0 + 3.0 * t1 + 10.0 * c1 - 4.0 * Math.pow(c1, 2.0) - 9.0 * ePrimeSquared) * Math.pow(d, 4.0) / 24.0)
+           + ((61.0 + 90.0 * t1 + 298.0 * c1 + 45.0 * Math.pow(t1, 2.0) - 252.0 * ePrimeSquared - 3.0 * Math.pow(c1, 2.0)) * Math.pow(d, 6.0) / 720.0));
+
+      const lon0Rad = toRadians(Number(projection.centralMeridianDeg));
+      const lonRad = lon0Rad
+        + ((d
+            - (1.0 + 2.0 * t1 + c1) * Math.pow(d, 3.0) / 6.0
+            + (5.0 - 2.0 * c1 + 28.0 * t1 - 3.0 * Math.pow(c1, 2.0) + 8.0 * ePrimeSquared + 24.0 * Math.pow(t1, 2.0)) * Math.pow(d, 5.0) / 120.0)
+           / cosFp);
+
+      return {
+        lat: toDegrees(latRad),
+        lon: toDegrees(lonRad),
+      };
+    }
+
+    function toRadians(degrees){
+      return Number(degrees) * Math.PI / 180.0;
+    }
+
+    function toDegrees(radians){
+      return Number(radians) * 180.0 / Math.PI;
+    }
+
+    function formatLatLonDms(lat, lon){
+      return formatSingleCoordDms(lat, 'N', 'S', 2) + ' / ' + formatSingleCoordDms(lon, 'E', 'W', 3);
+    }
+
+    function formatSingleCoordDms(value, positiveHemisphere, negativeHemisphere, degreeWidth){
+      const n = Number(value);
+      if (!isFinite(n)) return '-';
+      const hemi = n >= 0 ? positiveHemisphere : negativeHemisphere;
+      const abs = Math.abs(n);
+      let degrees = Math.floor(abs);
+      let minutesTotal = (abs - degrees) * 60.0;
+      let minutes = Math.floor(minutesTotal);
+      let seconds = Math.round((minutesTotal - minutes) * 60.0);
+      if (seconds >= 60){
+        seconds = 0;
+        minutes += 1;
+      }
+      if (minutes >= 60){
+        minutes = 0;
+        degrees += 1;
+      }
+      return hemi + String(degrees).padStart(degreeWidth, '0') + '°' + String(minutes).padStart(2, '0') + 'm' + String(seconds).padStart(2, '0') + 's';
+    }
+
+    function formatLatLonDdm(lat, lon){
+      return formatSingleCoordDdm(lat, 'N', 'S', 2) + ' / ' + formatSingleCoordDdm(lon, 'E', 'W', 3);
+    }
+
+    function formatSingleCoordDdm(value, positiveHemisphere, negativeHemisphere, degreeWidth){
+      const n = Number(value);
+      if (!isFinite(n)) return '-';
+      const hemi = n >= 0 ? positiveHemisphere : negativeHemisphere;
+      const abs = Math.abs(n);
+      let degrees = Math.floor(abs);
+      let minutes = (abs - degrees) * 60.0;
+      if (minutes >= 59.99995){
+        minutes = 0;
+        degrees += 1;
+      }
+      return hemi + String(degrees).padStart(degreeWidth, '0') + '°' + minutes.toFixed(3).padStart(6, '0') + 'm';
+    }
+
+    function formatLatLonMgrs(lat, lon){
+      const utm = latLonToUtm(lat, lon);
+      if (!utm) return 'MGRS N/A';
+      const letters = getMgrsLetters(utm.zone, utm.easting, utm.northing, lat);
+      if (!letters) return 'MGRS N/A';
+
+      const eastingRemainder = Math.floor(((utm.easting % 100000) + 100000) % 100000);
+      const northingRemainder = Math.floor(((utm.northing % 100000) + 100000) % 100000);
+      return String(utm.zone) + utm.band + ' ' + letters + ' ' + String(eastingRemainder).padStart(5, '0') + ' ' + String(northingRemainder).padStart(5, '0');
+    }
+
+    function latLonToUtm(lat, lon){
+      const latitude = Number(lat);
+      const longitude = Number(lon);
+      if (!isFinite(latitude) || !isFinite(longitude)) return null;
+      if (latitude < -80 || latitude > 84) return null;
+
+      const zone = Math.floor((longitude + 180) / 6) + 1;
+      const lonOrigin = (zone - 1) * 6 - 180 + 3;
+      const k0 = 0.9996;
+      const a = 6378137.0;
+      const f = 1.0 / 298.257223563;
+      const e2 = f * (2 - f);
+      const ePrime2 = e2 / (1 - e2);
+
+      const latRad = toRadians(latitude);
+      const lonRad = toRadians(longitude);
+      const lonOriginRad = toRadians(lonOrigin);
+
+      const n = a / Math.sqrt(1 - e2 * Math.sin(latRad) * Math.sin(latRad));
+      const t = Math.tan(latRad) * Math.tan(latRad);
+      const c = ePrime2 * Math.cos(latRad) * Math.cos(latRad);
+      const A = Math.cos(latRad) * (lonRad - lonOriginRad);
+
+      const m = a * ((1 - e2 / 4 - 3 * Math.pow(e2, 2) / 64 - 5 * Math.pow(e2, 3) / 256) * latRad
+        - (3 * e2 / 8 + 3 * Math.pow(e2, 2) / 32 + 45 * Math.pow(e2, 3) / 1024) * Math.sin(2 * latRad)
+        + (15 * Math.pow(e2, 2) / 256 + 45 * Math.pow(e2, 3) / 1024) * Math.sin(4 * latRad)
+        - (35 * Math.pow(e2, 3) / 3072) * Math.sin(6 * latRad));
+
+      let easting = k0 * n * (A + (1 - t + c) * Math.pow(A, 3) / 6
+        + (5 - 18 * t + t * t + 72 * c - 58 * ePrime2) * Math.pow(A, 5) / 120) + 500000.0;
+
+      let northing = k0 * (m + n * Math.tan(latRad) * (Math.pow(A, 2) / 2
+        + (5 - t + 9 * c + 4 * c * c) * Math.pow(A, 4) / 24
+        + (61 - 58 * t + t * t + 600 * c - 330 * ePrime2) * Math.pow(A, 6) / 720));
+
+      if (latitude < 0){
+        northing += 10000000.0;
+      }
+
+      easting = Math.min(999999.0, Math.max(0.0, easting));
+      northing = Math.max(0.0, northing);
+
+      return {
+        zone: zone,
+        band: getUtmLatitudeBand(latitude),
+        easting: easting,
+        northing: northing,
+      };
+    }
+
+    function getUtmLatitudeBand(lat){
+      const bands = 'CDEFGHJKLMNPQRSTUVWX';
+      const clamped = Math.max(-80, Math.min(84, Number(lat)));
+      const idx = Math.min(bands.length - 1, Math.max(0, Math.floor((clamped + 80) / 8)));
+      return bands.charAt(idx);
+    }
+
+    function getMgrsLetters(zone, easting, northing, latitude){
+      const zoneNum = Number(zone);
+      if (!isFinite(zoneNum) || zoneNum < 1 || zoneNum > 60) return '';
+
+      const eSet = (zoneNum - 1) % 3;
+      const eSets = ['ABCDEFGH', 'JKLMNPQR', 'STUVWXYZ'];
+      const eList = eSets[eSet];
+
+      const eIndex = Math.floor(Number(easting) / 100000);
+      if (!isFinite(eIndex) || eIndex < 1 || eIndex > 8) return '';
+      const eLetter = eList.charAt(eIndex - 1);
+
+      const northLettersOdd = 'ABCDEFGHJKLMNPQRSTUV';
+      const northLettersEven = 'FGHJKLMNPQRSTUVABCDE';
+      const nList = (zoneNum % 2 === 0) ? northLettersEven : northLettersOdd;
+      const nIndex = Math.floor(Number(northing) / 100000) % 20;
+      if (!isFinite(nIndex) || nIndex < 0) return '';
+      const nLetter = nList.charAt(nIndex);
+
+      if (!eLetter || !nLetter) return '';
+      return eLetter + nLetter;
     }
 
     function truncateText(value, maxLen){
@@ -7115,6 +7398,13 @@ namespace VAICOM
       const rowRevealKey = stepToKey(planState.rowRevealStep);
       const rowRevealMode = String(planState.rowRevealMode || '').toLowerCase();
       pruneExpiredSpeedRecommendations(planState);
+      const coordDisplayMode = getNavlogCoordDisplayMode(selected);
+      const coordHeaderText = (function(){
+        if (coordDisplayMode === 'dms') return 'DMS';
+        if (coordDisplayMode === 'ddm') return 'DDM';
+        if (coordDisplayMode === 'mgrs') return 'MGRS';
+        return 'X / Y';
+      })();
       const timingLogRows = (planState && Array.isArray(planState.timingLog))
         ? planState.timingLog.slice()
         : [];
@@ -7161,7 +7451,7 @@ namespace VAICOM
       html += '<div class=""fltPlanWpTitle"">Route: ' + escapeHtml(primaryRouteName) + '</div>';
       html += '<div class=""fltPlanWpTableWrap"">';
       html += '<table class=""fltPlanWpTable"">';
-      html += '<thead><tr><th style=""width:48px;"">STP</th><th style=""width:68px;"">TYPE</th><th style=""width:118px;"">NAME</th><th style=""width:78px;"">ALT</th><th style=""width:56px;"">HDG</th><th style=""width:86px;"">SPD</th><th style=""width:64px;"">DIST</th><th class=""fltPlanEtaHeader"" style=""width:90px;"" data-eta-header=""1"" title=""Click to set ETA start from current time"">' + etaHeading + '</th><th style=""width:150px;"">X / Y</th></tr></thead>';
+      html += '<thead><tr><th style=""width:34px;"">STP</th><th style=""width:68px;"">TYPE</th><th style=""width:110px;"">NAME</th><th style=""width:78px;"">ALT</th><th style=""width:40px;"">HDG</th><th style=""width:86px;"">SPD</th><th style=""width:42px;"">DIST</th><th class=""fltPlanEtaHeader"" style=""width:90px;"" data-eta-header=""1"" title=""Click to set ETA start from current time"">' + etaHeading + '</th><th class=""fltPlanEtaHeader"" style=""width:210px;"" data-navlog-coord-cycle=""1"" title=""Click to cycle X/Y → DMS → DDM → MGRS"">' + escapeHtml(coordHeaderText) + '</th></tr></thead>';
       html += '<tbody>';
 
       if (!displayRows.length){
@@ -7241,7 +7531,8 @@ namespace VAICOM
             const etaTitle = ataShown ? 'ATA active - click to return to ETA' : 'ETA - click to mark ATA at current mission time';
             html += '<td class=""fltPlanCellNum""><span class=""fltPlanEtaWrap""><input type=""checkbox"" data-tot-lock-step=""' + escapeHtml(stepKey) + '""' + lockChecked + '><span class=""' + etaClass + '"" data-eta-step=""' + escapeHtml(stepKey) + '"" data-eta-planned=""' + escapeHtml(plannedEtaText) + '"" title=""' + escapeHtml(etaTitle) + '"">' + escapeHtml(etaText) + '</span></span></td>';
           }
-          html += '<td class=""fltPlanCellNum"">' + escapeHtml((wp.x || '-') + ' / ' + (wp.y || '-')) + '</td>';
+          const coordText = getNavlogCoordinateDisplayText(wp, theatre, coordDisplayMode);
+          html += '<td class=""fltPlanCellNum fltPlanCoordValue"">' + escapeHtml(coordText) + '</td>';
           html += '</tr>';
         });
       }
@@ -8464,6 +8755,14 @@ namespace VAICOM
             const selected = getActiveFlightPlanSelection(latestData);
             if (selected){
               setEtaStartNowForSelection(selected);
+              render(latestData);
+            }
+            return;
+          }
+          if (node.getAttribute && node.getAttribute('data-navlog-coord-cycle')){
+            const selected = getActiveFlightPlanSelection(latestData);
+            if (selected){
+              cycleNavlogCoordDisplayMode(selected);
               render(latestData);
             }
             return;
