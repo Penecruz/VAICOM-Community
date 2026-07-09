@@ -6516,6 +6516,10 @@ namespace VAICOM
             callsign: String((a && a.Callsign) || '').trim(),
             name: String((a && a.Name) || '').trim(),
             category: String((a && a.Category) || '').trim().toUpperCase(),
+            typeName: String((a && a.TypeName) || '').trim(),
+            frequency: String((a && a.Frequency) || '').trim(),
+            tacan: String((a && a.Tacan) || '').trim(),
+            mpClientCallsign: String((a && a.MpClientCallsign) || '').trim(),
             altFeet: Number(a && a.AltFeet),
             markerId: 0,
             markerDisplayId: 0,
@@ -6539,6 +6543,10 @@ namespace VAICOM
             callsign: 'MKR',
             name: markerText,
             category: 'MAP_MARKER',
+            typeName: '',
+            frequency: '',
+            tacan: '',
+            mpClientCallsign: '',
             altFeet: 0,
             markerId: isFinite(markerId) ? Math.round(markerId) : 0,
             markerDisplayId: 0,
@@ -6843,6 +6851,9 @@ namespace VAICOM
             raceFill: '#1f2a35',
             assetBlue: '#6eb1ff',
             assetBlueDark: '#2f6fb3',
+            assetInfoBg: '#1a2734',
+            assetInfoStroke: '#7fa6cc',
+            assetInfoText: '#d4e6f8',
             markerFill: '#35223d',
             markerStroke: '#d79cff',
             markerLabel: '#d79cff',
@@ -6881,6 +6892,9 @@ namespace VAICOM
             raceFill: '#ffffff',
             assetBlue: '#2d8fe3',
             assetBlueDark: '#1f5d93',
+            assetInfoBg: '#f6f9fc',
+            assetInfoStroke: '#6f879f',
+            assetInfoText: '#1f3550',
             markerFill: '#f7edf8',
             markerStroke: '#8a2f99',
             markerLabel: '#8a2f99',
@@ -7255,6 +7269,38 @@ namespace VAICOM
         return '<rect x=""' + (x - 7).toFixed(1) + '"" y=""' + (y - 5.5).toFixed(1) + '"" width=""14"" height=""11"" fill=""' + fill + '"" stroke=""' + stroke + '"" stroke-width=""1.3"" />';
       }
 
+      function formatAssetFrequencyText(value){
+        const raw = String(value || '').trim();
+        if (!raw) return '';
+        const n = Number(raw);
+        if (isFinite(n) && n > 0){
+          let mhz = n;
+          if (n >= 10000000){
+            mhz = n / 1000000.0;
+          } else if (n >= 100000){
+            mhz = n / 1000.0;
+          }
+          return mhz.toFixed(3);
+        }
+        return raw;
+      }
+
+      function buildSelectedAssetInfoLines(asset){
+        if (!asset || typeof asset !== 'object') return [];
+        const lines = [];
+        const typeText = String(asset.typeName || '').trim();
+        const freqText = formatAssetFrequencyText(asset.frequency);
+        const tacanText = String(asset.tacan || '').trim();
+        const mpText = String(asset.mpClientCallsign || '').trim();
+
+        if (typeText) lines.push('TYPE: ' + typeText);
+        if (freqText) lines.push('FREQ: ' + freqText);
+        if (tacanText) lines.push('TACAN: ' + tacanText);
+        if (mpText) lines.push('MP: ' + mpText);
+
+        return lines;
+      }
+
       const selected = getActiveFlightPlanSelection((typeof data === 'undefined' ? null : data));
       const rawAssets = getMudMapAssets((typeof data === 'undefined' ? null : data), dlinkOnEnabled);
       const selectedAssetKey = getMapSelectedAssetKeyBySelection(selected);
@@ -7300,10 +7346,38 @@ namespace VAICOM
           ? ('<circle cx=""' + m.x.toFixed(1) + '"" cy=""' + m.y.toFixed(1) + '"" r=""11"" fill=""none"" stroke=""#c94444"" stroke-width=""2.4"" />')
           : '';
         const labelColor = isMapMarker ? palette.markerLabel : palette.assetBlueDark;
+        let selectedInfoBlock = '';
+        if (m.isSelected && !isMapMarker){
+          const infoLines = buildSelectedAssetInfoLines(m.asset);
+          if (infoLines.length){
+            const fontSize = 10;
+            const lineHeight = 12;
+            const padX = 5;
+            const padY = 4;
+            const maxChars = infoLines.reduce(function(max, line){ return Math.max(max, String(line || '').length); }, 0);
+            const boxWidth = Math.max(120, Math.min(300, (maxChars * 6.2) + (padX * 2)));
+            const boxHeight = (infoLines.length * lineHeight) + (padY * 2);
+            let boxX = m.x + 12;
+            let boxY = m.y + 8;
+            if ((boxX + boxWidth) > (width - 4)) boxX = m.x - boxWidth - 12;
+            if ((boxY + boxHeight) > (height - 4)) boxY = m.y - boxHeight - 12;
+            const textRows = infoLines.map(function(line, idx){
+              const txRow = (boxX + padX).toFixed(1);
+              const tyRow = (boxY + padY + (lineHeight * (idx + 1)) - 2).toFixed(1);
+              return '<text x=""' + txRow + '"" y=""' + tyRow + '"" font-size=""' + fontSize + '"" fill=""' + palette.assetInfoText + '"" font-weight=""700"">' + escapeHtml(String(line)) + '</text>';
+            }).join('');
+            selectedInfoBlock = '<g>'
+              + '<rect x=""' + boxX.toFixed(1) + '"" y=""' + boxY.toFixed(1) + '"" width=""' + boxWidth.toFixed(1) + '"" height=""' + boxHeight.toFixed(1) + '"" rx=""3"" ry=""3"" fill=""' + palette.assetInfoBg + '"" stroke=""' + palette.assetInfoStroke + '"" stroke-width=""1.1"" />'
+              + textRows
+              + '</g>';
+          }
+        }
         return '<g data-map-asset-key=""' + selectionKeyEncoded + '"" data-map-asset-category=""' + escapeHtml(String(m.asset.category || '')) + '"" style=""cursor:pointer"">'
           + selectedRing
           + assetIconFor(m)
-          + '<text x=""' + tx + '"" y=""' + ty + '"" font-size=""10"" fill=""' + labelColor + '"" font-weight=""700"">' + label + '</text></g>';
+          + '<text x=""' + tx + '"" y=""' + ty + '"" font-size=""10"" fill=""' + labelColor + '"" font-weight=""700"">' + label + '</text>'
+          + selectedInfoBlock
+          + '</g>';
       });
 
       const northArrow = [
@@ -11746,6 +11820,10 @@ namespace VAICOM
                                     Callsign = playerCallsign,
                                     Name = playerName,
                                     Category = "PLAYER",
+                                    TypeName = string.IsNullOrWhiteSpace(State.currentstate.id) ? "" : State.currentstate.id,
+                                    Frequency = "",
+                                    Tacan = "",
+                                    MpClientCallsign = string.IsNullOrWhiteSpace(State.currentstate.playerusername) ? "" : State.currentstate.playerusername,
                                     RawLine = string.Empty,
                                     X = playerNorth,
                                     Y = playerEast,
@@ -11807,6 +11885,10 @@ namespace VAICOM
                                     Callsign = callsign ?? "",
                                     Name = name ?? "",
                                     Category = normalizedCategory,
+                                    TypeName = string.IsNullOrWhiteSpace(unit.typename) ? "" : unit.typename,
+                                    Frequency = string.IsNullOrWhiteSpace(unit.freq) ? "" : unit.freq,
+                                    Tacan = string.IsNullOrWhiteSpace(unit.tacan) ? "" : unit.tacan,
+                                    MpClientCallsign = unit.ishuman && !string.IsNullOrWhiteSpace(unit.playerid) ? unit.playerid : "",
                                     RawLine = string.Empty,
                                     X = x,
                                     Y = y,
@@ -12028,6 +12110,10 @@ namespace VAICOM
                 public string Callsign { get; set; } = "";
                 public string Name { get; set; } = "";
                 public string Category { get; set; } = "";
+                public string TypeName { get; set; } = "";
+                public string Frequency { get; set; } = "";
+                public string Tacan { get; set; } = "";
+                public string MpClientCallsign { get; set; } = "";
                 public string RawLine { get; set; } = "";
                 public double X { get; set; }
                 public double Y { get; set; }
@@ -12040,6 +12126,10 @@ namespace VAICOM
                         Callsign = Callsign,
                         Name = Name,
                         Category = Category,
+                        TypeName = TypeName,
+                        Frequency = Frequency,
+                        Tacan = Tacan,
+                        MpClientCallsign = MpClientCallsign,
                         RawLine = RawLine,
                         X = X,
                         Y = Y,

@@ -74,8 +74,8 @@ namespace VAICOM.Helpers
                     {
                         Theater = "MarianaIslands",
                         CentralMeridianDeg = 147,
-                        FalseEastingMeters = 238417.99999989968,
-                        FalseNorthingMeters = -1491840.000000048,
+                        FalseEastingMeters = 238417.999991766526,
+                        FalseNorthingMeters = -1491839.999998347135,
                         ScaleFactor = 0.9996,
                     }
                 },
@@ -107,8 +107,8 @@ namespace VAICOM.Helpers
                     {
                         Theater = "Syria",
                         CentralMeridianDeg = 39,
-                        FalseEastingMeters = 282801.00000003993,
-                        FalseNorthingMeters = -3879865.9999999935,
+                        FalseEastingMeters = 282801.000060651742,
+                        FalseNorthingMeters = -3879866.000066791195,
                         ScaleFactor = 0.9996,
                     }
                 },
@@ -151,8 +151,8 @@ namespace VAICOM.Helpers
                     {
                         Theater = "Kola",
                         CentralMeridianDeg = 21,
-                        FalseEastingMeters = -62711,
-                        FalseNorthingMeters = -7543616,
+                        FalseEastingMeters = -62702.000001687862,
+                        FalseNorthingMeters = -7543625.000940491445,
                         ScaleFactor = 0.9996,
                     }
                 },
@@ -162,8 +162,8 @@ namespace VAICOM.Helpers
                     {
                         Theater = "GermanyCW",
                         CentralMeridianDeg = 21,
-                        FalseEastingMeters = 35444.045,
-                        FalseNorthingMeters = -6061632.212,
+                        FalseEastingMeters = 35427.62000191761,
+                        FalseNorthingMeters = -6061633.128573619,
                         ScaleFactor = 0.9996,
                     }
                 },
@@ -173,8 +173,8 @@ namespace VAICOM.Helpers
                     {
                         Theater = "Iraq",
                         CentralMeridianDeg = 45,
-                        FalseEastingMeters = 72292,
-                        FalseNorthingMeters = -3680040,
+                        FalseEastingMeters = 72289.999997470353,
+                        FalseNorthingMeters = -3680057.000046721194,
                         ScaleFactor = 0.9996,
                     }
                 },
