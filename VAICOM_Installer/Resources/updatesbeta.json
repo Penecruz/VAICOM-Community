@@ -7,11 +7,11 @@
       "isbeta": false,
       "isdev": false,
       "productid": 1,
-      "releasedate": 20260707,
-      "version": 314015,
-      "versionstring": "3.1.4.15",
+      "releasedate": 20260709,
+      "version": 314017,
+      "versionstring": "3.1.4.17",
       "downloadurl": "https://raw.githubusercontent.com/Penecruz/VAICOM-Community/Development/VAICOM_Installer/Resources/VAICOMPRO.zip",
-      "releasenotes": "BETA 3.1.4.15 \n- Fix FLT PLN Tab Mape not draggable \n- Fix Hold AI Transmission checkbox defualting to on and not working tuning off (dybamic Switching and Broadcast Parallel) \n- Fix TX Link with Hot Mic off not waiting for Options command sequence attempt 2. \n- F-4E WSO code tidy up and CAP time command \n- Add OpenKneeboard Out FLT PLN Tab Coordinate conversions X/Y, DMS, DDM and MGRS \n- Fix Night Mode on Stores Page FLT PLN Tab \n- Add Map Marker functionality to OKB-Out, they appear on SA map and on the COM/ROUTE page of FLT PLN tab "
+      "releasenotes": "BETA 3.1.4.17 \n- Fix FLT PLN Tab Mape not draggable \n- Fix Hold AI Transmission checkbox defualting to on and not working tuning off (dybamic Switching and Broadcast Parallel) \n- Fix TX Link with Hot Mic off not waiting for Options command sequence attempt 2. \n- F-4E WSO code tidy up and CAP time command \n- Add OpenKneeboard Out FLT PLN Tab Coordinate conversions X/Y, DMS, DDM and MGRS \n- Fix Night Mode on Stores Page FLT PLN Tab \n- Add Map Marker functionality to OKB-Out, they appear on SA map and on the COM/ROUTE page of FLT PLN tab \n- Add data blocks to bugged OKB FLT PLN Tab SA Map. \n- More precice position data conversions on Kola, CW Germany, Iraq and Syria with updated TM Projections model. "
     }
   ]
 }
