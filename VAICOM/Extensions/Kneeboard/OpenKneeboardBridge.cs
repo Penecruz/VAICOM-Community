@@ -532,7 +532,271 @@ namespace VAICOM
       return findFirstObjectByKeyPattern(root, /^MPD$/i, 0);
     }
 
-    function getDtcMapOverlays(root, routeKey){
+    function extractIcaoToken(text){
+      const s = String(text || '').toUpperCase();
+      if (!s) return '';
+      const m = s.match(/\b([A-Z]{4})\b/);
+      return m ? String(m[1] || '') : '';
+    }
+
+    function inferAirfieldType(text){
+      const s = String(text || '').toUpperCase();
+      if (!s) return 'airport';
+      if (s.indexOf('SEAPLANE') >= 0 || s.indexOf('SEA PLANE') >= 0 || s.indexOf('WATER') >= 0) return 'seaplane';
+      if (s.indexOf('HELIPORT') >= 0 || s.indexOf('HELI') >= 0 || s.indexOf('FARP') >= 0) return 'heliport';
+      return 'airport';
+    }
+
+    function inferAirfieldMilitary(text){
+      const s = String(text || '').toUpperCase();
+      if (!s) return false;
+      return s.indexOf('MIL') >= 0
+        || s.indexOf('AIRBASE') >= 0
+        || s.indexOf('AIR BASE') >= 0
+        || s.indexOf('AFB') >= 0
+        || s.indexOf('NAS') >= 0
+        || s.indexOf('AB ') >= 0
+        || s.indexOf(' AFB') >= 0;
+    }
+
+    function parseMetarVisibilityMeters(metarText){
+      const text = String(metarText || '').toUpperCase().trim();
+      if (!text) return NaN;
+      if (text.indexOf('CAVOK') >= 0) return 10000;
+
+      const meter = text.match(/(?:^|\s)(\d{4})(?:\s|$)/);
+      if (meter){
+        const mv = Number(meter[1]);
+        if (isFinite(mv) && mv > 0) return mv;
+      }
+
+      const sm = text.match(/(?:^|\s)(P?\d{1,2}(?:\s+\d\/\d)?|\d\/\d)SM(?:\s|$)/);
+      if (sm){
+        const token = String(sm[1] || '').trim();
+        let miles = NaN;
+        if (token.indexOf('/') >= 0 && token.indexOf(' ') < 0){
+          const parts = token.split('/');
+          const n = Number(parts[0]);
+          const d = Number(parts[1]);
+          if (isFinite(n) && isFinite(d) && d > 0) miles = n / d;
+        } else {
+          const clean = token.replace(/^P/i, '').trim();
+          const mixed = clean.match(/^(\d+)\s+(\d)\/(\d)$/);
+          if (mixed){
+            const whole = Number(mixed[1]);
+            const n = Number(mixed[2]);
+            const d = Number(mixed[3]);
+            if (isFinite(whole) && isFinite(n) && isFinite(d) && d > 0) miles = whole + (n / d);
+          } else {
+            const n = Number(clean);
+            if (isFinite(n)) miles = n;
+          }
+        }
+        if (isFinite(miles) && miles > 0) return miles * 1609.344;
+      }
+
+      return NaN;
+    }
+
+    function parseMetarCloudBaseFeet(metarText){
+      const text = String(metarText || '').toUpperCase().trim();
+      if (!text) return NaN;
+      if (text.indexOf('CAVOK') >= 0) return 99999;
+
+      const rx = /\b(FEW|SCT|BKN|OVC)(\d{3})\b/g;
+      let match = null;
+      let minBase = NaN;
+      while ((match = rx.exec(text)) !== null){
+        const baseHundreds = Number(match[2]);
+        if (!isFinite(baseHundreds)) continue;
+        const ft = baseHundreds * 100;
+        if (!isFinite(minBase) || ft < minBase) minBase = ft;
+      }
+
+      return isFinite(minBase) ? minBase : 99999;
+    }
+
+    function isMetarVfr(metarText){
+      const visMeters = parseMetarVisibilityMeters(metarText);
+      const cloudBaseFeet = parseMetarCloudBaseFeet(metarText);
+      return isFinite(visMeters) && isFinite(cloudBaseFeet) && visMeters > 5000 && cloudBaseFeet > 1500;
+    }
+
+    function buildMapAirfields(data){
+      const model = data || latestData || {};
+      const server = (model && model.Server) || {};
+      const diagnostics = (server && server.Diagnostics && typeof server.Diagnostics === 'object') ? server.Diagnostics : {};
+      const atcMetars = (server && server.AtcMetars && typeof server.AtcMetars === 'object') ? server.AtcMetars : {};
+      const results = [];
+      const seen = {};
+      const metarKeys = Object.keys(atcMetars).sort(function(a, b){ return String(b || '').length - String(a || '').length; });
+
+      function extractIcaoFromMetarText(metarText){
+        const text = String(metarText || '').toUpperCase();
+        if (!text) return '';
+        const m = text.match(/\bMETAR\s+([A-Z]{4})\b/);
+        return m ? String(m[1] || '') : '';
+      }
+
+      function resolveMetarKey(text, explicitIcao){
+        const icao = String(explicitIcao || '').toUpperCase();
+        if (icao && atcMetars[icao]) return icao;
+        const upper = String(text || '').toUpperCase();
+        const normUpper = upper.replace(/[^A-Z0-9]/g, '');
+        for (let i = 0; i < metarKeys.length; i++){
+          const k = String(metarKeys[i] || '').toUpperCase();
+          if (!k) continue;
+          if (upper.indexOf(k) >= 0) return k;
+          const normKey = k.replace(/[^A-Z0-9]/g, '');
+          if (normUpper && normKey && (normUpper.indexOf(normKey) >= 0 || normKey.indexOf(normUpper) >= 0)) return k;
+        }
+        return '';
+      }
+
+      function toNumber(v){
+        const n = Number(v);
+        return isFinite(n) ? n : NaN;
+      }
+
+      const atcUnitList = getMergedList(model && model.Units, 'ATC');
+      (Array.isArray(atcUnitList) ? atcUnitList : []).forEach(function(line){
+        const text = String(line || '').trim();
+        if (!text) return;
+        const metarKey = resolveMetarKey(text, extractIcaoToken(text));
+        if (!metarKey) return;
+        const metarText = String(atcMetars[metarKey] || '');
+        const m = text.match(/\b(\d{3})\/(\d{1,3})(?:\/(\d{1,3}))?/);
+        if (!m) return;
+
+        const bearing = Number(m[1]);
+        const rangeNm = Number(m[2]);
+        if (!isFinite(bearing) || !isFinite(rangeNm) || rangeNm <= 0) return;
+
+        const originNorth = Number(server && server.PlayerPosX);
+        const originEast = Number(server && server.PlayerPosY);
+        if (!isFinite(originNorth) || !isFinite(originEast)) return;
+
+        const distM = rangeNm * 1852.0;
+        const rad = bearing * (Math.PI / 180.0);
+        const north = originNorth + (Math.cos(rad) * distM);
+        const east = originEast + (Math.sin(rad) * distM);
+        if (!isFinite(north) || !isFinite(east)) return;
+
+        const icao = extractIcaoToken(text) || extractIcaoFromMetarText(metarText) || extractIcaoToken(metarKey);
+        if (!icao) return;
+
+        const dedupeKey = String(icao) + '|' + String(Math.round(north)) + '|' + String(Math.round(east));
+        if (seen[dedupeKey]) return;
+        seen[dedupeKey] = true;
+
+        results.push({
+          xNum: north,
+          yNum: east,
+          label: String(icao).toUpperCase(),
+          icao: String(icao).toUpperCase(),
+          type: inferAirfieldType(text),
+          isMilitary: inferAirfieldMilitary(text),
+          isVfr: isMetarVfr(metarText),
+        });
+      });
+
+      function tryAddAirfield(row, path){
+        if (!row || typeof row !== 'object') return;
+
+        const pos = row.pos && typeof row.pos === 'object' ? row.pos : null;
+        const point = row.point && typeof row.point === 'object' ? row.point : null;
+        const north = toNumber(row.x !== undefined ? row.x : (row.X !== undefined ? row.X : (pos ? (pos.x !== undefined ? pos.x : pos.X) : (point ? (point.x !== undefined ? point.x : point.X) : undefined))));
+        const east = toNumber(
+          row.y !== undefined ? row.y
+            : (row.Y !== undefined ? row.Y
+              : (row.z !== undefined ? row.z
+                : (row.Z !== undefined ? row.Z
+                  : (pos ? (pos.z !== undefined ? pos.z : (pos.y !== undefined ? pos.y : (pos.Z !== undefined ? pos.Z : pos.Y))) : (point ? (point.z !== undefined ? point.z : (point.y !== undefined ? point.y : (point.Z !== undefined ? point.Z : point.Y))) : undefined)))))
+        );
+        if (!isFinite(north) || !isFinite(east)) return;
+
+        const textBits = [
+          row.icao, row.ICAO, row.name, row.Name, row.callsign, row.Callsign,
+          row.fullname, row.FullName, row.displayName, row.DisplayName,
+          row.category, row.Category,
+          row.airfield, row.airfieldName, row.atcName, row.text, row.note,
+          path,
+        ];
+        const text = textBits.map(function(v){ return String(v || '').trim(); }).filter(function(v){ return !!v; }).join(' ');
+        const inferredIcao = extractIcaoToken(String(row.icao || row.ICAO || '')) || extractIcaoToken(text);
+        const metarKey = resolveMetarKey(text, inferredIcao);
+        const metarText = metarKey ? String(atcMetars[metarKey] || '') : '';
+        const metarIcao = extractIcaoFromMetarText(metarText);
+        const keyIcao = extractIcaoToken(metarKey);
+        const icao = String(inferredIcao || metarIcao || keyIcao || '').toUpperCase();
+        const rowCategory = String((row && (row.category || row.Category)) || '').toUpperCase();
+
+        const upperText = text.toUpperCase();
+        const looksLikeAirfield = !!icao
+          || !!metarKey
+          || upperText.indexOf('AIRFIELD') >= 0
+          || upperText.indexOf('AIRPORT') >= 0
+          || upperText.indexOf('AIRBASE') >= 0
+          || upperText.indexOf('ATC') >= 0
+          || upperText.indexOf('TOWER') >= 0
+          || upperText.indexOf('HELIPORT') >= 0
+          || upperText.indexOf('SEAPLANE') >= 0;
+        if (!looksLikeAirfield) return;
+
+        const vfr = isMetarVfr(metarText);
+        const type = inferAirfieldType(text);
+        const military = inferAirfieldMilitary(text);
+        const dedupeKey = (icao || '-') + '|' + String(Math.round(north)) + '|' + String(Math.round(east));
+        if (seen[dedupeKey]) return;
+        seen[dedupeKey] = true;
+
+        results.push({
+          xNum: north,
+          yNum: east,
+          label: icao || 'AF',
+          icao: icao,
+          type: type,
+          isMilitary: military,
+          isVfr: vfr,
+        });
+      }
+
+      const visited = [];
+      function scan(node, path, depth){
+        if (!node || typeof node !== 'object') return;
+        if (depth > 6) return;
+        if (visited.indexOf(node) >= 0) return;
+        visited.push(node);
+
+        if (Array.isArray(node)){
+          for (let i = 0; i < node.length && results.length < 48; i++){
+            scan(node[i], path + '[' + String(i) + ']', depth + 1);
+          }
+          return;
+        }
+
+        tryAddAirfield(node, path);
+        if (results.length >= 48) return;
+
+        Object.keys(node).forEach(function(k){
+          if (results.length >= 48) return;
+          const child = node[k];
+          if (child && typeof child === 'object'){
+            scan(child, path ? (path + '.' + k) : k, depth + 1);
+          }
+        });
+      }
+
+      scan(server.FriendlyAssets, 'friendlyAssets', 0);
+      scan(diagnostics, 'diagnostics', 0);
+      if (results.length < 48){
+        scan(server.Payload, 'payload', 0);
+      }
+
+      return results;
+    }
+
+    function getDtcMapOverlays(root, routeKey, data){
       const mpd = getDtcMpdRoot(root);
       const sa = (root && typeof root === 'object' && root.SA && typeof root.SA === 'object')
         ? root.SA
@@ -1144,10 +1408,28 @@ namespace VAICOM
         });
       }
 
+      (Array.isArray(mapOverlays.airfields) ? mapOverlays.airfields : []).forEach(function(p){
+        const isVfr = !!(p && p.isVfr);
+        const stroke = isVfr ? '#4aa360' : '#3a8fd0';
+        addPointFeature(p, {
+          kind: 'airfield',
+          group: 'overlay',
+          label: String((p && p.icao) || (p && p.label) || 'AF'),
+          airfieldType: String((p && p.type) || 'airport').toLowerCase(),
+          airfieldMilitary: !!(p && p.isMilitary),
+          isVfr: isVfr,
+          fill: '#ffffff',
+          stroke: stroke,
+          textColor: stroke,
+          radius: 5,
+        });
+      });
+
       const selected = getActiveFlightPlanSelection(model);
       const rawAssets = getMudMapAssets(model, dlinkOnEnabled);
       rawAssets.forEach(function(asset){
         const category = String((asset && asset.category) || '').toUpperCase();
+        if (category === 'ATC') return;
         const isPlayer = category === 'PLAYER';
         const callsign = String((asset && asset.callsign) || '').trim();
         const label = callsign || String((asset && asset.name) || category || 'ASSET').trim();
@@ -1232,6 +1514,7 @@ namespace VAICOM
       const geolines = Array.isArray(mapOverlays.geolines) ? mapOverlays.geolines : [];
       const threatPoints = Array.isArray(mapOverlays.threatPoints) ? mapOverlays.threatPoints : [];
       const destinationPoints = Array.isArray(mapOverlays.destinationPoints) ? mapOverlays.destinationPoints : [];
+      const airfields = Array.isArray(mapOverlays.airfields) ? mapOverlays.airfields : [];
       const faorLines = Array.isArray(mapOverlays.faorLines) ? mapOverlays.faorLines : [];
       const flotLines = Array.isArray(mapOverlays.flotLines) ? mapOverlays.flotLines : [];
       const capPoints = Array.isArray(mapOverlays.capPoints) ? mapOverlays.capPoints : [];
@@ -1906,9 +2189,11 @@ namespace VAICOM
     }
 
     function normalizeCategory(cat){
-      var c = String(cat || '').toUpperCase();
+      var c = String(cat || '').toUpperCase().trim();
+      var compact = c.replace(/[^A-Z0-9]/g, '');
       if (c === 'RIO' || c === 'ICEMAN' || c === 'WSO' || c === 'GEORGE' || c === 'CPG' || c === 'AICPG' || c === 'AIWSO') return 'AI CREW';
       if (c === 'REF' || c === 'CREW' || c === 'REF/CREW') return 'GND CREW';
+      if (compact === 'REFCREW' || compact === 'GROUNDCREW' || compact === 'GNDCREW' || compact === 'GROUND') return 'GND CREW';
       if (c === 'ALLIES') return 'FLIGHT';
       return c;
     }
@@ -5345,6 +5630,14 @@ namespace VAICOM
       const map = item.map;
       const host = item.host;
       const features = Array.isArray(payload && payload.features) ? payload.features : [];
+      const orderedFeatures = features.slice().sort(function(a, b){
+        const ak = String((((a || {}).properties || {}).kind) || '').toLowerCase();
+        const bk = String((((b || {}).properties || {}).kind) || '').toLowerCase();
+        const ap = ak === 'airfield' ? 1 : 0;
+        const bp = bk === 'airfield' ? 1 : 0;
+        if (ap !== bp) return ap - bp;
+        return 0;
+      });
 
       let overlaySvg = item.overlaySvg;
       if (!overlaySvg){
@@ -5357,13 +5650,17 @@ namespace VAICOM
         item.overlaySvg = overlaySvg;
       }
 
-      while (overlaySvg.firstChild) overlaySvg.removeChild(overlaySvg.firstChild);
-
-      if (!features.length) return;
+      const overlayRoot = overlaySvg;
+      if (!orderedFeatures.length){
+        overlayRoot.replaceChildren();
+        return;
+      }
 
       const selectedAssetKey = getMapSelectedAssetKeyBySelection(item.selectedKey);
       const selectedAssetInfo = { x: NaN, y: NaN, props: null };
       function makeNode(name){ return document.createElementNS('http://www.w3.org/2000/svg', name); }
+      const renderLayer = makeNode('g');
+      overlaySvg = renderLayer;
       const metersPerPixel = (function(){
         try{
           const center = map.getCenter ? map.getCenter() : null;
@@ -5493,7 +5790,7 @@ namespace VAICOM
         return g;
       }
 
-      features.forEach(function(feature){
+      orderedFeatures.forEach(function(feature){
         if (!feature || !feature.geometry || !feature.properties) return;
         const geom = feature.geometry || {};
         const props = feature.properties || {};
@@ -5521,12 +5818,13 @@ namespace VAICOM
         if (geom.type === 'Point' && Array.isArray(geom.coordinates) && geom.coordinates.length >= 2){
           const p = map.project([Number(geom.coordinates[0]), Number(geom.coordinates[1])]);
           if (!p) return;
-          const isAsset = props.group === 'asset';
-          const isSelected = isAsset && String(selectedAssetKey || '') === String(props.assetKey || '');
+          const kind = String((props && props.kind) || '').toLowerCase();
+          const isAsset = props.group === 'asset' && kind !== 'airfield';
+          const isSelectable = !!(props && props.assetKey) && (props.group === 'asset' || kind === 'airfield');
+          const isSelected = isSelectable && String(selectedAssetKey || '') === String(props.assetKey || '');
           const markerNode = isAsset
             ? createAssetSymbol(p.x, p.y, props)
             : (function(){
-                const kind = String((props && props.kind) || '').toLowerCase();
                 const fill = String((props && props.fill) || '#3a6ea5');
                 const stroke = String((props && props.stroke) || '#244766');
                 if (kind === 'destination'){
@@ -5541,6 +5839,64 @@ namespace VAICOM
                   d.setAttribute('stroke-width', '1.5');
                   d.style.pointerEvents = 'none';
                   return d;
+                }
+                if (kind === 'airfield'){
+                  const gField = makeNode('g');
+                  const type = String((props && props.airfieldType) || 'airport').toLowerCase();
+                  const military = !!(props && props.airfieldMilitary);
+                  const r = 6.5;
+
+                  const ring = makeNode('circle');
+                  ring.setAttribute('cx', p.x.toFixed(1));
+                  ring.setAttribute('cy', p.y.toFixed(1));
+                  ring.setAttribute('r', String(r));
+                  ring.setAttribute('fill', 'none');
+                  ring.setAttribute('stroke', stroke);
+                  ring.setAttribute('stroke-width', '2');
+                  gField.appendChild(ring);
+
+                  if (!military){
+                    for (let i = 0; i < 6; i++){
+                      const a = i * (Math.PI / 3.0);
+                      const x1 = p.x + (Math.cos(a) * (r + 0.5));
+                      const y1 = p.y + (Math.sin(a) * (r + 0.5));
+                      const x2 = p.x + (Math.cos(a) * (r + 2.2));
+                      const y2 = p.y + (Math.sin(a) * (r + 2.2));
+                      const tick = makeNode('line');
+                      tick.setAttribute('x1', x1.toFixed(1));
+                      tick.setAttribute('y1', y1.toFixed(1));
+                      tick.setAttribute('x2', x2.toFixed(1));
+                      tick.setAttribute('y2', y2.toFixed(1));
+                      tick.setAttribute('stroke', stroke);
+                      tick.setAttribute('stroke-width', '1.2');
+                      gField.appendChild(tick);
+                    }
+                  }
+
+                  if (type === 'heliport'){
+                    const tx = makeNode('text');
+                    tx.setAttribute('x', p.x.toFixed(1));
+                    tx.setAttribute('y', (p.y + 3.8).toFixed(1));
+                    tx.setAttribute('text-anchor', 'middle');
+                    tx.setAttribute('font-size', '8.8');
+                    tx.setAttribute('font-weight', '800');
+                    tx.setAttribute('fill', stroke);
+                    tx.textContent = 'H';
+                    gField.appendChild(tx);
+                  } else if (type === 'seaplane'){
+                    const tx = makeNode('text');
+                    tx.setAttribute('x', p.x.toFixed(1));
+                    tx.setAttribute('y', (p.y + 3.8).toFixed(1));
+                    tx.setAttribute('text-anchor', 'middle');
+                    tx.setAttribute('font-size', '9.0');
+                    tx.setAttribute('font-weight', '700');
+                    tx.setAttribute('fill', stroke);
+                    tx.textContent = '\u2693';
+                    gField.appendChild(tx);
+                  }
+
+                  gField.style.pointerEvents = 'none';
+                  return gField;
                 }
                 if (kind === 'threat'){
                   const gThreat = makeNode('g');
@@ -5668,7 +6024,7 @@ namespace VAICOM
                 return c;
               })();
 
-          if (isAsset && props.assetKey){
+          if (isSelectable && props.assetKey){
             markerNode.style.pointerEvents = 'auto';
             markerNode.style.cursor = 'pointer';
             markerNode.setAttribute('data-asset-key', String(props.assetKey));
@@ -5691,14 +6047,18 @@ namespace VAICOM
 
           const label = String(props.label || '').trim();
           if (label){
+            const kind = String((props && props.kind) || '').toLowerCase();
+            const isAirfieldLabel = kind === 'airfield';
             const text = makeNode('text');
-            text.setAttribute('x', (p.x + 9).toFixed(1));
+            text.setAttribute('x', (p.x + (isAirfieldLabel ? 11 : 9)).toFixed(1));
             text.setAttribute('y', (p.y + 4).toFixed(1));
-            text.setAttribute('font-size', '11');
+            text.setAttribute('font-size', isAirfieldLabel ? '12.5' : '11');
             text.setAttribute('font-weight', '700');
             const labelFill = isAsset
               ? '#1f3550'
-              : String((props && props.textColor) || '#1f2e3d');
+              : (isAirfieldLabel
+                  ? (props && props.isVfr ? '#1e6b3d' : '#1d4f87')
+                  : String((props && props.textColor) || '#1f2e3d'));
             text.setAttribute('fill', labelFill);
             text.setAttribute('stroke', '#ffffff');
             text.setAttribute('stroke-width', '0.6');
@@ -5707,7 +6067,7 @@ namespace VAICOM
             overlaySvg.appendChild(text);
           }
 
-          if (isAsset && props.assetKey){
+          if (isSelectable && props.assetKey){
             const hit = makeNode('circle');
             hit.setAttribute('cx', p.x.toFixed(1));
             hit.setAttribute('cy', p.y.toFixed(1));
@@ -5727,21 +6087,39 @@ namespace VAICOM
         function formatFreq(v){
           const raw = String(v || '').trim();
           if (!raw) return '';
-          const n = Number(raw);
-          if (!isFinite(n) || n <= 0) return raw;
-          let mhz = n;
-          if (n >= 10000000) mhz = n / 1000000.0;
-          else if (n >= 100000) mhz = n / 1000.0;
-          return mhz.toFixed(3);
+          let s = raw;
+          const dot = s.indexOf('.');
+          if (dot >= 0) s = s.substring(0, dot);
+          s = s.replace(/[^0-9]/g, '');
+          if (!s) return raw;
+          s = ('000000000' + s).slice(-9);
+          const main = s.substring(0, 3);
+          const decRaw = Number(s.substring(3, 6));
+          if (!isFinite(decRaw)) return raw;
+          const decRounded = Math.round(decRaw / 25.0) * 25;
+          const dec = ('000' + String(Math.round(decRounded))).slice(-3);
+          return main + '.' + dec;
         }
 
         const infoLines = [];
+        const category = String(p.category || '').trim().toUpperCase();
         const typeText = String(p.typeName || '').trim();
         const freqText = formatFreq(p.frequency);
+        const altFreqs = Array.isArray(p.altFrequencies) ? p.altFrequencies : [];
+        const allFreqs = [p.frequency].concat(altFreqs);
+        const normalizedFreqs = allFreqs
+          .map(function(v){ return formatFreq(v); })
+          .filter(function(v){ return !!v && isFinite(Number(v)); })
+          .map(function(v){ return { text: v, mhz: Number(v) }; });
+        const uhf = normalizedFreqs.find(function(f){ return f.mhz >= 225 && f.mhz <= 399.975; });
+        const vhf = normalizedFreqs.find(function(f){ return f.mhz >= 30 && f.mhz < 225; });
         const tacanText = String(p.tacan || '').trim();
         const mpText = String(p.mpClientCallsign || '').trim();
         if (typeText) infoLines.push('TYPE: ' + typeText);
-        if (freqText) infoLines.push('FREQ: ' + freqText);
+        if (category === 'ATC'){
+          if (uhf && uhf.text) infoLines.push('UHF: ' + uhf.text);
+          if (vhf && vhf.text) infoLines.push('VHF: ' + vhf.text);
+        } else if (freqText) infoLines.push('FREQ: ' + freqText);
         if (tacanText) infoLines.push('TACAN: ' + tacanText);
         if (mpText) infoLines.push('MP: ' + mpText);
 
@@ -5785,10 +6163,12 @@ namespace VAICOM
         }
       }
 
+      overlayRoot.replaceChildren(renderLayer);
+
       if (!item.overlayClickBound){
-        overlaySvg.addEventListener('click', function(ev){
+        overlayRoot.addEventListener('click', function(ev){
           let node = ev.target;
-          while (node && node !== overlaySvg){
+          while (node && node !== overlayRoot){
             const assetKey = node.getAttribute ? String(node.getAttribute('data-asset-key') || '') : '';
             if (assetKey){
               const current = getMapSelectedAssetKeyBySelection(item.selectedKey);
@@ -8074,6 +8454,7 @@ namespace VAICOM
             category: String((a && a.Category) || '').trim().toUpperCase(),
             typeName: String((a && a.TypeName) || '').trim(),
             frequency: String((a && a.Frequency) || '').trim(),
+            altFrequencies: Array.isArray(a && a.AltFrequencies) ? a.AltFrequencies.map(function(v){ return String(v || '').trim(); }).filter(function(v){ return !!v; }) : [],
             tacan: String((a && a.Tacan) || '').trim(),
             mpClientCallsign: String((a && a.MpClientCallsign) || '').trim(),
             altFeet: Number(a && a.AltFeet),
@@ -8145,7 +8526,115 @@ namespace VAICOM
       return findFirstObjectByKeyPattern(root, /^MPD$/i, 0);
     }
 
-    function getDtcMapOverlays(root, routeKey){
+    function buildMapAirfields(data){
+      const model = data || latestData || {};
+      const server = (model && model.Server) || {};
+      const assets = Array.isArray(server.FriendlyAssets) ? server.FriendlyAssets : [];
+      const atcMetars = (server && server.AtcMetars && typeof server.AtcMetars === 'object') ? server.AtcMetars : {};
+      const metarKeys = Object.keys(atcMetars);
+      const rows = [];
+      const seen = {};
+
+      function tokenIcao(text){
+        const m = String(text || '').toUpperCase().match(/\b([A-Z]{4})\b/);
+        return m ? String(m[1] || '') : '';
+      }
+
+      function metarIcao(text){
+        const m = String(text || '').toUpperCase().match(/\bMETAR\s+([A-Z]{4})\b/);
+        return m ? String(m[1] || '') : '';
+      }
+
+      function resolveMetarKey(text){
+        const upper = String(text || '').toUpperCase();
+        const compact = upper.replace(/[^A-Z0-9]/g, '');
+        for (let i = 0; i < metarKeys.length; i++){
+          const k = String(metarKeys[i] || '').toUpperCase();
+          if (!k) continue;
+          if (upper.indexOf(k) >= 0) return metarKeys[i];
+          const kc = k.replace(/[^A-Z0-9]/g, '');
+          if (compact && kc && (compact.indexOf(kc) >= 0 || kc.indexOf(compact) >= 0)) return metarKeys[i];
+        }
+        return '';
+      }
+
+      function parseVisMeters(text){
+        const t = String(text || '').toUpperCase();
+        if (!t) return NaN;
+        if (t.indexOf('CAVOK') >= 0) return 10000;
+        const mm = t.match(/(?:^|\s)(\d{4})(?:\s|$)/);
+        const mv = mm ? Number(mm[1]) : NaN;
+        return isFinite(mv) ? mv : NaN;
+      }
+
+      function parseCloudBaseFt(text){
+        const t = String(text || '').toUpperCase();
+        if (!t) return NaN;
+        if (t.indexOf('CAVOK') >= 0) return 99999;
+        const rx = /\b(FEW|SCT|BKN|OVC)(\d{3})\b/g;
+        let m = null;
+        let minFt = NaN;
+        while ((m = rx.exec(t)) !== null){
+          const ft = Number(m[2]) * 100;
+          if (!isFinite(ft)) continue;
+          if (!isFinite(minFt) || ft < minFt) minFt = ft;
+        }
+        return isFinite(minFt) ? minFt : 99999;
+      }
+
+      function isVfrMetar(text){
+        const vis = parseVisMeters(text);
+        const base = parseCloudBaseFt(text);
+        return isFinite(vis) && isFinite(base) && vis > 5000 && base > 1500;
+      }
+
+      assets.forEach(function(a){
+        const cat = String((a && a.Category) || (a && a.category) || '').toUpperCase();
+        if (cat !== 'ATC') return;
+
+        const north = Number(a && (a.X !== undefined ? a.X : a.x));
+        const east = Number(a && (a.Y !== undefined ? a.Y : a.y));
+        if (!isFinite(north) || !isFinite(east)) return;
+
+        const text = [a && a.Callsign, a && a.Name, a && a.TypeName, a && a.Category]
+          .map(function(v){ return String(v || '').trim(); })
+          .filter(function(v){ return !!v; })
+          .join(' ');
+
+        const key = resolveMetarKey(text);
+        const metar = key ? String(atcMetars[key] || '') : '';
+        const icao = tokenIcao(text) || metarIcao(metar) || tokenIcao(key);
+        const label = String((icao || (a && (a.Callsign || a.Name)) || 'ATC')).toUpperCase();
+
+        const dedupeKey = label + '|' + String(Math.round(north)) + '|' + String(Math.round(east));
+        if (seen[dedupeKey]) return;
+        seen[dedupeKey] = true;
+
+        const u = text.toUpperCase();
+        rows.push({
+          xNum: north,
+          yNum: east,
+          callsign: String((a && a.Callsign) || '').trim(),
+          name: String((a && a.Name) || '').trim(),
+          category: 'ATC',
+          typeName: String((a && a.TypeName) || '').trim(),
+          frequency: String((a && a.Frequency) || '').trim(),
+          altFrequencies: Array.isArray(a && a.AltFrequencies) ? a.AltFrequencies.map(function(v){ return String(v || '').trim(); }).filter(function(v){ return !!v; }) : [],
+          tacan: String((a && a.Tacan) || '').trim(),
+          mpClientCallsign: String((a && a.MpClientCallsign) || '').trim(),
+          altFeet: Number(a && a.AltFeet),
+          label: label,
+          icao: String(icao || ''),
+          type: (u.indexOf('SEAPLANE') >= 0 ? 'seaplane' : (u.indexOf('HELI') >= 0 || u.indexOf('FARP') >= 0 ? 'heliport' : 'airport')),
+          isMilitary: (u.indexOf('MIL') >= 0 || u.indexOf('AIRBASE') >= 0 || u.indexOf(' AFB') >= 0 || u.indexOf('NAS') >= 0),
+          isVfr: isVfrMetar(metar),
+        });
+      });
+
+      return rows;
+    }
+
+    function getDtcMapOverlays(root, routeKey, data){
       const mpd = getDtcMpdRoot(root);
       const sa = (root && typeof root === 'object' && root.SA && typeof root.SA === 'object')
         ? root.SA
@@ -8405,7 +8894,10 @@ namespace VAICOM
         faorLines: faorLines.concat(f14Lines),
         flotLines: flotLines,
         capPoints: capPoints,
-        corridors: corridors
+        corridors: corridors,
+        airfields: (typeof buildMapAirfields === 'function')
+          ? buildMapAirfields(data || latestData)
+          : ((typeof BuildMapAirfields === 'function') ? BuildMapAirfields(data || latestData) : [])
       };
     }
 
@@ -8762,10 +9254,45 @@ namespace VAICOM
         });
       }
 
+      (Array.isArray(mapOverlays.airfields) ? mapOverlays.airfields : []).forEach(function(p){
+        const isVfr = !!(p && p.isVfr);
+        const stroke = isVfr ? '#4aa360' : '#3a8fd0';
+        const airfieldAsset = {
+          callsign: String((p && p.callsign) || '').trim(),
+          name: String((p && p.name) || (p && p.label) || '').trim(),
+          category: 'ATC',
+          xNum: Number(p && p.xNum),
+          yNum: Number(p && p.yNum),
+        };
+        addPointFeature(p, {
+          kind: 'airfield',
+          group: 'asset',
+          assetKey: makeMapAssetSelectionKey(airfieldAsset),
+          label: String((p && p.icao) || (p && p.label) || 'AF'),
+          airfieldType: String((p && p.type) || 'airport').toLowerCase(),
+          airfieldMilitary: !!(p && p.isMilitary),
+          isVfr: isVfr,
+          category: 'ATC',
+          callsign: String((p && p.callsign) || '').trim(),
+          name: String((p && p.name) || '').trim(),
+          typeName: String((p && p.typeName) || '').trim(),
+          frequency: String((p && p.frequency) || '').trim(),
+          altFrequencies: Array.isArray(p && p.altFrequencies) ? p.altFrequencies.slice(0) : [],
+          tacan: String((p && p.tacan) || '').trim(),
+          mpClientCallsign: String((p && p.mpClientCallsign) || '').trim(),
+          altFeet: Number(p && p.altFeet),
+          fill: '#ffffff',
+          stroke: stroke,
+          textColor: stroke,
+          radius: 5,
+        });
+      });
+
       const selected = getActiveFlightPlanSelection(model);
       const rawAssets = getMudMapAssets(model, dlinkOnEnabled);
       rawAssets.forEach(function(asset){
         const category = String((asset && asset.category) || '').toUpperCase();
+        if (category === 'ATC') return;
         const isPlayer = category === 'PLAYER';
         const callsign = String((asset && asset.callsign) || '').trim();
         const label = callsign || String((asset && asset.name) || category || 'ASSET').trim();
@@ -8855,6 +9382,7 @@ namespace VAICOM
       const geolines = Array.isArray(mapOverlays.geolines) ? mapOverlays.geolines : [];
       const threatPoints = Array.isArray(mapOverlays.threatPoints) ? mapOverlays.threatPoints : [];
       const destinationPoints = Array.isArray(mapOverlays.destinationPoints) ? mapOverlays.destinationPoints : [];
+      const airfields = Array.isArray(mapOverlays.airfields) ? mapOverlays.airfields : [];
       const faorLines = Array.isArray(mapOverlays.faorLines) ? mapOverlays.faorLines : [];
       const flotLines = Array.isArray(mapOverlays.flotLines) ? mapOverlays.flotLines : [];
       const capPoints = Array.isArray(mapOverlays.capPoints) ? mapOverlays.capPoints : [];
@@ -8953,7 +9481,7 @@ namespace VAICOM
           }
         : null;
 
-      if (!rows.length && !threatPoints.length && !destinationPoints.length && !geolines.length && !faorLines.length && !flotLines.length && !capPoints.length && !corridors.length){
+      if (!rows.length && !threatPoints.length && !destinationPoints.length && !geolines.length && !faorLines.length && !flotLines.length && !capPoints.length && !corridors.length && !airfields.length){
         return '<div class=""fltPlanMessage"">No mappable waypoint coordinates found.</div>';
       }
 
@@ -8966,6 +9494,7 @@ namespace VAICOM
       threatPoints.forEach(function(p){ overlayPoints.push(p); });
       destinationPoints.forEach(function(p){ overlayPoints.push(p); });
       capPoints.forEach(function(p){ overlayPoints.push(p); });
+      airfields.forEach(function(p){ overlayPoints.push(p); });
       if (bullseye) overlayPoints.push(bullseye);
       function pushLineGroupPoints(lineGroups){
         (Array.isArray(lineGroups) ? lineGroups : []).forEach(function(group){
@@ -9207,6 +9736,90 @@ namespace VAICOM
         return '<g><polygon points=""' + p1 + ' ' + p2 + ' ' + p3 + ' ' + p4 + '"" fill=""' + palette.destFill + '"" stroke=""' + palette.destStroke + '"" stroke-width=""1.5"" /><text x=""' + (m.x + 9).toFixed(1) + '"" y=""' + (m.y + 4).toFixed(1) + '"" font-size=""10"" fill=""' + palette.destLabel + '"" font-weight=""700"">' + label + '</text></g>';
       });
 
+      const airfieldMapped = airfields
+        .map(function(p){
+          const north = Number(p && p.xNum);
+          const east = Number(p && p.yNum);
+          if (!isFinite(north) || !isFinite(east)) return null;
+          const m = mapPt({ xNum: north, yNum: east });
+          return { p: p, x: m.x, y: m.y };
+        })
+        .filter(function(m){ return !!m; });
+      const preselectedAssetKey = getMapSelectedAssetKeyBySelection(getActiveFlightPlanSelection((typeof data === 'undefined' ? null : data)));
+
+      const airfieldEls = airfieldMapped.map(function(m){
+        const stroke = String((m && m.p && m.p.isVfr) ? '#4aa360' : '#3a8fd0');
+        const labelColor = String((m && m.p && m.p.isVfr) ? '#1e6b3d' : '#1d4f87');
+        const type = String((m && m.p && m.p.type) || 'airport').toLowerCase();
+        const military = !!(m && m.p && m.p.isMilitary);
+        const selectionAsset = {
+          callsign: String((m && m.p && m.p.callsign) || '').trim(),
+          name: String((m && m.p && m.p.name) || (m && m.p && m.p.label) || '').trim(),
+          category: 'ATC',
+          xNum: Number(m && m.p && m.p.xNum),
+          yNum: Number(m && m.p && m.p.yNum),
+        };
+        const selectionKey = makeMapAssetSelectionKey(selectionAsset);
+        const isSelected = !!selectionKey && !!preselectedAssetKey && selectionKey === preselectedAssetKey;
+        const label = escapeHtml(String((m && m.p && (m.p.icao || m.p.label)) || 'AF'));
+        const r = 6.5;
+        let selectedInfoBlock = '';
+        if (isSelected){
+          const infoLines = buildSelectedAssetInfoLines({
+            category: 'ATC',
+            typeName: String((m && m.p && m.p.typeName) || '').trim(),
+            frequency: String((m && m.p && m.p.frequency) || '').trim(),
+            altFrequencies: Array.isArray(m && m.p && m.p.altFrequencies) ? m.p.altFrequencies : [],
+            tacan: String((m && m.p && m.p.tacan) || '').trim(),
+            mpClientCallsign: String((m && m.p && m.p.mpClientCallsign) || '').trim(),
+          });
+          if (infoLines.length){
+            const fontSize = 10;
+            const lineHeight = 12;
+            const padX = 5;
+            const padY = 4;
+            const maxChars = infoLines.reduce(function(max, line){ return Math.max(max, String(line || '').length); }, 0);
+            const boxWidth = Math.max(120, Math.min(300, (maxChars * 6.2) + (padX * 2)));
+            const boxHeight = (infoLines.length * lineHeight) + (padY * 2);
+            let boxX = m.x + 12;
+            let boxY = m.y + 8;
+            if ((boxX + boxWidth) > (width - 4)) boxX = m.x - boxWidth - 12;
+            if ((boxY + boxHeight) > (height - 4)) boxY = m.y - boxHeight - 12;
+            const textRows = infoLines.map(function(line, idx){
+              const txRow = (boxX + padX).toFixed(1);
+              const tyRow = (boxY + padY + (lineHeight * (idx + 1)) - 2).toFixed(1);
+              return '<text x=""' + txRow + '"" y=""' + tyRow + '"" font-size=""' + fontSize + '"" fill=""' + palette.assetInfoText + '"" font-weight=""700"">' + escapeHtml(String(line)) + '</text>';
+            }).join('');
+            selectedInfoBlock = '<g>'
+              + '<rect x=""' + boxX.toFixed(1) + '"" y=""' + boxY.toFixed(1) + '"" width=""' + boxWidth.toFixed(1) + '"" height=""' + boxHeight.toFixed(1) + '"" rx=""3"" ry=""3"" fill=""' + palette.assetInfoBg + '"" stroke=""' + palette.assetInfoStroke + '"" stroke-width=""1.1"" />'
+              + textRows
+              + '</g>';
+          }
+        }
+        let icon = '<g data-map-asset-key=""' + encodeURIComponent(selectionKey) + '"" data-map-asset-category=""ATC"" style=""cursor:pointer"">'
+          + (isSelected ? ('<circle cx=""' + m.x.toFixed(1) + '"" cy=""' + m.y.toFixed(1) + '"" r=""11"" fill=""none"" stroke=""#c94444"" stroke-width=""2.4"" />') : '')
+          + '<circle cx=""' + m.x.toFixed(1) + '"" cy=""' + m.y.toFixed(1) + '"" r=""' + r.toFixed(1) + '"" fill=""none"" stroke=""' + stroke + '"" stroke-width=""2"" />';
+        if (!military){
+          for (let i = 0; i < 6; i++){
+            const a = i * (Math.PI / 3.0);
+            const x1 = m.x + (Math.cos(a) * (r + 0.5));
+            const y1 = m.y + (Math.sin(a) * (r + 0.5));
+            const x2 = m.x + (Math.cos(a) * (r + 2.2));
+            const y2 = m.y + (Math.sin(a) * (r + 2.2));
+            icon += '<line x1=""' + x1.toFixed(1) + '"" y1=""' + y1.toFixed(1) + '"" x2=""' + x2.toFixed(1) + '"" y2=""' + y2.toFixed(1) + '"" stroke=""' + stroke + '"" stroke-width=""1.2"" />';
+          }
+        }
+        if (type === 'heliport'){
+          icon += '<text x=""' + m.x.toFixed(1) + '"" y=""' + (m.y + 3.8).toFixed(1) + '"" text-anchor=""middle"" font-size=""8.8"" fill=""' + stroke + '"" font-weight=""800"">H</text>';
+        } else if (type === 'seaplane'){
+          icon += '<text x=""' + m.x.toFixed(1) + '"" y=""' + (m.y + 3.8).toFixed(1) + '"" text-anchor=""middle"" font-size=""9.0"" fill=""' + stroke + '"" font-weight=""700"">⚓</text>';
+        }
+        icon += '<text x=""' + (m.x + 11).toFixed(1) + '"" y=""' + (m.y + 4).toFixed(1) + '"" font-size=""12"" fill=""' + labelColor + '"" font-weight=""700"">' + label + '</text>';
+        icon += selectedInfoBlock;
+        icon += '</g>';
+        return icon;
+      });
+
       const bullseyeEls = bullseye
         ? (function(){
             const m = mapPt(bullseye);
@@ -9310,29 +9923,42 @@ namespace VAICOM
       function formatAssetFrequencyText(value){
         const raw = String(value || '').trim();
         if (!raw) return '';
-        const n = Number(raw);
-        if (isFinite(n) && n > 0){
-          let mhz = n;
-          if (n >= 10000000){
-            mhz = n / 1000000.0;
-          } else if (n >= 100000){
-            mhz = n / 1000.0;
-          }
-          return mhz.toFixed(3);
-        }
-        return raw;
+        let s = raw;
+        const dot = s.indexOf('.');
+        if (dot >= 0) s = s.substring(0, dot);
+        s = s.replace(/[^0-9]/g, '');
+        if (!s) return raw;
+        s = ('000000000' + s).slice(-9);
+        const main = s.substring(0, 3);
+        const decRaw = Number(s.substring(3, 6));
+        if (!isFinite(decRaw)) return raw;
+        const decRounded = Math.round(decRaw / 25.0) * 25;
+        const dec = ('000' + String(Math.round(decRounded))).slice(-3);
+        return main + '.' + dec;
       }
 
       function buildSelectedAssetInfoLines(asset){
         if (!asset || typeof asset !== 'object') return [];
         const lines = [];
+        const category = String(asset.category || '').trim().toUpperCase();
         const typeText = String(asset.typeName || '').trim();
         const freqText = formatAssetFrequencyText(asset.frequency);
+        const altFreqs = Array.isArray(asset.altFrequencies) ? asset.altFrequencies : [];
+        const allFreqs = [asset.frequency].concat(altFreqs);
+        const normalizedFreqs = allFreqs
+          .map(function(v){ return formatAssetFrequencyText(v); })
+          .filter(function(v){ return !!v && isFinite(Number(v)); })
+          .map(function(v){ return { text: v, mhz: Number(v) }; });
+        const uhf = normalizedFreqs.find(function(f){ return f.mhz >= 225 && f.mhz <= 399.975; });
+        const vhf = normalizedFreqs.find(function(f){ return f.mhz >= 30 && f.mhz < 225; });
         const tacanText = String(asset.tacan || '').trim();
         const mpText = String(asset.mpClientCallsign || '').trim();
 
         if (typeText) lines.push('TYPE: ' + typeText);
-        if (freqText) lines.push('FREQ: ' + freqText);
+        if (category === 'ATC'){
+          if (uhf && uhf.text) lines.push('UHF: ' + uhf.text);
+          if (vhf && vhf.text) lines.push('VHF: ' + vhf.text);
+        } else if (freqText) lines.push('FREQ: ' + freqText);
         if (tacanText) lines.push('TACAN: ' + tacanText);
         if (mpText) lines.push('MP: ' + mpText);
 
@@ -9347,6 +9973,8 @@ namespace VAICOM
           const north = Number(asset.xNum);
           const east = Number(asset.yNum);
           if (!isFinite(north) || !isFinite(east)) return null;
+          const category = String((asset && asset.category) || '').toUpperCase();
+          if (category === 'ATC') return null;
           asset.xNum = north;
           asset.yNum = east;
           return asset;
@@ -9442,6 +10070,7 @@ namespace VAICOM
         + capEls.join('')
         + threatEls.join('')
         + destinationEls.join('')
+        + airfieldEls.join('')
         + bullseyeEls
         + assetEls.join('')
         + pointEls.join('')
@@ -9453,6 +10082,17 @@ namespace VAICOM
 
     function formatDtcPage3Html(pageSwitcherHtml, waypoints, data, selected, overlays, root){
       let mapRows = applyTypeOverrides(Array.isArray(waypoints) ? waypoints.slice() : [], selected);
+      let resolvedOverlays = overlays && typeof overlays === 'object'
+        ? overlays
+        : getDtcMapOverlays(root, getDtcRouteBySelection(selected), data);
+      if (!resolvedOverlays || typeof resolvedOverlays !== 'object'){
+        resolvedOverlays = {};
+      }
+      if (!Array.isArray(resolvedOverlays.airfields)){
+        resolvedOverlays.airfields = (typeof buildMapAirfields === 'function')
+          ? buildMapAirfields(data || latestData)
+          : ((typeof BuildMapAirfields === 'function') ? BuildMapAirfields(data || latestData) : []);
+      }
       const planState = getFlightPlanPlanState(selected);
       ensureDirectToStateValid(mapRows, planState);
       const deletedSet = getDeletedStepSet(planState);
@@ -9472,13 +10112,13 @@ namespace VAICOM
       if (mapBackgroundEnabled){
         openFreeMapLastPayloadStatus = 'init';
       }
-      const bullseyePoint = getMapBullseyePoint(root, mapRows, overlays, data);
+      const bullseyePoint = getMapBullseyePoint(root, mapRows, resolvedOverlays, data);
       const hasPayloadBuilder = typeof buildOpenFreeMapPayload === 'function';
       if (mapBackgroundEnabled && !hasPayloadBuilder){
         openFreeMapLastPayloadStatus = 'builder-missing';
       }
       const openFreeMapPayload = mapBackgroundEnabled && hasPayloadBuilder
-        ? buildOpenFreeMapPayload(mapRows, data, overlays, bullseyePoint)
+        ? buildOpenFreeMapPayload(mapRows, data, resolvedOverlays, bullseyePoint)
         : null;
       if (mapBackgroundEnabled && !openFreeMapPayload && openFreeMapLastPayloadStatus === 'init'){
         openFreeMapLastPayloadStatus = 'builder-null';
@@ -9499,19 +10139,37 @@ namespace VAICOM
       html += '<div class=""controls fltPlanControls"" style=""margin:0 0 6px 0;""><button type=""button"" class=""fltPlanPageBtn"" data-map-zoom=""in"">Map In</button><button type=""button"" class=""fltPlanPageBtn"" data-map-zoom=""out"">Map Out</button><button type=""button"" class=""fltPlanPageBtn"" data-map-zoom=""reset"">Map Reset</button><button id=""mapBgToggleBtn"" type=""button"" class=""fltPlanPageBtn"" data-map-bg-toggle=""1"">BG ' + (mapBackgroundEnabled ? 'ON' : 'OFF') + '</button><span id=""mapBgStatus"" class=""fltPlanMapBgStatus"">' + escapeHtml(bgStatus) + '</span></div>';
       const selectedAssetKey = getMapSelectedAssetKeyBySelection(selected);
       const rawAssets = getMudMapAssets(data, dlinkOnEnabled);
+      const airfieldAssets = (Array.isArray(resolvedOverlays && resolvedOverlays.airfields) ? resolvedOverlays.airfields : [])
+        .map(function(a){
+          return {
+            callsign: String((a && a.callsign) || '').trim(),
+            name: String((a && a.name) || (a && a.label) || '').trim(),
+            category: 'ATC',
+            typeName: String((a && a.typeName) || '').trim(),
+            frequency: String((a && a.frequency) || '').trim(),
+            altFrequencies: Array.isArray(a && a.altFrequencies) ? a.altFrequencies.slice(0) : [],
+            tacan: String((a && a.tacan) || '').trim(),
+            mpClientCallsign: String((a && a.mpClientCallsign) || '').trim(),
+            xNum: Number(a && a.xNum),
+            yNum: Number(a && a.yNum),
+            altFeet: Number(a && a.altFeet),
+          };
+        })
+        .filter(function(a){ return isFinite(Number(a.xNum)) && isFinite(Number(a.yNum)); });
+      const selectionPool = rawAssets.concat(airfieldAssets);
       const markerCount = rawAssets
         .filter(function(a){ return String((a && a.category) || '').toUpperCase() === 'MAP_MARKER'; })
         .length;
       let selectedAsset = null;
       if (selectedAssetKey){
-        selectedAsset = rawAssets.find(function(a){ return makeMapAssetSelectionKey(a) === selectedAssetKey; }) || null;
+        selectedAsset = selectionPool.find(function(a){ return makeMapAssetSelectionKey(a) === selectedAssetKey; }) || null;
         if (!selectedAsset){
           setMapSelectedAssetKeyBySelection(selected, '');
         }
       }
 
       html += '<div class=""fltPlanPage3Wrap"">';
-      const mapSvg = buildMudMapSvg(mapRows, data, overlays, bullseyePoint);
+      const mapSvg = buildMudMapSvg(mapRows, data, resolvedOverlays, bullseyePoint);
       if (openFreeMapId){
         html += '<div class=""fltPlanPage3Canvas fltPlanOpenMapWrap"" data-openfreemap-wrap=""' + escapeHtml(openFreeMapId) + '"">';
         html += '<div class=""fltPlanOpenMapHost"" data-openfreemap-map-id=""' + escapeHtml(openFreeMapId) + '"" data-openfreemap-selection=""' + escapeHtml(getFlightPlanEtaStartKey(selected)) + '""></div>';
@@ -10014,7 +10672,7 @@ namespace VAICOM
         routeKey = availableRoutes[0] || 'R1';
         setDtcRouteBySelection(selected, routeKey);
       }
-      const mapOverlays = getDtcMapOverlays(root, routeKey);
+      const mapOverlays = getDtcMapOverlays(root, routeKey, data);
       const isF14 = isF14DtcContext(root, data);
       let waypoints = applyTypeOverrides(filterDtcWaypointsByRoute(root, allWaypoints, routeKey), selected);
       if (isF14 && routeKey === 'R1'){
@@ -10577,8 +11235,28 @@ namespace VAICOM
           if (readoutEl){
             const selectedAssetKey = getMapSelectedAssetKeyBySelection(activeDtcSelection);
             const rawAssets = getMudMapAssets(displayData, dlinkOnEnabled);
+            const overlays = getDtcMapOverlays(null, getDtcRouteBySelection(activeDtcSelection), displayData);
+            const overlayAirfields = Array.isArray(overlays && overlays.airfields) ? overlays.airfields : [];
+            const airfieldAssets = overlayAirfields
+              .map(function(a){
+                return {
+                  callsign: String((a && a.callsign) || '').trim(),
+                  name: String((a && a.name) || (a && a.label) || '').trim(),
+                  category: 'ATC',
+                  typeName: String((a && a.typeName) || '').trim(),
+                  frequency: String((a && a.frequency) || '').trim(),
+                  altFrequencies: Array.isArray(a && a.altFrequencies) ? a.altFrequencies.slice(0) : [],
+                  tacan: String((a && a.tacan) || '').trim(),
+                  mpClientCallsign: String((a && a.mpClientCallsign) || '').trim(),
+                  xNum: Number(a && a.xNum),
+                  yNum: Number(a && a.yNum),
+                  altFeet: Number(a && a.altFeet),
+                };
+              })
+              .filter(function(a){ return isFinite(Number(a.xNum)) && isFinite(Number(a.yNum)); });
+            const selectionPool = rawAssets.concat(airfieldAssets);
             const selectedAsset = selectedAssetKey
-              ? (rawAssets.find(function(a){ return makeMapAssetSelectionKey(a) === selectedAssetKey; }) || null)
+              ? (selectionPool.find(function(a){ return makeMapAssetSelectionKey(a) === selectedAssetKey; }) || null)
               : null;
             const bullseyePoint = getMapBullseyePoint(null, [], null, displayData);
             let readout = formatMapBraReadout(displayData, selectedAsset, bullseyePoint);
@@ -11992,11 +12670,137 @@ namespace VAICOM
                         return;
                     }
 
+                    string sourceCategory = category.Trim();
+                    string sendCategory = ResolveOpenKneeboardCategory(sourceCategory);
+
                     lock (Sync)
                     {
-                        snapshot.ActiveCategory = category.ToUpperInvariant();
+                        snapshot.ActiveCategory = sendCategory.ToUpperInvariant();
                         snapshot.UpdatedUtc = DateTime.UtcNow;
                     }
+
+                    RefreshOpenKneeboardCategoryData(sourceCategory, sendCategory);
+                }
+
+                private static string ResolveOpenKneeboardCategory(string category)
+                {
+                    string cat = (category ?? string.Empty).Trim();
+                    if (string.IsNullOrWhiteSpace(cat)) return "LOG";
+
+                    if (State.AIRIOactive && (cat.Equals("RIO", StringComparison.OrdinalIgnoreCase) || cat.Equals("Iceman", StringComparison.OrdinalIgnoreCase)))
+                    {
+                        return "REF";
+                    }
+
+                    if (cat.Equals("Crew", StringComparison.OrdinalIgnoreCase))
+                    {
+                        return "REF";
+                    }
+
+                    if (cat.Equals("Allies", StringComparison.OrdinalIgnoreCase))
+                    {
+                        return "FLIGHT";
+                    }
+
+                    if (cat.IndexOf("ATC", StringComparison.OrdinalIgnoreCase) >= 0)
+                    {
+                        return "ATC";
+                    }
+
+                    if (cat.IndexOf("AWACS", StringComparison.OrdinalIgnoreCase) >= 0)
+                    {
+                        return "AWACS";
+                    }
+
+                    if (cat.IndexOf("TANK", StringComparison.OrdinalIgnoreCase) >= 0)
+                    {
+                        return "TANKER";
+                    }
+
+                    if (cat.IndexOf("JTAC", StringComparison.OrdinalIgnoreCase) >= 0)
+                    {
+                        return "JTAC";
+                    }
+
+                    return cat;
+                }
+
+                private static void RefreshOpenKneeboardCategoryData(string sourceCategory, string sendCategory)
+                {
+                    try
+                    {
+                        if (string.IsNullOrWhiteSpace(sendCategory)) return;
+
+                        if (!sendCategory.Equals("NOTES", StringComparison.OrdinalIgnoreCase)
+                            && !sendCategory.Equals("LOG", StringComparison.OrdinalIgnoreCase))
+                        {
+                            if (!sendCategory.Equals("REF", StringComparison.OrdinalIgnoreCase))
+                            {
+                                RefreshUnitsForCategory(sendCategory);
+                            }
+                            else if (sourceCategory.Equals("Crew", StringComparison.OrdinalIgnoreCase))
+                            {
+                                try
+                                {
+                                    KneeboardUnitsData crewUnits = new KneeboardUnitsData("Crew", false);
+                                    UpdateUnits("CREW", crewUnits.unitslist);
+                                }
+                                catch
+                                {
+                                }
+                            }
+
+                            if (State.KneeboardCatAliasStrings != null)
+                            {
+                                for (int i = 0; i < State.KneeboardCatAliasStrings.Length; i++)
+                                {
+                                    Dictionary<string, SortedDictionary<string, List<string>>> chunk = State.KneeboardCatAliasStrings[i];
+                                    SortedDictionary<string, List<string>> aliasStrings = new SortedDictionary<string, List<string>>();
+
+                                    if (chunk != null)
+                                    {
+                                        SortedDictionary<string, List<string>> fromSource;
+                                        SortedDictionary<string, List<string>> fromSend;
+                                        if (TryGetAliasChunkCategory(chunk, sourceCategory, out fromSource))
+                                        {
+                                            aliasStrings = fromSource;
+                                        }
+                                        else if (TryGetAliasChunkCategory(chunk, sendCategory, out fromSend))
+                                        {
+                                            aliasStrings = fromSend;
+                                        }
+                                    }
+
+                                    UpdateAliasChunk(sendCategory, i, aliasStrings);
+                                }
+                            }
+                        }
+                    }
+                    catch
+                    {
+                    }
+                }
+
+                private static bool TryGetAliasChunkCategory(Dictionary<string, SortedDictionary<string, List<string>>> chunk, string category, out SortedDictionary<string, List<string>> aliasStrings)
+                {
+                    aliasStrings = null;
+                    if (chunk == null || string.IsNullOrWhiteSpace(category)) return false;
+
+                    if (chunk.TryGetValue(category, out aliasStrings))
+                    {
+                        return aliasStrings != null;
+                    }
+
+                    foreach (KeyValuePair<string, SortedDictionary<string, List<string>>> entry in chunk)
+                    {
+                        if (entry.Key.Equals(category, StringComparison.OrdinalIgnoreCase))
+                        {
+                            aliasStrings = entry.Value;
+                            return aliasStrings != null;
+                        }
+                    }
+
+                    return false;
                 }
 
                 public static void UpdateLog(string category, string content)
@@ -13973,7 +14777,7 @@ namespace VAICOM
                         }
 
                         string playerCoalition = (State.currentstate.playercoalition ?? string.Empty).Trim();
-                        string[] categories = new[] { "Player", "Flight", "Tanker", "AWACS", "JTAC", "Allies" };
+                        string[] categories = new[] { "Player", "Flight", "Tanker", "AWACS", "JTAC", "ATC", "Allies" };
                         HashSet<string> seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
                         if (State.currentstate.bpos != null)
@@ -14011,6 +14815,8 @@ namespace VAICOM
                                 continue;
                             }
 
+                            bool categoryIsAtc = category.Equals("ATC", StringComparison.OrdinalIgnoreCase);
+
                             foreach (Servers.Server.DcsUnit unit in units)
                             {
                                 if (unit == null || unit.pos == null)
@@ -14022,6 +14828,7 @@ namespace VAICOM
                                 {
                                     string unitCoalition = (unit.coalition ?? string.Empty).Trim();
                                     if (!string.IsNullOrWhiteSpace(unitCoalition)
+                                        && !categoryIsAtc
                                         && !playerCoalition.Equals(unitCoalition, StringComparison.OrdinalIgnoreCase))
                                     {
                                         continue;
@@ -14058,6 +14865,9 @@ namespace VAICOM
                                     Category = normalizedCategory,
                                     TypeName = string.IsNullOrWhiteSpace(unit.typename) ? "" : unit.typename,
                                     Frequency = string.IsNullOrWhiteSpace(unit.freq) ? "" : unit.freq,
+                                    AltFrequencies = unit.altfreq == null
+                                        ? new List<string>()
+                                        : unit.altfreq.Where(f => !string.IsNullOrWhiteSpace(f)).ToList(),
                                     Tacan = string.IsNullOrWhiteSpace(unit.tacan) ? "" : unit.tacan,
                                     MpClientCallsign = unit.ishuman && !string.IsNullOrWhiteSpace(unit.playerid) ? unit.playerid : "",
                                     RawLine = string.Empty,
@@ -14283,6 +15093,7 @@ namespace VAICOM
                 public string Category { get; set; } = "";
                 public string TypeName { get; set; } = "";
                 public string Frequency { get; set; } = "";
+                public List<string> AltFrequencies { get; set; } = new List<string>();
                 public string Tacan { get; set; } = "";
                 public string MpClientCallsign { get; set; } = "";
                 public string RawLine { get; set; } = "";
@@ -14299,6 +15110,7 @@ namespace VAICOM
                         Category = Category,
                         TypeName = TypeName,
                         Frequency = Frequency,
+                        AltFrequencies = AltFrequencies == null ? new List<string>() : new List<string>(AltFrequencies),
                         Tacan = Tacan,
                         MpClientCallsign = MpClientCallsign,
                         RawLine = RawLine,
