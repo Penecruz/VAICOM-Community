@@ -319,7 +319,7 @@ namespace VAICOM
                 PTT.PTT_ApplyNewConfig();
                 State.AIRIOactive = State.dll_installed_rio && 
                                     State.activeconfig.RIO_Enabled && 
-                                    State.currentmodule.Equals(Products.DCSmodules.LookupTable[State.riomod]);
+                                    State.IsAirioTomcatModule();
 
                 if (DetectNewMission())
                 {

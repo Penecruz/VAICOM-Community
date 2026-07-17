@@ -268,6 +268,26 @@ namespace VAICOM
         return null;
       }
 
+      function getTheatreCenterLonLat(theatreName){
+        const t = String(theatreName || '').replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+        const centers = {
+          CAUCASUS: [44.5, 43.4],
+          NEVADA: [-115.2, 36.2],
+          NORMANDY: [0.6, 49.2],
+          THECHANNEL: [1.2, 51.0],
+          PERSIANGULF: [56.2, 25.5],
+          SYRIA: [37.0, 35.4],
+          MARIANAISLANDS: [145.6, 15.2],
+          FALKLANDS: [-59.5, -52.1],
+          SINAIMAP: [34.2, 30.1],
+          KOLA: [29.5, 68.7],
+          AFGHANISTAN: [66.0, 34.5],
+          IRAQ: [44.8, 33.2],
+          GERMANYCW: [10.2, 51.2],
+        };
+        return centers[t] || null;
+      }
+
       if (typeof value !== 'object') return null;
 
       const keys = Object.keys(value);
@@ -517,17 +537,12 @@ namespace VAICOM
       const sa = (root && typeof root === 'object' && root.SA && typeof root.SA === 'object')
         ? root.SA
         : findFirstObjectByKeyPattern(root, /^SA$/i, 0);
-      if ((!mpd || typeof mpd !== 'object') && (!sa || typeof sa !== 'object')){
-        return {
-          geolines: [],
-          threatPoints: [],
-          destinationPoints: [],
-          faorLines: [],
-          flotLines: [],
-          capPoints: [],
-          corridors: []
-        };
-      }
+      const f14Slots = getF14RouteSlots(root);
+      const route = String(routeKey || 'R1').toUpperCase();
+      const selectedF14Slot = f14Slots.find(function(slot){ return String((slot && slot.key) || '').toUpperCase() === route; }) || f14Slots[0] || null;
+      const selectedF14Route = selectedF14Slot && selectedF14Slot.route && typeof selectedF14Slot.route === 'object'
+        ? selectedF14Slot.route
+        : null;
 
       const allGeoLines = Array.isArray(mpd.GEO_LINES) ? mpd.GEO_LINES : [];
       const geoLines = allGeoLines
@@ -657,14 +672,96 @@ namespace VAICOM
 
       const corridors = parseLineCollection(sa && sa.CORRIDORS);
 
+      const f14AdditionalPoints = (Array.isArray(selectedF14Route && selectedF14Route.additional_points) ? selectedF14Route.additional_points : [])
+        .map(function(p){
+          const xNum = Number(p && p.x);
+          const yNum = Number(p && p.y);
+          if (!isFinite(xNum) || !isFinite(yNum)) return null;
+          const nameInfo = getF14WaypointTypeInfo((p && p.name) || '');
+          return {
+            xNum: xNum,
+            yNum: yNum,
+            label: String(nameInfo.name || (p && p.name) || '').trim(),
+            typeRaw: String(nameInfo.typeRaw || 'WP'),
+            isBullseye: !!nameInfo.isBullseye
+          };
+        })
+        .filter(function(p){ return !!p; });
+
+      const f14Lines = (Array.isArray(selectedF14Route && selectedF14Route.lines) ? selectedF14Route.lines : [])
+        .map(function(line, lineIdx){
+          const points = (Array.isArray(line && line.points) ? line.points : [])
+            .map(function(pt, pointIdx){
+              const xNum = Number(pt && pt.x);
+              const yNum = Number(pt && pt.y);
+              if (!isFinite(xNum) || !isFinite(yNum)) return null;
+              return {
+                xNum: xNum,
+                yNum: yNum,
+                number: isFinite(Number(pt && pt.number)) ? Number(pt.number) : (pointIdx + 1),
+                label: String((pt && pt.name) || '').trim()
+              };
+            })
+            .filter(function(pt){ return !!pt; });
+          return {
+            id: 'F14-LINE-' + String(lineIdx + 1),
+            number: lineIdx + 1,
+            label: String((line && line.name) || '').trim(),
+            points: points
+          };
+        })
+        .filter(function(line){ return line && Array.isArray(line.points) && line.points.length > 1; });
+
+      const jdamThreatPoints = (Array.isArray(root && root.JDAM && root.JDAM.stations) ? root.JDAM.stations : [])
+        .reduce(function(acc, station){
+          const targets = Array.isArray(station && station.targets) ? station.targets : [];
+          targets.forEach(function(target){
+            const active = !!(target && target.active);
+            const xNum = Number(target && target.x);
+            const yNum = Number(target && target.y);
+            if (!active || !isFinite(xNum) || !isFinite(yNum)) return;
+            acc.push({
+              xNum: xNum,
+              yNum: yNum,
+              radiusMeters: 0,
+              ring: false,
+              label: String((target && target.name) || 'DMPI').trim() || 'DMPI'
+            });
+          });
+          return acc;
+        }, []);
+
+      const f14BullseyeDestinations = f14AdditionalPoints
+        .filter(function(p){ return !!(p && p.isBullseye); })
+        .map(function(p){
+          return {
+            xNum: Number(p.xNum),
+            yNum: Number(p.yNum),
+            label: String(p.label || 'BULLSEYE')
+          };
+        });
+
+      const f14NamedDestinations = f14AdditionalPoints
+        .filter(function(p){
+          const typeRaw = String((p && p.typeRaw) || '').toUpperCase();
+          return typeRaw === 'DEST' || typeRaw === 'LANTIRN' || typeRaw === 'IP';
+        })
+        .map(function(p){
+          return {
+            xNum: Number(p.xNum),
+            yNum: Number(p.yNum),
+            label: String(p.label || '').trim()
+          };
+        });
+
       return {
         geolines: geoLines,
-        threatPoints: threatPoints.concat(mezThreatPoints),
-        destinationPoints: destinationPoints,
+        threatPoints: threatPoints.concat(mezThreatPoints).concat(jdamThreatPoints),
+        destinationPoints: destinationPoints.concat(f14BullseyeDestinations).concat(f14NamedDestinations),
         faorLines: faorLines,
         flotLines: flotLines,
         capPoints: capPoints,
-        corridors: corridors
+        corridors: corridors.concat(f14Lines)
       };
     }
 
@@ -734,6 +831,395 @@ namespace VAICOM
       }
 
       return null;
+    }
+
+    function buildOpenFreeMapPayload(waypoints, data, overlays, bullseyePoint){
+      const rows = Array.isArray(waypoints) ? waypoints.filter(function(wp){
+        return isFinite(Number(wp && wp.xNum)) && isFinite(Number(wp && wp.yNum));
+      }) : [];
+      const model = data || latestData || {};
+      const server = (model && model.Server) || {};
+      const diagnostics = (server && server.Diagnostics) || {};
+      const theatreCandidates = [
+        server.Theater,
+        diagnostics.theater,
+        diagnostics.terrain,
+        diagnostics.terrainName,
+        lastKnownTheater,
+      ];
+      let theatre = '';
+      for (let i = 0; i < theatreCandidates.length; i++){
+        const candidate = String(theatreCandidates[i] || '').trim();
+        if (!candidate) continue;
+        if (getMapProjectionByTheatre(candidate)){
+          theatre = candidate;
+          break;
+        }
+      }
+      if (!theatre){
+        openFreeMapLastPayloadStatus = 'no-theatre';
+        return null;
+      }
+
+      const mapOverlays = overlays && typeof overlays === 'object'
+        ? overlays
+        : { geolines: [], threatPoints: [], destinationPoints: [], faorLines: [], flotLines: [], capPoints: [], corridors: [] };
+
+      const approxCenterLonLat = getTheatreCenterLonLat(theatre);
+      let approxAnchorNorth = NaN;
+      let approxAnchorEast = NaN;
+      let approxAnchorReady = false;
+      let usedApproxProjection = false;
+
+      (function initApproxAnchor(){
+        if (!approxCenterLonLat) return;
+        const rawPoints = [];
+
+        function pushPoint(point){
+          const n = Number(point && point.xNum);
+          const e = Number(point && point.yNum);
+          if (!isFinite(n) || !isFinite(e)) return;
+          rawPoints.push({ n: n, e: e });
+        }
+
+        rows.forEach(pushPoint);
+        (Array.isArray(mapOverlays.geolines) ? mapOverlays.geolines : []).forEach(pushPoint);
+        (Array.isArray(mapOverlays.threatPoints) ? mapOverlays.threatPoints : []).forEach(pushPoint);
+        (Array.isArray(mapOverlays.destinationPoints) ? mapOverlays.destinationPoints : []).forEach(pushPoint);
+        (Array.isArray(mapOverlays.capPoints) ? mapOverlays.capPoints : []).forEach(pushPoint);
+
+        function pushLineGroupPoints(groups){
+          (Array.isArray(groups) ? groups : []).forEach(function(group){
+            (Array.isArray(group && group.points) ? group.points : []).forEach(pushPoint);
+          });
+        }
+
+        pushLineGroupPoints(mapOverlays.faorLines);
+        pushLineGroupPoints(mapOverlays.flotLines);
+        pushLineGroupPoints(mapOverlays.corridors);
+
+        const rawAssets = getMudMapAssets(model, dlinkOnEnabled);
+        rawAssets.forEach(pushPoint);
+        if (bullseyePoint) pushPoint(bullseyePoint);
+
+        if (!rawPoints.length) return;
+        const sumN = rawPoints.reduce(function(acc, p){ return acc + p.n; }, 0);
+        const sumE = rawPoints.reduce(function(acc, p){ return acc + p.e; }, 0);
+        approxAnchorNorth = sumN / rawPoints.length;
+        approxAnchorEast = sumE / rawPoints.length;
+        approxAnchorReady = isFinite(approxAnchorNorth) && isFinite(approxAnchorEast);
+      })();
+
+      function toLonLat(point){
+        const north = Number(point && point.xNum);
+        const east = Number(point && point.yNum);
+        if (!isFinite(north) || !isFinite(east)) return null;
+
+        function validLonLat(lon, lat){
+          return isFinite(Number(lon))
+            && isFinite(Number(lat))
+            && Math.abs(Number(lat)) <= 90
+            && Math.abs(Number(lon)) <= 180;
+        }
+
+        const llPrimary = convertDcsXYToLatLon(theatre, north, east);
+        if (llPrimary && validLonLat(llPrimary.lon, llPrimary.lat)){
+          return [Number(llPrimary.lon), Number(llPrimary.lat)];
+        }
+
+        const llSwapped = convertDcsXYToLatLon(theatre, east, north);
+        if (llSwapped && validLonLat(llSwapped.lon, llSwapped.lat)){
+          return [Number(llSwapped.lon), Number(llSwapped.lat)];
+        }
+
+        if (validLonLat(east, north)){
+          return [east, north];
+        }
+        if (validLonLat(north, east)){
+          return [north, east];
+        }
+
+        if (approxAnchorReady && Array.isArray(approxCenterLonLat) && approxCenterLonLat.length === 2){
+          const centerLon = Number(approxCenterLonLat[0]);
+          const centerLat = Number(approxCenterLonLat[1]);
+          if (isFinite(centerLon) && isFinite(centerLat)){
+            const dNorth = north - approxAnchorNorth;
+            const dEast = east - approxAnchorEast;
+            const lat = centerLat + (dNorth / 111320.0);
+            const lonScale = 111320.0 * Math.max(0.2, Math.cos(centerLat * Math.PI / 180.0));
+            const lon = centerLon + (dEast / lonScale);
+            if (validLonLat(lon, lat)){
+              usedApproxProjection = true;
+              return [lon, lat];
+            }
+          }
+        }
+
+        return null;
+      }
+
+      const pointsForBounds = [];
+      const features = [];
+
+      function addPointFeature(point, props){
+        const lonLat = toLonLat(point);
+        if (!lonLat) return;
+        pointsForBounds.push(lonLat);
+        features.push({
+          type: 'Feature',
+          geometry: {
+            type: 'Point',
+            coordinates: lonLat,
+          },
+          properties: props || {},
+        });
+      }
+
+      function addLineFeature(points, props){
+        const coords = (Array.isArray(points) ? points : [])
+          .map(function(p){ return toLonLat(p); })
+          .filter(function(c){ return Array.isArray(c) && c.length === 2; });
+        if (coords.length < 2) return;
+        coords.forEach(function(c){ pointsForBounds.push(c); });
+        features.push({
+          type: 'Feature',
+          geometry: {
+            type: 'LineString',
+            coordinates: coords,
+          },
+          properties: props || {},
+        });
+      }
+
+      const byStep = {};
+      rows.forEach(function(wp){ byStep[String(wp && wp.step)] = wp; });
+      getMudMapSegments(rows).forEach(function(seg){
+        const from = byStep[String(seg && seg.from && seg.from.step)] || (seg && seg.from);
+        const to = byStep[String(seg && seg.to && seg.to.step)] || (seg && seg.to);
+        if (!from || !to) return;
+        addLineFeature([from, to], {
+          stroke: '#2f5fa7',
+          lineWidth: seg && seg.dashed ? 1.8 : 2.2,
+          dashed: !!(seg && seg.dashed),
+        });
+      });
+
+      rows.forEach(function(wp){
+        const step = String(wp && wp.step || '').trim();
+        const name = String(wp && wp.name || '').trim();
+        const label = step ? (step + (name ? (' ' + name) : '')) : name;
+        addPointFeature(wp, {
+          kind: 'waypoint',
+          group: 'overlay',
+          label: label || 'WP',
+          fill: '#2d8fe3',
+          stroke: '#1f5d93',
+          textColor: '#1f3550',
+          radius: 4,
+        });
+      });
+
+      (Array.isArray(mapOverlays.geolines) ? mapOverlays.geolines : []).forEach(function(p){
+        addPointFeature(p, {
+          kind: 'geoline',
+          group: 'overlay',
+          label: String((p && p.label) || '').trim(),
+          fill: '#7a57b3',
+          stroke: '#5a3d89',
+          textColor: '#5a3d89',
+          radius: 3,
+        });
+      });
+
+      function addGroupedLines(groups, strokeColor){
+        (Array.isArray(groups) ? groups : []).forEach(function(g){
+          const pts = (Array.isArray(g && g.points) ? g.points : []);
+          addLineFeature(pts, { stroke: strokeColor, lineWidth: 2, dashed: true });
+        });
+      }
+
+      function addCorridorBounds(groups){
+        const corridorHalfWidthMeters = 5000;
+        (Array.isArray(groups) ? groups : []).forEach(function(group){
+          const pts = (Array.isArray(group && group.points) ? group.points : [])
+            .map(function(p){
+              return {
+                xNum: Number(p && p.xNum),
+                yNum: Number(p && p.yNum),
+                number: Number(p && p.number)
+              };
+            })
+            .filter(function(p){ return isFinite(p.xNum) && isFinite(p.yNum); })
+            .sort(function(a, b){
+              if (isFinite(a.number) && isFinite(b.number) && a.number !== b.number) return a.number - b.number;
+              return 0;
+            });
+          if (pts.length < 2) return;
+
+          const left = [];
+          const right = [];
+          for (let i = 0; i < pts.length; i++){
+            const prev = pts[Math.max(0, i - 1)];
+            const next = pts[Math.min(pts.length - 1, i + 1)];
+            const dNorth = Number(next.xNum) - Number(prev.xNum);
+            const dEast = Number(next.yNum) - Number(prev.yNum);
+            const len = Math.sqrt((dNorth * dNorth) + (dEast * dEast));
+            if (!isFinite(len) || len <= 0){
+              left.push({ xNum: pts[i].xNum, yNum: pts[i].yNum });
+              right.push({ xNum: pts[i].xNum, yNum: pts[i].yNum });
+              continue;
+            }
+            const unitEast = dEast / len;
+            const unitNorth = dNorth / len;
+            left.push({
+              xNum: pts[i].xNum + ((-unitEast) * corridorHalfWidthMeters),
+              yNum: pts[i].yNum + (unitNorth * corridorHalfWidthMeters)
+            });
+            right.push({
+              xNum: pts[i].xNum - ((-unitEast) * corridorHalfWidthMeters),
+              yNum: pts[i].yNum - (unitNorth * corridorHalfWidthMeters)
+            });
+          }
+
+          addLineFeature(left, { stroke: '#3c7cc0', lineWidth: 1.9, dashed: true });
+          addLineFeature(right, { stroke: '#3c7cc0', lineWidth: 1.9, dashed: true });
+        });
+      }
+
+      const geolineRows = Array.isArray(mapOverlays.geolines) ? mapOverlays.geolines : [];
+      ['L1', 'L2', 'L3', 'L4'].forEach(function(lineKey){
+        const linePoints = geolineRows
+          .filter(function(p){
+            const flags = (p && Array.isArray(p.lineFlags)) ? p.lineFlags : [];
+            return flags.indexOf(lineKey) >= 0;
+          })
+          .sort(function(a, b){
+            const an = Number(a && a.number);
+            const bn = Number(b && b.number);
+            if (isFinite(an) && isFinite(bn) && an !== bn) return an - bn;
+            return 0;
+          });
+        if (linePoints.length >= 2){
+          addLineFeature(linePoints, { stroke: '#7a57b3', lineWidth: 2.2, dashed: true });
+        }
+      });
+
+      addGroupedLines(mapOverlays.faorLines, '#1f9fd0');
+      addGroupedLines(mapOverlays.flotLines, '#c74b4b');
+      addCorridorBounds(mapOverlays.corridors);
+
+      (Array.isArray(mapOverlays.destinationPoints) ? mapOverlays.destinationPoints : []).forEach(function(p){
+        addPointFeature(p, {
+          kind: 'destination',
+          group: 'overlay',
+          label: String((p && p.label) || '').trim(),
+          fill: '#d4a42f',
+          stroke: '#7a5a14',
+          textColor: '#6a4f16',
+          radius: 4.4,
+        });
+      });
+
+      (Array.isArray(mapOverlays.threatPoints) ? mapOverlays.threatPoints : []).forEach(function(p){
+        addPointFeature(p, {
+          kind: 'threat',
+          group: 'overlay',
+          label: String((p && p.label) || '').trim(),
+          fill: '#bc3e3e',
+          stroke: '#8b2d2d',
+          textColor: '#8b2d2d',
+          radius: 4.2,
+        });
+      });
+
+      if (bullseyePoint){
+        addPointFeature(bullseyePoint, {
+          kind: 'bullseye',
+          group: 'overlay',
+          label: String((bullseyePoint && bullseyePoint.label) || 'BULLSEYE'),
+          fill: '#f0c544',
+          stroke: '#7a6420',
+          textColor: '#5f4b1b',
+          radius: 5,
+        });
+      }
+
+      const selected = getActiveFlightPlanSelection(model);
+      const rawAssets = getMudMapAssets(model, dlinkOnEnabled);
+      rawAssets.forEach(function(asset){
+        const category = String((asset && asset.category) || '').toUpperCase();
+        const isPlayer = category === 'PLAYER';
+        const callsign = String((asset && asset.callsign) || '').trim();
+        const label = callsign || String((asset && asset.name) || category || 'ASSET').trim();
+        addPointFeature(asset, {
+          kind: isPlayer ? 'player' : 'asset',
+          group: 'asset',
+          assetKind: getMudMapAssetKind(asset),
+          assetKey: makeMapAssetSelectionKey(asset),
+          label: label,
+          typeName: String((asset && asset.typeName) || ''),
+          frequency: String((asset && asset.frequency) || ''),
+          tacan: String((asset && asset.tacan) || ''),
+          mpClientCallsign: String((asset && asset.mpClientCallsign) || ''),
+          fill: isPlayer ? '#2f9e56' : '#5a7ea5',
+          stroke: isPlayer ? '#1e6a39' : '#385676',
+          textColor: isPlayer ? '#1e6a39' : '#1f3550',
+          radius: isPlayer ? 5 : 3.6,
+        });
+      });
+
+      if (!pointsForBounds.length){
+        const centerOnly = getTheatreCenterLonLat(theatre);
+        if (!centerOnly) {
+          openFreeMapLastPayloadStatus = 'no-converted-points';
+          return null;
+        }
+        openFreeMapLastPayloadStatus = 'base-only/no-overlay-points';
+        return {
+          selected: selected,
+          theatre: theatre,
+          centerLon: Number(centerOnly[0]),
+          centerLat: Number(centerOnly[1]),
+          bounds: [Number(centerOnly[0]) - 1.0, Number(centerOnly[1]) - 1.0, Number(centerOnly[0]) + 1.0, Number(centerOnly[1]) + 1.0],
+          features: [],
+        };
+      }
+
+      const lons = pointsForBounds.map(function(c){ return Number(c[0]); }).filter(function(v){ return isFinite(v); });
+      const lats = pointsForBounds.map(function(c){ return Number(c[1]); }).filter(function(v){ return isFinite(v); });
+      if (!lons.length || !lats.length){
+        const centerOnly = getTheatreCenterLonLat(theatre);
+        if (!centerOnly){
+          openFreeMapLastPayloadStatus = 'invalid-bounds';
+          return null;
+        }
+        openFreeMapLastPayloadStatus = 'base-only/invalid-bounds';
+        return {
+          selected: selected,
+          theatre: theatre,
+          centerLon: Number(centerOnly[0]),
+          centerLat: Number(centerOnly[1]),
+          bounds: [Number(centerOnly[0]) - 1.0, Number(centerOnly[1]) - 1.0, Number(centerOnly[0]) + 1.0, Number(centerOnly[1]) + 1.0],
+          features: [],
+        };
+      }
+
+      const minLon = Math.min.apply(null, lons);
+      const maxLon = Math.max.apply(null, lons);
+      const minLat = Math.min.apply(null, lats);
+      const maxLat = Math.max.apply(null, lats);
+      const centerLon = (minLon + maxLon) / 2;
+      const centerLat = (minLat + maxLat) / 2;
+
+      openFreeMapLastPayloadStatus = 'ok pts=' + String(pointsForBounds.length) + ' feat=' + String(features.length) + (usedApproxProjection ? ' approx=1' : '');
+      return {
+        selected: selected,
+        theatre: theatre,
+        centerLon: centerLon,
+        centerLat: centerLat,
+        bounds: [minLon, minLat, maxLon, maxLat],
+        features: features,
+      };
     }
 
     function buildMudMapSvg(waypoints, data, overlays, bullseyePoint){
@@ -1095,6 +1581,7 @@ namespace VAICOM
     .fltPlanToolbarRight { margin-left: auto; display: inline-flex; align-items: center; }
     .fltPlanPageBtn { font-size: 12px; border: 1px solid #8b96a1; background: #eceff3; padding: 2px 9px; cursor: pointer; min-height: 22px; }
     .fltPlanPageBtn.active { background: #d3dae2; font-weight: 700; }
+    .fltPlanMapBgStatus { font-size: 13px; color: #3a4b5d; margin-left: 6px; }
     .fltPlanPage2Grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
     .fltPlanPage2Stack { display: flex; flex-direction: column; gap: 8px; min-height: 0; }
     .fltPlanPage2Section { border: 1px solid #8b96a1; background: #f7f9fb; }
@@ -1107,6 +1594,11 @@ namespace VAICOM
     .fltPlanPage3Wrap { border: 1px solid #8b96a1; background: #f7f9fb; margin-top: 8px; padding: 4px; }
     .fltPlanPage3Legend { display: none; }
     .fltPlanPage3Canvas { border: 1px solid #8b96a1; background: #ffffff; width: 100%; height: 860px; box-sizing: border-box; }
+    .fltPlanOpenMapWrap { position: relative; overflow: hidden; }
+    .fltPlanOpenMapHost { position: absolute; inset: 0; width: 100%; height: 100%; }
+    .fltPlanOpenMapVectorOverlay { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 3; }
+    .fltPlanOpenMapFallback { position: absolute; inset: 0; width: 100%; height: 100%; display: none; }
+    .fltPlanOpenMapFallback > .fltPlanPage3Canvas { width: 100%; height: 100%; }
     .fltPlanPage3BraReadout { margin-top: 6px; border: 1px solid #8b96a1; background: #ffffff; color: #1f2e3d; min-height: 28px; padding: 4px 8px; font-size: 18px; line-height: 1.2; font-weight: 700; box-sizing: border-box; }
     .fltPlanStoresWrap { border: 1px solid #8b96a1; background: #f7f9fb; margin-top: 8px; padding: 6px; }
     .fltPlanStoresGrid { width: 100%; border-collapse: collapse; table-layout: fixed; background: #ffffff; }
@@ -1183,8 +1675,10 @@ namespace VAICOM
     body.night-mode .fltPlanPage2Table th { background: #2f3b48; }
     body.night-mode .fltPlanPageBtn { background: #2a3541; color: #e2eaf4; border-color: #5c6d7f; }
     body.night-mode .fltPlanPageBtn.active { background: #3a4a5b; color: #f5fbff; }
+    body.night-mode .fltPlanMapBgStatus { color: #a8bfd6; }
     body.night-mode .fltPlanPage3Legend { color: #b7c9db; }
     body.night-mode .fltPlanPage3Canvas { background: #1a232c; border-color: #5c6d7f; }
+    body.night-mode .fltPlanOpenMapFallback > .fltPlanPage3Canvas { background: #1a232c; border-color: #5c6d7f; }
     body.night-mode .fltPlanPage3BraReadout { background: #202933; border-color: #5c6d7f; color: #dfe8f2; }
     body.night-mode .fltPlanStoresWrap { background: #202933; border-color: #5c6d7f; }
     body.night-mode .fltPlanStoresGrid { background: #212a34; }
@@ -1308,13 +1802,27 @@ namespace VAICOM
     let fltPlanDtcPageBySelection = {};
     let fltPlanDtcRouteBySelection = {};
     let fltPlanMapViewBySelection = {};
+    let fltPlanMapBackgroundEnabledBySelection = {};
+    let fltPlanOpenFreeMapViewBySelection = {};
     let fltPlanMapSelectedAssetKeyBySelection = {};
+    let openFreeMapPayloadById = {};
+    let openFreeMapPayloadSeq = 1;
+    let openFreeMapInstancesByContainerId = {};
+    let openFreeMapContainerIdBySelectionKey = {};
+    let openFreeMapRuntimeReady = false;
+    let openFreeMapRuntimeLoading = false;
+    let openFreeMapRuntimeFailed = false;
+    let openFreeMapRuntimeErrorText = '';
+    let openFreeMapRuntimeLastAttemptMs = 0;
+    let openFreeMapLastPayloadStatus = '';
+    let openFreeMapRuntimeWaiters = [];
     let mapPanDrag = null;
     let navlogRowDrag = null;
     let runtimeFlightPlanSnapshot = null;
     let runtimeFlightPlanSnapshotMissionIdentity = '';
     let runtimeFlightPlanSnapshotGroupName = '';
     let lastKnownPlayerCallsign = '';
+    let lastKnownTheater = '';
     let lastMissionIdentity = '';
     let lastMissionClockSeconds = NaN;
     let missionClockAnchorSeconds = NaN;
@@ -1348,6 +1856,19 @@ namespace VAICOM
 
     function clamp(v, min, max){
       return Math.max(min, Math.min(max, v));
+    }
+
+    function updateKeywordBodyHtml(html){
+      const keywordBody = document.getElementById('keywordBody');
+      if (!keywordBody) return;
+
+      const previousScrollTop = keywordBody.scrollTop;
+      keywordBody.innerHTML = html;
+
+      if (previousScrollTop > 0){
+        const maxScrollTop = Math.max(0, keywordBody.scrollHeight - keywordBody.clientHeight);
+        keywordBody.scrollTop = clamp(previousScrollTop, 0, maxScrollTop);
+      }
     }
 
     function applyDtcListCollapsedState(collapsed){
@@ -4600,7 +5121,10 @@ namespace VAICOM
       delete fltPlanDtcPageBySelection[key];
       delete fltPlanDtcRouteBySelection[key];
       delete fltPlanMapViewBySelection[key];
+      delete fltPlanMapBackgroundEnabledBySelection[key];
+      delete fltPlanOpenFreeMapViewBySelection[key];
       delete fltPlanMapSelectedAssetKeyBySelection[key];
+      delete openFreeMapContainerIdBySelectionKey[key];
       if (!fakeMissionEnabled){
         resetMissionClockAnchor();
       }
@@ -4647,17 +5171,21 @@ namespace VAICOM
       fltPlanDtcPageBySelection[key] = (p === 2 || p === 3 || p === 4) ? p : 1;
     }
 
+    function isValidDtcRouteKey(route){
+      return /^R([1-9]|1[0-2])$/.test(String(route || '').toUpperCase());
+    }
+
     function getDtcRouteBySelection(selected){
       const key = getFlightPlanEtaStartKey(selected);
       const route = String(fltPlanDtcRouteBySelection[key] || '').toUpperCase();
-      return /^R[123]$/.test(route) ? route : 'R1';
+      return isValidDtcRouteKey(route) ? route : 'R1';
     }
 
     function setDtcRouteBySelection(selected, route){
       const key = getFlightPlanEtaStartKey(selected);
       if (!key) return;
       const r = String(route || '').toUpperCase();
-      fltPlanDtcRouteBySelection[key] = /^R[123]$/.test(r) ? r : 'R1';
+      fltPlanDtcRouteBySelection[key] = isValidDtcRouteKey(r) ? r : 'R1';
     }
 
     function getMapViewBySelection(selected){
@@ -4685,6 +5213,798 @@ namespace VAICOM
       if (!isFinite(factor) || factor <= 0) return;
       const current = isFinite(Number(state.zoom)) ? Number(state.zoom) : 1;
       state.zoom = clamp(current * factor, 0.6, 4.0);
+    }
+
+    function isMapBackgroundEnabledBySelection(selected){
+      const key = getFlightPlanEtaStartKey(selected);
+      if (!key) return true;
+      if (!Object.prototype.hasOwnProperty.call(fltPlanMapBackgroundEnabledBySelection, key)){
+        fltPlanMapBackgroundEnabledBySelection[key] = true;
+      }
+      return !!fltPlanMapBackgroundEnabledBySelection[key];
+    }
+
+    function toggleMapBackgroundEnabledBySelection(selected){
+      const key = getFlightPlanEtaStartKey(selected);
+      if (!key) return;
+      const current = isMapBackgroundEnabledBySelection(selected);
+      fltPlanMapBackgroundEnabledBySelection[key] = !current;
+      if (!current){
+        const svgState = getMapViewBySelection(selected);
+        const webState = getOpenFreeMapViewBySelection(selected);
+        if (!isFinite(Number(webState.zoom))){
+          const svgZoom = isFinite(Number(svgState.zoom)) ? Number(svgState.zoom) : 1;
+          webState.zoom = clamp(6 + Math.log(svgZoom) / Math.log(1.2), 2, 16);
+        }
+      } else {
+        const svgState = getMapViewBySelection(selected);
+        const webState = getOpenFreeMapViewBySelection(selected);
+        if (isFinite(Number(webState.zoom))){
+          const webZoom = Number(webState.zoom);
+          svgState.zoom = clamp(Math.pow(1.2, webZoom - 6), 0.6, 4.0);
+        }
+      }
+    }
+
+    function getOpenFreeMapViewBySelection(selected){
+      const key = getFlightPlanEtaStartKey(selected);
+      if (!key) return { centerLon: NaN, centerLat: NaN, zoom: NaN };
+      const existing = fltPlanOpenFreeMapViewBySelection[key];
+      if (existing && isFinite(Number(existing.centerLon)) && isFinite(Number(existing.centerLat)) && isFinite(Number(existing.zoom))){
+        return existing;
+      }
+      const state = { centerLon: NaN, centerLat: NaN, zoom: NaN };
+      fltPlanOpenFreeMapViewBySelection[key] = state;
+      return state;
+    }
+
+    function registerOpenFreeMapPayload(selected, payload){
+      if (!payload || typeof payload !== 'object') return '';
+      const selectedKey = getFlightPlanEtaStartKey(selected);
+      Object.keys(openFreeMapPayloadById).forEach(function(id){
+        const item = openFreeMapPayloadById[id];
+        if (!item) return;
+        if (String(item.selectedKey || '') === String(selectedKey || '')){
+          delete openFreeMapPayloadById[id];
+        }
+      });
+      const id = 'ofm_' + String(openFreeMapPayloadSeq++);
+      openFreeMapPayloadById[id] = {
+        selectedKey: selectedKey,
+        payload: payload,
+      };
+      return id;
+    }
+
+    function getLatestOpenFreeMapPayloadBySelection(selected){
+      const key = getFlightPlanEtaStartKey(selected);
+      if (!key) return null;
+      const ids = Object.keys(openFreeMapPayloadById);
+      if (!ids.length) return null;
+      let bestId = '';
+      let bestSeq = -1;
+      ids.forEach(function(id){
+        const item = openFreeMapPayloadById[id];
+        if (!item) return;
+        if (String(item.selectedKey || '') !== key) return;
+        const seq = Number(String(id).replace('ofm_', ''));
+        if (!isFinite(seq)) return;
+        if (seq > bestSeq){
+          bestSeq = seq;
+          bestId = id;
+        }
+      });
+      if (!bestId) return null;
+      const entry = openFreeMapPayloadById[bestId];
+      return entry && entry.payload ? entry.payload : null;
+    }
+
+    function syncOpenFreeMapForSelection(selected, payload){
+      const key = getFlightPlanEtaStartKey(selected);
+      if (!key || !payload) return false;
+      const containerId = String(openFreeMapContainerIdBySelectionKey[key] || '');
+      if (!containerId) return false;
+      const item = openFreeMapInstancesByContainerId[containerId];
+      if (!item || !item.map) return false;
+
+      const map = item.map;
+      if (!map || !map.isStyleLoaded || !map.isStyleLoaded()) return false;
+
+      item.payload = payload;
+
+      const bounds = Array.isArray(payload.bounds) ? payload.bounds.slice(0, 4) : null;
+      if (bounds && bounds.length === 4) item.bounds = bounds;
+
+      renderOpenFreeMapOverlay(item, payload);
+      return true;
+    }
+
+    function renderOpenFreeMapOverlay(item, payload){
+      if (!item || !item.map || !item.host) return;
+      const map = item.map;
+      const host = item.host;
+      const features = Array.isArray(payload && payload.features) ? payload.features : [];
+
+      let overlaySvg = item.overlaySvg;
+      if (!overlaySvg){
+        overlaySvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        overlaySvg.setAttribute('class', 'fltPlanOpenMapVectorOverlay');
+        overlaySvg.setAttribute('width', '100%');
+        overlaySvg.setAttribute('height', '100%');
+        overlaySvg.style.pointerEvents = 'none';
+        host.appendChild(overlaySvg);
+        item.overlaySvg = overlaySvg;
+      }
+
+      while (overlaySvg.firstChild) overlaySvg.removeChild(overlaySvg.firstChild);
+
+      if (!features.length) return;
+
+      const selectedAssetKey = getMapSelectedAssetKeyBySelection(item.selectedKey);
+      const selectedAssetInfo = { x: NaN, y: NaN, props: null };
+      function makeNode(name){ return document.createElementNS('http://www.w3.org/2000/svg', name); }
+      const metersPerPixel = (function(){
+        try{
+          const center = map.getCenter ? map.getCenter() : null;
+          const lat = center && isFinite(Number(center.lat)) ? Number(center.lat) : 0;
+          const zoom = map.getZoom ? Number(map.getZoom()) : 0;
+          const mpp = (156543.03392804097 * Math.cos(lat * (Math.PI / 180))) / Math.pow(2, zoom);
+          return (isFinite(mpp) && mpp > 0) ? mpp : NaN;
+        }catch(_){
+          return NaN;
+        }
+      })();
+
+      function createAssetSymbol(px, py, props){
+        const g = makeNode('g');
+        const kind = String((props && props.assetKind) || '').toLowerCase();
+        const fill = '#2d8fe3';
+        const stroke = '#1f5d93';
+        if (kind === 'awacs'){
+          const r = makeNode('rect');
+          r.setAttribute('x', (px - 8).toFixed(1));
+          r.setAttribute('y', (py - 6).toFixed(1));
+          r.setAttribute('width', '16');
+          r.setAttribute('height', '12');
+          r.setAttribute('rx', '1.6');
+          r.setAttribute('fill', fill);
+          r.setAttribute('stroke', stroke);
+          r.setAttribute('stroke-width', '1.3');
+          g.appendChild(r);
+          const l = makeNode('line');
+          l.setAttribute('x1', (px - 6).toFixed(1));
+          l.setAttribute('y1', py.toFixed(1));
+          l.setAttribute('x2', (px + 6).toFixed(1));
+          l.setAttribute('y2', py.toFixed(1));
+          l.setAttribute('stroke', stroke);
+          l.setAttribute('stroke-width', '1.2');
+          g.appendChild(l);
+          const c2 = makeNode('circle');
+          c2.setAttribute('cx', px.toFixed(1));
+          c2.setAttribute('cy', (py - 9).toFixed(1));
+          c2.setAttribute('r', '2.4');
+          c2.setAttribute('fill', stroke);
+          g.appendChild(c2);
+        } else if (kind === 'tanker'){
+          const p = makeNode('polygon');
+          p.setAttribute('points', (px - 8).toFixed(1) + ',' + py.toFixed(1) + ' ' + px.toFixed(1) + ',' + (py - 6).toFixed(1) + ' ' + (px + 8).toFixed(1) + ',' + py.toFixed(1) + ' ' + px.toFixed(1) + ',' + (py + 6).toFixed(1));
+          p.setAttribute('fill', fill);
+          p.setAttribute('stroke', stroke);
+          p.setAttribute('stroke-width', '1.3');
+          g.appendChild(p);
+        } else if (kind === 'jtac'){
+          const p = makeNode('polygon');
+          p.setAttribute('points', px.toFixed(1) + ',' + (py - 7).toFixed(1) + ' ' + (px - 7).toFixed(1) + ',' + (py + 7).toFixed(1) + ' ' + (px + 7).toFixed(1) + ',' + (py + 7).toFixed(1));
+          p.setAttribute('fill', fill);
+          p.setAttribute('stroke', stroke);
+          p.setAttribute('stroke-width', '1.3');
+          g.appendChild(p);
+        } else if (kind === 'rotary'){
+          const c = makeNode('circle');
+          c.setAttribute('cx', px.toFixed(1));
+          c.setAttribute('cy', py.toFixed(1));
+          c.setAttribute('r', '6');
+          c.setAttribute('fill', fill);
+          c.setAttribute('stroke', stroke);
+          c.setAttribute('stroke-width', '1.3');
+          g.appendChild(c);
+          const h = makeNode('line');
+          h.setAttribute('x1', (px - 9).toFixed(1));
+          h.setAttribute('y1', py.toFixed(1));
+          h.setAttribute('x2', (px + 9).toFixed(1));
+          h.setAttribute('y2', py.toFixed(1));
+          h.setAttribute('stroke', stroke);
+          h.setAttribute('stroke-width', '1.2');
+          g.appendChild(h);
+          const v = makeNode('line');
+          v.setAttribute('x1', px.toFixed(1));
+          v.setAttribute('y1', (py - 9).toFixed(1));
+          v.setAttribute('x2', px.toFixed(1));
+          v.setAttribute('y2', (py + 9).toFixed(1));
+          v.setAttribute('stroke', stroke);
+          v.setAttribute('stroke-width', '1.2');
+          g.appendChild(v);
+        } else if (kind === 'marker'){
+          const c = makeNode('circle');
+          c.setAttribute('cx', px.toFixed(1));
+          c.setAttribute('cy', py.toFixed(1));
+          c.setAttribute('r', '6.5');
+          c.setAttribute('fill', '#f7edf8');
+          c.setAttribute('stroke', '#8a2f99');
+          c.setAttribute('stroke-width', '1.4');
+          g.appendChild(c);
+          const h = makeNode('line');
+          h.setAttribute('x1', (px - 8).toFixed(1));
+          h.setAttribute('y1', py.toFixed(1));
+          h.setAttribute('x2', (px + 8).toFixed(1));
+          h.setAttribute('y2', py.toFixed(1));
+          h.setAttribute('stroke', '#8a2f99');
+          h.setAttribute('stroke-width', '1.2');
+          g.appendChild(h);
+          const v = makeNode('line');
+          v.setAttribute('x1', px.toFixed(1));
+          v.setAttribute('y1', (py - 8).toFixed(1));
+          v.setAttribute('x2', px.toFixed(1));
+          v.setAttribute('y2', (py + 8).toFixed(1));
+          v.setAttribute('stroke', '#8a2f99');
+          v.setAttribute('stroke-width', '1.2');
+          g.appendChild(v);
+        } else if (kind === 'player'){
+          const c = makeNode('circle');
+          c.setAttribute('cx', px.toFixed(1));
+          c.setAttribute('cy', py.toFixed(1));
+          c.setAttribute('r', '7.5');
+          c.setAttribute('fill', '#f2d76a');
+          c.setAttribute('stroke', '#7a6420');
+          c.setAttribute('stroke-width', '1.5');
+          g.appendChild(c);
+        } else {
+          const r = makeNode('rect');
+          r.setAttribute('x', (px - 7).toFixed(1));
+          r.setAttribute('y', (py - 5.5).toFixed(1));
+          r.setAttribute('width', '14');
+          r.setAttribute('height', '11');
+          r.setAttribute('fill', fill);
+          r.setAttribute('stroke', stroke);
+          r.setAttribute('stroke-width', '1.3');
+          g.appendChild(r);
+        }
+        return g;
+      }
+
+      features.forEach(function(feature){
+        if (!feature || !feature.geometry || !feature.properties) return;
+        const geom = feature.geometry || {};
+        const props = feature.properties || {};
+
+        if (geom.type === 'LineString' && Array.isArray(geom.coordinates) && geom.coordinates.length >= 2){
+          const linePts = geom.coordinates.map(function(c){
+            if (!Array.isArray(c) || c.length < 2) return null;
+            const p = map.project([Number(c[0]), Number(c[1])]);
+            return p ? (p.x.toFixed(1) + ',' + p.y.toFixed(1)) : null;
+          }).filter(function(v){ return !!v; });
+          if (linePts.length >= 2){
+            const pl = makeNode('polyline');
+            pl.setAttribute('points', linePts.join(' '));
+            pl.setAttribute('fill', 'none');
+            pl.setAttribute('stroke', String((props && props.stroke) || '#3d566e'));
+            pl.setAttribute('stroke-width', String(Number((props && props.lineWidth) || 2.2)));
+            if (props && props.dashed) pl.setAttribute('stroke-dasharray', '8 6');
+            pl.setAttribute('stroke-opacity', '0.92');
+            pl.style.pointerEvents = 'none';
+            overlaySvg.appendChild(pl);
+          }
+          return;
+        }
+
+        if (geom.type === 'Point' && Array.isArray(geom.coordinates) && geom.coordinates.length >= 2){
+          const p = map.project([Number(geom.coordinates[0]), Number(geom.coordinates[1])]);
+          if (!p) return;
+          const isAsset = props.group === 'asset';
+          const isSelected = isAsset && String(selectedAssetKey || '') === String(props.assetKey || '');
+          const markerNode = isAsset
+            ? createAssetSymbol(p.x, p.y, props)
+            : (function(){
+                const kind = String((props && props.kind) || '').toLowerCase();
+                const fill = String((props && props.fill) || '#3a6ea5');
+                const stroke = String((props && props.stroke) || '#244766');
+                if (kind === 'destination'){
+                  const d = makeNode('polygon');
+                  const p1 = p.x.toFixed(1) + ',' + (p.y - 7).toFixed(1);
+                  const p2 = (p.x - 7).toFixed(1) + ',' + p.y.toFixed(1);
+                  const p3 = p.x.toFixed(1) + ',' + (p.y + 7).toFixed(1);
+                  const p4 = (p.x + 7).toFixed(1) + ',' + p.y.toFixed(1);
+                  d.setAttribute('points', p1 + ' ' + p2 + ' ' + p3 + ' ' + p4);
+                  d.setAttribute('fill', fill);
+                  d.setAttribute('stroke', stroke);
+                  d.setAttribute('stroke-width', '1.5');
+                  d.style.pointerEvents = 'none';
+                  return d;
+                }
+                if (kind === 'threat'){
+                  const gThreat = makeNode('g');
+                  const xh = makeNode('line');
+                  xh.setAttribute('x1', (p.x - 7).toFixed(1));
+                  xh.setAttribute('y1', p.y.toFixed(1));
+                  xh.setAttribute('x2', (p.x + 7).toFixed(1));
+                  xh.setAttribute('y2', p.y.toFixed(1));
+                  xh.setAttribute('stroke', stroke);
+                  xh.setAttribute('stroke-width', '1.6');
+                  gThreat.appendChild(xh);
+                  const xv = makeNode('line');
+                  xv.setAttribute('x1', p.x.toFixed(1));
+                  xv.setAttribute('y1', (p.y - 7).toFixed(1));
+                  xv.setAttribute('x2', p.x.toFixed(1));
+                  xv.setAttribute('y2', (p.y + 7).toFixed(1));
+                  xv.setAttribute('stroke', stroke);
+                  xv.setAttribute('stroke-width', '1.6');
+                  gThreat.appendChild(xv);
+                  const radiusMeters = Number(props && props.radiusMeters);
+                  const showRing = !!(props && props.ring) && isFinite(radiusMeters) && radiusMeters > 0 && isFinite(metersPerPixel);
+                  if (showRing){
+                    const ringPx = Math.max(4, radiusMeters / metersPerPixel);
+                    const ring = makeNode('circle');
+                    ring.setAttribute('cx', p.x.toFixed(1));
+                    ring.setAttribute('cy', p.y.toFixed(1));
+                    ring.setAttribute('r', ringPx.toFixed(1));
+                    ring.setAttribute('fill', 'none');
+                    ring.setAttribute('stroke', stroke);
+                    ring.setAttribute('stroke-width', '1.4');
+                    ring.setAttribute('stroke-dasharray', '7 5');
+                    gThreat.appendChild(ring);
+                  }
+                  gThreat.style.pointerEvents = 'none';
+                  return gThreat;
+                }
+                if (kind === 'bullseye'){
+                  const gBull = makeNode('g');
+                  [11, 7, 3].forEach(function(r){
+                    const cRing = makeNode('circle');
+                    cRing.setAttribute('cx', p.x.toFixed(1));
+                    cRing.setAttribute('cy', p.y.toFixed(1));
+                    cRing.setAttribute('r', String(r));
+                    cRing.setAttribute('fill', 'none');
+                    cRing.setAttribute('stroke', stroke);
+                    cRing.setAttribute('stroke-width', '1.4');
+                    gBull.appendChild(cRing);
+                  });
+                  gBull.style.pointerEvents = 'none';
+                  return gBull;
+                }
+                if (kind === 'cap'){
+                  const gCap = makeNode('g');
+                  const courseDeg = isFinite(Number(props && props.course)) ? Number(props.course) : 0;
+                  const courseRad = courseDeg * (Math.PI / 180);
+                  const capLengthMeters = Math.max(4000, isFinite(Number(props && props.lengthMeters)) ? Number(props && props.lengthMeters) : 12000);
+                  const capDiameterMeters = Math.max(2000, isFinite(Number(props && props.diameterMeters)) ? Number(props && props.diameterMeters) : 6000);
+                  const widthPx = isFinite(metersPerPixel) ? Math.max(16, ((capLengthMeters + capDiameterMeters) / metersPerPixel)) : 40;
+                  const heightPx = isFinite(metersPerPixel) ? Math.max(10, (capDiameterMeters / metersPerPixel)) : 18;
+                  const radiusPx = heightPx / 2;
+                  const turnDir = String((props && props.turnDirection) || '').trim().toUpperCase();
+                  const isRightPattern = turnDir.indexOf('RIGHT') >= 0;
+                  const angleDeg = (courseDeg - 90) + (isRightPattern ? 0 : 180);
+                  const angleRad = angleDeg * (Math.PI / 180);
+
+                  const localAnchorX = isRightPattern ? ((widthPx / 2) - radiusPx) : (-(widthPx / 2) + radiusPx);
+                  const localAnchorY = -(heightPx / 2);
+                  const rotAnchorX = (localAnchorX * Math.cos(angleRad)) - (localAnchorY * Math.sin(angleRad));
+                  const rotAnchorY = (localAnchorX * Math.sin(angleRad)) + (localAnchorY * Math.cos(angleRad));
+                  const centerX = p.x - rotAnchorX;
+                  const centerY = p.y - rotAnchorY;
+
+                  const rect = makeNode('rect');
+                  rect.setAttribute('x', (centerX - (widthPx / 2)).toFixed(1));
+                  rect.setAttribute('y', (centerY - (heightPx / 2)).toFixed(1));
+                  rect.setAttribute('width', widthPx.toFixed(1));
+                  rect.setAttribute('height', heightPx.toFixed(1));
+                  rect.setAttribute('rx', radiusPx.toFixed(1));
+                  rect.setAttribute('ry', radiusPx.toFixed(1));
+                  rect.setAttribute('fill', 'none');
+                  rect.setAttribute('stroke', stroke);
+                  rect.setAttribute('stroke-width', '2.0');
+                  rect.setAttribute('transform', 'rotate(' + angleDeg.toFixed(1) + ' ' + centerX.toFixed(1) + ' ' + centerY.toFixed(1) + ')');
+                  gCap.appendChild(rect);
+
+                  const anchor = makeNode('circle');
+                  anchor.setAttribute('cx', p.x.toFixed(1));
+                  anchor.setAttribute('cy', p.y.toFixed(1));
+                  anchor.setAttribute('r', '2.9');
+                  anchor.setAttribute('fill', stroke);
+                  gCap.appendChild(anchor);
+
+                  const capLabel = String((props && props.label) || '').trim();
+                  if (capLabel){
+                    const tx = makeNode('text');
+                    tx.setAttribute('x', (p.x + (Math.sin(courseRad) * 10)).toFixed(1));
+                    tx.setAttribute('y', (p.y - (Math.cos(courseRad) * 10)).toFixed(1));
+                    tx.setAttribute('font-size', '10');
+                    tx.setAttribute('fill', stroke);
+                    tx.setAttribute('font-weight', '700');
+                    tx.textContent = capLabel;
+                    gCap.appendChild(tx);
+                  }
+
+                  gCap.style.pointerEvents = 'none';
+                  return gCap;
+                }
+                if (kind === 'geoline'){
+                  const geo = makeNode('circle');
+                  geo.setAttribute('cx', p.x.toFixed(1));
+                  geo.setAttribute('cy', p.y.toFixed(1));
+                  geo.setAttribute('r', '3.8');
+                  geo.setAttribute('fill', fill);
+                  geo.style.pointerEvents = 'none';
+                  return geo;
+                }
+                const c = makeNode('circle');
+                c.setAttribute('cx', p.x.toFixed(1));
+                c.setAttribute('cy', p.y.toFixed(1));
+                c.setAttribute('r', String(Number((props && props.radius) || 5.2)));
+                c.setAttribute('fill', fill);
+                c.setAttribute('stroke', stroke);
+                c.setAttribute('stroke-width', '1.6');
+                c.style.pointerEvents = 'none';
+                return c;
+              })();
+
+          if (isAsset && props.assetKey){
+            markerNode.style.pointerEvents = 'auto';
+            markerNode.style.cursor = 'pointer';
+            markerNode.setAttribute('data-asset-key', String(props.assetKey));
+            if (isSelected){
+              const ring = makeNode('circle');
+              ring.setAttribute('cx', p.x.toFixed(1));
+              ring.setAttribute('cy', p.y.toFixed(1));
+              ring.setAttribute('r', '11');
+              ring.setAttribute('fill', 'none');
+              ring.setAttribute('stroke', '#c94444');
+              ring.setAttribute('stroke-width', '2.4');
+              ring.style.pointerEvents = 'none';
+              overlaySvg.appendChild(ring);
+              selectedAssetInfo.x = p.x;
+              selectedAssetInfo.y = p.y;
+              selectedAssetInfo.props = props;
+            }
+          }
+          overlaySvg.appendChild(markerNode);
+
+          const label = String(props.label || '').trim();
+          if (label){
+            const text = makeNode('text');
+            text.setAttribute('x', (p.x + 9).toFixed(1));
+            text.setAttribute('y', (p.y + 4).toFixed(1));
+            text.setAttribute('font-size', '11');
+            text.setAttribute('font-weight', '700');
+            const labelFill = isAsset
+              ? '#1f3550'
+              : String((props && props.textColor) || '#1f2e3d');
+            text.setAttribute('fill', labelFill);
+            text.setAttribute('stroke', '#ffffff');
+            text.setAttribute('stroke-width', '0.6');
+            text.style.pointerEvents = 'none';
+            text.textContent = label;
+            overlaySvg.appendChild(text);
+          }
+
+          if (isAsset && props.assetKey){
+            const hit = makeNode('circle');
+            hit.setAttribute('cx', p.x.toFixed(1));
+            hit.setAttribute('cy', p.y.toFixed(1));
+            hit.setAttribute('r', '13');
+            hit.setAttribute('fill', '#000000');
+            hit.setAttribute('fill-opacity', '0.01');
+            hit.style.pointerEvents = 'auto';
+            hit.style.cursor = 'pointer';
+            hit.setAttribute('data-asset-key', String(props.assetKey));
+            overlaySvg.appendChild(hit);
+          }
+        }
+      });
+
+      if (selectedAssetInfo.props){
+        const p = selectedAssetInfo.props;
+        function formatFreq(v){
+          const raw = String(v || '').trim();
+          if (!raw) return '';
+          const n = Number(raw);
+          if (!isFinite(n) || n <= 0) return raw;
+          let mhz = n;
+          if (n >= 10000000) mhz = n / 1000000.0;
+          else if (n >= 100000) mhz = n / 1000.0;
+          return mhz.toFixed(3);
+        }
+
+        const infoLines = [];
+        const typeText = String(p.typeName || '').trim();
+        const freqText = formatFreq(p.frequency);
+        const tacanText = String(p.tacan || '').trim();
+        const mpText = String(p.mpClientCallsign || '').trim();
+        if (typeText) infoLines.push('TYPE: ' + typeText);
+        if (freqText) infoLines.push('FREQ: ' + freqText);
+        if (tacanText) infoLines.push('TACAN: ' + tacanText);
+        if (mpText) infoLines.push('MP: ' + mpText);
+
+        if (infoLines.length){
+          const fontSize = 10;
+          const lineHeight = 12;
+          const padX = 5;
+          const padY = 4;
+          const maxChars = infoLines.reduce(function(max, line){ return Math.max(max, String(line || '').length); }, 0);
+          const boxWidth = Math.max(120, Math.min(300, (maxChars * 6.2) + (padX * 2)));
+          const boxHeight = (infoLines.length * lineHeight) + (padY * 2);
+          let boxX = selectedAssetInfo.x + 12;
+          let boxY = selectedAssetInfo.y + 8;
+          const hostW = host.clientWidth || 920;
+          const hostH = host.clientHeight || 760;
+          if ((boxX + boxWidth) > (hostW - 4)) boxX = selectedAssetInfo.x - boxWidth - 12;
+          if ((boxY + boxHeight) > (hostH - 4)) boxY = selectedAssetInfo.y - boxHeight - 12;
+
+          const rect = makeNode('rect');
+          rect.setAttribute('x', boxX.toFixed(1));
+          rect.setAttribute('y', boxY.toFixed(1));
+          rect.setAttribute('width', boxWidth.toFixed(1));
+          rect.setAttribute('height', boxHeight.toFixed(1));
+          rect.setAttribute('rx', '3');
+          rect.setAttribute('ry', '3');
+          rect.setAttribute('fill', '#f6f9fc');
+          rect.setAttribute('stroke', '#6f879f');
+          rect.setAttribute('stroke-width', '1.1');
+          overlaySvg.appendChild(rect);
+
+          infoLines.forEach(function(line, idx){
+            const tx = makeNode('text');
+            tx.setAttribute('x', (boxX + padX).toFixed(1));
+            tx.setAttribute('y', (boxY + padY + (lineHeight * (idx + 1)) - 2).toFixed(1));
+            tx.setAttribute('font-size', String(fontSize));
+            tx.setAttribute('fill', '#1f3550');
+            tx.setAttribute('font-weight', '700');
+            tx.textContent = String(line);
+            overlaySvg.appendChild(tx);
+          });
+        }
+      }
+
+      if (!item.overlayClickBound){
+        overlaySvg.addEventListener('click', function(ev){
+          let node = ev.target;
+          while (node && node !== overlaySvg){
+            const assetKey = node.getAttribute ? String(node.getAttribute('data-asset-key') || '') : '';
+            if (assetKey){
+              const current = getMapSelectedAssetKeyBySelection(item.selectedKey);
+              setMapSelectedAssetKeyBySelection(item.selectedKey, current === assetKey ? '' : assetKey);
+              if (latestData) render(latestData);
+              ev.preventDefault();
+              return;
+            }
+            node = node.parentNode;
+          }
+        });
+        item.overlayClickBound = true;
+      }
+    }
+
+    function disposeOpenFreeMapInstances(){
+      const ids = Object.keys(openFreeMapInstancesByContainerId);
+      ids.forEach(function(id){
+        const item = openFreeMapInstancesByContainerId[id];
+        if (!item || !item.map) return;
+        try{ item.map.remove(); }catch(_){ }
+      });
+      openFreeMapInstancesByContainerId = {};
+      openFreeMapContainerIdBySelectionKey = {};
+      openFreeMapPayloadById = {};
+    }
+
+    function ensureOpenFreeMapRuntime(done){
+      if (typeof done !== 'function') return;
+      if (openFreeMapRuntimeReady && window.maplibregl){
+        done(true);
+        return;
+      }
+
+      const nowMs = Date.now();
+      if (openFreeMapRuntimeFailed && (nowMs - openFreeMapRuntimeLastAttemptMs) > 30000){
+        openFreeMapRuntimeFailed = false;
+      }
+
+      if (openFreeMapRuntimeFailed){
+        done(false);
+        return;
+      }
+
+      openFreeMapRuntimeWaiters.push(done);
+      if (openFreeMapRuntimeLoading) return;
+
+      openFreeMapRuntimeLoading = true;
+      openFreeMapRuntimeLastAttemptMs = nowMs;
+
+      function flush(ok){
+        const waiters = openFreeMapRuntimeWaiters.slice();
+        openFreeMapRuntimeWaiters = [];
+        waiters.forEach(function(cb){
+          try{ cb(!!ok); }catch(_){ }
+        });
+      }
+
+      function fail(reason){
+        openFreeMapRuntimeReady = false;
+        openFreeMapRuntimeLoading = false;
+        openFreeMapRuntimeFailed = true;
+        openFreeMapRuntimeErrorText = String(reason || 'Map runtime failed to load.');
+        flush(false);
+      }
+
+      const cssId = 'vaicom-ofm-maplibre-css';
+      if (!document.getElementById(cssId)){
+        const css = document.createElement('link');
+        css.id = cssId;
+        css.rel = 'stylesheet';
+        css.href = 'https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css';
+        css.onerror = function(){
+          const css2 = document.createElement('link');
+          css2.rel = 'stylesheet';
+          css2.href = 'https://cdn.jsdelivr.net/npm/maplibre-gl@4.7.1/dist/maplibre-gl.css';
+          document.head.appendChild(css2);
+        };
+        document.head.appendChild(css);
+      }
+
+      if (window.maplibregl){
+        openFreeMapRuntimeReady = true;
+        openFreeMapRuntimeLoading = false;
+        openFreeMapRuntimeErrorText = '';
+        flush(true);
+        return;
+      }
+
+      const scriptUrls = [
+        'https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js',
+        'https://cdn.jsdelivr.net/npm/maplibre-gl@4.7.1/dist/maplibre-gl.js'
+      ];
+
+      function tryLoad(index){
+        if (index >= scriptUrls.length){
+          fail('Unable to load MapLibre runtime from CDN.');
+          return;
+        }
+        const script = document.createElement('script');
+        script.src = scriptUrls[index];
+        script.async = true;
+        script.onload = function(){
+          openFreeMapRuntimeReady = !!window.maplibregl;
+          if (!openFreeMapRuntimeReady){
+            tryLoad(index + 1);
+            return;
+          }
+          openFreeMapRuntimeLoading = false;
+          openFreeMapRuntimeErrorText = '';
+          flush(true);
+        };
+        script.onerror = function(){
+          tryLoad(index + 1);
+        };
+        document.head.appendChild(script);
+      }
+
+      tryLoad(0);
+    }
+
+    function handleOpenFreeMapZoomAction(selected, action){
+      const key = getFlightPlanEtaStartKey(selected);
+      if (!key) return false;
+      const containerId = String(openFreeMapContainerIdBySelectionKey[key] || '');
+      if (!containerId) return false;
+      const item = openFreeMapInstancesByContainerId[containerId];
+      if (!item || !item.map) return false;
+
+      const map = item.map;
+      const mode = String(action || '').toLowerCase();
+      if (mode === 'in'){
+        map.zoomIn({ duration: 0 });
+        return true;
+      }
+      if (mode === 'out'){
+        map.zoomOut({ duration: 0 });
+        return true;
+      }
+      if (mode === 'reset'){
+        const bounds = item.bounds;
+        if (bounds && bounds.length === 4){
+          map.fitBounds([[bounds[0], bounds[1]], [bounds[2], bounds[3]]], { padding: 36, duration: 0, maxZoom: 11 });
+          return true;
+        }
+      }
+      return false;
+    }
+
+    function initializeOpenFreeMapInstances(){
+      const hosts = Array.from(document.querySelectorAll('[data-openfreemap-map-id]'));
+      if (!hosts.length) return;
+
+      function getOpenFreeMapStyleUrl(){
+        return nightModeEnabled
+          ? 'https://tiles.openfreemap.org/styles/dark'
+          : 'https://tiles.openfreemap.org/styles/liberty';
+      }
+
+      ensureOpenFreeMapRuntime(function(ok){
+        hosts.forEach(function(host){
+          const mapId = String(host.getAttribute('data-openfreemap-map-id') || '');
+          if (!mapId) return;
+          if (openFreeMapInstancesByContainerId[mapId]) return;
+
+          const wrap = host.closest ? host.closest('[data-openfreemap-wrap]') : null;
+          const fallback = wrap ? wrap.querySelector('.fltPlanOpenMapFallback') : null;
+          if (fallback) fallback.style.display = 'none';
+          const entry = openFreeMapPayloadById[mapId];
+          const payload = entry && entry.payload ? entry.payload : null;
+
+          if (!ok || !payload || !isFinite(Number(payload.centerLon)) || !isFinite(Number(payload.centerLat)) || !window.maplibregl){
+            if (fallback) fallback.style.display = 'block';
+            return;
+          }
+
+          host.innerHTML = '';
+
+          try{
+            const selectedKey = String((entry && entry.selectedKey) || host.getAttribute('data-openfreemap-selection') || '');
+            const bounds = Array.isArray(payload.bounds) ? payload.bounds.slice(0, 4) : null;
+            const viewState = getOpenFreeMapViewBySelection(selectedKey);
+            const hasStoredView = isFinite(Number(viewState.centerLon)) && isFinite(Number(viewState.centerLat)) && isFinite(Number(viewState.zoom));
+
+            const map = new maplibregl.Map({
+              container: host,
+              style: getOpenFreeMapStyleUrl(),
+              center: hasStoredView
+                ? [Number(viewState.centerLon), Number(viewState.centerLat)]
+                : [Number(payload.centerLon || 0), Number(payload.centerLat || 0)],
+              zoom: hasStoredView ? Number(viewState.zoom) : 6,
+              attributionControl: true,
+            });
+
+            map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right');
+
+            map.on('error', function(){
+              openFreeMapLastPayloadStatus = 'map-error';
+            });
+
+            const item = {
+              map: map,
+              selectedKey: selectedKey,
+              bounds: bounds,
+              host: host,
+              payload: payload,
+            };
+
+            map.on('load', function(){
+              renderOpenFreeMapOverlay(item, payload);
+              if (!hasStoredView && bounds && bounds.length === 4){
+                map.fitBounds([[bounds[0], bounds[1]], [bounds[2], bounds[3]]], { padding: 36, duration: 0, maxZoom: 11 });
+              }
+              if (fallback) fallback.style.display = 'none';
+            });
+
+            map.on('move', function(){
+              const currentPayload = item.payload || payload;
+              renderOpenFreeMapOverlay(item, currentPayload);
+            });
+
+            map.on('moveend', function(){
+              const center = map.getCenter();
+              if (!center) return;
+              const state = getOpenFreeMapViewBySelection(selectedKey);
+              state.centerLon = Number(center.lng);
+              state.centerLat = Number(center.lat);
+              state.zoom = Number(map.getZoom());
+            });
+
+            openFreeMapInstancesByContainerId[mapId] = item;
+            if (selectedKey) openFreeMapContainerIdBySelectionKey[selectedKey] = mapId;
+          }catch(_){
+            if (fallback) fallback.style.display = 'block';
+          }
+        });
+      });
     }
 
     function getMapSelectedAssetKeyBySelection(selected){
@@ -4925,7 +6245,25 @@ namespace VAICOM
     function getMapProjectionByTheatre(theatre){
       const t = String(theatre || '').trim();
       if (!t) return null;
-      return mapProjectionCatalog[t] || null;
+      if (mapProjectionCatalog[t]) return mapProjectionCatalog[t];
+
+      const normalized = t.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+      if (!normalized) return null;
+
+      if (mapProjectionAliases[normalized] && mapProjectionCatalog[mapProjectionAliases[normalized]]){
+        return mapProjectionCatalog[mapProjectionAliases[normalized]];
+      }
+
+      const keys = Object.keys(mapProjectionCatalog);
+      for (let i = 0; i < keys.length; i++){
+        const key = keys[i];
+        const keyNorm = String(key || '').replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+        if (keyNorm === normalized){
+          return mapProjectionCatalog[key];
+        }
+      }
+
+      return null;
     }
 
     const mapProjectionCatalog = {
@@ -4942,6 +6280,28 @@ namespace VAICOM
       Kola: { centralMeridianDeg: 21, falseEastingMeters: -62711, falseNorthingMeters: -7543616, scaleFactor: 0.9996 },
       GermanyCW: { centralMeridianDeg: 21, falseEastingMeters: 35444.045, falseNorthingMeters: -6061632.212, scaleFactor: 0.9996 },
       Iraq: { centralMeridianDeg: 45, falseEastingMeters: 72292, falseNorthingMeters: -3680040, scaleFactor: 0.9996 },
+    };
+
+    const mapProjectionAliases = {
+      PERSIANGULF: 'PersianGulf',
+      MARIANAISLANDS: 'MarianaIslands',
+      MARIANAISLAND: 'MarianaIslands',
+      NEVADA: 'Nevada',
+      NEVADAMAP: 'Nevada',
+      NTTR: 'Nevada',
+      NEVADATESTANDTRAININGRANGE: 'Nevada',
+      SINAI: 'SinaiMap',
+      SINAIMAP: 'SinaiMap',
+      THECHANNELMAP: 'TheChannel',
+      CHANNEL: 'TheChannel',
+      GERMANYCOLDWAR: 'GermanyCW',
+      GERMANYCW: 'GermanyCW',
+      FALKLANDSISLANDS: 'Falklands',
+      CAUCASUSMAP: 'Caucasus',
+      SYRIAMAP: 'Syria',
+      IRAQMAP: 'Iraq',
+      KOLAMAP: 'Kola',
+      AFGHANISTANMAP: 'Afghanistan'
     };
 
     function inverseTransverseMercator(easting, northing, projection){
@@ -5710,6 +7070,77 @@ namespace VAICOM
       return isFinite(n) && n >= 1 && n <= 25;
     }
 
+    function getF14NavRoutes(root){
+      if (!root || typeof root !== 'object') return [];
+      const nav = Array.isArray(root.NAV) ? root.NAV : [];
+      return nav.filter(function(route){
+        if (!route || typeof route !== 'object') return false;
+        return Array.isArray(route.waypoints)
+          || Array.isArray(route.additional_points)
+          || Array.isArray(route.lines);
+      });
+    }
+
+    function getF14RouteSlots(root){
+      const routes = getF14NavRoutes(root);
+      const slots = routes.slice(0, 12).map(function(route, idx){
+        return {
+          key: 'R' + String(idx + 1),
+          route: route
+        };
+      });
+      return slots;
+    }
+
+    function getF14WaypointTypeInfo(rawName){
+      const original = String(rawName || '').trim();
+      const upper = original.toUpperCase();
+      const result = {
+        name: original,
+        typeRaw: 'WP',
+        isBullseye: false,
+      };
+
+      if (!upper) return result;
+
+      if (isBullseyeText(upper)){
+        result.typeRaw = 'BULL';
+        result.isBullseye = true;
+      }
+
+      function markAndTrim(regex, typeRaw, extra){
+        const match = upper.match(regex);
+        if (!match) return false;
+        result.typeRaw = typeRaw;
+        if (extra && typeof extra === 'object'){
+          Object.keys(extra).forEach(function(k){ result[k] = extra[k]; });
+        }
+        const trimmed = original.substring(0, match.index).trim();
+        if (trimmed) result.name = trimmed;
+        return true;
+      }
+
+      if (markAndTrim(/XFP$/i, 'FP')) return result;
+      if (markAndTrim(/XIP$/i, 'IP')) return result;
+      if (markAndTrim(/XST$/i, 'TGT')) return result;
+      if (markAndTrim(/XDP$/i, 'DP')) return result;
+      if (markAndTrim(/XHA$/i, 'HA')) return result;
+      if (markAndTrim(/XHB$/i, 'HOME')) return result;
+      if (markAndTrim(/X(?:\d{0,2})?B$/i, 'BULL', { isBullseye: true })) return result;
+      if (markAndTrim(/X(?:\d{0,2})?D$/i, 'DEST')) return result;
+      if (markAndTrim(/X(?:\d{0,2})?L$/i, 'LANTIRN')) return result;
+
+      const priorityMatch = upper.match(/X([1-7])$/i);
+      if (priorityMatch){
+        const level = Number(priorityMatch[1]);
+        result.typeRaw = (level >= 1 && level <= 3) ? ('PRIO ' + String(level)) : 'WP';
+        const trimmed = original.substring(0, priorityMatch.index).trim();
+        if (trimmed) result.name = trimmed;
+      }
+
+      return result;
+    }
+
     function getDtcWaypoints(root){
       const wypt = findDtcWyptObject(root, 0) || {};
       const navPts = Array.isArray(wypt.NAV_PTS) ? wypt.NAV_PTS : [];
@@ -5734,8 +7165,12 @@ namespace VAICOM
 
           const etaNum = isFinite(Number(routePoint.ETA)) ? Number(routePoint.ETA) : (isFinite(Number(point.ETA)) ? Number(point.ETA) : Number(point.TOS));
           const altNum = isFinite(Number(routePoint.alt)) ? Number(routePoint.alt) : (isFinite(Number(point.alt)) ? Number(point.alt) : (isFinite(Number(point.routeAltitude)) ? Number(point.routeAltitude) : Number(point.altitude)));
-          const xNum = isFinite(Number(point.x)) ? Number(point.x) : Number(point.posX);
-          const yNum = isFinite(Number(point.y)) ? Number(point.y) : Number(point.posY);
+          const xNum = isFinite(Number(routePoint.x))
+            ? Number(routePoint.x)
+            : (isFinite(Number(point.x)) ? Number(point.x) : Number(point.posX));
+          const yNum = isFinite(Number(routePoint.y))
+            ? Number(routePoint.y)
+            : (isFinite(Number(point.y)) ? Number(point.y) : Number(point.posY));
           const stepNum = isFinite(Number(point.wypt_num)) ? Math.round(Number(point.wypt_num)) : (isFinite(Number(point.number)) ? Math.round(Number(point.number)) : (idx + 1));
           if (!isDtcPrimaryRouteSteerpoint(stepNum)) return null;
           const speed = isFinite(Number(routePoint.speed)) ? Math.round(Number(routePoint.speed)) : (isFinite(Number(point.speed)) ? Math.round(Number(point.speed)) : NaN);
@@ -5760,6 +7195,60 @@ namespace VAICOM
             yNum: yNum
           };
         }).filter(function(wp){ return !!wp; });
+      }
+
+      const f14Slots = getF14RouteSlots(root);
+      if (f14Slots.length){
+        const mapped = [];
+        f14Slots.forEach(function(slot){
+          const route = (slot && slot.route && typeof slot.route === 'object') ? slot.route : {};
+          const routeWaypoints = Array.isArray(route.waypoints) ? route.waypoints : [];
+          routeWaypoints.slice(0, 200).forEach(function(point, idx){
+            const wp = (point && typeof point === 'object') ? point : {};
+            const nameInfo = getF14WaypointTypeInfo(wp.name);
+            const stepNum = isFinite(Number(wp.wypt_num))
+              ? Math.round(Number(wp.wypt_num))
+              : (isFinite(Number(wp.number)) ? Math.round(Number(wp.number)) : (idx + 1));
+            if (!isDtcPrimaryRouteSteerpoint(stepNum)) return;
+
+            const etaNum = isFinite(Number(wp.ETA)) ? Number(wp.ETA)
+              : (isFinite(Number(wp.tot)) ? Number(wp.tot) : NaN);
+            const altNum = isFinite(Number(wp.alt)) ? Number(wp.alt)
+              : (isFinite(Number(wp.elev)) ? Number(wp.elev) : Number(wp.altitude));
+            const xNum = isFinite(Number(wp.x)) ? Number(wp.x) : Number(wp.posX);
+            const yNum = isFinite(Number(wp.y)) ? Number(wp.y) : Number(wp.posY);
+            const spdNum = isFinite(Number(wp.spd)) ? Number(wp.spd) : Number(wp.speed);
+
+            mapped.push({
+              step: String(stepNum),
+              type: abbreviateRouteType(nameInfo.typeRaw || 'WP'),
+              typeRaw: String(nameInfo.typeRaw || 'WP'),
+              name: nameInfo.name || String(wp.name || ''),
+              alt: isFinite(altNum) ? String(Math.round(altNum)) : '-',
+              altFeet: altNum,
+              altType: String(wp.altitudeType || wp.alt_type || wp.altType || wp.alttype || ''),
+              eta: formatEtaSeconds(etaNum),
+              etaSourceSeconds: etaNum,
+              spd: isFinite(spdNum) ? String(Math.round(spdNum)) : '-',
+              x: isFinite(xNum) ? String(Math.round(xNum)) : '-',
+              y: isFinite(yNum) ? String(Math.round(yNum)) : '-',
+              xNum: xNum,
+              yNum: yNum,
+              __routeKey: String((slot && slot.key) || 'R1')
+            });
+          });
+        });
+
+        if (mapped.length){
+          return mapped
+            .sort(function(a, b){
+              const ra = String((a && a.__routeKey) || 'R1');
+              const rb = String((b && b.__routeKey) || 'R1');
+              if (ra !== rb) return ra.localeCompare(rb);
+              return Number(a && a.step) - Number(b && b.step);
+            })
+            .slice(0, 200);
+        }
       }
 
       const candidates = [];
@@ -5830,7 +7319,7 @@ namespace VAICOM
       const cmds = foundCmds
         .sort(function(a, b){
           function score(obj){
-            return Object.keys(obj || {}).filter(function(k){ return /^(AUTO_?\d+|MAN_?\d+|BYP)$/i.test(String(k)); }).length;
+            return Object.keys(obj || {}).filter(function(k){ return /^(AUTO_?\d+|MAN_?\d+|BYP|PROG_?\d+)$/i.test(String(k)); }).length;
           }
           return score(b) - score(a);
         })[0];
@@ -5900,6 +7389,17 @@ namespace VAICOM
       const rightRows = rightModes
         .map(function(k){ return rowByKey[String(k).toUpperCase()]; })
         .filter(function(x){ return !!x; });
+      if (!leftRows.length && !rightRows.length){
+        const fallbackRows = keys
+          .map(function(k){ return rowByKey[String(k).toUpperCase()]; })
+          .filter(function(x){ return !!x; });
+        const split = Math.ceil(fallbackRows.length / 2);
+        for (let i = 0; i < split; i++){
+          leftRows.push(fallbackRows[i] || '');
+          rightRows.push(fallbackRows[i + split] || '');
+        }
+      }
+
       const maxRows = Math.max(leftRows.length, rightRows.length);
 
       const rows = [];
@@ -6260,6 +7760,10 @@ namespace VAICOM
       const wypt = findDtcWyptObject(root, 0) || {};
       const navPts = Array.isArray(wypt.NAV_PTS) ? wypt.NAV_PTS : [];
       const navRoute = Array.isArray(wypt.NAV_ROUTE) ? wypt.NAV_ROUTE : [];
+      const f14Slots = getF14RouteSlots(root);
+      const routeRows = f14Slots.length
+        ? f14Slots.map(function(slot){ return String((slot && slot.key) || '').toUpperCase(); }).filter(function(k){ return isValidDtcRouteKey(k); })
+        : ['R1','R2','R3'];
 
       function isRouteSelected(v){
         if (v === true) return true;
@@ -6277,6 +7781,18 @@ namespace VAICOM
       });
 
       function routeList(routeKey){
+        if (f14Slots.length){
+          const labels = (Array.isArray(waypoints) ? waypoints : [])
+            .filter(function(wp){ return String((wp && wp.__routeKey) || '').toUpperCase() === routeKey; })
+            .sort(function(a, b){ return Number(a && a.step) - Number(b && b.step); })
+            .map(function(wp){
+              const step = String((wp && wp.step) || '-');
+              const name = String((wp && wp.name) || '').trim();
+              return name ? ('STP' + step + ' ' + name) : ('STP' + step);
+            });
+          return labels.length ? labels.join(', ') : '-';
+        }
+
         const orderKey = routeKey + '_order';
         const points = navPts.filter(function(p){
           return !!(p && typeof p === 'object' && isRouteSelected(p[routeKey]));
@@ -6319,11 +7835,9 @@ namespace VAICOM
         return '-';
       }
 
-      const body = [
-        '<tr><td>R1</td><td>' + escapeHtml(routeList('R1')) + '</td></tr>',
-        '<tr><td>R2</td><td>' + escapeHtml(routeList('R2')) + '</td></tr>',
-        '<tr><td>R3</td><td>' + escapeHtml(routeList('R3')) + '</td></tr>'
-      ];
+      const body = routeRows.map(function(routeKey){
+        return '<tr><td>' + escapeHtml(routeKey) + '</td><td>' + escapeHtml(routeList(routeKey)) + '</td></tr>';
+      });
 
       return '<div class=""fltPlanPage2Section""><div class=""fltPlanPage2Title"">ROUTES</div><div class=""fltPlanPage2Body""><table class=""fltPlanPage2Table""><thead><tr><th style=""width:56px;"">ROUTE</th><th>WAYPOINTS</th></tr></thead><tbody>' + body.join('') + '</tbody></table></div></div>';
     }
@@ -6371,6 +7885,19 @@ namespace VAICOM
     }
 
     function getDtcAvailableRoutes(root, waypoints){
+      const f14Slots = getF14RouteSlots(root);
+      if (f14Slots.length){
+        const rows = Array.isArray(waypoints) ? waypoints : [];
+        const available = ['R1'];
+        f14Slots.forEach(function(slot){
+          const routeKey = String((slot && slot.key) || '').toUpperCase();
+          if (!isValidDtcRouteKey(routeKey) || routeKey === 'R1') return;
+          const hasRows = rows.some(function(wp){ return String((wp && wp.__routeKey) || '').toUpperCase() === routeKey; });
+          if (hasRows) available.push(routeKey);
+        });
+        return available;
+      }
+
       const wypt = findDtcWyptObject(root, 0) || {};
       const navPts = Array.isArray(wypt.NAV_PTS) ? wypt.NAV_PTS : [];
       const navRoute = Array.isArray(wypt.NAV_ROUTE) ? wypt.NAV_ROUTE : [];
@@ -6390,12 +7917,20 @@ namespace VAICOM
 
     function filterDtcWaypointsByRoute(root, waypoints, routeKey){
       const route = String(routeKey || 'R1').toUpperCase();
-      if (!/^R[123]$/.test(route)) return Array.isArray(waypoints) ? waypoints : [];
+      if (!isValidDtcRouteKey(route)) return Array.isArray(waypoints) ? waypoints : [];
+
+      const list = Array.isArray(waypoints) ? waypoints : [];
+      const hasTaggedRoutes = list.some(function(wp){ return String((wp && wp.__routeKey) || '').trim() !== ''; });
+      if (list.some(function(wp){ return String((wp && wp.__routeKey) || '').toUpperCase() === route; })){
+        return list
+          .filter(function(wp){ return String((wp && wp.__routeKey) || '').toUpperCase() === route; })
+          .sort(function(a, b){ return Number(a && a.step) - Number(b && b.step); });
+      }
+      if (hasTaggedRoutes) return [];
 
       const wypt = findDtcWyptObject(root, 0) || {};
       const navPts = Array.isArray(wypt.NAV_PTS) ? wypt.NAV_PTS : [];
       const navRoute = Array.isArray(wypt.NAV_ROUTE) ? wypt.NAV_ROUTE : [];
-      const list = Array.isArray(waypoints) ? waypoints : [];
       if (!navPts.length || !list.length) return list;
 
       const stepSet = {};
@@ -6594,17 +8129,12 @@ namespace VAICOM
       const sa = (root && typeof root === 'object' && root.SA && typeof root.SA === 'object')
         ? root.SA
         : findFirstObjectByKeyPattern(root, /^SA$/i, 0);
-      if ((!mpd || typeof mpd !== 'object') && (!sa || typeof sa !== 'object')){
-        return {
-          geolines: [],
-          threatPoints: [],
-          destinationPoints: [],
-          faorLines: [],
-          flotLines: [],
-          capPoints: [],
-          corridors: []
-        };
-      }
+      const f14Slots = getF14RouteSlots(root);
+      const route = String(routeKey || 'R1').toUpperCase();
+      const selectedF14Slot = f14Slots.find(function(slot){ return String((slot && slot.key) || '').toUpperCase() === route; }) || f14Slots[0] || null;
+      const selectedF14Route = selectedF14Slot && selectedF14Slot.route && typeof selectedF14Slot.route === 'object'
+        ? selectedF14Slot.route
+        : null;
 
       const allGeoLines = Array.isArray(mpd && mpd.GEO_LINES) ? mpd.GEO_LINES : [];
       const geoLines = allGeoLines
@@ -6734,11 +8264,124 @@ namespace VAICOM
 
       const corridors = parseLineCollection(sa && sa.CORRIDORS);
 
+      const f14AdditionalPoints = (Array.isArray(selectedF14Route && selectedF14Route.additional_points) ? selectedF14Route.additional_points : [])
+        .map(function(p){
+          const xNum = Number(p && p.x);
+          const yNum = Number(p && p.y);
+          if (!isFinite(xNum) || !isFinite(yNum)) return null;
+          const nameInfo = getF14WaypointTypeInfo((p && p.name) || '');
+          return {
+            xNum: xNum,
+            yNum: yNum,
+            label: String(nameInfo.name || (p && p.name) || '').trim(),
+            isBullseye: !!nameInfo.isBullseye,
+            typeRaw: String(nameInfo.typeRaw || 'WP')
+          };
+        })
+        .filter(function(p){ return !!p; });
+
+      const f14Lines = (Array.isArray(selectedF14Route && selectedF14Route.lines) ? selectedF14Route.lines : [])
+        .map(function(line, lineIdx){
+          const points = (Array.isArray(line && line.points) ? line.points : [])
+            .map(function(pt, pointIdx){
+              const xNum = Number(pt && pt.x);
+              const yNum = Number(pt && pt.y);
+              if (!isFinite(xNum) || !isFinite(yNum)) return null;
+              return {
+                xNum: xNum,
+                yNum: yNum,
+                number: isFinite(Number(pt && pt.number)) ? Number(pt.number) : (pointIdx + 1),
+                label: String((pt && pt.name) || '').trim()
+              };
+            })
+            .filter(function(pt){ return !!pt; });
+          return {
+            id: 'F14-LINE-' + String(lineIdx + 1),
+            number: lineIdx + 1,
+            label: String((line && line.name) || '').trim(),
+            points: points
+          };
+        })
+        .filter(function(line){ return line && Array.isArray(line.points) && line.points.length > 1; });
+
+      const jdamThreatPoints = (Array.isArray(root && root.JDAM && root.JDAM.stations) ? root.JDAM.stations : [])
+        .reduce(function(acc, station){
+          const targets = Array.isArray(station && station.targets) ? station.targets : [];
+          targets.forEach(function(target){
+            const active = !!(target && target.active);
+            const xNum = Number(target && target.x);
+            const yNum = Number(target && target.y);
+            if (!active || !isFinite(xNum) || !isFinite(yNum)) return;
+            acc.push({
+              xNum: xNum,
+              yNum: yNum,
+              radiusMeters: 0,
+              ring: false,
+              label: String((target && target.name) || 'DMPI').trim() || 'DMPI'
+            });
+          });
+          return acc;
+        }, []);
+
+      const f14BullseyeDestinations = f14AdditionalPoints
+        .filter(function(p){ return !!(p && p.isBullseye); })
+        .map(function(p){
+          return {
+            xNum: Number(p.xNum),
+            yNum: Number(p.yNum),
+            label: String(p.label || 'BULLSEYE')
+          };
+        });
+
+      const f14AreaThreatPoints = f14AdditionalPoints
+        .filter(function(p){
+          const typeRaw = String((p && p.typeRaw) || '').toUpperCase();
+          return typeRaw === 'DP' || typeRaw === 'HA';
+        })
+        .map(function(p){
+          const typeRaw = String((p && p.typeRaw) || '').toUpperCase();
+          const areaLabel = typeRaw === 'DP' ? 'DP' : 'HA';
+          const nameLabel = String((p && p.label) || '').trim();
+          return {
+            xNum: Number(p.xNum),
+            yNum: Number(p.yNum),
+            radiusMeters: 20 * 1852,
+            ring: true,
+            label: (areaLabel + (nameLabel ? (' ' + nameLabel) : '')).trim(),
+            subtype: areaLabel.toLowerCase()
+          };
+        });
+
+      const f14GeneralDestinations = f14AdditionalPoints
+        .filter(function(p){
+          if (!p || p.isBullseye) return false;
+          const typeRaw = String((p && p.typeRaw) || '').toUpperCase();
+          return typeRaw !== 'DP' && typeRaw !== 'HA';
+        })
+        .map(function(p){
+          const typeRaw = String((p && p.typeRaw) || '').toUpperCase();
+          const prioMatch = typeRaw.match(/^PRIO\s*(\d+)$/);
+          const isPriority = !!prioMatch;
+          const priorityLabel = isPriority ? ('P' + String(prioMatch[1])) : '';
+          const labelText = isPriority
+            ? priorityLabel
+            : String(p.label || '').trim();
+          const subtype = typeRaw === 'LANTIRN'
+            ? 'lantirn'
+            : (isPriority ? 'priority' : typeRaw.toLowerCase());
+          return {
+            xNum: Number(p.xNum),
+            yNum: Number(p.yNum),
+            label: labelText,
+            subtype: subtype
+          };
+        });
+
       return {
         geolines: geoLines,
-        threatPoints: threatPoints.concat(mezThreatPoints),
-        destinationPoints: destinationPoints,
-        faorLines: faorLines,
+        threatPoints: threatPoints.concat(mezThreatPoints).concat(jdamThreatPoints).concat(f14AreaThreatPoints),
+        destinationPoints: destinationPoints.concat(f14BullseyeDestinations).concat(f14GeneralDestinations),
+        faorLines: faorLines.concat(f14Lines),
         flotLines: flotLines,
         capPoints: capPoints,
         corridors: corridors
@@ -6813,6 +8456,372 @@ namespace VAICOM
       }
 
       return null;
+    }
+
+    function buildOpenFreeMapPayload(waypoints, data, overlays, bullseyePoint){
+      const rows = Array.isArray(waypoints) ? waypoints.filter(function(wp){
+        return isFinite(Number(wp && wp.xNum)) && isFinite(Number(wp && wp.yNum));
+      }) : [];
+      const model = data || latestData || {};
+      const server = (model && model.Server) || {};
+      const diagnostics = (server && server.Diagnostics) || {};
+      const theatreCandidates = [
+        server.Theater,
+        diagnostics.theater,
+        diagnostics.terrain,
+        diagnostics.terrainName,
+        lastKnownTheater,
+      ];
+      let theatre = '';
+      for (let i = 0; i < theatreCandidates.length; i++){
+        const candidate = String(theatreCandidates[i] || '').trim();
+        if (!candidate) continue;
+        if (getMapProjectionByTheatre(candidate)){
+          theatre = candidate;
+          break;
+        }
+      }
+      if (!theatre){
+        openFreeMapLastPayloadStatus = 'no-theatre';
+        return null;
+      }
+
+      const mapOverlays = overlays && typeof overlays === 'object'
+        ? overlays
+        : { geolines: [], threatPoints: [], destinationPoints: [], faorLines: [], flotLines: [], capPoints: [], corridors: [] };
+
+      function toLonLat(point){
+        const north = Number(point && point.xNum);
+        const east = Number(point && point.yNum);
+        if (!isFinite(north) || !isFinite(east)) return null;
+
+        function validLonLat(lon, lat){
+          return isFinite(Number(lon))
+            && isFinite(Number(lat))
+            && Math.abs(Number(lat)) <= 90
+            && Math.abs(Number(lon)) <= 180;
+        }
+
+        const llPrimary = convertDcsXYToLatLon(theatre, north, east);
+        if (llPrimary && validLonLat(llPrimary.lon, llPrimary.lat)){
+          return [Number(llPrimary.lon), Number(llPrimary.lat)];
+        }
+
+        const llSwapped = convertDcsXYToLatLon(theatre, east, north);
+        if (llSwapped && validLonLat(llSwapped.lon, llSwapped.lat)){
+          return [Number(llSwapped.lon), Number(llSwapped.lat)];
+        }
+
+        if (validLonLat(east, north)){
+          return [east, north];
+        }
+        if (validLonLat(north, east)){
+          return [north, east];
+        }
+
+        return null;
+      }
+
+      function getTheatreCenterLonLat(theatreName){
+        const t = String(theatreName || '').replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+        const centers = {
+          CAUCASUS: [44.5, 43.4],
+          NEVADA: [-115.2, 36.2],
+          NORMANDY: [0.6, 49.2],
+          THECHANNEL: [1.2, 51.0],
+          PERSIANGULF: [56.2, 25.5],
+          SYRIA: [37.0, 35.4],
+          MARIANAISLANDS: [145.6, 15.2],
+          FALKLANDS: [-59.5, -52.1],
+          SINAIMAP: [34.2, 30.1],
+          KOLA: [29.5, 68.7],
+          AFGHANISTAN: [66.0, 34.5],
+          IRAQ: [44.8, 33.2],
+          GERMANYCW: [10.2, 51.2],
+        };
+        return centers[t] || null;
+      }
+
+      const pointsForBounds = [];
+      const features = [];
+
+      function addPointFeature(point, props){
+        const lonLat = toLonLat(point);
+        if (!lonLat) return;
+        pointsForBounds.push(lonLat);
+        features.push({
+          type: 'Feature',
+          geometry: {
+            type: 'Point',
+            coordinates: lonLat,
+          },
+          properties: props || {},
+        });
+      }
+
+      function addLineFeature(points, props){
+        const coords = (Array.isArray(points) ? points : [])
+          .map(function(p){ return toLonLat(p); })
+          .filter(function(c){ return Array.isArray(c) && c.length === 2; });
+        if (coords.length < 2) return;
+        coords.forEach(function(c){ pointsForBounds.push(c); });
+        features.push({
+          type: 'Feature',
+          geometry: {
+            type: 'LineString',
+            coordinates: coords,
+          },
+          properties: props || {},
+        });
+      }
+
+      const byStep = {};
+      rows.forEach(function(wp){ byStep[String(wp && wp.step)] = wp; });
+      getMudMapSegments(rows).forEach(function(seg){
+        const from = byStep[String(seg && seg.from && seg.from.step)] || (seg && seg.from);
+        const to = byStep[String(seg && seg.to && seg.to.step)] || (seg && seg.to);
+        if (!from || !to) return;
+        addLineFeature([from, to], {
+          stroke: '#2f5fa7',
+          lineWidth: seg && seg.dashed ? 1.8 : 2.2,
+          dashed: !!(seg && seg.dashed)
+        });
+      });
+
+      rows.forEach(function(wp){
+        const step = String(wp && wp.step || '').trim();
+        const name = String(wp && wp.name || '').trim();
+        const label = step ? (step + (name ? (' ' + name) : '')) : name;
+        addPointFeature(wp, {
+          kind: 'waypoint',
+          label: label || 'WP',
+          fill: '#2d8fe3',
+          stroke: '#1f5d93',
+          textColor: '#1f3550',
+          radius: 4,
+        });
+      });
+
+      (Array.isArray(mapOverlays.geolines) ? mapOverlays.geolines : []).forEach(function(p){
+        addPointFeature(p, {
+          kind: 'geoline',
+          label: String((p && p.label) || '').trim(),
+          fill: '#7a57b3',
+          stroke: '#5a3d89',
+          textColor: '#5a3d89',
+          radius: 3,
+        });
+      });
+
+      const geolineRows = Array.isArray(mapOverlays.geolines) ? mapOverlays.geolines : [];
+      ['L1', 'L2', 'L3', 'L4'].forEach(function(lineKey){
+        const linePoints = geolineRows
+          .filter(function(p){
+            const flags = (p && Array.isArray(p.lineFlags)) ? p.lineFlags : [];
+            return flags.indexOf(lineKey) >= 0;
+          })
+          .sort(function(a, b){
+            const an = Number(a && a.number);
+            const bn = Number(b && b.number);
+            if (isFinite(an) && isFinite(bn) && an !== bn) return an - bn;
+            return 0;
+          });
+        if (linePoints.length >= 2){
+          addLineFeature(linePoints, { stroke: '#7a57b3', lineWidth: 2.2, dashed: true });
+        }
+      });
+
+      function addGroupedLines(groups, strokeColor){
+        (Array.isArray(groups) ? groups : []).forEach(function(g){
+          const pts = (Array.isArray(g && g.points) ? g.points : []);
+          addLineFeature(pts, { stroke: strokeColor, lineWidth: 2, dashed: true });
+        });
+      }
+
+      function addCorridorBounds(groups){
+        const corridorHalfWidthMeters = 5000;
+        (Array.isArray(groups) ? groups : []).forEach(function(group){
+          const pts = (Array.isArray(group && group.points) ? group.points : [])
+            .map(function(p){
+              return {
+                xNum: Number(p && p.xNum),
+                yNum: Number(p && p.yNum),
+                number: Number(p && p.number)
+              };
+            })
+            .filter(function(p){ return isFinite(p.xNum) && isFinite(p.yNum); })
+            .sort(function(a, b){
+              if (isFinite(a.number) && isFinite(b.number) && a.number !== b.number) return a.number - b.number;
+              return 0;
+            });
+          if (pts.length < 2) return;
+
+          const left = [];
+          const right = [];
+          for (let i = 0; i < pts.length; i++){
+            const prev = pts[Math.max(0, i - 1)];
+            const next = pts[Math.min(pts.length - 1, i + 1)];
+            const dNorth = Number(next.xNum) - Number(prev.xNum);
+            const dEast = Number(next.yNum) - Number(prev.yNum);
+            const len = Math.sqrt((dNorth * dNorth) + (dEast * dEast));
+            if (!isFinite(len) || len <= 0){
+              left.push({ xNum: pts[i].xNum, yNum: pts[i].yNum });
+              right.push({ xNum: pts[i].xNum, yNum: pts[i].yNum });
+              continue;
+            }
+            const unitEast = dEast / len;
+            const unitNorth = dNorth / len;
+            left.push({
+              xNum: pts[i].xNum + ((-unitEast) * corridorHalfWidthMeters),
+              yNum: pts[i].yNum + (unitNorth * corridorHalfWidthMeters)
+            });
+            right.push({
+              xNum: pts[i].xNum - ((-unitEast) * corridorHalfWidthMeters),
+              yNum: pts[i].yNum - (unitNorth * corridorHalfWidthMeters)
+            });
+          }
+
+          addLineFeature(left, { stroke: '#3c7cc0', lineWidth: 1.9, dashed: true });
+          addLineFeature(right, { stroke: '#3c7cc0', lineWidth: 1.9, dashed: true });
+        });
+      }
+
+      addGroupedLines(mapOverlays.faorLines, '#1f9fd0');
+      addGroupedLines(mapOverlays.flotLines, '#c74b4b');
+      addCorridorBounds(mapOverlays.corridors);
+
+      (Array.isArray(mapOverlays.destinationPoints) ? mapOverlays.destinationPoints : []).forEach(function(p){
+        addPointFeature(p, {
+          kind: 'destination',
+          label: String((p && p.label) || '').trim(),
+          destinationSubtype: String((p && p.subtype) || '').toLowerCase(),
+          fill: '#d4a42f',
+          stroke: '#7a5a14',
+          textColor: '#6a4f16',
+          radius: 4.4,
+        });
+      });
+
+      (Array.isArray(mapOverlays.threatPoints) ? mapOverlays.threatPoints : []).forEach(function(p){
+        addPointFeature(p, {
+          kind: 'threat',
+          label: String((p && p.label) || '').trim(),
+          fill: '#bc3e3e',
+          stroke: '#8b2d2d',
+          textColor: '#8b2d2d',
+          radius: 4.2,
+          ring: !!(p && p.ring),
+          radiusMeters: Number(p && p.radiusMeters),
+        });
+      });
+
+      (Array.isArray(mapOverlays.capPoints) ? mapOverlays.capPoints : []).forEach(function(p){
+        addPointFeature(p, {
+          kind: 'cap',
+          label: String((p && p.label) || '').trim(),
+          fill: '#2f5fa7',
+          stroke: '#2f5fa7',
+          textColor: '#2f5fa7',
+          radius: 3.8,
+          course: Number(p && p.course),
+          lengthMeters: Number(p && p.lengthMeters),
+          diameterMeters: Number(p && p.diameterMeters),
+          turnDirection: String((p && p.turnDirection) || '').trim(),
+        });
+      });
+
+      if (bullseyePoint){
+        addPointFeature(bullseyePoint, {
+          kind: 'bullseye',
+          label: String((bullseyePoint && bullseyePoint.label) || 'BULLSEYE'),
+          fill: '#f0c544',
+          stroke: '#7a6420',
+          textColor: '#5f4b1b',
+          radius: 5,
+        });
+      }
+
+      const selected = getActiveFlightPlanSelection(model);
+      const rawAssets = getMudMapAssets(model, dlinkOnEnabled);
+      rawAssets.forEach(function(asset){
+        const category = String((asset && asset.category) || '').toUpperCase();
+        const isPlayer = category === 'PLAYER';
+        const callsign = String((asset && asset.callsign) || '').trim();
+        const label = callsign || String((asset && asset.name) || category || 'ASSET').trim();
+        const assetKey = makeMapAssetSelectionKey(asset);
+        addPointFeature(asset, {
+          kind: isPlayer ? 'player' : 'asset',
+          group: isPlayer ? 'player' : 'asset',
+          label: label,
+          fill: isPlayer ? '#2f9e56' : '#5a7ea5',
+          stroke: isPlayer ? '#1e6a39' : '#385676',
+          textColor: isPlayer ? '#1e6a39' : '#1f3550',
+          radius: isPlayer ? 5 : 3.6,
+          assetKind: getMudMapAssetKind(asset),
+          assetKey: assetKey,
+          callsign: String((asset && asset.callsign) || '').trim(),
+          name: String((asset && asset.name) || '').trim(),
+          category: category,
+          typeName: String((asset && asset.typeName) || '').trim(),
+          frequency: String((asset && asset.frequency) || '').trim(),
+          tacan: String((asset && asset.tacan) || '').trim(),
+          mpClientCallsign: String((asset && asset.mpClientCallsign) || '').trim(),
+          altFeet: Number(asset && asset.altFeet),
+        });
+      });
+
+      if (!pointsForBounds.length){
+        const centerOnly = getTheatreCenterLonLat(theatre);
+        if (!centerOnly) {
+          openFreeMapLastPayloadStatus = 'no-converted-points';
+          return null;
+        }
+        openFreeMapLastPayloadStatus = 'base-only/no-overlay-points';
+        return {
+          selected: selected,
+          theatre: theatre,
+          centerLon: Number(centerOnly[0]),
+          centerLat: Number(centerOnly[1]),
+          bounds: [Number(centerOnly[0]) - 1.0, Number(centerOnly[1]) - 1.0, Number(centerOnly[0]) + 1.0, Number(centerOnly[1]) + 1.0],
+          features: [],
+        };
+      }
+
+      const lons = pointsForBounds.map(function(c){ return Number(c[0]); }).filter(function(v){ return isFinite(v); });
+      const lats = pointsForBounds.map(function(c){ return Number(c[1]); }).filter(function(v){ return isFinite(v); });
+      if (!lons.length || !lats.length){
+        const centerOnly = getTheatreCenterLonLat(theatre);
+        if (!centerOnly){
+          openFreeMapLastPayloadStatus = 'invalid-bounds';
+          return null;
+        }
+        openFreeMapLastPayloadStatus = 'base-only/invalid-bounds';
+        return {
+          selected: selected,
+          theatre: theatre,
+          centerLon: Number(centerOnly[0]),
+          centerLat: Number(centerOnly[1]),
+          bounds: [Number(centerOnly[0]) - 1.0, Number(centerOnly[1]) - 1.0, Number(centerOnly[0]) + 1.0, Number(centerOnly[1]) + 1.0],
+          features: [],
+        };
+      }
+
+      const minLon = Math.min.apply(null, lons);
+      const maxLon = Math.max.apply(null, lons);
+      const minLat = Math.min.apply(null, lats);
+      const maxLat = Math.max.apply(null, lats);
+      const centerLon = (minLon + maxLon) / 2;
+      const centerLat = (minLat + maxLat) / 2;
+
+      openFreeMapLastPayloadStatus = 'ok pts=' + String(pointsForBounds.length) + ' feat=' + String(features.length);
+      return {
+        selected: selected,
+        theatre: theatre,
+        centerLon: centerLon,
+        centerLat: centerLat,
+        bounds: [minLon, minLat, maxLon, maxLat],
+        features: features,
+      };
     }
 
     function buildMudMapSvg(waypoints, data, overlays, bullseyePoint){
@@ -7162,6 +9171,14 @@ namespace VAICOM
       });
       const destinationEls = destinationMapped.map(function(m){
         const label = escapeHtml(String((m && m.p && m.p.label) || 'DEST'));
+        const subtype = String((m && m.p && m.p.subtype) || '').toLowerCase();
+        if (subtype === 'lantirn'){
+          return '<g>'
+            + '<line x1=""' + (m.x - 5).toFixed(1) + '"" y1=""' + m.y.toFixed(1) + '"" x2=""' + (m.x + 5).toFixed(1) + '"" y2=""' + m.y.toFixed(1) + '"" stroke=""' + palette.destStroke + '"" stroke-width=""1.5"" />'
+            + '<line x1=""' + m.x.toFixed(1) + '"" y1=""' + (m.y - 5).toFixed(1) + '"" x2=""' + m.x.toFixed(1) + '"" y2=""' + (m.y + 5).toFixed(1) + '"" stroke=""' + palette.destStroke + '"" stroke-width=""1.5"" />'
+            + '<text x=""' + (m.x + 9).toFixed(1) + '"" y=""' + (m.y + 4).toFixed(1) + '"" font-size=""10"" fill=""' + palette.destLabel + '"" font-weight=""700"">' + label + '</text>'
+            + '</g>';
+        }
         const p1 = m.x.toFixed(1) + ',' + (m.y - 7).toFixed(1);
         const p2 = (m.x - 7).toFixed(1) + ',' + m.y.toFixed(1);
         const p3 = m.x.toFixed(1) + ',' + (m.y + 7).toFixed(1);
@@ -7430,8 +9447,35 @@ namespace VAICOM
       if (pageSwitcherHtml){
         html += '<div style=""margin:4px 0 6px 0;"">' + pageSwitcherHtml + '</div>';
       }
-      html += '<div class=""controls fltPlanControls"" style=""margin:0 0 6px 0;""><button type=""button"" class=""fltPlanPageBtn"" data-map-zoom=""in"">Map +</button><button type=""button"" class=""fltPlanPageBtn"" data-map-zoom=""out"">Map -</button><button type=""button"" class=""fltPlanPageBtn"" data-map-zoom=""reset"">Map Reset</button></div>';
+      const mapBackgroundEnabled = isMapBackgroundEnabledBySelection(selected);
+      if (mapBackgroundEnabled){
+        openFreeMapLastPayloadStatus = 'init';
+      }
       const bullseyePoint = getMapBullseyePoint(root, mapRows, overlays, data);
+      const hasPayloadBuilder = typeof buildOpenFreeMapPayload === 'function';
+      if (mapBackgroundEnabled && !hasPayloadBuilder){
+        openFreeMapLastPayloadStatus = 'builder-missing';
+      }
+      const openFreeMapPayload = mapBackgroundEnabled && hasPayloadBuilder
+        ? buildOpenFreeMapPayload(mapRows, data, overlays, bullseyePoint)
+        : null;
+      if (mapBackgroundEnabled && !openFreeMapPayload && openFreeMapLastPayloadStatus === 'init'){
+        openFreeMapLastPayloadStatus = 'builder-null';
+      }
+      const openFreeMapId = (openFreeMapPayload && typeof registerOpenFreeMapPayload === 'function')
+        ? registerOpenFreeMapPayload(selected, openFreeMapPayload)
+        : '';
+      if (mapBackgroundEnabled && openFreeMapPayload && !openFreeMapId){
+        openFreeMapLastPayloadStatus = 'register-failed';
+      }
+      const bgStatus = !mapBackgroundEnabled
+        ? 'BG disabled'
+        : (openFreeMapRuntimeFailed
+            ? ('BG runtime unavailable' + (openFreeMapRuntimeErrorText ? (': ' + openFreeMapRuntimeErrorText) : ''))
+            : (openFreeMapPayload
+                ? ('BG ready [' + openFreeMapLastPayloadStatus + ']')
+                : ('BG unavailable for current theatre/data (' + String((((data && data.Server) || {}).Theater) || lastKnownTheater || '?') + ')' + (openFreeMapLastPayloadStatus ? (' [' + openFreeMapLastPayloadStatus + ']') : ''))));
+      html += '<div class=""controls fltPlanControls"" style=""margin:0 0 6px 0;""><button type=""button"" class=""fltPlanPageBtn"" data-map-zoom=""in"">Map In</button><button type=""button"" class=""fltPlanPageBtn"" data-map-zoom=""out"">Map Out</button><button type=""button"" class=""fltPlanPageBtn"" data-map-zoom=""reset"">Map Reset</button><button id=""mapBgToggleBtn"" type=""button"" class=""fltPlanPageBtn"" data-map-bg-toggle=""1"">BG ' + (mapBackgroundEnabled ? 'ON' : 'OFF') + '</button><span id=""mapBgStatus"" class=""fltPlanMapBgStatus"">' + escapeHtml(bgStatus) + '</span></div>';
       const selectedAssetKey = getMapSelectedAssetKeyBySelection(selected);
       const rawAssets = getMudMapAssets(data, dlinkOnEnabled);
       const markerCount = rawAssets
@@ -7446,12 +9490,20 @@ namespace VAICOM
       }
 
       html += '<div class=""fltPlanPage3Wrap"">';
-      html += buildMudMapSvg(mapRows, data, overlays, bullseyePoint);
+      const mapSvg = buildMudMapSvg(mapRows, data, overlays, bullseyePoint);
+      if (openFreeMapId){
+        html += '<div class=""fltPlanPage3Canvas fltPlanOpenMapWrap"" data-openfreemap-wrap=""' + escapeHtml(openFreeMapId) + '"">';
+        html += '<div class=""fltPlanOpenMapHost"" data-openfreemap-map-id=""' + escapeHtml(openFreeMapId) + '"" data-openfreemap-selection=""' + escapeHtml(getFlightPlanEtaStartKey(selected)) + '""></div>';
+        html += '<div class=""fltPlanOpenMapFallback"">' + mapSvg + '</div>';
+        html += '</div>';
+      } else {
+        html += mapSvg;
+      }
       let readout = formatMapBraReadout(data, selectedAsset, bullseyePoint);
       if (markerCount > 0){
         readout += '   MKR ' + String(markerCount);
       }
-      html += '<div class=""fltPlanPage3BraReadout"">' + escapeHtml(readout) + '</div>';
+      html += '<div id=""mapBraReadout"" class=""fltPlanPage3BraReadout"">' + escapeHtml(readout) + '</div>';
       html += '</div></div>';
       return html;
     }
@@ -7956,7 +10008,7 @@ namespace VAICOM
         return formatDtcPage3Html(pageSwitcherHtml, waypoints, data, selected, mapOverlays, root);
       }
       if (page === 2){
-        return formatDtcPage2Html(root, pageSwitcherHtml, waypoints, data, selected);
+        return formatDtcPage2Html(root, pageSwitcherHtml, allWaypoints, data, selected);
       }
       return renderFlightPlanBoardHtml(selected, data, getDtcDisplayName(selected) + ' ' + routeKey, 'DTC JSON', getPathFileName(selected), waypoints, cmdsBlockHtml, pageSwitcherHtml);
     }
@@ -8386,6 +10438,10 @@ namespace VAICOM
       const displayData = getDisplayData(data);
       maybeResetFlightPlanStateForMission(data);
       const server = displayData && displayData.Server ? displayData.Server : {};
+      const renderTheater = String(server.Theater || '').trim();
+      if (renderTheater){
+        lastKnownTheater = renderTheater;
+      }
       const haveMission = !!(server.Aircraft || server.MissionTitle || server.Theater);
       const debugMode = !!server.DebugMode;
       const defaultStatusText = haveMission ? 'Live session detected.' : 'Waiting for mission data...';
@@ -8439,9 +10495,72 @@ namespace VAICOM
       updateDrawModeToggleUi();
       document.getElementById('tabTitle').textContent = 'Tab: ' + tabLabel(selectedTab);
       const tabBody = document.getElementById('tabBody');
+      let activeDtcSelection = '';
+      let preserveOpenFreeMapView = false;
+      if (selectedTab === 'DTC'){
+        activeDtcSelection = getActiveFlightPlanSelection(displayData);
+        const page = activeDtcSelection ? getDtcPageBySelection(activeDtcSelection) : 1;
+        const openMapHost = (tabBody && tabBody.querySelector) ? tabBody.querySelector('[data-openfreemap-map-id]') : null;
+        const hasOpenMapHost = !!openMapHost;
+        const hostSelection = openMapHost ? String(openMapHost.getAttribute('data-openfreemap-selection') || '') : '';
+        preserveOpenFreeMapView = !!(activeDtcSelection
+          && page === 4
+          && hasOpenMapHost
+          && hostSelection === getFlightPlanEtaStartKey(activeDtcSelection)
+          && isMapBackgroundEnabledBySelection(activeDtcSelection));
+      }
+
+      if (!preserveOpenFreeMapView && typeof disposeOpenFreeMapInstances === 'function'){
+        disposeOpenFreeMapInstances();
+      }
+
       if (selectedTab === 'DTC'){
         tabBody.className = 'content mainContent fltPlanContent';
-        tabBody.innerHTML = formatDtcTabContentHtml(displayData);
+        if (!preserveOpenFreeMapView){
+          tabBody.innerHTML = formatDtcTabContentHtml(displayData);
+          if (typeof initializeOpenFreeMapInstances === 'function'){
+            initializeOpenFreeMapInstances();
+          }
+        } else if (activeDtcSelection){
+          formatDtcTabContentHtml(displayData);
+          const payload = getLatestOpenFreeMapPayloadBySelection(activeDtcSelection);
+          if (payload){
+            syncOpenFreeMapForSelection(activeDtcSelection, payload);
+          }
+          const bgBtn = document.getElementById('mapBgToggleBtn');
+          if (bgBtn){
+            bgBtn.textContent = 'BG ' + (isMapBackgroundEnabledBySelection(activeDtcSelection) ? 'ON' : 'OFF');
+          }
+          const bgStatusEl = document.getElementById('mapBgStatus');
+          if (bgStatusEl){
+            const mapBackgroundEnabled = isMapBackgroundEnabledBySelection(activeDtcSelection);
+            const hasPayload = !!payload;
+            const bgStatus = !mapBackgroundEnabled
+              ? 'BG disabled'
+              : (openFreeMapRuntimeFailed
+                  ? ('BG runtime unavailable' + (openFreeMapRuntimeErrorText ? (': ' + openFreeMapRuntimeErrorText) : ''))
+                  : (hasPayload
+                      ? ('BG ready [' + openFreeMapLastPayloadStatus + ']')
+                      : ('BG unavailable for current theatre/data (' + String((((displayData && displayData.Server) || {}).Theater) || lastKnownTheater || '?') + ')' + (openFreeMapLastPayloadStatus ? (' [' + openFreeMapLastPayloadStatus + ']') : ''))));
+            bgStatusEl.textContent = bgStatus;
+          }
+
+          const readoutEl = document.getElementById('mapBraReadout');
+          if (readoutEl){
+            const selectedAssetKey = getMapSelectedAssetKeyBySelection(activeDtcSelection);
+            const rawAssets = getMudMapAssets(displayData, dlinkOnEnabled);
+            const selectedAsset = selectedAssetKey
+              ? (rawAssets.find(function(a){ return makeMapAssetSelectionKey(a) === selectedAssetKey; }) || null)
+              : null;
+            const bullseyePoint = getMapBullseyePoint(null, [], null, displayData);
+            let readout = formatMapBraReadout(displayData, selectedAsset, bullseyePoint);
+            const markerCount = rawAssets.filter(function(a){ return String((a && a.category) || '').toUpperCase() === 'MAP_MARKER'; }).length;
+            if (markerCount > 0){
+              readout += '   MKR ' + String(markerCount);
+            }
+            readoutEl.textContent = readout;
+          }
+        }
       } else {
         tabBody.className = 'content mainContent';
         tabBody.textContent = formatTabContent(displayData, selectedTab);
@@ -8465,7 +10584,7 @@ namespace VAICOM
       } else {
         if (keywordPanelEl) keywordPanelEl.style.display = 'flex';
         document.getElementById('keywordTitle').textContent = 'Keywords: ' + tabLabel(selectedTab) + aiCrewPhaseSuffix;
-        document.getElementById('keywordBody').innerHTML = formatKeywordReferenceHtml(displayData, selectedTab);
+        updateKeywordBodyHtml(formatKeywordReferenceHtml(displayData, selectedTab));
       }
 
       const showRawWrap = document.getElementById('showRawWrap');
@@ -8897,9 +11016,30 @@ namespace VAICOM
             const selected = getActiveFlightPlanSelection(latestData);
             const action = String(node.getAttribute('data-map-zoom') || '').toLowerCase();
             if (selected){
-              if (action === 'in') zoomMapViewBySelection(selected, 1.2);
-              else if (action === 'out') zoomMapViewBySelection(selected, 1 / 1.2);
-              else if (action === 'reset') resetMapViewBySelection(selected);
+              const handledByWebMap = (typeof handleOpenFreeMapZoomAction === 'function')
+                ? handleOpenFreeMapZoomAction(selected, action)
+                : false;
+              if (!handledByWebMap){
+                if (action === 'in') zoomMapViewBySelection(selected, 1.2);
+                else if (action === 'out') zoomMapViewBySelection(selected, 1 / 1.2);
+                else if (action === 'reset') resetMapViewBySelection(selected);
+                render(latestData);
+              }
+            }
+            return;
+          }
+          if (node.getAttribute && node.getAttribute('data-map-bg-toggle')){
+            const selected = getActiveFlightPlanSelection(latestData);
+            if (selected){
+              toggleMapBackgroundEnabledBySelection(selected);
+              render(latestData);
+            }
+            return;
+          }
+          if (node.getAttribute && node.getAttribute('data-map-bg-toggle')){
+            const selected = getActiveFlightPlanSelection(latestData);
+            if (selected){
+              toggleMapBackgroundEnabledBySelection(selected);
               render(latestData);
             }
             return;

@@ -987,7 +987,7 @@ namespace VAICOM
                         State.currentmessage.operatedial = State.activeconfig.OperateDial;
                         State.currentmessage.importmenus = State.activeconfig.ImportOtherMenu;
 
-                        State.currentmessage.AIRIO = State.currentmodule.Equals(Products.DCSmodules.LookupTable[State.riomod]);
+                        State.currentmessage.AIRIO = State.IsAirioTomcatModule();
                         State.currentmessage.carriersuppressauto = State.activeconfig.CarrierSuppressAuto;
 
                         // SPECIAL: CONSTRUCT MESSAGE FOR GEORGE
@@ -1003,7 +1003,7 @@ namespace VAICOM
                         }
 
                         // EXCEPTION: F14 Cat Launch
-                        if (State.currentmodule.Equals(Products.DCSmodules.LookupTable["F-14AB"]) && State.currentcommand.dcsid.Equals("wMsgLeaderGroundGestureSalut"))
+                        if (State.IsAirioTomcatModule() && State.currentcommand.dcsid.Equals("wMsgLeaderGroundGestureSalut"))
                         {
                             F14Salute();
                         }

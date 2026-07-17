@@ -277,7 +277,7 @@ namespace VAICOM
                     {
                         if (State.dcsrunning)
                         {
-                            if (State.currentmodule.Equals(DCSmodules.LookupTable[State.riomod])) // F-14AB
+                            if (State.IsAirioTomcatModule())
                             {
                                 return 1;
                             }

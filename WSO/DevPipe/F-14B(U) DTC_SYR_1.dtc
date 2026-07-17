@@ -1,0 +1,1011 @@
+{
+    "data": {
+                          "CMDS": {
+                                        "CMDSAutoOverrides": [  ],
+                                         "CMDSAutoPrograms": {
+                                                                      "AAA": {
+                                                                                   "Program": 2,
+                                                                                 "Threshold": 2
+                                                                             },
+                                                                 "Aircraft": {
+                                                                                   "Program": 5,
+                                                                                 "Threshold": 3
+                                                                             },
+                                                                    "Naval": {
+                                                                                   "Program": 5,
+                                                                                 "Threshold": 3
+                                                                             },
+                                                                      "SAM": {
+                                                                                   "Program": 5,
+                                                                                 "Threshold": 3
+                                                                             },
+                                                                  "Unknown": {
+                                                                                   "Program": 4,
+                                                                                 "Threshold": 3
+                                                                             }
+                                                             },
+                                        "CMDSBingoSettings": {
+                                                                  "ChaffNum": 10,
+                                                                 "FlaresNum": 10,
+                                                                 "Other1Num": 0,
+                                                                 "Other2Num": 0
+                                                             },
+                                      "CMDSProgramSettings": {
+                                                                 "PROG_1": {
+                                                                                  "Chaff": {
+                                                                                               "BurstInterval": 0.2,
+                                                                                               "BurstQuantity": 2,
+                                                                                               "SalvoInterval": 1,
+                                                                                               "SalvoQuantity": 2
+                                                                                           },
+                                                                                  "Flare": {
+                                                                                               "BurstInterval": 0.5,
+                                                                                               "BurstQuantity": 2,
+                                                                                               "SalvoInterval": 1,
+                                                                                               "SalvoQuantity": 4
+                                                                                           },
+                                                                                 "Other1": {
+                                                                                               "BurstInterval": 0,
+                                                                                               "BurstQuantity": 0,
+                                                                                               "SalvoInterval": 0,
+                                                                                               "SalvoQuantity": 0
+                                                                                           },
+                                                                                 "Other2": {
+                                                                                               "BurstInterval": 0,
+                                                                                               "BurstQuantity": 0,
+                                                                                               "SalvoInterval": 0,
+                                                                                               "SalvoQuantity": 0
+                                                                                           },
+                                                                               "Priority": 2
+                                                                           },
+                                                                 "PROG_2": {
+                                                                                  "Chaff": {
+                                                                                               "BurstInterval": 0.25,
+                                                                                               "BurstQuantity": 3,
+                                                                                               "SalvoInterval": 2,
+                                                                                               "SalvoQuantity": 2
+                                                                                           },
+                                                                                  "Flare": {
+                                                                                               "BurstInterval": 1,
+                                                                                               "BurstQuantity": 1,
+                                                                                               "SalvoInterval": 1,
+                                                                                               "SalvoQuantity": 1
+                                                                                           },
+                                                                                 "Other1": {
+                                                                                               "BurstInterval": 0,
+                                                                                               "BurstQuantity": 0,
+                                                                                               "SalvoInterval": 0,
+                                                                                               "SalvoQuantity": 0
+                                                                                           },
+                                                                                 "Other2": {
+                                                                                               "BurstInterval": 0,
+                                                                                               "BurstQuantity": 0,
+                                                                                               "SalvoInterval": 0,
+                                                                                               "SalvoQuantity": 0
+                                                                                           },
+                                                                               "Priority": 0
+                                                                           },
+                                                                 "PROG_3": {
+                                                                                  "Chaff": {
+                                                                                               "BurstInterval": 1,
+                                                                                               "BurstQuantity": 1,
+                                                                                               "SalvoInterval": 1,
+                                                                                               "SalvoQuantity": 1
+                                                                                           },
+                                                                                  "Flare": {
+                                                                                               "BurstInterval": 0.5,
+                                                                                               "BurstQuantity": 2,
+                                                                                               "SalvoInterval": 3,
+                                                                                               "SalvoQuantity": 4
+                                                                                           },
+                                                                                 "Other1": {
+                                                                                               "BurstInterval": 0,
+                                                                                               "BurstQuantity": 0,
+                                                                                               "SalvoInterval": 0,
+                                                                                               "SalvoQuantity": 0
+                                                                                           },
+                                                                                 "Other2": {
+                                                                                               "BurstInterval": 0,
+                                                                                               "BurstQuantity": 0,
+                                                                                               "SalvoInterval": 0,
+                                                                                               "SalvoQuantity": 0
+                                                                                           },
+                                                                               "Priority": 0
+                                                                           },
+                                                                 "PROG_4": {
+                                                                                  "Chaff": {
+                                                                                               "BurstInterval": 0.25,
+                                                                                               "BurstQuantity": 2,
+                                                                                               "SalvoInterval": 3,
+                                                                                               "SalvoQuantity": 2
+                                                                                           },
+                                                                                  "Flare": {
+                                                                                               "BurstInterval": 1,
+                                                                                               "BurstQuantity": 1,
+                                                                                               "SalvoInterval": 3,
+                                                                                               "SalvoQuantity": 5
+                                                                                           },
+                                                                                 "Other1": {
+                                                                                               "BurstInterval": 0,
+                                                                                               "BurstQuantity": 0,
+                                                                                               "SalvoInterval": 0,
+                                                                                               "SalvoQuantity": 0
+                                                                                           },
+                                                                                 "Other2": {
+                                                                                               "BurstInterval": 0,
+                                                                                               "BurstQuantity": 0,
+                                                                                               "SalvoInterval": 0,
+                                                                                               "SalvoQuantity": 0
+                                                                                           },
+                                                                               "Priority": 0
+                                                                           },
+                                                                 "PROG_5": {
+                                                                                  "Chaff": {
+                                                                                               "BurstInterval": 0.2,
+                                                                                               "BurstQuantity": 4,
+                                                                                               "SalvoInterval": 2,
+                                                                                               "SalvoQuantity": 4
+                                                                                           },
+                                                                                  "Flare": {
+                                                                                               "BurstInterval": 1,
+                                                                                               "BurstQuantity": 2,
+                                                                                               "SalvoInterval": 2,
+                                                                                               "SalvoQuantity": 2
+                                                                                           },
+                                                                                 "Other1": {
+                                                                                               "BurstInterval": 0,
+                                                                                               "BurstQuantity": 0,
+                                                                                               "SalvoInterval": 0,
+                                                                                               "SalvoQuantity": 0
+                                                                                           },
+                                                                                 "Other2": {
+                                                                                               "BurstInterval": 0,
+                                                                                               "BurstQuantity": 0,
+                                                                                               "SalvoInterval": 0,
+                                                                                               "SalvoQuantity": 0
+                                                                                           },
+                                                                               "Priority": 1
+                                                                           },
+                                                                 "PROG_6": {
+                                                                                  "Chaff": {
+                                                                                               "BurstInterval": 1,
+                                                                                               "BurstQuantity": 1,
+                                                                                               "SalvoInterval": 2,
+                                                                                               "SalvoQuantity": 2
+                                                                                           },
+                                                                                  "Flare": {
+                                                                                               "BurstInterval": 0.5,
+                                                                                               "BurstQuantity": 2,
+                                                                                               "SalvoInterval": 2,
+                                                                                               "SalvoQuantity": 6
+                                                                                           },
+                                                                                 "Other1": {
+                                                                                               "BurstInterval": 0,
+                                                                                               "BurstQuantity": 0,
+                                                                                               "SalvoInterval": 0,
+                                                                                               "SalvoQuantity": 0
+                                                                                           },
+                                                                                 "Other2": {
+                                                                                               "BurstInterval": 0,
+                                                                                               "BurstQuantity": 0,
+                                                                                               "SalvoInterval": 0,
+                                                                                               "SalvoQuantity": 0
+                                                                                           },
+                                                                               "Priority": 1
+                                                                           },
+                                                                 "PROG_7": {
+                                                                                  "Chaff": {
+                                                                                               "BurstInterval": 1,
+                                                                                               "BurstQuantity": 1,
+                                                                                               "SalvoInterval": 1,
+                                                                                               "SalvoQuantity": 2
+                                                                                           },
+                                                                                  "Flare": {
+                                                                                               "BurstInterval": 1,
+                                                                                               "BurstQuantity": 2,
+                                                                                               "SalvoInterval": 1,
+                                                                                               "SalvoQuantity": 1
+                                                                                           },
+                                                                                 "Other1": {
+                                                                                               "BurstInterval": 0,
+                                                                                               "BurstQuantity": 0,
+                                                                                               "SalvoInterval": 0,
+                                                                                               "SalvoQuantity": 0
+                                                                                           },
+                                                                                 "Other2": {
+                                                                                               "BurstInterval": 0,
+                                                                                               "BurstQuantity": 0,
+                                                                                               "SalvoInterval": 0,
+                                                                                               "SalvoQuantity": 0
+                                                                                           },
+                                                                               "Priority": 0
+                                                                           },
+                                                                 "PROG_8": {
+                                                                                  "Chaff": {
+                                                                                               "BurstInterval": 1,
+                                                                                               "BurstQuantity": 1,
+                                                                                               "SalvoInterval": 1,
+                                                                                               "SalvoQuantity": 2
+                                                                                           },
+                                                                                  "Flare": {
+                                                                                               "BurstInterval": 1,
+                                                                                               "BurstQuantity": 2,
+                                                                                               "SalvoInterval": 1,
+                                                                                               "SalvoQuantity": 1
+                                                                                           },
+                                                                                 "Other1": {
+                                                                                               "BurstInterval": 0,
+                                                                                               "BurstQuantity": 0,
+                                                                                               "SalvoInterval": 0,
+                                                                                               "SalvoQuantity": 0
+                                                                                           },
+                                                                                 "Other2": {
+                                                                                               "BurstInterval": 0,
+                                                                                               "BurstQuantity": 0,
+                                                                                               "SalvoInterval": 0,
+                                                                                               "SalvoQuantity": 0
+                                                                                           },
+                                                                               "Priority": 0
+                                                                           }
+                                                             }
+                                  },
+                "cartridge_name": "SYR-1",
+                          "JDAM": {
+                                      "stations": [ {
+                                                      "targets": [ {
+                                                                                 "active": true,
+                                                                         "attack_heading": 0,
+                                                                               "drop_alt": 20000,
+                                                                               "drop_spd": 450,
+                                                                                   "elev": 383,
+                                                                       "has_impact_angle": false,
+                                                                     "has_impact_heading": false,
+                                                                           "impact_angle": 65,
+                                                                         "impact_heading": 0,
+                                                                     "lar_half_angle_deg": 44.983734395416,
+                                                                            "lar_polygon": [ {
+                                                                                               "x": -203089.57876013,
+                                                                                               "y": -57134.759748643
+                                                                                           }, {
+                                                                                               "x": -203842.19530854,
+                                                                                               "y": -58438.89979348
+                                                                                           }, {
+                                                                                               "x": -203842.19530854,
+                                                                                               "y": -59944.626503574
+                                                                                           }, {
+                                                                                               "x": -203089.57876013,
+                                                                                               "y": -61248.766548411
+                                                                                           }, {
+                                                                                               "x": -210529.70935448,
+                                                                                               "y": -68684.674008676
+                                                                                           }, {
+                                                                                               "x": -212662.37355752,
+                                                                                               "y": -65903.970060007
+                                                                                           }, {
+                                                                                               "x": -214002.97624667,
+                                                                                               "y": -62666.169034166
+                                                                                           }, {
+                                                                                               "x": -214460.22322035,
+                                                                                               "y": -59191.763148527
+                                                                                           }, {
+                                                                                               "x": -214002.97624667,
+                                                                                               "y": -55717.357262888
+                                                                                           }, {
+                                                                                               "x": -212662.37355752,
+                                                                                               "y": -52479.556237047
+                                                                                           }, {
+                                                                                               "x": -210529.70935448,
+                                                                                               "y": -49698.852288378
+                                                                                           } ],
+                                                                           "lar_rmax_nmi": 7.2509806211745,
+                                                                           "lar_rmin_nmi": 1.5712031862492,
+                                                                                    "lat": 33.194380550215,
+                                                                               "launch_x": -209200.74931561,
+                                                                               "launch_y": -59191.763148527,
+                                                                                    "lon": 35.331972542808,
+                                                                                   "name": "TGT-1",
+                                                                                      "x": -201031.40710994,
+                                                                                      "y": -59191.763148527
+                                                                 }, {
+                                                                                 "active": true,
+                                                                         "attack_heading": 0,
+                                                                               "drop_alt": 20000,
+                                                                               "drop_spd": 450,
+                                                                                   "elev": 383,
+                                                                       "has_impact_angle": false,
+                                                                     "has_impact_heading": false,
+                                                                           "impact_angle": 65,
+                                                                         "impact_heading": 0,
+                                                                     "lar_half_angle_deg": 44.983734395416,
+                                                                            "lar_polygon": [ {
+                                                                                               "x": -203144.71468853,
+                                                                                               "y": -57291.590833872
+                                                                                           }, {
+                                                                                               "x": -203897.33123694,
+                                                                                               "y": -58595.730878709
+                                                                                           }, {
+                                                                                               "x": -203897.33123694,
+                                                                                               "y": -60101.457588803
+                                                                                           }, {
+                                                                                               "x": -203144.71468853,
+                                                                                               "y": -61405.597633639
+                                                                                           }, {
+                                                                                               "x": -210584.84528288,
+                                                                                               "y": -68841.505093905
+                                                                                           }, {
+                                                                                               "x": -212717.50948592,
+                                                                                               "y": -66060.801145235
+                                                                                           }, {
+                                                                                               "x": -214058.11217508,
+                                                                                               "y": -62823.000119395
+                                                                                           }, {
+                                                                                               "x": -214515.35914875,
+                                                                                               "y": -59348.594233756
+                                                                                           }, {
+                                                                                               "x": -214058.11217508,
+                                                                                               "y": -55874.188348117
+                                                                                           }, {
+                                                                                               "x": -212717.50948592,
+                                                                                               "y": -52636.387322276
+                                                                                           }, {
+                                                                                               "x": -210584.84528288,
+                                                                                               "y": -49855.683373606
+                                                                                           } ],
+                                                                           "lar_rmax_nmi": 7.2509806211745,
+                                                                           "lar_rmin_nmi": 1.5712031862492,
+                                                                                    "lat": 33.193834682294,
+                                                                               "launch_x": -209255.88524401,
+                                                                               "launch_y": -59348.594233756,
+                                                                                    "lon": 35.330314182333,
+                                                                                   "name": "TGT-2",
+                                                                                      "x": -201086.54303834,
+                                                                                      "y": -59348.594233756
+                                                                 }, {
+                                                                                 "active": true,
+                                                                         "attack_heading": 0,
+                                                                               "drop_alt": 20000,
+                                                                               "drop_spd": 450,
+                                                                                   "elev": 389,
+                                                                       "has_impact_angle": false,
+                                                                     "has_impact_heading": false,
+                                                                           "impact_angle": 65,
+                                                                         "impact_heading": 0,
+                                                                     "lar_half_angle_deg": 44.983734395416,
+                                                                            "lar_polygon": [ {
+                                                                                               "x": -203030.15448174,
+                                                                                               "y": -57219.914126951
+                                                                                           }, {
+                                                                                               "x": -203782.77103015,
+                                                                                               "y": -58524.054171788
+                                                                                           }, {
+                                                                                               "x": -203782.77103015,
+                                                                                               "y": -60029.780881882
+                                                                                           }, {
+                                                                                               "x": -203030.15448174,
+                                                                                               "y": -61333.920926718
+                                                                                           }, {
+                                                                                               "x": -210470.28507609,
+                                                                                               "y": -68769.828386984
+                                                                                           }, {
+                                                                                               "x": -212602.94927913,
+                                                                                               "y": -65989.124438314
+                                                                                           }, {
+                                                                                               "x": -213943.55196829,
+                                                                                               "y": -62751.323412474
+                                                                                           }, {
+                                                                                               "x": -214400.79894196,
+                                                                                               "y": -59276.917526835
+                                                                                           }, {
+                                                                                               "x": -213943.55196829,
+                                                                                               "y": -55802.511641196
+                                                                                           }, {
+                                                                                               "x": -212602.94927913,
+                                                                                               "y": -52564.710615355
+                                                                                           }, {
+                                                                                               "x": -210470.28507609,
+                                                                                               "y": -49784.006666685
+                                                                                           } ],
+                                                                           "lar_rmax_nmi": 7.2509806211745,
+                                                                           "lar_rmin_nmi": 1.5712031862492,
+                                                                                    "lat": 33.194888554202,
+                                                                               "launch_x": -209141.32503722,
+                                                                               "launch_y": -59276.917526835,
+                                                                                    "lon": 35.33103851437,
+                                                                                   "name": "TGT-3",
+                                                                                      "x": -200971.98283155,
+                                                                                      "y": -59276.917526835
+                                                                 }, {
+                                                                                 "active": false,
+                                                                         "attack_heading": 0,
+                                                                               "drop_alt": 20000,
+                                                                               "drop_spd": 450,
+                                                                                   "elev": 0,
+                                                                       "has_impact_angle": false,
+                                                                     "has_impact_heading": false,
+                                                                           "impact_angle": 65,
+                                                                         "impact_heading": 0,
+                                                                     "lar_half_angle_deg": 44.983734395416,
+                                                                           "lar_rmax_nmi": 7.2509806211745,
+                                                                           "lar_rmin_nmi": 1.5712031862492,
+                                                                                   "name": ""
+                                                                 }, {
+                                                                                 "active": false,
+                                                                         "attack_heading": 0,
+                                                                               "drop_alt": 20000,
+                                                                               "drop_spd": 450,
+                                                                                   "elev": 0,
+                                                                       "has_impact_angle": false,
+                                                                     "has_impact_heading": false,
+                                                                           "impact_angle": 65,
+                                                                         "impact_heading": 0,
+                                                                     "lar_half_angle_deg": 44.983734395416,
+                                                                           "lar_rmax_nmi": 7.2509806211745,
+                                                                           "lar_rmin_nmi": 1.5712031862492,
+                                                                                   "name": ""
+                                                                 }, {
+                                                                                 "active": false,
+                                                                         "attack_heading": 0,
+                                                                               "drop_alt": 20000,
+                                                                               "drop_spd": 450,
+                                                                                   "elev": 0,
+                                                                       "has_impact_angle": false,
+                                                                     "has_impact_heading": false,
+                                                                           "impact_angle": 65,
+                                                                         "impact_heading": 0,
+                                                                     "lar_half_angle_deg": 44.983734395416,
+                                                                           "lar_rmax_nmi": 7.2509806211745,
+                                                                           "lar_rmin_nmi": 1.5712031862492,
+                                                                                   "name": ""
+                                                                 }, {
+                                                                                 "active": false,
+                                                                         "attack_heading": 0,
+                                                                               "drop_alt": 20000,
+                                                                               "drop_spd": 450,
+                                                                                   "elev": 0,
+                                                                       "has_impact_angle": false,
+                                                                     "has_impact_heading": false,
+                                                                           "impact_angle": 65,
+                                                                         "impact_heading": 0,
+                                                                     "lar_half_angle_deg": 44.983734395416,
+                                                                           "lar_rmax_nmi": 7.2509806211745,
+                                                                           "lar_rmin_nmi": 1.5712031862492,
+                                                                                   "name": ""
+                                                                 }, {
+                                                                                 "active": false,
+                                                                         "attack_heading": 0,
+                                                                               "drop_alt": 20000,
+                                                                               "drop_spd": 450,
+                                                                                   "elev": 0,
+                                                                       "has_impact_angle": false,
+                                                                     "has_impact_heading": false,
+                                                                           "impact_angle": 65,
+                                                                         "impact_heading": 0,
+                                                                     "lar_half_angle_deg": 44.983734395416,
+                                                                           "lar_rmax_nmi": 7.2509806211745,
+                                                                           "lar_rmin_nmi": 1.5712031862492,
+                                                                                   "name": ""
+                                                                 } ]
+                                                  }, {
+                                                      "targets": [ {
+                                                                                 "active": false,
+                                                                         "attack_heading": 0,
+                                                                               "drop_alt": 20000,
+                                                                               "drop_spd": 450,
+                                                                                   "elev": 0,
+                                                                       "has_impact_angle": false,
+                                                                     "has_impact_heading": false,
+                                                                           "impact_angle": 65,
+                                                                         "impact_heading": 0,
+                                                                     "lar_half_angle_deg": 44.983734395416,
+                                                                           "lar_rmax_nmi": 7.2509806211745,
+                                                                           "lar_rmin_nmi": 1.5712031862492,
+                                                                                   "name": ""
+                                                                 }, {
+                                                                                 "active": false,
+                                                                         "attack_heading": 0,
+                                                                               "drop_alt": 20000,
+                                                                               "drop_spd": 450,
+                                                                                   "elev": 0,
+                                                                       "has_impact_angle": false,
+                                                                     "has_impact_heading": false,
+                                                                           "impact_angle": 65,
+                                                                         "impact_heading": 0,
+                                                                     "lar_half_angle_deg": 44.983734395416,
+                                                                           "lar_rmax_nmi": 7.2509806211745,
+                                                                           "lar_rmin_nmi": 1.5712031862492,
+                                                                                   "name": ""
+                                                                 }, {
+                                                                                 "active": false,
+                                                                         "attack_heading": 0,
+                                                                               "drop_alt": 20000,
+                                                                               "drop_spd": 450,
+                                                                                   "elev": 0,
+                                                                       "has_impact_angle": false,
+                                                                     "has_impact_heading": false,
+                                                                           "impact_angle": 65,
+                                                                         "impact_heading": 0,
+                                                                     "lar_half_angle_deg": 44.983734395416,
+                                                                           "lar_rmax_nmi": 7.2509806211745,
+                                                                           "lar_rmin_nmi": 1.5712031862492,
+                                                                                   "name": ""
+                                                                 }, {
+                                                                                 "active": false,
+                                                                         "attack_heading": 0,
+                                                                               "drop_alt": 20000,
+                                                                               "drop_spd": 450,
+                                                                                   "elev": 0,
+                                                                       "has_impact_angle": false,
+                                                                     "has_impact_heading": false,
+                                                                           "impact_angle": 65,
+                                                                         "impact_heading": 0,
+                                                                     "lar_half_angle_deg": 44.983734395416,
+                                                                           "lar_rmax_nmi": 7.2509806211745,
+                                                                           "lar_rmin_nmi": 1.5712031862492,
+                                                                                   "name": ""
+                                                                 }, {
+                                                                                 "active": false,
+                                                                         "attack_heading": 0,
+                                                                               "drop_alt": 20000,
+                                                                               "drop_spd": 450,
+                                                                                   "elev": 0,
+                                                                       "has_impact_angle": false,
+                                                                     "has_impact_heading": false,
+                                                                           "impact_angle": 65,
+                                                                         "impact_heading": 0,
+                                                                     "lar_half_angle_deg": 44.983734395416,
+                                                                           "lar_rmax_nmi": 7.2509806211745,
+                                                                           "lar_rmin_nmi": 1.5712031862492,
+                                                                                   "name": ""
+                                                                 }, {
+                                                                                 "active": false,
+                                                                         "attack_heading": 0,
+                                                                               "drop_alt": 20000,
+                                                                               "drop_spd": 450,
+                                                                                   "elev": 0,
+                                                                       "has_impact_angle": false,
+                                                                     "has_impact_heading": false,
+                                                                           "impact_angle": 65,
+                                                                         "impact_heading": 0,
+                                                                     "lar_half_angle_deg": 44.983734395416,
+                                                                           "lar_rmax_nmi": 7.2509806211745,
+                                                                           "lar_rmin_nmi": 1.5712031862492,
+                                                                                   "name": ""
+                                                                 }, {
+                                                                                 "active": false,
+                                                                         "attack_heading": 0,
+                                                                               "drop_alt": 20000,
+                                                                               "drop_spd": 450,
+                                                                                   "elev": 0,
+                                                                       "has_impact_angle": false,
+                                                                     "has_impact_heading": false,
+                                                                           "impact_angle": 65,
+                                                                         "impact_heading": 0,
+                                                                     "lar_half_angle_deg": 44.983734395416,
+                                                                           "lar_rmax_nmi": 7.2509806211745,
+                                                                           "lar_rmin_nmi": 1.5712031862492,
+                                                                                   "name": ""
+                                                                 }, {
+                                                                                 "active": false,
+                                                                         "attack_heading": 0,
+                                                                               "drop_alt": 20000,
+                                                                               "drop_spd": 450,
+                                                                                   "elev": 0,
+                                                                       "has_impact_angle": false,
+                                                                     "has_impact_heading": false,
+                                                                           "impact_angle": 65,
+                                                                         "impact_heading": 0,
+                                                                     "lar_half_angle_deg": 44.983734395416,
+                                                                           "lar_rmax_nmi": 7.2509806211745,
+                                                                           "lar_rmin_nmi": 1.5712031862492,
+                                                                                   "name": ""
+                                                                 } ]
+                                                  }, {
+                                                      "targets": [ {
+                                                                                 "active": false,
+                                                                         "attack_heading": 0,
+                                                                               "drop_alt": 20000,
+                                                                               "drop_spd": 450,
+                                                                                   "elev": 0,
+                                                                       "has_impact_angle": false,
+                                                                     "has_impact_heading": false,
+                                                                           "impact_angle": 65,
+                                                                         "impact_heading": 0,
+                                                                     "lar_half_angle_deg": 44.983734395416,
+                                                                           "lar_rmax_nmi": 7.2509806211745,
+                                                                           "lar_rmin_nmi": 1.5712031862492,
+                                                                                   "name": ""
+                                                                 }, {
+                                                                                 "active": false,
+                                                                         "attack_heading": 0,
+                                                                               "drop_alt": 20000,
+                                                                               "drop_spd": 450,
+                                                                                   "elev": 0,
+                                                                       "has_impact_angle": false,
+                                                                     "has_impact_heading": false,
+                                                                           "impact_angle": 65,
+                                                                         "impact_heading": 0,
+                                                                     "lar_half_angle_deg": 44.983734395416,
+                                                                           "lar_rmax_nmi": 7.2509806211745,
+                                                                           "lar_rmin_nmi": 1.5712031862492,
+                                                                                   "name": ""
+                                                                 }, {
+                                                                                 "active": false,
+                                                                         "attack_heading": 0,
+                                                                               "drop_alt": 20000,
+                                                                               "drop_spd": 450,
+                                                                                   "elev": 0,
+                                                                       "has_impact_angle": false,
+                                                                     "has_impact_heading": false,
+                                                                           "impact_angle": 65,
+                                                                         "impact_heading": 0,
+                                                                     "lar_half_angle_deg": 44.983734395416,
+                                                                           "lar_rmax_nmi": 7.2509806211745,
+                                                                           "lar_rmin_nmi": 1.5712031862492,
+                                                                                   "name": ""
+                                                                 }, {
+                                                                                 "active": false,
+                                                                         "attack_heading": 0,
+                                                                               "drop_alt": 20000,
+                                                                               "drop_spd": 450,
+                                                                                   "elev": 0,
+                                                                       "has_impact_angle": false,
+                                                                     "has_impact_heading": false,
+                                                                           "impact_angle": 65,
+                                                                         "impact_heading": 0,
+                                                                     "lar_half_angle_deg": 44.983734395416,
+                                                                           "lar_rmax_nmi": 7.2509806211745,
+                                                                           "lar_rmin_nmi": 1.5712031862492,
+                                                                                   "name": ""
+                                                                 }, {
+                                                                                 "active": false,
+                                                                         "attack_heading": 0,
+                                                                               "drop_alt": 20000,
+                                                                               "drop_spd": 450,
+                                                                                   "elev": 0,
+                                                                       "has_impact_angle": false,
+                                                                     "has_impact_heading": false,
+                                                                           "impact_angle": 65,
+                                                                         "impact_heading": 0,
+                                                                     "lar_half_angle_deg": 44.983734395416,
+                                                                           "lar_rmax_nmi": 7.2509806211745,
+                                                                           "lar_rmin_nmi": 1.5712031862492,
+                                                                                   "name": ""
+                                                                 }, {
+                                                                                 "active": false,
+                                                                         "attack_heading": 0,
+                                                                               "drop_alt": 20000,
+                                                                               "drop_spd": 450,
+                                                                                   "elev": 0,
+                                                                       "has_impact_angle": false,
+                                                                     "has_impact_heading": false,
+                                                                           "impact_angle": 65,
+                                                                         "impact_heading": 0,
+                                                                     "lar_half_angle_deg": 44.983734395416,
+                                                                           "lar_rmax_nmi": 7.2509806211745,
+                                                                           "lar_rmin_nmi": 1.5712031862492,
+                                                                                   "name": ""
+                                                                 }, {
+                                                                                 "active": false,
+                                                                         "attack_heading": 0,
+                                                                               "drop_alt": 20000,
+                                                                               "drop_spd": 450,
+                                                                                   "elev": 0,
+                                                                       "has_impact_angle": false,
+                                                                     "has_impact_heading": false,
+                                                                           "impact_angle": 65,
+                                                                         "impact_heading": 0,
+                                                                     "lar_half_angle_deg": 44.983734395416,
+                                                                           "lar_rmax_nmi": 7.2509806211745,
+                                                                           "lar_rmin_nmi": 1.5712031862492,
+                                                                                   "name": ""
+                                                                 }, {
+                                                                                 "active": false,
+                                                                         "attack_heading": 0,
+                                                                               "drop_alt": 20000,
+                                                                               "drop_spd": 450,
+                                                                                   "elev": 0,
+                                                                       "has_impact_angle": false,
+                                                                     "has_impact_heading": false,
+                                                                           "impact_angle": 65,
+                                                                         "impact_heading": 0,
+                                                                     "lar_half_angle_deg": 44.983734395416,
+                                                                           "lar_rmax_nmi": 7.2509806211745,
+                                                                           "lar_rmin_nmi": 1.5712031862492,
+                                                                                   "name": ""
+                                                                 } ]
+                                                  }, {
+                                                      "targets": [ {
+                                                                                 "active": false,
+                                                                         "attack_heading": 0,
+                                                                               "drop_alt": 20000,
+                                                                               "drop_spd": 450,
+                                                                                   "elev": 0,
+                                                                       "has_impact_angle": false,
+                                                                     "has_impact_heading": false,
+                                                                           "impact_angle": 65,
+                                                                         "impact_heading": 0,
+                                                                     "lar_half_angle_deg": 44.983734395416,
+                                                                           "lar_rmax_nmi": 7.2509806211745,
+                                                                           "lar_rmin_nmi": 1.5712031862492,
+                                                                                   "name": ""
+                                                                 }, {
+                                                                                 "active": false,
+                                                                         "attack_heading": 0,
+                                                                               "drop_alt": 20000,
+                                                                               "drop_spd": 450,
+                                                                                   "elev": 0,
+                                                                       "has_impact_angle": false,
+                                                                     "has_impact_heading": false,
+                                                                           "impact_angle": 65,
+                                                                         "impact_heading": 0,
+                                                                     "lar_half_angle_deg": 44.983734395416,
+                                                                           "lar_rmax_nmi": 7.2509806211745,
+                                                                           "lar_rmin_nmi": 1.5712031862492,
+                                                                                   "name": ""
+                                                                 }, {
+                                                                                 "active": false,
+                                                                         "attack_heading": 0,
+                                                                               "drop_alt": 20000,
+                                                                               "drop_spd": 450,
+                                                                                   "elev": 0,
+                                                                       "has_impact_angle": false,
+                                                                     "has_impact_heading": false,
+                                                                           "impact_angle": 65,
+                                                                         "impact_heading": 0,
+                                                                     "lar_half_angle_deg": 44.983734395416,
+                                                                           "lar_rmax_nmi": 7.2509806211745,
+                                                                           "lar_rmin_nmi": 1.5712031862492,
+                                                                                   "name": ""
+                                                                 }, {
+                                                                                 "active": false,
+                                                                         "attack_heading": 0,
+                                                                               "drop_alt": 20000,
+                                                                               "drop_spd": 450,
+                                                                                   "elev": 0,
+                                                                       "has_impact_angle": false,
+                                                                     "has_impact_heading": false,
+                                                                           "impact_angle": 65,
+                                                                         "impact_heading": 0,
+                                                                     "lar_half_angle_deg": 44.983734395416,
+                                                                           "lar_rmax_nmi": 7.2509806211745,
+                                                                           "lar_rmin_nmi": 1.5712031862492,
+                                                                                   "name": ""
+                                                                 }, {
+                                                                                 "active": false,
+                                                                         "attack_heading": 0,
+                                                                               "drop_alt": 20000,
+                                                                               "drop_spd": 450,
+                                                                                   "elev": 0,
+                                                                       "has_impact_angle": false,
+                                                                     "has_impact_heading": false,
+                                                                           "impact_angle": 65,
+                                                                         "impact_heading": 0,
+                                                                     "lar_half_angle_deg": 44.983734395416,
+                                                                           "lar_rmax_nmi": 7.2509806211745,
+                                                                           "lar_rmin_nmi": 1.5712031862492,
+                                                                                   "name": ""
+                                                                 }, {
+                                                                                 "active": false,
+                                                                         "attack_heading": 0,
+                                                                               "drop_alt": 20000,
+                                                                               "drop_spd": 450,
+                                                                                   "elev": 0,
+                                                                       "has_impact_angle": false,
+                                                                     "has_impact_heading": false,
+                                                                           "impact_angle": 65,
+                                                                         "impact_heading": 0,
+                                                                     "lar_half_angle_deg": 44.983734395416,
+                                                                           "lar_rmax_nmi": 7.2509806211745,
+                                                                           "lar_rmin_nmi": 1.5712031862492,
+                                                                                   "name": ""
+                                                                 }, {
+                                                                                 "active": false,
+                                                                         "attack_heading": 0,
+                                                                               "drop_alt": 20000,
+                                                                               "drop_spd": 450,
+                                                                                   "elev": 0,
+                                                                       "has_impact_angle": false,
+                                                                     "has_impact_heading": false,
+                                                                           "impact_angle": 65,
+                                                                         "impact_heading": 0,
+                                                                     "lar_half_angle_deg": 44.983734395416,
+                                                                           "lar_rmax_nmi": 7.2509806211745,
+                                                                           "lar_rmin_nmi": 1.5712031862492,
+                                                                                   "name": ""
+                                                                 }, {
+                                                                                 "active": false,
+                                                                         "attack_heading": 0,
+                                                                               "drop_alt": 20000,
+                                                                               "drop_spd": 450,
+                                                                                   "elev": 0,
+                                                                       "has_impact_angle": false,
+                                                                     "has_impact_heading": false,
+                                                                           "impact_angle": 65,
+                                                                         "impact_heading": 0,
+                                                                     "lar_half_angle_deg": 44.983734395416,
+                                                                           "lar_rmax_nmi": 7.2509806211745,
+                                                                           "lar_rmin_nmi": 1.5712031862492,
+                                                                                   "name": ""
+                                                                 } ]
+                                                  } ]
+                                  },
+                           "NAV": [ {
+                                      "additional_points": [  ],
+                                                  "lines": [  ],
+                                                   "name": "Primary",
+                                          "route_as_line": false,
+                                              "waypoints": [  ]
+                                  }, {
+                                      "additional_points": [ {
+                                                               "elev": 10,
+                                                                "lat": 32.809592401401,
+                                                                "lon": 35.593101015358,
+                                                               "name": "XB",
+                                                                  "x": -244544.38738576,
+                                                                  "y": -36217.328441474
+                                                           }, {
+                                                               "elev": 0,
+                                                                "lat": 33.876335476052,
+                                                                "lon": 34.179435876926,
+                                                               "name": "OCEANA",
+                                                                  "x": -120948.40958739,
+                                                                  "y": -163212.25961341
+                                                           } ],
+                                                  "lines": [ {
+                                                               "closed": false,
+                                                               "points": [ {
+                                                                             "elev": 92,
+                                                                              "lat": 33.093299361716,
+                                                                              "lon": 35.104391937629,
+                                                                                "x": -211479.66174784,
+                                                                                "y": -80840.913338127
+                                                                         }, {
+                                                                             "elev": 2051,
+                                                                              "lat": 33.102739882028,
+                                                                              "lon": 35.319460200132,
+                                                                                "x": -211158.3916374,
+                                                                                "y": -60716.669012947
+                                                                         }, {
+                                                                             "elev": 2224,
+                                                                              "lat": 33.056103337054,
+                                                                              "lon": 35.376672765072,
+                                                                                "x": -216519.03534871,
+                                                                                "y": -55552.746171778
+                                                                         }, {
+                                                                             "elev": 1591,
+                                                                              "lat": 33.13092382936,
+                                                                              "lon": 35.529014696408,
+                                                                                "x": -208699.38076065,
+                                                                                "y": -41044.581998969
+                                                                         }, {
+                                                                             "elev": 1847,
+                                                                              "lat": 33.28673273502,
+                                                                              "lon": 35.560977885938,
+                                                                                "x": -191511.72702266,
+                                                                                "y": -37491.98495422
+                                                                         }, {
+                                                                             "elev": 1152,
+                                                                              "lat": 33.277840827897,
+                                                                              "lon": 35.655938048202,
+                                                                                "x": -192785.99413985,
+                                                                                "y": -28675.434089371
+                                                                         }, {
+                                                                             "elev": 6158,
+                                                                              "lat": 33.336354642375,
+                                                                              "lon": 35.773707954938,
+                                                                                "x": -186640.35456524,
+                                                                                "y": -17500.314099492
+                                                                         } ]
+                                                           } ],
+                                                   "name": "",
+                                          "route_as_line": false,
+                                              "waypoints": [ {
+                                                               "elev": 0,
+                                                                "lat": 32.927981475051,
+                                                                "lon": 35.063959505372,
+                                                               "name": "ACRE",
+                                                                "spd": 0,
+                                                                "tot": "",
+                                                                  "x": -229683.39653106,
+                                                                  "y": -85305.208034345
+                                                           }, {
+                                                               "elev": 10,
+                                                                "lat": 32.806671739671,
+                                                                "lon": 35.588655846132,
+                                                               "name": "BULL",
+                                                                "spd": 0,
+                                                                "tot": "",
+                                                                  "x": -244854.95861267,
+                                                                  "y": -36644.238729958
+                                                           }, {
+                                                               "elev": 2635,
+                                                                "lat": 33.024458516248,
+                                                                "lon": 35.457540376461,
+                                                               "name": "CAP2",
+                                                                "spd": 0,
+                                                                "tot": "",
+                                                                  "x": -220287.99947094,
+                                                                  "y": -48115.700629482
+                                                           }, {
+                                                               "elev": 0,
+                                                                "lat": 33.728875140223,
+                                                                "lon": 34.607853049676,
+                                                               "name": "AAR1",
+                                                                "spd": 0,
+                                                                "tot": "",
+                                                                  "x": -139098.01197342,
+                                                                  "y": -124242.22896874
+                                                           } ]
+                                  }, {
+                                      "additional_points": [  ],
+                                                  "lines": [  ],
+                                                   "name": "",
+                                          "route_as_line": false,
+                                              "waypoints": [  ]
+                                  }, {
+                                      "additional_points": [  ],
+                                                  "lines": [  ],
+                                                   "name": "",
+                                          "route_as_line": false,
+                                              "waypoints": [  ]
+                                  }, {
+                                      "additional_points": [  ],
+                                                  "lines": [  ],
+                                                   "name": "",
+                                          "route_as_line": false,
+                                              "waypoints": [  ]
+                                  }, {
+                                      "additional_points": [  ],
+                                                  "lines": [  ],
+                                                   "name": "",
+                                          "route_as_line": false,
+                                              "waypoints": [  ]
+                                  }, {
+                                      "additional_points": [  ],
+                                                  "lines": [  ],
+                                                   "name": "",
+                                          "route_as_line": false,
+                                              "waypoints": [  ]
+                                  }, {
+                                      "additional_points": [  ],
+                                                  "lines": [  ],
+                                                   "name": "",
+                                          "route_as_line": false,
+                                              "waypoints": [  ]
+                                  }, {
+                                      "additional_points": [  ],
+                                                  "lines": [  ],
+                                                   "name": "",
+                                          "route_as_line": false,
+                                              "waypoints": [  ]
+                                  }, {
+                                      "additional_points": [  ],
+                                                  "lines": [  ],
+                                                   "name": "",
+                                          "route_as_line": false,
+                                              "waypoints": [  ]
+                                  }, {
+                                      "additional_points": [  ],
+                                                  "lines": [  ],
+                                                   "name": "",
+                                          "route_as_line": false,
+                                              "waypoints": [  ]
+                                  }, {
+                                      "additional_points": [  ],
+                                                  "lines": [  ],
+                                                   "name": "",
+                                          "route_as_line": false,
+                                              "waypoints": [  ]
+                                  } ],
+                          "name": "F-14B(U) DTC_SYR_1",
+                           "TIS": {
+                                       "add_wingmen_to_list": true,
+                                              "own_callsign": "      ",
+                                         "send_to_callsigns": [  ],
+                                      "use_mission_callsign": true
+                                  },
+                          "type": "F-14BU"
+            },
+    "name": "F-14B(U) DTC_SYR_1",
+    "type": "F-14BU"
+}
