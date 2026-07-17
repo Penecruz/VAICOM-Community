@@ -5188,6 +5188,27 @@ namespace VAICOM
       fltPlanDtcRouteBySelection[key] = isValidDtcRouteKey(r) ? r : 'R1';
     }
 
+    function updateDtcRouteButtonUi(selected){
+      const host = document.getElementById('tabBody');
+      if (!host || !selected) return;
+      const activeRoute = getDtcRouteBySelection(selected);
+      const buttons = host.querySelectorAll ? host.querySelectorAll('[data-dtc-route]') : [];
+      for (let i = 0; i < buttons.length; i++){
+        const btn = buttons[i];
+        if (!btn || !btn.classList || !btn.getAttribute) continue;
+        const key = String(btn.getAttribute('data-dtc-route') || '').toUpperCase();
+        btn.classList.toggle('active', key === activeRoute);
+      }
+    }
+
+    function isF14DtcContext(root, data){
+      const rootType = String((root && root.type) || '').toUpperCase();
+      if (rootType.indexOf('F-14') >= 0 || rootType.indexOf('TOMCAT') >= 0) return true;
+      const model = data || latestData || {};
+      const aircraft = String((((model && model.Server) || {}).Aircraft) || '').toUpperCase();
+      return aircraft.indexOf('F-14') >= 0 || aircraft.indexOf('TOMCAT') >= 0;
+    }
+
     function getMapViewBySelection(selected){
       const key = getFlightPlanEtaStartKey(selected);
       if (!key) return { zoom: 1, panX: 0, panY: 0 };
@@ -9994,7 +10015,14 @@ namespace VAICOM
         setDtcRouteBySelection(selected, routeKey);
       }
       const mapOverlays = getDtcMapOverlays(root, routeKey);
-      const waypoints = applyTypeOverrides(filterDtcWaypointsByRoute(root, allWaypoints, routeKey), selected);
+      const isF14 = isF14DtcContext(root, data);
+      let waypoints = applyTypeOverrides(filterDtcWaypointsByRoute(root, allWaypoints, routeKey), selected);
+      if (isF14 && routeKey === 'R1'){
+        const runtimeWaypoints = getMissionRuntimeWaypoints(data);
+        if (runtimeWaypoints.length){
+          waypoints = applyTypeOverrides(runtimeWaypoints.slice(), '__RUNTIME_PLAYER__');
+        }
+      }
       const cmdsBlockHtml = formatDtcCmdsBlockHtml(root);
       const page = getDtcPageBySelection(selected);
       const routeButtons = availableRoutes.map(function(r){
@@ -10560,6 +10588,9 @@ namespace VAICOM
             }
             readoutEl.textContent = readout;
           }
+        }
+        if (activeDtcSelection){
+          updateDtcRouteButtonUi(activeDtcSelection);
         }
       } else {
         tabBody.className = 'content mainContent';
