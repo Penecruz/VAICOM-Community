@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using VAICOM.Static;
@@ -22,26 +23,33 @@ namespace VAICOM
                         return;
                     }
 
-                    Extensions.Kneeboard.OpenKneeboardBridge.AppendRawServerMessage(receivedString);
+                    Extensions.Kneeboard.OpenKneeboardBridge.AppendRawServerMessage(trimmed);
 
-                    if (DetectAH64WeaponState(receivedString))
+                    if (DetectAH64WeaponState(trimmed))
                     {
                         return;
                     }
 
-                    if (!ValidateRaw(receivedString))
+                    if (!ValidateRaw(trimmed))
                     {
-                        Log.Write("VOID SERVER MESSAGE: " + receivedString, Static.Colors.Inline);
+                        Log.Write("VOID SERVER MESSAGE: " + trimmed, Static.Colors.Inline);
                         Extensions.Kneeboard.OpenKneeboardBridge.UpdateStatus("Warning: waiting for mission data...", "warning");
                         return;
                     }
 
-                    if (DetectEndMission(receivedString))
+                    if (DetectEndMission(trimmed))
                     {
                         EndMission();
                         return;
                     }
-                    ServerMessage decodedMessage = DecodeRawMessage(receivedString);
+
+                    if (!trimmed.StartsWith("{", StringComparison.Ordinal))
+                    {
+                        Log.Write("NON-JSON mission update ignored: " + trimmed, Static.Colors.Inline);
+                        return;
+                    }
+
+                    ServerMessage decodedMessage = DecodeRawMessage(trimmed);
                     if (decodedMessage == null)
                     {
                         Log.Write("NOT DECODED: " + receivedString, Static.Colors.Inline);
@@ -63,6 +71,7 @@ namespace VAICOM
             public static bool DetectAH64WeaponState(string receivedString)
             {
                 const string prefix = "missiondata.update.ah64state";
+                receivedString = (receivedString ?? "").Trim();
                 if (string.IsNullOrEmpty(receivedString) || !receivedString.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
                 {
                     return false;
@@ -134,7 +143,7 @@ namespace VAICOM
             public static bool ValidateRaw(string receivedString)
             {
                 string inputfilter = "missiondata.update";
-                if (!receivedString.Contains(inputfilter))
+                if (string.IsNullOrWhiteSpace(receivedString) || receivedString.IndexOf(inputfilter, StringComparison.OrdinalIgnoreCase) < 0)
                 {
                     return false;
                 }
@@ -146,10 +155,17 @@ namespace VAICOM
 
             public static ServerMessage DecodeRawMessage(string receivedString)
             {
-
-
                 try
                 {
+                    JToken token = JToken.Parse(receivedString);
+                    JObject obj = token as JObject;
+                    if (obj != null)
+                    {
+                        NormalizeDictionaryToken(obj, "atcmetars");
+                        NormalizeDictionaryToken(obj, "atcicaotypes");
+                        return obj.ToObject<ServerMessage>();
+                    }
+
                     return JsonConvert.DeserializeObject<ServerMessage>(receivedString);
                 }
                 catch (Exception e)
@@ -158,6 +174,24 @@ namespace VAICOM
                     return null;
                 }
 
+            }
+
+            private static void NormalizeDictionaryToken(JObject obj, string propertyName)
+            {
+                if (obj == null || string.IsNullOrWhiteSpace(propertyName))
+                {
+                    return;
+                }
+
+                if (!obj.TryGetValue(propertyName, StringComparison.OrdinalIgnoreCase, out JToken value) || value == null)
+                {
+                    return;
+                }
+
+                if (value.Type == JTokenType.Array)
+                {
+                    obj[propertyName] = new JObject();
+                }
             }
 
 

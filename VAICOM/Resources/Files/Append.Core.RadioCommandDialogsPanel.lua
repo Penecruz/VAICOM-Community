@@ -2453,35 +2453,72 @@ base.vaicom.state = {
 					return overrides
 				end
 
-				local function resolveIcaoForAtc(callsign, atcName)
+				local function resolveIcaoMetaForAtc(callsign, atcName)
 					local overrides = loadIcaoOverrides()
 					local theatre = base.string.lower(base.tostring(base.vaicom.state and base.vaicom.state.theatre or ""))
 					local keyCallsign = normalizeIcaoKey(callsign)
 					local keyName = normalizeIcaoKey(atcName)
 
-					local function readCode(scope, key)
+					local function normalizeIcaoType(value)
+						local t = base.string.upper(base.tostring(value or ""))
+						if t == "MIL" or t == "CIV" or t == "JOINT" then
+							return t
+						end
+						return ""
+					end
+
+					local function readCodeAndType(scope, key)
 						if base.type(scope) ~= "table" or key == "" then
-							return nil
+							return nil, ""
 						end
 						local value = scope[key]
 						if value == nil then
-							return nil
+							return nil, ""
 						end
+
+						if base.type(value) == "table" then
+							local code = base.string.upper(base.tostring(value.icao or ""))
+							if base.string.match(code, "^%u%u%u%u$") then
+								return code, normalizeIcaoType(value.type)
+							end
+							return nil, ""
+						end
+
 						local code = base.string.upper(base.tostring(value))
 						if base.string.match(code, "^%u%u%u%u$") then
-							return code
+							return code, ""
 						end
-						return nil
+						return nil, ""
 					end
 
 					local theatreTable = overrides[theatre]
 					local fallbackTable = overrides.default
-					local mapped = readCode(theatreTable, keyCallsign)
-						or readCode(theatreTable, keyName)
-						or readCode(fallbackTable, keyCallsign)
-						or readCode(fallbackTable, keyName)
-                 if mapped ~= nil then
-						return mapped
+					local code, airfieldType = readCodeAndType(theatreTable, keyCallsign)
+					if code == nil then code, airfieldType = readCodeAndType(theatreTable, keyName) end
+					if code == nil then code, airfieldType = readCodeAndType(fallbackTable, keyCallsign) end
+					if code == nil then code, airfieldType = readCodeAndType(fallbackTable, keyName) end
+					if code ~= nil then
+						return {
+							icao = code,
+							type = airfieldType,
+						}
+					end
+
+					local direct = extractIcaoToken(callsign)
+					if direct ~= nil then
+						return {
+							icao = direct,
+							type = "",
+						}
+					end
+
+					return nil
+				end
+
+				local function resolveIcaoForAtc(callsign, atcName)
+					local mappedMeta = resolveIcaoMetaForAtc(callsign, atcName)
+					if mappedMeta ~= nil and mappedMeta.icao ~= nil then
+						return mappedMeta.icao
 					end
 
 					local direct = extractIcaoToken(callsign)
@@ -2490,6 +2527,69 @@ base.vaicom.state = {
 					end
 
 					return nil
+				end
+
+				local function buildAllAtcIcaoTypes()
+					local result = {}
+					local atcs = base.vaicom.state and base.vaicom.state.availablerecipients and base.vaicom.state.availablerecipients.ATC
+					if base.type(atcs) ~= "table" then
+						return result
+					end
+
+					for _, atc in base.pairs(atcs) do
+						if atc then
+							local callsign = ""
+							local okCallsign, valueCallsign = base.pcall(function()
+								return base.vaicom.properties and base.vaicom.properties.missioncallsign and base.vaicom.properties.missioncallsign(atc) or ""
+							end)
+							if okCallsign and valueCallsign ~= nil then
+								callsign = base.tostring(valueCallsign)
+							end
+
+							local atcName = ""
+							local okDescName, atcDesc = base.pcall(function() return atc:getDesc() end)
+							if okDescName and atcDesc ~= nil then
+								atcName = base.tostring(atcDesc.displayName or atcDesc.typeName or "")
+							end
+
+							local normalizedCallsign = normalizeIcaoKey(callsign)
+							local normalizedAtcName = normalizeIcaoKey(atcName)
+							local meta = resolveIcaoMetaForAtc(callsign, atcName)
+							if meta ~= nil then
+								local typeCode = base.string.upper(base.tostring(meta.type or ""))
+								if typeCode == "MIL" or typeCode == "CIV" or typeCode == "JOINT" then
+									local icao = base.string.upper(base.tostring(meta.icao or ""))
+									if icao ~= "" then
+										result[icao] = typeCode
+									end
+									if normalizedCallsign ~= "" then
+										result[normalizedCallsign] = typeCode
+									end
+									if normalizedAtcName ~= "" then
+										result[normalizedAtcName] = typeCode
+									end
+
+									local upperCallsign = base.string.upper(base.tostring(callsign or ""))
+									if upperCallsign ~= "" then
+										result[upperCallsign] = typeCode
+									end
+
+									local shortCallsign = ""
+									local okShort, valueShort = base.pcall(function()
+										return base.vaicom.properties and base.vaicom.properties.callsign and base.vaicom.properties.callsign(atc) or ""
+									end)
+									if okShort and valueShort ~= nil then
+										shortCallsign = base.string.upper(base.tostring(valueShort))
+									end
+									if shortCallsign ~= "" then
+										result[shortCallsign] = typeCode
+									end
+								end
+							end
+						end
+					end
+
+					return result
 				end
 
               local function buildMetarForAtcInfo(atcInfoOverride)
@@ -4218,8 +4318,12 @@ base.vaicom.state = {
              chunk[12] 		= {
 									metar = buildAtcMetar(),
 									atcmetars = buildAllAtcMetars(),
+									atcicaotypes = buildAllAtcIcaoTypes(),
 									diagnostics = getChunk12Diagnostics(),
 								  }
+				if base.vaicom and base.vaicom.state then
+					base.vaicom.state.atcicaotypes = chunk[12].atcicaotypes
+				end
 				local selectedRadio = getSelectedRadio(base.vaicom.state.dcsid)
 				for n,k in base.pairs(data.communicators) do
 					local Viper_VHF = (base.vaicom.state.dcsid == "F-16C_50" and n == 38) 

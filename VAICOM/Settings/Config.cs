@@ -20,6 +20,7 @@ namespace VAICOM
             public int? SelectorMode;
             public bool UseSRSmapping;
             public bool PermaTXInfo;
+            public bool WagsFundraiserDismissed;
             public bool MouseExternalTX;
             public bool ReleaseHot;
 
@@ -204,6 +205,7 @@ namespace VAICOM
                 SelectorMode = null,
                 UseSRSmapping = false,
                 PermaTXInfo = false,
+                WagsFundraiserDismissed = false,
                 MouseExternalTX = false,
                 ReleaseHot = false,
 

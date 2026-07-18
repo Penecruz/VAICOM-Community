@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Threading;
 using VAICOM.Client;
 using VAICOM.Helpers;
 using VAICOM.Products;
@@ -19,6 +21,9 @@ namespace VAICOM
         public partial class ConfigWindow : Window
         {
             // --- PTT CONFIG PAGE ----------------------------------------
+            private const string WagsFundraiserPrompt = "Support Matt Wags Wagners Cancer Fight - Click Here";
+            private DispatcherTimer wagsFundraiserMarqueeTimer;
+            private int wagsFundraiserMarqueeOffset;
 
             // bugs & radio colors 
 
@@ -637,7 +642,115 @@ namespace VAICOM
             private void setModuleInfotext(object sender, EventArgs e)
             {
                 string info = Common.GetCurrentModuleDisplayText();
-                ModuleInfo.Text = info;
+                bool showFundraiser = ShouldShowWagsFundraiserPrompt();
+                if (showFundraiser)
+                {
+                    StartWagsFundraiserMarquee();
+                }
+                else
+                {
+                    StopWagsFundraiserMarquee();
+                }
+
+                if (!showFundraiser)
+                {
+                    ModuleInfo.Text = info;
+                }
+
+                ModuleInfo.Cursor = showFundraiser ? Cursors.Hand : Cursors.Arrow;
+            }
+
+            private void StartWagsFundraiserMarquee()
+            {
+                if (wagsFundraiserMarqueeTimer == null)
+                {
+                    wagsFundraiserMarqueeTimer = new DispatcherTimer();
+                    wagsFundraiserMarqueeTimer.Interval = TimeSpan.FromMilliseconds(180);
+                    wagsFundraiserMarqueeTimer.Tick += WagsFundraiserMarqueeTimer_Tick;
+                }
+
+                if (!wagsFundraiserMarqueeTimer.IsEnabled)
+                {
+                    wagsFundraiserMarqueeOffset = 0;
+                    wagsFundraiserMarqueeTimer.Start();
+                    WagsFundraiserMarqueeTimer_Tick(null, EventArgs.Empty);
+                }
+            }
+
+            private void StopWagsFundraiserMarquee()
+            {
+                if (wagsFundraiserMarqueeTimer != null && wagsFundraiserMarqueeTimer.IsEnabled)
+                {
+                    wagsFundraiserMarqueeTimer.Stop();
+                }
+            }
+
+            private void WagsFundraiserMarqueeTimer_Tick(object sender, EventArgs e)
+            {
+                if (ModuleInfo == null)
+                {
+                    return;
+                }
+
+                string marqueeSource = WagsFundraiserPrompt + "     ";
+                string loop = marqueeSource + marqueeSource;
+                int viewLength = Math.Min(30, marqueeSource.Length);
+
+                if (wagsFundraiserMarqueeOffset >= marqueeSource.Length)
+                {
+                    wagsFundraiserMarqueeOffset = 0;
+                }
+
+                ModuleInfo.Text = loop.Substring(wagsFundraiserMarqueeOffset, viewLength);
+                wagsFundraiserMarqueeOffset++;
+            }
+
+            private static bool ShouldShowWagsFundraiserPrompt()
+            {
+                if (State.activeconfig == null)
+                {
+                    return false;
+                }
+
+                if (State.activeconfig.WagsFundraiserDismissed)
+                {
+                    return false;
+                }
+
+                if (State.currentmodule == null)
+                {
+                    return true;
+                }
+
+                return State.currentmodule.Id.Equals("----", StringComparison.OrdinalIgnoreCase);
+            }
+
+            private void ModuleInfo_OpenWagsFundraiser(object sender, MouseButtonEventArgs e)
+            {
+                try
+                {
+                    if (!ShouldShowWagsFundraiserPrompt())
+                    {
+                        return;
+                    }
+
+                    const string url = "https://www.gofundme.com/f/support-matt-wags-wagners-cancer-fight?attribution_id=sl:036f7eae-fcd2-4fff-aa34-fdc683faf9a6&lang=en_US&ts=1784293424&utm_campaign=fp_sharesheet&utm_content=amp20_t1&utm_medium=customer&utm_source=copy_link";
+                    Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
+
+                    State.activeconfig.WagsFundraiserDismissed = true;
+                    Settings.ConfigFile.WriteConfigToFile(true);
+                    StopWagsFundraiserMarquee();
+
+                    if (ModuleInfo != null)
+                    {
+                        ModuleInfo.Text = Common.GetCurrentModuleDisplayText();
+                        ModuleInfo.Cursor = Cursors.Arrow;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Log.Write("Unable to open Wags fundraiser link: " + ex.Message, Static.Colors.Warning);
+                }
             }
 
             private void setMicKeysInfotext(object sender, EventArgs e)
@@ -738,7 +851,22 @@ namespace VAICOM
                     EasyCommsInfo.Text = info2;
 
                     string info3 = Common.GetCurrentModuleDisplayText();
-                    ModuleInfo.Text = info3;
+                    bool showFundraiser = ShouldShowWagsFundraiserPrompt();
+                    if (showFundraiser)
+                    {
+                        StartWagsFundraiserMarquee();
+                    }
+                    else
+                    {
+                        StopWagsFundraiserMarquee();
+                    }
+
+                    if (!showFundraiser)
+                    {
+                        ModuleInfo.Text = info3;
+                    }
+
+                    ModuleInfo.Cursor = showFundraiser ? Cursors.Hand : Cursors.Arrow;
 
                     string keyname = "TX1";
                     string keyenabled;

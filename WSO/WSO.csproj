@@ -64,6 +64,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <None Include="DevPipe\airports.json" />
     <None Include="DevPipe\ExampleMod.lua" />
     <None Include="DevPipe\F-14B%28U%29 DTC_SYR_1.dtc" />
     <None Include="DevPipe\F-16CM - Vaicom WIP.dtc" />

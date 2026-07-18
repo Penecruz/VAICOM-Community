@@ -318,6 +318,7 @@ namespace VAICOM
                 public object missioncmds;
                 public string metar;
                 public Dictionary<string, string> atcmetars;
+                public Dictionary<string, string> atcicaotypes;
                 public object diagnostics;
 
                 public int intercom;
@@ -354,6 +355,7 @@ namespace VAICOM
                     menucargo = null;
                     mission = null;
                     atcmetars = new Dictionary<string, string>();
+                    atcicaotypes = new Dictionary<string, string>();
                     bpos = new Vector(); // added
                     cpos = new campos();
                     options = new DcsOptions();
@@ -408,6 +410,7 @@ namespace VAICOM
                 public object missioncmds;
                 public string metar;
                 public Dictionary<string, string> atcmetars;
+                public Dictionary<string, string> atcicaotypes;
                 public object diagnostics;
 
                 public Dictionary<string, List<DcsUnit>> availablerecipients;

@@ -598,28 +598,37 @@ namespace VAICOM
       return NaN;
     }
 
-    function parseMetarCloudBaseFeet(metarText){
+    function isMetarCloudVfr(metarText){
       const text = String(metarText || '').toUpperCase().trim();
-      if (!text) return NaN;
-      if (text.indexOf('CAVOK') >= 0) return 99999;
+      if (!text) return false;
+      if (text.indexOf('CAVOK') >= 0) return true;
 
       const rx = /\b(FEW|SCT|BKN|OVC)(\d{3})\b/g;
       let match = null;
-      let minBase = NaN;
+      let lowSctCount = 0;
       while ((match = rx.exec(text)) !== null){
+        const layer = String(match[1] || '').toUpperCase();
         const baseHundreds = Number(match[2]);
         if (!isFinite(baseHundreds)) continue;
         const ft = baseHundreds * 100;
-        if (!isFinite(minBase) || ft < minBase) minBase = ft;
+        if (!isFinite(ft)) continue;
+
+        if (ft < 1500){
+          if (layer === 'BKN' || layer === 'OVC') return false;
+          if (layer === 'SCT'){
+            lowSctCount += 1;
+            if (lowSctCount >= 2) return false;
+          }
+        }
       }
 
-      return isFinite(minBase) ? minBase : 99999;
+      return true;
     }
 
     function isMetarVfr(metarText){
       const visMeters = parseMetarVisibilityMeters(metarText);
-      const cloudBaseFeet = parseMetarCloudBaseFeet(metarText);
-      return isFinite(visMeters) && isFinite(cloudBaseFeet) && visMeters > 5000 && cloudBaseFeet > 1500;
+      const cloudVfr = isMetarCloudVfr(metarText);
+      return isFinite(visMeters) && cloudVfr && visMeters >= 5000;
     }
 
     function buildMapAirfields(data){
@@ -627,9 +636,54 @@ namespace VAICOM
       const server = (model && model.Server) || {};
       const diagnostics = (server && server.Diagnostics && typeof server.Diagnostics === 'object') ? server.Diagnostics : {};
       const atcMetars = (server && server.AtcMetars && typeof server.AtcMetars === 'object') ? server.AtcMetars : {};
+      const atcIcaoTypes = (server && server.AtcIcaoTypes && typeof server.AtcIcaoTypes === 'object') ? server.AtcIcaoTypes : {};
       const results = [];
       const seen = {};
       const metarKeys = Object.keys(atcMetars).sort(function(a, b){ return String(b || '').length - String(a || '').length; });
+
+      function normalizeOverrideType(value){
+        const t = String(value || '').trim().toUpperCase();
+        if (t === 'MIL' || t === 'CIV' || t === 'JOINT') return t;
+        return '';
+      }
+
+      function normalizeOverrideLookupKey(value){
+        return String(value || '')
+          .toUpperCase()
+          .replace(/[\_\-\/\.,\(\)]/g, ' ')
+          .replace(/\s+/g, ' ')
+          .trim();
+      }
+
+      function resolveOverrideType(icao, text, fallbackKey){
+        const keyIcao = String(icao || '').toUpperCase();
+        const keyText = String(text || '').toUpperCase();
+        const keyFallback = String(fallbackKey || '').toUpperCase();
+        const normText = normalizeOverrideLookupKey(text);
+        const normFallback = normalizeOverrideLookupKey(fallbackKey);
+        return normalizeOverrideType(atcIcaoTypes[keyIcao])
+          || normalizeOverrideType(atcIcaoTypes[keyText])
+          || normalizeOverrideType(atcIcaoTypes[keyFallback])
+          || normalizeOverrideType(atcIcaoTypes[normText])
+          || normalizeOverrideType(atcIcaoTypes[normFallback])
+          || (function(){
+            if (!normText && !normFallback) return '';
+            const keys = Object.keys(atcIcaoTypes || {});
+            for (let i = 0; i < keys.length; i++){
+              const k = String(keys[i] || '');
+              if (!k) continue;
+              const nk = normalizeOverrideLookupKey(k);
+              if (!nk) continue;
+              if ((normText && (normText === nk || normText.indexOf(nk) >= 0 || nk.indexOf(normText) >= 0))
+                || (normFallback && (normFallback === nk || normFallback.indexOf(nk) >= 0 || nk.indexOf(normFallback) >= 0))){
+                const t = normalizeOverrideType(atcIcaoTypes[k]);
+                if (t) return t;
+              }
+            }
+            return '';
+          })()
+          || '';
+      }
 
       function extractIcaoFromMetarText(metarText){
         const text = String(metarText || '').toUpperCase();
@@ -684,18 +738,23 @@ namespace VAICOM
 
         const icao = extractIcaoToken(text) || extractIcaoFromMetarText(metarText) || extractIcaoToken(metarKey);
         if (!icao) return;
+        const overrideType = resolveOverrideType(icao, text, metarKey);
 
         const dedupeKey = String(icao) + '|' + String(Math.round(north)) + '|' + String(Math.round(east));
         if (seen[dedupeKey]) return;
         seen[dedupeKey] = true;
+
+        const type = (overrideType === 'MIL') ? 'airport'
+          : (overrideType === 'JOINT' ? 'airport' : inferAirfieldType(text));
+        const isMilitary = (overrideType === 'MIL' || overrideType === 'JOINT') ? true : inferAirfieldMilitary(text);
 
         results.push({
           xNum: north,
           yNum: east,
           label: String(icao).toUpperCase(),
           icao: String(icao).toUpperCase(),
-          type: inferAirfieldType(text),
-          isMilitary: inferAirfieldMilitary(text),
+          type: type,
+          isMilitary: isMilitary,
           isVfr: isMetarVfr(metarText),
         });
       });
@@ -729,6 +788,7 @@ namespace VAICOM
         const metarIcao = extractIcaoFromMetarText(metarText);
         const keyIcao = extractIcaoToken(metarKey);
         const icao = String(inferredIcao || metarIcao || keyIcao || '').toUpperCase();
+        const overrideType = resolveOverrideType(icao, text, metarKey);
         const rowCategory = String((row && (row.category || row.Category)) || '').toUpperCase();
 
         const upperText = text.toUpperCase();
@@ -744,8 +804,9 @@ namespace VAICOM
         if (!looksLikeAirfield) return;
 
         const vfr = isMetarVfr(metarText);
-        const type = inferAirfieldType(text);
-        const military = inferAirfieldMilitary(text);
+        const type = (overrideType === 'MIL') ? 'airport'
+          : (overrideType === 'JOINT' ? 'airport' : inferAirfieldType(text));
+        const military = (overrideType === 'MIL' || overrideType === 'JOINT') ? true : inferAirfieldMilitary(text);
         const dedupeKey = (icao || '-') + '|' + String(Math.round(north)) + '|' + String(Math.round(east));
         if (seen[dedupeKey]) return;
         seen[dedupeKey] = true;
@@ -5652,7 +5713,6 @@ namespace VAICOM
 
       const overlayRoot = overlaySvg;
       if (!orderedFeatures.length){
-        overlayRoot.replaceChildren();
         return;
       }
 
@@ -6163,7 +6223,23 @@ namespace VAICOM
         }
       }
 
-      overlayRoot.replaceChildren(renderLayer);
+      const previousLayer = item.overlayRenderLayer && item.overlayRenderLayer.parentNode === overlayRoot
+        ? item.overlayRenderLayer
+        : null;
+      overlayRoot.appendChild(renderLayer);
+      item.overlayRenderLayer = renderLayer;
+      if (previousLayer && previousLayer !== renderLayer){
+        previousLayer.style.display = 'none';
+        if (typeof window !== 'undefined' && typeof window.requestAnimationFrame === 'function'){
+          window.requestAnimationFrame(function(){
+            if (previousLayer.parentNode === overlayRoot){
+              overlayRoot.removeChild(previousLayer);
+            }
+          });
+        } else if (previousLayer.parentNode === overlayRoot){
+          overlayRoot.removeChild(previousLayer);
+        }
+      }
 
       if (!item.overlayClickBound){
         overlayRoot.addEventListener('click', function(ev){
@@ -8453,6 +8529,7 @@ namespace VAICOM
             name: String((a && a.Name) || '').trim(),
             category: String((a && a.Category) || '').trim().toUpperCase(),
             typeName: String((a && a.TypeName) || '').trim(),
+            icaoType: String((a && a.IcaoType) || '').trim().toUpperCase(),
             frequency: String((a && a.Frequency) || '').trim(),
             altFrequencies: Array.isArray(a && a.AltFrequencies) ? a.AltFrequencies.map(function(v){ return String(v || '').trim(); }).filter(function(v){ return !!v; }) : [],
             tacan: String((a && a.Tacan) || '').trim(),
@@ -8531,9 +8608,56 @@ namespace VAICOM
       const server = (model && model.Server) || {};
       const assets = Array.isArray(server.FriendlyAssets) ? server.FriendlyAssets : [];
       const atcMetars = (server && server.AtcMetars && typeof server.AtcMetars === 'object') ? server.AtcMetars : {};
+      const atcIcaoTypes = (server && server.AtcIcaoTypes && typeof server.AtcIcaoTypes === 'object') ? server.AtcIcaoTypes : {};
       const metarKeys = Object.keys(atcMetars);
       const rows = [];
       const seen = {};
+
+      function normalizeOverrideType(value){
+        const t = String(value || '').trim().toUpperCase();
+        if (t === 'MIL' || t === 'CIV' || t === 'JOINT') return t;
+        return '';
+      }
+
+      function normalizeOverrideLookupKey(value){
+        return String(value || '')
+          .toUpperCase()
+          .replace(/[\_\-\/\.,\(\)]/g, ' ')
+          .replace(/\s+/g, ' ')
+          .trim();
+      }
+
+      function resolveOverrideType(icao, text, fallbackKey, directType){
+        const direct = normalizeOverrideType(directType);
+        if (direct) return direct;
+        const keyIcao = String(icao || '').toUpperCase();
+        const keyText = String(text || '').toUpperCase();
+        const keyFallback = String(fallbackKey || '').toUpperCase();
+        const normText = normalizeOverrideLookupKey(text);
+        const normFallback = normalizeOverrideLookupKey(fallbackKey);
+        return normalizeOverrideType(atcIcaoTypes[keyIcao])
+          || normalizeOverrideType(atcIcaoTypes[keyText])
+          || normalizeOverrideType(atcIcaoTypes[keyFallback])
+          || normalizeOverrideType(atcIcaoTypes[normText])
+          || normalizeOverrideType(atcIcaoTypes[normFallback])
+          || (function(){
+            if (!normText && !normFallback) return '';
+            const keys = Object.keys(atcIcaoTypes || {});
+            for (let i = 0; i < keys.length; i++){
+              const k = String(keys[i] || '');
+              if (!k) continue;
+              const nk = normalizeOverrideLookupKey(k);
+              if (!nk) continue;
+              if ((normText && (normText === nk || normText.indexOf(nk) >= 0 || nk.indexOf(normText) >= 0))
+                || (normFallback && (normFallback === nk || normFallback.indexOf(nk) >= 0 || nk.indexOf(normFallback) >= 0))){
+                const t = normalizeOverrideType(atcIcaoTypes[k]);
+                if (t) return t;
+              }
+            }
+            return '';
+          })()
+          || '';
+      }
 
       function tokenIcao(text){
         const m = String(text || '').toUpperCase().match(/\b([A-Z]{4})\b/);
@@ -8567,25 +8691,32 @@ namespace VAICOM
         return isFinite(mv) ? mv : NaN;
       }
 
-      function parseCloudBaseFt(text){
+      function isCloudVfr(text){
         const t = String(text || '').toUpperCase();
-        if (!t) return NaN;
-        if (t.indexOf('CAVOK') >= 0) return 99999;
+        if (!t) return false;
+        if (t.indexOf('CAVOK') >= 0) return true;
         const rx = /\b(FEW|SCT|BKN|OVC)(\d{3})\b/g;
         let m = null;
-        let minFt = NaN;
+        let lowSctCount = 0;
         while ((m = rx.exec(t)) !== null){
+          const layer = String(m[1] || '').toUpperCase();
           const ft = Number(m[2]) * 100;
           if (!isFinite(ft)) continue;
-          if (!isFinite(minFt) || ft < minFt) minFt = ft;
+          if (ft < 1500){
+            if (layer === 'BKN' || layer === 'OVC') return false;
+            if (layer === 'SCT'){
+              lowSctCount += 1;
+              if (lowSctCount >= 2) return false;
+            }
+          }
         }
-        return isFinite(minFt) ? minFt : 99999;
+        return true;
       }
 
       function isVfrMetar(text){
         const vis = parseVisMeters(text);
-        const base = parseCloudBaseFt(text);
-        return isFinite(vis) && isFinite(base) && vis > 5000 && base > 1500;
+        const cloudVfr = isCloudVfr(text);
+        return isFinite(vis) && cloudVfr && vis >= 5000;
       }
 
       assets.forEach(function(a){
@@ -8604,6 +8735,7 @@ namespace VAICOM
         const key = resolveMetarKey(text);
         const metar = key ? String(atcMetars[key] || '') : '';
         const icao = tokenIcao(text) || metarIcao(metar) || tokenIcao(key);
+        const overrideType = resolveOverrideType(icao, text, key, a && a.IcaoType);
         const label = String((icao || (a && (a.Callsign || a.Name)) || 'ATC')).toUpperCase();
 
         const dedupeKey = label + '|' + String(Math.round(north)) + '|' + String(Math.round(east));
@@ -8625,8 +8757,10 @@ namespace VAICOM
           altFeet: Number(a && a.AltFeet),
           label: label,
           icao: String(icao || ''),
-          type: (u.indexOf('SEAPLANE') >= 0 ? 'seaplane' : (u.indexOf('HELI') >= 0 || u.indexOf('FARP') >= 0 ? 'heliport' : 'airport')),
-          isMilitary: (u.indexOf('MIL') >= 0 || u.indexOf('AIRBASE') >= 0 || u.indexOf(' AFB') >= 0 || u.indexOf('NAS') >= 0),
+          type: (u.indexOf('SEAPLANE') >= 0 ? 'seaplane' : (u.indexOf('HELI') >= 0 || u.indexOf('FARP') >= 0 ? 'heliport' : (overrideType === 'MIL' || overrideType === 'JOINT' ? 'airport' : 'airport'))),
+          isMilitary: (overrideType === 'MIL' || overrideType === 'JOINT')
+            ? true
+            : (u.indexOf('MIL') >= 0 || u.indexOf('AIRBASE') >= 0 || u.indexOf(' AFB') >= 0 || u.indexOf('NAS') >= 0),
           isVfr: isVfrMetar(metar),
         });
       });
@@ -14480,6 +14614,9 @@ namespace VAICOM
                             server.AtcMetars = State.currentstate.atcmetars == null
                                 ? new Dictionary<string, string>()
                                 : new Dictionary<string, string>(State.currentstate.atcmetars);
+                            server.AtcIcaoTypes = State.currentstate.atcicaotypes == null
+                                ? new Dictionary<string, string>()
+                                : new Dictionary<string, string>(State.currentstate.atcicaotypes);
                             server.Diagnostics = State.currentstate.diagnostics;
                             server.FlightMembers = BuildFlightMemberSnapshot();
                             server.FriendlyAssets = BuildFriendlyAssetsSnapshot();
@@ -14713,6 +14850,73 @@ namespace VAICOM
                     return isKnownAwacsCallsign || isAwacsType;
                 }
 
+                private static string ResolveAtcIcaoType(string callsign, string atcName)
+                {
+                    try
+                    {
+                        if (State.currentstate == null || State.currentstate.atcicaotypes == null)
+                        {
+                            return string.Empty;
+                        }
+
+                        string keyCallsign = NormalizeAtcLookupKey(callsign);
+                        string keyName = NormalizeAtcLookupKey(atcName);
+
+                        string type;
+                        if (!string.IsNullOrWhiteSpace(keyCallsign)
+                            && State.currentstate.atcicaotypes.TryGetValue(keyCallsign, out type))
+                        {
+                            return NormalizeAtcIcaoTypeValue(type);
+                        }
+
+                        if (!string.IsNullOrWhiteSpace(keyName)
+                            && State.currentstate.atcicaotypes.TryGetValue(keyName, out type))
+                        {
+                            return NormalizeAtcIcaoTypeValue(type);
+                        }
+
+                        foreach (KeyValuePair<string, string> pair in State.currentstate.atcicaotypes)
+                        {
+                            string normalizedKey = NormalizeAtcLookupKey(pair.Key);
+                            if (!string.IsNullOrWhiteSpace(keyCallsign)
+                                && string.Equals(normalizedKey, keyCallsign, StringComparison.Ordinal))
+                            {
+                                return NormalizeAtcIcaoTypeValue(pair.Value);
+                            }
+
+                            if (!string.IsNullOrWhiteSpace(keyName)
+                                && string.Equals(normalizedKey, keyName, StringComparison.Ordinal))
+                            {
+                                return NormalizeAtcIcaoTypeValue(pair.Value);
+                            }
+                        }
+                    }
+                    catch
+                    {
+                    }
+
+                    return string.Empty;
+                }
+
+                private static string NormalizeAtcLookupKey(string value)
+                {
+                    string s = (value ?? string.Empty).Trim().ToUpperInvariant();
+                    if (string.IsNullOrWhiteSpace(s))
+                    {
+                        return string.Empty;
+                    }
+
+                    s = Regex.Replace(s, @"[_\-/\.,\(\)]", " ");
+                    s = Regex.Replace(s, @"\s+", " ").Trim();
+                    return s;
+                }
+
+                private static string NormalizeAtcIcaoTypeValue(string value)
+                {
+                    string t = (value ?? string.Empty).Trim().ToUpperInvariant();
+                    return (t == "MIL" || t == "CIV" || t == "JOINT") ? t : string.Empty;
+                }
+
                 private static List<OpenKneeboardMapMarker> BuildMapMarkerSnapshot()
                 {
                     List<OpenKneeboardMapMarker> markers = new List<OpenKneeboardMapMarker>();
@@ -14865,6 +15069,7 @@ namespace VAICOM
                                     Category = normalizedCategory,
                                     TypeName = string.IsNullOrWhiteSpace(unit.typename) ? "" : unit.typename,
                                     Frequency = string.IsNullOrWhiteSpace(unit.freq) ? "" : unit.freq,
+                                    IcaoType = ResolveAtcIcaoType(callsign, name),
                                     AltFrequencies = unit.altfreq == null
                                         ? new List<string>()
                                         : unit.altfreq.Where(f => !string.IsNullOrWhiteSpace(f)).ToList(),
@@ -15004,6 +15209,7 @@ namespace VAICOM
                 public object Payload { get; set; } = null;
                 public List<Servers.Server.RadioDevice> Radios { get; set; } = new List<Servers.Server.RadioDevice>();
                 public Dictionary<string, string> AtcMetars { get; set; } = new Dictionary<string, string>();
+                public Dictionary<string, string> AtcIcaoTypes { get; set; } = new Dictionary<string, string>();
                 public List<OpenKneeboardFlightMember> FlightMembers { get; set; } = new List<OpenKneeboardFlightMember>();
                 public List<OpenKneeboardFriendlyAsset> FriendlyAssets { get; set; } = new List<OpenKneeboardFriendlyAsset>();
                 public object Diagnostics { get; set; } = null;
@@ -15030,6 +15236,7 @@ namespace VAICOM
                         Payload = Payload,
                         Radios = Radios == null ? new List<Servers.Server.RadioDevice>() : new List<Servers.Server.RadioDevice>(Radios),
                         AtcMetars = new Dictionary<string, string>(AtcMetars ?? new Dictionary<string, string>()),
+                        AtcIcaoTypes = new Dictionary<string, string>(AtcIcaoTypes ?? new Dictionary<string, string>()),
                         FlightMembers = FlightMembers == null
                             ? new List<OpenKneeboardFlightMember>()
                             : FlightMembers.ConvertAll(member => member == null ? null : member.Clone()).FindAll(member => member != null),
@@ -15093,6 +15300,7 @@ namespace VAICOM
                 public string Category { get; set; } = "";
                 public string TypeName { get; set; } = "";
                 public string Frequency { get; set; } = "";
+                public string IcaoType { get; set; } = "";
                 public List<string> AltFrequencies { get; set; } = new List<string>();
                 public string Tacan { get; set; } = "";
                 public string MpClientCallsign { get; set; } = "";
@@ -15110,6 +15318,7 @@ namespace VAICOM
                         Category = Category,
                         TypeName = TypeName,
                         Frequency = Frequency,
+                        IcaoType = IcaoType,
                         AltFrequencies = AltFrequencies == null ? new List<string>() : new List<string>(AltFrequencies),
                         Tacan = Tacan,
                         MpClientCallsign = MpClientCallsign,
