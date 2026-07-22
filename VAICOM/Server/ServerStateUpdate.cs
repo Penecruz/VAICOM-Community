@@ -269,9 +269,31 @@ namespace VAICOM
                 try
                 {
                     string cat = "Allies";
+                    if (serverMessage.availablerecipients == null
+                        || !serverMessage.availablerecipients.ContainsKey(cat)
+                        || serverMessage.availablerecipients[cat] == null
+                        || State.currentstate.availablerecipients == null
+                        || !State.currentstate.availablerecipients.ContainsKey(cat)
+                        || !State.currentstate.availablerecipients.ContainsKey("Player"))
+                    {
+                        receivedupdatecomplete = false;
+                        return;
+                    }
+
+                    int playerId = (State.currentstate.availablerecipients["Player"] != null
+                        && State.currentstate.availablerecipients["Player"].Count > 0
+                        && State.currentstate.availablerecipients["Player"][0] != null)
+                        ? State.currentstate.availablerecipients["Player"][0].id_
+                        : -1;
+
                     foreach (DcsUnit a in serverMessage.availablerecipients[cat])
                     {
-                        if (State.currentstate.availablerecipients["Player"].Count > 0 && !a.id_.Equals(State.currentstate.availablerecipients["Player"][0].id_))
+                        if (a == null)
+                        {
+                            continue;
+                        }
+
+                        if (playerId < 0 || !a.id_.Equals(playerId))
                         {
                             a.reccat = cat;
                             a.descr = catdescriptions[cat];
@@ -291,9 +313,31 @@ namespace VAICOM
                 try
                 {
                     string cat = "Allies";
+                    if (serverMessage.availablerecipients == null
+                        || !serverMessage.availablerecipients.ContainsKey(cat)
+                        || serverMessage.availablerecipients[cat] == null
+                        || State.currentstate.availablerecipients == null
+                        || !State.currentstate.availablerecipients.ContainsKey(cat)
+                        || !State.currentstate.availablerecipients.ContainsKey("Player"))
+                    {
+                        receivedupdatecomplete = false;
+                        return;
+                    }
+
+                    int playerId = (State.currentstate.availablerecipients["Player"] != null
+                        && State.currentstate.availablerecipients["Player"].Count > 0
+                        && State.currentstate.availablerecipients["Player"][0] != null)
+                        ? State.currentstate.availablerecipients["Player"][0].id_
+                        : -1;
+
                     foreach (DcsUnit a in serverMessage.availablerecipients[cat])
                     {
-                        if (!a.id_.Equals(State.currentstate.availablerecipients["Player"][0].id_))
+                        if (a == null)
+                        {
+                            continue;
+                        }
+
+                        if (playerId < 0 || !a.id_.Equals(playerId))
                         {
                             a.reccat = cat;
                             a.descr = catdescriptions[cat];
@@ -365,6 +409,7 @@ namespace VAICOM
                 {
                     State.currentstate.metar = serverMessage.metar;
                     State.currentstate.atcmetars = serverMessage.atcmetars ?? new Dictionary<string, string>();
+                    State.currentstate.atcicaotypes = serverMessage.atcicaotypes ?? new Dictionary<string, string>();
                     State.currentstate.diagnostics = serverMessage.diagnostics;
                 }
                 catch (Exception e)

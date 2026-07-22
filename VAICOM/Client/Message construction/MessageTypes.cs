@@ -397,7 +397,7 @@ namespace VAICOM
                     updaterequest.operatedial = State.activeconfig.OperateDial;
                     updaterequest.redirect_world_speech = State.activeconfig.Redirect_World_Speech;
                     updaterequest.fc3 = State.currentmodule.IsFC;
-                    updaterequest.AIRIO = State.currentmodule.Equals(Products.DCSmodules.LookupTable[State.riomod]);
+                    updaterequest.AIRIO = State.IsAirioTomcatModule();
                     updaterequest.carriersuppressauto = State.activeconfig.CarrierSuppressAuto;
 
                     string formatmessage = JsonConvert.SerializeObject(updaterequest);
@@ -471,7 +471,7 @@ namespace VAICOM
                     updaterequest.operatedial = State.activeconfig.OperateDial;
                     updaterequest.redirect_world_speech = State.activeconfig.Redirect_World_Speech;
                     updaterequest.fc3 = State.currentmodule.IsFC;
-                    updaterequest.AIRIO = State.currentmodule.Equals(Products.DCSmodules.LookupTable[State.riomod]);
+                    updaterequest.AIRIO = State.IsAirioTomcatModule();
                     updaterequest.carriersuppressauto = State.activeconfig.CarrierSuppressAuto;
 
                     string formatmessage = JsonConvert.SerializeObject(updaterequest);

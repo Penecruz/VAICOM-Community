@@ -2109,14 +2109,106 @@ base.vaicom.get = {
 				end,
 				},
 				markers = function()
-					local count = 0
+					local details = base.vaicom.get.missiondata.markerdetails()
+					return (base.type(details) == "table") and #details or 0
+				end,
+				markerdetails = function()
+					local details = {}
 					local Stack = base.world.getMarkPanels()
-					if #Stack > 0 then
-						for i= 1,#Stack do
-							count = count + 1
+					if base.type(Stack) ~= "table" then return details end
+					local function tryget(fn)
+						local ok, value = base.pcall(fn)
+						if ok then return value end
+						return nil
+					end
+					local function normalizeCoalition(v)
+						if base.type(v) == "number" then return v end
+						local s = base.string.upper(base.tostring(v or ""))
+						if s == "RED" then return 1 end
+						if s == "BLUE" then return 2 end
+						if s == "NEUTRAL" then return 0 end
+						return 0
+					end
+					local function getInitiatorName(initiator)
+						if initiator == nil then return "" end
+						local name = tryget(function() return initiator.getName and initiator:getName() end)
+						if name ~= nil and name ~= "" then return base.tostring(name) end
+						return base.tostring(initiator)
+					end
+					local function appendMarker(panel, fallbackId)
+						if panel == nil then return end
+
+						local p = tryget(function() return panel.pos end)
+							or tryget(function() return panel.position end)
+							or tryget(function() return panel.point end)
+							or tryget(function() return panel.vec3 end)
+							or tryget(function() return panel.coord end)
+							or tryget(function() return panel.getPos and panel:getPos() end)
+
+						local x = (base.type(p) == "table") and (p.x or p[1]) or (tryget(function() return panel.x end) or tryget(function() return panel.posX end) or tryget(function() return panel.pos_x end))
+						local y = (base.type(p) == "table") and (p.y or p[2]) or (tryget(function() return panel.y end) or tryget(function() return panel.posY end) or tryget(function() return panel.pos_y end))
+						local z = (base.type(p) == "table") and (p.z or p[3]) or (tryget(function() return panel.z end) or tryget(function() return panel.posZ end) or tryget(function() return panel.pos_z end))
+
+						local markerId = tryget(function() return panel.idx end)
+							or tryget(function() return panel.id end)
+							or tryget(function() return panel.markId end)
+							or tryget(function() return panel.markID end)
+							or tryget(function() return panel.markerId end)
+							or tryget(function() return panel.markerID end)
+							or tryget(function() return panel.getId and panel:getId() end)
+							or fallbackId
+
+						local markerText = tryget(function() return panel.text end)
+							or tryget(function() return panel.message end)
+							or tryget(function() return panel.getText and panel:getText() end)
+							or ""
+
+						local markerInitiator = tryget(function() return panel.initiator end)
+						local markerAuthor = tryget(function() return panel.author end)
+						if markerAuthor == nil or markerAuthor == "" then
+							markerAuthor = getInitiatorName(markerInitiator)
+						end
+
+						local markerCoal = tryget(function() return panel.coalition end)
+							or tryget(function() return panel.side end)
+							or tryget(function() return panel.getCoalition and panel:getCoalition() end)
+							or 0
+						local markerGroupId = tryget(function() return panel.groupID end)
+							or tryget(function() return panel.groupId end)
+							or tryget(function() return panel.getGroupID and panel:getGroupID() end)
+							or -1
+
+						base.table.insert(details, {
+							id = markerId,
+							text = base.tostring(markerText),
+							author = base.tostring(markerAuthor),
+							coalition = normalizeCoalition(markerCoal),
+							groupID = markerGroupId,
+							x = x or 0,
+							y = y or 0,
+							z = z or 0,
+						})
+					end
+					for i = 1, #Stack do
+						appendMarker(tryget(function() return Stack[i] end), i)
+					end
+					if #details == 0 then
+						for k, panel in base.pairs(Stack) do
+							local fallbackId = tonumber(k) or (#details + 1)
+							appendMarker(panel, fallbackId)
 						end
 					end
-					return count
+					if #details == 0 then
+						local getFn = tryget(function() return Stack.get end)
+						if base.type(getFn) == "function" then
+							for i = 1, 100 do
+								local panel = tryget(function() return getFn(Stack, i) end)
+								if panel == nil then break end
+								appendMarker(panel, i)
+							end
+						end
+					end
+					return details
 				end,				
 			  },
 }
@@ -2262,7 +2354,8 @@ base.vaicom.state = {
 				base.vaicom.state.riostate.jmr						= base.vaicom.state.activemessage.AIRIO and (data.initialized and base.GetDevice(0).get_argument_value and (base.GetDevice(0):get_argument_value(151) ==1)) or false
 				base.vaicom.state.riostate.AM182					= base.vaicom.state.activemessage.AIRIO and (data.initialized and base.GetDevice(0).get_argument_value and (base.GetDevice(0):get_argument_value(359) ==1)) or false
 				base.vaicom.state.riostate.ejsn						= base.vaicom.state.activemessage.AIRIO and (data.initialized and base.GetDevice(0).get_argument_value and (base.GetDevice(0):get_argument_value(2049) ==1)) or false
-				base.vaicom.state.riostate.markers					= base.vaicom.state.activemessage.AIRIO and (data.initialized and base.vaicom.get.missiondata.markers()) or 0
+				base.vaicom.state.riostate.markers					= (data.initialized and base.vaicom.get.missiondata.markers()) or 0
+				base.vaicom.state.riostate.markerdetails				= (data.initialized and base.vaicom.get.missiondata.markerdetails()) or {}
 				base.vaicom.state.availablerecipients.Player 		= data.initialized and base.vaicom.get.missiondata.listby.Player(base.vaicom.helper.sortby.index)
 				base.vaicom.state.availablerecipients.Flight 		= data.initialized and base.vaicom.get.missiondata.listby.Flight(base.vaicom.helper.sortby.index,	"radio")					
 				base.vaicom.state.availablerecipients.JTAC			= data.initialized and base.vaicom.get.missiondata.listby.JTAC(base.vaicom.helper.sortby.distance,	"radio")
@@ -2360,35 +2453,72 @@ base.vaicom.state = {
 					return overrides
 				end
 
-				local function resolveIcaoForAtc(callsign, atcName)
+				local function resolveIcaoMetaForAtc(callsign, atcName)
 					local overrides = loadIcaoOverrides()
 					local theatre = base.string.lower(base.tostring(base.vaicom.state and base.vaicom.state.theatre or ""))
 					local keyCallsign = normalizeIcaoKey(callsign)
 					local keyName = normalizeIcaoKey(atcName)
 
-					local function readCode(scope, key)
+					local function normalizeIcaoType(value)
+						local t = base.string.upper(base.tostring(value or ""))
+						if t == "MIL" or t == "CIV" or t == "JOINT" then
+							return t
+						end
+						return ""
+					end
+
+					local function readCodeAndType(scope, key)
 						if base.type(scope) ~= "table" or key == "" then
-							return nil
+							return nil, ""
 						end
 						local value = scope[key]
 						if value == nil then
-							return nil
+							return nil, ""
 						end
+
+						if base.type(value) == "table" then
+							local code = base.string.upper(base.tostring(value.icao or ""))
+							if base.string.match(code, "^%u%u%u%u$") then
+								return code, normalizeIcaoType(value.type)
+							end
+							return nil, ""
+						end
+
 						local code = base.string.upper(base.tostring(value))
 						if base.string.match(code, "^%u%u%u%u$") then
-							return code
+							return code, ""
 						end
-						return nil
+						return nil, ""
 					end
 
 					local theatreTable = overrides[theatre]
 					local fallbackTable = overrides.default
-					local mapped = readCode(theatreTable, keyCallsign)
-						or readCode(theatreTable, keyName)
-						or readCode(fallbackTable, keyCallsign)
-						or readCode(fallbackTable, keyName)
-                 if mapped ~= nil then
-						return mapped
+					local code, airfieldType = readCodeAndType(theatreTable, keyCallsign)
+					if code == nil then code, airfieldType = readCodeAndType(theatreTable, keyName) end
+					if code == nil then code, airfieldType = readCodeAndType(fallbackTable, keyCallsign) end
+					if code == nil then code, airfieldType = readCodeAndType(fallbackTable, keyName) end
+					if code ~= nil then
+						return {
+							icao = code,
+							type = airfieldType,
+						}
+					end
+
+					local direct = extractIcaoToken(callsign)
+					if direct ~= nil then
+						return {
+							icao = direct,
+							type = "",
+						}
+					end
+
+					return nil
+				end
+
+				local function resolveIcaoForAtc(callsign, atcName)
+					local mappedMeta = resolveIcaoMetaForAtc(callsign, atcName)
+					if mappedMeta ~= nil and mappedMeta.icao ~= nil then
+						return mappedMeta.icao
 					end
 
 					local direct = extractIcaoToken(callsign)
@@ -2397,6 +2527,69 @@ base.vaicom.state = {
 					end
 
 					return nil
+				end
+
+				local function buildAllAtcIcaoTypes()
+					local result = {}
+					local atcs = base.vaicom.state and base.vaicom.state.availablerecipients and base.vaicom.state.availablerecipients.ATC
+					if base.type(atcs) ~= "table" then
+						return result
+					end
+
+					for _, atc in base.pairs(atcs) do
+						if atc then
+							local callsign = ""
+							local okCallsign, valueCallsign = base.pcall(function()
+								return base.vaicom.properties and base.vaicom.properties.missioncallsign and base.vaicom.properties.missioncallsign(atc) or ""
+							end)
+							if okCallsign and valueCallsign ~= nil then
+								callsign = base.tostring(valueCallsign)
+							end
+
+							local atcName = ""
+							local okDescName, atcDesc = base.pcall(function() return atc:getDesc() end)
+							if okDescName and atcDesc ~= nil then
+								atcName = base.tostring(atcDesc.displayName or atcDesc.typeName or "")
+							end
+
+							local normalizedCallsign = normalizeIcaoKey(callsign)
+							local normalizedAtcName = normalizeIcaoKey(atcName)
+							local meta = resolveIcaoMetaForAtc(callsign, atcName)
+							if meta ~= nil then
+								local typeCode = base.string.upper(base.tostring(meta.type or ""))
+								if typeCode == "MIL" or typeCode == "CIV" or typeCode == "JOINT" then
+									local icao = base.string.upper(base.tostring(meta.icao or ""))
+									if icao ~= "" then
+										result[icao] = typeCode
+									end
+									if normalizedCallsign ~= "" then
+										result[normalizedCallsign] = typeCode
+									end
+									if normalizedAtcName ~= "" then
+										result[normalizedAtcName] = typeCode
+									end
+
+									local upperCallsign = base.string.upper(base.tostring(callsign or ""))
+									if upperCallsign ~= "" then
+										result[upperCallsign] = typeCode
+									end
+
+									local shortCallsign = ""
+									local okShort, valueShort = base.pcall(function()
+										return base.vaicom.properties and base.vaicom.properties.callsign and base.vaicom.properties.callsign(atc) or ""
+									end)
+									if okShort and valueShort ~= nil then
+										shortCallsign = base.string.upper(base.tostring(valueShort))
+									end
+									if shortCallsign ~= "" then
+										result[shortCallsign] = typeCode
+									end
+								end
+							end
+						end
+					end
+
+					return result
 				end
 
               local function buildMetarForAtcInfo(atcInfoOverride)
@@ -4125,8 +4318,12 @@ base.vaicom.state = {
              chunk[12] 		= {
 									metar = buildAtcMetar(),
 									atcmetars = buildAllAtcMetars(),
+									atcicaotypes = buildAllAtcIcaoTypes(),
 									diagnostics = getChunk12Diagnostics(),
 								  }
+				if base.vaicom and base.vaicom.state then
+					base.vaicom.state.atcicaotypes = chunk[12].atcicaotypes
+				end
 				local selectedRadio = getSelectedRadio(base.vaicom.state.dcsid)
 				for n,k in base.pairs(data.communicators) do
 					local Viper_VHF = (base.vaicom.state.dcsid == "F-16C_50" and n == 38) 

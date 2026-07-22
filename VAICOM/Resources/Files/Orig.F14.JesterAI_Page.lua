@@ -1,3 +1,4 @@
+dofile(LockOn_Options.script_path.."paths.lua")
 dofile(LockOn_Options.common_script_path.."devices_defs.lua")
 dofile(LockOn_Options.common_script_path.."ViewportHandling.lua")
 
@@ -29,15 +30,15 @@ end
 SetCustomScale(scale)
 
 dofile(LockOn_Options.common_script_path.."elements_defs.lua")
-dofile(LockOn_Options.script_path.."Scripts/Common/levels.lua")
+dofile(base_script_path.."Scripts/Common/levels.lua")
 dofile(LockOn_Options.common_script_path.."devices_defs.lua")
 
 
 INDICATOR_LEVEL = JESTER_DEFAULT_LEVEL
 
-dofile(LockOn_Options.script_path.."fonts.lua")
-dofile(LockOn_Options.script_path.."Scripts/Common/common_defs.lua")
-IndTexture_Path = LockOn_Options.script_path.."Resources/IndicationTextures/"
+dofile(base_script_path.."fonts.lua")
+dofile(base_script_path.."Scripts/Common/common_defs.lua")
+IndTexture_Path = base_script_path.."Resources/IndicationTextures/"
 
 
 
@@ -120,12 +121,17 @@ function MakePieNumber(index,pos_x,pos_y,press_x,press_y)
 	AddElement(press)	
 end
 
----[[
-local SHOW_MASKS=false
+-- Pixel art Jester portrait
+local SHOW_MASKS = false
+-- Portrait sprite-sheet material name. Registered in materials.lua so this
+-- page and JesterSubtitle_Page reference the same underlying material by
+-- name (avoids the double-free at teardown from creating two materials
+-- pointing at the same DDS).
+local JesterBUMat = get_aircraft_type() == "F-14BU" and "JESTER_PORTRAIT_BU" or "JESTER_PORTRAIT_AB"
 
+-- Clipping masks for circular portrait area
 local jestercam_clip_rect          = CreateElement "ceMeshPoly"
 	jestercam_clip_rect.name           = create_guid_string()
-	--jestercam_clip_rect.init_pos       = {0, 0, 0}
 	jestercam_clip_rect.primitivetype  = "triangles"
 	jestercam_clip_rect.vertices = { {-0.31 * scale,0.31 * scale},
 									{0.31 * scale,0.31 * scale},
@@ -143,7 +149,6 @@ AddElement(jestercam_clip_rect)
 
 local jestercam_clip          = CreateElement "ceMeshPoly"
 	jestercam_clip.name           = create_guid_string()
-	--jestercam_clip.init_pos       = {0, 0, 0}
 	jestercam_clip.primitivetype  = "triangles"
 	set_circle(jestercam_clip, 0.307 * scale)
     jestercam_clip.parent_element = grid_origin.name
@@ -169,27 +174,89 @@ local camera_back          = CreateElement "ceMeshPoly"
     camera_back.controllers = {{"jestercam"}}
     camera_back.h_clip_relation = h_clip_relations.COMPARE
     camera_back.level			= INDICATOR_LEVEL
-	camera_back.material       = MakeMaterial(nil, {255, 255, 255, 0})
+	camera_back.material       = MakeMaterial(nil, {0, 0, 0, 255})
 AddElement(camera_back)
---]]
 
-local JesterView_render 			= create_textured_box(0,0,512,512,512,512)
-	JesterView_render.primitivetype	= "triangles"
-	JesterView_render.name 	= create_guid_string()
-	JesterView_render.material = "JesterViewMaterial"--MakeMaterial("mfd1",{255,255,255,255})--"TIDMaterial"--MakeMaterial("mfd1",{255,255,255,255})-- "TIDMaterial" ----RED_MAT
-	JesterView_render.init_pos = {0, 0.15 * scale, 0}
-	JesterView_render.parent_element = camera_back.name
-	JesterView_render.isdraw		 = true
-	JesterView_render.isvisible		 = true
-	JesterView_render.collimated = false
-	JesterView_render.vertices = { {-0.35 * scale,0.35 * scale},
-									{0.35 * scale,0.35 * scale},
-									{ 0.35 * scale,-0.35 * scale},
-									{-0.35 * scale,-0.35 * scale}}
-    JesterView_render.indices = {0,1,2,0,2,3}
-    --JesterView_render.h_clip_relation = h_clip_relations.COMPARE
-    --JesterView_render.level = INDICATOR_LEVEL
-AddElement(JesterView_render)
+-- Portrait size
+local ps = 0.25 * scale -- portrait half-size
+
+-- Helper: create a textured quad from sprite sheet region
+-- u1,v1 = top-left UV, u2,v2 = bottom-right UV
+local portrait_y_offset = 0.11 * scale
+
+local function make_sprite(name_suffix, u1, v1, u2, v2, half_w, half_h, parent, controllers)
+	local elem = CreateElement "ceTexPoly"
+	elem.name = "jester_" .. name_suffix
+	elem.material = JesterBUMat
+	elem.parent_element = parent
+	elem.init_pos = {0, 0, 0}
+	elem.isdraw = true
+	elem.isvisible = true
+	elem.h_clip_relation = h_clip_relations.COMPARE
+	elem.level = INDICATOR_LEVEL
+	elem.vertices = {
+		{-half_w, half_h},
+		{ half_w, half_h},
+		{ half_w, -half_h},
+		{-half_w, -half_h}
+	}
+	elem.tex_coords = {
+		{u1, v1},
+		{u2, v1},
+		{u2, v2},
+		{u1, v2}
+	}
+	elem.indices = {0, 1, 2, 0, 2, 3}
+	if controllers then
+		elem.controllers = controllers
+	end
+	AddElement(elem)
+	return elem
+end
+
+-- Sky background: live camera render with posterize shader (BU)
+-- Uses JesterViewMaterial which reads the mfd2 render target
+-- Camera is positioned behind aircraft looking at sky (set in C++)
+local sky_size = 0.40 * scale
+local JesterSky = CreateElement "ceTexPoly"
+	JesterSky.name = "jester_sky"
+	JesterSky.material = "JesterViewMaterial"
+	JesterSky.parent_element = camera_back.name
+	JesterSky.init_pos = {0, portrait_y_offset, 0}
+	JesterSky.isdraw = true
+	JesterSky.isvisible = true
+	JesterSky.h_clip_relation = h_clip_relations.COMPARE
+	JesterSky.level = INDICATOR_LEVEL
+	JesterSky.vertices = {
+		{-sky_size, sky_size},
+		{ sky_size, sky_size},
+		{ sky_size, -sky_size},
+		{-sky_size, -sky_size}
+	}
+	JesterSky.tex_coords = {
+		{0, 0}, {1, 0}, {1, 1}, {0, 1}
+	}
+	JesterSky.indices = {0, 1, 2, 0, 2, 3}
+AddElement(JesterSky)
+
+-- Layer 5: Seat (row 0, col 2-3, 2 cells wide)
+make_sprite("seat", 0.5, 0.0, 1.0, 0.25, ps*2.75, ps*1.6, camera_back.name, {{"jester_seat", portrait_y_offset-0.1*scale}})
+
+-- Layer 6: Jester portraits (one per state, controller toggles visibility)
+-- 0=forward (r0c0), 1=left (r0c1), 2=right (r1c0), 3=dead (r1c1),
+-- 4=highG (r1c2), 5=midG (r1c3), 6=negG (r2c0), 7=lookDown (r2c1),
+-- 8=stressed (r2c2), 9=lookUp (r2c3)
+local py = portrait_y_offset + 0.07 * scale
+make_sprite("portrait_fwd",      0.0,  0.0,  0.25, 0.25, ps, ps, camera_back.name, {{"jester_portrait", 0, py}})
+make_sprite("portrait_left",     0.25, 0.0,  0.5,  0.25, ps, ps, camera_back.name, {{"jester_portrait", 1, py}})
+make_sprite("portrait_right",    0.0,  0.25, 0.25, 0.5,  ps, ps, camera_back.name, {{"jester_portrait", 2, py}})
+make_sprite("portrait_dead",     0.25, 0.25, 0.5,  0.5,  ps, ps, camera_back.name, {{"jester_portrait", 3, py}})
+make_sprite("portrait_highg",    0.5,  0.25, 0.75, 0.5,  ps, ps, camera_back.name, {{"jester_portrait", 4, py}})
+make_sprite("portrait_midg",     0.75, 0.25, 1.0,  0.5,  ps, ps, camera_back.name, {{"jester_portrait", 5, py}})
+make_sprite("portrait_negg",     0.0,  0.5,  0.25, 0.75, ps, ps, camera_back.name, {{"jester_portrait", 6, py}})
+make_sprite("portrait_lookdown", 0.25, 0.5,  0.5,  0.75, ps, ps, camera_back.name, {{"jester_portrait", 7, py}})
+make_sprite("portrait_stressed", 0.5,  0.5,  0.75, 0.75, ps, ps, camera_back.name, {{"jester_portrait", 8, py}})
+make_sprite("portrait_lookup",   0.75, 0.5,  1.0,  0.75, ps, ps, camera_back.name, {{"jester_portrait", 9, py}})
 
 local status_bar_x = 0.305
 --local status_bar_y1 = -0.007812
@@ -462,3 +529,4 @@ AddElement(line)
 
 --
 --
+

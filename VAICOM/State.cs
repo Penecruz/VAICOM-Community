@@ -38,7 +38,7 @@ namespace VAICOM
         public static string clientmode = ClientModes.Normal; //set to Normal for release, Debug for development
 
         public static string versionstring = "";
-        public static string pluginversionnumber = "3.1.4"; // used by Theme (Special page)
+        public static string pluginversionnumber = "3.1.5"; // used by Theme (Special page)
         public static string vaminversion = "1.16";
         public static string defProfileName = "VAICOM for DCS World";
         // Add a new property to control Voice Access priority
@@ -77,6 +77,32 @@ namespace VAICOM
         // AIRIO
 
         public static string riomod = "F-14AB";
+
+        public static bool IsAirioTomcatModule()
+        {
+            if (currentmodule != null)
+            {
+                DCSmodule f14ab;
+                if (Products.DCSmodules.LookupTable.TryGetValue("F-14AB", out f14ab) && currentmodule.Equals(f14ab))
+                {
+                    return true;
+                }
+
+                DCSmodule f14bu;
+                if (Products.DCSmodules.LookupTable.TryGetValue("F-14BU", out f14bu) && currentmodule.Equals(f14bu))
+                {
+                    return true;
+                }
+            }
+
+            if (currentstate == null || string.IsNullOrWhiteSpace(currentstate.id))
+            {
+                return false;
+            }
+
+            return currentstate.id.Equals("F-14AB", StringComparison.OrdinalIgnoreCase)
+                || currentstate.id.Equals("F-14BU", StringComparison.OrdinalIgnoreCase);
+        }
 
         // ------------------------------------------------------------------------------------------------------------
         // VA system environment

@@ -6,11 +6,11 @@
       "isbeta": false,
       "isdev": false,
       "productid": 1,
-      "releasedate": 202606027,
-      "version": 31411,
-      "versionstring": "3.1.4.11",
-      "downloadurl": "https://github.com/Penecruz/VAICOM-Community/releases/download/v3.1.4.11/VAICOMPRO.zip",
-      "releasenotes": "Release 3.1.4.11\n\nNew\n- Added F-4E WSO additional Ground commands.\n- Added OpenKneeboard connection notifier on the VAICOM PTT tab.\n- Added OKB Out tab to the VAICOM UI and moved related features from the Expansion tab.\n- Added OKB Out FLT PLN STORES page to show runtime aircraft stores.\n- Added SA MAP B/E marker support with D-Link asset bugging for B/E and BRA readout.\n- Added NAVLOG DIR TO and DEL step actions.\n- Added flight pilot list view for Single Player / Multiplayer in FLT PLN (WIP).\n- Added multiplayer-safe F-14 AIRIO handling for servers requiring pure client scripts (mini wheel unavailable in this mode).\n\nImproved\n- Improved OKB FLT PLN tab behavior and client display name detection.\n- Improved DTC import handling for F-16C in OKB Out FLT PLN.\n- Improved D-Link target labels and asset validation in OKB Out.\n- Improved DIR TO / DEL STP action robustness with armed-state handling and clearer row highlighting.\n- Improved Saved Games folder discovery for OKB flight plan files.\n- Improved logging and snapshot update efficiency to reduce unnecessary server-process updates (performance).\n- Improved Auto Browse behavior by decoupling DCS kneeboard and OKB Out settings.\n\nFixed\n- Fixed Krasnodar-Pashkovsky airbase name truncation.\n- Fixed F-4E dialog visibility issue.\n- Fixed Execute external plugin OKB commands when auto-browse is disabled.\n- Fixed minor NAVLOG refresh loop caused by player callsign updates.\n- Fixed text selection/highlighting with stylus in OKB Out.\n- Fixed Jester Mini Wheel checkbox persistence (now remembers configuration)."
+      "releasedate": 20260719,
+      "version": 3152,
+      "versionstring": "3.1.5.2",
+      "downloadurl": "https://github.com/Penecruz/VAICOM-Community/releases/download/v3.1.5.2/VAICOMPRO.zip",
+      "releasenotes": "Release 3.1.5.2\n\nNew\n• OpenKneeboard FLT PLN Out SA Map background for both day and night operations.\n• OpenKneeboard FLT PLN Out SA Map Dynamic Airfield map symbols that indicate if the airfield is VFR or IFR and provide UHF and VHF frequencies. if bugged.\n• OpenKneeboard FLT PLN Out SA Map now supports in game Map Markers, either user, client or system generated.\n• F-14B(U) added as supported module. (WIP)\n• OpenKneeboard FLT PLN Out now supports F-14B(U) DTC import.\n• OpenKneeboard FLT PLN Out SA Map data blocks added to bugged assets to display Freq and TACAN data.\n\nImproved\n• OpenKneeboard output FLT PLN Tab SA Map now has a more stable dynamic layer, better night mode handling and more consistent design elements.\n• WSO/Jester CAP time commands added.\n• OpenKneeboard Out better keywords scroll handling.\n\nFixed\n• Fixed TX Link with Hot Mic off not waiting for Options command sequence attempt 2.\n• Fixed Hold AI Transmission checkbox defaulting to on and not working tuning off (dynamic Switching and Broadcast Parallel).\n• Fixed Night Mode FLT PLN Out Stores page readability."
     }
   ]
 }

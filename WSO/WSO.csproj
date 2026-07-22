@@ -64,7 +64,9 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <None Include="DevPipe\airports.json" />
     <None Include="DevPipe\ExampleMod.lua" />
+    <None Include="DevPipe\F-14B%28U%29 DTC_SYR_1.dtc" />
     <None Include="DevPipe\F-16CM - Vaicom WIP.dtc" />
     <None Include="DevPipe\F-16C_50_LAWOS_STD.dtc" />
     <None Include="DevPipe\F-16C_50_LAWOS_STD_M7.dtc" />
@@ -77,6 +79,7 @@
     <None Include="DevPipe\Moose.lua" />
     <None Include="DevPipe\properties_snapshot.json" />
     <None Include="DevPipe\TimeOverTarget.lua" />
+    <None Include="DevPipe\Utils.lua" />
     <None Include="packages.config" />
     <None Include="Temp\ANZUS_NTTR_2025_5.0.zip" />
     <None Include="Temp\Caucasus.lua" />

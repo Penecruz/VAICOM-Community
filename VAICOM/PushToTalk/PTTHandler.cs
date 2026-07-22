@@ -490,6 +490,33 @@ namespace VAICOM
                 }
             }
 
+            public static void PTT_ForceSuspendListeningAfterCommand()
+            {
+                try
+                {
+                    if (State.currentTXnode != null && State.currentTXnode.radios[0].on)
+                    {
+                        UI.Playsound.Pttnoise(false);
+                        PTT_Manage_AOCS_Speech(false);
+                        PTT_Manage_ShowOptions(false);
+                    }
+
+                    PTT_Manage_Listen_States_OnPressRelease(false, false);
+
+                    State.transmitting = false;
+                    TXLinkToggle = false;
+
+                    if (State.currentTXnode != null)
+                    {
+                        State.currentTXnode.relay = false;
+                        PTT_GUI_Update(State.currentTXnode, false);
+                    }
+                }
+                catch
+                {
+                }
+            }
+
             public static void PTT_Manage_AOCS_Speech(bool keypress)
             {
                 try
