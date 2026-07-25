@@ -281,6 +281,8 @@ namespace VAICOM
 
             public static void ProcessServerData()
             {
+                Log.Write("Processing server data...", Colors.Text);
+
                 State.deepdebugmode = State.clientmode.Equals(ClientModes.Debug) || State.currentstate.playerusername.Equals(State.debuguser);
 
                 if (State.currentstate.playerusername.Equals(State.debuguser))
