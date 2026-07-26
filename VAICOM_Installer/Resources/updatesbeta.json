@@ -7,11 +7,11 @@
       "isbeta": false,
       "isdev": false,
       "productid": 1,
-      "releasedate": 20260726,
-      "version": 3153,
-      "versionstring": "3.1.5.3",
+      "releasedate": 20260727,
+      "version": 3154,
+      "versionstring": "3.1.5.4",
       "downloadurl": "https://raw.githubusercontent.com/Penecruz/VAICOM-Community/Development/VAICOM_Installer/Resources/VAICOMPRO.zip",
-      "releasenotes": "BETA 3.1.5.3 \n- Fix F-14 Mini Wheel unchecked nreaking IC. \n- Update F-14 Jester scripts to release version."
+      "releasenotes": "BETA 3.1.5.4 \n- Fix F-14 Mini Wheel unchecked nreaking IC. \n- Update F-14 Jester scripts to release version. \n- F-14 Jester 1.5 command remapping Radar, Air to ground,  Air to air, Weapons selection and fuzing. \n- F-14 Jester 1.5 new crew contract commands. \n- F-14 Jester 1.5 new Air to Ground Commands, JDAM and GGW options."
     }
   ]
 }

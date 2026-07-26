@@ -223,6 +223,11 @@ namespace VAICOM.Extensions.RIO
             {"wMsgJ_WPN_AG_STN_36",             "Select Stations 3,6"           },
             {"wMsgJ_WPN_AG_STN_45",             "Select Stations 4,5"           },
 
+            {"wMsgJ_WPN_AG_JDAM_WPT_TO_GGW",    "Send Waypoint to GGW"          },
+            {"wMsgJ_WPN_AG_JDAM_SEL_PP",        "Select GGW Pre Planned"        },
+            {"wMsgJ_WPN_AG_JDAM_PP_ALL_STN",    "Send Pre Planned to All Stations"},
+            {"wMsgJ_WPN_AG_JDAM_DESIG_TO_STN",  "Send Designation to Station"   },
+
             //{"wMsgPlaceHolder155",              "PlaceHolder155"                },
             //{"wMsgPlaceHolder156",              "PlaceHolder156"                },
             //{"wMsgPlaceHolder157",              "PlaceHolder157"                },
@@ -430,6 +435,12 @@ namespace VAICOM.Extensions.RIO
             {"wMsgJ_UTIL_CONTR_NO_CALL",        "No landing callouts"           },
             {"wMsgJ_UTIL_CONTR_ACTIVE",         "Jester resume"                 },//na
             {"wMsgJ_UTIL_CONTR_INACTIVE",       "Jester suspend"                },//na
+            {"wMsgJ_UTIL_CONTR_AUTO_EXPAND",    "Enable Auto Expand"            },
+            {"wMsgJ_UTIL_CONTR_AUTO_VID",       "Disable Auto VID"              },
+            {"wMsgJ_UTIL_CONTR_NO_IFF_REPLY_BANDIT", "Treat no-reply as bandit" },
+            {"wMsgJ_UTIL_CONTR_DISABLE_AUTO_EXPAND", "Disable Auto Expand"       },
+            {"wMsgJ_UTIL_CONTR_ENABLE_AUTO_VID", "Enable Auto VID"              },
+            {"wMsgJ_UTIL_CONTR_NO_IFF_REPLY_BOGEY", "Treat no-reply as bogey"   },
 
             {"wMsgJ_RESET",                     "Reset"                         },
             // Supercarriers
