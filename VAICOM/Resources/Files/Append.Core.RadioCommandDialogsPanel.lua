@@ -3644,7 +3644,7 @@ base.vaicom.state = {
 					end
 
 					local nowTick = base.tonumber(base.vaicom.state and base.vaicom.state.timer) or 0
-					local shouldRefreshStatic = nowTick - (diagCache.staticAt or -10000) >= 86400
+					local shouldRefreshStatic = diagCache.staticAt == nil or ((nowTick - diagCache.staticAt) >= 86400)
 					local missionRef = base.tostring(missionObj)
 					if diagCache.missionRef ~= missionRef then
 						diagCache.missionRef = missionRef
