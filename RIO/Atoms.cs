@@ -68,7 +68,7 @@
             public static DeviceAction Atom_J_RDR_GO_SILENT = new DeviceAction() { device = Devices.RIO, command = 3564, value = 1 }; // JESTER_Quiet
             public static DeviceAction Atom_J_RDR_SPOT = new DeviceAction() { device = Devices.RIO, command = 3563, value = 1 }; // JESTER_Spot
             public static DeviceAction Atom_J_RDR_BREAK_LOCK = new DeviceAction() { device = Devices.RIO, command = 3577, value = 1 }; // JESTER_BreakLock
-            public static DeviceAction Atom_J_RDR_TO_PSTT = new DeviceAction() { device = Devices.RIO, command = start + 0, value = 0 };
+            public static DeviceAction Atom_J_RDR_TO_PSTT = new DeviceAction() { device = Devices.RIO, command = 3576, value = 1 }; //JESTER_TogglePDorPStt
             public static DeviceAction Atom_J_RDR_SCAN_ELEV = new DeviceAction() { device = Devices.RIO, command = start + 0, value = 0 };
             public static DeviceAction Atom_J_RDR_SCAN_AZ = new DeviceAction() { device = Devices.RIO, command = start + 0, value = 0 };
             public static DeviceAction Atom_J_RDR_SCAN_DIST = new DeviceAction() { device = Devices.RIO, command = start + 0, value = 0 };
@@ -109,7 +109,7 @@
             public static DeviceAction Atom_J_RDR_STT_TWS_TGT_8 = new DeviceAction() { device = Devices.RIO, command = start + 0, value = 0 };
             public static DeviceAction Atom_J_RDR_RNG_25 = new DeviceAction() { device = Devices.RIO, command = 3579, value = 1 }; //JESTER_Range_25
             public static DeviceAction Atom_J_RDR_RNG_50 = new DeviceAction() { device = Devices.RIO, command = 3580, value = 1 }; //JESTER_Range_50
-            public static DeviceAction Atom_J_RDR_RNG_AUTO = new DeviceAction() { device = Devices.RIO, command = 3578, value = 1 }; //JESTER_Range_Auto
+            public static DeviceAction Atom_J_RDR_RNG_AUTO = new DeviceAction() { device = Devices.RIO, command = 3578, value = 1 }; //JESTER_Range
 
 
             public static DeviceAction Atom_J_RDR_MODE_AUTO = new DeviceAction() { device = Devices.RIO, command = start + 0, value = 0 };

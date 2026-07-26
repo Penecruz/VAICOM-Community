@@ -198,6 +198,11 @@ namespace VAICOM.Extensions.RIO
             { "wMsgJ_WPN_AG_STN_36" ,           new CommandInfo { uniqueid = 23353, name = "wMsgJ_WPN_AG_STN_36",           displayname = Labels.aicommands["wMsgJ_WPN_AG_STN_36"], enabled = true          } },
             { "wMsgJ_WPN_AG_STN_45" ,           new CommandInfo { uniqueid = 23354, name = "wMsgJ_WPN_AG_STN_45",           displayname = Labels.aicommands["wMsgJ_WPN_AG_STN_45"], enabled = true          } },
 
+            { "wMsgJ_WPN_AG_JDAM_WPT_TO_GGW" ,   new CommandInfo { uniqueid = 23355, name = "wMsgJ_WPN_AG_JDAM_WPT_TO_GGW",   displayname = Labels.aicommands["wMsgJ_WPN_AG_JDAM_WPT_TO_GGW"], enabled = true   } },
+            { "wMsgJ_WPN_AG_JDAM_SEL_PP" ,       new CommandInfo { uniqueid = 23356, name = "wMsgJ_WPN_AG_JDAM_SEL_PP",       displayname = Labels.aicommands["wMsgJ_WPN_AG_JDAM_SEL_PP"], enabled = true       } },
+            { "wMsgJ_WPN_AG_JDAM_PP_ALL_STN" ,   new CommandInfo { uniqueid = 23357, name = "wMsgJ_WPN_AG_JDAM_PP_ALL_STN",   displayname = Labels.aicommands["wMsgJ_WPN_AG_JDAM_PP_ALL_STN"], enabled = true   } },
+            { "wMsgJ_WPN_AG_JDAM_DESIG_TO_STN" , new CommandInfo { uniqueid = 23358, name = "wMsgJ_WPN_AG_JDAM_DESIG_TO_STN", displayname = Labels.aicommands["wMsgJ_WPN_AG_JDAM_DESIG_TO_STN"], enabled = true } },
+
             //{ "wMsgPlaceHolder155" ,            new CommandInfo { uniqueid = 23355, name = "wMsgPlaceHolder155",            displayname = Labels.aicommands["wMsgPlaceHolder155"]          } },
             //{ "wMsgPlaceHolder156" ,            new CommandInfo { uniqueid = 23356, name = "wMsgPlaceHolder156",            displayname = Labels.aicommands["wMsgPlaceHolder156"]          } },
             //{ "wMsgPlaceHolder157" ,            new CommandInfo { uniqueid = 23357, name = "wMsgPlaceHolder157",            displayname = Labels.aicommands["wMsgPlaceHolder157"]          } },
@@ -402,6 +407,12 @@ namespace VAICOM.Extensions.RIO
             { "wMsgJ_UTIL_CONTR_INACTIVE" ,     new CommandInfo { uniqueid = 23534, name = "wMsgJ_UTIL_CONTR_INACTIVE",     displayname = Labels.aicommands["wMsgJ_UTIL_CONTR_INACTIVE"], enabled = true          } }, //na
             { "wMsgJ_UTIL_CONTR_CALL" ,         new CommandInfo { uniqueid = 23535, name = "wMsgJ_UTIL_CONTR_CALL",         displayname = Labels.aicommands["wMsgJ_UTIL_CONTR_CALL"], enabled = true           } },
             { "wMsgJ_UTIL_CONTR_NO_CALL" ,      new CommandInfo { uniqueid = 23531, name = "wMsgJ_UTIL_CONTR_NO_CALL",      displayname = Labels.aicommands["wMsgJ_UTIL_CONTR_NO_CALL"], enabled = true           } },
+            { "wMsgJ_UTIL_CONTR_AUTO_EXPAND" ,  new CommandInfo { uniqueid = 23584, name = "wMsgJ_UTIL_CONTR_AUTO_EXPAND",  displayname = Labels.aicommands["wMsgJ_UTIL_CONTR_AUTO_EXPAND"], enabled = true        } },
+            { "wMsgJ_UTIL_CONTR_AUTO_VID" ,     new CommandInfo { uniqueid = 23585, name = "wMsgJ_UTIL_CONTR_AUTO_VID",     displayname = Labels.aicommands["wMsgJ_UTIL_CONTR_AUTO_VID"], enabled = true           } },
+            { "wMsgJ_UTIL_CONTR_NO_IFF_REPLY_BANDIT" , new CommandInfo { uniqueid = 23586, name = "wMsgJ_UTIL_CONTR_NO_IFF_REPLY_BANDIT", displayname = Labels.aicommands["wMsgJ_UTIL_CONTR_NO_IFF_REPLY_BANDIT"], enabled = true } },
+            { "wMsgJ_UTIL_CONTR_DISABLE_AUTO_EXPAND" , new CommandInfo { uniqueid = 23587, name = "wMsgJ_UTIL_CONTR_DISABLE_AUTO_EXPAND", displayname = Labels.aicommands["wMsgJ_UTIL_CONTR_DISABLE_AUTO_EXPAND"], enabled = true } },
+            { "wMsgJ_UTIL_CONTR_ENABLE_AUTO_VID" ,    new CommandInfo { uniqueid = 23588, name = "wMsgJ_UTIL_CONTR_ENABLE_AUTO_VID", displayname = Labels.aicommands["wMsgJ_UTIL_CONTR_ENABLE_AUTO_VID"], enabled = true } },
+            { "wMsgJ_UTIL_CONTR_NO_IFF_REPLY_BOGEY" , new CommandInfo { uniqueid = 23589, name = "wMsgJ_UTIL_CONTR_NO_IFF_REPLY_BOGEY", displayname = Labels.aicommands["wMsgJ_UTIL_CONTR_NO_IFF_REPLY_BOGEY"], enabled = true } },
 
             { "wMsgJ_RESET" ,                   new CommandInfo { uniqueid = 23536, name = "wMsgJ_RESET",                   displayname = Labels.aicommands["wMsgJ_RESET"], enabled = true           } },
 

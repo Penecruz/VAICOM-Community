@@ -69,19 +69,19 @@ namespace VAICOM.Extensions.RIO
             {"wMsgLANTIRN_QWP_Plus",                new List<List<DeviceAction>> {Macro.Seq_LANTIRN_QWP_Plus                }},
 
             // block: radar
-            {"wMsgJ_RDR_GO_SILENT",                 new List<List<DeviceAction>> { Macro.Seq_J_MENU_MAIN, Macro.Seq_J_RDR_GO_SILENT       }},
+            {"wMsgJ_RDR_GO_SILENT",                 new List<List<DeviceAction>> { Macro.Seq_J_RDR_GO_SILENT       }},
             {"wMsgJ_RDR_SPOT",                      new List<List<DeviceAction>> { Macro.Seq_J_RDR_SPOT            }},
             {"wMsgJ_RDR_BREAK_LOCK",                new List<List<DeviceAction>> { Macro.Seq_J_RDR_BREAK_LOCK      }}, // when STT locked
-            {"wMsgJ_RDR_TO_PSTT",                   new List<List<DeviceAction>> { Macro.Seq_J_MENU_MAIN, Macro.Seq_J_RDR_TO_PSTT         }}, // when STT locked
+            {"wMsgJ_RDR_TO_PSTT",                   new List<List<DeviceAction>> { Macro.Seq_J_RDR_TO_PSTT         }}, // when STT locked
             {"wMsgJ_RDR_SCAN_ELEV",                 new List<List<DeviceAction>> { }},  // not endpoint
             {"wMsgJ_RDR_SCAN_AZ",                   new List<List<DeviceAction>> { }},  // not endpoint
             {"wMsgJ_RDR_SCAN_DIST",                 new List<List<DeviceAction>> { }},  // not endpoint
             {"wMsgJ_RDR_TOGGLE_STT",                new List<List<DeviceAction>> { Macro.Seq_J_RDR_TOGGLE_STT      }},
             {"wMsgJ_RDR_VSL_HIGH",                  new List<List<DeviceAction>> { Macro.Seq_J_RDR_VSL_HIGH        }},
             {"wMsgJ_RDR_VSL_LOW",                   new List<List<DeviceAction>> { Macro.Seq_J_RDR_VSL_LOW         }},
-            {"wMsgJ_RDR_STT_TGT_AHEAD",             new List<List<DeviceAction>> {Macro.Seq_J_MENU_MAIN, Macro.Seq_J_RDR_STT_TGT_AHEAD           }},
-            {"wMsgJ_RDR_STT_ENMY_TGT_AHEAD",        new List<List<DeviceAction>> {Macro.Seq_J_MENU_MAIN, Macro.Seq_J_RDR_STT_ENMY_TGT_AHEAD      }},
-            {"wMsgJ_RDR_STT_FRNDLY_TGT_AHEAD",      new List<List<DeviceAction>> {Macro.Seq_J_MENU_MAIN, Macro.Seq_J_RDR_STT_FRNDLY_TGT_AHEAD    }},
+            {"wMsgJ_RDR_STT_TGT_AHEAD",             new List<List<DeviceAction>> {Macro.Seq_J_RDR_STT_TGT_AHEAD           }},
+            {"wMsgJ_RDR_STT_ENMY_TGT_AHEAD",        new List<List<DeviceAction>> {Macro.Seq_J_RDR_STT_ENMY_TGT_AHEAD      }},
+            {"wMsgJ_RDR_STT_FRNDLY_TGT_AHEAD",      new List<List<DeviceAction>> {Macro.Seq_J_RDR_STT_FRNDLY_TGT_AHEAD    }},
             {"wMsgJ_RDR_STT_CHOOSE_SPECIFIC_TGT",   new List<List<DeviceAction>> {Macro.Seq_J_MENU_MAIN, Macro.Seq_J_RDR_STT_CHOOSE_SPECIFIC_TGT }},
             {"wMsgJ_RDR_STT_FIRST_TWS_TGT",         new List<List<DeviceAction>> {Macro.Seq_J_MENU_MAIN, Macro.Seq_J_RDR_STT_FIRST_TWS_TGT       }},
             {"wMsgJ_RDR_STT_TWS_TGT_NUM",           new List<List<DeviceAction>> { }}, // not endpoint, show hint
@@ -89,9 +89,9 @@ namespace VAICOM.Extensions.RIO
             {"wMsgJ_RDR_GO_ACTIVE",                 new List<List<DeviceAction>> {Macro.Seq_J_MENU_MAIN, Macro.Seq_J_RDR_GO_ACTIVE               }},
             {"wMsgJ_RDR_STT_LOCK",                  new List<List<DeviceAction>> { }},  // not endpoint, show hint
             {"wMsgJ_RDR_AUTO",                      new List<List<DeviceAction>> {Macro.Seq_J_MENU_MAIN, Macro.Seq_J_RDR_AUTO                    }},
-            {"wMsgJ_RDR_RNG_100",                   new List<List<DeviceAction>> { Macro.Seq_J_MENU_MAIN, Macro.Seq_J_RDR_RNG_100                     }},
-            {"wMsgJ_RDR_RNG_200",                   new List<List<DeviceAction>> { Macro.Seq_J_MENU_MAIN, Macro.Seq_J_RDR_RNG_200                     }},
-            {"wMsgJ_RDR_RNG_400",                   new List<List<DeviceAction>> { Macro.Seq_J_MENU_MAIN, Macro.Seq_J_RDR_RNG_400                     }},
+            {"wMsgJ_RDR_RNG_100",                   new List<List<DeviceAction>> { Macro.Seq_J_RDR_RNG_100                     }},
+            {"wMsgJ_RDR_RNG_200",                   new List<List<DeviceAction>> { Macro.Seq_J_RDR_RNG_200                     }},
+            {"wMsgJ_RDR_RNG_400",                   new List<List<DeviceAction>> { Macro.Seq_J_RDR_RNG_400                     }},
             {"wMsgJ_RDR_POS",                       new List<List<DeviceAction>> { Macro.Seq_J_MENU_MAIN, Macro.Seq_J_RDR_POS                     }}, // not endpoint
             {"wMsgJ_RDR_POS_CTR",                   new List<List<DeviceAction>> { Macro.Seq_J_MENU_MAIN, Macro.Seq_J_RDR_POS_CTR                 }},
             {"wMsgJ_RDR_POS_CTR_L",                 new List<List<DeviceAction>> { Macro.Seq_J_MENU_MAIN, Macro.Seq_J_RDR_POS_CTR_L               }},
@@ -111,14 +111,14 @@ namespace VAICOM.Extensions.RIO
             {"wMsgJ_RDR_STT_TWS_TGT_6",             new List<List<DeviceAction>> { Macro.Seq_J_MENU_MAIN, Macro.Seq_J_RDR_STT_TWS_TGT_6         }},
             {"wMsgJ_RDR_STT_TWS_TGT_7",             new List<List<DeviceAction>> { Macro.Seq_J_MENU_MAIN, Macro.Seq_J_RDR_STT_TWS_TGT_7         }},
             {"wMsgJ_RDR_STT_TWS_TGT_8",             new List<List<DeviceAction>> { Macro.Seq_J_MENU_MAIN, Macro.Seq_J_RDR_STT_TWS_TGT_8         }},
-            {"wMsgJ_RDR_RNG_25",                    new List<List<DeviceAction>> { Macro.Seq_J_MENU_MAIN, Macro.Seq_J_RDR_RNG_25                }},
-            {"wMsgJ_RDR_RNG_50",                    new List<List<DeviceAction>> { Macro.Seq_J_MENU_MAIN, Macro.Seq_J_RDR_RNG_50                }},
-            {"wMsgJ_RDR_RNG_AUTO",                  new List<List<DeviceAction>> { Macro.Seq_J_MENU_MAIN, Macro.Seq_J_RDR_RNG_AUTO              }},
+            {"wMsgJ_RDR_RNG_25",                    new List<List<DeviceAction>> { Macro.Seq_J_RDR_RNG_25                }},
+            {"wMsgJ_RDR_RNG_50",                    new List<List<DeviceAction>> { Macro.Seq_J_RDR_RNG_50                }},
+            {"wMsgJ_RDR_RNG_AUTO",                  new List<List<DeviceAction>> { Macro.Seq_J_RDR_RNG_AUTO              }},
 
 
             {"wMsgJ_RDR_MODE_AUTO",                 new List<List<DeviceAction>> { Macro.Seq_J_MENU_MAIN, Macro.Seq_J_RDR_MODE_AUTO       }},
-            {"wMsgJ_RDR_MODE_TWS",                  new List<List<DeviceAction>> { Macro.Seq_J_MENU_MAIN, Macro.Seq_J_RDR_MODE_TWS        }},
-            {"wMsgJ_RDR_MODE_RWS",                  new List<List<DeviceAction>> { Macro.Seq_J_MENU_MAIN, Macro.Seq_J_RDR_MODE_RWS        }},
+            {"wMsgJ_RDR_MODE_TWS",                  new List<List<DeviceAction>> { Macro.Seq_J_RDR_MODE_TWS        }},
+            {"wMsgJ_RDR_MODE_RWS",                  new List<List<DeviceAction>> { Macro.Seq_J_RDR_MODE_RWS        }},
             {"wMsgJ_RDR_MODE",                      new List<List<DeviceAction>> {  }},// not endpoint, hint
             // end of radar
 
@@ -202,6 +202,11 @@ namespace VAICOM.Extensions.RIO
             {"wMsgJ_WPN_AG_STN_3456",           new List<List<DeviceAction>> { Macro.Seq_J_MENU_MAIN, Macro.Seq_J_WPN_AG_STN_3456      }},
             {"wMsgJ_WPN_AG_STN_36",             new List<List<DeviceAction>> { Macro.Seq_J_MENU_MAIN, Macro.Seq_J_WPN_AG_STN_36        }},
             {"wMsgJ_WPN_AG_STN_45",             new List<List<DeviceAction>> { Macro.Seq_J_MENU_MAIN, Macro.Seq_J_WPN_AG_STN_45        }},
+
+            {"wMsgJ_WPN_AG_JDAM_WPT_TO_GGW",    new List<List<DeviceAction>> { Macro.Seq_J_MENU_MAIN, Macro.Seq_J_WPN_AG_JDAM_WPT_TO_GGW   }},
+            {"wMsgJ_WPN_AG_JDAM_SEL_PP",        new List<List<DeviceAction>> { Macro.Seq_J_MENU_MAIN, Macro.Seq_J_WPN_AG_JDAM_SEL_PP       }},
+            {"wMsgJ_WPN_AG_JDAM_PP_ALL_STN",    new List<List<DeviceAction>> { Macro.Seq_J_MENU_MAIN, Macro.Seq_J_WPN_AG_JDAM_PP_ALL_STN   }},
+            {"wMsgJ_WPN_AG_JDAM_DESIG_TO_STN",  new List<List<DeviceAction>> { Macro.Seq_J_MENU_MAIN, Macro.Seq_J_WPN_AG_JDAM_DESIG_TO_STN }},
 
             //{"wMsgPlaceHolder155",          new List<List<DeviceAction>> {Macro.Seq_PlaceHolder155        }},
             //{"wMsgPlaceHolder156",          new List<List<DeviceAction>> {Macro.Seq_PlaceHolder156        }},
@@ -405,6 +410,12 @@ namespace VAICOM.Extensions.RIO
             {"wMsgJ_UTIL_CONTR_INACTIVE",   new List<List<DeviceAction>> {Macro.Seq_J_UTIL_CONTR_INACTIVE       }}, //new
             {"wMsgJ_UTIL_CONTR_CALL",       new List<List<DeviceAction>> {Macro.Seq_J_UTIL_CONTR_CALL           }},
             {"wMsgJ_UTIL_CONTR_NO_CALL",    new List<List<DeviceAction>> {Macro.Seq_J_UTIL_CONTR_NO_CALL        }},
+            {"wMsgJ_UTIL_CONTR_AUTO_EXPAND",        new List<List<DeviceAction>> {Macro.Seq_J_MENU_MAIN, Macro.Seq_J_UTIL_CONTR_AUTO_EXPAND}},
+            {"wMsgJ_UTIL_CONTR_AUTO_VID",           new List<List<DeviceAction>> {Macro.Seq_J_MENU_MAIN, Macro.Seq_J_UTIL_CONTR_AUTO_VID}},
+            {"wMsgJ_UTIL_CONTR_NO_IFF_REPLY_BANDIT",new List<List<DeviceAction>> {Macro.Seq_J_MENU_MAIN, Macro.Seq_J_UTIL_CONTR_NO_IFF_REPLY_BANDIT}},
+            {"wMsgJ_UTIL_CONTR_DISABLE_AUTO_EXPAND",new List<List<DeviceAction>> {Macro.Seq_J_MENU_MAIN, Macro.Seq_J_UTIL_CONTR_AUTO_EXPAND}},
+            {"wMsgJ_UTIL_CONTR_ENABLE_AUTO_VID",    new List<List<DeviceAction>> {Macro.Seq_J_MENU_MAIN, Macro.Seq_J_UTIL_CONTR_AUTO_VID}},
+            {"wMsgJ_UTIL_CONTR_NO_IFF_REPLY_BOGEY", new List<List<DeviceAction>> {Macro.Seq_J_MENU_MAIN, Macro.Seq_J_UTIL_CONTR_NO_IFF_REPLY_BANDIT}},
 
             {"wMsgJ_RESET",                 new List<List<DeviceAction>> {Macro.Seq_J_RESET        }},
 
@@ -416,14 +427,14 @@ namespace VAICOM.Extensions.RIO
             {"wMsgJ_RAD_DL_HOST_FORE",          new List<List<DeviceAction>> {Macro.Seq_J_MENU_MAIN, Macro.Seq_J_RAD_DL_HOST_FORE     }},
             {"wMsgJ_RAD_DL_HOST_BURK",          new List<List<DeviceAction>> {Macro.Seq_J_MENU_MAIN, Macro.Seq_J_RAD_DL_HOST_BURK     }},
 
-            {"wMsgJESTER_Steerpoint_SP1",       new List<List<DeviceAction>> { Macro.Seq_J_MENU_CONTEXT, Macro.Seq_JESTER_Steerpoint_SP1     }},
-            {"wMsgJESTER_Steerpoint_SP2",       new List<List<DeviceAction>> { Macro.Seq_J_MENU_CONTEXT, Macro.Seq_JESTER_Steerpoint_SP2     }},
-            {"wMsgJESTER_Steerpoint_SP3",       new List<List<DeviceAction>> { Macro.Seq_J_MENU_CONTEXT, Macro.Seq_JESTER_Steerpoint_SP3     }},
-            {"wMsgJESTER_Steerpoint_FP",        new List<List<DeviceAction>> { Macro.Seq_J_MENU_CONTEXT, Macro.Seq_JESTER_Steerpoint_FP      }},
-            {"wMsgJESTER_Steerpoint_IP",        new List<List<DeviceAction>> { Macro.Seq_J_MENU_CONTEXT, Macro.Seq_JESTER_Steerpoint_IP      }},
-            {"wMsgJESTER_Steerpoint_ST",        new List<List<DeviceAction>> { Macro.Seq_J_MENU_CONTEXT, Macro.Seq_JESTER_Steerpoint_ST      }},
-            {"wMsgJESTER_Steerpoint_HB",        new List<List<DeviceAction>> { Macro.Seq_J_MENU_CONTEXT, Macro.Seq_JESTER_Steerpoint_HB      }},
-            {"wMsgJESTER_Steerpoint_MAN",       new List<List<DeviceAction>> { Macro.Seq_J_MENU_CONTEXT, Macro.Seq_JESTER_Steerpoint_MAN     }},
+            {"wMsgJESTER_Steerpoint_SP1",       new List<List<DeviceAction>> { Macro.Seq_JESTER_Steerpoint_SP1     }},
+            {"wMsgJESTER_Steerpoint_SP2",       new List<List<DeviceAction>> { Macro.Seq_JESTER_Steerpoint_SP2     }},
+            {"wMsgJESTER_Steerpoint_SP3",       new List<List<DeviceAction>> { Macro.Seq_JESTER_Steerpoint_SP3     }},
+            {"wMsgJESTER_Steerpoint_FP",        new List<List<DeviceAction>> { Macro.Seq_JESTER_Steerpoint_FP      }},
+            {"wMsgJESTER_Steerpoint_IP",        new List<List<DeviceAction>> { Macro.Seq_JESTER_Steerpoint_IP      }},
+            {"wMsgJESTER_Steerpoint_ST",        new List<List<DeviceAction>> { Macro.Seq_JESTER_Steerpoint_ST      }},
+            {"wMsgJESTER_Steerpoint_HB",        new List<List<DeviceAction>> { Macro.Seq_JESTER_Steerpoint_HB      }},
+            {"wMsgJESTER_Steerpoint_MAN",       new List<List<DeviceAction>> { Macro.Seq_JESTER_Steerpoint_MAN     }},
             {"wMsgLANTIRN_GPSZero",             new List<List<DeviceAction>> {Macro.Seq_LANTIRN_GPSZero           }},
             {"wMsgLANTIRN_ToggleFOV",           new List<List<DeviceAction>> {Macro.Seq_LANTIRN_ToggleFOV         }},
             {"wMsgJ_UTIL_NAV_MAP_MARKER",          new List<List<DeviceAction>> {Macro.Seq_J_MENU_MAIN, Macro.Seq_J_UTIL_NAV_MAP_MARKER        }},

@@ -7,11 +7,11 @@
       "isbeta": false,
       "isdev": false,
       "productid": 1,
-      "releasedate": 20260719,
-      "version": 3152,
-      "versionstring": "3.1.5.2",
+      "releasedate": 20260727,
+      "version": 3154,
+      "versionstring": "3.1.5.4",
       "downloadurl": "https://raw.githubusercontent.com/Penecruz/VAICOM-Community/Development/VAICOM_Installer/Resources/VAICOMPRO.zip",
-      "releasenotes": "BETA 3.1.5.2 \n- Fix FLT PLN Tab Map not draggable \n- Fix Hold AI Transmission checkbox defualting to on and not working tuning off (dybamic Switching and Broadcast Parallel) \n- Fix TX Link with Hot Mic off not waiting for Options command sequence attempt 2. \n- F-4E WSO code tidy up and CAP time command \n- Add OpenKneeboard Out FLT PLN Tab Coordinate conversions X/Y, DMS, DDM and MGRS \n- Fix Night Mode on Stores Page FLT PLN Tab \n- Add Map Marker functionality to OKB-Out, they appear on SA map and on the COM/ROUTE page of FLT PLN tab \n- Add data blocks to bugged OKB FLT PLN Tab SA Map. \n- More precice position data conversions on Kola, CW Germany, Iraq and Syria with updated TM Projections model. \n- Adds F-14B(U) support and new Openkneeboard Out DTC handling for it's DTC. \n- New OKB Out FLT PLN Tab features, Map markers, Background map and SA markup handling. \n- Fix Keywords panel Scroll bar behaviour in OKB Out not stopping on release. \n- Add dynamic Airport Symbols and data blocks to SA Map, Type CIV/MIL/JOINT and WX VFR/IFR Handling \n- Add Wags fundraiser link and message to Vaicom UI"
+      "releasenotes": "BETA 3.1.5.4 \n- Fix F-14 Mini Wheel unchecked nreaking IC. \n- Update F-14 Jester scripts to release version. \n- F-14 Jester 1.5 command remapping Radar, Air to ground,  Air to air, Weapons selection and fuzing. \n- F-14 Jester 1.5 new crew contract commands. \n- F-14 Jester 1.5 new Air to Ground Commands, JDAM and GGW options."
     }
   ]
 }

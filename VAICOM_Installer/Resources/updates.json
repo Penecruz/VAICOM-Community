@@ -6,11 +6,11 @@
       "isbeta": false,
       "isdev": false,
       "productid": 1,
-      "releasedate": 20260719,
-      "version": 3152,
-      "versionstring": "3.1.5.2",
-      "downloadurl": "https://github.com/Penecruz/VAICOM-Community/releases/download/v3.1.5.2/VAICOMPRO.zip",
-      "releasenotes": "Release 3.1.5.2\n\nNew\n• OpenKneeboard FLT PLN Out SA Map background for both day and night operations.\n• OpenKneeboard FLT PLN Out SA Map Dynamic Airfield map symbols that indicate if the airfield is VFR or IFR and provide UHF and VHF frequencies. if bugged.\n• OpenKneeboard FLT PLN Out SA Map now supports in game Map Markers, either user, client or system generated.\n• F-14B(U) added as supported module. (WIP)\n• OpenKneeboard FLT PLN Out now supports F-14B(U) DTC import.\n• OpenKneeboard FLT PLN Out SA Map data blocks added to bugged assets to display Freq and TACAN data.\n\nImproved\n• OpenKneeboard output FLT PLN Tab SA Map now has a more stable dynamic layer, better night mode handling and more consistent design elements.\n• WSO/Jester CAP time commands added.\n• OpenKneeboard Out better keywords scroll handling.\n\nFixed\n• Fixed TX Link with Hot Mic off not waiting for Options command sequence attempt 2.\n• Fixed Hold AI Transmission checkbox defaulting to on and not working tuning off (dynamic Switching and Broadcast Parallel).\n• Fixed Night Mode FLT PLN Out Stores page readability."
+      "releasedate": 20260726,
+      "version": 3153,
+      "versionstring": "3.1.5.3",
+      "downloadurl": "https://github.com/Penecruz/VAICOM-Community/releases/download/v3.1.5.3/VAICOMPRO.zip",
+      "releasenotes": "Release 3.1.5.3\n\nFixed\n• Unchecking F14 Mini Wheel on the Vaicom Expansions tab again allows F-14A/B and F-14B(U) to be used on servers requiring pure client scripts."
     }
   ]
 }

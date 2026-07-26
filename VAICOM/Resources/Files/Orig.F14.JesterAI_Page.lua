@@ -182,7 +182,7 @@ local ps = 0.25 * scale -- portrait half-size
 
 -- Helper: create a textured quad from sprite sheet region
 -- u1,v1 = top-left UV, u2,v2 = bottom-right UV
-local portrait_y_offset = 0.11 * scale
+local portrait_y_offset = 0.062 * scale
 
 local function make_sprite(name_suffix, u1, v1, u2, v2, half_w, half_h, parent, controllers)
 	local elem = CreateElement "ceTexPoly"
@@ -240,13 +240,14 @@ local JesterSky = CreateElement "ceTexPoly"
 AddElement(JesterSky)
 
 -- Layer 5: Seat (row 0, col 2-3, 2 cells wide)
-make_sprite("seat", 0.5, 0.0, 1.0, 0.25, ps*2.75, ps*1.6, camera_back.name, {{"jester_seat", portrait_y_offset-0.1*scale}})
+make_sprite("seat", 0.5, 0.0, 1.0, 0.25, ps*2, ps*1, camera_back.name, {{"jester_seat", portrait_y_offset+0.03*scale}})
 
 -- Layer 6: Jester portraits (one per state, controller toggles visibility)
 -- 0=forward (r0c0), 1=left (r0c1), 2=right (r1c0), 3=dead (r1c1),
 -- 4=highG (r1c2), 5=midG (r1c3), 6=negG (r2c0), 7=lookDown (r2c1),
--- 8=stressed (r2c2), 9=lookUp (r2c3)
-local py = portrait_y_offset + 0.07 * scale
+-- 8=stressed (r2c2), 9=lookUp (r2c3), 10=fullLeft (r3c0), 11=fullRight (r3c1),
+-- 12=deadLowG (r3c2)
+local py = portrait_y_offset + 0.02 * scale
 make_sprite("portrait_fwd",      0.0,  0.0,  0.25, 0.25, ps, ps, camera_back.name, {{"jester_portrait", 0, py}})
 make_sprite("portrait_left",     0.25, 0.0,  0.5,  0.25, ps, ps, camera_back.name, {{"jester_portrait", 1, py}})
 make_sprite("portrait_right",    0.0,  0.25, 0.25, 0.5,  ps, ps, camera_back.name, {{"jester_portrait", 2, py}})
@@ -257,6 +258,35 @@ make_sprite("portrait_negg",     0.0,  0.5,  0.25, 0.75, ps, ps, camera_back.nam
 make_sprite("portrait_lookdown", 0.25, 0.5,  0.5,  0.75, ps, ps, camera_back.name, {{"jester_portrait", 7, py}})
 make_sprite("portrait_stressed", 0.5,  0.5,  0.75, 0.75, ps, ps, camera_back.name, {{"jester_portrait", 8, py}})
 make_sprite("portrait_lookup",   0.75, 0.5,  1.0,  0.75, ps, ps, camera_back.name, {{"jester_portrait", 9, py}})
+make_sprite("portrait_fullleft", 0.0,  0.75, 0.25, 1.0,  ps, ps, camera_back.name, {{"jester_portrait", 10, py}})
+make_sprite("portrait_fullright",0.25, 0.75, 0.5,  1.0,  ps, ps, camera_back.name, {{"jester_portrait", 11, py}})
+make_sprite("portrait_dead_lowg",0.5,  0.75, 0.75, 1.0,  ps, ps, camera_back.name, {{"jester_portrait", 12, py}})
+
+
+if get_aircraft_type() == "F-14BU" then
+	local scanline_size = 0.40 * scale
+	local ScanlinesOverlay = CreateElement "ceTexPoly"
+		ScanlinesOverlay.name = "jester_scanlines"
+		ScanlinesOverlay.material = MakeMaterial(IndTexture_Path.."scanlines.png", {255, 255, 255, 255})
+		ScanlinesOverlay.parent_element = camera_back.name
+		ScanlinesOverlay.init_pos = {0, 0, 0}
+		ScanlinesOverlay.isdraw = true
+		ScanlinesOverlay.isvisible = true
+		ScanlinesOverlay.h_clip_relation = h_clip_relations.COMPARE
+		ScanlinesOverlay.level = INDICATOR_LEVEL
+		ScanlinesOverlay.blend_mode = 6 -- multiply
+		ScanlinesOverlay.vertices = {
+			{-scanline_size, scanline_size},
+			{ scanline_size, scanline_size},
+			{ scanline_size, -scanline_size},
+			{-scanline_size, -scanline_size}
+		}
+		ScanlinesOverlay.tex_coords = {
+			{0, 0}, {1, 0}, {1, 1}, {0, 1}
+		}
+		ScanlinesOverlay.indices = {0, 1, 2, 0, 2, 3}
+	AddElement(ScanlinesOverlay)
+end
 
 local status_bar_x = 0.305
 --local status_bar_y1 = -0.007812
