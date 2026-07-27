@@ -2103,7 +2103,7 @@ base.vaicom.get = {
 					local Stack = base.vaicom.list.localAllies(radio)
 					return Stack	
 				end,
-              Opposition  = function(sortfunction, radio)
+				Opposition  = function(sortfunction, radio)
 					local Stack = base.vaicom.list.localOpposition(radio)
 					return Stack	
 				end,
@@ -2267,7 +2267,7 @@ base.vaicom.state = {
 									ATC				= {},
 									AWACS			= {}, 
 									Tanker			= {},
-                                   Opposition		= {},
+									Opposition		= {},
 									Crew			= {},
 									Aux				= {},
 									Moose		    = {}, -- Add moose
@@ -2371,7 +2371,7 @@ base.vaicom.state = {
 				base.vaicom.state.riostate.AM182					= base.vaicom.state.activemessage.AIRIO and (data.initialized and base.GetDevice(0).get_argument_value and (base.GetDevice(0):get_argument_value(359) ==1)) or false
 				base.vaicom.state.riostate.ejsn						= base.vaicom.state.activemessage.AIRIO and (data.initialized and base.GetDevice(0).get_argument_value and (base.GetDevice(0):get_argument_value(2049) ==1)) or false
 				base.vaicom.state.riostate.markers					= (data.initialized and base.vaicom.get.missiondata.markers()) or 0
-				base.vaicom.state.riostate.markerdetails				= (data.initialized and base.vaicom.get.missiondata.markerdetails()) or {}
+				base.vaicom.state.riostate.markerdetails			= (data.initialized and base.vaicom.get.missiondata.markerdetails()) or {}
 				base.vaicom.state.availablerecipients.Player 		= data.initialized and base.vaicom.get.missiondata.listby.Player(base.vaicom.helper.sortby.index)
 				base.vaicom.state.availablerecipients.Flight 		= data.initialized and base.vaicom.get.missiondata.listby.Flight(base.vaicom.helper.sortby.index,	"radio")					
 				base.vaicom.state.availablerecipients.JTAC			= data.initialized and base.vaicom.get.missiondata.listby.JTAC(base.vaicom.helper.sortby.distance,	"radio")
@@ -2866,7 +2866,7 @@ base.vaicom.state = {
 					end
 					if qnhHpa == nil then qnhHpa = 1013 end
 
-                 local presetName = base.string.upper(base.tostring(clouds.preset or clouds.name or ""))
+					local presetName = base.string.upper(base.tostring(clouds.preset or clouds.name or ""))
 					if (base.tonumber(cloudsDensity) or 0) <= 0 and presetName ~= "" then
 						if base.string.find(presetName, "OVC", 1, true) or base.string.find(presetName, "OVERCAST", 1, true) then
 							cloudsDensity = 8
@@ -2889,21 +2889,21 @@ base.vaicom.state = {
 					if cloudsDensity >= 6 and cloudsDensity <= 7 then cloudCode = "BKN" end
 					if cloudsDensity >= 8 then cloudCode = "OVC" end
 
-                 local cloudPart = cloudCode
+					local cloudPart = cloudCode
 					local cloudAtGround = false
 					local cloudBaseMslFt = nil
 					local cloudBaseAglFt = nil
 					if cloudsBase ~= nil then
-                     cloudBaseMslFt = base.tonumber(cloudsBase)
+						cloudBaseMslFt = base.tonumber(cloudsBase)
 						if cloudBaseMslFt ~= nil then
 							cloudBaseMslFt = cloudBaseMslFt * 3.28084
 							cloudBaseAglFt = cloudBaseMslFt - stationElevationFt
 						end
 					end
 					if cloudCode ~= "SKC" and cloudsBase ~= nil then
-                      local baseHundredsFt = toInt((cloudBaseAglFt or 0) / 100)
+						local baseHundredsFt = toInt((cloudBaseAglFt or 0) / 100)
 						if baseHundredsFt ~= nil and baseHundredsFt < 0 then baseHundredsFt = 0 end
-                      if (cloudBaseAglFt or 0) <= 0 then cloudAtGround = true end
+						if (cloudBaseAglFt or 0) <= 0 then cloudAtGround = true end
 						if (baseHundredsFt or 0) < 1 then baseHundredsFt = 1 end
 						cloudPart = cloudCode .. pad3(baseHundredsFt)
 					end
@@ -2912,7 +2912,7 @@ base.vaicom.state = {
 					if weather.enable_dust and (base.tonumber(weather.dust_density) or 0) > 0 then
 						base.table.insert(wx, "DU")
 					end
-                 local fog2Active = weather.fog2 and base.type(weather.fog2) == "table" and ((base.tonumber(weather.fog2.mode) or 0) > 0)
+					local fog2Active = weather.fog2 and base.type(weather.fog2) == "table" and ((base.tonumber(weather.fog2.mode) or 0) > 0)
 					if (weather.enable_fog and weather.fog and (base.tonumber(weather.fog.visibility) or 0) > 0)
 						or (fog2Active and (base.tonumber(fogVis) or 0) > 0)
 					then
@@ -2969,7 +2969,7 @@ base.vaicom.state = {
 						end
 						if p >= 2 then precipCode = "TSRA" end
 					end
-                   if precipCode == nil then
+					if precipCode == nil then
 						if presetName ~= "" and base.string.find(presetName, "RAIN", 1, true) then
                            local t = stationTemp
 							if t ~= nil then
@@ -3003,7 +3003,7 @@ base.vaicom.state = {
 					end
 
 					local tempPart = "--"
-                 local tempInt = toInt(stationTemp)
+					local tempInt = toInt(stationTemp)
 					if tempInt ~= nil then
 						if tempInt < 0 then
 							tempPart = "M" .. pad2(-tempInt)
@@ -3041,7 +3041,7 @@ base.vaicom.state = {
 					local noCloudBelow5000 = false
 					if cloudCode == "SKC" then
 						noCloudBelow5000 = true
-                  elseif cloudBaseAglFt ~= nil and cloudBaseAglFt >= 5000 then
+					elseif cloudBaseAglFt ~= nil and cloudBaseAglFt >= 5000 then
 						noCloudBelow5000 = true
 					end
 					if visM >= 9999 and noCloudBelow5000 then
@@ -3063,16 +3063,16 @@ base.vaicom.state = {
 					end
 
 					local rmkPart = ""
-                   if turbulence ~= nil then
+					if turbulence ~= nil then
 						if turbulence > 40 then
 							rmkPart = " RMK SEV TURB B050"
-                     elseif turbulence > 27 and turbulence <= 40 then
+						elseif turbulence > 27 and turbulence <= 40 then
 							rmkPart = " RMK MOD TURB B050"
 						end
 					end
 
-                  local station = atcInfo and atcInfo.icao or "DCS"
-                 local metarTime = pad2(reportDay) .. pad2(reportHour) .. pad2(reportMin) .. "Z"
+					local station = atcInfo and atcInfo.icao or "DCS"
+					local metarTime = pad2(reportDay) .. pad2(reportHour) .. pad2(reportMin) .. "Z"
 					return "METAR " .. station .. " " .. metarTime .. " " .. windPart .. windVarPart .. " " .. skyPart .. " " .. tempPart .. " Q" .. base.string.format("%04d", qnhHpa) .. rmkPart
 				end
 
@@ -3267,7 +3267,7 @@ base.vaicom.state = {
 					return candidates
 				end
 
-             local function resolveTacanFromGroupMap(groupName, sourceMap)
+				local function resolveTacanFromGroupMap(groupName, sourceMap)
 					for _, candidate in base.pairs(getGroupNameCandidates(groupName)) do
                       local tac = normalizeTacanValue(sourceMap[candidate])
 						if tac ~= "" then return tac end
@@ -4312,9 +4312,9 @@ base.vaicom.state = {
 																JTAC 		= {},
 																AWACS		= {},
 																Tanker		= {},
-                                   Opposition	= {},
+																Opposition	= {},
 																Crew		= {},
-																Aux			= {},		
+																Aux			= {},
 																Cargo		= {},
 																Moose		= {}, -- Add Moose
 															}		
@@ -4463,18 +4463,18 @@ base.vaicom.state = {
               	for chunkId = 1, 12 do
 					local chunkPayload = addChunkHeader(chunk[chunkId], chunkId)
 					local payload = JSON:encode(chunkPayload)
-					if chunkId == 9 then
-						-- Large menus that exceed the maximum payload cause errors
-						-- during sending and prevent sending all chunks to VAICOM.
-						if #payload < maxSize then
-							sendChunk(payload, chunkId)
-						else
-							-- Send empty menu items if menu too large
-							local menuPayload = { menuaux = { items = {}, name = "other" } }
-							chunkPayload = addChunkHeader(menuPayload, chunkId)
-							payload = JSON:encode(chunkPayload)
-							sendChunk(payload, chunkId)
-						end
+					if chunkId == 9 and (#payload > maxSize) then
+						-- Large menus that exceed the maximum payload cause udp errors
+						-- and prevent sending the chunk to VAICOM. Send empty menu item
+						-- if menus are too large.
+						local menuPayload = { menuaux = { items = {}, name = "Other" } }
+						chunkPayload = addChunkHeader(menuPayload, chunkId)
+						sendChunk(JSON:encode(chunkPayload), chunkId)
+					elseif chunkId == 10 and (#payload > maxSize) then
+						-- Large numbers of markers that exceed the maximum payload cause udp errors
+						-- and prevent sending the chunk to VAICOM. Set these to an empty array.
+						chunkPayload.riostate.markerdetails = {}
+						sendChunk(JSON:encode(chunkPayload), chunkId)
 					else
 						sendChunk(payload, chunkId)
 					end
@@ -4504,7 +4504,7 @@ base.vaicom.init = {
 		base.vaicom.relay = socket.try(socket.udp()) 
 		socket.try(base.vaicom.relay:setpeername(base.vaicom.config.relayaddress,base.vaicom.config.relayport))
 		socket.try(base.vaicom.relay:settimeout(base.vaicom.config.relaytimeout))
-end,
+	end,
 	stop = function(self)
 		if base.vaicom.sender then
 			socket.try(base.vaicom.sender:close())
