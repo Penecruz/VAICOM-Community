@@ -15,19 +15,6 @@ namespace VAICOM
             {
                 ExtractAll(serverMessage);
 
-                // Some MP environments may not deliver all legacy chunks (11/12).
-                // If core state is present by chunk 10, allow processing to continue.
-                if (!receivedupdatecomplete
-                    && serverMessage != null
-                    && serverMessage.cid >= 10
-                    && State.currentstate != null
-                    && !string.IsNullOrEmpty(State.currentstate.id)
-                    && !State.currentstate.id.Equals("----"))
-                {
-                    receivedupdatecomplete = true;
-                    processingchunks = false;
-                }
-
                 if (receivedupdatecomplete)
                 {
                     if (!processingchunks)
@@ -35,7 +22,6 @@ namespace VAICOM
                         ProcessServerData();
                     }
                 }
-
             }
 
             public static void DumpStateToLog()
@@ -49,6 +35,15 @@ namespace VAICOM
 
             public static void ExtractAll(ServerMessage serverMessage)
             {
+                // The final received message contains the "completed" property
+                // indicating that all chunks have been sent and can now be processed.
+                if (serverMessage.completed)
+                {
+                    receivedupdatecomplete = true;
+                    processingchunks = false;
+                    return;
+                }
+
                 switch (serverMessage.cid)
                 {
                     case 1:
@@ -92,7 +87,6 @@ namespace VAICOM
 
             public static void ExtractChunk1(ServerMessage serverMessage)
             {
-
                 processingchunks = true;
 
                 State.previousstate = State.currentstate;
@@ -159,7 +153,6 @@ namespace VAICOM
 
             public static void ExtractChunk3(ServerMessage serverMessage)
             {
-
                 processingchunks = true;
                 try
                 {
@@ -181,7 +174,6 @@ namespace VAICOM
 
             public static void ExtractChunk4(ServerMessage serverMessage)
             {
-
                 processingchunks = true;
                 try
                 {
@@ -240,7 +232,6 @@ namespace VAICOM
             }
             public static void ExtractChunk6(ServerMessage serverMessage)
             {
-
                 processingchunks = true;
                 try
                 {
@@ -397,9 +388,7 @@ namespace VAICOM
                 {
                     Log.Write("ERROR 11/" + chunkcount + " :" + e.StackTrace, Colors.Inline);
                 }
-                receivedupdatecomplete = true;
-                processingchunks = false;
-
+                receivedupdatecomplete = false;
             }
 
             public static void ExtractChunk12(ServerMessage serverMessage)
@@ -416,8 +405,7 @@ namespace VAICOM
                 {
                     Log.Write("ERROR 12/" + chunkcount + " :" + e.StackTrace, Colors.Inline);
                 }
-                receivedupdatecomplete = true;
-                processingchunks = false;
+                receivedupdatecomplete = false;
             }
 
             public static void LogFlightUnits(ServerMessage serverMessage)

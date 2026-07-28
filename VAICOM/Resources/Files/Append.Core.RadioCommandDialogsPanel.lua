@@ -564,7 +564,6 @@ function DecodeMessage(rawdata)
 	return true
 end		
 function ProcessRemoteCommand()
-
 	if not DecodeMessage(base.vaicom.state.rawcommand) then
 		socket.try(base.vaicom.sender:send(base.vaicom.flags.raw))
 		return
@@ -595,7 +594,7 @@ function ProcessRemoteCommand()
 		return
 	end		
 	if clientmessage.type == base.vaicom.messagetype.requestupdate  	then			
-		base.vaicom.state.sendupdateall()		
+		base.vaicom.state.sendupdateall()
 		return
 	end				
 	if clientmessage.type == base.vaicom.messagetype.devicecontrol  	then
@@ -690,7 +689,6 @@ function ProcessRemoteCommand()
 		base.setmetatable(purgeMessage, sendMessage)
 		purgeMessage:perform()
 	end			
-
 end
 function ApplySettings(message)
 	base.vaicom.set.debugmode(message.debug)
@@ -2301,7 +2299,7 @@ base.vaicom.state = {
 									[base.vaicom.categories.recipient.Cargo] 	= nil,
 									[base.vaicom.categories.recipient.Allies] 	= nil,										
 									},																	
-		update =					{		
+		update =					{
 			all = function()
 				-- Lightweight profiling
 				local profiling = base.vaicom.state.profiling
@@ -4267,7 +4265,8 @@ base.vaicom.state = {
 
 				local selectedRadio = getSelectedRadio(base.vaicom.state.dcsid)
 				profMark("getSelectedRadio")
-            	local missionGroupTacanMap = buildMissionGroupTacanMap()
+            	
+				local missionGroupTacanMap = buildMissionGroupTacanMap()
 				profMark("buildMissionGroupTacanMap")
 				
                 local chunk = {}
@@ -4370,6 +4369,7 @@ base.vaicom.state = {
 				if base.vaicom and base.vaicom.state then
 					base.vaicom.state.atcicaotypes = chunk[12].atcicaotypes
 				end
+
 				for n,k in base.pairs(data.communicators) do
 					local Viper_VHF = (base.vaicom.state.dcsid == "F-16C_50" and n == 38) 
 					local ICS = (n == data.intercomId)
@@ -4390,9 +4390,15 @@ base.vaicom.state = {
 					base.table.insert(chunk[2].radios, radio)
 				end
 				profMark("radios list")
+				
 				for recipientclass,_ in base.pairs(base.vaicom.state.availablerecipients) do
                 	for n,k in base.pairs(base.vaicom.state.availablerecipients[recipientclass]) do
-					   local unitDiagnostics = ""
+						-- We only send the first 50 for some recipient classes
+						if (recipientclass == "ATC" or recipientclass == "Allies") and n >= 50 then
+							break
+						end
+
+						local unitDiagnostics = ""
 						if base.vaicom.state.debugmode and (recipientclass == "Tanker" or recipientclass == "ATC" or recipientclass == "AWACS" or recipientclass == "Flight") then
                             unitDiagnostics = base.tostring(base.vaicom.properties.unitdiagnostics(k))
 						end
@@ -4440,6 +4446,7 @@ base.vaicom.state = {
 					end
 				end
 				profMark("recipients list")
+				
 				local function sendChunk(payload, chunkId)
 					local ok, err = base.pcall(function()
 						socket.try(base.vaicom.sender:send(payload))
@@ -4479,7 +4486,11 @@ base.vaicom.state = {
 						sendChunk(payload, chunkId)
 					end
 				end
-				profMark("encode+send")
+				
+				-- Send chunk indicating that all chunks have been sent and now ready for processing.
+				local completedPayload = { completed = true }
+				sendChunk(JSON:encode(addChunkHeader(completedPayload, 13)), 13)
+				profMark("encode+send chunks")
 
 				if profiling then
 					base.print(base.string.format("VAICOM profiling (sendupdateall) | %-40s %8.3f ms", "TOTAL", (profClock() - profStart) * 1000))
