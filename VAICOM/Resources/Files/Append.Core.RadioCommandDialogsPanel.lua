@@ -531,6 +531,16 @@ function setShowMenu(on)
 			
 	end
 end
+function onMenuHide(self, menu)
+	-- Override to skip freeCommandMenu() so the communicator remains acquired.
+	-- For modules like the Mi-8, freeCommandMenu() causes is_communicator_available()
+	-- to return false, which prevents VAICOM from transmitting AI comms.
+	-- Original DCS behaviour (without VAICOM) never hides the panel, so
+	-- freeCommandMenu() was never called during a flight; this restores that state.
+	self.window:setVisible(false)
+	self.mainCaption:setVisible(false)
+	banMouse(self, false)
+end
 function RemoteInputs() --check remote Inputs for errors
 	local returnvalue = false			
 	datareadout = base.vaicom.receiver:receive()
