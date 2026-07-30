@@ -117,6 +117,10 @@ namespace VAICOM.Extensions.RIO
             {"wMsgJ_RDR_POS_CTR_R",                 "Scan Azimuth Center Right"         },
             {"wMsgJ_RDR_POS_L",                     "Scan Azimuth Left"                 },
             {"wMsgJ_RDR_POS_R",                     "Scan Azimuth Right"                },
+            {"wMsgJ_RDR_POS_L20",                   "Scan Azimuth Left 20"              },
+            {"wMsgJ_RDR_POS_R20",                   "Scan Azimuth Right 20"             },
+            {"wMsgJ_RDR_POS_L55",                   "Scan Azimuth Hard Left"            },
+            {"wMsgJ_RDR_POS_R55",                   "Scan Azimuth Hard Right"           },
 
             {"wMsgJ_RDR_SCAN_ELEV",                 "Scan Elevation"                    }, // not endpoint, show hint
             {"wMsgJ_RDR_AUTO",                      "Scan Elevation Automatic"          },

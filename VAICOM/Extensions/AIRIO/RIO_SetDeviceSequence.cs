@@ -692,13 +692,47 @@ namespace VAICOM
 
             public static partial class Message
             {
+                private static bool IsF14BUActive()
+                {
+                    try
+                    {
+                        if ((State.currentstate != null) && !string.IsNullOrWhiteSpace(State.currentstate.id) && State.currentstate.id.Equals("F-14BU", StringComparison.OrdinalIgnoreCase))
+                        {
+                            return true;
+                        }
+
+                        if (!string.IsNullOrWhiteSpace(State.riomod) && State.riomod.Equals("F-14BU", StringComparison.OrdinalIgnoreCase))
+                        {
+                            return true;
+                        }
+                    }
+                    catch
+                    {
+                    }
+
+                    return false;
+                }
+
                 public static void SetRioDeviceSequence()
                 {
                     try
                     {
 
+                        string cmd = State.currentkey["command"];
+                        Dictionary<string, List<List<Extensions.RIO.DeviceAction>>> commandTable = Extensions.RIO.DeviceActionsLibrary.Sequences.RioCommands;
+
+                        if (IsF14BUActive())
+                        {
+                            string overrideKey = "F-14BU:" + cmd;
+                            if (Extensions.RIO.DeviceActionsLibrary.Sequences.AuxCommands.ContainsKey(overrideKey))
+                            {
+                                commandTable = Extensions.RIO.DeviceActionsLibrary.Sequences.AuxCommands;
+                                cmd = overrideKey;
+                            }
+                        }
+
                         List<Extensions.RIO.DeviceAction> cache = new List<Extensions.RIO.DeviceAction>();
-                        foreach (List<Extensions.RIO.DeviceAction> actionlist in Extensions.RIO.DeviceActionsLibrary.Sequences.RioCommands[State.currentkey["command"]])
+                        foreach (List<Extensions.RIO.DeviceAction> actionlist in commandTable[cmd])
                         {
                             cache.AddRange(actionlist);
                         }
