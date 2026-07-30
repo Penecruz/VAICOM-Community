@@ -2106,14 +2106,12 @@ base.vaicom.get = {
 					return Stack	
 				end,
 				},
-				markers = function()
-					local details = base.vaicom.get.missiondata.markerdetails()
-					return (base.type(details) == "table") and #details or 0
-				end,
 				markerdetails = function()
 					local details = {}
 					local Stack = base.world.getMarkPanels()
-					if base.type(Stack) ~= "table" then return details end
+					-- Only build the map marker details if there are 20 or less as some
+					-- large missions can have over a thousand markers, which we don't send
+					if base.type(Stack) ~= "table" or #Stack > 20 then return details end
 					local function tryget(fn)
 						local ok, value = base.pcall(fn)
 						if ok then return value end
@@ -2363,13 +2361,15 @@ base.vaicom.state = {
 					end
 				end
 
+				local markerdetails = (data.initialized and base.vaicom.get.missiondata.markerdetails()) or {}
+				base.vaicom.state.riostate.markerdetails = markerdetails
+				base.vaicom.state.riostate.markers = #markerdetails
+
 				base.vaicom.state.riostate.ics						= (base.vaicom.state.activemessage.AIRIO and (data.initialized and base.GetDevice(0).get_argument_value and (base.GetDevice(0):get_argument_value(2044) > -1))) or f4eICSHot or ah64ICSHot -- Check for F-14 ICS state, F-4E pilot ICS hot mic position, or AH-64 ICS hot mic position
 				base.vaicom.state.riostate.sngl						= base.vaicom.state.activemessage.AIRIO and (data.initialized and base.GetDevice(0).get_argument_value and (base.GetDevice(0):get_argument_value(60) >0)) or false
 				base.vaicom.state.riostate.jmr						= base.vaicom.state.activemessage.AIRIO and (data.initialized and base.GetDevice(0).get_argument_value and (base.GetDevice(0):get_argument_value(151) ==1)) or false
 				base.vaicom.state.riostate.AM182					= base.vaicom.state.activemessage.AIRIO and (data.initialized and base.GetDevice(0).get_argument_value and (base.GetDevice(0):get_argument_value(359) ==1)) or false
 				base.vaicom.state.riostate.ejsn						= base.vaicom.state.activemessage.AIRIO and (data.initialized and base.GetDevice(0).get_argument_value and (base.GetDevice(0):get_argument_value(2049) ==1)) or false
-				base.vaicom.state.riostate.markers					= (data.initialized and base.vaicom.get.missiondata.markers()) or 0
-				base.vaicom.state.riostate.markerdetails			= (data.initialized and base.vaicom.state.riostate.markers <= 20 and base.vaicom.get.missiondata.markerdetails()) or {}
 				base.vaicom.state.availablerecipients.Player 		= data.initialized and base.vaicom.get.missiondata.listby.Player(base.vaicom.helper.sortby.index)
 				base.vaicom.state.availablerecipients.Flight 		= data.initialized and base.vaicom.get.missiondata.listby.Flight(base.vaicom.helper.sortby.index,	"radio")					
 				base.vaicom.state.availablerecipients.JTAC			= data.initialized and base.vaicom.get.missiondata.listby.JTAC(base.vaicom.helper.sortby.distance,	"radio")
