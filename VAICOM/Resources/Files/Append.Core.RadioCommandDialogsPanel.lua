@@ -1283,7 +1283,7 @@ base.vaicom.properties = {
 					"channel", "Channel", "channelNumber", "tacanChannel", "TACANChannel",
 					"getChannel", "get_channel", "getChannelNumber", "getTacanChannel", "getTACANChannel"
 				})
-              if channel == nil then
+				if channel == nil then
 					channel = callMethod(beaconObj, "getChannel") or callMethod(beaconObj, "get_channel") or callMethod(beaconObj, "getChannelNumber") or callMethod(beaconObj, "getTacanChannel") or callMethod(beaconObj, "getTACANChannel")
 				end
 				if channel == nil then
@@ -1307,7 +1307,7 @@ base.vaicom.properties = {
 			local beacon = nil
 			local okBeacon = false
 			okBeacon, beacon = base.pcall(function() return Locator:getBeacon() end)
-         if not okBeacon then
+			if not okBeacon then
 				beacon = nil
 			end
 			if (not okBeacon) or beacon == nil then
@@ -1350,7 +1350,7 @@ base.vaicom.properties = {
 
 		return tacan
 	end,
-  unitdiagnostics = function(Locator)
+	unitdiagnostics = function(Locator)
 		local probe = ""
 		local okProbe, result = base.pcall(function()
 			if Locator == nil then
@@ -1490,7 +1490,7 @@ base.vaicom.properties = {
 		local returnstr ="unknown"
 		local Coalition = nil
 		if Locator ~= nil then
-		Coalition = Locator:getCoalition()
+			Coalition = Locator:getCoalition()
 		end
 		if Coalition == base.coalition.side.NEUTRAL then returnstr = "NEUTRAL" end
 		if Coalition == base.coalition.side.BLUE then returnstr = "BLUE" end
@@ -1633,25 +1633,25 @@ base.vaicom.objects = {
 		local Collection = {}
 		for i =1,4 do
 			local wingman = data.pUnit and data.pUnit:getGroup():getUnit(i)
-			if wingman then 
-			base.table.insert(Collection, wingman)
+			if wingman then
+				base.table.insert(Collection, wingman)
 			end
 		end
 		return Collection
 	end,	
 	localJTACs = function(getside)
 		local Collection = {}	
-			Collection = base.coalition.getServiceProviders(getside, base.coalition.service.FAC)
+		Collection = base.coalition.getServiceProviders(getside, base.coalition.service.FAC)
 		return Collection
 	end,	
 	localATCs = function(getside)
 		local Collection = {}
-			Collection = base.coalition.getServiceProviders(getside, base.coalition.service.ATC)
+		Collection = base.coalition.getServiceProviders(getside, base.coalition.service.ATC)
 		return Collection	
 	end,
 	localAWACSs = function(getside)
 		local Collection = {}
-          Collection = base.coalition.getServiceProviders(getside, base.coalition.service.AWACS)
+		Collection = base.coalition.getServiceProviders(getside, base.coalition.service.AWACS)
 
 		local function addUniqueUnit(unit)
 			if unit == nil then return end
@@ -1727,7 +1727,9 @@ base.vaicom.objects = {
 				local okUnits, units = base.pcall(function() return g:getUnits() end)
 				if okUnits and units ~= nil and base.type(units) == "table" then
 					for _, u in base.pairs(units) do
-						if isAwacsLikeUnit(u) then
+						-- Check for late activation units and filter out if not activated
+						local inactive = (u.isActive and not u:isActive()) or false 
+						if not inactive and isAwacsLikeUnit(u) then
 							addUniqueUnit(u)
 						end
 					end
@@ -1738,7 +1740,7 @@ base.vaicom.objects = {
 	end,	
 	localTankers = function(getside)
 		local Collection = {}
-			Collection = base.coalition.getServiceProviders(getside, base.coalition.service.TANKER)
+		Collection = base.coalition.getServiceProviders(getside, base.coalition.service.TANKER)
 		return Collection
 	end,	
 	localCrew = function(getside)
@@ -1759,10 +1761,12 @@ base.vaicom.objects = {
 	end,
 	localAllies = function(getside)
 		local Collection = {}
-			Collection = base.coalition.getPlayers and base.coalition.getPlayers(getside)
+		Collection = base.coalition.getPlayers and base.coalition.getPlayers(getside)
 
 		local function addUniqueUnit(unit)
 			if unit == nil then return end
+			-- Filter out late activation units that aren't activated yet
+			if unit.isActive and not unit:isActive() then return end
 			local uid = unit.id_
 			if uid == nil then
 				base.table.insert(Collection, unit)
@@ -1804,8 +1808,8 @@ base.vaicom.objects = {
 			end
 		end
 		return Collection
-	end,	
-   localOpposition = function(getside)
+	end,
+	localOpposition = function(getside)
 		local Collection = {}
 		local opposite = nil
 		if getside == base.coalition.side.BLUE then opposite = base.coalition.side.RED end
@@ -1813,6 +1817,8 @@ base.vaicom.objects = {
 
 		local function addUniqueUnit(unit)
 			if unit == nil then return end
+			-- Filter out late activation units that aren't activated yet
+			if unit.isActive and not unit:isActive() then return end
 			local uid = unit.id_
 			if uid == nil then
 				base.table.insert(Collection, unit)
@@ -1844,7 +1850,7 @@ base.vaicom.objects = {
 			end
 		end
 		if opposite then
-           addUnits(base.vaicom.objects.localJTACs(opposite))
+			addUnits(base.vaicom.objects.localJTACs(opposite))
 			addUnits(base.vaicom.objects.localAWACSs(opposite))
 			addUnits(base.vaicom.objects.localTankers(opposite))
 			addUnits(base.vaicom.objects.localATCs(opposite))
