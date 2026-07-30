@@ -2369,7 +2369,7 @@ base.vaicom.state = {
 				base.vaicom.state.riostate.AM182					= base.vaicom.state.activemessage.AIRIO and (data.initialized and base.GetDevice(0).get_argument_value and (base.GetDevice(0):get_argument_value(359) ==1)) or false
 				base.vaicom.state.riostate.ejsn						= base.vaicom.state.activemessage.AIRIO and (data.initialized and base.GetDevice(0).get_argument_value and (base.GetDevice(0):get_argument_value(2049) ==1)) or false
 				base.vaicom.state.riostate.markers					= (data.initialized and base.vaicom.get.missiondata.markers()) or 0
-				base.vaicom.state.riostate.markerdetails			= (data.initialized and base.vaicom.get.missiondata.markerdetails()) or {}
+				base.vaicom.state.riostate.markerdetails			= (data.initialized and base.vaicom.state.riostate.markers <= 20 and base.vaicom.get.missiondata.markerdetails()) or {}
 				base.vaicom.state.availablerecipients.Player 		= data.initialized and base.vaicom.get.missiondata.listby.Player(base.vaicom.helper.sortby.index)
 				base.vaicom.state.availablerecipients.Flight 		= data.initialized and base.vaicom.get.missiondata.listby.Flight(base.vaicom.helper.sortby.index,	"radio")					
 				base.vaicom.state.availablerecipients.JTAC			= data.initialized and base.vaicom.get.missiondata.listby.JTAC(base.vaicom.helper.sortby.distance,	"radio")
