@@ -1029,6 +1029,55 @@ base.vaicom.categories = {
 					[2] 	= "blue",	
 				},		
 }
+
+-- Per-update memoization for DCS engine boundary calls.
+-- getCommunicator/getDesc/getPlayerName are queried by many properties for the
+-- same Locator within a single sendupdateall pass. The object identities are
+-- stable across one pass (live values like frequency are still read off the
+-- cached communicator each time), so we cache them and clear the cache at the
+-- start of every sendupdateall to avoid cross-update staleness.
+local propcache = { comm = {}, desc = {}, pname = {} }
+local function resetPropCache()
+	propcache.comm = {}
+	propcache.desc = {}
+	propcache.pname = {}
+end
+local function getCommunicatorCached(Locator)
+	if Locator == nil then return nil end
+	local cached = propcache.comm[Locator]
+	if cached == nil then
+		cached = Locator:getCommunicator()
+		if cached == nil then cached = false end -- memoize the "no communicator" result
+		propcache.comm[Locator] = cached
+	end
+	if cached == false then return nil end
+	return cached
+end
+local function getDescCached(Locator)
+	if Locator == nil then return nil end
+	local cached = propcache.desc[Locator]
+	if cached == nil then
+		cached = Locator:getDesc()
+		if cached == nil then cached = false end
+		propcache.desc[Locator] = cached
+	end
+	if cached == false then return nil end
+	return cached
+end
+local function getPlayerNameCached(Locator)
+	if Locator == nil then return nil end
+	local cached = propcache.pname[Locator]
+	if cached == nil then
+		if Locator.getPlayerName then
+			cached = Locator:getPlayerName()
+		end
+		if cached == nil then cached = false end
+		propcache.pname[Locator] = cached
+	end
+	if cached == false then return nil end
+	return cached
+end
+
 base.vaicom.properties = {
 	range = function(Locator)
 		local range = 0
@@ -1051,36 +1100,33 @@ base.vaicom.properties = {
 		end
 	end,
 	displayname = function(Locator)
-		displaystr = Locator:getDesc() and Locator:getDesc().displayName or "unknown"
+		local displaystr = getDescCached(Locator) and getDescCached(Locator).displayName or "unknown"
 		return displaystr
 	end,
 	typename = function(Locator)
 		local displaystr = "unknown"
-		if Locator:getDesc() ~= nil then
-			displaystr = Locator:getDesc().typeName
+		if getDescCached(Locator) ~= nil then
+			displaystr = getDescCached(Locator).typeName
 		end
 		return displaystr
 	end,
 	attributes = function(Locator)
 		local attr = {}
-		if Locator:getDesc().attributes then
-			attr = Locator:getDesc().attributes
+		if getDescCached(Locator).attributes then
+			attr = getDescCached(Locator).attributes
 		end
 		return attr
 	end,
 	description = function(Locator)
-	local descr = {}
-		if Locator:getDesc() then
-			descr = Locator:getDesc()
+		local descr = {}
+		if getDescCached(Locator) then
+			descr = getDescCached(Locator)
 		end
-	return descr
+		return descr
 	end,
 	missioncallsign = function(Locator)
 		local callsignStr = "unknown"
-		local UnitCommunicator = nil
-		if Locator ~= nil then
-			UnitCommunicator = Locator:getCommunicator()
-		end
+		local UnitCommunicator = getCommunicatorCached(Locator)
 		if UnitCommunicator then
 			local useprotocol = base.speech.defaultProtocol
 			if base.vaicom.settings.forcecallsigns then
@@ -1145,12 +1191,9 @@ base.vaicom.properties = {
 		return ID	
 	end,
 	modulation = function(Locator)
-		local UnitCommunicator = nil
 		local Modulation = nil
 		local Modulationstr = "XX"
-		if Locator ~= nil then
-         UnitCommunicator = Locator:getCommunicator()
-		end
+        local UnitCommunicator = getCommunicatorCached(Locator)
 		if UnitCommunicator then
 			local okMod, mod = base.pcall(function()
 				return UnitCommunicator:getModulation()
@@ -1176,11 +1219,8 @@ base.vaicom.properties = {
 		return Modulationstr
 	end,
 	frequency = function(Locator)
-		local UnitCommunicator
 		local Frequency = "0"
-		if Locator ~= nil then
-			UnitCommunicator = Locator:getCommunicator()
-		end
+		local UnitCommunicator = getCommunicatorCached(Locator)
 		if UnitCommunicator then
             local okFreq, freq = base.pcall(function()
 				return UnitCommunicator:getFrequency()
@@ -1206,12 +1246,9 @@ base.vaicom.properties = {
 		return Frequency
 	end,
 	altfreq = function(Locator)
-		local UnitCommunicator = nil
 		local FreqTbl = {}
 		local counter = 0
-		if Locator ~= nil then
-			UnitCommunicator = Locator:getCommunicator()
-		end
+		local UnitCommunicator = getCommunicatorCached(Locator)
 		if UnitCommunicator then
             local okCount, count = base.pcall(function()
 				return UnitCommunicator:countTransivers()
@@ -1451,30 +1488,23 @@ base.vaicom.properties = {
 		return probe
 	end,
 	freqmods = function(Locator)
-		local UnitCommunicator = nil
 		local FreqTbl = {}
-		local counter = 0
-		if Locator ~= nil then
-			UnitCommunicator = Locator:getCommunicator()
-		end
+		local UnitCommunicator = getCommunicatorCached(Locator)
 		if UnitCommunicator then
 			FreqTbl = UnitCommunicator:getFrequenciesModulations()
 		end
 		return FreqTbl
 	end,
 	human = function(Locator)
-		return Locator.getPlayerName and Locator:getPlayerName() and true or false		
+		return Locator.getPlayerName and getPlayerNameCached(Locator) and true or false
 	end,
 	playerid = function(Locator)
-		return Locator.getPlayerName and Locator:getPlayerName() or "" 	
+		return Locator.getPlayerName and getPlayerNameCached(Locator) or ""
 	end,
 	commstatus = function(Locator)
 		local State = nil
-		local UnitCommunicator =nil
 		local Statestring = "unknown"
-		if Locator ~= nil then
-			UnitCommunicator = Locator:getCommunicator()
-		end
+		local UnitCommunicator = getCommunicatorCached(Locator)
 		if UnitCommunicator then
 			State = getRecepientState(UnitCommunicator)
 		else
@@ -1507,12 +1537,12 @@ base.vaicom.properties = {
 		return result
 	end,
 	isplayerunit = function(Locator)
-	local playerunitID = data.pUnit.id_
-	local locatorID = Locator.id_
-	return locatorID == playerunitID
+		local playerunitID = data.pUnit.id_
+		local locatorID = Locator.id_
+		return locatorID == playerunitID
 	end,
 	refuelable = function(Locator)
-		return Locator:getDesc().attributes.Refuelable
+		return getDescCached(Locator).attributes.Refuelable
 	end,
 }
 base.vaicom.helper = {	
@@ -1996,7 +2026,7 @@ base.vaicom.list = {
 		if coalition then
 			Listing = base.vaicom.helper.mergetables(Listing, base.vaicom.objects.localTankers(coalition))
 		end
-      local isMultiplayerNow = data.initialized and base.DCS.isMultiplayer() or false
+		local isMultiplayerNow = data.initialized and base.DCS.isMultiplayer() or false
 		if (not isMultiplayerNow) and (not selectstr or selectstr == "radio") then
 			Listing = base.vaicom.filter.hasradio(Listing)
 		end
@@ -2426,6 +2456,9 @@ base.vaicom.state = {
 					base.print(base.string.format("VAICOM profiling (sendupdateall) | %-40s %8.3f ms", label, (now - profLast) * 1000))
 					profLast = now
 				end
+
+				-- start each pass with a fresh per-Locator engine-call cache
+				resetPropCache()
 				
 				local function getMissionObject()
 					local function tryget(fn)
@@ -3166,8 +3199,8 @@ base.vaicom.state = {
 						id = taskObj.action.id or id
 						params = taskObj.action.params or params
 					end
-
-                  local idStr = base.tostring(id or "")
+					
+					local idStr = base.tostring(id or "")
 					local idLower = base.string.lower(idStr)
 					local isBeaconTask = (id == "ActivateBeacon") or (idLower ~= "" and base.string.find(idLower, "beacon") ~= nil)
 
