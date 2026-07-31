@@ -101,7 +101,7 @@ Auto-generated inventory from current code (RIO/Commands.cs, RIO/Aliases.cs, RIO
 | `wMsgJ_RAD_182_SELECT_CHAN` | 23430 | Radio 2 Select Channel | Direct/Atomic |  | Macro.Seq_J_RAD_182_SELECT_CHAN | TBD | TBD | Needs test |  |
 | `wMsgJ_RAD_182_SELECT_MODE` | 23431 | Radio 2 Select Mode | Direct/Atomic |  | Macro.Seq_J_RAD_182_SELECT_MODE | TBD | TBD | Needs test |  |
 | `wMsgJ_RAD_182_TUNE_ATC` | 23432 | Radio 2 Tune ATC | Direct/Atomic |  | Macro.Seq_J_RAD_182_TUNE_ATC | TBD | TBD | Needs test |  |
-| `wMsgJ_RAD_182_TUNE_MAN` | 23429 | Radio 2 Tune Manual | Macro | 1>4 | Macro.Seq_J_RAD_182_TUNE_MAN | TBD | TBD | Needs test |  |
+| `wMsgJ_RAD_182_TUNE_MAN` | 23429 | Radio 2 Tune Manual | Macro | 1>4 | Macro.Seq_J_MENU_MAIN, Macro.Seq_J_RAD_182_TUNE_MAN | TBD | TBD | Needs test |  |
 | `wMsgJ_RAD_182_TUNE_TAC` | 23433 | Radio 2 Tune TAC | Direct/Atomic |  | Macro.Seq_J_RAD_182_TUNE_TAC | TBD | TBD | Needs test |  |
 | `wMsgJ_RAD_182_USE_CHAN` | 23420 | Radio Use Channel | Direct/Atomic |  | Macro.Seq_J_RAD_182_USE_CHAN | TBD | TBD | Needs test |  |
 | `wMsgJ_RAD_182_USE_CHAN_1 ` | 23421 |  | Direct/Atomic |  | Macro.Seq_J_RAD_182_USE_CHAN_1 | TBD | TBD | Needs test |  |
@@ -112,7 +112,7 @@ Auto-generated inventory from current code (RIO/Commands.cs, RIO/Aliases.cs, RIO
 | `wMsgJ_RAD_182_USE_CHAN_6` | 23426 | Radio Use Channel 6 | Direct/Atomic |  | Macro.Seq_J_RAD_182_USE_CHAN_6 | TBD | TBD | Needs test |  |
 | `wMsgJ_RAD_182_USE_CHAN_7` | 23427 | Radio Use Channel 7 | Direct/Atomic |  | Macro.Seq_J_RAD_182_USE_CHAN_7 | TBD | TBD | Needs test |  |
 | `wMsgJ_RAD_182_USE_CHAN_8` | 23428 | Radio Use Channel 8 | Direct/Atomic |  | Macro.Seq_J_RAD_182_USE_CHAN_8 | TBD | TBD | Needs test |  |
-| `wMsgJ_RAD_182_USE_GUARD` | 23418 | Radio Use Guard | Macro | 1>1 | Macro.Seq_J_RAD_182_USE_GUARD | TBD | TBD | Needs test |  |
+| `wMsgJ_RAD_182_USE_GUARD` | 23418 | Radio Use Guard | Macro | 1>1 | Macro.Seq_J_MENU_MAIN, Macro.Seq_J_RAD_182_USE_GUARD | TBD | TBD | Needs test |  |
 | `wMsgJ_RAD_182_USE_MANUAL` | 23419 | Radio 2 Use Manual | Direct/Atomic |  | Macro.Seq_J_RAD_182_USE_MANUAL | TBD | TBD | Needs test |  |
 | `wMsgJ_RAD_DL` | 23435 | Link | Unmapped |  |  | TBD | TBD | Needs test |  |
 | `wMsgJ_RAD_DL_FGHT` | 23440 | Link Mode Fighter | Macro | 7>1>2 | Macro.Seq_J_MENU_MAIN, Macro.Seq_J_RAD_DL_FGHT | TBD | TBD | Needs test |  |
@@ -191,11 +191,26 @@ Auto-generated inventory from current code (RIO/Commands.cs, RIO/Aliases.cs, RIO
 | `wMsgJ_RDR_ASP_BEAM` | 23594 | Aspect Switch Beam | Macro | 2>5>6>1 | Macro.Seq_J_MENU_MAIN, Macro.Seq_J_RDR_ASP_BEAM | TBD | TBD | Needs test |  |
 | `wMsgJ_RDR_ASP_NOSE` | 23595 | Aspect Switch Nose | Macro | 2>5>6>2 | Macro.Seq_J_MENU_MAIN, Macro.Seq_J_RDR_ASP_NOSE | TBD | TBD | Needs test |  |
 | `wMsgJ_RDR_ASP_TAIL` | 23596 | Aspect Switch Tail | Macro | 2>5>6>3 | Macro.Seq_J_MENU_MAIN, Macro.Seq_J_RDR_ASP_TAIL | TBD | TBD | Needs test |  |
-| `wMsgJ_RDR_AUTO` | 23259 | Scan Elevation Auto | Macro | 2>2>1>1 | Macro.Seq_J_MENU_MAIN, Macro.Seq_J_RDR_AUTO | TBD | TBD | Needs test |  |
+| `wMsgJ_RDR_AUTO` | 23259 | Scan Elevation Auto | Macro | 2>1>2>5>1 | Macro.Seq_J_MENU_MAIN, Macro.Seq_J_RDR_AUTO | TBD | TBD | Needs test |  |
 | `wMsgJ_RDR_BREAK_LOCK` | 23242 | Break Lock | Direct/Atomic |  | Macro.Seq_J_RDR_BREAK_LOCK | TBD | TBD | Needs test |  |
-| `wMsgJ_RDR_BVR` | 23256 | Go BVR | Macro | 2>2 | Macro.Seq_J_MENU_MAIN, Macro.Seq_J_RDR_BVR | TBD | TBD | Needs test |  |
+| `wMsgJ_RDR_BVR` | 23256 | Go BVR | Macro | 2>1 | Macro.Seq_J_MENU_MAIN, Macro.Seq_J_RDR_BVR | TBD | TBD | Needs test |  |
+| `wMsgJ_RDR_ELEV_CLOSE_HI` | 23714 | Scan Close High | Macro | 2>1>2>3>8 | Macro.Seq_J_MENU_MAIN, Macro.Seq_J_RDR_ELEV_CLOSE_HI | TBD | TBD | Needs test |  |
+| `wMsgJ_RDR_ELEV_CLOSE_LOW` | 23710 | Scan Close Low | Macro | 2>1>2>3>2 | Macro.Seq_J_MENU_MAIN, Macro.Seq_J_RDR_ELEV_CLOSE_LOW | TBD | TBD | Needs test |  |
+| `wMsgJ_RDR_ELEV_CLOSE_MID` | 23712 | Scan Close Level | Macro | 2>1>2>3>5 | Macro.Seq_J_MENU_MAIN, Macro.Seq_J_RDR_ELEV_CLOSE_MID | TBD | TBD | Needs test |  |
+| `wMsgJ_RDR_ELEV_CLOSE_MID_HI` | 23713 | Scan Close Level High | Macro | 2>1>2>3>6 | Macro.Seq_J_MENU_MAIN, Macro.Seq_J_RDR_ELEV_CLOSE_MID_HI | TBD | TBD | Needs test |  |
+| `wMsgJ_RDR_ELEV_CLOSE_MID_LO` | 23711 | Scan Close Level Low | Macro | 2>1>2>3>4 | Macro.Seq_J_MENU_MAIN, Macro.Seq_J_RDR_ELEV_CLOSE_MID_LO | TBD | TBD | Needs test |  |
+| `wMsgJ_RDR_ELEV_LONG_HI` | 23724 | Scan Long High | Macro | 2>1>2>7>8 | Macro.Seq_J_MENU_MAIN, Macro.Seq_J_RDR_ELEV_LONG_HI | TBD | TBD | Needs test |  |
+| `wMsgJ_RDR_ELEV_LONG_LOW` | 23720 | Scan Long Low | Macro | 2>1>2>7>2 | Macro.Seq_J_MENU_MAIN, Macro.Seq_J_RDR_ELEV_LONG_LOW | TBD | TBD | Needs test |  |
+| `wMsgJ_RDR_ELEV_LONG_MID` | 23722 | Scan Long Level | Macro | 2>1>2>7>5 | Macro.Seq_J_MENU_MAIN, Macro.Seq_J_RDR_ELEV_LONG_MID | TBD | TBD | Needs test |  |
+| `wMsgJ_RDR_ELEV_LONG_MID_HI` | 23723 | Scan Long Level High | Macro | 2>1>2>7>6 | Macro.Seq_J_MENU_MAIN, Macro.Seq_J_RDR_ELEV_LONG_MID_HI | TBD | TBD | Needs test |  |
+| `wMsgJ_RDR_ELEV_LONG_MID_LO` | 23721 | Scan Long Level Low | Macro | 2>1>2>7>4 | Macro.Seq_J_MENU_MAIN, Macro.Seq_J_RDR_ELEV_LONG_MID_LO | TBD | TBD | Needs test |  |
+| `wMsgJ_RDR_ELEV_MID_HI` | 23719 | Scan Mid High | Macro | 2>1>2>5>8 | Macro.Seq_J_MENU_MAIN, Macro.Seq_J_RDR_ELEV_MID_HI | TBD | TBD | Needs test |  |
+| `wMsgJ_RDR_ELEV_MID_LOW` | 23715 | Scan Mid Low | Macro | 2>1>2>5>2 | Macro.Seq_J_MENU_MAIN, Macro.Seq_J_RDR_ELEV_MID_LOW | TBD | TBD | Needs test |  |
+| `wMsgJ_RDR_ELEV_MID_MID` | 23717 | Scan Mid Level | Macro | 2>1>2>5>5 | Macro.Seq_J_MENU_MAIN, Macro.Seq_J_RDR_ELEV_MID_MID | TBD | TBD | Needs test |  |
+| `wMsgJ_RDR_ELEV_MID_MID_HI` | 23718 | Scan Mid Level High | Macro | 2>1>2>5>6 | Macro.Seq_J_MENU_MAIN, Macro.Seq_J_RDR_ELEV_MID_MID_HI | TBD | TBD | Needs test |  |
+| `wMsgJ_RDR_ELEV_MID_MID_LO` | 23716 | Scan Mid Level Low | Macro | 2>1>2>5>4 | Macro.Seq_J_MENU_MAIN, Macro.Seq_J_RDR_ELEV_MID_MID_LO | TBD | TBD | Needs test |  |
 | `wMsgJ_RDR_GO_ACTIVE` | 23257 | Go Active | Macro | 2>1>6 | Macro.Seq_J_MENU_MAIN, Macro.Seq_J_RDR_GO_ACTIVE | TBD | TBD | Needs test |  |
-| `wMsgJ_RDR_GO_SILENT` | 23240 | Go Standby | Macro | 2>1>7 | Macro.Seq_J_RDR_GO_SILENT | TBD | TBD | Needs test |  |
+| `wMsgJ_RDR_GO_SILENT` | 23240 | Go Standby | Macro | 2>1>7 | Macro.Seq_J_MENU_MAIN, Macro.Seq_J_RDR_GO_SILENT | TBD | TBD | Needs test |  |
 | `wMsgJ_RDR_MODE` | 23289 | Radar Mode | Unmapped |  |  | TBD | TBD | Needs test |  |
 | `wMsgJ_RDR_MODE_AUTO` | 23286 | Radar Mode Automatic | Macro | 3>5>1 | Macro.Seq_J_MENU_MAIN, Macro.Seq_J_RDR_MODE_AUTO | TBD | TBD | Needs test |  |
 | `wMsgJ_RDR_MODE_RWS` | 23288 | Radar Mode RWS | Direct/Atomic |  | Macro.Seq_J_RDR_MODE_RWS | TBD | TBD | Needs test |  |
@@ -204,17 +219,21 @@ Auto-generated inventory from current code (RIO/Commands.cs, RIO/Aliases.cs, RIO
 | `wMsgJ_RDR_MODE_SIZE_S` | 23299 | Look For A Small Target | Macro | 3>5>5>3 | Macro.Seq_J_MENU_MAIN, Macro.Seq_J_RDR_MODE_SIZE_S | TBD | TBD | Needs test |  |
 | `wMsgJ_RDR_MODE_TWS` | 23287 | Radar Mode TWS | Direct/Atomic |  | Macro.Seq_J_RDR_MODE_TWS | TBD | TBD | Needs test |  |
 | `wMsgJ_RDR_MODE_TWS_MAN` | 23296 | Radar Mode TWS Manual | Macro | 3>5>3 | Macro.Seq_J_MENU_MAIN, Macro.Seq_J_RDR_MODE_TWS_MAN | TBD | TBD | Needs test |  |
-| `wMsgJ_RDR_POS` | 23263 | Scan Azimuth Auto | Macro | 3>4>1 | Macro.Seq_J_MENU_MAIN, Macro.Seq_J_RDR_POS | TBD | TBD | Needs test |  |
-| `wMsgJ_RDR_POS_CTR` | 23264 | Scan Center | Macro | 3>4>4 | Macro.Seq_J_MENU_MAIN, Macro.Seq_J_RDR_POS_CTR | TBD | TBD | Needs test |  |
-| `wMsgJ_RDR_POS_CTR_L` | 23265 | Scan Center Left | Macro | 3>4>3 | Macro.Seq_J_MENU_MAIN, Macro.Seq_J_RDR_POS_CTR_L | TBD | TBD | Needs test |  |
-| `wMsgJ_RDR_POS_CTR_R` | 23266 | Scan Center Right | Macro | 3>4>5 | Macro.Seq_J_MENU_MAIN, Macro.Seq_J_RDR_POS_CTR_R | TBD | TBD | Needs test |  |
-| `wMsgJ_RDR_POS_HI` | 23269 | Scan High | Macro | 3>4>1>6 | Macro.Seq_J_MENU_MAIN, Macro.Seq_J_RDR_POS_HI | TBD | TBD | Needs test |  |
-| `wMsgJ_RDR_POS_L` | 23267 | Scan Left | Macro | 3>4>2 | Macro.Seq_J_MENU_MAIN, Macro.Seq_J_RDR_POS_L | TBD | TBD | Needs test |  |
-| `wMsgJ_RDR_POS_LO` | 23270 | Scan Low | Macro | 3>4>1>2 | Macro.Seq_J_MENU_MAIN, Macro.Seq_J_RDR_POS_LO | TBD | TBD | Needs test |  |
-| `wMsgJ_RDR_POS_MID` | 23271 | Scan Level | Macro | 3>4>1>4 | Macro.Seq_J_MENU_MAIN, Macro.Seq_J_RDR_POS_MID | TBD | TBD | Needs test |  |
-| `wMsgJ_RDR_POS_MID_HI` | 23272 | Scan Level High | Macro | 3>4>1>5 | Macro.Seq_J_MENU_MAIN, Macro.Seq_J_RDR_POS_MID_HI | TBD | TBD | Needs test |  |
-| `wMsgJ_RDR_POS_MID_LO` | 23273 | Scan Level Low | Macro | 3>4>1>3 | Macro.Seq_J_MENU_MAIN, Macro.Seq_J_RDR_POS_MID_LO | TBD | TBD | Needs test |  |
-| `wMsgJ_RDR_POS_R` | 23268 | Scan Right | Macro | 3>4>6 | Macro.Seq_J_MENU_MAIN, Macro.Seq_J_RDR_POS_R | TBD | TBD | Needs test |  |
+| `wMsgJ_RDR_POS` | 23263 | Scan Azimuth Auto | Macro | 2>1>3>5 | Macro.Seq_J_MENU_MAIN, Macro.Seq_J_RDR_POS | TBD | TBD | Needs test |  |
+| `wMsgJ_RDR_POS_CTR` | 23264 | Scan Center | Macro | 2>1>3>1 | Macro.Seq_J_MENU_MAIN, Macro.Seq_J_RDR_POS_CTR | TBD | TBD | Needs test |  |
+| `wMsgJ_RDR_POS_CTR_L` | 23265 | Scan Center Left | Macro | 2>1>3>8 | Macro.Seq_J_MENU_MAIN, Macro.Seq_J_RDR_POS_CTR_L | TBD | TBD | Needs test |  |
+| `wMsgJ_RDR_POS_CTR_R` | 23266 | Scan Center Right | Macro | 2>1>3>2 | Macro.Seq_J_MENU_MAIN, Macro.Seq_J_RDR_POS_CTR_R | TBD | TBD | Needs test |  |
+| `wMsgJ_RDR_POS_HI` | 23269 |  | Macro | 2>1>2>5>8 | Macro.Seq_J_MENU_MAIN, Macro.Seq_J_RDR_POS_HI | TBD | TBD | Needs test |  |
+| `wMsgJ_RDR_POS_L` | 23267 | Scan Left | Macro | 2>1>3>7 | Macro.Seq_J_MENU_MAIN, Macro.Seq_J_RDR_POS_L | TBD | TBD | Needs test |  |
+| `wMsgJ_RDR_POS_L20` | 23896 | Scan Left 20 | Macro | 2>1>3>8 | Macro.Seq_J_MENU_MAIN, Macro.Seq_J_RDR_POS_L20 | TBD | TBD | Needs test |  |
+| `wMsgJ_RDR_POS_L55` | 23898 | Scan Hard Left | Macro | 2>1>3>6 | Macro.Seq_J_MENU_MAIN, Macro.Seq_J_RDR_POS_L55 | TBD | TBD | Needs test |  |
+| `wMsgJ_RDR_POS_LO` | 23270 |  | Macro | 2>1>2>5>2 | Macro.Seq_J_MENU_MAIN, Macro.Seq_J_RDR_POS_LO | TBD | TBD | Needs test |  |
+| `wMsgJ_RDR_POS_MID` | 23271 |  | Macro | 2>1>2>5>5 | Macro.Seq_J_MENU_MAIN, Macro.Seq_J_RDR_POS_MID | TBD | TBD | Needs test |  |
+| `wMsgJ_RDR_POS_MID_HI` | 23272 |  | Macro | 2>1>2>5>6 | Macro.Seq_J_MENU_MAIN, Macro.Seq_J_RDR_POS_MID_HI | TBD | TBD | Needs test |  |
+| `wMsgJ_RDR_POS_MID_LO` | 23273 |  | Macro | 2>1>2>5>4 | Macro.Seq_J_MENU_MAIN, Macro.Seq_J_RDR_POS_MID_LO | TBD | TBD | Needs test |  |
+| `wMsgJ_RDR_POS_R` | 23268 | Scan Right | Macro | 2>1>3>3 | Macro.Seq_J_MENU_MAIN, Macro.Seq_J_RDR_POS_R | TBD | TBD | Needs test |  |
+| `wMsgJ_RDR_POS_R20` | 23897 | Scan Right 20 | Macro | 2>1>3>2 | Macro.Seq_J_MENU_MAIN, Macro.Seq_J_RDR_POS_R20 | TBD | TBD | Needs test |  |
+| `wMsgJ_RDR_POS_R55` | 23899 | Scan Hard Right | Macro | 2>1>3>4 | Macro.Seq_J_MENU_MAIN, Macro.Seq_J_RDR_POS_R55 | TBD | TBD | Needs test |  |
 | `wMsgJ_RDR_RNG_100` | 23260 | Scan Range 100 | Direct/Atomic |  | Macro.Seq_J_RDR_RNG_100 | TBD | TBD | Needs test |  |
 | `wMsgJ_RDR_RNG_200` | 23261 | Scan Range 200 | Direct/Atomic |  | Macro.Seq_J_RDR_RNG_200 | TBD | TBD | Needs test |  |
 | `wMsgJ_RDR_RNG_25` | 23282 | Scan Range 25 | Direct/Atomic |  | Macro.Seq_J_RDR_RNG_25 | TBD | TBD | Needs test |  |
@@ -251,7 +270,7 @@ Auto-generated inventory from current code (RIO/Commands.cs, RIO/Aliases.cs, RIO
 | `wMsgJ_RDR_TOGGLE_STT` | 23247 | Switch STT | Direct/Atomic |  | Macro.Seq_J_RDR_TOGGLE_STT | TBD | TBD | Needs test |  |
 | `wMsgJ_RDR_VSL_HIGH` | 23248 | VSL High | Direct/Atomic |  | Macro.Seq_J_RDR_VSL_HIGH | TBD | TBD | Needs test |  |
 | `wMsgJ_RDR_VSL_LOW` | 23249 | VSL Low | Direct/Atomic |  | Macro.Seq_J_RDR_VSL_LOW | TBD | TBD | Needs test |  |
-| `wMsgJ_RESET` | 23536 | Wake Up | Hybrid | 1 | Macro.Seq_J_RESET | TBD | TBD | Needs test |  |
+| `wMsgJ_RESET` | 23536 | Wake Up | Hybrid | 1 | Macro.Seq_J_MENU_MAIN, Macro.Seq_J_RESET | TBD | TBD | Needs test |  |
 | `wMsgJ_STRT_ABORT` | 23700 | Abort Startup | Macro | 3 | Macro.Seq_J_MENU_CONTEXT, Macro.Seq_J_STRT_ABORT | TBD | TBD | Needs test |  |
 | `wMsgJ_STRT_ASSISTED` | 23709 | Assisted Startup | Macro | 4 | Macro.Seq_J_MENU_CONTEXT, Macro.Seq_J_STRT_ASSISTED | TBD | TBD | Needs test |  |
 | `wMsgJ_STRT_CHECK` | 23705 | Check | Direct/Atomic |  | Macro.Seq_J_STRT_CHECK | TBD | TBD | Needs test |  |

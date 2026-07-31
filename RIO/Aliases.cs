@@ -121,11 +121,21 @@ namespace VAICOM.Extensions.RIO
 
             {"Scan Elevation",              "wMsgJ_RDR_SCAN_ELEV"               },// not endpoint, hint
             {"Scan Elevation Auto",         "wMsgJ_RDR_AUTO"                    }, // for elev
-            {"Scan High",                   "wMsgJ_RDR_POS_HI"                  },
-            {"Scan Low",                    "wMsgJ_RDR_POS_LO"                  },
-            {"Scan Level",                  "wMsgJ_RDR_POS_MID"                 },
-            {"Scan Level High",             "wMsgJ_RDR_POS_MID_HI"              },
-            {"Scan Level Low",              "wMsgJ_RDR_POS_MID_LO"              },
+            {"Scan Close Low",              "wMsgJ_RDR_ELEV_CLOSE_LOW"          },
+            {"Scan Close Level Low",        "wMsgJ_RDR_ELEV_CLOSE_MID_LO"       },
+            {"Scan Close Level",            "wMsgJ_RDR_ELEV_CLOSE_MID"          },
+            {"Scan Close Level High",       "wMsgJ_RDR_ELEV_CLOSE_MID_HI"       },
+            {"Scan Close High",             "wMsgJ_RDR_ELEV_CLOSE_HI"           },
+            {"Scan Mid Low",                "wMsgJ_RDR_ELEV_MID_LOW"            },
+            {"Scan Mid Level Low",          "wMsgJ_RDR_ELEV_MID_MID_LO"         },
+            {"Scan Mid Level",              "wMsgJ_RDR_ELEV_MID_MID"            },
+            {"Scan Mid Level High",         "wMsgJ_RDR_ELEV_MID_MID_HI"         },
+            {"Scan Mid High",               "wMsgJ_RDR_ELEV_MID_HI"             },
+            {"Scan Long Low",               "wMsgJ_RDR_ELEV_LONG_LOW"           },
+            {"Scan Long Level Low",         "wMsgJ_RDR_ELEV_LONG_MID_LO"        },
+            {"Scan Long Level",             "wMsgJ_RDR_ELEV_LONG_MID"           },
+            {"Scan Long Level High",        "wMsgJ_RDR_ELEV_LONG_MID_HI"        },
+            {"Scan Long High",              "wMsgJ_RDR_ELEV_LONG_HI"            },
 
             {"Radar Mode Automatic",        "wMsgJ_RDR_MODE_AUTO"               },
             {"Radar Mode TWS",              "wMsgJ_RDR_MODE_TWS"                },
