@@ -114,14 +114,28 @@ namespace VAICOM.Extensions.RIO
             {"Scan Center Right",           "wMsgJ_RDR_POS_CTR_R"               },
             {"Scan Left",                   "wMsgJ_RDR_POS_L"                   },
             {"Scan Right",                  "wMsgJ_RDR_POS_R"                   },
+            {"Scan Left 20",                "wMsgJ_RDR_POS_L20"                 },
+            {"Scan Right 20",               "wMsgJ_RDR_POS_R20"                 },
+            {"Scan Hard Left",              "wMsgJ_RDR_POS_L55"                 },
+            {"Scan Hard Right",             "wMsgJ_RDR_POS_R55"                 },
 
             {"Scan Elevation",              "wMsgJ_RDR_SCAN_ELEV"               },// not endpoint, hint
             {"Scan Elevation Auto",         "wMsgJ_RDR_AUTO"                    }, // for elev
-            {"Scan High",                   "wMsgJ_RDR_POS_HI"                  },
-            {"Scan Low",                    "wMsgJ_RDR_POS_LO"                  },
-            {"Scan Level",                  "wMsgJ_RDR_POS_MID"                 },
-            {"Scan Level High",             "wMsgJ_RDR_POS_MID_HI"              },
-            {"Scan Level Low",              "wMsgJ_RDR_POS_MID_LO"              },
+            {"Scan Close Low",              "wMsgJ_RDR_ELEV_CLOSE_LOW"          },
+            {"Scan Close Level Low",        "wMsgJ_RDR_ELEV_CLOSE_MID_LO"       },
+            {"Scan Close Level",            "wMsgJ_RDR_ELEV_CLOSE_MID"          },
+            {"Scan Close Level High",       "wMsgJ_RDR_ELEV_CLOSE_MID_HI"       },
+            {"Scan Close High",             "wMsgJ_RDR_ELEV_CLOSE_HI"           },
+            {"Scan Mid Low",                "wMsgJ_RDR_ELEV_MID_LOW"            },
+            {"Scan Mid Level Low",          "wMsgJ_RDR_ELEV_MID_MID_LO"         },
+            {"Scan Mid Level",              "wMsgJ_RDR_ELEV_MID_MID"            },
+            {"Scan Mid Level High",         "wMsgJ_RDR_ELEV_MID_MID_HI"         },
+            {"Scan Mid High",               "wMsgJ_RDR_ELEV_MID_HI"             },
+            {"Scan Long Low",               "wMsgJ_RDR_ELEV_LONG_LOW"           },
+            {"Scan Long Level Low",         "wMsgJ_RDR_ELEV_LONG_MID_LO"        },
+            {"Scan Long Level",             "wMsgJ_RDR_ELEV_LONG_MID"           },
+            {"Scan Long Level High",        "wMsgJ_RDR_ELEV_LONG_MID_HI"        },
+            {"Scan Long High",              "wMsgJ_RDR_ELEV_LONG_HI"            },
 
             {"Radar Mode Automatic",        "wMsgJ_RDR_MODE_AUTO"               },
             {"Radar Mode TWS",              "wMsgJ_RDR_MODE_TWS"                },
@@ -427,11 +441,17 @@ namespace VAICOM.Extensions.RIO
             // Contract
             {"Contract",                        "wMsgJ_UTIL_CONTR"              }, // not endpoint, disable
             {"Keep it quiet back there",        "wMsgJ_UTIL_CONTR_NO_TALK"      },
+            {"No Talking",                  "wMsgJ_UTIL_CONTR_NO_TALK"      },
             {"You can talk again",              "wMsgJ_UTIL_CONTR_TALK"         },
+            {"Talk to me Jester",                 "wMsgJ_UTIL_CONTR_TALK"         },
             {"Set Eject for Both",              "wMsgJ_UTIL_CONTR_EJECT_BTH"    },
+            {"Set Eject Both",               "wMsgJ_UTIL_CONTR_EJECT_BTH"    },
             {"Set Eject for Single",            "wMsgJ_UTIL_CONTR_EJECT_SNG"    },
+            {"Set Eject Single",             "wMsgJ_UTIL_CONTR_EJECT_SNG"    },
             {"OK for landing calls",            "wMsgJ_UTIL_CONTR_CALL"         },
+            {"Landing Callouts Enable",  "wMsgJ_UTIL_CONTR_CALL"         },
             {"No landing calls",                "wMsgJ_UTIL_CONTR_NO_CALL"      },
+            {"Landing Callouts Disable", "wMsgJ_UTIL_CONTR_NO_CALL"      },
 
             {"Back to work",                    "wMsgJ_UTIL_CONTR_ACTIVE"       }, //new
             {"Knock it off",                    "wMsgJ_UTIL_CONTR_INACTIVE"     }, //new

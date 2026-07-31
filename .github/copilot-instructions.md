@@ -50,6 +50,9 @@
   - X1..X3 = Priority points
   - X4..X7 = Generic points
 
+## F-14BU Elevation Wheel Behavior
+- For F-14BU elevation wheel behavior, commands work without recipient but must also work with 'Jester' prefix; classification issues should be checked when recipient-prefixed recognition fails.
+
 ## Jester Mods Installation
 - For auto-installed Jester mods, set the Saved Games path to `\Saved Games\DCS_F4E\jester\mods` (and initialize under that), instead of the default DCS/DCS.openbeta folder mapping.
 

@@ -69,7 +69,7 @@ namespace VAICOM.Extensions.RIO
             {"wMsgLANTIRN_QWP_Plus",                new List<List<DeviceAction>> {Macro.Seq_LANTIRN_QWP_Plus                }},
 
             // block: radar
-            {"wMsgJ_RDR_GO_SILENT",                 new List<List<DeviceAction>> { Macro.Seq_J_RDR_GO_SILENT       }},
+            {"wMsgJ_RDR_GO_SILENT",                 new List<List<DeviceAction>> { Macro.Seq_J_MENU_MAIN, Macro.Seq_J_RDR_GO_SILENT       }},
             {"wMsgJ_RDR_SPOT",                      new List<List<DeviceAction>> { Macro.Seq_J_RDR_SPOT            }},
             {"wMsgJ_RDR_BREAK_LOCK",                new List<List<DeviceAction>> { Macro.Seq_J_RDR_BREAK_LOCK      }}, // when STT locked
             {"wMsgJ_RDR_TO_PSTT",                   new List<List<DeviceAction>> { Macro.Seq_J_RDR_TO_PSTT         }}, // when STT locked
@@ -98,11 +98,30 @@ namespace VAICOM.Extensions.RIO
             {"wMsgJ_RDR_POS_CTR_R",                 new List<List<DeviceAction>> { Macro.Seq_J_MENU_MAIN, Macro.Seq_J_RDR_POS_CTR_R               }},
             {"wMsgJ_RDR_POS_L",                     new List<List<DeviceAction>> { Macro.Seq_J_MENU_MAIN, Macro.Seq_J_RDR_POS_L                   }},
             {"wMsgJ_RDR_POS_R",                     new List<List<DeviceAction>> { Macro.Seq_J_MENU_MAIN, Macro.Seq_J_RDR_POS_R                   }},
+            {"wMsgJ_RDR_POS_L20",                   new List<List<DeviceAction>> { Macro.Seq_J_MENU_MAIN, Macro.Seq_J_RDR_POS_L20                 }},
+            {"wMsgJ_RDR_POS_R20",                   new List<List<DeviceAction>> { Macro.Seq_J_MENU_MAIN, Macro.Seq_J_RDR_POS_R20                 }},
+            {"wMsgJ_RDR_POS_L55",                   new List<List<DeviceAction>> { Macro.Seq_J_MENU_MAIN, Macro.Seq_J_RDR_POS_L55                 }},
+            {"wMsgJ_RDR_POS_R55",                   new List<List<DeviceAction>> { Macro.Seq_J_MENU_MAIN, Macro.Seq_J_RDR_POS_R55                 }},
             {"wMsgJ_RDR_POS_HI",                    new List<List<DeviceAction>> { Macro.Seq_J_MENU_MAIN, Macro.Seq_J_RDR_POS_HI                  }},
             {"wMsgJ_RDR_POS_LO",                    new List<List<DeviceAction>> { Macro.Seq_J_MENU_MAIN, Macro.Seq_J_RDR_POS_LO                  }},
             {"wMsgJ_RDR_POS_MID",                   new List<List<DeviceAction>> { Macro.Seq_J_MENU_MAIN, Macro.Seq_J_RDR_POS_MID                 }},
             {"wMsgJ_RDR_POS_MID_HI",                new List<List<DeviceAction>> { Macro.Seq_J_MENU_MAIN, Macro.Seq_J_RDR_POS_MID_HI              }},
             {"wMsgJ_RDR_POS_MID_LO",                new List<List<DeviceAction>> { Macro.Seq_J_MENU_MAIN, Macro.Seq_J_RDR_POS_MID_LO              }},
+            {"wMsgJ_RDR_ELEV_CLOSE_LOW",            new List<List<DeviceAction>> { Macro.Seq_J_MENU_MAIN, Macro.Seq_J_RDR_ELEV_CLOSE_LOW          }},
+            {"wMsgJ_RDR_ELEV_CLOSE_MID_LO",         new List<List<DeviceAction>> { Macro.Seq_J_MENU_MAIN, Macro.Seq_J_RDR_ELEV_CLOSE_MID_LO       }},
+            {"wMsgJ_RDR_ELEV_CLOSE_MID",            new List<List<DeviceAction>> { Macro.Seq_J_MENU_MAIN, Macro.Seq_J_RDR_ELEV_CLOSE_MID          }},
+            {"wMsgJ_RDR_ELEV_CLOSE_MID_HI",         new List<List<DeviceAction>> { Macro.Seq_J_MENU_MAIN, Macro.Seq_J_RDR_ELEV_CLOSE_MID_HI       }},
+            {"wMsgJ_RDR_ELEV_CLOSE_HI",             new List<List<DeviceAction>> { Macro.Seq_J_MENU_MAIN, Macro.Seq_J_RDR_ELEV_CLOSE_HI           }},
+            {"wMsgJ_RDR_ELEV_MID_LOW",              new List<List<DeviceAction>> { Macro.Seq_J_MENU_MAIN, Macro.Seq_J_RDR_ELEV_MID_LOW            }},
+            {"wMsgJ_RDR_ELEV_MID_MID_LO",           new List<List<DeviceAction>> { Macro.Seq_J_MENU_MAIN, Macro.Seq_J_RDR_ELEV_MID_MID_LO         }},
+            {"wMsgJ_RDR_ELEV_MID_MID",              new List<List<DeviceAction>> { Macro.Seq_J_MENU_MAIN, Macro.Seq_J_RDR_ELEV_MID_MID            }},
+            {"wMsgJ_RDR_ELEV_MID_MID_HI",           new List<List<DeviceAction>> { Macro.Seq_J_MENU_MAIN, Macro.Seq_J_RDR_ELEV_MID_MID_HI         }},
+            {"wMsgJ_RDR_ELEV_MID_HI",               new List<List<DeviceAction>> { Macro.Seq_J_MENU_MAIN, Macro.Seq_J_RDR_ELEV_MID_HI             }},
+            {"wMsgJ_RDR_ELEV_LONG_LOW",             new List<List<DeviceAction>> { Macro.Seq_J_MENU_MAIN, Macro.Seq_J_RDR_ELEV_LONG_LOW           }},
+            {"wMsgJ_RDR_ELEV_LONG_MID_LO",          new List<List<DeviceAction>> { Macro.Seq_J_MENU_MAIN, Macro.Seq_J_RDR_ELEV_LONG_MID_LO        }},
+            {"wMsgJ_RDR_ELEV_LONG_MID",             new List<List<DeviceAction>> { Macro.Seq_J_MENU_MAIN, Macro.Seq_J_RDR_ELEV_LONG_MID           }},
+            {"wMsgJ_RDR_ELEV_LONG_MID_HI",          new List<List<DeviceAction>> { Macro.Seq_J_MENU_MAIN, Macro.Seq_J_RDR_ELEV_LONG_MID_HI        }},
+            {"wMsgJ_RDR_ELEV_LONG_HI",              new List<List<DeviceAction>> { Macro.Seq_J_MENU_MAIN, Macro.Seq_J_RDR_ELEV_LONG_HI            }},
             {"wMsgJ_RDR_STT_TWS_TGT_1",             new List<List<DeviceAction>> { Macro.Seq_J_MENU_MAIN, Macro.Seq_J_RDR_STT_TWS_TGT_1         }},
             {"wMsgJ_RDR_STT_TWS_TGT_2",             new List<List<DeviceAction>> { Macro.Seq_J_MENU_MAIN, Macro.Seq_J_RDR_STT_TWS_TGT_2         }},
             {"wMsgJ_RDR_STT_TWS_TGT_3",             new List<List<DeviceAction>> { Macro.Seq_J_MENU_MAIN, Macro.Seq_J_RDR_STT_TWS_TGT_3         }},
@@ -278,7 +297,7 @@ namespace VAICOM.Extensions.RIO
             {"wMsgJ_RAD_159_TUNE_ATC",      new List<List<DeviceAction>> {Macro.Seq_J_RAD_159_TUNE_ATC    }},
             {"wMsgJ_RAD_159_TUNE_TAC",      new List<List<DeviceAction>> {Macro.Seq_J_RAD_159_TUNE_TAC    }},
             {"wMsgJ_RAD_182",               new List<List<DeviceAction>> {Macro.Seq_J_RAD_182             }},
-            {"wMsgJ_RAD_182_USE_GUARD",     new List<List<DeviceAction>> {Macro.Seq_J_RAD_182_USE_GUARD   }},
+            {"wMsgJ_RAD_182_USE_GUARD",     new List<List<DeviceAction>> {Macro.Seq_J_MENU_MAIN, Macro.Seq_J_RAD_182_USE_GUARD   }},
             {"wMsgJ_RAD_182_USE_MANUAL",    new List<List<DeviceAction>> {Macro.Seq_J_RAD_182_USE_MANUAL  }},
             {"wMsgJ_RAD_182_USE_CHAN",      new List<List<DeviceAction>> {Macro.Seq_J_RAD_182_USE_CHAN    }},
             {"wMsgJ_RAD_182_USE_CHAN_1 ",   new List<List<DeviceAction>> {Macro.Seq_J_RAD_182_USE_CHAN_1  }},
@@ -289,7 +308,7 @@ namespace VAICOM.Extensions.RIO
             {"wMsgJ_RAD_182_USE_CHAN_6",    new List<List<DeviceAction>> {Macro.Seq_J_RAD_182_USE_CHAN_6  }},
             {"wMsgJ_RAD_182_USE_CHAN_7",    new List<List<DeviceAction>> {Macro.Seq_J_RAD_182_USE_CHAN_7  }},
             {"wMsgJ_RAD_182_USE_CHAN_8",    new List<List<DeviceAction>> {Macro.Seq_J_RAD_182_USE_CHAN_8  }},
-            {"wMsgJ_RAD_182_TUNE_MAN",      new List<List<DeviceAction>> {Macro.Seq_J_RAD_182_TUNE_MAN    }},
+            {"wMsgJ_RAD_182_TUNE_MAN",      new List<List<DeviceAction>> {Macro.Seq_J_MENU_MAIN, Macro.Seq_J_RAD_182_TUNE_MAN    }},
             {"wMsgJ_RAD_182_SELECT_CHAN",   new List<List<DeviceAction>> {Macro.Seq_J_RAD_182_SELECT_CHAN }},
             {"wMsgJ_RAD_182_SELECT_MODE",   new List<List<DeviceAction>> {Macro.Seq_J_RAD_182_SELECT_MODE }},
             {"wMsgJ_RAD_182_TUNE_ATC",      new List<List<DeviceAction>> {Macro.Seq_J_RAD_182_TUNE_ATC    }},
@@ -402,14 +421,14 @@ namespace VAICOM.Extensions.RIO
             {"wMsgJ_UTIL_NAV_HSTZONE",          new List<List<DeviceAction>> { Macro.Seq_J_MENU_MAIN, Macro.Seq_J_UTIL_NAV_MAN_ENT_SPT,  Macro.Seq_J_UTIL_NAV_HSTZONE, Macro.Seq_J_UTIL_NAV_HSTZONE      }},
 
             {"wMsgJ_UTIL_CONTR",            new List<List<DeviceAction>> {Macro.Seq_J_UTIL_CONTR                }},
-            {"wMsgJ_UTIL_CONTR_NO_TALK",    new List<List<DeviceAction>> {Macro.Seq_J_UTIL_CONTR_NO_TALK        }}, // direct not via main menu
-            {"wMsgJ_UTIL_CONTR_TALK",       new List<List<DeviceAction>> {Macro.Seq_J_UTIL_CONTR_TALK           }},
-            {"wMsgJ_UTIL_CONTR_EJECT_BTH",  new List<List<DeviceAction>> {Macro.Seq_J_UTIL_CONTR_EJECT_BTH      }},
-            {"wMsgJ_UTIL_CONTR_EJECT_SNG",  new List<List<DeviceAction>> {Macro.Seq_J_UTIL_CONTR_EJECT_SNG      }},
-            {"wMsgJ_UTIL_CONTR_ACTIVE",     new List<List<DeviceAction>> {Macro.Seq_J_UTIL_CONTR_ACTIVE         }}, //new
-            {"wMsgJ_UTIL_CONTR_INACTIVE",   new List<List<DeviceAction>> {Macro.Seq_J_UTIL_CONTR_INACTIVE       }}, //new
-            {"wMsgJ_UTIL_CONTR_CALL",       new List<List<DeviceAction>> {Macro.Seq_J_UTIL_CONTR_CALL           }},
-            {"wMsgJ_UTIL_CONTR_NO_CALL",    new List<List<DeviceAction>> {Macro.Seq_J_UTIL_CONTR_NO_CALL        }},
+            {"wMsgJ_UTIL_CONTR_NO_TALK",    new List<List<DeviceAction>> {Macro.Seq_J_MENU_MAIN, Macro.Seq_J_UTIL_CONTR_NO_TALK        }},
+            {"wMsgJ_UTIL_CONTR_TALK",       new List<List<DeviceAction>> {Macro.Seq_J_MENU_MAIN, Macro.Seq_J_UTIL_CONTR_TALK           }},
+            {"wMsgJ_UTIL_CONTR_EJECT_BTH",  new List<List<DeviceAction>> {Macro.Seq_J_MENU_MAIN, Macro.Seq_J_UTIL_CONTR_EJECT_BTH      }},
+            {"wMsgJ_UTIL_CONTR_EJECT_SNG",  new List<List<DeviceAction>> {Macro.Seq_J_MENU_MAIN, Macro.Seq_J_UTIL_CONTR_EJECT_SNG      }},
+            {"wMsgJ_UTIL_CONTR_ACTIVE",     new List<List<DeviceAction>> {Macro.Seq_J_MENU_MAIN, Macro.Seq_J_UTIL_CONTR_ACTIVE         }}, //new
+            {"wMsgJ_UTIL_CONTR_INACTIVE",   new List<List<DeviceAction>> {Macro.Seq_J_MENU_MAIN, Macro.Seq_J_UTIL_CONTR_INACTIVE       }}, //new
+            {"wMsgJ_UTIL_CONTR_CALL",       new List<List<DeviceAction>> {Macro.Seq_J_MENU_MAIN, Macro.Seq_J_UTIL_CONTR_CALL           }},
+            {"wMsgJ_UTIL_CONTR_NO_CALL",    new List<List<DeviceAction>> {Macro.Seq_J_MENU_MAIN, Macro.Seq_J_UTIL_CONTR_NO_CALL        }},
             {"wMsgJ_UTIL_CONTR_AUTO_EXPAND",        new List<List<DeviceAction>> {Macro.Seq_J_MENU_MAIN, Macro.Seq_J_UTIL_CONTR_AUTO_EXPAND}},
             {"wMsgJ_UTIL_CONTR_AUTO_VID",           new List<List<DeviceAction>> {Macro.Seq_J_MENU_MAIN, Macro.Seq_J_UTIL_CONTR_AUTO_VID}},
             {"wMsgJ_UTIL_CONTR_NO_IFF_REPLY_BANDIT",new List<List<DeviceAction>> {Macro.Seq_J_MENU_MAIN, Macro.Seq_J_UTIL_CONTR_NO_IFF_REPLY_BANDIT}},
@@ -417,7 +436,7 @@ namespace VAICOM.Extensions.RIO
             {"wMsgJ_UTIL_CONTR_ENABLE_AUTO_VID",    new List<List<DeviceAction>> {Macro.Seq_J_MENU_MAIN, Macro.Seq_J_UTIL_CONTR_AUTO_VID}},
             {"wMsgJ_UTIL_CONTR_NO_IFF_REPLY_BOGEY", new List<List<DeviceAction>> {Macro.Seq_J_MENU_MAIN, Macro.Seq_J_UTIL_CONTR_NO_IFF_REPLY_BANDIT}},
 
-            {"wMsgJ_RESET",                 new List<List<DeviceAction>> {Macro.Seq_J_RESET        }},
+            {"wMsgJ_RESET",                 new List<List<DeviceAction>> {Macro.Seq_J_MENU_MAIN, Macro.Seq_J_RESET        }},
 
             {"wMsgJ_RAD_DL_HOST_WASH",          new List<List<DeviceAction>> {Macro.Seq_J_MENU_MAIN, Macro.Seq_J_RAD_DL_HOST_WASH     }},
             {"wMsgJ_RAD_DL_HOST_ROOS",          new List<List<DeviceAction>> {Macro.Seq_J_MENU_MAIN, Macro.Seq_J_RAD_DL_HOST_ROOS     }},
@@ -727,6 +746,8 @@ namespace VAICOM.Extensions.RIO
 
             public static Dictionary<string, List<List<DeviceAction>>> AuxCommands = new Dictionary<string, List<List<DeviceAction>>>()
             {
+                {"F-14BU:wMsgJ_RDR_GO_ACTIVE", new List<List<DeviceAction>> { Macro.Seq_J_MENU_MAIN, Macro.Seq_J_RDR_GO_ACTIVE_BU }},
+                {"F-14BU:wMsgJ_RDR_GO_SILENT", new List<List<DeviceAction>> { Macro.Seq_J_MENU_MAIN, Macro.Seq_J_RDR_GO_SILENT_BU }},
             };
 
         }
