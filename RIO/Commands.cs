@@ -156,6 +156,7 @@ namespace VAICOM.Extensions.RIO
             { "wMsgJ_RDR_MODE_SIZE_M" ,             new CommandInfo { uniqueid = 23297, name = "wMsgJ_RDR_MODE_SIZE_M",     displayname = Labels.aicommands["wMsgJ_RDR_MODE_SIZE_M"], enabled = true            } },
             { "wMsgJ_RDR_MODE_SIZE_L" ,             new CommandInfo { uniqueid = 23298, name = "wMsgJ_RDR_MODE_SIZE_L",     displayname = Labels.aicommands["wMsgJ_RDR_MODE_SIZE_L"], enabled = true            } },
             { "wMsgJ_RDR_MODE_SIZE_S" ,             new CommandInfo { uniqueid = 23299, name = "wMsgJ_RDR_MODE_SIZE_S",     displayname = Labels.aicommands["wMsgJ_RDR_MODE_SIZE_S"], enabled = true            } },
+            { "wMsgJ_RDR_TID_EXP" ,                 new CommandInfo { uniqueid = 23756, name = "wMsgJ_RDR_TID_EXP",         displayname = Labels.aicommands["wMsgJ_RDR_TID_EXP"], enabled = true              } },
 
             // block: weapons id 23300-23399 (DONE!)
             { "wMsgJ_WPN_AG_SORDN" ,            new CommandInfo { uniqueid = 23300, name = "wMsgJ_WPN_AG_SORDN",            displayname = Labels.aicommands["wMsgJ_WPN_AG_SORDN"], enabled = true            } }, //hint

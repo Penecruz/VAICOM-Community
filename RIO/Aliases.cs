@@ -144,6 +144,10 @@ namespace VAICOM.Extensions.RIO
             {"Look For A regular Target",   "wMsgJ_RDR_MODE_SIZE_M"             },
             {"Look For A Big Target",       "wMsgJ_RDR_MODE_SIZE_L"             },
             {"Look For A Small Target",     "wMsgJ_RDR_MODE_SIZE_S"             },
+
+            {"TID Expand",                  "wMsgJ_RDR_TID_EXP"                 },
+            {"TID Collapse",                "wMsgJ_RDR_TID_EXP"                 },// TID expand/collapse toggle
+
             // end of radar
 
             // LANTIRN

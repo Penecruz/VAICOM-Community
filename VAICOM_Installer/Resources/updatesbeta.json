@@ -8,10 +8,10 @@
       "isdev": false,
       "productid": 1,
       "releasedate": 20260801,
-      "version": 3157,
-      "versionstring": "3.1.5.7",
+      "version": 3158,
+      "versionstring": "3.1.5.8",
       "downloadurl": "https://raw.githubusercontent.com/Penecruz/VAICOM-Community/Development/VAICOM_Installer/Resources/VAICOMPRO.zip",
-      "releasenotes": "BETA 3.1.5.7 \n- Fix F-14 Mini Wheel unchecked nreaking IC. \n- Update F-14 Jester scripts to release version. \n- F-14 Jester 1.5 command remapping Radar, Air to ground,  Air to air, Weapons selection and fuzing. \n- F-14 Jester 1.5 new crew contract commands. \n- F-14 Jester 1.5 new Air to Ground Commands, JDAM and GGW options. \n- Fix F-14 Jester 1.5 Radar active/standby, elevation and azimuth commands \n- Adds check of module prior to sending AIRIO command \n- Performance improvements and additional logging for process server data \n- F-14 AIRIO new radar elevation commands (replace old ones to allow more options) \n- F-14 AIRIO Navigation commands fix A/B and Add B(U) logic and increase steepoint numbers to 14. \n- F-14 AIRIO New Commands for B(U) Direct Steepoint X, Nav Mode and Flight Plan management. \n- More process update performance tweaks. "
+      "releasenotes": "BETA 3.1.5.8 \n- Fix F-14 Mini Wheel unchecked nreaking IC. \n- Update F-14 Jester scripts to release version. \n- F-14 Jester 1.5 command remapping Radar, Air to ground,  Air to air, Weapons selection and fuzing. \n- F-14 Jester 1.5 new crew contract commands. \n- F-14 Jester 1.5 new Air to Ground Commands, JDAM and GGW options. \n- Fix F-14 Jester 1.5 Radar active/standby, elevation and azimuth commands \n- Adds check of module prior to sending AIRIO command \n- Performance improvements and additional logging for process server data \n- F-14 AIRIO new radar elevation commands (replace old ones to allow more options) \n- F-14 AIRIO Navigation commands fix A/B and Add B(U) logic and increase steepoint numbers to 14. \n- F-14 AIRIO New Commands for B(U) Direct Steepoint X, Nav Mode and Flight Plan management. \n- More process update performance tweaks. \n- F-14 AIRIO Fix Scan Hi commands. \n- F-14 AIRIO add TID Expand/Collapse commands "
     }
   ]
 }

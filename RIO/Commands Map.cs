@@ -160,6 +160,7 @@ namespace VAICOM.Extensions.RIO
             {"wMsgJ_RDR_MODE_SIZE_M",           new List<List<DeviceAction>> { Macro.Seq_J_MENU_MAIN, Macro.Seq_J_RDR_MODE_SIZE_M       }},
             {"wMsgJ_RDR_MODE_SIZE_L",           new List<List<DeviceAction>> { Macro.Seq_J_MENU_MAIN, Macro.Seq_J_RDR_MODE_SIZE_L       }},
             {"wMsgJ_RDR_MODE_SIZE_S",           new List<List<DeviceAction>> { Macro.Seq_J_MENU_MAIN, Macro.Seq_J_RDR_MODE_SIZE_S       }},
+            {"wMsgJ_RDR_TID_EXP",               new List<List<DeviceAction>> { Macro.Seq_J_MENU_MAIN, Macro.Seq_J_RDR_TID_EXP           }},
 
             // block: weapons
             // section: AG

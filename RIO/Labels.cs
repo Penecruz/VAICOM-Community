@@ -170,6 +170,7 @@ namespace VAICOM.Extensions.RIO
             {"wMsgJ_RDR_MODE_SIZE_M",               "Target Size Normal"             },
             {"wMsgJ_RDR_MODE_SIZE_L",               "Target Size Large"              },
             {"wMsgJ_RDR_MODE_SIZE_S",               "Target Size Small"              },
+            {"wMsgJ_RDR_TID_EXP",                   "TID Expand Toggle"              },
 
             // block: weapons
             {"wMsgJ_WPN_AG_SORDN",              "AG Select Stores"              }, //hint
