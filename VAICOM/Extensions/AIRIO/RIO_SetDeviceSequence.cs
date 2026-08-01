@@ -696,12 +696,30 @@ namespace VAICOM
                 {
                     try
                     {
-                        if ((State.currentstate != null) && !string.IsNullOrWhiteSpace(State.currentstate.id) && State.currentstate.id.Equals("F-14BU", StringComparison.OrdinalIgnoreCase))
+                        string stateId = (State.currentstate != null && !string.IsNullOrWhiteSpace(State.currentstate.id))
+                            ? State.currentstate.id.Trim()
+                            : string.Empty;
+
+                        if (!string.IsNullOrWhiteSpace(stateId))
                         {
-                            return true;
+                            if (stateId.Equals("F-14BU", StringComparison.OrdinalIgnoreCase)
+                                || stateId.Equals("F-14B(U)", StringComparison.OrdinalIgnoreCase)
+                                || stateId.Equals("F14BU", StringComparison.OrdinalIgnoreCase)
+                                || (stateId.IndexOf("F-14B", StringComparison.OrdinalIgnoreCase) >= 0
+                                    && stateId.IndexOf("U", StringComparison.OrdinalIgnoreCase) >= 0))
+                            {
+                                return true;
+                            }
                         }
 
-                        if (!string.IsNullOrWhiteSpace(State.riomod) && State.riomod.Equals("F-14BU", StringComparison.OrdinalIgnoreCase))
+                        string rioMod = !string.IsNullOrWhiteSpace(State.riomod)
+                            ? State.riomod.Trim()
+                            : string.Empty;
+
+                        if (!string.IsNullOrWhiteSpace(rioMod)
+                            && (rioMod.Equals("F-14BU", StringComparison.OrdinalIgnoreCase)
+                                || rioMod.Equals("F-14B(U)", StringComparison.OrdinalIgnoreCase)
+                                || rioMod.Equals("F14BU", StringComparison.OrdinalIgnoreCase)))
                         {
                             return true;
                         }
@@ -721,14 +739,48 @@ namespace VAICOM
                         string cmd = State.currentkey["command"];
                         Dictionary<string, List<List<Extensions.RIO.DeviceAction>>> commandTable = Extensions.RIO.DeviceActionsLibrary.Sequences.RioCommands;
 
-                        if (IsF14BUActive())
+                        bool isF14BU = IsF14BUActive();
+
+                        if (isF14BU)
                         {
                             string overrideKey = "F-14BU:" + cmd;
                             if (Extensions.RIO.DeviceActionsLibrary.Sequences.AuxCommands.ContainsKey(overrideKey))
                             {
                                 commandTable = Extensions.RIO.DeviceActionsLibrary.Sequences.AuxCommands;
                                 cmd = overrideKey;
+
+                                if (commandTable[cmd].Count == 0)
+                                {
+                                    State.currentmessage.dspmsg = "AIRIO : Command N/A to F-14B(U)\n";
+                                    State.currentmessage.msgdur = 3;
+                                    State.currentmessage.extsequence = new List<Extensions.RIO.DeviceAction>();
+                                    State.currentmessage.extsequence.Add(new Extensions.RIO.DeviceAction()
+                                    {
+                                        device = 62,
+                                        command = 3725,
+                                        value = 1
+                                    });
+                                    return;
+                                }
                             }
+                        }
+
+                        if (!commandTable.ContainsKey(cmd))
+                        {
+                            if (isF14BU)
+                            {
+                                State.currentmessage.dspmsg = "AIRIO : Command N/A to F-14B(U)\n";
+                                State.currentmessage.msgdur = 3;
+                                State.currentmessage.extsequence = new List<Extensions.RIO.DeviceAction>();
+                                State.currentmessage.extsequence.Add(new Extensions.RIO.DeviceAction()
+                                {
+                                    device = 62,
+                                    command = 3725,
+                                    value = 1
+                                });
+                                return;
+                            }
+                            return;
                         }
 
                         List<Extensions.RIO.DeviceAction> cache = new List<Extensions.RIO.DeviceAction>();

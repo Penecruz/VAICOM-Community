@@ -426,6 +426,14 @@ namespace VAICOM.Extensions.RIO
             {"wMsgJ_UTIL_NAV_MAP_SPT_4",        "Map Steerpoint 4"              }, // 4-8 not used
             {"wMsgJ_UTIL_NAV_MAP_SPT_5",        "Map Steerpoint 5"              },
             {"wMsgJ_UTIL_NAV_MAP_SPT_6",        "Map Steerpoint 6"              },
+            {"wMsgJ_UTIL_NAV_MAP_SPT_7",        "Map Steerpoint 7"              },
+            {"wMsgJ_UTIL_NAV_MAP_SPT_8",        "Map Steerpoint 8"              },
+            {"wMsgJ_UTIL_NAV_MAP_SPT_9",        "Map Steerpoint 9"              },
+            {"wMsgJ_UTIL_NAV_MAP_SPT_10",       "Map Steerpoint 10"             },
+            {"wMsgJ_UTIL_NAV_MAP_SPT_11",       "Map Steerpoint 11"             },
+            {"wMsgJ_UTIL_NAV_MAP_SPT_12",       "Map Steerpoint 12"             },
+            {"wMsgJ_UTIL_NAV_MAP_SPT_13",       "Map Steerpoint 13"             },
+            {"wMsgJ_UTIL_NAV_MAP_SPT_14",       "Map Steerpoint 14"             },
 
             {"wMsgJ_UTIL_NAV_MAP_FIX_PNT",      "Navigate Fixed Point"          },
             {"wMsgJ_UTIL_NAV_MAP_INIT_PNT",     "Navigate Initial Point"        },
@@ -444,6 +452,31 @@ namespace VAICOM.Extensions.RIO
             {"wMsgJ_UTIL_NAV_REST_HOME",        "Restore Home Base"             },
             {"wMsgJ_UTIL_NAV_DEF_PNT",          "Restore Defense Point"         },
             {"wMsgJ_UTIL_NAV_HSTZONE",          "Restore Hostile Zone"          }, //
+
+            {"wMsgJ_UTIL_NAV_LOAD_FLT_PLAN_1",  "Load Flight Plan 1"            }, //f-14B(U) Flight Plan managment
+            {"wMsgJ_UTIL_NAV_LOAD_FLT_PLAN_2",  "Load Flight Plan 2"            },
+            {"wMsgJ_UTIL_NAV_LOAD_FLT_PLAN_3",  "Load Flight Plan 3"            },
+            {"wMsgJ_UTIL_NAV_LOAD_FLT_PLAN_4",  "Load Flight Plan 4"            },
+            {"wMsgJ_UTIL_NAV_LOAD_FLT_PLAN_5",  "Load Flight Plan 5"            },
+            {"wMsgJ_UTIL_NAV_LOAD_FLT_PLAN_6",  "Load Flight Plan 6"            },
+            {"wMsgJ_UTIL_NAV_LOAD_FLT_PLAN_7",  "Load Flight Plan 7"            },
+            {"wMsgJ_UTIL_NAV_RELOAD_FLT_PLAN",  "Reload Flight Plan"            },
+            {"wMsgJ_UTIL_NAV_DIR_SPT_1",        "Direct Steerpoint 1"           },
+            {"wMsgJ_UTIL_NAV_DIR_SPT_2",        "Direct Steerpoint 2"           },
+            {"wMsgJ_UTIL_NAV_DIR_SPT_3",        "Direct Steerpoint 3"           },
+            {"wMsgJ_UTIL_NAV_DIR_SPT_4",        "Direct Steerpoint 4"           },
+            {"wMsgJ_UTIL_NAV_DIR_SPT_5",        "Direct Steerpoint 5"           },
+            {"wMsgJ_UTIL_NAV_DIR_SPT_6",        "Direct Steerpoint 6"           },
+            {"wMsgJ_UTIL_NAV_DIR_SPT_7",        "Direct Steerpoint 7"           },
+            {"wMsgJ_UTIL_NAV_DIR_SPT_8",        "Direct Steerpoint 8"           },
+            {"wMsgJ_UTIL_NAV_DIR_SPT_9",        "Direct Steerpoint 9"           },
+            {"wMsgJ_UTIL_NAV_DIR_SPT_10",       "Direct Steerpoint 10"          },
+            {"wMsgJ_UTIL_NAV_DIR_SPT_11",       "Direct Steerpoint 11"          },
+            {"wMsgJ_UTIL_NAV_DIR_SPT_12",       "Direct Steerpoint 12"          },
+            {"wMsgJ_UTIL_NAV_DIR_SPT_13",       "Direct Steerpoint 13"          },
+            {"wMsgJ_UTIL_NAV_DIR_SPT_14",       "Direct Steerpoint 14"          },
+            {"wMsgJ_UTIL_NAV_MODE_EGI",         "Nav Mode EGI"                  },
+            {"wMsgJ_UTIL_NAV_MODE_DEST",        "Nav Mode Destination"          },
 
             {"wMsgJ_UTIL_CONTR",                "Utility Contract"              }, //na
             {"wMsgJ_UTIL_CONTR_NO_TALK",        "No Talking"                    },
@@ -517,6 +550,7 @@ namespace VAICOM.Extensions.RIO
             {"wMsgJ_UTIL_NAV_GRD_5SCTR",        "Grid 5 Sectors"                },
             {"wMsgJ_UTIL_NAV_GRD_6SCTR",        "Grid 6 Sectors"                },
             {"wMsgJ_UTIL_NAV_GRD_MARKER",       "J_UTIL_NAV_GRD_MARKER"         },
+            
             //{"wMsgPlaceHolder383",              "PlaceHolder383"                },
             //{"wMsgPlaceHolder384",              "PlaceHolder384"                },
             //{"wMsgPlaceHolder385",              "PlaceHolder385"                },

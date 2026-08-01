@@ -100,16 +100,15 @@ namespace VAICOM.Extensions.RIO
             {"Track Single Target X",       "wMsgJ_RDR_STT_CHOOSE_SPECIFIC_TGT" }, // disabled //
 
             {"Scan Range",                  "wMsgJ_RDR_SCAN_DIST"               },// not endpoint //
-            {"Scan Range Auto",             "wMsgJ_RDR_RNG_AUTO"                },
-            {"Scan Range 25",               "wMsgJ_RDR_RNG_25"                      },
-            {"Scan Range 50",               "wMsgJ_RDR_RNG_50"                      },
-            {"Scan Range 100",              "wMsgJ_RDR_RNG_100"                     },
-            {"Scan Range 200",              "wMsgJ_RDR_RNG_200"                     },
-            {"Scan Range 400",              "wMsgJ_RDR_RNG_400"                     },
+            {"Scan Range Auto",             "wMsgJ_RDR_RNG_AUTO"                },// for Range
+            {"Scan Range 25",               "wMsgJ_RDR_RNG_25"                  },
+            {"Scan Range 50",               "wMsgJ_RDR_RNG_50"                  },
+            {"Scan Range 100",              "wMsgJ_RDR_RNG_100"                 },
+            {"Scan Range 200",              "wMsgJ_RDR_RNG_200"                 },
+            {"Scan Range 400",              "wMsgJ_RDR_RNG_400"                 },
 
             {"Scan Azimuth",                "wMsgJ_RDR_SCAN_AZ"                 },// not endpoint //
-            {"Scan Azimuth Auto",           "wMsgJ_RDR_POS"                     },
-            {"Scan Center",                 "wMsgJ_RDR_POS_CTR"                 },
+            {"Scan Azimuth Auto",           "wMsgJ_RDR_POS"                     },// for Azimuth
             {"Scan Center Left",            "wMsgJ_RDR_POS_CTR_L"               },
             {"Scan Center Right",           "wMsgJ_RDR_POS_CTR_R"               },
             {"Scan Left",                   "wMsgJ_RDR_POS_L"                   },
@@ -120,30 +119,34 @@ namespace VAICOM.Extensions.RIO
             {"Scan Hard Right",             "wMsgJ_RDR_POS_R55"                 },
 
             {"Scan Elevation",              "wMsgJ_RDR_SCAN_ELEV"               },// not endpoint, hint
-            {"Scan Elevation Auto",         "wMsgJ_RDR_AUTO"                    }, // for elev
+            {"Scan Elevation Auto",         "wMsgJ_RDR_AUTO"                    }, // for Elevation
             {"Scan Close Low",              "wMsgJ_RDR_ELEV_CLOSE_LOW"          },
             {"Scan Close Level Low",        "wMsgJ_RDR_ELEV_CLOSE_MID_LO"       },
             {"Scan Close Level",            "wMsgJ_RDR_ELEV_CLOSE_MID"          },
             {"Scan Close Level High",       "wMsgJ_RDR_ELEV_CLOSE_MID_HI"       },
             {"Scan Close High",             "wMsgJ_RDR_ELEV_CLOSE_HI"           },
-            {"Scan Mid Low",                "wMsgJ_RDR_ELEV_MID_LOW"            },
-            {"Scan Mid Level Low",          "wMsgJ_RDR_ELEV_MID_MID_LO"         },
-            {"Scan Mid Level",              "wMsgJ_RDR_ELEV_MID_MID"            },
-            {"Scan Mid Level High",         "wMsgJ_RDR_ELEV_MID_MID_HI"         },
-            {"Scan Mid High",               "wMsgJ_RDR_ELEV_MID_HI"             },
+            {"Scan Low",                    "wMsgJ_RDR_ELEV_MID_LOW"            },
+            {"Scan Level Low",              "wMsgJ_RDR_ELEV_MID_MID_LO"         },
+            {"Scan Level",                  "wMsgJ_RDR_ELEV_MID_MID"            },
+            {"Scan Level High",             "wMsgJ_RDR_ELEV_MID_MID_HI"         },
+            {"Scan High",                   "wMsgJ_RDR_ELEV_MID_HI"             },
             {"Scan Long Low",               "wMsgJ_RDR_ELEV_LONG_LOW"           },
             {"Scan Long Level Low",         "wMsgJ_RDR_ELEV_LONG_MID_LO"        },
             {"Scan Long Level",             "wMsgJ_RDR_ELEV_LONG_MID"           },
             {"Scan Long Level High",        "wMsgJ_RDR_ELEV_LONG_MID_HI"        },
             {"Scan Long High",              "wMsgJ_RDR_ELEV_LONG_HI"            },
 
-            {"Radar Mode Automatic",        "wMsgJ_RDR_MODE_AUTO"               },
+            {"Radar Mode",                  "wMsgJ_RDR_MODE"                    }, // Not Endpoint
+            {"Radar Mode Automatic",        "wMsgJ_RDR_MODE_AUTO"               }, //Modes
             {"Radar Mode TWS",              "wMsgJ_RDR_MODE_TWS"                },
-            {"Radar Mode RWS",              "wMsgJ_RDR_MODE_RWS"                },
-            {"Radar Mode",                  "wMsgJ_RDR_MODE"                    },
+            {"Radar Mode RWS",              "wMsgJ_RDR_MODE_RWS"                },         
+            {"Radar Mode TWS Manual",       "wMsgJ_RDR_MODE_TWS_MAN"            },
+            {"Look For A regular Target",   "wMsgJ_RDR_MODE_SIZE_M"             },
+            {"Look For A Big Target",       "wMsgJ_RDR_MODE_SIZE_L"             },
+            {"Look For A Small Target",     "wMsgJ_RDR_MODE_SIZE_S"             },
             // end of radar
 
-            // spare block
+            // LANTIRN
             {"Stabilize",                   "wMsgJ_RDR_STAB"                    },
             {"Stabilize 15 Seconds",        "wMsgJ_RDR_STAB_15"                 },
             {"Stabilize 30 Seconds",        "wMsgJ_RDR_STAB_30"                 },
@@ -157,12 +160,6 @@ namespace VAICOM.Extensions.RIO
             //{"PlaceHolder098",              "wMsgPlaceHolder098"                },
             //{"PlaceHolder099",              "wMsgPlaceHolder099"                },
 
-            //New
-
-            {"Radar Mode TWS Manual",       "wMsgJ_RDR_MODE_TWS_MAN"            },
-            {"Look For A regular Target",   "wMsgJ_RDR_MODE_SIZE_M"             },
-            {"Look For A Big Target",       "wMsgJ_RDR_MODE_SIZE_L"             },
-            {"Look For A Small Target",     "wMsgJ_RDR_MODE_SIZE_S"             },
 
             // block: weapons (DONE)
             // section: AG
@@ -221,7 +218,7 @@ namespace VAICOM.Extensions.RIO
             {"Set Ripple Distance 200",     "wMsgJ_WPN_AG_RIP_DIST_200"         },
             {"Set Ripple Distance 400",     "wMsgJ_WPN_AG_RIP_DIST_400"         },
 
-            {"Drop Weapons",                "wMsgJ_WPN_AG_JETT"                 },
+            {"Drop Weapons",                "wMsgJ_WPN_AG_JETT"                 }, //Jettison
             {"Drop Tanks",                  "wMsgJ_WPN_AG_DROP_TANKS"           },
 
             {"Switch Lantern",              "wMsgJ_WPN_AG_UTIL_LANTIRN"         },
@@ -238,7 +235,7 @@ namespace VAICOM.Extensions.RIO
 
             {"Send Waypoint to GGW",        "wMsgJ_WPN_AG_JDAM_WPT_TO_GGW"      },
             {"Select GGW Pre Planned",      "wMsgJ_WPN_AG_JDAM_SEL_PP"          },
-            {"Send Pre Planned to all Stations", "wMsgJ_WPN_AG_JDAM_PP_ALL_STN"  },
+            {"Send Pre Planned to all Stations", "wMsgJ_WPN_AG_JDAM_PP_ALL_STN" },
             {"Send Designation to Station", "wMsgJ_WPN_AG_JDAM_DESIG_TO_STN"    },
 
             //{"PlaceHolder155",              "wMsgPlaceHolder155"                },
@@ -417,13 +414,41 @@ namespace VAICOM.Extensions.RIO
             {"Navigate Steerpoint 1",           "wMsgJ_UTIL_NAV_MAP_SPT_1"      },
             {"Navigate Steerpoint 2",           "wMsgJ_UTIL_NAV_MAP_SPT_2"      },
             {"Navigate Steerpoint 3",           "wMsgJ_UTIL_NAV_MAP_SPT_3"      },
-            {"Navigate Steerpoint 4",           "wMsgJ_UTIL_NAV_MAP_SPT_4"      }, // 4-8 not used
-            {"Navigate Steerpoint 5",           "wMsgJ_UTIL_NAV_MAP_SPT_5"      }, // na
-            {"Navigate Steerpoint 6",           "wMsgJ_UTIL_NAV_MAP_SPT_6"      }, // na
+            {"Navigate Steerpoint 4",           "wMsgJ_UTIL_NAV_MAP_SPT_4"      }, // 4-14 not used by F-14A/B 
+            {"Navigate Steerpoint 5",           "wMsgJ_UTIL_NAV_MAP_SPT_5"      }, 
+            {"Navigate Steerpoint 6",           "wMsgJ_UTIL_NAV_MAP_SPT_6"      }, 
+            {"Navigate Steerpoint 7",           "wMsgJ_UTIL_NAV_MAP_SPT_7"      },
+            {"Navigate Steerpoint 8",           "wMsgJ_UTIL_NAV_MAP_SPT_8"      },
+            {"Navigate Steerpoint 9",           "wMsgJ_UTIL_NAV_MAP_SPT_9"      },
+            {"Navigate Steerpoint 10",          "wMsgJ_UTIL_NAV_MAP_SPT_10"     },
+            {"Navigate Steerpoint 11",          "wMsgJ_UTIL_NAV_MAP_SPT_11"     },
+            {"Navigate Steerpoint 12",          "wMsgJ_UTIL_NAV_MAP_SPT_12"     },
+            {"Navigate Steerpoint 13",          "wMsgJ_UTIL_NAV_MAP_SPT_13"     },
+            {"Navigate Steerpoint 14",          "wMsgJ_UTIL_NAV_MAP_SPT_14"     },
+
             {"Navigate Fixed Point",            "wMsgJ_UTIL_NAV_MAP_FIX_PNT"    },
             {"Navigate Initial Point",          "wMsgJ_UTIL_NAV_MAP_INIT_PNT"   },
             {"Navigate Target",                 "wMsgJ_UTIL_NAV_SURF_TGT"       },
             {"Navigate Home Base",              "wMsgJ_UTIL_NAV_HOME_BASE"      },
+
+            {"Direct Steerpoint 1",             "wMsgJ_UTIL_NAV_DIR_SPT_1"     }, //F-14B(U) only 1-14 for EGI navigation
+            {"Direct Steerpoint 2",             "wMsgJ_UTIL_NAV_DIR_SPT_2"     },
+            {"Direct Steerpoint 3",             "wMsgJ_UTIL_NAV_DIR_SPT_3"     },
+            {"Direct Steerpoint 4",             "wMsgJ_UTIL_NAV_DIR_SPT_4"     },
+            {"Direct Steerpoint 5",             "wMsgJ_UTIL_NAV_DIR_SPT_5"     },
+            {"Direct Steerpoint 6",             "wMsgJ_UTIL_NAV_DIR_SPT_6"     },
+            {"Direct Steerpoint 7",             "wMsgJ_UTIL_NAV_DIR_SPT_7"     },
+            {"Direct Steerpoint 8",             "wMsgJ_UTIL_NAV_DIR_SPT_8"     },
+            {"Direct Steerpoint 9",             "wMsgJ_UTIL_NAV_DIR_SPT_9"     },
+            {"Direct Steerpoint 10",            "wMsgJ_UTIL_NAV_DIR_SPT_10"    },
+            {"Direct Steerpoint 11",            "wMsgJ_UTIL_NAV_DIR_SPT_11"    },
+            {"Direct Steerpoint 12",            "wMsgJ_UTIL_NAV_DIR_SPT_12"    },
+            {"Direct Steerpoint 13",            "wMsgJ_UTIL_NAV_DIR_SPT_13"    },
+            {"Direct Steerpoint 14",            "wMsgJ_UTIL_NAV_DIR_SPT_14"    },
+
+            {"Nav Mode E G I",                  "wMsgJ_UTIL_NAV_MODE_EGI"       },
+            {"Nav Mode G P S",                  "wMsgJ_UTIL_NAV_MODE_EGI"       },//F-14B(U) Nav mode selection
+            {"Nav Mode Destination",            "wMsgJ_UTIL_NAV_MODE_DEST"      },
 
             {"Restore",                         "wMsgJ_UTIL_NAV_REST_MORE"      }, // show hint
             {"Restore Steerpoint 1",            "wMsgJ_UTIL_NAV_REST_MSN_SPT_1" },
@@ -437,6 +462,15 @@ namespace VAICOM.Extensions.RIO
             {"Restore Home Base",               "wMsgJ_UTIL_NAV_REST_HOME"      },
             {"Restore Defense Point",           "wMsgJ_UTIL_NAV_DEF_PNT"        }, // testc?
             {"Restore Hostile Zone",            "wMsgJ_UTIL_NAV_HSTZONE"        }, //
+
+            {"Load Flight Plan 1",          "wMsgJ_UTIL_NAV_LOAD_FLT_PLAN_1"    }, //F-14B(U) Flight Plan management
+            {"Load Flight Plan 2",          "wMsgJ_UTIL_NAV_LOAD_FLT_PLAN_2"    },
+            {"Load Flight Plan 3",          "wMsgJ_UTIL_NAV_LOAD_FLT_PLAN_3"    },
+            {"Load Flight Plan 4",          "wMsgJ_UTIL_NAV_LOAD_FLT_PLAN_4"    },
+            {"Load Flight Plan 5",          "wMsgJ_UTIL_NAV_LOAD_FLT_PLAN_5"    },
+            {"Load Flight Plan 6",          "wMsgJ_UTIL_NAV_LOAD_FLT_PLAN_6"    },
+            {"Load Flight Plan 7",          "wMsgJ_UTIL_NAV_LOAD_FLT_PLAN_7"    },
+            {"Reload Flight Plan",          "wMsgJ_UTIL_NAV_RELOAD_FLT_PLAN"    },
 
             // Contract
             {"Contract",                        "wMsgJ_UTIL_CONTR"              }, // not endpoint, disable
@@ -520,6 +554,7 @@ namespace VAICOM.Extensions.RIO
             {"Grid 5 Sectors",              "wMsgJ_UTIL_NAV_GRD_5SCTR"                },
             {"Grid 6 Sectors",              "wMsgJ_UTIL_NAV_GRD_6SCTR"                },
             {"J_UTIL_NAV_GRD_MARKER",       "wMsgJ_UTIL_NAV_GRD_MARKER"               },
+            
             {"PlaceHolder383",              "wMsgPlaceHolder383"                },
             {"PlaceHolder384",              "wMsgPlaceHolder384"                },
             {"PlaceHolder385",              "wMsgPlaceHolder385"                },
