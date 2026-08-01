@@ -76,8 +76,8 @@ namespace VAICOM.Extensions.RIO
                 public static List<DeviceAction> Seq_J_RDR_STT_TGT_AHEAD = new List<DeviceAction>() { RIO.Atom_J_RDR_STT_TGT_AHEAD };
                 public static List<DeviceAction> Seq_J_RDR_STT_ENMY_TGT_AHEAD = new List<DeviceAction>() { RIO.Atom_J_RDR_STT_ENMY_TGT_AHEAD };
                 public static List<DeviceAction> Seq_J_RDR_STT_FRNDLY_TGT_AHEAD = new List<DeviceAction>() { RIO.Atom_J_RDR_STT_FRNDLY_TGT_AHEAD };
-                public static List<DeviceAction> Seq_J_RDR_STT_CHOOSE_SPECIFIC_TGT = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_2, RIO.Atom_J_MENU_OPTION_1, RIO.Atom_J_MENU_OPTION_4 };
-                public static List<DeviceAction> Seq_J_RDR_STT_FIRST_TWS_TGT = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_2, RIO.Atom_J_MENU_OPTION_1, RIO.Atom_J_MENU_OPTION_5 };
+                public static List<DeviceAction> Seq_J_RDR_STT_CHOOSE_SPECIFIC_TGT = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_2, RIO.Atom_J_MENU_OPTION_1, RIO.Atom_J_MENU_OPTION_1, RIO.Atom_J_MENU_OPTION_4 };
+                public static List<DeviceAction> Seq_J_RDR_STT_FIRST_TWS_TGT = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_2, RIO.Atom_J_MENU_OPTION_1, RIO.Atom_J_MENU_OPTION_1, RIO.Atom_J_MENU_OPTION_5 };
                 public static List<DeviceAction> Seq_J_RDR_STT_TWS_TGT_NUM = new List<DeviceAction>() { };
                 public static List<DeviceAction> Seq_J_RDR_BVR = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_2, RIO.Atom_J_MENU_OPTION_1 }; // not endpoint (root, disable cmd)
                 public static List<DeviceAction> Seq_J_RDR_GO_ACTIVE = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_2, RIO.Atom_J_MENU_OPTION_1, RIO.Atom_J_MENU_OPTION_6 };
@@ -121,14 +121,14 @@ namespace VAICOM.Extensions.RIO
                 public static List<DeviceAction> Seq_J_RDR_ELEV_LONG_MID = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_2, RIO.Atom_J_MENU_OPTION_1, RIO.Atom_J_MENU_OPTION_2, RIO.Atom_J_MENU_OPTION_7, RIO.Atom_J_MENU_OPTION_5 };
                 public static List<DeviceAction> Seq_J_RDR_ELEV_LONG_MID_HI = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_2, RIO.Atom_J_MENU_OPTION_1, RIO.Atom_J_MENU_OPTION_2, RIO.Atom_J_MENU_OPTION_7, RIO.Atom_J_MENU_OPTION_6 };
                 public static List<DeviceAction> Seq_J_RDR_ELEV_LONG_HI = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_2, RIO.Atom_J_MENU_OPTION_1, RIO.Atom_J_MENU_OPTION_2, RIO.Atom_J_MENU_OPTION_7, RIO.Atom_J_MENU_OPTION_8, RIO.Atom_J_MENU_OPTION_3 };
-                public static List<DeviceAction> Seq_J_RDR_STT_TWS_TGT_1 = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_2, RIO.Atom_J_MENU_OPTION_1, RIO.Atom_J_MENU_OPTION_6, RIO.Atom_J_MENU_OPTION_1 };
-                public static List<DeviceAction> Seq_J_RDR_STT_TWS_TGT_2 = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_2, RIO.Atom_J_MENU_OPTION_1, RIO.Atom_J_MENU_OPTION_6, RIO.Atom_J_MENU_OPTION_2 };
-                public static List<DeviceAction> Seq_J_RDR_STT_TWS_TGT_3 = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_2, RIO.Atom_J_MENU_OPTION_1, RIO.Atom_J_MENU_OPTION_6, RIO.Atom_J_MENU_OPTION_3 };
-                public static List<DeviceAction> Seq_J_RDR_STT_TWS_TGT_4 = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_2, RIO.Atom_J_MENU_OPTION_1, RIO.Atom_J_MENU_OPTION_6, RIO.Atom_J_MENU_OPTION_4 };
-                public static List<DeviceAction> Seq_J_RDR_STT_TWS_TGT_5 = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_2, RIO.Atom_J_MENU_OPTION_1, RIO.Atom_J_MENU_OPTION_6, RIO.Atom_J_MENU_OPTION_5 };
-                public static List<DeviceAction> Seq_J_RDR_STT_TWS_TGT_6 = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_2, RIO.Atom_J_MENU_OPTION_1, RIO.Atom_J_MENU_OPTION_6, RIO.Atom_J_MENU_OPTION_6 };
-                public static List<DeviceAction> Seq_J_RDR_STT_TWS_TGT_7 = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_2, RIO.Atom_J_MENU_OPTION_1, RIO.Atom_J_MENU_OPTION_6, RIO.Atom_J_MENU_OPTION_7 };
-                public static List<DeviceAction> Seq_J_RDR_STT_TWS_TGT_8 = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_2, RIO.Atom_J_MENU_OPTION_1, RIO.Atom_J_MENU_OPTION_6, RIO.Atom_J_MENU_OPTION_8 };
+                public static List<DeviceAction> Seq_J_RDR_STT_TWS_TGT_1 = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_2, RIO.Atom_J_MENU_OPTION_1, RIO.Atom_J_MENU_OPTION_1, RIO.Atom_J_MENU_OPTION_6, RIO.Atom_J_MENU_OPTION_1 };
+                public static List<DeviceAction> Seq_J_RDR_STT_TWS_TGT_2 = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_2, RIO.Atom_J_MENU_OPTION_1, RIO.Atom_J_MENU_OPTION_1, RIO.Atom_J_MENU_OPTION_6, RIO.Atom_J_MENU_OPTION_2 };
+                public static List<DeviceAction> Seq_J_RDR_STT_TWS_TGT_3 = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_2, RIO.Atom_J_MENU_OPTION_1, RIO.Atom_J_MENU_OPTION_1, RIO.Atom_J_MENU_OPTION_6, RIO.Atom_J_MENU_OPTION_3 };
+                public static List<DeviceAction> Seq_J_RDR_STT_TWS_TGT_4 = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_2, RIO.Atom_J_MENU_OPTION_1, RIO.Atom_J_MENU_OPTION_1, RIO.Atom_J_MENU_OPTION_6, RIO.Atom_J_MENU_OPTION_4 };
+                public static List<DeviceAction> Seq_J_RDR_STT_TWS_TGT_5 = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_2, RIO.Atom_J_MENU_OPTION_1, RIO.Atom_J_MENU_OPTION_1, RIO.Atom_J_MENU_OPTION_6, RIO.Atom_J_MENU_OPTION_5 };
+                public static List<DeviceAction> Seq_J_RDR_STT_TWS_TGT_6 = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_2, RIO.Atom_J_MENU_OPTION_1, RIO.Atom_J_MENU_OPTION_1, RIO.Atom_J_MENU_OPTION_6, RIO.Atom_J_MENU_OPTION_6 };
+                public static List<DeviceAction> Seq_J_RDR_STT_TWS_TGT_7 = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_2, RIO.Atom_J_MENU_OPTION_1, RIO.Atom_J_MENU_OPTION_1, RIO.Atom_J_MENU_OPTION_6, RIO.Atom_J_MENU_OPTION_7 };
+                public static List<DeviceAction> Seq_J_RDR_STT_TWS_TGT_8 = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_2, RIO.Atom_J_MENU_OPTION_1, RIO.Atom_J_MENU_OPTION_1, RIO.Atom_J_MENU_OPTION_6, RIO.Atom_J_MENU_OPTION_8 };
                 public static List<DeviceAction> Seq_J_RDR_RNG_25 = new List<DeviceAction>() { RIO.Atom_J_RDR_RNG_25 };
                 public static List<DeviceAction> Seq_J_RDR_RNG_50 = new List<DeviceAction>() { RIO.Atom_J_RDR_RNG_50 };
                 public static List<DeviceAction> Seq_J_RDR_RNG_AUTO = new List<DeviceAction>() { RIO.Atom_J_RDR_RNG_AUTO };
@@ -174,6 +174,8 @@ namespace VAICOM.Extensions.RIO
                 public static List<DeviceAction> Seq_J_WPN_AG_SORDN_WPN_8 = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_4, RIO.Atom_J_MENU_OPTION_1, RIO.Atom_J_MENU_OPTION_1 };
                 public static List<DeviceAction> Seq_J_WPN_AG_SPOT = new List<DeviceAction>() { RIO.Atom_J_WPN_AG_SPOT };
                 public static List<DeviceAction> Seq_J_WPN_AG_SET_COMP_TGT = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_4, RIO.Atom_J_MENU_OPTION_2, RIO.Atom_J_MENU_OPTION_1 }; // was 2
+                public static List<DeviceAction> Seq_J_WPN_AG_SET_COMP_IP = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_4, RIO.Atom_J_MENU_OPTION_2, RIO.Atom_J_MENU_OPTION_3 };
+                public static List<DeviceAction> Seq_J_WPN_AG_SET_MAN = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_4, RIO.Atom_J_MENU_OPTION_2, RIO.Atom_J_MENU_OPTION_4 };
                 public static List<DeviceAction> Seq_J_WPN_AG_SET_PAIRS = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_4, RIO.Atom_J_MENU_OPTION_3, RIO.Atom_J_MENU_OPTION_1 };
                 public static List<DeviceAction> Seq_J_WPN_AG_SETFUSE = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_4, RIO.Atom_J_MENU_OPTION_4 };
                 public static List<DeviceAction> Seq_J_WPN_AG_SETFUSE_NOSETAIL = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_4, RIO.Atom_J_MENU_OPTION_4, RIO.Atom_J_MENU_OPTION_1 };
@@ -564,11 +566,23 @@ namespace VAICOM.Extensions.RIO
                 public static List<DeviceAction> Seq_J_DEF_CMS_MOD_OFF = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_6, RIO.Atom_J_MENU_OPTION_1, RIO.Atom_J_MENU_OPTION_3 };
                 public static List<DeviceAction> Seq_J_DEF_CMS_MOD_MAN = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_6, RIO.Atom_J_MENU_OPTION_1, RIO.Atom_J_MENU_OPTION_2 };
                 public static List<DeviceAction> Seq_J_DEF_CMS_MOD_AUTO = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_6, RIO.Atom_J_MENU_OPTION_1, RIO.Atom_J_MENU_OPTION_1 };
+                public static List<DeviceAction> Seq_J_DEF_CMS_MOD_OFF_BU = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_6, RIO.Atom_J_MENU_OPTION_1, RIO.Atom_J_MENU_OPTION_1 };
+                public static List<DeviceAction> Seq_J_DEF_CMS_MOD_SBY_BU = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_6, RIO.Atom_J_MENU_OPTION_1, RIO.Atom_J_MENU_OPTION_2 };
+                public static List<DeviceAction> Seq_J_DEF_CMS_MOD_MAN_BU = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_6, RIO.Atom_J_MENU_OPTION_1, RIO.Atom_J_MENU_OPTION_3 };
+                public static List<DeviceAction> Seq_J_DEF_CMS_MOD_SEMI_BU = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_6, RIO.Atom_J_MENU_OPTION_1, RIO.Atom_J_MENU_OPTION_4 };
+                public static List<DeviceAction> Seq_J_DEF_CMS_MOD_AUTO_BU = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_6, RIO.Atom_J_MENU_OPTION_1, RIO.Atom_J_MENU_OPTION_5 };
+                public static List<DeviceAction> Seq_J_DEF_CMS_MOD_BYP_BU = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_6, RIO.Atom_J_MENU_OPTION_1, RIO.Atom_J_MENU_OPTION_6 };
 
                 public static List<DeviceAction> Seq_J_DEF_FLR_MOD = new List<DeviceAction>() { };
                 public static List<DeviceAction> Seq_J_DEF_FLR_MOD_PILOT = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_6, RIO.Atom_J_MENU_OPTION_2, RIO.Atom_J_MENU_OPTION_1 };
                 public static List<DeviceAction> Seq_J_DEF_FLR_MOD_NORM = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_6, RIO.Atom_J_MENU_OPTION_2, RIO.Atom_J_MENU_OPTION_2 };
                 public static List<DeviceAction> Seq_J_DEF_FLR_MOD_MULTI = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_6, RIO.Atom_J_MENU_OPTION_2, RIO.Atom_J_MENU_OPTION_3 };
+
+                public static List<DeviceAction> Seq_J_DEF_MAN_PGM = new List<DeviceAction>() { };
+                public static List<DeviceAction> Seq_J_DEF_MAN_PGM_1_BU = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_6, RIO.Atom_J_MENU_OPTION_2, RIO.Atom_J_MENU_OPTION_1 };
+                public static List<DeviceAction> Seq_J_DEF_MAN_PGM_2_BU = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_6, RIO.Atom_J_MENU_OPTION_2, RIO.Atom_J_MENU_OPTION_2 };
+                public static List<DeviceAction> Seq_J_DEF_MAN_PGM_3_BU = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_6, RIO.Atom_J_MENU_OPTION_2, RIO.Atom_J_MENU_OPTION_3 };
+                public static List<DeviceAction> Seq_J_DEF_MAN_PGM_4_BU = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_6, RIO.Atom_J_MENU_OPTION_2, RIO.Atom_J_MENU_OPTION_4 };
 
                 // Chaff program
                 public static List<DeviceAction> Seq_J_DEF_CHF_PGM = new List<DeviceAction>() { };
@@ -579,7 +593,14 @@ namespace VAICOM.Extensions.RIO
                 public static List<DeviceAction> Seq_J_DEF_CHF_PGM_20_84 = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_6, RIO.Atom_J_MENU_OPTION_3, RIO.Atom_J_MENU_OPTION_5 };
                 public static List<DeviceAction> Seq_J_DEF_CHF_PGM_40_44 = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_6, RIO.Atom_J_MENU_OPTION_3, RIO.Atom_J_MENU_OPTION_6 };
                 public static List<DeviceAction> Seq_J_DEF_CHF_PGM_40_84 = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_6, RIO.Atom_J_MENU_OPTION_3, RIO.Atom_J_MENU_OPTION_7 };
-                public static List<DeviceAction> Seq_J_DEF_CHF_PGM_R1_12 = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_6, RIO.Atom_J_MENU_OPTION_3, RIO.Atom_J_MENU_OPTION_8 };
+                public static List<DeviceAction> Seq_J_DEF_CHF_PGM_R1_82 = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_6, RIO.Atom_J_MENU_OPTION_3, RIO.Atom_J_MENU_OPTION_8 };
+                public static List<DeviceAction> Seq_J_DEF_CMDS_IHBT_1_BU = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_6, RIO.Atom_J_MENU_OPTION_3, RIO.Atom_J_MENU_OPTION_1 };
+                public static List<DeviceAction> Seq_J_DEF_CMDS_IHBT_2_BU = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_6, RIO.Atom_J_MENU_OPTION_3, RIO.Atom_J_MENU_OPTION_2 };
+                public static List<DeviceAction> Seq_J_DEF_CMDS_IHBT_3_BU = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_6, RIO.Atom_J_MENU_OPTION_3, RIO.Atom_J_MENU_OPTION_3 };
+                public static List<DeviceAction> Seq_J_DEF_CMDS_IHBT_4_BU = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_6, RIO.Atom_J_MENU_OPTION_3, RIO.Atom_J_MENU_OPTION_4 };
+                public static List<DeviceAction> Seq_J_DEF_CMDS_IHBT_5_BU = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_6, RIO.Atom_J_MENU_OPTION_3, RIO.Atom_J_MENU_OPTION_5 };
+                public static List<DeviceAction> Seq_J_DEF_CMDS_IHBT_6_BU = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_6, RIO.Atom_J_MENU_OPTION_3, RIO.Atom_J_MENU_OPTION_6 };
+                public static List<DeviceAction> Seq_J_DEF_CMDS_IHBT_7_BU = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_6, RIO.Atom_J_MENU_OPTION_3, RIO.Atom_J_MENU_OPTION_7 };
 
                 // RWR display
                 public static List<DeviceAction> Seq_J_DEF_RWR_DSP_TYP = new List<DeviceAction>() { };
@@ -588,10 +609,17 @@ namespace VAICOM.Extensions.RIO
                 public static List<DeviceAction> Seq_J_DEF_RWR_AAA = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_6, RIO.Atom_J_MENU_OPTION_6, RIO.Atom_J_MENU_OPTION_3 };
                 public static List<DeviceAction> Seq_J_DEF_RWR_UNK = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_6, RIO.Atom_J_MENU_OPTION_6, RIO.Atom_J_MENU_OPTION_4 };
                 public static List<DeviceAction> Seq_J_DEF_RWR_FRND = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_6, RIO.Atom_J_MENU_OPTION_6, RIO.Atom_J_MENU_OPTION_5 };
+                public static List<DeviceAction> Seq_J_DEF_RWR_NORM_BU = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_6, RIO.Atom_J_MENU_OPTION_5, RIO.Atom_J_MENU_OPTION_1 };
+                public static List<DeviceAction> Seq_J_DEF_RWR_AIRB_BU = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_6, RIO.Atom_J_MENU_OPTION_5, RIO.Atom_J_MENU_OPTION_2 };
+                public static List<DeviceAction> Seq_J_DEF_RWR_AAA_BU = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_6, RIO.Atom_J_MENU_OPTION_5, RIO.Atom_J_MENU_OPTION_3 };
+                public static List<DeviceAction> Seq_J_DEF_RWR_UNK_BU = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_6, RIO.Atom_J_MENU_OPTION_5, RIO.Atom_J_MENU_OPTION_4 };
+                public static List<DeviceAction> Seq_J_DEF_RWR_FRND_BU = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_6, RIO.Atom_J_MENU_OPTION_5, RIO.Atom_J_MENU_OPTION_5 };
 
                 // Jammer ON/OFF (toggle)
                 public static List<DeviceAction> Seq_J_DEF_JMR_ON = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_6, RIO.Atom_J_MENU_OPTION_7 };
                 public static List<DeviceAction> Seq_J_DEF_JMR_SBY = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_6, RIO.Atom_J_MENU_OPTION_7 };
+                public static List<DeviceAction> Seq_J_DEF_JMR_ON_BU = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_6, RIO.Atom_J_MENU_OPTION_6 };
+                public static List<DeviceAction> Seq_J_DEF_JMR_SBY_BU = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_6, RIO.Atom_J_MENU_OPTION_6 };
 
                 // Dispense Order
                 public static List<DeviceAction> Seq_J_DEF_CMS_CTL_ORD = new List<DeviceAction>() { };

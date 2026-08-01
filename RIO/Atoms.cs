@@ -487,7 +487,7 @@
             public static DeviceAction Atom_J_DEF_CHF_PGM_20_84 = new DeviceAction() { device = Devices.RIO, command = start + 0, value = 0 };
             public static DeviceAction Atom_J_DEF_CHF_PGM_40_44 = new DeviceAction() { device = Devices.RIO, command = start + 0, value = 0 };
             public static DeviceAction Atom_J_DEF_CHF_PGM_40_84 = new DeviceAction() { device = Devices.RIO, command = start + 0, value = 0 };
-            public static DeviceAction Atom_J_DEF_CHF_PGM_R1_12 = new DeviceAction() { device = Devices.RIO, command = start + 0, value = 0 };
+            public static DeviceAction Atom_J_DEF_CHF_PGM_R1_82 = new DeviceAction() { device = Devices.RIO, command = start + 0, value = 0 };
 
             public static DeviceAction Atom_J_DEF_RWR_DSP_TYP = new DeviceAction() { device = Devices.RIO, command = start + 0, value = 0 };
             public static DeviceAction Atom_J_DEF_RWR_AIRB = new DeviceAction() { device = Devices.RIO, command = start + 0, value = 0 };

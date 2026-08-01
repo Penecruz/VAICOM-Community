@@ -188,7 +188,9 @@ namespace VAICOM.Extensions.RIO
             {"wMsgJ_WPN_AG_SPOT",               "AG Weapon Spot"                }, // not used
 
             {"wMsgJ_WPN_AG_SET_COMP_TGT",       "AG Attack Mode Target"         },
+            {"wMsgJ_WPN_AG_SET_COMP_IP",        "AG Attack Mode IP"             },
             {"wMsgJ_WPN_AG_SET_COMP_PILOT",     "AG Attack Mode Pilot"          },
+            {"wMsgJ_WPN_AG_SET_MAN",            "AG Attack Mode Manual"         },
 
             {"wMsgJ_WPN_AG_SET_SNGL",           "Set Release Single"            },
             {"wMsgJ_WPN_AG_SET_PAIRS",          "Set Release Pairs"             },
@@ -567,23 +569,32 @@ namespace VAICOM.Extensions.RIO
             {"wMsgJ_WLKMN_NEXT",                "Fast Forward"                  },
             {"wMsgJ_WLKMN_PREV",                "Rewind"                        },
 
-            {"wMsgJ_RDR_ASP_BEAM",              "Aspect Switch Beam"                },
-            {"wMsgJ_RDR_ASP_NOSE",              "Aspect Switch Nose"                },
-            {"wMsgJ_RDR_ASP_TAIL",              "Aspect Switch Tail"                },
+            {"wMsgJ_RDR_ASP_BEAM",              "Aspect Switch Beam"            },
+            {"wMsgJ_RDR_ASP_NOSE",              "Aspect Switch Nose"            },
+            {"wMsgJ_RDR_ASP_TAIL",              "Aspect Switch Tail"            },
             //{"wMsgPlaceHolder397",              "PlaceHolder397"                },
             //{"wMsgPlaceHolder398",              "PlaceHolder398"                },
             //{"wMsgPlaceHolder399",              "PlaceHolder399"                },
 
             // block: defensive
-            {"wMsgJ_DEF_CMS_MOD",               "CMS Mode"                      }, // indirect
-            {"wMsgJ_DEF_CMS_MOD_OFF",           "CMS Mode Off"                  },
-            {"wMsgJ_DEF_CMS_MOD_MAN",           "CMS Mode Manual"               },
-            {"wMsgJ_DEF_CMS_MOD_AUTO",          "CMS Mode Auto"                 },
+            {"wMsgJ_DEF_CMS_MOD",               "CMS/CMDS Mode"                 }, // indirect
+            {"wMsgJ_DEF_CMS_MOD_OFF",           "CMS/CMDS Mode Off"             },
+            {"wMsgJ_DEF_CMS_MOD_MAN",           "CMS/CMDS Mode Manual"          },
+            {"wMsgJ_DEF_CMS_MOD_AUTO",          "CMS/CMDS Mode Auto"            },
+            {"wMsgJ_DEF_CMS_MOD_SBY",           "CMDS Mode Standby"             },
+            {"wMsgJ_DEF_CMS_MOD_SEMI",          "CMDS Mode Semi"                },
+            {"wMsgJ_DEF_CMS_MOD_BYP",           "CMDS Mode Bypass"              },
 
             {"wMsgJ_DEF_FLR_MOD",               "Flares Mode"                   }, // not endpoint
             {"wMsgJ_DEF_FLR_MOD_PILOT",         "Flares Mode to Pilot"          },
             {"wMsgJ_DEF_FLR_MOD_NORM",          "Flares Mode to Normal"         },
             {"wMsgJ_DEF_FLR_MOD_MULTI",         "Flares Mode to Multi"          },
+
+            {"wMsgJ_DEF_MAN_PGM",               "Manual CMDS Program"                },
+            {"wMsgJ_DEF_MAN_PGM_1",             "Manual CMDS Program 1"              },
+            {"wMsgJ_DEF_MAN_PGM_2",             "Manual CMDS Program 2"              },
+            {"wMsgJ_DEF_MAN_PGM_3",             "Manual CMDS Program 3"              },
+            {"wMsgJ_DEF_MAN_PGM_4",             "Manual CMDS Program 4"              },
 
             {"wMsgJ_DEF_CHF_PGM",               "Chaff Program"                         },
             {"wMsgJ_DEF_CHF_PGM_RR_12",         "Chaff Program 1 (RR 12)"               },
@@ -593,7 +604,14 @@ namespace VAICOM.Extensions.RIO
             {"wMsgJ_DEF_CHF_PGM_20_84",         "Chaff Program 5 (20 84)"               },
             {"wMsgJ_DEF_CHF_PGM_40_44",         "Chaff Program 6 (40 44)"               },
             {"wMsgJ_DEF_CHF_PGM_40_84",         "Chaff Program 7 (40 84)"               },
-            {"wMsgJ_DEF_CHF_PGM_R1_12",         "Chaff Program 8 (R1 12)"               },
+            {"wMsgJ_DEF_CHF_PGM_R1_82",         "Chaff Program 8 (R1 82)"               },
+            {"wMsgJ_DEF_CMDS_IHBT_1",           "CMDS Inhibit Chaff"                    },
+            {"wMsgJ_DEF_CMDS_IHBT_2",           "CMDS Inhibit Flares"                   },
+            {"wMsgJ_DEF_CMDS_IHBT_3",           "CMDS Inhibit 01"                       },
+            {"wMsgJ_DEF_CMDS_IHBT_4",           "CMDS Inhibit 02"                       },
+            {"wMsgJ_DEF_CMDS_IHBT_5",           "CMDS Inhibit RWR"                      },
+            {"wMsgJ_DEF_CMDS_IHBT_6",           "CMDS Inhibit MWS"                      },
+            {"wMsgJ_DEF_CMDS_IHBT_7",           "CMDS Inhibit Jammer"                   },
 
             {"wMsgJ_DEF_RWR_DSP_TYP",           "RWR Display Type"              },
             {"wMsgJ_DEF_RWR_AIRB",              "RWR Mode Airborne"             },

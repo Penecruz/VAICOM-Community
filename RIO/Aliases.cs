@@ -110,6 +110,7 @@ namespace VAICOM.Extensions.RIO
             {"Scan Azimuth",                "wMsgJ_RDR_SCAN_AZ"                 },// not endpoint //
             {"Scan Azimuth Auto",           "wMsgJ_RDR_POS"                     },// for Azimuth
             {"Scan Center Left",            "wMsgJ_RDR_POS_CTR_L"               },
+            {"Scan Center",                 "wMsgJ_RDR_POS_CTR"                 },
             {"Scan Center Right",           "wMsgJ_RDR_POS_CTR_R"               },
             {"Scan Left",                   "wMsgJ_RDR_POS_L"                   },
             {"Scan Right",                  "wMsgJ_RDR_POS_R"                   },
@@ -159,8 +160,8 @@ namespace VAICOM.Extensions.RIO
             {"Stabilize Hold",              "wMsgJ_RDR_STAB_INDEF"              },
             {"Area Track",                  "wMsgJ_RDR_STAB_GROUND"             },
 
-            {"Eyeballs",                    "wMsgLANTIRN_Head_Eyeball"         },
-            {"Head Control",                 "wMsgLANTIRN_Head_Head"                },
+            {"Eyeballs",                    "wMsgLANTIRN_Head_Eyeball"          },
+            {"Head Control",                 "wMsgLANTIRN_Head_Head"            },
             //{"PlaceHolder098",              "wMsgPlaceHolder098"                },
             //{"PlaceHolder099",              "wMsgPlaceHolder099"                },
 
@@ -182,7 +183,9 @@ namespace VAICOM.Extensions.RIO
             {"AG Weapon Spot",              "wMsgJ_WPN_AG_SPOT"                 }, // not used
 
             {"Attack Mode Target",          "wMsgJ_WPN_AG_SET_COMP_TGT"         },
+            {"Attack Mode I P",             "wMsgJ_WPN_AG_SET_COMP_IP"          },
             {"Attack Mode Pilot",           "wMsgJ_WPN_AG_SET_COMP_PILOT"       },
+            {"Attack Mode Manual",          "wMsgJ_WPN_AG_SET_MAN"              },
 
             {"Set Release Single",          "wMsgJ_WPN_AG_SET_SNGL"             },
             {"Set Release Pairs",           "wMsgJ_WPN_AG_SET_PAIRS"            },
@@ -227,7 +230,7 @@ namespace VAICOM.Extensions.RIO
 
             {"Switch Lantern",              "wMsgJ_WPN_AG_UTIL_LANTIRN"         },
 
-            {"Go Air to Ground",            "wMsgJ_WPN_AG"                      }, // not use
+            {"Go Air to Ground",            "wMsgJ_WPN_AG"                      }, // not used
             {"Go Air to Air",               "wMsgJ_WPN_AA"                      }, // not used
 
             {"Select Stations",             "wMsgJ_WPN_AG_STN"                  },
@@ -582,15 +585,24 @@ namespace VAICOM.Extensions.RIO
             {"PlaceHolder399",              "wMsgPlaceHolder399"                },
 
             // block:defensive
-            {"Countermeasures Mode",        "wMsgJ_DEF_CMS_MOD"                 }, //
+            {"Countermeasures Mode",        "wMsgJ_DEF_CMS_MOD"                 }, //A/B and B(U)
             {"Countermeasures Off",         "wMsgJ_DEF_CMS_MOD_OFF"             },
             {"Countermeasures Manual",      "wMsgJ_DEF_CMS_MOD_MAN"             },
             {"Countermeasures Auto",        "wMsgJ_DEF_CMS_MOD_AUTO"            },
+            {"Countermeasures Standby",     "wMsgJ_DEF_CMS_MOD_SBY"             }, //B(U) Only
+            {"Countermeasures Semi",        "wMsgJ_DEF_CMS_MOD_SEMI"            }, //
+            {"Countermeasures Bypass",      "wMsgJ_DEF_CMS_MOD_BYP"             }, //
 
             {"Flares Mode",                 "wMsgJ_DEF_FLR_MOD"                 }, //
             {"Flares Mode Pilot",           "wMsgJ_DEF_FLR_MOD_PILOT"           },
             {"Flares Mode Normal",          "wMsgJ_DEF_FLR_MOD_NORM"            },
             {"Flares Mode Multi",           "wMsgJ_DEF_FLR_MOD_MULTI"           },
+
+            {"Manual Program",               "wMsgJ_DEF_MAN_PGM"                }, // hint
+            {"Manual Program 1",             "wMsgJ_DEF_MAN_PGM_1"              }, //B(U) Only
+            {"Manual Program 2",             "wMsgJ_DEF_MAN_PGM_2"              },
+            {"Manual Program 3",             "wMsgJ_DEF_MAN_PGM_3"              },
+            {"Manual Program 4",             "wMsgJ_DEF_MAN_PGM_4"              },
 
             {"Chaff Program",               "wMsgJ_DEF_CHF_PGM"                 }, // hint
             {"Chaff Program 1",             "wMsgJ_DEF_CHF_PGM_RR_12"           },
@@ -600,7 +612,16 @@ namespace VAICOM.Extensions.RIO
             {"Chaff Program 5",             "wMsgJ_DEF_CHF_PGM_20_84"           },
             {"Chaff Program 6",             "wMsgJ_DEF_CHF_PGM_40_44"           },
             {"Chaff Program 7",             "wMsgJ_DEF_CHF_PGM_40_84"           },
-            {"Chaff Program 8",             "wMsgJ_DEF_CHF_PGM_R1_12"           },
+            {"Chaff Program 8",             "wMsgJ_DEF_CHF_PGM_R1_82"           },
+
+            {"Inhibit Chaff",               "wMsgJ_DEF_CMDS_IHBT_1"             }, //B(U) only CMDS Inhibits 1-7
+            {"Inhibit Flares",              "wMsgJ_DEF_CMDS_IHBT_2"             },
+            {"Inhibit Zero One",            "wMsgJ_DEF_CMDS_IHBT_3"             },
+            {"Inhibit Zero Two",            "wMsgJ_DEF_CMDS_IHBT_4"             },
+            {"Inhibit R W R",               "wMsgJ_DEF_CMDS_IHBT_5"             },
+            {"Inhibit M W S",               "wMsgJ_DEF_CMDS_IHBT_6"             },
+            {"Inhibit Jammer",              "wMsgJ_DEF_CMDS_IHBT_7"             },
+
 
             {"Display",                     "wMsgJ_DEF_RWR_DSP_TYP"             }, // show hint: RWR options: Airborne/Normal/AAA/Unknown/Friendly
             {"Display Airborne",            "wMsgJ_DEF_RWR_AIRB"                },
