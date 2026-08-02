@@ -491,6 +491,9 @@ namespace VAICOM
                             case "wMsgJ_WPN_AG_SORDN_WPN_10": // 
                                 weaponstr = "TALD";
                                 break;
+                            case "wMsgJ_WPN_AG_SORDN_WPN_11": //
+                                weaponstr = "JDAM";
+                                break;
 
                         }
 
@@ -514,6 +517,20 @@ namespace VAICOM
                             if (have_GBU10) { action = action_GBU10; }
                         }
 
+                        if (weaponstr.Equals("JDAM"))
+                        {
+                            action = DeviceActionsLibrary.RIO.Atom_J_VOID;
+
+                            Extensions.RIO.DeviceAction action_GBU31 = helper.AGweaponsstate["GBU31"];
+                            Extensions.RIO.DeviceAction action_GBU38 = helper.AGweaponsstate["GBU38"];
+
+                            bool have_GBU31 = !action_GBU31.Equals(DeviceActionsLibrary.RIO.Atom_J_VOID);
+                            bool have_GBU38 = !action_GBU38.Equals(DeviceActionsLibrary.RIO.Atom_J_VOID);
+
+                            if (have_GBU38) { action = action_GBU38; }
+                            if (have_GBU31) { action = action_GBU31; }
+                        }
+
                         if (weaponstr.Equals("Mk82"))
                         {
                             action = DeviceActionsLibrary.RIO.Atom_J_VOID;
@@ -532,7 +549,7 @@ namespace VAICOM
                         }
                         else
                         {
-                            if (!weaponstr.Equals("GBU"))
+                            if (!weaponstr.Equals("GBU") && !weaponstr.Equals("JDAM"))
                             {
                                 action = helper.AGweaponsstate[weaponstr];
                             }
@@ -584,7 +601,7 @@ namespace VAICOM
                 }
 
                 // reject attack mode
-                if ((State.currentstate.riostate.amt && State.currentkey["command"].Equals("wMsgJ_WPN_AG_SET_COMP_TGT")) || (!State.currentstate.riostate.amt && State.currentkey["command"].Equals("wMsgJ_WPN_AG_SET_COMP_PILOT")))
+                if (State.currentstate.riostate.amt && State.currentkey["command"].Equals("wMsgJ_WPN_AG_SET_COMP_TGT"))
                 {
                     State.currentmessage.dspmsg = "AIRIO : Already done!\n";
                     State.currentmessage.msgdur = 5;
@@ -762,6 +779,27 @@ namespace VAICOM
                                     });
                                     return;
                                 }
+                            }
+                        }
+                        else
+                        {
+                            string buOnlyKey = "F-14BU:" + cmd;
+                            bool hasBUOverride = Extensions.RIO.DeviceActionsLibrary.Sequences.AuxCommands.ContainsKey(buOnlyKey);
+                            bool hasABEntry = commandTable.ContainsKey(cmd);
+                            bool isABEmpty = hasABEntry && commandTable[cmd].Count == 0;
+
+                            if (hasBUOverride && (!hasABEntry || isABEmpty))
+                            {
+                                State.currentmessage.dspmsg = "AIRIO : Command N/A to F-14A/B\n";
+                                State.currentmessage.msgdur = 3;
+                                State.currentmessage.extsequence = new List<Extensions.RIO.DeviceAction>();
+                                State.currentmessage.extsequence.Add(new Extensions.RIO.DeviceAction()
+                                {
+                                    device = 62,
+                                    command = 3725,
+                                    value = 1
+                                });
+                                return;
                             }
                         }
 

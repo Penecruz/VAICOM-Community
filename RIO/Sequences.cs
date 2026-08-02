@@ -174,6 +174,7 @@ namespace VAICOM.Extensions.RIO
                 public static List<DeviceAction> Seq_J_WPN_AG_SORDN_WPN_8 = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_4, RIO.Atom_J_MENU_OPTION_1, RIO.Atom_J_MENU_OPTION_1 };
                 public static List<DeviceAction> Seq_J_WPN_AG_SPOT = new List<DeviceAction>() { RIO.Atom_J_WPN_AG_SPOT };
                 public static List<DeviceAction> Seq_J_WPN_AG_SET_COMP_TGT = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_4, RIO.Atom_J_MENU_OPTION_2, RIO.Atom_J_MENU_OPTION_1 }; // was 2
+                public static List<DeviceAction> Seq_J_WPN_AG_SET_COMP_PILOT = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_4, RIO.Atom_J_MENU_OPTION_2, RIO.Atom_J_MENU_OPTION_2 }; // same
                 public static List<DeviceAction> Seq_J_WPN_AG_SET_COMP_IP = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_4, RIO.Atom_J_MENU_OPTION_2, RIO.Atom_J_MENU_OPTION_3 };
                 public static List<DeviceAction> Seq_J_WPN_AG_SET_MAN = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_4, RIO.Atom_J_MENU_OPTION_2, RIO.Atom_J_MENU_OPTION_4 };
                 public static List<DeviceAction> Seq_J_WPN_AG_SET_PAIRS = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_4, RIO.Atom_J_MENU_OPTION_3, RIO.Atom_J_MENU_OPTION_1 };
@@ -213,8 +214,8 @@ namespace VAICOM.Extensions.RIO
                 public static List<DeviceAction> Seq_J_WPN_AG_UTIL_LANTIRN = new List<DeviceAction>() { new DeviceAction() { device = Devices.TID, command = 3498, value = 1 }, new DeviceAction() { device = Devices.TID, command = 3498, value = 0 } }; //new DeviceAction() { device = Devices.TID, command = 3498, value = 0}, 
                 public static List<DeviceAction> Seq_J_WPN_AG_SORDN_WPN_9 = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_4, RIO.Atom_J_MENU_OPTION_1, RIO.Atom_J_MENU_OPTION_1 };
                 public static List<DeviceAction> Seq_J_WPN_AG_SORDN_WPN_10 = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_4, RIO.Atom_J_MENU_OPTION_1, RIO.Atom_J_MENU_OPTION_1 };
-                public static List<DeviceAction> Seq_J_WPN_AG_SET_SNGL = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_4, RIO.Atom_J_MENU_OPTION_3, RIO.Atom_J_MENU_OPTION_1 };
-                public static List<DeviceAction> Seq_J_WPN_AG_SET_COMP_PILOT = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_4, RIO.Atom_J_MENU_OPTION_2, RIO.Atom_J_MENU_OPTION_2 }; // same
+                public static List<DeviceAction> Seq_J_WPN_AG_SORDN_WPN_11 = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_4, RIO.Atom_J_MENU_OPTION_1, RIO.Atom_J_MENU_OPTION_1 };
+                public static List<DeviceAction> Seq_J_WPN_AG_SET_SNGL = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_4, RIO.Atom_J_MENU_OPTION_3, RIO.Atom_J_MENU_OPTION_1 };               
                 public static List<DeviceAction> Seq_J_WPN_AG_DROP_TANKS = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_2, RIO.Atom_J_MENU_OPTION_2, RIO.Atom_J_MENU_OPTION_2 };
 
                 public static List<DeviceAction> Seq_J_WPN_AG_STN = new List<DeviceAction>() { }; // not endpoint

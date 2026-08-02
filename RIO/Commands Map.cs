@@ -214,6 +214,7 @@ namespace VAICOM.Extensions.RIO
             {"wMsgJ_WPN_AG_UTIL_LANTIRN",       new List<List<DeviceAction>> { Macro.Seq_J_WPN_AG_UTIL_LANTIRN   }},
             {"wMsgJ_WPN_AG_SORDN_WPN_9",        new List<List<DeviceAction>> { Macro.Seq_J_MENU_MAIN, Macro.Seq_J_WPN_AG_SORDN_WPN_9    }},
             {"wMsgJ_WPN_AG_SORDN_WPN_10",       new List<List<DeviceAction>> { Macro.Seq_J_MENU_MAIN, Macro.Seq_J_WPN_AG_SORDN_WPN_10   }},
+            {"wMsgJ_WPN_AG_SORDN_WPN_11",       new List<List<DeviceAction>> { Macro.Seq_J_MENU_MAIN, Macro.Seq_J_WPN_AG_SORDN_WPN_10   }},
             {"wMsgJ_WPN_AG_SET_SNGL",           new List<List<DeviceAction>> { Macro.Seq_J_MENU_MAIN, Macro.Seq_J_WPN_AG_SET_SNGL       }},
             {"wMsgJ_WPN_AG_SET_COMP_PILOT",     new List<List<DeviceAction>> { Macro.Seq_J_MENU_MAIN, Macro.Seq_J_WPN_AG_SET_COMP_PILOT }},
             {"wMsgJ_WPN_AG_DROP_TANKS",         new List<List<DeviceAction>> { Macro.Seq_J_MENU_MAIN, Macro.Seq_J_WPN_AG_DROP_TANKS     }},

@@ -26,6 +26,8 @@ namespace VAICOM
                     {"GBU12",       null }, //DeviceActionsLibrary.RIO.Atom_J_VOID  },
                     {"GBU16",       null }, // DeviceActionsLibrary.RIO.Atom_J_VOID  },
                     {"GBU24",       null }, //DeviceActionsLibrary.RIO.Atom_J_VOID  },
+                    {"GBU31",       null }, //DeviceActionsLibrary.RIO.Atom_J_VOID  },
+                    {"GBU38",       null }, //DeviceActionsLibrary.RIO.Atom_J_VOID  },
                     {"Mk20",        null }, //DeviceActionsLibrary.RIO.Atom_J_VOID  },
                     {"LUU2",        null }, //DeviceActionsLibrary.RIO.Atom_J_VOID  },
                     {"BDU33",       null }, //DeviceActionsLibrary.RIO.Atom_J_VOID  },
@@ -66,6 +68,8 @@ namespace VAICOM
                     AGweaponsstate["GBU12"] = DeviceActionsLibrary.RIO.Atom_J_VOID;
                     AGweaponsstate["GBU16"] = DeviceActionsLibrary.RIO.Atom_J_VOID;
                     AGweaponsstate["GBU24"] = DeviceActionsLibrary.RIO.Atom_J_VOID;
+                    AGweaponsstate["GBU31"] = DeviceActionsLibrary.RIO.Atom_J_VOID;
+                    AGweaponsstate["GBU38"] = DeviceActionsLibrary.RIO.Atom_J_VOID;
                     AGweaponsstate["Mk20"] = DeviceActionsLibrary.RIO.Atom_J_VOID;
                     AGweaponsstate["LUU2"] = DeviceActionsLibrary.RIO.Atom_J_VOID;
                     AGweaponsstate["BDU33"] = DeviceActionsLibrary.RIO.Atom_J_VOID;
@@ -101,6 +105,8 @@ namespace VAICOM
                     if (classid.Contains("GBU") && classid.Contains("12")) { return "GBU12"; }
                     if (classid.Contains("GBU") && classid.Contains("16")) { return "GBU16"; }
                     if (classid.Contains("GBU") && classid.Contains("24")) { return "GBU24"; }
+                    if (classid.Contains("GBU") && classid.Contains("31")) { return "GBU31"; }
+                    if (classid.Contains("GBU") && classid.Contains("38")) { return "GBU38"; }
                     if (classid.Contains("MK") && classid.Contains("20")) { return "Mk20"; }
                     if (classid.Contains("SUU") && classid.Contains("25")) { return "LUU2"; }
                     if (classid.Contains("BDU")) { return "BDU33"; }
@@ -341,7 +347,7 @@ namespace VAICOM
                     { "wMsgJ_RDR_STAB"              ,"\"Stabilize [ 15 Seconds | 30 Seconds | 1 Minute | 2 Minutes | Hold | Ground ]\"\nStabilize radar for time period."   },
                     { "wMsgJ_RDR_MODE"              ,"\"Radar Mode [ Automatic | TWS | RWS ] \"\nSet radar scan / search mode" },
                     // Weapon
-                    { "wMsgJ_WPN_AG_SORDN"         ,"\"Select [ Mk81s | Mk82s | Mk83s | Mk84s | Zunis | Paveways | Rockeyes | LUUs | BDUs | TALD ]\"\nSelect AG Weapon."   },
+                    { "wMsgJ_WPN_AG_SORDN"         ,"\"Select [ Mk81s | Mk82s | Mk83s | Mk84s | Zunis | Paveways | Rockeyes | LUUs | BDUs | TALD | JDAM ]\"\nSelect AG Weapon."   },
                     { "wMsgJ_WPN_AG_RIP"           ,"\"Set Ripple [ Quantity.. | Time.. | Distance.. ]\"\nSet Ripple Parameters"   },
                     { "wMsgJ_WPN_AG_RIP_QTY"       ,"\"Set Ripple Quantity [ 2 | 3 | 4 | 6 | 8 | 16 | 28 ]\"\nSet Ripple Quantity parameter"   },
                     { "wMsgJ_WPN_AG_RIP_TIME"      ,"\"Set Ripple Time [ 10 | 20 | 50 | 100 | 200 | 500 | 990 ]\"\nSet Ripple Timer parameter (in ms)"   },

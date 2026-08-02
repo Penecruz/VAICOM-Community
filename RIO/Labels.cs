@@ -184,6 +184,7 @@ namespace VAICOM.Extensions.RIO
             {"wMsgJ_WPN_AG_SORDN_WPN_8",        "AG Select GBUs"                },
             {"wMsgJ_WPN_AG_SORDN_WPN_9",        "AG Select BDUs"                },
             {"wMsgJ_WPN_AG_SORDN_WPN_10",       "AG Select TALD"                },
+            {"wMsgJ_WPN_AG_SORDN_WPN_11",       "AG Select JDAM"                },
 
             {"wMsgJ_WPN_AG_SPOT",               "AG Weapon Spot"                }, // not used
 
