@@ -592,11 +592,11 @@ function ProcessRemoteCommand()
 	if clientmessage.type == base.vaicom.messagetype.settingschange 	then		
 		socket.try(base.vaicom.sender:send(base.vaicom.flags.raw))
 		return
-	end		
+	end
 	if clientmessage.type == base.vaicom.messagetype.requestupdate  	then			
 		base.vaicom.state.sendupdateall()
 		return
-	end				
+	end
 	if clientmessage.type == base.vaicom.messagetype.devicecontrol  	then
 		local now = base.Export.LoGetModelTime and base.Export.LoGetModelTime() or 0
 		local cumulativeDelay = 0
@@ -629,7 +629,7 @@ function ProcessRemoteCommand()
 		end
 		for i= 1, #clientmessage.cmdsequence do
 		  base.Export.LoSetCommand(clientmessage.cmdsequence[i])
-		end	
+		end
 		socket.try(base.vaicom.sender:send(base.vaicom.flags.raw))
 		return
 	end
@@ -1531,7 +1531,7 @@ base.vaicom.properties = {
 		local result = false
 		if Locator:getCommunicator() then
 			if Locator:getCommunicator():hasTransiver() then
-			result = true
+				result = true
 			end
 		end
 		return result
@@ -1559,7 +1559,7 @@ base.vaicom.helper = {
 	tablelength = function(inputlist)
 		local count = 0
 		if inputlist ~= nil and base.type(inputlist) == 'table'  then
-				for _ in base.pairs(inputlist) do count = count + 1 end	
+			for _ in base.pairs(inputlist) do count = count + 1 end
 		end
 		return count
 	end,
@@ -1643,14 +1643,40 @@ base.vaicom.filter = {
 		end
 		return Collection
 	end,
-	}
+}
+
 base.vaicom.objects = {
+	getGroups = function(coalition, category)
+		return base.coalition.getGroups and base.coalition.getGroups(coalition, category)
+	end,
+	getUnits = function(group)
+		return group:getUnits()
+	end,
+	getMissionCallsign = function(unit)
+		return base.vaicom.properties and base.vaicom.properties.missioncallsign and base.vaicom.properties.missioncallsign(unit) or ""
+	end,
+	addUniqueUnit = function(collection, unit)
+		if unit == nil then return end
+		-- Filter out late activation units that aren't activated yet
+		if unit.isActive and not unit:isActive() then return end
+		local uid = unit.id_
+		if uid == nil then
+			base.table.insert(collection, unit)
+			return
+		end
+		for _, existing in base.pairs(collection) do
+			if existing ~= nil and existing.id_ == uid then
+				return
+			end
+		end
+		base.table.insert(collection, unit)
+	end,
 	localRadios = function() 
 		local Collection = {}
 		if data.communicators ~= {} and base.vaicom.helper.tablelength(data.communicators) > 0 then
-		Collection = data.communicators
+			Collection = data.communicators
 		else
-		Collection = {}
+			Collection = {}
 		end
 		return Collection
 	end,
@@ -1682,21 +1708,6 @@ base.vaicom.objects = {
 	localAWACSs = function(getside)
 		local Collection = {}
 		Collection = base.coalition.getServiceProviders(getside, base.coalition.service.AWACS)
-
-		local function addUniqueUnit(unit)
-			if unit == nil then return end
-			local uid = unit.id_
-			if uid == nil then
-				base.table.insert(Collection, unit)
-				return
-			end
-			for _, existing in base.pairs(Collection) do
-				if existing ~= nil and existing.id_ == uid then
-					return
-				end
-			end
-			base.table.insert(Collection, unit)
-		end
 
 		local function isAwacsLikeUnit(unit)
 			if unit == nil then return false end
@@ -1730,9 +1741,7 @@ base.vaicom.objects = {
 			end
 
 			local callsign = ""
-			local okCallsign, valueCallsign = base.pcall(function()
-				return base.vaicom.properties and base.vaicom.properties.missioncallsign and base.vaicom.properties.missioncallsign(unit) or ""
-			end)
+			local okCallsign, valueCallsign = base.pcall(base.vaicom.objects.getMissionCallsign, unit)
 			if okCallsign and valueCallsign ~= nil then
 				callsign = base.string.upper(base.tostring(valueCallsign))
 			end
@@ -1749,18 +1758,16 @@ base.vaicom.objects = {
 			return false
 		end
 
-		local okGroups, planeGroups = base.pcall(function()
-			return base.coalition.getGroups and base.coalition.getGroups(getside, base.Group.Category.AIRPLANE)
-		end)
+		local okGroups, planeGroups = base.pcall(base.vaicom.objects.getGroups, getside, base.Group.Category.AIRPLANE)
 		if okGroups and planeGroups ~= nil and base.type(planeGroups) == "table" then
 			for _, g in base.pairs(planeGroups) do
-				local okUnits, units = base.pcall(function() return g:getUnits() end)
+				local okUnits, units = base.pcall(base.vaicom.objects.getUnits, g)
 				if okUnits and units ~= nil and base.type(units) == "table" then
 					for _, u in base.pairs(units) do
 						-- Check for late activation units and filter out if not activated
 						local inactive = (u.isActive and not u:isActive()) or false 
 						if not inactive and isAwacsLikeUnit(u) then
-							addUniqueUnit(u)
+							base.vaicom.objects.addUniqueUnit(Collection, u)
 						end
 					end
 				end
@@ -1793,45 +1800,24 @@ base.vaicom.objects = {
 		local Collection = {}
 		Collection = base.coalition.getPlayers and base.coalition.getPlayers(getside)
 
-		local function addUniqueUnit(unit)
-			if unit == nil then return end
-			-- Filter out late activation units that aren't activated yet
-			if unit.isActive and not unit:isActive() then return end
-			local uid = unit.id_
-			if uid == nil then
-				base.table.insert(Collection, unit)
-				return
-			end
-			for _, existing in base.pairs(Collection) do
-				if existing ~= nil and existing.id_ == uid then
-					return
-				end
-			end
-			base.table.insert(Collection, unit)
-		end
-
 		local function addGroupUnits(group)
 			if group == nil then return end
-			local okUnits, units = base.pcall(function() return group:getUnits() end)
+			local okUnits, units = base.pcall(base.vaicom.objects.getUnits, group)
 			if okUnits and units ~= nil and base.type(units) == "table" then
 				for _, u in base.pairs(units) do
-					addUniqueUnit(u)
+					base.vaicom.objects.addUniqueUnit(Collection, u)
 				end
 			end
 		end
 
-		local okPlaneGroups, planeGroups = base.pcall(function()
-			return base.coalition.getGroups and base.coalition.getGroups(getside, base.Group.Category.AIRPLANE)
-		end)
+		local okPlaneGroups, planeGroups = base.pcall(base.vaicom.objects.getGroups, getside, base.Group.Category.AIRPLANE)
 		if okPlaneGroups and planeGroups ~= nil and base.type(planeGroups) == "table" then
 			for _, g in base.pairs(planeGroups) do
 				addGroupUnits(g)
 			end
 		end
 
-		local okHeliGroups, heliGroups = base.pcall(function()
-			return base.coalition.getGroups and base.coalition.getGroups(getside, base.Group.Category.HELICOPTER)
-		end)
+		local okHeliGroups, heliGroups = base.pcall(base.vaicom.objects.getGroups, getside, base.Group.Category.HELICOPTER)
 		if okHeliGroups and heliGroups ~= nil and base.type(heliGroups) == "table" then
 			for _, g in base.pairs(heliGroups) do
 				addGroupUnits(g)
@@ -1845,40 +1831,24 @@ base.vaicom.objects = {
 		if getside == base.coalition.side.BLUE then opposite = base.coalition.side.RED end
 		if getside == base.coalition.side.RED then opposite = base.coalition.side.BLUE end
 
-		local function addUniqueUnit(unit)
-			if unit == nil then return end
-			-- Filter out late activation units that aren't activated yet
-			if unit.isActive and not unit:isActive() then return end
-			local uid = unit.id_
-			if uid == nil then
-				base.table.insert(Collection, unit)
-				return
-			end
-			for _, existing in base.pairs(Collection) do
-				if existing ~= nil and existing.id_ == uid then
-					return
-				end
-			end
-			base.table.insert(Collection, unit)
-		end
-
 		local function addUnits(units)
 			if units ~= nil and base.type(units) == "table" then
 				for _, u in base.pairs(units) do
-					addUniqueUnit(u)
+					base.vaicom.objects.addUniqueUnit(Collection, u)
 				end
 			end
 		end
 
 		local function addGroupAircraft(group)
 			if group == nil then return end
-			local okUnits, units = base.pcall(function() return group:getUnits() end)
+			local okUnits, units = base.pcall(base.vaicom.objects.getUnits, group)
 			if okUnits and units ~= nil and base.type(units) == "table" then
 				for _, u in base.pairs(units) do
-					addUniqueUnit(u)
+					base.vaicom.objects.addUniqueUnit(Collection, u)
 				end
 			end
 		end
+
 		if opposite then
 			addUnits(base.vaicom.objects.localJTACs(opposite))
 			addUnits(base.vaicom.objects.localAWACSs(opposite))
@@ -1886,18 +1856,14 @@ base.vaicom.objects = {
 			addUnits(base.vaicom.objects.localATCs(opposite))
 			addUnits(base.vaicom.objects.localAllies(opposite))
 
-			local okPlaneGroups, planeGroups = base.pcall(function()
-				return base.coalition.getGroups and base.coalition.getGroups(opposite, base.Group.Category.AIRPLANE)
-			end)
+			local okPlaneGroups, planeGroups = base.pcall(base.vaicom.objects.getGroups, opposite, base.Group.Category.AIRPLANE)
 			if okPlaneGroups and planeGroups ~= nil and base.type(planeGroups) == "table" then
 				for _, g in base.pairs(planeGroups) do
 					addGroupAircraft(g)
 				end
 			end
 
-			local okHeliGroups, heliGroups = base.pcall(function()
-				return base.coalition.getGroups and base.coalition.getGroups(opposite, base.Group.Category.HELICOPTER)
-			end)
+			local okHeliGroups, heliGroups = base.pcall(base.vaicom.objects.getGroups, opposite, base.Group.Category.HELICOPTER)
 			if okHeliGroups and heliGroups ~= nil and base.type(heliGroups) == "table" then
 				for _, g in base.pairs(heliGroups) do
 					addGroupAircraft(g)
@@ -1974,9 +1940,7 @@ base.vaicom.list = {
 				descName = base.string.upper(base.tostring(desc.displayName or desc.typeName or ""))
 			end
 			local cs = ""
-			local okCs, vCs = base.pcall(function()
-				return base.vaicom.properties and base.vaicom.properties.missioncallsign and base.vaicom.properties.missioncallsign(locator) or ""
-			end)
+			local okCs, vCs = base.pcall(base.vaicom.objects.getMissionCallsign, locator)
 			if okCs and vCs ~= nil then
 				cs = base.string.upper(base.tostring(vCs))
 			end
@@ -2073,15 +2037,15 @@ base.vaicom.list = {
 	end,
 }
 base.vaicom.get = { 
-	serverdata  ={	
+	serverdata = {
 		dcsversion = function()
 			local fullversionstring = base.tostring(base._ED_VERSION)
 			local versionnumber = base.string.sub(fullversionstring,5,9) or "X.X"
 			return versionnumber
-		end,				
-				}, 		
-	missiondata ={	
-		listby ={					
+		end,
+	},
+	missiondata = {
+		listby = {
 				Radio 	= function(sortfunction)
 					local Stack = base.vaicom.list.localRadios()
 					if Stack ~=nil and #Stack > 1 then base.table.sort(Stack, sortfunction) end 								
@@ -2493,8 +2457,8 @@ base.vaicom.state = {
 					if base.vaicom.state.icaooverrides.lastload and (now - base.vaicom.state.icaooverrides.lastload) < 30 then
 						return base.vaicom.state.icaooverrides.table or {}
 					end
-
-                 local overrides = {}
+					
+					local overrides = {}
 					local runtimeLoad = base.loadfile or loadfile
 					local candidatePaths = {}
 					if base.lfs and base.lfs.writedir then
@@ -2608,9 +2572,7 @@ base.vaicom.state = {
 					for _, atc in base.pairs(atcs) do
 						if atc then
 							local callsign = ""
-							local okCallsign, valueCallsign = base.pcall(function()
-								return base.vaicom.properties and base.vaicom.properties.missioncallsign and base.vaicom.properties.missioncallsign(atc) or ""
-							end)
+							local okCallsign, valueCallsign = base.pcall(base.vaicom.objects.getMissionCallsign, atc)
 							if okCallsign and valueCallsign ~= nil then
 								callsign = base.tostring(valueCallsign)
 							end
@@ -2693,9 +2655,7 @@ base.vaicom.state = {
 							descName = base.string.upper(base.tostring(desc.displayName or desc.typeName or ""))
 						end
 						local cs = ""
-						local okCs, vCs = base.pcall(function()
-							return base.vaicom.properties and base.vaicom.properties.missioncallsign and base.vaicom.properties.missioncallsign(locator) or ""
-						end)
+						local okCs, vCs = base.pcall(base.vaicom.objects.getMissionCallsign, locator)
 						if okCs and vCs ~= nil then
 							cs = base.string.upper(base.tostring(vCs))
 						end
@@ -2730,9 +2690,7 @@ base.vaicom.state = {
 									local distSq = (dx * dx) + (dz * dz)
 
 									local callsign = ""
-									local okCallsign, valueCallsign = base.pcall(function()
-										return base.vaicom.properties and base.vaicom.properties.missioncallsign and base.vaicom.properties.missioncallsign(atc) or ""
-									end)
+									local okCallsign, valueCallsign = base.pcall(base.vaicom.objects.getMissionCallsign, atc)
 									if okCallsign and valueCallsign ~= nil then
 										callsign = base.tostring(valueCallsign)
 									end
@@ -3129,9 +3087,7 @@ base.vaicom.state = {
 							local atcPoint = atc:getPoint()
 							if atcPoint then
 								local callsign = ""
-								local okCallsign, valueCallsign = base.pcall(function()
-									return base.vaicom.properties and base.vaicom.properties.missioncallsign and base.vaicom.properties.missioncallsign(atc) or ""
-								end)
+								local okCallsign, valueCallsign = base.pcall(base.vaicom.objects.getMissionCallsign, atc)
 								if okCallsign and valueCallsign ~= nil then
 									callsign = base.tostring(valueCallsign)
 								end
@@ -3490,7 +3446,7 @@ base.vaicom.state = {
 								24
 							)
 
-						local commChannelTable = k and (k.channels or k.Channels or k.presets or k.Presets) or nil
+							local commChannelTable = k and (k.channels or k.Channels or k.presets or k.Presets) or nil
 							local commChannelNames = k and (k.channelsNames or k.channelNames or k.ChannelsNames or k.names or k.Names) or nil
 							if base.type(commChannelTable) == "table" then
 								for chIdx, chValue in base.pairs(commChannelTable) do
@@ -4530,6 +4486,9 @@ base.vaicom.state = {
 				local completedPayload = { completed = true }
 				sendChunk(JSON:encode(addChunkHeader(completedPayload, 13)), 13)
 				profMark("encode+send chunks")
+
+				-- Clear receipients list Locator properties cache
+				resetPropCache()
 
 				if profiling then
 					base.print(base.string.format("VAICOM profiling (sendupdateall) | %-40s %8.3f ms", "TOTAL", (profClock() - profStart) * 1000))
