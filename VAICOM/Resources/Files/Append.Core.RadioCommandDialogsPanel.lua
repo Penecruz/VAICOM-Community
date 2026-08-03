@@ -4286,7 +4286,7 @@ base.vaicom.state = {
 							probe.playerMissionRadioChannels = copyStringList(diagCache.playerMissionRadioChannels)
 						end
 
-						if nowTick - (diagCache.weatherAt or -10000) >= 86400 then
+						if (diagCache.weatherAt == nil or diagCache.weatherAt == -10000) or ((nowTick - diagCache.weatherAt) >= 86400) then
 							collectWeatherSummary(missionObj)
 							diagCache.weatherAt = nowTick
 							diagCache.weatherType = probe.weatherType
