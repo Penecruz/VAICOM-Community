@@ -185,6 +185,8 @@ namespace VAICOM.Extensions.RIO
             {"wMsgJ_WPN_AG_SORDN_WPN_9",        "AG Select BDUs"                },
             {"wMsgJ_WPN_AG_SORDN_WPN_10",       "AG Select TALD"                },
             {"wMsgJ_WPN_AG_SORDN_WPN_11",       "AG Select JDAM"                },
+            {"wMsgJ_WPN_AG_SORDN_WPN_12",       "AG Select GBU31"               },
+            {"wMsgJ_WPN_AG_SORDN_WPN_13",       "AG Select GBU38"               },
 
             {"wMsgJ_WPN_AG_SPOT",               "AG Weapon Spot"                }, // not used
 
@@ -247,9 +249,15 @@ namespace VAICOM.Extensions.RIO
             {"wMsgJ_WPN_AG_STN_45",             "Select Stations 4,5"           },
 
             {"wMsgJ_WPN_AG_JDAM_WPT_TO_GGW",    "Send Waypoint to GGW"          },
-            {"wMsgJ_WPN_AG_JDAM_SEL_PP",        "Select GGW Pre Planned"        },
-            {"wMsgJ_WPN_AG_JDAM_PP_ALL_STN",    "Send Pre Planned to All Stations"},
             {"wMsgJ_WPN_AG_JDAM_DESIG_TO_STN",  "Send Designation to Station"   },
+            {"wMsgJ_WPN_AG_JDAM_PP_ALL_STN_1",  "PP 1 to GGW ALL STN"           },
+            {"wMsgJ_WPN_AG_JDAM_PP_ALL_STN_2",  "PP 2 to GGW ALL STN"           },
+            {"wMsgJ_WPN_AG_JDAM_PP_ALL_STN_3",  "PP 3 to GGW ALL STN"           },
+            {"wMsgJ_WPN_AG_JDAM_PP_ALL_STN_4",  "PP 4 to GGW ALL STN"           },
+            {"wMsgJ_WPN_AG_JDAM_PP_ALL_STN_5",  "PP 5 to GGW ALL STN"           },
+            {"wMsgJ_WPN_AG_JDAM_PP_ALL_STN_6",  "PP 6 to GGW ALL STN"           },
+            {"wMsgJ_WPN_AG_JDAM_PP_ALL_STN_7",  "PP 7 to GGW ALL STN"           },
+            {"wMsgJ_WPN_AG_JDAM_PP_ALL_STN_8",  "PP 8 to GGW ALL STN"           },
 
             //{"wMsgPlaceHolder155",              "PlaceHolder155"                },
             //{"wMsgPlaceHolder156",              "PlaceHolder156"                },

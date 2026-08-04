@@ -14,6 +14,23 @@ namespace VAICOM
             {
 
                 public static bool showingjestermenu = false;  // reset at mission start
+                // Candidate for Heatblur core inclusion as a generic proxy command.
+                private const int JesterWheelVisibleProxyCommand = 10079;
+
+                private static Extensions.RIO.DeviceAction BuildJesterWheelVisibilityAction(bool visible)
+                {
+                    return new Extensions.RIO.DeviceAction()
+                    {
+                        device = Extensions.RIO.DeviceActionsLibrary.Devices.PROXY,
+                        command = JesterWheelVisibleProxyCommand,
+                        value = visible ? 1 : 0
+                    };
+                }
+
+                private static bool IsMiniWheelVisibilityPatchActive()
+                {
+                    return State.activeconfig != null && State.activeconfig.RIO_MiniWheel_Enabled;
+                }
 
                 public static void ShowWheel(bool show)
                 {
@@ -42,6 +59,10 @@ namespace VAICOM
                             State.currentmessage = new DcsClient.Message.CommsMessage();
                             State.currentmessage.type = Messagetypes.DeviceControl;
                             State.currentmessage.extsequence = new List<Extensions.RIO.DeviceAction>();
+                            if (IsMiniWheelVisibilityPatchActive())
+                            {
+                                State.currentmessage.extsequence.Add(BuildJesterWheelVisibilityAction(true));
+                            }
 
                             List<Extensions.RIO.DeviceAction> openmenu = new List<Extensions.RIO.DeviceAction>();
                             Extensions.RIO.DeviceAction openmenuaction = new Extensions.RIO.DeviceAction()
@@ -108,6 +129,10 @@ namespace VAICOM
                             State.currentmessage = new DcsClient.Message.CommsMessage();
                             State.currentmessage.type = Messagetypes.DeviceControl;
                             State.currentmessage.extsequence = new List<Extensions.RIO.DeviceAction>();
+                            if (IsMiniWheelVisibilityPatchActive())
+                            {
+                                State.currentmessage.extsequence.Add(BuildJesterWheelVisibilityAction(false));
+                            }
 
                             List<Extensions.RIO.DeviceAction> openmenu = new List<Extensions.RIO.DeviceAction>();
                             Extensions.RIO.DeviceAction openmenuaction = new Extensions.RIO.DeviceAction()

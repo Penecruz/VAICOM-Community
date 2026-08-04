@@ -1,6 +1,7 @@
 dofile(LockOn_Options.script_path.."paths.lua")
 dofile(LockOn_Options.common_script_path.."devices_defs.lua")
 dofile(base_script_path.."materials.lua")
+-- Wheel visibility is driven by proxy_device.lua via JESTER_WHEEL_VISIBLE.
 
 indicator_type       = indicator_types.COMMON
 purposes 	 = {render_purpose.SCREENSPACE_INSIDE_COCKPIT,

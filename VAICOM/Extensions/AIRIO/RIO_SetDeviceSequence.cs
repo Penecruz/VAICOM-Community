@@ -494,6 +494,12 @@ namespace VAICOM
                             case "wMsgJ_WPN_AG_SORDN_WPN_11": //
                                 weaponstr = "JDAM";
                                 break;
+                            case "wMsgJ_WPN_AG_SORDN_WPN_12": //
+                                weaponstr = "GBU31";
+                                break;
+                            case "wMsgJ_WPN_AG_SORDN_WPN_13": //
+                                weaponstr = "GBU38";
+                                break;
 
                         }
 
@@ -830,12 +836,37 @@ namespace VAICOM
                         // always close menu wheel: add at the end
 
 
+                        bool explicitWheelInvocation = State.currentcommand != null
+                            && (State.currentcommand.isMenu() || State.currentcommand.isOptions());
+
+                        bool useMiniWheelVisibilityGate = State.activeconfig != null
+                            && State.activeconfig.RIO_MiniWheel_Enabled;
+
+                        if (useMiniWheelVisibilityGate && !explicitWheelInvocation)
+                        {
+                            State.currentmessage.extsequence.Add(new Extensions.RIO.DeviceAction()
+                            {
+                                device = Extensions.RIO.DeviceActionsLibrary.Devices.PROXY,
+                                command = 10079,
+                                value = 0
+                            });
+                        }
+
                         for (int i = 0; i < cache.Count; i++)
                         {
-                            State.currentmessage.extsequence.Add(new Extensions.RIO.DeviceAction());
-                            State.currentmessage.extsequence[i].command = cache[i].command;
-                            State.currentmessage.extsequence[i].device = cache[i].device;
-                            State.currentmessage.extsequence[i].value = cache[i].value;
+                            Extensions.RIO.DeviceAction source = cache[i];
+
+                            if (source == null)
+                            {
+                                continue;
+                            }
+
+                            State.currentmessage.extsequence.Add(new Extensions.RIO.DeviceAction()
+                            {
+                                command = source.command,
+                                device = source.device,
+                                value = source.value
+                            });
                         }
 
                         List<Extensions.RIO.DeviceAction> closemenu = new List<Extensions.RIO.DeviceAction>();

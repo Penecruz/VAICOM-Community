@@ -279,6 +279,18 @@ namespace VAICOM
                         }
                         break;
 
+                    case "airio.ggw.prepln":
+                        if (State.dll_installed_rio)
+                        {
+                            Client.DcsClient.Message.SetRioDeviceSequence_GGW_PrePlanned();
+                        }
+                        else
+                        {
+                            UI.Playsound.Sorry();
+                            vaProxy.WriteToLog("This command requires AIRIO extension.", Colors.Warning);
+                        }
+                        break;
+
                     case "airio.dev.laser.code":
                         if (State.dll_installed_rio)
                         {
