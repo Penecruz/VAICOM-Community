@@ -1031,16 +1031,17 @@ base.vaicom.categories = {
 }
 
 -- Per-update memoization for DCS engine boundary calls.
--- getCommunicator/getDesc/getPlayerName are queried by many properties for the
--- same Locator within a single sendupdateall pass. The object identities are
+-- getCommunicator/getDesc/getPlayerName/range are queried by many properties for the
+-- same Locator within a single update.all sendupdateall pass. The object identities are
 -- stable across one pass (live values like frequency are still read off the
 -- cached communicator each time), so we cache them and clear the cache at the
 -- start of every sendupdateall to avoid cross-update staleness.
-local propcache = { comm = {}, desc = {}, pname = {} }
+local propcache = { comm = {}, desc = {}, pname = {}, range = {} }
 local function resetPropCache()
 	propcache.comm = {}
 	propcache.desc = {}
 	propcache.pname = {}
+	propcache.range = {}
 end
 local function getCommunicatorCached(Locator)
 	if Locator == nil then return nil end
@@ -1077,20 +1078,31 @@ local function getPlayerNameCached(Locator)
 	if cached == false then return nil end
 	return cached
 end
+local function getRangeCached(Locator)
+	if Locator == nil then return nil end
+	local cached = propcache.range[Locator]
+	if cached == nil then
+		local selfPoint = base.vaicom.state.playerpoint
+		if not selfPoint then
+			selfPoint = Locator:getPoint()
+		end
+		local ipoint = Locator:getPoint()
+		local distsq = (ipoint.x - selfPoint.x) * (ipoint.x - selfPoint.x) + (ipoint.z - selfPoint.z) * (ipoint.z - selfPoint.z)
+		cached = base.math.floor(base.math.sqrt(distsq))
+		if cached == nil then cached = false end
+		propcache.range[Locator] = cached
+	end
+	if cached == false then return nil end
+	return cached
+end
 
 base.vaicom.properties = {
 	range = function(Locator)
-		local range = 0
-		if Locator ~= nil then
-			local selfPoint = data.pUnit and data.pUnit:getPosition().p 
-			if not selfPoint then
-				selfPoint = Locator:getPoint()
-			end
-			local ipoint = Locator:getPoint()
-			local distsq = (ipoint.x - selfPoint.x) * (ipoint.x - selfPoint.x) + (ipoint.z - selfPoint.z) * (ipoint.z - selfPoint.z)
-			range = base.math.floor(base.math.sqrt(distsq))
+		local range = getRangeCached(Locator)
+		if range ~= nil then
+			return range
 		end
-		return range
+		return 0
 	end,
 	pos = function(Locator)
 		if Locator ~= nil and Locator.getPoint then
@@ -1100,29 +1112,32 @@ base.vaicom.properties = {
 		end
 	end,
 	displayname = function(Locator)
-		local displaystr = getDescCached(Locator) and getDescCached(Locator).displayName or "unknown"
-		return displaystr
+		local displayname = getDescCached(Locator).displayName
+		if displayname ~= nil then
+			return displayname
+		end
+		return "unknown"
 	end,
 	typename = function(Locator)
-		local displaystr = "unknown"
-		if getDescCached(Locator) ~= nil then
-			displaystr = getDescCached(Locator).typeName
+		local typename = getDescCached(Locator).typeName
+		if typename ~= nil then
+			return typename
 		end
-		return displaystr
+		return "unknown"
 	end,
 	attributes = function(Locator)
-		local attr = {}
-		if getDescCached(Locator).attributes then
-			attr = getDescCached(Locator).attributes
+		local attr = getDescCached(Locator).attributes
+		if attr ~= nil then
+			return attr
 		end
-		return attr
+		return {}
 	end,
 	description = function(Locator)
-		local descr = {}
-		if getDescCached(Locator) then
-			descr = getDescCached(Locator)
+		local descr = getDescCached(Locator)
+		if descr ~= nil then
+			return descr
 		end
-		return descr
+		return {}
 	end,
 	missioncallsign = function(Locator)
 		local callsignStr = "unknown"
@@ -2024,15 +2039,15 @@ base.vaicom.list = {
 		end
 		return Listing
 	end,
-   localOpposition = function(selectstr)
+	localOpposition = function(selectstr)
 		local Listing = {}
 		local coalition = data.pUnit and data.pUnit:getCoalition()
 		if coalition then
 			Listing = base.vaicom.helper.mergetables(Listing, base.vaicom.objects.localOpposition(coalition))
 		end
 		if Listing ~= nil and #Listing > 1 then
-			base.table.sort(Listing, base.vaicom.helper.sortby.distance)
-		end
+            base.table.sort(Listing, base.vaicom.helper.sortby.distance)
+        end
 		return Listing
 	end,
 }
@@ -2067,8 +2082,8 @@ base.vaicom.get = {
 					return Stack
 				end,									
 				ATC 	= function(sortfunction, radio)
-					local Stack = base.vaicom.list.localATCs(radio)		
-					if Stack ~=nil and #Stack > 1 then base.table.sort(Stack, sortfunction) end 
+					local Stack = base.vaicom.list.localATCs(radio)
+					if Stack ~=nil and #Stack > 1 then base.table.sort(Stack, sortfunction) end
 					return Stack
 				end,									
 				AWACS 	= function(sortfunction, radio)
@@ -2246,6 +2261,7 @@ base.vaicom.state = {
 		airborne				= false, 
 		timer					= 0,
 		playerunit				= data.pUnit,
+		playerpoint				= data.pUnit and data.pUnit:getPosition().p,
 		payload					= {},
 		bpos					= {},
 		cpos					= {},
@@ -2311,14 +2327,21 @@ base.vaicom.state = {
 					profLast = now
 				end
 
+				-- Start each pass with a fresh per-Locator engine-call cache
+				-- This will be used by the sendupdateall function as well as this
+				-- is called after the update.all. This cache will be cleared once
+				-- the sendupdateall call completes to free up memory.
+				resetPropCache()
+
 				base.vaicom.state.timer								= data.initialized and base.Export.LoGetModelTime()
 				base.vaicom.state.tod								= data.initialized and base.Export.LoGetMissionStartTime()
 				base.vaicom.state.playerunit 						= data.initialized and data.pUnit
+				base.vaicom.state.playerpoint						= data.initialized and data.pUnit and data.pUnit:getPosition().p
 				base.vaicom.state.payload 							= data.initialized and base.Export.LoGetPayloadInfo()
 				base.vaicom.state.bpos								= data.initialized and base.Export.LoGetSelfData() and base.Export.LoGetSelfData().Position or nil
 				base.vaicom.state.cpos.type							= data.initialized and base.view.getCamType()
 				base.vaicom.state.cpos.loc							= data.initialized and base.view.getCamPoint()
-				base.vaicom.state.playercoalition 					= data.pUnit and base.DCS.getPlayerCoalition() or base.coalition.side.NEUTRAL	
+				base.vaicom.state.playercoalition 					= data.pUnit and base.DCS.getPlayerCoalition() or base.coalition.side.NEUTRAL
 				base.vaicom.state.riostate.canopy					= base.vaicom.state.activemessage.AIRIO and (data.initialized and base.Export.LoGetMechInfo().canopy and (base.Export.LoGetMechInfo().canopy.value >0)) or false
 				base.vaicom.state.riostate.rdr						= base.vaicom.state.activemessage.AIRIO and (data.initialized and base.GetDevice(0).get_argument_value and (base.GetDevice(0):get_argument_value(2012) >0)) or false
 				base.vaicom.state.riostate.pdstt					= base.vaicom.state.activemessage.AIRIO and (data.initialized and base.GetDevice(0).get_argument_value and (base.GetDevice(0):get_argument_value(11503) >0)) or false
@@ -2420,9 +2443,6 @@ base.vaicom.state = {
 					base.print(base.string.format("VAICOM profiling (sendupdateall) | %-40s %8.3f ms", label, (now - profLast) * 1000))
 					profLast = now
 				end
-
-				-- start each pass with a fresh per-Locator engine-call cache
-				resetPropCache()
 				
 				local function getMissionObject()
 					local function tryget(fn)

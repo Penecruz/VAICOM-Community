@@ -19,9 +19,9 @@ namespace VAICOM
 
             public static bool DetectNewMission()
             {
-                bool newmissiondetect = ((State.previousstate.id != State.currentstate.id) || 
-                                         (State.previousstate.playerunitid != State.currentstate.playerunitid) || 
-                                         (State.previousstate.missiontitle != State.currentstate.missiontitle) || 
+                bool newmissiondetect = ((State.previousstate.id != State.currentstate.id) ||
+                                         (State.previousstate.playerunitid != State.currentstate.playerunitid) ||
+                                         (State.previousstate.missiontitle != State.currentstate.missiontitle) ||
                                          (State.previousstate.easycomms != State.currentstate.easycomms));
 
                 if (!newmissionflag && newmissiondetect)

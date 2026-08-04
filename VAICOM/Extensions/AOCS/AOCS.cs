@@ -284,7 +284,7 @@ namespace VAICOM
                         // briefing command
                         if (State.currentkey["command"].Equals("readbriefing"))
                         {
-                                //UI.Playsound.Commandcomplete();
+                            //UI.Playsound.Commandcomplete();
                             if (State.currentstate.multiplayer && !State.activeconfig.MP_AOCS)
                             {
                                 UI.Playsound.Sorry();
@@ -679,6 +679,5 @@ namespace VAICOM
         }
     }
 }
-
 
 
