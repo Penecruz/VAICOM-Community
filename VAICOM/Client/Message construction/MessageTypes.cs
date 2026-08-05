@@ -116,6 +116,10 @@ namespace VAICOM
                     public int? kneeboard;
                     public bool? dictmode;
 
+                    // Only include the diagnostics probe data if OKB
+                    // is running and has an active connection.
+                    public bool includediagnostics;
+
                     public UpdateRequest()
                     {
                         debug = State.activeconfig.Debugmode;
@@ -126,6 +130,7 @@ namespace VAICOM
                         tgtdevname = State.currentradiodevicename.Replace(":", " ");
                         importmenus = State.activeconfig.ImportOtherMenu;
                         dictmode = State.Proxy.Dictation.IsOn();
+                        includediagnostics = Extensions.Kneeboard.OpenKneeboardBridge.HasActiveConnection;
                         //kneeboard = 1; // show kneeboard on PTT press, test
                     }
 

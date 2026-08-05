@@ -593,7 +593,8 @@ function ProcessRemoteCommand()
 		socket.try(base.vaicom.sender:send(base.vaicom.flags.raw))
 		return
 	end
-	if clientmessage.type == base.vaicom.messagetype.requestupdate  	then			
+	if clientmessage.type == base.vaicom.messagetype.requestupdate  	then
+		base.vaicom.state.includediagnostics = clientmessage.includediagnostics
 		base.vaicom.state.sendupdateall()
 		return
 	end
@@ -2244,6 +2245,7 @@ base.vaicom.set = {
 base.vaicom.state = {
 		debugmode 				= false,
 		profiling				= false, -- Logs performance timings to the DCS log when true.
+		includediagnostics		= false,
 		dcsversion 				= base.vaicom.get.serverdata.dcsversion(),
 		root 					= base.tostring(base.lfs.writedir()),
 		currentdir 				= base.tostring(base.lfs.currentdir()),
@@ -3366,6 +3368,10 @@ base.vaicom.state = {
 						weatherKeys = {},
 						weatherSummary = {},
 					}
+
+					if base.vaicom.state and not base.vaicom.state.includediagnostics then
+						return probe
+					end
 
 					local diagnosticsDebug = base.vaicom.state and base.vaicom.state.debugmode
 
