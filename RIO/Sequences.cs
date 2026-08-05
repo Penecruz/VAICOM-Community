@@ -228,6 +228,14 @@ namespace VAICOM.Extensions.RIO
                 public static List<DeviceAction> Seq_J_WPN_AG_JDAM_WPT_TO_GGW = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_4, RIO.Atom_J_MENU_OPTION_6, RIO.Atom_J_MENU_OPTION_1 };
                 public static List<DeviceAction> Seq_J_WPN_AG_JDAM_SEL_PP = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_4, RIO.Atom_J_MENU_OPTION_6, RIO.Atom_J_MENU_OPTION_2 };
                 public static List<DeviceAction> Seq_J_WPN_AG_JDAM_PP_ALL_STN = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_4, RIO.Atom_J_MENU_OPTION_6, RIO.Atom_J_MENU_OPTION_3 };
+                public static List<DeviceAction> Seq_J_WPN_AG_JDAM_PP_ALL_STN_1 = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_4, RIO.Atom_J_MENU_OPTION_6, RIO.Atom_J_MENU_OPTION_3, RIO.Atom_J_MENU_OPTION_1 };
+                public static List<DeviceAction> Seq_J_WPN_AG_JDAM_PP_ALL_STN_2 = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_4, RIO.Atom_J_MENU_OPTION_6, RIO.Atom_J_MENU_OPTION_3, RIO.Atom_J_MENU_OPTION_2 };
+                public static List<DeviceAction> Seq_J_WPN_AG_JDAM_PP_ALL_STN_3 = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_4, RIO.Atom_J_MENU_OPTION_6, RIO.Atom_J_MENU_OPTION_3, RIO.Atom_J_MENU_OPTION_3 };
+                public static List<DeviceAction> Seq_J_WPN_AG_JDAM_PP_ALL_STN_4 = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_4, RIO.Atom_J_MENU_OPTION_6, RIO.Atom_J_MENU_OPTION_3, RIO.Atom_J_MENU_OPTION_4 };
+                public static List<DeviceAction> Seq_J_WPN_AG_JDAM_PP_ALL_STN_5 = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_4, RIO.Atom_J_MENU_OPTION_6, RIO.Atom_J_MENU_OPTION_3, RIO.Atom_J_MENU_OPTION_5 };
+                public static List<DeviceAction> Seq_J_WPN_AG_JDAM_PP_ALL_STN_6 = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_4, RIO.Atom_J_MENU_OPTION_6, RIO.Atom_J_MENU_OPTION_3, RIO.Atom_J_MENU_OPTION_6 };
+                public static List<DeviceAction> Seq_J_WPN_AG_JDAM_PP_ALL_STN_7 = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_4, RIO.Atom_J_MENU_OPTION_6, RIO.Atom_J_MENU_OPTION_3, RIO.Atom_J_MENU_OPTION_7 };
+                public static List<DeviceAction> Seq_J_WPN_AG_JDAM_PP_ALL_STN_8 = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_4, RIO.Atom_J_MENU_OPTION_6, RIO.Atom_J_MENU_OPTION_3, RIO.Atom_J_MENU_OPTION_8 };
                 public static List<DeviceAction> Seq_J_WPN_AG_JDAM_DESIG_TO_STN = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_4, RIO.Atom_J_MENU_OPTION_6, RIO.Atom_J_MENU_OPTION_4 };
 
                 public static List<DeviceAction> Seq_PlaceHolder155 = new List<DeviceAction>() { RIO.Atom_J_RAD_DL_MAJ1_0 };

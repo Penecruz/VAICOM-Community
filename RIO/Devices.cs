@@ -14,6 +14,7 @@
 
         public static class Devices
         {
+            public static int PROXY = 1;
             public static int ICS = 2;
             public static int ARC159 = 3;
             public static int ARC182 = 4;

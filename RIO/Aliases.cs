@@ -179,7 +179,9 @@ namespace VAICOM.Extensions.RIO
             {"Select Paveways",             "wMsgJ_WPN_AG_SORDN_WPN_8"          },
             {"Select Bee Dee Yous",         "wMsgJ_WPN_AG_SORDN_WPN_9"          },
             {"Select TALD",                 "wMsgJ_WPN_AG_SORDN_WPN_10"         },
-            {"Select J DAMS",               "wMsgJ_WPN_AG_SORDN_WPN_11"         },
+            {"Select J DAMS",               "wMsgJ_WPN_AG_SORDN_WPN_11"         },            
+            {"Select Thirty Ones",          "wMsgJ_WPN_AG_SORDN_WPN_12"         },
+            {"Select Thirty Eights",        "wMsgJ_WPN_AG_SORDN_WPN_13"         },
 
             {"AG Weapon Spot",              "wMsgJ_WPN_AG_SPOT"                 }, // not used
 
@@ -244,8 +246,14 @@ namespace VAICOM.Extensions.RIO
             {"Select Stations 4 5",         "wMsgJ_WPN_AG_STN_45"               },
 
             {"Send Waypoint to G G W",      "wMsgJ_WPN_AG_JDAM_WPT_TO_GGW"        },
-            {"Select G G W Pre Planned",      "wMsgJ_WPN_AG_JDAM_SEL_PP"          },
-            {"Send Pre Planned to all Stations", "wMsgJ_WPN_AG_JDAM_PP_ALL_STN"   },
+            {"Send Pre Planned one to All",    "wMsgJ_WPN_AG_JDAM_PP_ALL_STN_1"    },
+            {"Send Pre Planned two to All",    "wMsgJ_WPN_AG_JDAM_PP_ALL_STN_2"    },
+            {"Send Pre Planned three to All",  "wMsgJ_WPN_AG_JDAM_PP_ALL_STN_3"    },
+            {"Send Pre Planned four to All",   "wMsgJ_WPN_AG_JDAM_PP_ALL_STN_4"    },
+            {"Send Pre Planned five to All",   "wMsgJ_WPN_AG_JDAM_PP_ALL_STN_5"    },
+            {"Send Pre Planned six to All",    "wMsgJ_WPN_AG_JDAM_PP_ALL_STN_6"    },
+            {"Send Pre Planned seven to All",  "wMsgJ_WPN_AG_JDAM_PP_ALL_STN_7"    },
+            {"Send Pre Planned eight to All",  "wMsgJ_WPN_AG_JDAM_PP_ALL_STN_8"    },
             {"Send Designation to Station", "wMsgJ_WPN_AG_JDAM_DESIG_TO_STN"      },            
 
             // block: radio

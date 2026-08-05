@@ -77,7 +77,8 @@ local string_shift_large = large_font_scale * string_shift
 
 local grid_origin = create_origin()
 grid_origin.init_pos = {cx * aspect, -cy, 0}
-grid_origin.controllers = {{"show"}}
+grid_origin.element_params = {"JESTER_WHEEL_VISIBLE"}
+grid_origin.controllers = {{"show"}, {"parameter_in_range", 0, 0.9, 1.1}}
 
 local small = 0.01 * scale
 

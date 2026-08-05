@@ -374,10 +374,13 @@ namespace VAICOM
                                             if (thisfile.AIRIO) // 
                                             {
                                                 bool isF14JesterMiniWheelFile =
-                                                    !string.IsNullOrWhiteSpace(thisfile.installfolder)
-                                                    && thisfile.installfolder.Equals("Mods\\aircraft\\F14\\Cockpit\\Scripts\\JesterAI", StringComparison.OrdinalIgnoreCase)
-                                                    && (thisfile.filename.Equals("JesterAI_Page.lua", StringComparison.OrdinalIgnoreCase)
-                                                        || thisfile.filename.Equals("init.lua", StringComparison.OrdinalIgnoreCase));
+                                                    (!string.IsNullOrWhiteSpace(thisfile.installfolder)
+                                                     && thisfile.installfolder.Equals("Mods\\aircraft\\F14\\Cockpit\\Scripts\\JesterAI", StringComparison.OrdinalIgnoreCase)
+                                                     && (thisfile.filename.Equals("JesterAI_Page.lua", StringComparison.OrdinalIgnoreCase)
+                                                         || thisfile.filename.Equals("init.lua", StringComparison.OrdinalIgnoreCase)))
+                                                    || (!string.IsNullOrWhiteSpace(thisfile.installfolder)
+                                                        && thisfile.installfolder.Equals("Mods\\aircraft\\F14\\Cockpit", StringComparison.OrdinalIgnoreCase)
+                                                        && thisfile.filename.Equals("proxy_device.lua", StringComparison.OrdinalIgnoreCase));
 
                                                 bool airioFeatureEnabledForFile = State.dll_installed_rio
                                                     && (isF14JesterMiniWheelFile

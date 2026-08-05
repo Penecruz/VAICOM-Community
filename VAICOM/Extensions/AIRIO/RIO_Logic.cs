@@ -38,6 +38,27 @@ namespace VAICOM
 
                 };
 
+                private static readonly string[] AGweaponsmenuorder = new string[]
+                {
+                    "Mk81",
+                    "Mk82",
+                    "Mk83",
+                    "Mk84",
+                    "Zuni",
+                    "GBU10",
+                    "GBU12",
+                    "GBU16",
+                    "GBU24",
+                    "GBU31",
+                    "GBU38",
+                    "Mk20",
+                    "LUU2",
+                    "BDU33",
+                    "Mk82A",
+                    "Mk82SE",
+                    "TALD"
+                };
+
                 public static DeviceAction GetAtom(int num)
                 {
                     DeviceAction value = DeviceActionsLibrary.RIO.Atom_J_VOID;
@@ -138,16 +159,14 @@ namespace VAICOM
                         resetAGweapons();
                         int counter = 0;
 
-                        Dictionary<string, DeviceAction> readdict = new Dictionary<string, DeviceAction>(AGweaponsstate);
-
-                        foreach (KeyValuePair<string, DeviceAction> entry in readdict)
+                        foreach (string weapon in AGweaponsmenuorder)
                         {
-                            if (entry.Value.Equals(DeviceActionsLibrary.RIO.Atom_J_VOID)) // wpn not identified yet
+                            if (AGweaponsstate[weapon].Equals(DeviceActionsLibrary.RIO.Atom_J_VOID)) // wpn not identified yet
                             {
                                 foreach (Server.payloadstation station in State.currentstate.payload.Stations)
                                 {
                                     string wpn = extractweapon(station.CLSID);
-                                    if (entry.Key.Equals(wpn) && station.count > 0)
+                                    if (weapon.Equals(wpn) && station.count > 0)
                                     {
                                         Log.Write("found new AG weapon!" + wpn, Colors.Inline);
                                         counter += 1;

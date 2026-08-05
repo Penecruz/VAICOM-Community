@@ -256,6 +256,30 @@ namespace VAICOM
                   kneeboard = false,
                 } },
 
+                {"2.8 proxy_device.lua",new Server.LuaFile
+                { fileid = "8C458AFD-27CF-4C12-A3C9-2E9F558C6B25",
+                  filename = "proxy_device.lua",
+                  installfolder = "Mods\\aircraft\\F14\\Cockpit",
+                  installfolder_legacy = "Mods\\aircraft\\F14\\Cockpit",
+                  append = false,
+                  root = true,
+                  hardreset = true,
+                  orig = Properties.Resources.ResourceManager.GetString("Orig_F14_proxy_device"),
+                  orig_legacy = Properties.Resources.ResourceManager.GetString("Orig_F14_proxy_device"),
+                  source = Properties.Resources.ResourceManager.GetString("Append_F14_proxy_device"),
+                  source_legacy = Properties.Resources.ResourceManager.GetString("Append_F14_proxy_device"),
+                  version ="2.8",
+                  canremove = true,
+                  reset = false,
+                  //ACTIVE:
+                  install = true,
+                  export = false,
+                  autoremove  = false,
+                  quiet  = true,
+                  AIRIO = true,
+                  kneeboard = false,
+                } },
+
                 // ---- F-4E WSO interface.js
                  {"2.9 WSO Wheel Interface.js",new Server.LuaFile
                 { fileid = "2D8D5F9E-7721-4FCD-ADCB-C04F1294F986",

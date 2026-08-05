@@ -176,6 +176,8 @@ namespace VAICOM.Extensions.RIO
             { "wMsgJ_WPN_AG_SORDN_WPN_9" ,      new CommandInfo { uniqueid = 23409, name = "wMsgJ_WPN_AG_SORDN_WPN_9",      displayname = Labels.aicommands["wMsgJ_WPN_AG_SORDN_WPN_9"], enabled = true     } },
             { "wMsgJ_WPN_AG_SORDN_WPN_10" ,     new CommandInfo { uniqueid = 23410, name = "wMsgJ_WPN_AG_SORDN_WPN_10",     displayname = Labels.aicommands["wMsgJ_WPN_AG_SORDN_WPN_10"], enabled = true    } },
             { "wMsgJ_WPN_AG_SORDN_WPN_11" ,     new CommandInfo { uniqueid = 23411, name = "wMsgJ_WPN_AG_SORDN_WPN_11",     displayname = Labels.aicommands["wMsgJ_WPN_AG_SORDN_WPN_11"], enabled = true    } },
+            { "wMsgJ_WPN_AG_SORDN_WPN_12" ,     new CommandInfo { uniqueid = 23496, name = "wMsgJ_WPN_AG_SORDN_WPN_12",     displayname = Labels.aicommands["wMsgJ_WPN_AG_SORDN_WPN_12"], enabled = true    } },
+            { "wMsgJ_WPN_AG_SORDN_WPN_13" ,     new CommandInfo { uniqueid = 23497, name = "wMsgJ_WPN_AG_SORDN_WPN_13",     displayname = Labels.aicommands["wMsgJ_WPN_AG_SORDN_WPN_13"], enabled = true    } },
             { "wMsgJ_WPN_AG_SPOT" ,             new CommandInfo { uniqueid = 23412, name = "wMsgJ_WPN_AG_SPOT",             displayname = Labels.aicommands["wMsgJ_WPN_AG_SPOT"]   } }, // not used
             { "wMsgJ_WPN_AG_SET_COMP_TGT" ,     new CommandInfo { uniqueid = 23413, name = "wMsgJ_WPN_AG_SET_COMP_TGT",     displayname = Labels.aicommands["wMsgJ_WPN_AG_SET_COMP_TGT"], enabled = true     } },
             { "wMsgJ_WPN_AG_SET_PAIRS" ,        new CommandInfo { uniqueid = 23414, name = "wMsgJ_WPN_AG_SET_PAIRS",        displayname = Labels.aicommands["wMsgJ_WPN_AG_SET_PAIRS"], enabled = true        } },
@@ -228,11 +230,17 @@ namespace VAICOM.Extensions.RIO
             { "wMsgJ_WPN_AG_STN_45" ,           new CommandInfo { uniqueid = 23459, name = "wMsgJ_WPN_AG_STN_45",           displayname = Labels.aicommands["wMsgJ_WPN_AG_STN_45"], enabled = true          } },
 
             { "wMsgJ_WPN_AG_JDAM_WPT_TO_GGW" ,   new CommandInfo { uniqueid = 23460, name = "wMsgJ_WPN_AG_JDAM_WPT_TO_GGW" ,   displayname = Labels.aicommands["wMsgJ_WPN_AG_JDAM_WPT_TO_GGW"], enabled = true   } },
-            { "wMsgJ_WPN_AG_JDAM_SEL_PP" ,       new CommandInfo { uniqueid = 23461, name = "wMsgJ_WPN_AG_JDAM_SEL_PP" ,       displayname = Labels.aicommands["wMsgJ_WPN_AG_JDAM_SEL_PP"], enabled = true       } },
-            { "wMsgJ_WPN_AG_JDAM_PP_ALL_STN" ,   new CommandInfo { uniqueid = 23462, name = "wMsgJ_WPN_AG_JDAM_PP_ALL_STN" ,   displayname = Labels.aicommands["wMsgJ_WPN_AG_JDAM_PP_ALL_STN"], enabled = true   } },
             { "wMsgJ_WPN_AG_JDAM_DESIG_TO_STN" , new CommandInfo { uniqueid = 23463, name = "wMsgJ_WPN_AG_JDAM_DESIG_TO_STN" , displayname = Labels.aicommands["wMsgJ_WPN_AG_JDAM_DESIG_TO_STN"], enabled = true } },
             { "wMsgJ_WPN_AG_SET_COMP_IP" ,       new CommandInfo { uniqueid = 23464, name = "wMsgJ_WPN_AG_SET_COMP_IP" ,       displayname = Labels.aicommands["wMsgJ_WPN_AG_SET_COMP_IP"], enabled = true       } },
             { "wMsgJ_WPN_AG_SET_MAN" ,           new CommandInfo { uniqueid = 23465, name = "wMsgJ_WPN_AG_SET_MAN" ,           displayname = Labels.aicommands["wMsgJ_WPN_AG_SET_MAN"], enabled = true           } },            
+            { "wMsgJ_WPN_AG_JDAM_PP_ALL_STN_1" , new CommandInfo { uniqueid = 23466, name = "wMsgJ_WPN_AG_JDAM_PP_ALL_STN_1" , displayname = Labels.aicommands["wMsgJ_WPN_AG_JDAM_PP_ALL_STN_1"], enabled = true } },
+            { "wMsgJ_WPN_AG_JDAM_PP_ALL_STN_2" , new CommandInfo { uniqueid = 23467, name = "wMsgJ_WPN_AG_JDAM_PP_ALL_STN_2" , displayname = Labels.aicommands["wMsgJ_WPN_AG_JDAM_PP_ALL_STN_2"], enabled = true } },
+            { "wMsgJ_WPN_AG_JDAM_PP_ALL_STN_3" , new CommandInfo { uniqueid = 23468, name = "wMsgJ_WPN_AG_JDAM_PP_ALL_STN_3" , displayname = Labels.aicommands["wMsgJ_WPN_AG_JDAM_PP_ALL_STN_3"], enabled = true } },
+            { "wMsgJ_WPN_AG_JDAM_PP_ALL_STN_4" , new CommandInfo { uniqueid = 23469, name = "wMsgJ_WPN_AG_JDAM_PP_ALL_STN_4" , displayname = Labels.aicommands["wMsgJ_WPN_AG_JDAM_PP_ALL_STN_4"], enabled = true } },
+            { "wMsgJ_WPN_AG_JDAM_PP_ALL_STN_5" , new CommandInfo { uniqueid = 23470, name = "wMsgJ_WPN_AG_JDAM_PP_ALL_STN_5" , displayname = Labels.aicommands["wMsgJ_WPN_AG_JDAM_PP_ALL_STN_5"], enabled = true } },
+            { "wMsgJ_WPN_AG_JDAM_PP_ALL_STN_6" , new CommandInfo { uniqueid = 23471, name = "wMsgJ_WPN_AG_JDAM_PP_ALL_STN_6" , displayname = Labels.aicommands["wMsgJ_WPN_AG_JDAM_PP_ALL_STN_6"], enabled = true } },
+            { "wMsgJ_WPN_AG_JDAM_PP_ALL_STN_7" , new CommandInfo { uniqueid = 23472, name = "wMsgJ_WPN_AG_JDAM_PP_ALL_STN_7" , displayname = Labels.aicommands["wMsgJ_WPN_AG_JDAM_PP_ALL_STN_7"], enabled = true } },
+            { "wMsgJ_WPN_AG_JDAM_PP_ALL_STN_8" , new CommandInfo { uniqueid = 23473, name = "wMsgJ_WPN_AG_JDAM_PP_ALL_STN_8" , displayname = Labels.aicommands["wMsgJ_WPN_AG_JDAM_PP_ALL_STN_8"], enabled = true } },
             
             // end of Weapons 23400 - 23499
 
