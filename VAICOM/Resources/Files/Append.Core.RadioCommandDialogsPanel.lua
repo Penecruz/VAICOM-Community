@@ -2570,44 +2570,82 @@ base.vaicom.state = {
 					return nil
 				end
 
-				local function resolveIcaoForAtc(callsign, atcName)
-					local mappedMeta = resolveIcaoMetaForAtc(callsign, atcName)
-					if mappedMeta ~= nil and mappedMeta.icao ~= nil then
-						return mappedMeta.icao
+				-- Resolve every ATC's callsign/name/icao/meta/point exactly once per
+				-- sendupdateall pass.
+				local atcDescriptors = nil -- memoized for this pass
+				local function buildAtcDescriptors()
+					if atcDescriptors ~= nil then
+						return atcDescriptors
 					end
-
-					local direct = extractIcaoToken(callsign)
-					if direct ~= nil then
-						return direct
-					end
-
-					return nil
-				end
-
-				local function buildAllAtcIcaoTypes()
-					local result = {}
+					local list = {}
 					local atcs = base.vaicom.state and base.vaicom.state.availablerecipients and base.vaicom.state.availablerecipients.ATC
 					if base.type(atcs) ~= "table" then
-						return result
+						atcDescriptors = list
+						return list
 					end
-
 					for _, atc in base.pairs(atcs) do
 						if atc then
 							local callsign = ""
-							local okCallsign, valueCallsign = base.pcall(base.vaicom.objects.getMissionCallsign, atc)
+							local okCallsign, valueCallsign = base.pcall(function()
+								return base.vaicom.properties and base.vaicom.properties.missioncallsign and base.vaicom.properties.missioncallsign(atc) or ""
+							end)
 							if okCallsign and valueCallsign ~= nil then
 								callsign = base.tostring(valueCallsign)
 							end
 
+							local atcDesc = base.vaicom.properties.description(atc)
 							local atcName = ""
-							local okDescName, atcDesc = base.pcall(function() return atc:getDesc() end)
-							if okDescName and atcDesc ~= nil then
+							if atcDesc ~= nil then
 								atcName = base.tostring(atcDesc.displayName or atcDesc.typeName or "")
 							end
 
+							local shortCallsign = ""
+							local okShort, valueShort = base.pcall(function()
+								return base.vaicom.properties and base.vaicom.properties.callsign and base.vaicom.properties.callsign(atc) or ""
+							end)
+							if okShort and valueShort ~= nil then
+								shortCallsign = base.tostring(valueShort)
+							end
+
+							local meta = resolveIcaoMetaForAtc(callsign, atcName)
+							local icao
+							if meta ~= nil and meta.icao ~= nil then
+								icao = meta.icao
+							else
+								icao = extractIcaoToken(callsign)
+							end
+
+							local point = nil
+							if atc.getPoint then
+								point = atc:getPoint()
+							end
+
+							base.table.insert(list, {
+								locator = atc,
+								point = point,
+								callsign = callsign,
+								shortCallsign = shortCallsign,
+								atcName = atcName,
+								meta = meta,
+								icao = icao,
+							})
+						end
+					end
+					atcDescriptors = list
+					return list
+				end
+
+				local function buildAllAtcIcaoTypes()
+					local result = {}
+					for _, d in base.pairs(buildAtcDescriptors()) do
+						local atc = d.locator
+						if atc then
+							local callsign = d.callsign
+							local atcName = d.atcName
+
 							local normalizedCallsign = normalizeIcaoKey(callsign)
 							local normalizedAtcName = normalizeIcaoKey(atcName)
-							local meta = resolveIcaoMetaForAtc(callsign, atcName)
+							local meta = d.meta
 							if meta ~= nil then
 								local typeCode = base.string.upper(base.tostring(meta.type or ""))
 								if typeCode == "MIL" or typeCode == "CIV" or typeCode == "JOINT" then
@@ -2627,13 +2665,7 @@ base.vaicom.state = {
 										result[upperCallsign] = typeCode
 									end
 
-									local shortCallsign = ""
-									local okShort, valueShort = base.pcall(function()
-										return base.vaicom.properties and base.vaicom.properties.callsign and base.vaicom.properties.callsign(atc) or ""
-									end)
-									if okShort and valueShort ~= nil then
-										shortCallsign = base.string.upper(base.tostring(valueShort))
-									end
+									local shortCallsign = base.string.upper(base.tostring(d.shortCallsign or ""))
 									if shortCallsign ~= "" then
 										result[shortCallsign] = typeCode
 									end
@@ -2669,75 +2701,42 @@ base.vaicom.state = {
 						return false
 					end
 
-					local function isHeliportAtc(locator)
-						if locator == nil then return false end
-						local descName = ""
-						local okDesc, desc = base.pcall(function() return locator:getDesc() end)
-						if okDesc and desc ~= nil then
-							descName = base.string.upper(base.tostring(desc.displayName or desc.typeName or ""))
-						end
-						local cs = ""
-						local okCs, vCs = base.pcall(base.vaicom.objects.getMissionCallsign, locator)
-						if okCs and vCs ~= nil then
-							cs = base.string.upper(base.tostring(vCs))
-						end
-						local full = descName .. " " .. cs
-						return base.string.find(full, "HELI", 1, true) ~= nil
-							or base.string.find(full, "HELIPAD", 1, true) ~= nil
-							or base.string.find(full, "HELIPORT", 1, true) ~= nil
-							or base.string.find(full, "FARP", 1, true) ~= nil
-					end
-
 					local function getClosestAtcInfo()
-						if not (data and data.pUnit and data.pUnit.getPoint) then
+						if not base.vaicom.state.playerpoint then
                             return { icao = "DCS", elevationFt = 0 }
 						end
 
-						local playerPoint = data.pUnit:getPoint()
-						local atcs = base.vaicom.state and base.vaicom.state.availablerecipients and base.vaicom.state.availablerecipients.ATC
-						if base.type(atcs) ~= "table" then
-							return { icao = "DCS", elevationFt = 0 }
-						end
+						local playerPoint = base.vaicom.state.playerpoint
+						local rotor = isRotorModule()
 
 						local closestIcao = nil
 						local closestElevationFt = 0
 						local closestDist = nil
 
-						for _, atc in base.pairs(atcs) do
-							if atc and atc.getPoint then
-								local atcPoint = atc:getPoint()
-								if atcPoint then
-									local dx = (atcPoint.x or 0) - (playerPoint.x or 0)
-									local dz = (atcPoint.z or 0) - (playerPoint.z or 0)
-									local distSq = (dx * dx) + (dz * dz)
+						for _, d in base.pairs(buildAtcDescriptors()) do
+							local atcPoint = d.point
+							if atcPoint then
+								local dx = (atcPoint.x or 0) - (playerPoint.x or 0)
+								local dz = (atcPoint.z or 0) - (playerPoint.z or 0)
+								local distSq = (dx * dx) + (dz * dz)
 
-									local callsign = ""
-									local okCallsign, valueCallsign = base.pcall(base.vaicom.objects.getMissionCallsign, atc)
-									if okCallsign and valueCallsign ~= nil then
-										callsign = base.tostring(valueCallsign)
-									end
-
-									local atcName = ""
-									local okDescName, atcDesc = base.pcall(function() return atc:getDesc() end)
-									if okDescName and atcDesc ~= nil then
-										atcName = base.tostring(atcDesc.displayName or atcDesc.typeName or "")
-									end
-
-									local icao = resolveIcaoForAtc(callsign, atcName)
-									local rotor = isRotorModule()
-									local heliport = isHeliportAtc(atc)
-									if (rotor and icao ~= nil) or ((not rotor) and icao ~= nil and (not heliport)) then
-										if closestDist == nil or distSq < closestDist then
-											closestDist = distSq
-											closestIcao = icao
-                                         closestElevationFt = (base.tonumber(atcPoint.y) or 0) * 3.28084
-										end
+								local icao = d.icao
+								local full = base.string.upper(d.atcName) .. " " .. base.string.upper(d.callsign)
+								local heliport = base.string.find(full, "HELI", 1, true) ~= nil
+									or base.string.find(full, "HELIPAD", 1, true) ~= nil
+									or base.string.find(full, "HELIPORT", 1, true) ~= nil
+									or base.string.find(full, "FARP", 1, true) ~= nil
+								if (rotor and icao ~= nil) or ((not rotor) and icao ~= nil and (not heliport)) then
+									if closestDist == nil or distSq < closestDist then
+										closestDist = distSq
+										closestIcao = icao
+										closestElevationFt = (base.tonumber(atcPoint.y) or 0) * 3.28084
 									end
 								end
 							end
 						end
 
-                     return {
+						return {
 							icao = closestIcao or "DCS",
 							elevationFt = closestElevationFt or 0
 						}
@@ -2781,8 +2780,8 @@ base.vaicom.state = {
 							windSpd = upperAdjustedSpd
 						end
 					end
-                   local vis = weather.visibility and weather.visibility.distance or nil
-				   local temp = weather.season and weather.season.temperature or nil
+					local vis = weather.visibility and weather.visibility.distance or nil
+					local temp = weather.season and weather.season.temperature or nil
 					local stationTemp = base.tonumber(temp)
 					if stationTemp ~= nil then
 						stationTemp = stationTemp - (stationElevationFt / 1000) * 2
@@ -3099,53 +3098,30 @@ base.vaicom.state = {
 
 				local function buildAllAtcMetars()
 					local result = {}
-					local atcs = base.vaicom.state and base.vaicom.state.availablerecipients and base.vaicom.state.availablerecipients.ATC
-					if base.type(atcs) ~= "table" then
-						return result
-					end
+					for _, d in base.pairs(buildAtcDescriptors()) do
+						local atc = d.locator
+						if atc and d.point then
+							local atcPoint = d.point
+							local callsign = d.callsign
+							local icao = d.icao
+							local stationInfo = {
+								icao = icao or "DCS",
+								elevationFt = (base.tonumber(atcPoint.y) or 0) * 3.28084
+							}
+							local metar = buildMetarForAtcInfo(stationInfo)
 
-					for _, atc in base.pairs(atcs) do
-						if atc and atc.getPoint then
-							local atcPoint = atc:getPoint()
-							if atcPoint then
-								local callsign = ""
-								local okCallsign, valueCallsign = base.pcall(base.vaicom.objects.getMissionCallsign, atc)
-								if okCallsign and valueCallsign ~= nil then
-									callsign = base.tostring(valueCallsign)
-								end
+							if icao ~= nil and icao ~= "" then
+								result[icao] = metar
+							end
 
-                              local atcName = ""
-								local okDescName, atcDesc = base.pcall(function() return atc:getDesc() end)
-								if okDescName and atcDesc ~= nil then
-									atcName = base.tostring(atcDesc.displayName or atcDesc.typeName or "")
-								end
+							local upperCallsign = base.string.upper(base.tostring(callsign or ""))
+							if upperCallsign ~= "" then
+								result[upperCallsign] = metar
+							end
 
-								local icao = resolveIcaoForAtc(callsign, atcName)
-								local stationInfo = {
-									icao = icao or "DCS",
-									elevationFt = (base.tonumber(atcPoint.y) or 0) * 3.28084
-								}
-								local metar = buildMetarForAtcInfo(stationInfo)
-
-								if icao ~= nil and icao ~= "" then
-									result[icao] = metar
-								end
-
-								local upperCallsign = base.string.upper(base.tostring(callsign or ""))
-								if upperCallsign ~= "" then
-									result[upperCallsign] = metar
-								end
-
-								local shortCallsign = ""
-								local okShort, valueShort = base.pcall(function()
-									return base.vaicom.properties and base.vaicom.properties.callsign and base.vaicom.properties.callsign(atc) or ""
-								end)
-								if okShort and valueShort ~= nil then
-									shortCallsign = base.string.upper(base.tostring(valueShort))
-								end
-								if shortCallsign ~= "" then
-									result[shortCallsign] = metar
-								end
+							local shortCallsign = base.string.upper(base.tostring(d.shortCallsign or ""))
+							if shortCallsign ~= "" then
+								result[shortCallsign] = metar
 							end
 						end
 					end
