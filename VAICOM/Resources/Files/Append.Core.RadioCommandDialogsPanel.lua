@@ -3273,6 +3273,15 @@ base.vaicom.state = {
 						return result
 					end
 
+					-- Mission group TACAN assignments are static for a given mission.
+					-- Cache the built map against the mission object identity so it is
+					-- only built once per mission (rebuilds on load).
+					local missionRef = base.tostring(missionObj)
+					local cache = base.vaicom.state and base.vaicom.state.grouptacancache
+					if base.type(cache) == "table" and cache.missionRef == missionRef and base.type(cache.map) == "table" then
+						return cache.map
+					end
+
 					local coal = missionObj.coalition
 					if base.type(coal) ~= "table" then
 						return result
@@ -3309,6 +3318,8 @@ base.vaicom.state = {
 							end
 						end
 					end
+
+					base.vaicom.state.grouptacancache = { missionRef = base.tostring(missionObj), map = result }
 
 					return result
 				end
