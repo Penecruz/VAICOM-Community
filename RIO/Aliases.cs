@@ -525,7 +525,11 @@ namespace VAICOM.Extensions.RIO
             {"Grid 4 Sectors",              "wMsgJ_UTIL_NAV_GRD_4SCTR"                },
             {"Grid 5 Sectors",              "wMsgJ_UTIL_NAV_GRD_5SCTR"                },
             {"Grid 6 Sectors",              "wMsgJ_UTIL_NAV_GRD_6SCTR"                },
-            {"J_UTIL_NAV_GRD_MARKER",       "wMsgJ_UTIL_NAV_GRD_MARKER"               },            
+            {"J_UTIL_NAV_GRD_MARKER",       "wMsgJ_UTIL_NAV_GRD_MARKER"               },
+
+            {"Aspect Switch Beam",          "wMsgJ_RDR_ASP_BEAM"                },
+            {"Aspect Switch Nose",          "wMsgJ_RDR_ASP_NOSE"                },
+            {"Aspect Switch Tail",          "wMsgJ_RDR_ASP_TAIL"                },
             
             // end of utility
 
@@ -534,14 +538,8 @@ namespace VAICOM.Extensions.RIO
             {"Cut it out",                  "wMsgJ_WLKMN_STOP"                  },
             {"Skip this part",              "wMsgJ_WLKMN_NEXT"                  },
             {"Go back a little",            "wMsgJ_WLKMN_PREV"                  },
-
-            {"Aspect Switch Beam",              "wMsgJ_RDR_ASP_BEAM"                },
-            {"Aspect Switch Nose",              "wMsgJ_RDR_ASP_NOSE"                },
-            {"Aspect Switch Tail",              "wMsgJ_RDR_ASP_TAIL"                },
-            {"PlaceHolder397",              "wMsgPlaceHolder397"                },
-            {"PlaceHolder398",              "wMsgPlaceHolder398"                },
-            {"PlaceHolder399",              "wMsgPlaceHolder399"                },
-
+            
+            
             // block:defensive
             {"Countermeasures Mode",        "wMsgJ_DEF_CMS_MOD"                 }, //A/B and B(U)
             {"Countermeasures Off",         "wMsgJ_DEF_CMS_MOD_OFF"             },

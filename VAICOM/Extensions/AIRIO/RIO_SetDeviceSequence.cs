@@ -372,6 +372,10 @@ namespace VAICOM
 
                     helper.getDLstate();
 
+                    bool isTomcatBU = State.currentstate != null
+                        && !string.IsNullOrWhiteSpace(State.currentstate.id)
+                        && State.currentstate.id.Equals("F-14BU", StringComparison.OrdinalIgnoreCase);
+
                     Extensions.RIO.DeviceAction action = new Extensions.RIO.DeviceAction();
 
                     string unitstr = "";
@@ -427,7 +431,14 @@ namespace VAICOM
                         {
                             State.currentmessage.extsequence = new List<Extensions.RIO.DeviceAction>();
                             State.currentmessage.extsequence.AddRange(DeviceActionsLibrary.Sequences.Macro.Seq_J_MENU_MAIN);
-                            State.currentmessage.extsequence.AddRange(DeviceActionsLibrary.Sequences.Macro.Seq_J_RAD_DL_SET_HOST);
+                            if (isTomcatBU)
+                            {
+                                State.currentmessage.extsequence.AddRange(DeviceActionsLibrary.Sequences.Macro.Seq_J_RAD_DL_SET_HOST_BU);
+                            }
+                            else
+                            {
+                                State.currentmessage.extsequence.AddRange(DeviceActionsLibrary.Sequences.Macro.Seq_J_RAD_DL_SET_HOST);
+                            }
                             State.currentmessage.extsequence.Add(action);
 
                         }

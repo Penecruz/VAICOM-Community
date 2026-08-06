@@ -333,6 +333,11 @@ namespace VAICOM.Extensions.RIO
                 public static List<DeviceAction> Seq_J_RAD_DL_OFF = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_7, RIO.Atom_J_MENU_OPTION_1, RIO.Atom_J_MENU_OPTION_3 };
                 public static List<DeviceAction> Seq_J_RAD_DL_FGHT = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_7, RIO.Atom_J_MENU_OPTION_1, RIO.Atom_J_MENU_OPTION_2 };
 
+                public static List<DeviceAction> Seq_J_RAD_DL_SET_HOST_BU = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_1, RIO.Atom_J_MENU_OPTION_2, RIO.Atom_J_MENU_OPTION_3 };
+                public static List<DeviceAction> Seq_J_RAD_DL_TACT_BU = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_1, RIO.Atom_J_MENU_OPTION_2, RIO.Atom_J_MENU_OPTION_1, RIO.Atom_J_MENU_OPTION_1 };
+                public static List<DeviceAction> Seq_J_RAD_DL_OFF_BU = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_1, RIO.Atom_J_MENU_OPTION_2, RIO.Atom_J_MENU_OPTION_1, RIO.Atom_J_MENU_OPTION_3 };
+                public static List<DeviceAction> Seq_J_RAD_DL_FGHT_BU = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_1, RIO.Atom_J_MENU_OPTION_2, RIO.Atom_J_MENU_OPTION_1, RIO.Atom_J_MENU_OPTION_2 };
+
                 public static List<DeviceAction> Seq_J_RAD_DL_SET_FREQ_1 = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_7, RIO.Atom_J_MENU_OPTION_2, RIO.Atom_J_MENU_OPTION_1 };
                 public static List<DeviceAction> Seq_J_RAD_DL_SET_FREQ_2 = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_7, RIO.Atom_J_MENU_OPTION_2, RIO.Atom_J_MENU_OPTION_2 };
                 public static List<DeviceAction> Seq_J_RAD_DL_SET_FREQ_3 = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_7, RIO.Atom_J_MENU_OPTION_2, RIO.Atom_J_MENU_OPTION_3 };
@@ -341,6 +346,15 @@ namespace VAICOM.Extensions.RIO
                 public static List<DeviceAction> Seq_J_RAD_DL_SET_FREQ_6 = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_7, RIO.Atom_J_MENU_OPTION_2, RIO.Atom_J_MENU_OPTION_6 };
                 public static List<DeviceAction> Seq_J_RAD_DL_SET_FREQ_7 = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_7, RIO.Atom_J_MENU_OPTION_2, RIO.Atom_J_MENU_OPTION_7 };
                 public static List<DeviceAction> Seq_J_RAD_DL_SET_FREQ_8 = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_7, RIO.Atom_J_MENU_OPTION_2, RIO.Atom_J_MENU_OPTION_8 };
+
+                public static List<DeviceAction> Seq_J_RAD_DL_SET_FREQ_1_BU = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_1, RIO.Atom_J_MENU_OPTION_2, RIO.Atom_J_MENU_OPTION_2, RIO.Atom_J_MENU_OPTION_1 };
+                public static List<DeviceAction> Seq_J_RAD_DL_SET_FREQ_2_BU = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_1, RIO.Atom_J_MENU_OPTION_2, RIO.Atom_J_MENU_OPTION_2, RIO.Atom_J_MENU_OPTION_2 };
+                public static List<DeviceAction> Seq_J_RAD_DL_SET_FREQ_3_BU = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_1, RIO.Atom_J_MENU_OPTION_2, RIO.Atom_J_MENU_OPTION_2, RIO.Atom_J_MENU_OPTION_3 };
+                public static List<DeviceAction> Seq_J_RAD_DL_SET_FREQ_4_BU = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_1, RIO.Atom_J_MENU_OPTION_2, RIO.Atom_J_MENU_OPTION_2, RIO.Atom_J_MENU_OPTION_4 };
+                public static List<DeviceAction> Seq_J_RAD_DL_SET_FREQ_5_BU = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_1, RIO.Atom_J_MENU_OPTION_2, RIO.Atom_J_MENU_OPTION_2, RIO.Atom_J_MENU_OPTION_5 };
+                public static List<DeviceAction> Seq_J_RAD_DL_SET_FREQ_6_BU = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_1, RIO.Atom_J_MENU_OPTION_2, RIO.Atom_J_MENU_OPTION_2, RIO.Atom_J_MENU_OPTION_6 };
+                public static List<DeviceAction> Seq_J_RAD_DL_SET_FREQ_7_BU = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_1, RIO.Atom_J_MENU_OPTION_2, RIO.Atom_J_MENU_OPTION_2, RIO.Atom_J_MENU_OPTION_7 };
+                public static List<DeviceAction> Seq_J_RAD_DL_SET_FREQ_8_BU = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_1, RIO.Atom_J_MENU_OPTION_2, RIO.Atom_J_MENU_OPTION_2, RIO.Atom_J_MENU_OPTION_8 };
 
                 public static List<DeviceAction> Seq_J_RAD_TCN = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_5, RIO.Atom_J_MENU_OPTION_5 };
                 public static List<DeviceAction> Seq_J_RAD_TCN_MODE = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_5, RIO.Atom_J_MENU_OPTION_5, RIO.Atom_J_MENU_OPTION_1 }; // show hint

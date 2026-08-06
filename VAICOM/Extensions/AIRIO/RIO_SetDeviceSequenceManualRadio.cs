@@ -39,6 +39,16 @@ namespace VAICOM
                         // start menu sequence
 
                         State.currentmessage.extsequence.AddRange(VAICOM.Extensions.RIO.DeviceActionsLibrary.Sequences.Macro.Seq_J_MENU_MAIN); // includes close first
+
+                        bool isTomcatBU = State.currentstate != null
+                            && !string.IsNullOrWhiteSpace(State.currentstate.id)
+                            && State.currentstate.id.Equals("F-14BU", StringComparison.OrdinalIgnoreCase);
+
+                        if (isTomcatBU)
+                        {
+                            State.currentmessage.extsequence.AddRange(VAICOM.Extensions.RIO.DeviceActionsLibrary.Sequences.Macro.Seq_J_MENU_OPTION_1);
+                        }
+
                         State.currentmessage.extsequence.AddRange(VAICOM.Extensions.RIO.DeviceActionsLibrary.Sequences.Macro.Seq_J_RAD_182_TUNE_MAN);
 
                         string header = State.Proxy.Utility.ParseTokens("{CMDSEGMENT:0}");
@@ -204,6 +214,12 @@ namespace VAICOM
                             case "two five":
                                 minval2 = 25;
                                 break;
+                            case "twenty five":
+                                minval2 = 25;
+                                break;
+                            case "twenty-five":
+                                minval2 = 25;
+                                break;
                             case "dos cinco":
                                 minval2 = 25;
                                 break;
@@ -224,6 +240,9 @@ namespace VAICOM
                             case "five zero":
                                 minval2 = 50;
                                 break;
+                            case "fifty":
+                                minval2 = 50;
+                                break;
                             case "cinco cero":
                                 minval2 = 50;
                                 break;
@@ -239,6 +258,12 @@ namespace VAICOM
                                 minval2 = 75;
                                 break;
                             case "seven five":
+                                minval2 = 75;
+                                break;
+                            case "seventy five":
+                                minval2 = 75;
+                                break;
+                            case "seventy-five":
                                 minval2 = 75;
                                 break;
                             case "siete cinco":
