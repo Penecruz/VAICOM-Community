@@ -102,13 +102,13 @@ namespace VAICOM.Extensions.RIO
             {"wMsgJ_RDR_GO_ACTIVE",                 "Switch Radar Transmit"             },
             {"wMsgJ_RDR_GO_SILENT",                 "Switch Radar Standby"              },
 
-            {"wMsgJ_RDR_SCAN_DIST",                 "Scan Range"                        }, // not endpoint, show hint
-            {"wMsgJ_RDR_RNG_AUTO",                  "Scan Range Automatic"              },
-            {"wMsgJ_RDR_RNG_25",                    "Scan Range 25"                     },
-            {"wMsgJ_RDR_RNG_50",                    "Scan Range 50"                     },
-            {"wMsgJ_RDR_RNG_100",                   "Scan Range 100"                    },
-            {"wMsgJ_RDR_RNG_200",                   "Scan Range 200"                    },
-            {"wMsgJ_RDR_RNG_400",                   "Scan Range 400"                    },
+            {"wMsgJ_RDR_SCAN_DIST",                 "TID Range"                        }, // not endpoint, show hint
+            {"wMsgJ_RDR_RNG_AUTO",                  "TID Range Automatic"              },
+            {"wMsgJ_RDR_RNG_25",                    "TID Range 25"                     },
+            {"wMsgJ_RDR_RNG_50",                    "TID Range 50"                     },
+            {"wMsgJ_RDR_RNG_100",                   "TID Range 100"                    },
+            {"wMsgJ_RDR_RNG_200",                   "TID Range 200"                    },
+            {"wMsgJ_RDR_RNG_400",                   "TID Range 400"                    },
 
             {"wMsgJ_RDR_SCAN_AZ",                   "Scan Azimuth"                      }, // not endpoint, show hint
             {"wMsgJ_RDR_POS",                       "Scan Azimuth Automatic"            },

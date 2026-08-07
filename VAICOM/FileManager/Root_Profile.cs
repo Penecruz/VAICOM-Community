@@ -22,13 +22,13 @@ namespace VAICOM
                         string rootpath = State.Proxy.SessionState["VA_APPS"] + "\\" + Products.Products.Families.Vaicom.VaicomProPlugin.rootfoldername;
                         string path;
                         string filename = "VAICOM PRO for DCS World.vap";
-                        string sourcefile = Properties.Resources.VAICOM_PRO_for_DCS_World;
+                        byte[] sourcefile = Properties.Resources.VAICOM_PRO_for_DCS_World;
 
                         path = rootpath + "\\" + AppData.SubFolders["profiles"] + "\\" + filename;
 
                         if (!File.Exists(path) || (File.Exists(path) & overwrite))
                         {
-                            File.WriteAllText(path, sourcefile);
+                            File.WriteAllBytes(path, sourcefile);
                         }
 
                     }
@@ -47,6 +47,30 @@ namespace VAICOM
                         string path;
                         string filename = "VAICOM F-4E WSO.vap";
                         byte[] sourcefile = Properties.Resources.VAICOM_F_4E_WSO;
+
+                        path = rootpath + "\\" + AppData.SubFolders["profiles"] + "\\" + filename;
+
+                        if (!File.Exists(path) || (File.Exists(path) & overwrite))
+                        {
+                            File.WriteAllBytes(path, sourcefile);
+                        }
+
+                    }
+                    catch
+                    {
+                    }
+                }
+                // check if VAICOM F-14 Update.vap profile file exist and if not creates it:
+                public static void CheckF14UpdateProfile(bool overwrite)
+                {
+                    Log.Write("Checking F-14 update profile.", Colors.Text);
+
+                    try
+                    {
+                        string rootpath = State.Proxy.SessionState["VA_APPS"] + "\\" + Products.Products.Families.Vaicom.VaicomProPlugin.rootfoldername;
+                        string path;
+                        string filename = "VAICOM F-14 Update.vap";
+                        byte[] sourcefile = Properties.Resources.VAICOM_F_14_Update;
 
                         path = rootpath + "\\" + AppData.SubFolders["profiles"] + "\\" + filename;
 

@@ -99,13 +99,13 @@ namespace VAICOM.Extensions.RIO
             {"Track Single Target 8",       "wMsgJ_RDR_STT_TWS_TGT_8"           },
             {"Track Single Target X",       "wMsgJ_RDR_STT_CHOOSE_SPECIFIC_TGT" }, // disabled //
 
-            {"Scan Range",                  "wMsgJ_RDR_SCAN_DIST"               },// not endpoint //
-            {"Scan Range Auto",             "wMsgJ_RDR_RNG_AUTO"                },// for Range
-            {"Scan Range 25",               "wMsgJ_RDR_RNG_25"                  },
-            {"Scan Range 50",               "wMsgJ_RDR_RNG_50"                  },
-            {"Scan Range 100",              "wMsgJ_RDR_RNG_100"                 },
-            {"Scan Range 200",              "wMsgJ_RDR_RNG_200"                 },
-            {"Scan Range 400",              "wMsgJ_RDR_RNG_400"                 },
+            {"TID Range",                   "wMsgJ_RDR_SCAN_DIST"               },// not endpoint //
+            {"TID Range Auto",              "wMsgJ_RDR_RNG_AUTO"                },// for TID Range
+            {"TID Range 25",                "wMsgJ_RDR_RNG_25"                  },
+            {"TID Range 50",                "wMsgJ_RDR_RNG_50"                  },
+            {"TID Range 100",               "wMsgJ_RDR_RNG_100"                 },
+            {"TID Range 200",               "wMsgJ_RDR_RNG_200"                 },
+            {"TID Range 400",               "wMsgJ_RDR_RNG_400"                 },
 
             {"Scan Azimuth",                "wMsgJ_RDR_SCAN_AZ"                 },// not endpoint //
             {"Scan Azimuth Auto",           "wMsgJ_RDR_POS"                     },// for Azimuth

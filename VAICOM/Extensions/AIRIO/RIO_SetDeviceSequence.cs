@@ -775,6 +775,15 @@ namespace VAICOM
 
                         bool isF14BU = IsF14BUActive();
 
+                        string stateIdForLog = (State.currentstate != null && !string.IsNullOrWhiteSpace(State.currentstate.id))
+                            ? State.currentstate.id
+                            : "<null>";
+                        string rioModForLog = !string.IsNullOrWhiteSpace(State.riomod)
+                            ? State.riomod
+                            : "<null>";
+
+                        Log.Write("AIRIO module detect | cmd=" + cmd + " | state.id=" + stateIdForLog + " | riomod=" + rioModForLog + " | isF14BU=" + isF14BU, Colors.Text);
+
                         if (isF14BU)
                         {
                             string overrideKey = "F-14BU:" + cmd;

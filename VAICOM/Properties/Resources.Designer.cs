@@ -2380,25 +2380,24 @@ namespace VAICOM.Properties {
                 return ((byte[])(obj));
             }
         }
+
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        public static byte[] VAICOM_F_14_Update {
+            get {
+                object obj = ResourceManager.GetObject("VAICOM_F-14_Update", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
         
         /// <summary>
-        ///   Looks up a localized string similar to &lt;?xml version=&quot;1.0&quot;?&gt;
-        ///&lt;Profile xmlns:xsd=&quot;http://www.w3.org/2001/XMLSchema&quot; xmlns:xsi=&quot;http://www.w3.org/2001/XMLSchema-instance&quot;&gt;
-        ///  &lt;HasMB&gt;false&lt;/HasMB&gt;
-        ///  &lt;Id&gt;65ee8337-d43c-4b26-aea9-4ce0f9d4e467&lt;/Id&gt;
-        ///  &lt;Name&gt;VAICOM for DCS World&lt;/Name&gt;
-        ///  &lt;Commands&gt;
-        ///    &lt;Command&gt;
-        ///      &lt;Referrer xsi:nil=&quot;true&quot; /&gt;
-        ///      &lt;ExecType&gt;3&lt;/ExecType&gt;
-        ///      &lt;Confidence&gt;0&lt;/Confidence&gt;
-        ///      &lt;PrefixActionCount&gt;0&lt;/PrefixActionCount&gt;
-        ///      &lt;IsDynamicallyCreated&gt;false&lt;/IsDynamicallyCreated&gt;
-        ///      &lt;TargetProcessSet&gt;false&lt;/Targ [rest of string was truncated]&quot;;.
+        ///   Looks up a localized resource of type System.Byte[].
         /// </summary>
-        public static string VAICOM_PRO_for_DCS_World {
+        public static byte[] VAICOM_PRO_for_DCS_World {
             get {
-                return ResourceManager.GetString("VAICOM_PRO_for_DCS_World", resourceCulture);
+                object obj = ResourceManager.GetObject("VAICOM_PRO_for_DCS_World", resourceCulture);
+                return ((byte[])(obj));
             }
         }
         

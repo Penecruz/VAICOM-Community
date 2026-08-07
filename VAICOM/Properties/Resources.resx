@@ -218,7 +218,7 @@
     <value>..\resources\images\sidetitle-reset.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
   <data name="VAICOM_PRO_for_DCS_World" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\Files\VAICOM PRO for DCS World.vap;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;Windows-1252</value>
+    <value>..\Resources\Files\VAICOM PRO for DCS World.vap;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="EULA" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\resources\files\eula.txt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;Windows-1252</value>
@@ -642,5 +642,8 @@
   </data>
   <data name="VAICOM_F-4E_WSO" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\Files\VAICOM F-4E WSO.vap;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="VAICOM_F-14_Update" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Files\VAICOM F-14 Update.vap;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
 </root>

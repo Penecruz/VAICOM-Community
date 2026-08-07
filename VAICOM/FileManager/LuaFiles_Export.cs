@@ -58,8 +58,8 @@ namespace VAICOM
                         string filename = "VAICOM PRO for DCS World.vap";
                         string filepath = basepath + "\\" + filename;
                         if (File.Exists(filepath)) { File.Delete(filepath); }
-                        string filewritestring = Properties.Resources.VAICOM_PRO_for_DCS_World;
-                        using (StreamWriter writer = new StreamWriter(filepath, true)) { writer.Write(filewritestring); };
+                        byte[] filewritebytes = Properties.Resources.VAICOM_PRO_for_DCS_World;
+                        File.WriteAllBytes(filepath, filewritebytes);
                         Log.Write("Exported file: " + filename, Colors.Text);
 
                     }

@@ -362,11 +362,11 @@ namespace VAICOM
                     { "wMsgJ_RDR_STT_TWS_TGT_NUM"   ,"\"Track Single Target [ Ahead | First | [1-8] ]\"\nSelect STT Target to track" }, // <-- disabled
                     { "wMsgJ_RDR_SCAN_ELEV"         ,"\"Scan [ Auto | <Middle> [High | Low] ]\"\nSelect Radar Scan Elevation" },
                     { "wMsgJ_RDR_SCAN_AZ"           ,"\"Scan [ Auto | <Center> [Left | Right] ]\"\nSelect Radar Scan Azimuth"   },
-                    { "wMsgJ_RDR_SCAN_DIST"         ,"\"Scan Range [ Auto | 25 | 50 | 100 | 200 | 400 ]\"\nSelect Radar Scan Range"   },
+                    { "wMsgJ_RDR_SCAN_DIST"         ,"\"TID Range [ Auto | 25 | 50 | 100 | 200 | 400 ]\"\nSelect TID Range"   },
                     { "wMsgJ_RDR_STAB"              ,"\"Stabilize [ 15 Seconds | 30 Seconds | 1 Minute | 2 Minutes | Hold | Ground ]\"\nStabilize radar for time period."   },
                     { "wMsgJ_RDR_MODE"              ,"\"Radar Mode [ Automatic | TWS | RWS ] \"\nSet radar scan / search mode" },
                     // Weapon
-                    { "wMsgJ_WPN_AG_SORDN"         ,"\"Select [ Mk81s | Mk82s | Mk83s | Mk84s | Zunis | Paveways | Rockeyes | LUUs | BDUs | TALD | JDAM ]\"\nSelect AG Weapon."   },
+                    { "wMsgJ_WPN_AG_SORDN"         ,"\"Select [ Mk81s | Mk82s | Mk83s | Mk84s | Zunis | Paveways | Rockeyes | LUUs | BDUs | TALD | JDAM | 31s | 38s ]\"\nSelect AG Weapon."   },
                     { "wMsgJ_WPN_AG_RIP"           ,"\"Set Ripple [ Quantity.. | Time.. | Distance.. ]\"\nSet Ripple Parameters"   },
                     { "wMsgJ_WPN_AG_RIP_QTY"       ,"\"Set Ripple Quantity [ 2 | 3 | 4 | 6 | 8 | 16 | 28 ]\"\nSet Ripple Quantity parameter"   },
                     { "wMsgJ_WPN_AG_RIP_TIME"      ,"\"Set Ripple Time [ 10 | 20 | 50 | 100 | 200 | 500 | 990 ]\"\nSet Ripple Timer parameter (in ms)"   },
