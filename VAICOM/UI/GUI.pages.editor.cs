@@ -533,6 +533,7 @@ namespace VAICOM
                     string keywords = FileHandler.Database.ExportMasterKeywordString();
                     if (!string.IsNullOrEmpty(keywords))
                     {
+                        FileHandler.Database.WriteAllCategoriesToFile(true);
                         // Copy the keywords to the Windows clipboard
                         System.Windows.Clipboard.SetDataObject(keywords);
                         // Set the keywords into the variable used in the VoiceAttack profile
@@ -552,27 +553,6 @@ namespace VAICOM
                     {
                         Log.Write("No keywords located in database", Colors.Warning);
                     }
-                }
-                catch
-                {
-                }
-            }
-
-            private void KeywordsToClipboard(object sender, RoutedEventArgs e)
-            {
-                try
-                {
-                    string keywords = FileHandler.Database.ExportMasterKeywordString();
-                    FileHandler.Database.WriteAllCategoriesToFile(true);
-                    Message.Text = "Keywords exported. Follow instructions to update VA profile.";
-                    string caption = "Modified database";
-                    string message = "The keywords database was updated.\n\nIMPORTANT: YOU MUST NOW UPDATE THE VOICEATTACK PROFILE.\n\nThe updated keyword set was placed in Windows clipboard.\nOpen the VoiceAttack window now and edit the profile (pencil icon).\n\nIn the profile, double-click the 'AI Communications' command (category Keywords collection) and clear all existing keywords in the 'When I Say' field (use Ctrl+A, then Delete key).\nThen apply Paste (Ctrl+V) to place the new keyword set and press Apply/Done to store.\n\nNOTES:\nIn VA make sure multipart commands are consolidated.\n";
-                    System.Windows.MessageBox.Show(message, caption, MessageBoxButton.OK, MessageBoxImage.Information);
-                    Message.Text = "";
-                    State.activeconfig.Editorunsavedchanges = false;
-                    Settings.ConfigFile.WriteConfigToFile(true);
-                    Reflectunsavedchanges();
-                    Aliases.SetAOCSCallsign();
                 }
                 catch
                 {
