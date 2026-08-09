@@ -19,7 +19,7 @@ namespace VAICOM
             public partial class Database
             {
                 // txt file export
-                public static void ExportMasterKeywordString()
+                public static string ExportMasterKeywordString()
                 {
                     try
                     {
@@ -36,14 +36,15 @@ namespace VAICOM
                         string path = State.VA_APPS + "\\" + AppData.RootFolder + "\\" + AppData.SubFolders["export"] + "\\" + filename;
                         File.WriteAllText(path, writestring);
                         ExportKeywordsAsHTML();
-                        System.Windows.Clipboard.SetDataObject(writestring);
                         Log.Write("File export success.", Colors.Text);
 
+                        return writestring;
                     }
                     catch (Exception a)
                     {
                         Log.Write("There was a problem during file export." + a.Message, Colors.Warning);
                         UI.Playsound.Error();
+                        return "";
                     }
                 }
 
