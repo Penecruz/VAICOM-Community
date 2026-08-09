@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading;
 using VAICOM.Database;
 using VAICOM.Extensions.AIWSO;
 using VAICOM.Extensions.Kneeboard;
@@ -377,6 +378,39 @@ namespace VAICOM
                     Log.Write("Ready, sending message for recipient class " + State.currentrecipientclass.Name + ", calledisclass = " + State.calledisclass, Colors.Inline);
 
                     ConstructMessage();
+
+                    bool shouldPrimeF14WheelChocksBeforeRemove =
+                        State.currentcommand != null
+                        && State.currentmessage != null
+                        && State.IsAirioTomcatModule()
+                        && State.currentcommand.dcsid.Equals("wMsgLeaderGroundToggleWheelChocks", StringComparison.Ordinal)
+                        && State.currentcommand.hasparameter
+                        && !State.currentcommand.on
+                        && State.F14WheelChocksStateAssumed;
+
+                    if (shouldPrimeF14WheelChocksBeforeRemove
+                        && State.currentmessage.parameters is List<object> chockParams
+                        && chockParams.Count > 0
+                        && chockParams[0] is bool)
+                    {
+                        chockParams[0] = true;
+                        Log.Write("F-14 wheel chocks sync: priming PLACE before first REMOVE.", Colors.Inline);
+                        SendNewMessage();
+                        int waitedMs = 0;
+                        while (State.F14WheelChocksStateAssumed && waitedMs < 4000)
+                        {
+                            Thread.Sleep(250);
+                            waitedMs += 250;
+                        }
+
+                        if (State.F14WheelChocksStateAssumed)
+                        {
+                            Log.Write("F-14 wheel chocks sync: no confirmation yet, proceeding with REMOVE.", Colors.Warning);
+                        }
+                        chockParams[0] = false;
+                        State.F14WheelChocksState = State.WheelChocksState.On;
+                    }
+
                     SendNewMessage();
 
                     bool sentRioCloseMacro = State.currentcommand.isRIO()

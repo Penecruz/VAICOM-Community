@@ -104,6 +104,16 @@ namespace VAICOM
                 || currentstate.id.Equals("F-14BU", StringComparison.OrdinalIgnoreCase);
         }
 
+        public enum WheelChocksState
+        {
+            Unknown = 0,
+            On = 1,
+            Off = 2
+        }
+
+        public static WheelChocksState F14WheelChocksState = WheelChocksState.Unknown;
+        public static bool F14WheelChocksStateAssumed = false;
+
         // ------------------------------------------------------------------------------------------------------------
         // VA system environment
 
