@@ -572,7 +572,17 @@ function ProcessRemoteCommand()
 	local clientmessage = base.vaicom.state.activemessage 
 	
 	updateMainCaption()
-	base.vaicom.state.update.all()
+
+	-- update.all() rebuilds every recipient list (DCS queries + distance + sort)
+	-- and refreshes player/riostate state. This is only required for some message types
+	-- that need this updated state to be sent back to the server.
+	-- Ignore updating for other types, e.g. device controls or displaying messages
+	-- to the user so we don't trigger a full rebuild of all the state.
+	if clientmessage.exec ~= nil
+		or clientmessage.type == base.vaicom.messagetype.requestupdate
+		or clientmessage.type == base.vaicom.messagetype.aicomms then
+			base.vaicom.state.update.all()
+	end
 	
 	if clientmessage.dspmsg 									~=nil	then
 		base.trigger.action.outTextForGroup(data.pUnit:getGroup().id_, clientmessage.dspmsg,clientmessage.msgdur or 5)
