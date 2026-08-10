@@ -305,7 +305,6 @@ namespace VAICOM
 
             public static void CreateDatabase(dynamic vaProxy)
             {
-
                 Log.Write("Initializing database tables...", Colors.Text);
 
                 Dcs.CreateDcsMessagesTable();
@@ -344,6 +343,30 @@ namespace VAICOM
                 State.importeddcsmodules = new List<DCSmodule>();
                 FileHandler.Database.ReadModulesFromFile();
 
+                // update VoiceAttack profile
+                UpdateProfileKeywords(vaProxy);
+            }
+
+            private static void UpdateProfileKeywords(dynamic vaProxy)
+            {
+                try
+                {
+                    string keywords = FileHandler.Database.ExportMasterKeywordString();
+                    if (!string.IsNullOrEmpty(keywords))
+                    {
+                        // Set the keywords into the variable used in the VoiceAttack profile
+                        State.Proxy.SetText("vaicom.keywords", keywords);
+                        // Reload the current profile to pick up the variable change
+                        vaProxy.Profile.Reset();
+                    }
+                    else
+                    {
+                        Log.Write("No keywords found in database", Colors.Warning);
+                    }
+                }
+                catch
+                {
+                }
             }
 
             public static void StartNetwork(dynamic vaProxy)

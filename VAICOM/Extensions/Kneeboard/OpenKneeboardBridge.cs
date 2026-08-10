@@ -12338,6 +12338,7 @@ namespace VAICOM
 
                 public static void Initialize()
                 {
+                    ResetRawServerMessagesLog();
                     ResetSnapshot();
                     RefreshDtcFilesSnapshot();
                     SetPluginRegistration(State.activeconfig != null && State.activeconfig.OpenKneeboard_Out);
@@ -14085,6 +14086,26 @@ namespace VAICOM
                         {
                             Directory.CreateDirectory(logsFolder);
                             File.AppendAllText(filePath, DateTime.UtcNow.ToString("o") + " | " + rawMessage + Environment.NewLine);
+                        }
+                    }
+                    catch
+                    {
+                    }
+                }
+
+                private static void ResetRawServerMessagesLog()
+                {
+                    try
+                    {
+                        string logsFolder = Path.Combine(State.VA_APPS, Products.Products.Families.Vaicom.VaicomProPlugin.rootfoldername, AppData.SubFolders["logfiles"]);
+                        string filePath = Path.Combine(logsFolder, "VAICOMPRO.ServerMessages.log");
+
+                        lock (RawServerLogSync)
+                        {
+                            if (File.Exists(filePath))
+                            {
+                                File.Delete(filePath);
+                            }
                         }
                     }
                     catch

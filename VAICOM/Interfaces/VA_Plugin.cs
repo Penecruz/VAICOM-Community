@@ -44,29 +44,6 @@ namespace VAICOM
                 DcsClient.Initialize(vaProxy);
                 State.initialized = true;
                 VA_ExposeVariables(State.Proxy);
-                UpdateProfileKeywords();
-            }
-
-            private static void UpdateProfileKeywords()
-            {
-                try
-                {
-                    string keywords = FileHandler.Database.ExportMasterKeywordString();
-                    if (!string.IsNullOrEmpty(keywords))
-                    {
-                        // Set the keywords into the variable used in the VoiceAttack profile
-                        State.Proxy.SetText("vaicom.keywords", keywords);
-                        // Reload the current profile to pick up the variable change
-                        State.Proxy.Profile.Reset();
-                    }
-                    else
-                    {
-                        Log.Write("No keywords found in database", Colors.Warning);
-                    }
-                }
-                catch
-                {
-                }
             }
 
             public static void VA_Invoke1(dynamic vaProxy)
