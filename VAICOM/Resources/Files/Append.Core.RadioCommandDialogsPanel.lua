@@ -2425,7 +2425,6 @@ base.vaicom.state = {
 				base.vaicom.state.dcsversion						= data.initialized and base.vaicom.get.serverdata.dcsversion()
 				base.vaicom.state.easycomms							= data.initialized and data.radioAutoTune
 				base.vaicom.state.options							= {}
-				base.vaicom.state.options.plugins					= data.initialized and dcsoptions.getOption("plugins") or {}
 				base.vaicom.state.options.sound						= data.initialized and dcsoptions.getOption("sound") or {}
 				base.vaicom.state.pause								= data.initialized and base.DCS.getPause() or false
 				base.vaicom.state.theatre							= data.initialized and base.env.mission.theatre or ""
