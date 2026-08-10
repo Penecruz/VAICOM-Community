@@ -84,7 +84,14 @@ namespace VAICOM
 
                 if (State.currentmodule.Id.Equals("F-14", StringComparison.OrdinalIgnoreCase))
                 {
-                    return IsF14RioSeatActive() ? "F-14 Tomcat RIO" : "F-14 Tomcat Pilot";
+                    if (State.currentstate.id.Equals("F-14BU", StringComparison.OrdinalIgnoreCase))
+                    {
+                        return IsF14RioSeatActive() ? "F-14B(U) Tomcat RIO" : "F-14B(U) Tomcat Pilot";
+                    }
+                    else
+                    {
+                        return IsF14RioSeatActive() ? "F-14A/B Tomcat RIO" : "F-14A/B Tomcat Pilot";
+                    }
                 }
 
                 if (State.currentmodule.Id.Equals("F-4E-45MC", StringComparison.OrdinalIgnoreCase))

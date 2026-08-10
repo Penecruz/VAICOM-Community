@@ -13,7 +13,7 @@ namespace VAICOM
         {
             public static void DisplayCurrentModule()
             {
-                Log.Write("Player " + State.currentstate.playerusername + " entered module " + State.currentmodule.Name + " " + State.currentmodule.Alias + ", unit callsign " + State.currentstate.playercallsign, Colors.Message);
+                Log.Write("Player " + State.currentstate.playerusername + " entered module " + GetModuleDisplayName() + ", unit callsign " + State.currentstate.playercallsign, Colors.Message);
                 try
                 {
                     Log.Write("Nearest ATC: " + State.currentstate.availablerecipients["ATC"][0].fullname + ".", Colors.Message);
@@ -337,6 +337,16 @@ namespace VAICOM
                     return true;
                 }
                 return false;
+            }
+
+            private static string GetModuleDisplayName()
+            {
+                if (State.currentmodule.Id.Equals("F-14", StringComparison.OrdinalIgnoreCase))
+                {
+                    return State.currentstate.id.Equals("F-14BU", StringComparison.OrdinalIgnoreCase) ? "F-14B(U)" : "F-14A/B";
+                }
+
+                return $"{State.currentmodule.Name} {State.currentmodule.Alias}";
             }
         }
     }
