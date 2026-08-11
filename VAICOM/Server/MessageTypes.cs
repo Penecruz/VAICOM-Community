@@ -190,14 +190,11 @@ namespace VAICOM
             public class DcsOptions
             {
                 public DcsSoundConfig sound;
-                public DcsPluginsConfig plugins;
 
                 public DcsOptions()
                 {
                     sound = new DcsSoundConfig();
-                    plugins = new DcsPluginsConfig();
                 }
-
             }
 
             public class TomcatState
