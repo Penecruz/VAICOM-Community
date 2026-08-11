@@ -458,6 +458,10 @@ namespace VAICOM.Extensions.RIO
             {"wMsgJ_UTIL_NAV_DIR_SPT_14",       "Direct Steerpoint 14"          },
             {"wMsgJ_UTIL_NAV_MODE_EGI",         "Nav Mode EGI"                  },
             {"wMsgJ_UTIL_NAV_MODE_DEST",        "Nav Mode Destination"          },
+            {"wMsgJ_UTIL_NAV_SEQ_AUTO",         "Nav Sequence Auto"             },
+            {"wMsgJ_UTIL_NAV_SEQ_OFLY",         "Nav Sequence Overfly"          },
+            {"wMsgJ_UTIL_NAV_SEQ_MAN",          "Nav Sequence Manual"           },
+            {"wMsgJ_UTIL_NAV_BHDI_FLY",         "Nav Backup to Selected"        },
 
             {"wMsgJ_UTIL_CONTR",                "Utility Contract"              }, //na
             {"wMsgJ_UTIL_CONTR_NO_TALK",        "No Talking"                    },

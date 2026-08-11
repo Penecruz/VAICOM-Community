@@ -885,7 +885,8 @@ namespace VAICOM
                             {
                                 command = source.command,
                                 device = source.device,
-                                value = source.value
+                                value = source.value,
+                                delayMs = source.delayMs
                             });
                         }
 

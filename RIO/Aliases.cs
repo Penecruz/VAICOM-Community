@@ -375,24 +375,26 @@ namespace VAICOM.Extensions.RIO
             {"Navigate Target",                 "wMsgJ_UTIL_NAV_SURF_TGT"       },
             {"Navigate Home Base",              "wMsgJ_UTIL_NAV_HOME_BASE"      },
 
-            {"Direct Steerpoint 1",             "wMsgJ_UTIL_NAV_DIR_SPT_1"     }, //F-14B(U) only 1-14 for EGI navigation
-            {"Direct Steerpoint 2",             "wMsgJ_UTIL_NAV_DIR_SPT_2"     },
-            {"Direct Steerpoint 3",             "wMsgJ_UTIL_NAV_DIR_SPT_3"     },
-            {"Direct Steerpoint 4",             "wMsgJ_UTIL_NAV_DIR_SPT_4"     },
-            {"Direct Steerpoint 5",             "wMsgJ_UTIL_NAV_DIR_SPT_5"     },
-            {"Direct Steerpoint 6",             "wMsgJ_UTIL_NAV_DIR_SPT_6"     },
-            {"Direct Steerpoint 7",             "wMsgJ_UTIL_NAV_DIR_SPT_7"     },
-            {"Direct Steerpoint 8",             "wMsgJ_UTIL_NAV_DIR_SPT_8"     },
-            {"Direct Steerpoint 9",             "wMsgJ_UTIL_NAV_DIR_SPT_9"     },
-            {"Direct Steerpoint 10",            "wMsgJ_UTIL_NAV_DIR_SPT_10"    },
-            {"Direct Steerpoint 11",            "wMsgJ_UTIL_NAV_DIR_SPT_11"    },
-            {"Direct Steerpoint 12",            "wMsgJ_UTIL_NAV_DIR_SPT_12"    },
-            {"Direct Steerpoint 13",            "wMsgJ_UTIL_NAV_DIR_SPT_13"    },
-            {"Direct Steerpoint 14",            "wMsgJ_UTIL_NAV_DIR_SPT_14"    },
-
             {"Nav Mode E G I",                  "wMsgJ_UTIL_NAV_MODE_EGI"       },
             {"Nav Mode G P S",                  "wMsgJ_UTIL_NAV_MODE_EGI"       },//F-14B(U) Nav mode selection
             {"Nav Mode Destination",            "wMsgJ_UTIL_NAV_MODE_DEST"      },
+
+            {"Nav Sequence Auto",               "wMsgJ_UTIL_NAV_SEQ_AUTO"       },
+            {"Nav Sequence Overfly",            "wMsgJ_UTIL_NAV_SEQ_OFLY"       },//F-14B(U) Nav Wayoint Sequencin
+            {"Nav Sequence Manual",             "wMsgJ_UTIL_NAV_SEQ_MAN"        },
+
+            {"Nav Backup to Selected",          "wMsgJ_UTIL_NAV_BHDI_FLY"       }, //F-14B(U) Nav Backup to Selected Steerpoint
+            
+            {"Nav Backup to Steerpoint 1",      "wMsgJ_UTIL_NAV_BHDI_SPT_1"     },
+            {"Nav Backup to Steerpoint 2",      "wMsgJ_UTIL_NAV_BHDI_SPT_2"     },
+            {"Nav Backup to Steerpoint 3",      "wMsgJ_UTIL_NAV_BHDI_SPT_3"     },
+            {"Nav Backup to Initial Point",     "wMsgJ_UTIL_NAV_BHDI_INIT_PT"   },
+            {"Nav Backup to Fixed Point",       "wMsgJ_UTIL_NAV_BHDI_FIX_PT"    },
+            {"Nav Backup to Mission Steerpoint","wMsgJ_UTIL_NAV_BHDI_MN_FIX_PT" }, //na
+            {"Nav Backup to Target",            "wMsgJ_UTIL_NAV_BHDI_STGT_1"    },
+            {"Nav Backup to Home Base",         "wMsgJ_UTIL_NAV_BHDI_HOME"      },
+            {"Nav Backup to Defense Point",     "wMsgJ_UTIL_NAV_DEF_PNT"        }, // testc?
+            {"Nav Backup to Hostile Zone",      "wMsgJ_UTIL_NAV_HSTZONE"        }, //
 
             {"Restore",                         "wMsgJ_UTIL_NAV_REST_MORE"      }, // show hint
             {"Restore Steerpoint 1",            "wMsgJ_UTIL_NAV_REST_MSN_SPT_1" },

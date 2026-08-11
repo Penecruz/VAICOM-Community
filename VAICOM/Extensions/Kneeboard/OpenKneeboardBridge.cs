@@ -13387,6 +13387,27 @@ namespace VAICOM
                         }
                     }
 
+                    foreach (KeyValuePair<string, IEnumerable<string>> extra in GetF14ManualAiCrewKeywordSections())
+                    {
+                        if (string.IsNullOrWhiteSpace(extra.Key) || extra.Value == null)
+                        {
+                            continue;
+                        }
+
+                        if (!buckets.TryGetValue(extra.Key, out SortedSet<string> set))
+                        {
+                            continue;
+                        }
+
+                        foreach (string keyword in extra.Value)
+                        {
+                            if (!string.IsNullOrWhiteSpace(keyword))
+                            {
+                                set.Add(keyword.Trim());
+                            }
+                        }
+                    }
+
                     Dictionary<string, List<string>> sections = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
                     foreach (string section in F14AiCrewKeywordSectionOrder)
                     {
@@ -13399,6 +13420,66 @@ namespace VAICOM
                     }
 
                     return sections;
+                }
+
+                private static Dictionary<string, IEnumerable<string>> GetF14ManualAiCrewKeywordSections()
+                {
+                    return new Dictionary<string, IEnumerable<string>>(StringComparer.OrdinalIgnoreCase)
+                    {
+                        {
+                            "Radio",
+                            new[]
+                            {
+                                "Radio Frequency [0..3] [0..9] [0..9] [Point; Decimal] [0..9] [0; 2 5; 5 0; 7 5]"
+                            }
+                        },
+                        {
+                            "Datalink",
+                            new[]
+                            {
+                                "Link Tune [0..9] [0..9] [Point; Decimal] [0..9]"
+                            }
+                        },
+                        {
+                            "TACAN",
+                            new[]
+                            {
+                                "TACAN Tune [X-Ray; Yankee] [0..1] [0..9] [0..9]"
+                            }
+                        },
+                        {
+                            "Radar",
+                            new[]
+                            {
+                                "Scan Range [0..30,5] [Angels; on] [the deck; 1..4,5]"
+                            }
+                        },
+                        {
+                            "LANTIRN",
+                            new[]
+                            {
+                                "Track Marker [0..10]",
+                                "Laser Code [5..7] [1..8] [1..8]"
+                            }
+                        },
+                        {
+                            "Weapons",
+                            new[]
+                            {
+                                "Pre Planned [1..8] To Station [3..6]"
+                            }
+                        },
+                        {
+                            "Utility/Navigation",
+                            new[]
+                            {
+                                "Map Marker [0..10] to [Waypoint 1; Waypoint 2; Waypoint 3; Steerpoint]",
+                                "Map Marker [0..10] to Grid",
+                                "[Fly; Orbit] Marker [0..10]",
+                                "Direct [Waypoint; Steerpoint] [1..50]"
+                            }
+                        }
+                    };
                 }
 
                 private static string ClassifyF14AiCrewKeywordSection(string commandId)

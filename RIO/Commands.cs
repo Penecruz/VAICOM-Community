@@ -456,6 +456,10 @@ namespace VAICOM.Extensions.RIO
             { "wMsgJ_UTIL_NAV_DIR_SPT_14" ,           new CommandInfo { uniqueid = 23761, name = "wMsgJ_UTIL_NAV_DIR_SPT_14",           displayname = Labels.aicommands["wMsgJ_UTIL_NAV_DIR_SPT_14"], enabled = true } },
             { "wMsgJ_UTIL_NAV_MODE_EGI" ,             new CommandInfo { uniqueid = 23762, name = "wMsgJ_UTIL_NAV_MODE_EGI",             displayname = Labels.aicommands["wMsgJ_UTIL_NAV_MODE_EGI"], enabled = true } },
             { "wMsgJ_UTIL_NAV_MODE_DEST" ,            new CommandInfo { uniqueid = 23763, name = "wMsgJ_UTIL_NAV_MODE_DEST",            displayname = Labels.aicommands["wMsgJ_UTIL_NAV_MODE_DEST"], enabled = true } },
+            { "wMsgJ_UTIL_NAV_SEQ_AUTO" ,             new CommandInfo { uniqueid = 23764, name = "wMsgJ_UTIL_NAV_SEQ_AUTO",             displayname = Labels.aicommands["wMsgJ_UTIL_NAV_SEQ_AUTO"], enabled = true } },
+            { "wMsgJ_UTIL_NAV_SEQ_OFLY" ,             new CommandInfo { uniqueid = 23765, name = "wMsgJ_UTIL_NAV_SEQ_OFLY",             displayname = Labels.aicommands["wMsgJ_UTIL_NAV_SEQ_OFLY"], enabled = true } },
+            { "wMsgJ_UTIL_NAV_SEQ_MAN" ,              new CommandInfo { uniqueid = 23766, name = "wMsgJ_UTIL_NAV_SEQ_MAN",              displayname = Labels.aicommands["wMsgJ_UTIL_NAV_SEQ_MAN"], enabled = true } },
+            { "wMsgJ_UTIL_NAV_BHDI_FLY" ,             new CommandInfo { uniqueid = 23767, name = "wMsgJ_UTIL_NAV_BHDI_FLY",             displayname = Labels.aicommands["wMsgJ_UTIL_NAV_BHDI_FLY"], enabled = true } },
             
             // end of Navigation and Utility 23650 - 23779
 

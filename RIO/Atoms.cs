@@ -415,6 +415,43 @@
 
             public static DeviceAction Atom_J_UTIL_NAV_MAP_MARKER = new DeviceAction() { device = Devices.RIO, command = start + 0, value = 0 };
 
+            public static DeviceAction Atom_J_PROXY_BU_DIRECT_TO_SELECTED = new DeviceAction() { device = Devices.PROXY, command = 10042, value = 1.0 };
+
+            public static DeviceAction Atom_J_PROXY_BU_DIRECT_TO_SELECTED_DELAYED(int delayMs)
+            {
+                if (delayMs < 0)
+                {
+                    delayMs = 0;
+                }
+
+                return new DeviceAction()
+                {
+                    device = Devices.PROXY,
+                    command = 10042,
+                    value = 1.0,
+                    delayMs = delayMs
+                };
+            }
+
+            public static DeviceAction Atom_J_PROXY_BU_SELECT_WAYPOINT(int waypointNumber)
+            {
+                if (waypointNumber < 0)
+                {
+                    waypointNumber = 0;
+                }
+                else if (waypointNumber > 99)
+                {
+                    waypointNumber = 99;
+                }
+
+                return new DeviceAction()
+                {
+                    device = Devices.PROXY,
+                    command = 10037,
+                    value = waypointNumber / 100.0
+                };
+            }
+
             public static DeviceAction Atom_J_UTIL_NAV_GRD_ENABLE = new DeviceAction() { device = Devices.RIO, command = start + 0, value = 0 };
             public static DeviceAction Atom_J_UTIL_NAV_GRD_DSABLE = new DeviceAction() { device = Devices.RIO, command = start + 0, value = 0 };
             public static DeviceAction Atom_J_UTIL_NAV_GRD_CENTER = new DeviceAction() { device = Devices.RIO, command = start + 0, value = 0 };

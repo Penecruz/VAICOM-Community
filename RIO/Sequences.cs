@@ -552,22 +552,12 @@ namespace VAICOM.Extensions.RIO
                 public static List<DeviceAction> Seq_J_UTIL_NAV_LOAD_FLT_PLAN_6_BU = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_5, RIO.Atom_J_MENU_OPTION_7, RIO.Atom_J_MENU_OPTION_1, RIO.Atom_J_MENU_OPTION_6 };
                 public static List<DeviceAction> Seq_J_UTIL_NAV_LOAD_FLT_PLAN_7_BU = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_5, RIO.Atom_J_MENU_OPTION_7, RIO.Atom_J_MENU_OPTION_1, RIO.Atom_J_MENU_OPTION_7 };
                 public static List<DeviceAction> Seq_J_UTIL_NAV_RELOAD_FLT_PLAN_BU = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_5, RIO.Atom_J_MENU_OPTION_7, RIO.Atom_J_MENU_OPTION_2 };
-                public static List<DeviceAction> Seq_J_UTIL_NAV_DIR_SPT_1_BU = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_5, RIO.Atom_J_MENU_OPTION_5, RIO.Atom_J_MENU_OPTION_1 };
-                public static List<DeviceAction> Seq_J_UTIL_NAV_DIR_SPT_2_BU = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_5, RIO.Atom_J_MENU_OPTION_5, RIO.Atom_J_MENU_OPTION_2 };
-                public static List<DeviceAction> Seq_J_UTIL_NAV_DIR_SPT_3_BU = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_5, RIO.Atom_J_MENU_OPTION_5, RIO.Atom_J_MENU_OPTION_3 };
-                public static List<DeviceAction> Seq_J_UTIL_NAV_DIR_SPT_4_BU = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_5, RIO.Atom_J_MENU_OPTION_5, RIO.Atom_J_MENU_OPTION_4 };
-                public static List<DeviceAction> Seq_J_UTIL_NAV_DIR_SPT_5_BU = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_5, RIO.Atom_J_MENU_OPTION_5, RIO.Atom_J_MENU_OPTION_5 };
-                public static List<DeviceAction> Seq_J_UTIL_NAV_DIR_SPT_6_BU = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_5, RIO.Atom_J_MENU_OPTION_5, RIO.Atom_J_MENU_OPTION_6 };
-                public static List<DeviceAction> Seq_J_UTIL_NAV_DIR_SPT_7_BU = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_5, RIO.Atom_J_MENU_OPTION_5, RIO.Atom_J_MENU_OPTION_7 };
-                public static List<DeviceAction> Seq_J_UTIL_NAV_DIR_SPT_8_BU = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_5, RIO.Atom_J_MENU_OPTION_5, RIO.Atom_J_MENU_OPTION_8, RIO.Atom_J_MENU_OPTION_1 };
-                public static List<DeviceAction> Seq_J_UTIL_NAV_DIR_SPT_9_BU = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_5, RIO.Atom_J_MENU_OPTION_5, RIO.Atom_J_MENU_OPTION_8, RIO.Atom_J_MENU_OPTION_2 };
-                public static List<DeviceAction> Seq_J_UTIL_NAV_DIR_SPT_10_BU = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_5, RIO.Atom_J_MENU_OPTION_5, RIO.Atom_J_MENU_OPTION_8, RIO.Atom_J_MENU_OPTION_3 };
-                public static List<DeviceAction> Seq_J_UTIL_NAV_DIR_SPT_11_BU = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_5, RIO.Atom_J_MENU_OPTION_5, RIO.Atom_J_MENU_OPTION_8, RIO.Atom_J_MENU_OPTION_4 };
-                public static List<DeviceAction> Seq_J_UTIL_NAV_DIR_SPT_12_BU = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_5, RIO.Atom_J_MENU_OPTION_5, RIO.Atom_J_MENU_OPTION_8, RIO.Atom_J_MENU_OPTION_5 };
-                public static List<DeviceAction> Seq_J_UTIL_NAV_DIR_SPT_13_BU = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_5, RIO.Atom_J_MENU_OPTION_5, RIO.Atom_J_MENU_OPTION_8, RIO.Atom_J_MENU_OPTION_6 };
-                public static List<DeviceAction> Seq_J_UTIL_NAV_DIR_SPT_14_BU = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_5, RIO.Atom_J_MENU_OPTION_5, RIO.Atom_J_MENU_OPTION_8, RIO.Atom_J_MENU_OPTION_7 };
                 public static List<DeviceAction> Seq_J_UTIL_NAV_MODE_EGI_BU = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_5, RIO.Atom_J_MENU_OPTION_1, RIO.Atom_J_MENU_OPTION_1 };
                 public static List<DeviceAction> Seq_J_UTIL_NAV_MODE_DEST_BU = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_5, RIO.Atom_J_MENU_OPTION_1, RIO.Atom_J_MENU_OPTION_2 };
+                public static List<DeviceAction> Seq_J_UTIL_NAV_SEQ_AUTO_BU = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_5, RIO.Atom_J_MENU_OPTION_2, RIO.Atom_J_MENU_OPTION_1 };
+                public static List<DeviceAction> Seq_J_UTIL_NAV_SEQ_OFLY_BU = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_5, RIO.Atom_J_MENU_OPTION_2, RIO.Atom_J_MENU_OPTION_2 };
+                public static List<DeviceAction> Seq_J_UTIL_NAV_SEQ_MAN_BU = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_5, RIO.Atom_J_MENU_OPTION_2, RIO.Atom_J_MENU_OPTION_3 };
+                public static List<DeviceAction> Seq_J_UTIL_NAV_BHDI_FLY_BU = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_5, RIO.Atom_J_MENU_OPTION_3, RIO.Atom_J_MENU_OPTION_1 };
 
                 //Supercarriers
                 public static List<DeviceAction> Seq_J_RAD_DL_HOST_WASH = new List<DeviceAction>() { RIO.Atom_J_RAD_DL_HOST_WASH };

@@ -302,6 +302,18 @@ namespace VAICOM
                         }
                         break;
 
+                    case "airio.egi.direct":
+                        if (State.dll_installed_rio)
+                        {
+                            Client.DcsClient.Message.SetRioDeviceSequence_EGI_DirectWaypoint();
+                        }
+                        else
+                        {
+                            UI.Playsound.Sorry();
+                            vaProxy.WriteToLog("This command requires AIRIO extension.", Colors.Warning);
+                        }
+                        break;
+
                     case "airio.ggw.prepln":
                         if (State.dll_installed_rio)
                         {
