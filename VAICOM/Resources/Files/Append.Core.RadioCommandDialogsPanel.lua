@@ -1865,36 +1865,12 @@ base.vaicom.objects = {
 			end
 		end
 
-		local function addGroupAircraft(group)
-			if group == nil then return end
-			local okUnits, units = base.pcall(base.vaicom.objects.getUnits, group)
-			if okUnits and units ~= nil and base.type(units) == "table" then
-				for _, u in base.pairs(units) do
-					base.vaicom.objects.addUniqueUnit(Collection, u)
-				end
-			end
-		end
-
 		if opposite then
 			addUnits(base.vaicom.objects.localJTACs(opposite))
 			addUnits(base.vaicom.objects.localAWACSs(opposite))
 			addUnits(base.vaicom.objects.localTankers(opposite))
 			addUnits(base.vaicom.objects.localATCs(opposite))
 			addUnits(base.vaicom.objects.localAllies(opposite))
-
-			local okPlaneGroups, planeGroups = base.pcall(base.vaicom.objects.getGroups, opposite, base.Group.Category.AIRPLANE)
-			if okPlaneGroups and planeGroups ~= nil and base.type(planeGroups) == "table" then
-				for _, g in base.pairs(planeGroups) do
-					addGroupAircraft(g)
-				end
-			end
-
-			local okHeliGroups, heliGroups = base.pcall(base.vaicom.objects.getGroups, opposite, base.Group.Category.HELICOPTER)
-			if okHeliGroups and heliGroups ~= nil and base.type(heliGroups) == "table" then
-				for _, g in base.pairs(heliGroups) do
-					addGroupAircraft(g)
-				end
-			end
 		end
 		return Collection
 	end,
