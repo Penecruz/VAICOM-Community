@@ -34,6 +34,8 @@ namespace VAICOM
                 private static string storeLookupResolvedPath = "";
                 private static DateTime storeLookupLastWriteUtc = DateTime.MinValue;
                 private static string storeLookupMapJson = "{}";
+                private static string selectedTab = "";
+
                 private static readonly string IndexHtml = @"<!doctype html>
 <html>
 <head>
@@ -11652,7 +11654,7 @@ namespace VAICOM
 
     async function tick(){
       try{
-        const r = await fetch('state', { cache: 'no-store' });
+        const r = await fetch(`state?selectedTab=${selectedTab}`, { cache: 'no-store' });
         const j = await r.json();
         try{
           render(j);
@@ -13779,6 +13781,13 @@ namespace VAICOM
 
                     if (path == "/okb/state" || path == "/okb/index.json")
                     {
+                        // Extract the currently selected tab from the query string
+                        string queryParams = context.Request.Url.Query;
+                        if (queryParams.Contains("selectedTab"))
+                        {
+                            selectedTab = queryParams.Substring(queryParams.LastIndexOf('=') + 1);
+                        }
+
                         WriteJson(context.Response, BuildSnapshotJson());
                         return;
                     }
@@ -13843,6 +13852,11 @@ namespace VAICOM
 
                     context.Response.StatusCode = 404;
                     context.Response.Close();
+                }
+
+                public static bool IsFlightPlanTabSelected()
+                {
+                    return !string.IsNullOrEmpty(selectedTab) && selectedTab.Equals("DTC");
                 }
 
                 private static string GetIndexHtmlWithStoreLookup()

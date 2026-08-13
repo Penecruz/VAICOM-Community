@@ -130,7 +130,9 @@ namespace VAICOM
                         tgtdevname = State.currentradiodevicename.Replace(":", " ");
                         importmenus = State.activeconfig.ImportOtherMenu;
                         dictmode = State.Proxy.Dictation.IsOn();
-                        includediagnostics = Extensions.Kneeboard.OpenKneeboardBridge.HasActiveConnection;
+
+                        includediagnostics = Extensions.Kneeboard.OpenKneeboardBridge.HasActiveConnection && Extensions.Kneeboard.OpenKneeboardBridge.IsFlightPlanTabSelected();
+                        
                         //kneeboard = 1; // show kneeboard on PTT press, test
                     }
 
