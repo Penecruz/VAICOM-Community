@@ -556,6 +556,7 @@ namespace VAICOM.Extensions.RIO
             { "wMsgJ_STRT_ASSISTED" ,           new CommandInfo { uniqueid = 23889, name = "wMsgJ_STRT_ASSISTED",           displayname = Labels.aicommands["wMsgJ_STRT_ASSISTED"], enabled = true      } },
             { "wMsgJ_CANOPY_OPEN" ,             new CommandInfo { uniqueid = 23890, name = "wMsgJ_CANOPY_OPEN",             displayname = Labels.aicommands["wMsgJ_CANOPY_OPEN"], enabled = true                } },
             { "wMsgJ_CANOPY_CLOSE",             new CommandInfo { uniqueid = 23891, name = "wMsgJ_CANOPY_CLOSE",            displayname = Labels.aicommands["wMsgJ_CANOPY_CLOSE"], enabled = true               } },
+            { "wMsgJ_SDWN_SHUTDOWN",            new CommandInfo { uniqueid = 23892, name = "wMsgJ_SDWN_SHUTDOWN",           displayname = Labels.aicommands["wMsgJ_SDWN_SHUTDOWN"], enabled = true              } },
             // end of RIO misc 23880 - 23919
 
             // block: AI pilot 23920 - 23999

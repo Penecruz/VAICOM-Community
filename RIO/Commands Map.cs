@@ -652,6 +652,7 @@ namespace VAICOM.Extensions.RIO
             {"wMsgJ_STRT_PAUSE",            new List<List<DeviceAction>> { Macro.Seq_J_STRT_PAUSE        }},
             {"wMsgJ_STRT_STARTUP",          new List<List<DeviceAction>> { Macro.Seq_J_MENU_CONTEXT, Macro.Seq_J_STRT_STARTUP        }},
             {"wMsgJ_STRT_ASSISTED",         new List<List<DeviceAction>> { Macro.Seq_J_MENU_CONTEXT, Macro.Seq_J_STRT_ASSISTED       }},
+            {"wMsgJ_SDWN_SHUTDOWN",         new List<List<DeviceAction>> { Macro.Seq_J_MENU_CONTEXT, Macro.Seq_J_SDWN_SHUTDOWN       }},
             
             // block 600-700 AI pilot
             {"wMsgI_ALT",                   new List<List<DeviceAction>> { }},// hint

@@ -291,6 +291,19 @@ namespace VAICOM
                         }
                         break;
 
+                    case "airio.shutdown":
+                    case "airio.dev.shutdown":
+                        if (State.dll_installed_rio)
+                        {
+                            Client.DcsClient.Message.SetRioDeviceSequence_Shutdown();
+                        }
+                        else
+                        {
+                            UI.Playsound.Sorry();
+                            vaProxy.WriteToLog("This command requires AIRIO extension.", Colors.Warning);
+                        }
+                        break;
+
                     case "airio.ggw.prepln":
                         if (State.dll_installed_rio)
                         {

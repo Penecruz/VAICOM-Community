@@ -18,18 +18,21 @@ namespace VAICOM
                 {
                     validationError = string.Empty;
 
+                    // Step 1: guard against unsupported module/runtime.
                     if (!IsF14BUActive())
                     {
                         validationError = "AIRIO : EGI Direct Waypoint is available only in F-14B(U).";
                         return false;
                     }
 
+                    // Step 2: validate supported spoken/index range.
                     if (waypointNumber < 1 || waypointNumber > 50)
                     {
                         validationError = "AIRIO : Waypoint out of range. Valid range is 1 to 50.";
                         return false;
                     }
 
+                    // Step 3: reset outbound action list.
                     if (State.currentmessage.extsequence == null)
                     {
                         State.currentmessage.extsequence = new List<Extensions.RIO.DeviceAction>();
@@ -41,16 +44,41 @@ namespace VAICOM
 
                     double waypointValue = waypointNumber / 100.0;
 
-                    State.currentmessage.extsequence.Add(Extensions.RIO.DeviceActionsLibrary.RIO.Atom_J_PROXY_BU_SELECT_WAYPOINT(waypointNumber));
+                    // Step 4: normalize nav list by reloading BU flight plan.
+                    State.currentmessage.extsequence.AddRange(Extensions.RIO.DeviceActionsLibrary.Sequences.Macro.Seq_J_MENU_MAIN);
+                    State.currentmessage.extsequence.AddRange(Extensions.RIO.DeviceActionsLibrary.Sequences.Macro.Seq_J_UTIL_NAV_RELOAD_FLT_PLAN_BU);
+                    State.currentmessage.extsequence.Add(Extensions.RIO.DeviceActionsLibrary.RIO.Atom_J_MENU_CLOSE);
+
+                    // Step 5: wait, then select requested waypoint (double-tap for reliability).
                     State.currentmessage.extsequence.Add(new Extensions.RIO.DeviceAction()
                     {
                         device = Extensions.RIO.DeviceActionsLibrary.Devices.PROXY,
                         command = 10037,
                         value = waypointValue,
-                        delayMs = 60
+                        delayMs = 2000
                     });
-                    State.currentmessage.extsequence.Add(Extensions.RIO.DeviceActionsLibrary.RIO.Atom_J_PROXY_BU_DIRECT_TO_SELECTED_DELAYED(160));
-                    State.currentmessage.extsequence.Add(Extensions.RIO.DeviceActionsLibrary.RIO.Atom_J_PROXY_BU_DIRECT_TO_SELECTED_DELAYED(320));
+                    State.currentmessage.extsequence.Add(new Extensions.RIO.DeviceAction()
+                    {
+                        device = Extensions.RIO.DeviceActionsLibrary.Devices.PROXY,
+                        command = 10037,
+                        value = waypointValue,
+                        delayMs = 120
+                    });
+
+                    // Step 6: issue direct-to-selected with a retry pulse.
+                    State.currentmessage.extsequence.Add(Extensions.RIO.DeviceActionsLibrary.RIO.Atom_J_PROXY_BU_DIRECT_TO_SELECTED_DELAYED(300));
+                    State.currentmessage.extsequence.Add(Extensions.RIO.DeviceActionsLibrary.RIO.Atom_J_PROXY_BU_DIRECT_TO_SELECTED_DELAYED(480));
+
+                    if (State.activeconfig != null && State.activeconfig.Debugmode)
+                    {
+                        List<string> sequenceDebug = new List<string>();
+                        for (int i = 0; i < State.currentmessage.extsequence.Count; i++)
+                        {
+                            Extensions.RIO.DeviceAction a = State.currentmessage.extsequence[i];
+                            sequenceDebug.Add("#" + i.ToString() + " d=" + a.device.ToString() + " c=" + a.command.ToString() + " v=" + a.value.ToString("0.##") + " t=" + a.delayMs.ToString());
+                        }
+                        Log.Write("AIRIO EGI direct seq | wp=" + waypointNumber.ToString() + " | " + string.Join(" | ", sequenceDebug), Colors.Inline);
+                    }
 
                     return true;
                 }
@@ -59,6 +87,7 @@ namespace VAICOM
                 {
                     waypointNumber = 0;
 
+                    // Step 1: scan spoken command token segments and resolve the last valid number.
                     bool found = false;
                     List<string> segmentDebug = new List<string>();
 
@@ -71,6 +100,7 @@ namespace VAICOM
                         int parsed;
                         if (Int32.TryParse(safeSegment, out parsed) && parsed > 0)
                         {
+                            // Prefer explicit numeric segment values when present.
                             waypointNumber = parsed;
                             found = true;
                             continue;
@@ -88,6 +118,7 @@ namespace VAICOM
 
                         if (digitsOnly.Length > 0 && Int32.TryParse(digitsOnly, out parsed) && parsed > 0)
                         {
+                            // Fallback: parse embedded digits in mixed tokens.
                             waypointNumber = parsed;
                             found = true;
                         }
@@ -150,8 +181,6 @@ namespace VAICOM
                             return;
                         }
 
-                        bool repeatedWaypointRequest = (lastEgiDirectedWaypoint == waypointNumber);
-
                         string validationError;
                         if (!TryBuildRioEgiDirectWaypointSequence(waypointNumber, out validationError))
                         {
@@ -170,14 +199,6 @@ namespace VAICOM
                         }
 
                         UI.Playsound.Commandcomplete();
-                        if (repeatedWaypointRequest)
-                        {
-                            riospeech.riospeakrandom(3);
-                        }
-                        else
-                        {
-                            riospeech.riospeakrandom(1);
-                        }
                         lastEgiDirectedWaypoint = waypointNumber;
 
                         if (!State.clientmode.Equals(ClientModes.Debug) && tables.menustate[tables.menucats.PLAYERSEAT].Equals(tables.menustates.RIO))

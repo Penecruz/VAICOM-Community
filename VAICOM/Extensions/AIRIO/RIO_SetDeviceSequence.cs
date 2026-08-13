@@ -726,6 +726,39 @@ namespace VAICOM
 
             public static partial class Message
             {
+                private static bool TryHandleTomcatShutdownAlias(string cmd)
+                {
+                    if (!string.Equals(cmd, "wMsgJ_SDWN_SHUTDOWN", StringComparison.OrdinalIgnoreCase))
+                    {
+                        return false;
+                    }
+
+                    if (State.currentmessage.extsequence == null)
+                    {
+                        State.currentmessage.extsequence = new List<Extensions.RIO.DeviceAction>();
+                    }
+                    else
+                    {
+                        State.currentmessage.extsequence.Clear();
+                    }
+
+                    bool isF14BU = IsF14BUActive();
+                    BuildTomcatShutdownSequence(State.currentmessage.extsequence, isF14BU);
+
+                    if (State.currentmessage.extsequence != null && State.currentmessage.extsequence.Count > 0)
+                    {
+                        PlayShutdownStartVoiceAck();
+                        QueueShutdownCompletionCue(State.currentmessage.extsequence);
+                    }
+
+                    if (State.activeconfig != null && State.activeconfig.Debugmode)
+                    {
+                        Log.Write("AIRIO shutdown alias seq | cmd=" + cmd + " | isF14BU=" + isF14BU.ToString() + " | actions=" + State.currentmessage.extsequence.Count.ToString(), Colors.Inline);
+                    }
+
+                    return true;
+                }
+
                 private static bool IsF14BUActive()
                 {
                     try
@@ -771,6 +804,12 @@ namespace VAICOM
                     {
 
                         string cmd = State.currentkey["command"];
+
+                        if (TryHandleTomcatShutdownAlias(cmd))
+                        {
+                            return;
+                        }
+
                         Dictionary<string, List<List<Extensions.RIO.DeviceAction>>> commandTable = Extensions.RIO.DeviceActionsLibrary.Sequences.RioCommands;
 
                         bool isF14BU = IsF14BUActive();

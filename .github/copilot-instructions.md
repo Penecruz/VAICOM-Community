@@ -59,3 +59,6 @@
 
 ## COM Frequency Display
 - For runtime COM frequency display, use strict three-decimal MHz formatting for module consistency (e.g., 305.000, 127.050).
+
+## Code Clarity
+- Add small step-by-step code notes/comments in complex command-flow methods for clarity.

@@ -765,6 +765,7 @@ namespace VAICOM.Extensions.RIO
                 public static List<DeviceAction> Seq_J_STRT_PAUSE = new List<DeviceAction>() { RIO.Atom_J_STRT_PAUSE };
                 public static List<DeviceAction> Seq_J_STRT_STARTUP = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_3 };
                 public static List<DeviceAction> Seq_J_STRT_ASSISTED = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_4 };
+                public static List<DeviceAction> Seq_J_SDWN_SHUTDOWN = new List<DeviceAction>() { };
 
                 // block 600-700: AI pilot
                 public static List<DeviceAction> Seq_I_ALT = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_5 }; // to menus

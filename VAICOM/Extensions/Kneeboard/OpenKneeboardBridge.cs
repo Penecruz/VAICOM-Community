@@ -3370,7 +3370,7 @@ namespace VAICOM
 
     function getF14AiCrewKeywordGroups(data, phrases){
       const sectionOrder = [
-        'Startup',
+        'Startup and Shutdown',
         'Radio',
         'Radar',
         'Utility/Navigation',
@@ -3379,7 +3379,9 @@ namespace VAICOM
         'Defensive/Countermeasures',
         'Datalink',
         'TACAN',
+        'Walkman',
         'Crew Contract',
+        'Miscellaneous',
         'Supercarriers',
         'AI Pilot'
       ];
@@ -3408,10 +3410,12 @@ namespace VAICOM
         if (t.indexOf('link ') === 0) return 'Datalink';
         if (t.indexOf('tacan') === 0) return 'TACAN';
         if (t.indexOf('navigate') === 0 || t.indexOf('direct steerpoint') === 0 || t.indexOf('nav mode') === 0 || t.indexOf('restore') === 0 || t.indexOf('load flight plan') === 0 || t.indexOf('reload flight plan') === 0 || t.indexOf('grid ') === 0) return 'Utility/Navigation';
+        if (t.indexOf('rock and roll') === 0 || t.indexOf('cut it out') === 0 || t.indexOf('skip this part') === 0 || t.indexOf('go back a little') === 0) return 'Walkman';
         if (t.indexOf('contract') === 0 || t.indexOf('no talking') === 0 || t.indexOf('talk to me') === 0 || t.indexOf('set eject') === 0 || t.indexOf('landing callouts') === 0 || t.indexOf('back to work') === 0 || t.indexOf('knock it off') === 0 || t.indexOf('wake up') === 0) return 'Crew Contract';
         if (t.indexOf('link host ') === 0 || t.indexOf('tacan tune ') === 0) return 'Supercarriers';
         if (t.indexOf('chaff') === 0 || t.indexOf('flare') === 0 || t.indexOf('flares') === 0 || t.indexOf('countermeasure') === 0 || t.indexOf('jammer') === 0 || t.indexOf('black hot') === 0 || t.indexOf('white hot') === 0) return 'Defensive/Countermeasures';
-        if (t.indexOf('startup') === 0 || t.indexOf('assisted startup') === 0 || t.indexOf('align ') === 0 || t.indexOf('abort startup') === 0 || t === 'check' || t.indexOf('hold it') === 0 || t.indexOf('loud and clear') === 0) return 'Startup';
+        if (t.indexOf('startup') === 0 || t.indexOf('assisted startup') === 0 || t.indexOf('align ') === 0 || t.indexOf('abort startup') === 0 || t.indexOf('commence shutdown') === 0 || t === 'check' || t.indexOf('hold it') === 0 || t.indexOf('loud and clear') === 0) return 'Startup and Shutdown';
+        if (t.indexOf('open canopy') === 0 || t.indexOf('close canopy') === 0 || t.indexOf('open menu') === 0 || t.indexOf('close menu') === 0 || t.indexOf('toggle menu') === 0 || t.indexOf('do option ') === 0 || t.indexOf('do menu ') === 0) return 'Miscellaneous';
         if (t.indexOf('set altitude') === 0 || t.indexOf('go angels') === 0 || t.indexOf('change altitude') === 0 || t.indexOf('climb ') === 0 || t.indexOf('descent ') === 0 || t.indexOf('slow down') === 0 || t.indexOf('speed up') === 0 || t.indexOf('heading ') === 0 || t.indexOf('set heading') === 0 || t.indexOf('turn ') === 0 || t.indexOf('change speed') === 0 || t.indexOf('fly to destination') === 0 || t.indexOf('orbit destination') === 0 || t.indexOf('head straight') === 0) return 'AI Pilot';
         return '';
       }
@@ -13309,7 +13313,7 @@ namespace VAICOM
 
                 private static readonly string[] F14AiCrewKeywordSectionOrder = new[]
                 {
-                    "Startup",
+                    "Startup and Shutdown",
                     "Radio",
                     "Radar",
                     "Utility/Navigation",
@@ -13318,7 +13322,9 @@ namespace VAICOM
                     "Defensive/Countermeasures",
                     "Datalink",
                     "TACAN",
+                    "Walkman",
                     "Crew Contract",
+                    "Miscellaneous",
                     "Supercarriers",
                     "AI Pilot",
                 };
@@ -13531,6 +13537,11 @@ namespace VAICOM
                         return "Utility/Navigation";
                     }
 
+                    if (commandId.StartsWith("wMsgJ_WLKMN_", StringComparison.OrdinalIgnoreCase))
+                    {
+                        return "Walkman";
+                    }
+
                     if (commandId.StartsWith("wMsgJ_UTIL_CONTR_", StringComparison.OrdinalIgnoreCase)
                         || commandId.Equals("wMsgJ_RESET", StringComparison.OrdinalIgnoreCase))
                     {
@@ -13544,7 +13555,19 @@ namespace VAICOM
 
                     if (commandId.StartsWith("wMsgJ_STRT_", StringComparison.OrdinalIgnoreCase))
                     {
-                        return "Startup";
+                        return "Startup and Shutdown";
+                    }
+
+                    if (commandId.StartsWith("wMsgJ_SDWN_", StringComparison.OrdinalIgnoreCase))
+                    {
+                        return "Startup and Shutdown";
+                    }
+
+                    if (commandId.StartsWith("wMsgJ_CANOPY_", StringComparison.OrdinalIgnoreCase)
+                        || commandId.StartsWith("wMsgJ_MENU_", StringComparison.OrdinalIgnoreCase)
+                        || commandId.StartsWith("wMsgJ_UTIL_", StringComparison.OrdinalIgnoreCase))
+                    {
+                        return "Miscellaneous";
                     }
 
                     if (commandId.StartsWith("wMsgI_", StringComparison.OrdinalIgnoreCase))

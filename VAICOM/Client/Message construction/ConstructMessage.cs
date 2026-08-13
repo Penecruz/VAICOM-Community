@@ -827,9 +827,10 @@ namespace VAICOM
                                 State.currentmessage.dspmsg = "VAICOM PRO: RIO | " + Database.Labels.aicommands[State.currentkey["command"]];
                             }
 
-                            if (Extensions.RIO.menuhelper.optionhints.ContainsKey(State.currentkey["command"]))
+                            string contextualHint;
+                            if (Extensions.RIO.menuhelper.TryGetOptionHint(State.currentkey["command"], out contextualHint))
                             {
-                                State.currentmessage.dspmsg = "AIRIO command use:\n" + Extensions.RIO.menuhelper.optionhints[State.currentkey["command"]];
+                                State.currentmessage.dspmsg = "AIRIO command use:\n" + contextualHint;
                                 State.currentmessage.msgdur = 5;
 
                                 if (State.currentkey["command"].Equals("wMsgJ_WPN_AG_SORDN"))

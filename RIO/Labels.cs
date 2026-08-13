@@ -691,16 +691,17 @@ namespace VAICOM.Extensions.RIO
 
             // startup
             {"wMsgJ_STRT_ABORT",                "Cancel Procedure"              },
-            {"wMsgJ_STRT_INS_FINE",             "INS Alignment Fine"                },
-            {"wMsgJ_STRT_INS_MIN_WPN",          "INS Alignment Minimum"             },
-            {"wMsgJ_STRT_INS_COARSE",           "INS Alignment Coarse"              },
-            {"wMsgJ_STRT_INS_NOW",              "INS Alignment Now"                 },
+            {"wMsgJ_STRT_INS_FINE",             "INS Alignment Fine"            },
+            {"wMsgJ_STRT_INS_MIN_WPN",          "INS Alignment Minimum"         },
+            {"wMsgJ_STRT_INS_COARSE",           "INS Alignment Coarse"          },
+            {"wMsgJ_STRT_INS_NOW",              "INS Alignment Now"             },
 
             {"wMsgJ_STRT_CHECK",                "Confirm Checkpoint"            },
             {"wMsgJ_STRT_LOUD_CLR",             "Confirm ICS test"              },
             {"wMsgJ_STRT_PAUSE",                "Pause"                         },
             {"wMsgJ_STRT_STARTUP",              "Perform Start Procedure"       },
             {"wMsgJ_STRT_ASSISTED",             "Assisted Start Procedure"      },
+            {"wMsgJ_SDWN_SHUTDOWN",             "Postflight Shutdown"           },
 
             // 600-700 AI pilot
             {"wMsgI_ALT",                       "Go Altitude"                           },

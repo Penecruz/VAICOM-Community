@@ -274,6 +274,8 @@ namespace VAICOM
                     // 1= OK
                     // 2= NOK
                     // 3 =hmm
+                    // 4 = checklist completion cue
+                    // 4 = Right Throttle to Idle
 
                     List<string> filelist = new List<string>();
 
@@ -299,6 +301,10 @@ namespace VAICOM
                             {
                                 filename = "misc/uhm";
                             }
+                            if (type.Equals(4))
+                            {
+                                filename = "checklists/rightthrottleidle";
+                            }
                             break;
 
                         default:
@@ -315,13 +321,17 @@ namespace VAICOM
                             {
                                 filename = "misc/uhm"; // nothing
                             }
+                            if (type.Equals(4))
+                            {
+                                filename = "checklists/rightthrottleidle";
+                            }
                             break;
 
                     }
 
                     //now add random extension (1-17)
                     //Random rnd = new Random();
-                    int checkmax = 17;
+                    int checkmax = type.Equals(4) ? 9 : 17;
                     int dice = State.random2.Next(1, 1 + checkmax);
                     string append = dice.ToString();
 
@@ -352,6 +362,9 @@ namespace VAICOM
 
             public class menuhelper
             {
+                private const string CmsModeHintAB = "\"Countermeasures [ Off | Manual | Auto ] \"\nSets CMS operation mode";
+                private const string CmsModeHintBU = "\"Countermeasures Mode [ Off | Bypass | Manual | Semi | Auto ] \"\nSets CMDS operation mode";
+
                 public static Dictionary<string, string> optionhints = new Dictionary<string, string>()
                 {
 
@@ -389,7 +402,7 @@ namespace VAICOM
                     { "wMsgJ_DEF_CMS_CTL_ORD"       ,"\"Dispense Order [ Chaff | Flare ] [ Program | Single | Tight ] \"\nSet sequence order for chaff/flares countermeasures" },
                     { "wMsgJ_DEF_FLR_PGM"           ,"\"Flares Program [ 2x2 | 4x2 | 10x2 | 4x6 | 8x6 | 10x6 | 6x10 | 10x10 ]\"\nSet Flares countermeasures program (qty by sec)" },
                     { "wMsgJ_DEF_CHF_PGM"           ,"\"Chaff Program [1-8]\"\nSet Chaff countermeasures program number" },
-                    { "wMsgJ_DEF_CMS_MOD"           ,"\"Countermeasures [ Off | Manual | Auto ] \"\nSets CMS operation mode" },
+                    { "wMsgJ_DEF_CMS_MOD"           ,CmsModeHintAB },
                     { "wMsgJ_DEF_FLR_MOD"           ,"\"Flares Mode [ Pilot | Normal | Multi ] \"\nSets Flares dispense mode" },
 
                     //Datalink
@@ -404,6 +417,58 @@ namespace VAICOM
                     { "wMsgI_DIR"                   ,"\"Heading [ Straight | North | NorthEast | East | SouthEast | South | SouthWest | West | NorthWest ] \"\nSelects heading" },
                     { "wMsgI_DIR_CHG"               ,"\"Turn [ Left | Right ] [ 5 | 10 | 30 | 45 ] \"\nCommand turn (angle)" },
                 };
+
+                public static bool TryGetOptionHint(string commandId, out string hint) //New logic to return different hint for F-14B(U) vs F-14A/B if required.
+                {
+                    hint = null;
+
+                    if (string.IsNullOrWhiteSpace(commandId))
+                    {
+                        return false;
+                    }
+
+                    if (commandId.Equals("wMsgJ_DEF_CMS_MOD", StringComparison.OrdinalIgnoreCase))
+                    {
+                        hint = IsF14BUActiveForHints() ? CmsModeHintBU : CmsModeHintAB;
+                        return true;
+                    }
+
+                    return optionhints.TryGetValue(commandId, out hint);
+                }
+
+                private static bool IsF14BUActiveForHints()
+                {
+                    try
+                    {
+                        string stateId = (State.currentstate != null && !string.IsNullOrWhiteSpace(State.currentstate.id))
+                            ? State.currentstate.id.Trim()
+                            : string.Empty;
+
+                        if (!string.IsNullOrWhiteSpace(stateId)
+                            && (stateId.Equals("F-14BU", StringComparison.OrdinalIgnoreCase)
+                                || stateId.Equals("F-14B(U)", StringComparison.OrdinalIgnoreCase)
+                                || stateId.Equals("F14BU", StringComparison.OrdinalIgnoreCase)
+                                || (stateId.IndexOf("F-14B", StringComparison.OrdinalIgnoreCase) >= 0
+                                    && stateId.IndexOf("U", StringComparison.OrdinalIgnoreCase) >= 0)))
+                        {
+                            return true;
+                        }
+
+                        string rioMod = !string.IsNullOrWhiteSpace(State.riomod)
+                            ? State.riomod.Trim()
+                            : string.Empty;
+
+                        return !string.IsNullOrWhiteSpace(rioMod)
+                            && (rioMod.Equals("F-14BU", StringComparison.OrdinalIgnoreCase)
+                                || rioMod.Equals("F-14B(U)", StringComparison.OrdinalIgnoreCase)
+                                || rioMod.Equals("F14BU", StringComparison.OrdinalIgnoreCase));
+                    }
+                    catch
+                    {
+                    }
+
+                    return false;
+                }
             }
 
         }

@@ -577,7 +577,7 @@ namespace VAICOM.Extensions.RIO
             {"Look for Movers",                     "wMsgLANTIRN_Srch_Vehicle"              },
             {"Look for Ships",                      "wMsgLANTIRN_Ships_Active"              },            
             
-            // Startup
+            // Startup and Shutdown
             {"Abort Startup",               "wMsgJ_STRT_ABORT"                  },
             {"Align Fine",                  "wMsgJ_STRT_INS_FINE"               },
             {"Align Minimum",               "wMsgJ_STRT_INS_MIN_WPN"            },
@@ -589,6 +589,7 @@ namespace VAICOM.Extensions.RIO
             {"Hold it",                     "wMsgJ_STRT_PAUSE"                  },
             {"Startup",                     "wMsgJ_STRT_STARTUP"                },
             {"Assisted Startup",            "wMsgJ_STRT_ASSISTED"               },
+            {"Commence Shutdown",           "wMsgJ_SDWN_SHUTDOWN"               },
 
             // AI pilot
             {"Set Altitude",                "wMsgI_ALT"                         },
