@@ -1554,13 +1554,11 @@ base.vaicom.properties = {
 		return returnstr
 	end,
 	hasradio = function(Locator)
-		local result = false
-		if Locator:getCommunicator() then
-			if Locator:getCommunicator():hasTransiver() then
-				result = true
-			end
+		local communicator = getCommunicatorCached(Locator)
+		if communicator ~= nil and communicator:hasTransiver() then
+			return true
 		end
-		return result
+		return false
 	end,
 	isplayerunit = function(Locator)
 		local playerunitID = data.pUnit.id_
@@ -1616,8 +1614,8 @@ base.vaicom.filter = {
 	hasradio = function(Units)
 		local Collection = {}
 		if base.vaicom.helper.tablelength(Units) > 0 then
-			for i, unit in base.pairs(Units) do
-				local communicator = unit:getCommunicator()
+			for _, unit in base.pairs(Units) do
+				local communicator = getCommunicatorCached(unit)
 				if communicator ~= nil and communicator:hasTransiver() then
 					base.table.insert(Collection, unit)
 				end	
@@ -2111,9 +2109,9 @@ base.vaicom.get = {
 				markerdetails = function()
 					local details = {}
 					local Stack = base.world.getMarkPanels()
-					-- Only build the map marker details if there are 20 or less as some
+					-- Only build the map marker details if there are 64 or less as some
 					-- large missions can have over a thousand markers, which we don't send
-					if base.type(Stack) ~= "table" or #Stack > 20 then return details end
+					if base.type(Stack) ~= "table" or #Stack >= 64 then return details end
 					local function tryget(fn)
 						local ok, value = base.pcall(fn)
 						if ok then return value end
@@ -2373,6 +2371,8 @@ base.vaicom.state = {
 				end
 
 				local markerdetails = (data.initialized and base.vaicom.get.missiondata.markerdetails()) or {}
+				-- Map markers are used by OKB so only include if we are retrieving this data (diagnostics probe)
+				local markerdetails = (base.vaicom.state.includediagnostics and data.initialized and base.vaicom.get.missiondata.markerdetails()) or {}
 				base.vaicom.state.riostate.markerdetails = markerdetails
 				base.vaicom.state.riostate.markers = #markerdetails
 
