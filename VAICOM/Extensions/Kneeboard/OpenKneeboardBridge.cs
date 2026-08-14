@@ -3324,7 +3324,7 @@ namespace VAICOM
       const server = (data && data.Server) || {};
       const aircraft = String(server.Aircraft || '').toUpperCase();
 
-      if (aircraft.indexOf('F-14') >= 0) return ['RIO','ICEMAN','AI CREW','REF','CREW','REF/CREW','GND CREW'];
+      if (aircraft.indexOf('F-14') >= 0) return ['RIO','ICEMAN','AI CREW'];
       if (aircraft.indexOf('F-4') >= 0) return ['WSO','AIWSO','AI CREW','REF','CREW','REF/CREW','GND CREW'];
       if (aircraft.indexOf('AH-64') >= 0 || aircraft.indexOf('AH64') >= 0) return ['GEORGE','CPG','AICPG','AI CREW','REF','CREW','REF/CREW','GND CREW'];
 
@@ -4165,8 +4165,13 @@ namespace VAICOM
 
       if (tab === 'GND CREW'){
         const filtered = [];
+        const aiCrewSet = new Set((Array.isArray(data.AiCrewKeywords) ? data.AiCrewKeywords : []).map(function(k){
+          return String(k || '').replace(/\s+/g, ' ').trim().toUpperCase();
+        }).filter(function(k){ return k.length > 0; }));
+
         phrases.forEach(function(p){
-          if (!/^George\s/i.test(p)) filtered.push(p);
+          const normalized = String(p || '').replace(/\s+/g, ' ').trim().toUpperCase();
+          if (!/^George\s/i.test(p) && !aiCrewSet.has(normalized)) filtered.push(p);
         });
         return reorderGroundCrewPhrasesForFlow(filtered);
       }
