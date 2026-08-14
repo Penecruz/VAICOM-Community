@@ -96,7 +96,8 @@ namespace VAICOM
                 public List<string> altfreq;
                 public string mod;
                 public string tacan;
-                public string unitdiagnostics;
+                // This is currently unused and will be used in the future
+                //public string unitdiagnostics;
                 public string tacanprobe;
                 public string status;
                 public bool ishuman;

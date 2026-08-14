@@ -4391,10 +4391,12 @@ base.vaicom.state = {
 							break
 						end
 
-						local unitDiagnostics = ""
-						if base.vaicom.state.debugmode and (recipientclass == "Tanker" or recipientclass == "ATC" or recipientclass == "AWACS" or recipientclass == "Flight") then
-                            unitDiagnostics = base.tostring(base.vaicom.properties.unitdiagnostics(k))
-						end
+						-- This is currently unused and will be used in the future.
+						-- local unitDiagnostics = ""
+						-- if base.vaicom.state.debugmode and (recipientclass == "Tanker" or recipientclass == "ATC" or recipientclass == "AWACS" or recipientclass == "Flight") then
+                        --     unitDiagnostics = base.tostring(base.vaicom.properties.unitdiagnostics(k))
+						-- end
+
                         local tacanValue = normalizeTacanValue(base.vaicom.properties.tacan(k))
                        	if tacanValue == "" and (recipientclass == "Tanker" or recipientclass == "ATC" or recipientclass == "AWACS" or recipientclass == "Flight") then
 							local okGroup, groupObj = base.pcall(function() return k:getGroup() end)
@@ -4416,7 +4418,6 @@ base.vaicom.state = {
 										coalition = base.tostring(base.vaicom.properties.coalition(k)),
 										altfreq = base.vaicom.properties.altfreq(k),
                                     	tacan = tacanValue,
-                                    	unitdiagnostics = unitDiagnostics,
 										freq = base.tostring(base.vaicom.properties.frequency(k)),
 										mod = base.tostring(base.vaicom.properties.modulation(k)),
 										ishuman = base.vaicom.properties.human(k),
