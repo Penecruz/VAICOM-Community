@@ -2370,7 +2370,6 @@ base.vaicom.state = {
 					end
 				end
 
-				local markerdetails = (data.initialized and base.vaicom.get.missiondata.markerdetails()) or {}
 				-- Map markers are used by OKB so only include if we are retrieving this data (diagnostics probe)
 				local markerdetails = (base.vaicom.state.includediagnostics and data.initialized and base.vaicom.get.missiondata.markerdetails()) or {}
 				base.vaicom.state.riostate.markerdetails = markerdetails
