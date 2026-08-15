@@ -241,7 +241,6 @@
     <None Include="Resources\Files\Append.Core.TabSheetBar.lua" />
     <None Include="Resources\Files\Append.Core.VAICOMPRO.export.lua" />
     <None Include="Resources\Files\Append.F14.JesterAI_Page.lua" />
-    <None Include="Resources\Files\Append.F14.JesterInit.lua" />
     <None Include="Resources\Files\Append.Kneeboard.1.lua" />
     <None Include="Resources\Files\Append.Kneeboard.command_defs.lua" />
     <None Include="Resources\Files\Append.Kneeboard.declare_VAICOMPRO_device.lua" />
@@ -260,7 +259,6 @@
     <None Include="Resources\Files\Orig.Core.TabSheetBar.lua" />
     <None Include="Resources\Files\Orig.Core.VAICOMPRO.export.lua" />
     <None Include="Resources\Files\Orig.F14.JesterAI_Page.lua" />
-    <None Include="Resources\Files\Orig.F14.JesterInit.lua" />
     <None Include="Resources\Files\Orig.F4E.Jester.Renderer.js" />
     <None Include="Resources\Files\Orig.F4E.Jester.Dialog.Interface.js" />
     <None Include="Resources\Files\Orig.ReplaceString.F14.JesterAI_Page.lua" />

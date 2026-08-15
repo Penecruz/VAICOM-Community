@@ -43,7 +43,7 @@ IndTexture_Path = base_script_path.."Resources/IndicationTextures/"
 
 
 
-local alpha = 190
+local alpha = 0
 
 
 local BaseCircleMat = MakeMaterial(IndTexture_Path.."JUI_Base_Circle.dds", {255, 255, 255, alpha})
@@ -86,20 +86,7 @@ function MakePieNumber(index,pos_x,pos_y,press_x,press_y)
 	local pie_origin = create_origin(create_guid_string())
 		pie_origin.parent_element = grid_origin.name
 		pie_origin.init_pos = {pos_x * scale, pos_y * scale}
-	local dbg_vert = create_textured_box(0,0,64,64,256,64)
-		dbg_vert.name = create_guid_string()
-		dbg_vert.vertices = {{-small, small},
-                        { small, small},
-                        { small,-small},
-                        {-small,-small}}
-		dbg_vert.parent_element = pie_origin.name
-		dbg_vert.init_pos		= {0,0}
-		dbg_vert.material = CategoriesMat
-		dbg_vert.isdraw = true
-		dbg_vert.use_mipfilter = true
-		dbg_vert.additive_alpha = false
-	--AddElement(dbg_vert)
-		
+
 	local pie_num_str           = CreateElement "ceStringPoly"
 		pie_num_str.name            = create_guid_string()
 		pie_num_str.material        = "font_JesterUI_Grey"
@@ -110,21 +97,11 @@ function MakePieNumber(index,pos_x,pos_y,press_x,press_y)
 		pie_num_str.controllers 		= {{"rosetext",index, 1}}
 		pie_num_str.isdraw = false
 	AddElement(pie_num_str)
-	local press = CreateElement "ceStringPoly"
-		press.name            = create_guid_string()
-		press.material        = "font_JesterUI_Grey"
-		press.parent_element = pie_num_str.name
-		press.stringdefs    = jester_stringdef_small
-		press.init_pos		    = {press_x * scale, press_y * scale}
-		press.alignment     = "LeftBotom"
-		--press.controllers 		= {{"rosetextcenter", 1}}
-		press.value = "PRESS"
-		press.isdraw = true	
-	AddElement(press)	
 end
 
 -- Pixel art Jester portrait
 local SHOW_MASKS = false
+local SHOW_CENTER_PORTRAIT = false
 -- Portrait sprite-sheet material name. Registered in materials.lua so this
 -- page and JesterSubtitle_Page reference the same underlying material by
 -- name (avoids the double-free at teardown from creating two materials
@@ -171,8 +148,8 @@ local camera_back          = CreateElement "ceMeshPoly"
 									{-0.40 * scale,-0.40 * scale}}
     camera_back.indices = {0,1,2,0,2,3}
     camera_back.parent_element = grid_origin.name
-	camera_back.isdraw         = true
-	camera_back.isvisible      = true
+	camera_back.isdraw         = SHOW_CENTER_PORTRAIT
+	camera_back.isvisible      = SHOW_CENTER_PORTRAIT
     camera_back.controllers = {{"jestercam"}}
     camera_back.h_clip_relation = h_clip_relations.COMPARE
     camera_back.level			= INDICATOR_LEVEL
@@ -192,8 +169,8 @@ local function make_sprite(name_suffix, u1, v1, u2, v2, half_w, half_h, parent, 
 	elem.material = JesterBUMat
 	elem.parent_element = parent
 	elem.init_pos = {0, 0, 0}
-	elem.isdraw = true
-	elem.isvisible = true
+	elem.isdraw = SHOW_CENTER_PORTRAIT
+	elem.isvisible = SHOW_CENTER_PORTRAIT
 	elem.h_clip_relation = h_clip_relations.COMPARE
 	elem.level = INDICATOR_LEVEL
 	elem.vertices = {
@@ -225,8 +202,8 @@ local JesterSky = CreateElement "ceTexPoly"
 	JesterSky.material = "JesterViewMaterial"
 	JesterSky.parent_element = camera_back.name
 	JesterSky.init_pos = {0, portrait_y_offset, 0}
-	JesterSky.isdraw = true
-	JesterSky.isvisible = true
+	JesterSky.isdraw = SHOW_CENTER_PORTRAIT
+	JesterSky.isvisible = SHOW_CENTER_PORTRAIT
 	JesterSky.h_clip_relation = h_clip_relations.COMPARE
 	JesterSky.level = INDICATOR_LEVEL
 	JesterSky.vertices = {
@@ -272,8 +249,8 @@ if get_aircraft_type() == "F-14BU" then
 		ScanlinesOverlay.material = MakeMaterial(IndTexture_Path.."scanlines.png", {255, 255, 255, 255})
 		ScanlinesOverlay.parent_element = camera_back.name
 		ScanlinesOverlay.init_pos = {0, 0, 0}
-		ScanlinesOverlay.isdraw = true
-		ScanlinesOverlay.isvisible = true
+		ScanlinesOverlay.isdraw = SHOW_CENTER_PORTRAIT
+		ScanlinesOverlay.isvisible = SHOW_CENTER_PORTRAIT
 		ScanlinesOverlay.h_clip_relation = h_clip_relations.COMPARE
 		ScanlinesOverlay.level = INDICATOR_LEVEL
 		ScanlinesOverlay.blend_mode = 6 -- multiply
