@@ -245,6 +245,60 @@ namespace VAICOM
       flex-direction: column;
       gap: 8px;
     }
+    .efbRightActionDrawer {
+      position: absolute;
+      right: 58px;
+      top: 8px;
+      width: 52px;
+      padding: 6px;
+      border: 1px solid #6e7a87;
+      border-radius: 10px;
+      background: rgba(245, 250, 255, 0.95);
+      box-shadow: 0 8px 18px rgba(0,0,0,0.3);
+      z-index: 33;
+      transform: translateX(0);
+      opacity: 1;
+      transition: transform 260ms ease, opacity 220ms ease;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .efbRightActionDrawer.closed {
+      transform: translateX(110%);
+      opacity: 0;
+      pointer-events: none;
+    }
+    .efbRightDrawerBtn {
+      width: 40px;
+      height: 40px;
+      border: 1px solid #7c8692;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.9);
+      color: #1a2a3a;
+      font-size: 21px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+      opacity: 0.5;
+      transition: transform 120ms ease, filter 120ms ease, box-shadow 140ms ease, border-color 140ms ease;
+    }
+    .efbRightDrawerBtn:hover {
+      animation: iconHoverWobble 220ms ease;
+      filter: brightness(1.1);
+      opacity: 0.8;
+      border-color: #79aef0;
+      box-shadow: 0 0 0 2px rgba(121, 174, 240, 0.35), 0 8px 16px rgba(32, 86, 153, 0.35);
+    }
+    .efbRightDrawerBtn:active {
+      transform: translateY(0);
+      filter: brightness(1.05);
+      opacity: 0.95;
+      border-color: #8bc4ff;
+      box-shadow: 0 0 0 3px rgba(134, 196, 255, 0.52), 0 0 18px rgba(80, 170, 255, 0.45);
+    }
     .efbRailBtn {
       width: 44px;
       height: 44px;
@@ -2382,6 +2436,8 @@ namespace VAICOM
     body.night-mode .helpOverlayContent { background: rgba(45, 57, 72, 0.76); border-color: #5f7184; color: #dfe8f2; }
     body.night-mode .helpOverlayContent a { color: #9bc8ff; }
     body.night-mode .efbRailBtn { background: rgba(43, 53, 65, 0.92); color: #e2eaf2; border-color: #607183; }
+    body.night-mode .efbRightActionDrawer { background: rgba(33, 44, 58, 0.95); border-color: #607183; }
+    body.night-mode .efbRightDrawerBtn { background: #2b3541; color: #e2eaf2; border-color: #607183; }
     body.night-mode .efbSelectorDrawer { background: rgba(33, 44, 58, 0.95); border-color: #607183; }
     body.night-mode .efbDrawerHeader { background: rgba(45, 59, 77, 0.94); border-bottom-color: #607183; color: #e2eaf2; }
     body.night-mode .efbDrawerCloseBtn { background: #2b3541; color: #e2eaf2; border-color: #607183; }
@@ -2396,7 +2452,7 @@ namespace VAICOM
     body.night-mode .efbPickerEmpty { color: #9fb2c6; }
     body.night-mode .efbViewport { background: #121920; border-color: #607183; }
     body.night-mode .efbEmpty { color: #9fb4c9; }
-    body.night-mode .efbChartImage { filter: brightness(0.60) contrast(1.18) saturate(0.82) hue-rotate(175deg); }
+    body.night-mode .efbChartImage { filter: brightness(0.62) contrast(1.08) saturate(0.92); }
     body.night-mode .fltPlanSelected { color: #9fb6cb; }
     body.night-mode .missionClockLabel { color: #9fb6cb; }
     body.night-mode .dtcFileItem { background: #1f2731; color: #e2eaf4; border-color: #5a6b7c; }
@@ -2712,6 +2768,7 @@ namespace VAICOM
     let efbDrawerMode = 'airport';
     let efbSelectionFlowActive = false;
     let efbPinnedChartsByAirport = {};
+    let efbRightToolsOpen = false;
 
     function clamp(v, min, max){
       return Math.max(min, Math.min(max, v));
@@ -2938,8 +2995,23 @@ namespace VAICOM
       const s = clamp(Number(viewport.scale) || 1, 0.5, 3.5);
       const tx = Number(viewport.tx) || 0;
       const ty = Number(viewport.ty) || 0;
+      const rot = Number(viewport.rot) || 0;
       img.style.transformOrigin = 'center center';
-      img.style.transform = 'translate(' + tx + 'px,' + ty + 'px) scale(' + s + ')';
+      img.style.transform = 'translate(' + tx + 'px,' + ty + 'px) rotate(' + rot + 'deg) scale(' + s + ')';
+    }
+
+    function normalizeRotationDeg(v){
+      let d = Number(v) || 0;
+      while (d >= 180) d -= 360;
+      while (d < -180) d += 360;
+      return d;
+    }
+
+    function applyEfbViewportDefaults(viewport){
+      viewport.scale = clamp(Number(viewport.scale) || 1, 0.5, 3.5);
+      viewport.tx = Number(viewport.tx) || 0;
+      viewport.ty = Number(viewport.ty) || 0;
+      viewport.rot = normalizeRotationDeg(Number(viewport.rot) || 0);
     }
 
     async function ensureEfbChartsLoaded(data){
@@ -3022,9 +3094,16 @@ namespace VAICOM
         + '<button id=""efbPinnedBtn"" type=""button"" class=""efbRailBtn"" title=""Pinned charts"">📌</button>'
         + '</div>'
         + '<div class=""efbRightRail"">'
+        + '<button id=""efbRotateToolsBtn"" type=""button"" class=""efbRailBtn"" title=""Chart orientation tools"">⤾</button>'
         + '<button id=""efbZoomOutBtn"" type=""button"" class=""efbRailBtn"" title=""Zoom out"">−</button>'
         + '<button id=""efbZoomResetBtn"" type=""button"" class=""efbRailBtn"" title=""Reset view"">⟳</button>'
         + '<button id=""efbZoomInBtn"" type=""button"" class=""efbRailBtn"" title=""Zoom in"">+</button>'
+        + '</div>'
+        + '<div id=""efbRightActionDrawer"" class=""' + (efbRightToolsOpen ? 'efbRightActionDrawer' : 'efbRightActionDrawer closed') + '"">'
+        + '<button id=""efbRotateLeftBtn"" type=""button"" class=""efbRightDrawerBtn"" title=""Rotate left"">⟲</button>'
+        + '<button id=""efbRotateRightBtn"" type=""button"" class=""efbRightDrawerBtn"" title=""Rotate right"">⟳</button>'
+        + '<button id=""efbFitHorizontalBtn"" type=""button"" class=""efbRightDrawerBtn"" title=""Fit horizontally"">↔</button>'
+        + '<button id=""efbFitVerticalBtn"" type=""button"" class=""efbRightDrawerBtn"" title=""Fit vertically"">↕</button>'
         + '</div>'
         + '<div id=""efbSelectorDrawer"" class=""' + drawerClass + '"">'
         + '<div class=""efbDrawerHeader""><span id=""efbDrawerTitle"">' + drawerTitle + '</span><button id=""efbDrawerCloseBtn"" class=""efbDrawerCloseBtn"" type=""button"">✕</button></div>'
@@ -3041,6 +3120,7 @@ namespace VAICOM
     function bindEfbInteractions(data){
       const airportKey = getEfbAirportKey(data);
       const viewport = getEfbViewport(airportKey);
+      applyEfbViewportDefaults(viewport);
 
       function applyEfbDrawerUi(){
         const drawer = document.getElementById('efbSelectorDrawer');
@@ -3194,10 +3274,13 @@ namespace VAICOM
           if (selectedTab !== 'EFB') return;
           if (efbSelectionFlowActive) return;
           const target = ev && ev.target;
-          const insideDrawer = target && target.closest && (target.closest('.efbSelectorDrawer') || target.closest('.efbLeftRail'));
+          const insideDrawer = target && target.closest && (target.closest('.efbSelectorDrawer') || target.closest('.efbLeftRail') || target.closest('.efbRightRail') || target.closest('.efbRightActionDrawer'));
           if (!insideDrawer){
             closeEfbDrawer();
+            efbRightToolsOpen = false;
             applyEfbDrawerUi();
+            const rightDrawer = document.getElementById('efbRightActionDrawer');
+            if (rightDrawer) rightDrawer.className = efbRightToolsOpen ? 'efbRightActionDrawer' : 'efbRightActionDrawer closed';
           }
         });
         efbPickerDocumentHandlerBound = true;
@@ -3225,8 +3308,70 @@ namespace VAICOM
         viewport.scale = 1;
         viewport.tx = 0;
         viewport.ty = 0;
+        viewport.rot = 0;
         const image = document.getElementById('efbChartImage');
         if (image) applyEfbViewportToImage(image, viewport);
+      };
+
+      const rightDrawer = document.getElementById('efbRightActionDrawer');
+      const rotateToolsBtn = document.getElementById('efbRotateToolsBtn');
+      if (rotateToolsBtn){
+        rotateToolsBtn.onclick = function(ev){
+          ev.preventDefault();
+          ev.stopPropagation();
+          efbRightToolsOpen = !efbRightToolsOpen;
+          if (rightDrawer) rightDrawer.className = efbRightToolsOpen ? 'efbRightActionDrawer' : 'efbRightActionDrawer closed';
+        };
+      }
+
+      const rotateLeftBtn = document.getElementById('efbRotateLeftBtn');
+      if (rotateLeftBtn) rotateLeftBtn.onclick = function(){
+        viewport.rot = normalizeRotationDeg((Number(viewport.rot) || 0) - 90);
+        const image = document.getElementById('efbChartImage');
+        if (image) applyEfbViewportToImage(image, viewport);
+      };
+
+      const rotateRightBtn = document.getElementById('efbRotateRightBtn');
+      if (rotateRightBtn) rotateRightBtn.onclick = function(){
+        viewport.rot = normalizeRotationDeg((Number(viewport.rot) || 0) + 90);
+        const image = document.getElementById('efbChartImage');
+        if (image) applyEfbViewportToImage(image, viewport);
+      };
+
+      const fitHorizontalBtn = document.getElementById('efbFitHorizontalBtn');
+      if (fitHorizontalBtn) fitHorizontalBtn.onclick = function(){
+        const image = document.getElementById('efbChartImage');
+        const host = document.getElementById('efbChartViewport');
+        if (!image || !host || !image.naturalWidth) return;
+        const baseWidth = host.clientWidth;
+        const baseHeight = (baseWidth * image.naturalHeight) / image.naturalWidth;
+        const rotRad = (Math.PI / 180) * (Number(viewport.rot) || 0);
+        const absCos = Math.abs(Math.cos(rotRad));
+        const absSin = Math.abs(Math.sin(rotRad));
+        const bboxWidthAtScale1 = (baseWidth * absCos) + (baseHeight * absSin);
+        const scale = clamp(host.clientWidth / Math.max(1, bboxWidthAtScale1), 0.5, 3.5);
+        viewport.scale = scale;
+        viewport.tx = 0;
+        viewport.ty = 0;
+        applyEfbViewportToImage(image, viewport);
+      };
+
+      const fitVerticalBtn = document.getElementById('efbFitVerticalBtn');
+      if (fitVerticalBtn) fitVerticalBtn.onclick = function(){
+        const image = document.getElementById('efbChartImage');
+        const host = document.getElementById('efbChartViewport');
+        if (!image || !host || !image.naturalHeight) return;
+        const baseWidth = host.clientWidth;
+        const baseHeight = (baseWidth * image.naturalHeight) / image.naturalWidth;
+        const rotRad = (Math.PI / 180) * (Number(viewport.rot) || 0);
+        const absCos = Math.abs(Math.cos(rotRad));
+        const absSin = Math.abs(Math.sin(rotRad));
+        const bboxHeightAtScale1 = (baseWidth * absSin) + (baseHeight * absCos);
+        const scale = clamp(host.clientHeight / Math.max(1, bboxHeightAtScale1), 0.5, 3.5);
+        viewport.scale = scale;
+        viewport.tx = 0;
+        viewport.ty = 0;
+        applyEfbViewportToImage(image, viewport);
       };
 
       const viewEl = document.getElementById('efbChartViewport');

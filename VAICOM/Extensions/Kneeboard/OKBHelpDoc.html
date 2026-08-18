@@ -440,15 +440,37 @@
 
     <section id="efb" class="tab">
       <h2>EFB Tab</h2>
-      <p><strong>Overview:</strong> Electronic Flight Bag workspace with chart browsing and future Navigraph integration.</p>
-      <p><strong>Contains:</strong> Auth/session state, airport/chart selection, file-based chart fallback rendering, and viewport interaction.</p>
+      <p><strong>Overview:</strong> Electronic Flight Bag workspace for chart viewing with a floating icon rail workflow and pinned favorites list.</p>
+      <p><strong>Contains:</strong> Auto/manual airport selection, chart list drawer, global pinned chart drawer, local-file chart rendering, and viewport pan/zoom controls.</p>
       <div class="controls">
-        <h3>Controls</h3>
+        <h3>Left Rail Controls</h3>
         <ul>
-          <li><strong>Airport selector</strong>: Lists available ICAO folders from Saved Games chart root.</li>
-          <li><strong>Chart selector</strong>: Lists available chart files by section/folder.</li>
-          <li><strong>Chart viewport</strong>: Pan/zoom behavior with per-airport state retention.</li>
-          <li><strong>Night Mode behavior</strong>: Applies chart-friendly dark styling/filtering.</li>
+          <li><strong>Auto (A)</strong>: Resolves/selects airport from current mission context, then opens the chart list for that airport.</li>
+          <li><strong>Airport (🗼)</strong>: Opens airport list drawer first; selecting an airport opens its chart list.</li>
+          <li><strong>Pinned (📌)</strong>: Opens pinned drawer (favorites) showing only charts explicitly pinned from chart rows.</li>
+        </ul>
+
+        <h3>Drawer Lists and Pinning</h3>
+        <ul>
+          <li><strong>Chart list rows</strong>: Each chart row has a line pin icon. Toggle to pin/unpin that chart.</li>
+          <li><strong>Pinned drawer behavior</strong>: Shows pinned charts from <em>any</em> airport as a global favorites list.</li>
+          <li><strong>Pinned row format</strong>: Rows display <code>AIRPORT · CHART NAME</code> for clarity across multiple fields.</li>
+          <li><strong>Unpin paths</strong>: You can unpin from either the airport chart list or from the pinned drawer itself.</li>
+          <li><strong>Selecting pinned charts</strong>: Choosing a pinned row switches to that chart's airport and loads the selected chart.</li>
+        </ul>
+
+        <h3>Right Rail and Viewport Controls</h3>
+        <ul>
+          <li><strong>Zoom Out (−)</strong>: Decreases chart zoom.</li>
+          <li><strong>Recenter (⟳)</strong>: Resets zoom and pan to default centered view.</li>
+          <li><strong>Zoom In (+)</strong>: Increases chart zoom.</li>
+          <li><strong>Pan/drag</strong>: Click-drag in chart viewport to move the chart image.</li>
+        </ul>
+
+        <h3>Night Mode and Chart Sources</h3>
+        <ul>
+          <li><strong>Local folder charts</strong>: Night mode darkens chart brightness/contrast without hue swapping, so blue water and brown/orange terrain remain correct.</li>
+          <li><strong>Navigraph charts</strong>: Dedicated provider-rendered night chart styling is expected when Navigraph chart mode is enabled.</li>
         </ul>
       </div>
     </section>
