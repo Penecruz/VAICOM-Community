@@ -158,6 +158,7 @@ namespace VAICOM
                 { "database",   "Database"  },
                 { "profiles",   "Profiles"  },
                 { "export",     "Export"    },
+                { "documentation", "Documentation" },
             };
 
         }

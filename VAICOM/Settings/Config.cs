@@ -91,6 +91,14 @@ namespace VAICOM
             public bool OpenKneeboard_Out;
             public bool OpenKneeboard_AutoBrowse;
             public int OpenKneeboard_Out_Port;
+            public bool OpenKneeboard_EfbEnabled;
+            public string OpenKneeboard_EfbAuthBlob;
+            public bool OpenKneeboard_EfbDevBypass;
+            public string OpenKneeboard_EfbOAuthClientId;
+            public string OpenKneeboard_EfbOAuthClientSecret;
+            public string OpenKneeboard_EfbOAuthScope;
+            public string OpenKneeboard_EfbOAuthDeviceAuthEndpoint;
+            public string OpenKneeboard_EfbOAuthTokenEndpoint;
 
             // multiplayer page
 
@@ -294,6 +302,14 @@ namespace VAICOM
                 OpenKneeboard_Out = false,
                 OpenKneeboard_AutoBrowse = false,
                 OpenKneeboard_Out_Port = 7779,
+                OpenKneeboard_EfbEnabled = false,
+                OpenKneeboard_EfbAuthBlob = "",
+                OpenKneeboard_EfbDevBypass = false,
+                OpenKneeboard_EfbOAuthClientId = "",
+                OpenKneeboard_EfbOAuthClientSecret = "",
+                OpenKneeboard_EfbOAuthScope = "openid charts offline_access",
+                OpenKneeboard_EfbOAuthDeviceAuthEndpoint = "https://identity.api.navigraph.com/connect/deviceauthorization",
+                OpenKneeboard_EfbOAuthTokenEndpoint = "https://identity.api.navigraph.com/connect/token",
 
                 // multiplayer page
 
