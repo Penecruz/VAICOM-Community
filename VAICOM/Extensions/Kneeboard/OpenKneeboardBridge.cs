@@ -51,6 +51,7 @@ namespace VAICOM
       -ms-user-select: none !important;
       user-select: none !important;
     }
+
     .sheet {
       width: 100%;
       height: 100%;
@@ -127,7 +128,7 @@ namespace VAICOM
       text-transform: uppercase;
       letter-spacing: 0.5px;
     }
-    #tabTitle, #keywordTitle { font-size: 23px; }
+    #tabTitle, #keywordTitle { font-size: 23px; } /* sidebar tabs */
     .panel .content { padding: 10px; white-space: pre-wrap; word-break: break-word; overflow: auto; }
     .panel h4.clickable { cursor: pointer; user-select: none; }
     .session { margin-bottom: 8px; }
@@ -139,6 +140,17 @@ namespace VAICOM
       height: 100%;
       display: flex;
       min-height: 0;
+    }
+    @keyframes tabHoverWobble {
+      0% { transform: rotate(180deg) translateY(-1px); }
+      30% { transform: rotate(180deg) translateY(-2px) rotate(-2deg); }
+      60% { transform: rotate(180deg) translateY(-2px) rotate(2deg); }
+      100% { transform: rotate(180deg) translateY(-1px); }
+    }
+    @keyframes tabActiveGlowPulse {
+      0% { box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.22), 0 0 0 2px rgba(242, 215, 106, 0.62), 0 0 9px rgba(242, 215, 106, 0.36); filter: saturate(1.18) brightness(1.09); }
+      50% { box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.28), 0 0 0 2px rgba(242, 215, 106, 0.9), 0 0 16px rgba(242, 215, 106, 0.58); filter: saturate(1.3) brightness(1.17); }
+      100% { box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.22), 0 0 0 2px rgba(242, 215, 106, 0.62), 0 0 9px rgba(242, 215, 106, 0.36); filter: saturate(1.18) brightness(1.09); }
     }
     .tabs { display: flex; flex-direction: column; gap: 4px; height: 100%; width: 100%; }
     .tab {
@@ -158,6 +170,15 @@ namespace VAICOM
       display: flex;
       align-items: center;
       justify-content: center;
+      opacity: 0.75;
+      transition: transform 120ms ease, filter 120ms ease, box-shadow 140ms ease, border-color 140ms ease, opacity 140ms ease;
+    }
+    .tab:hover {
+      animation: tabHoverWobble 220ms ease;
+      opacity: 0.8;
+      border-color: #79aef0;
+      box-shadow: 0 0 0 2px rgba(121, 174, 240, 0.35), 0 8px 16px rgba(32, 86, 153, 0.35);
+      filter: brightness(1.1);
     }
     .tab.active {
       color: #ffffff;
@@ -167,7 +188,9 @@ namespace VAICOM
       filter: saturate(1.22) brightness(1.12);
       font-weight: 800;
       transform: rotate(180deg) scale(1.06);
+      opacity: 0.95;
       z-index: 2;
+      animation: tabActiveGlowPulse 1800ms ease-in-out infinite;
     }
 
     .tab-LOG { background: rgba(126, 85, 56, 0.82); }
@@ -247,9 +270,9 @@ namespace VAICOM
     }
     .efbRightActionDrawer {
       position: absolute;
-      right: 58px;
+      right: 80px;
       top: 8px;
-      width: 52px;
+      width: 76px;
       padding: 6px;
       border: 1px solid #6e7a87;
       border-radius: 10px;
@@ -269,13 +292,13 @@ namespace VAICOM
       pointer-events: none;
     }
     .efbRightDrawerBtn {
-      width: 40px;
-      height: 40px;
+      width: 60px; /* size bump: +50% for easier rotation/fit button targeting */
+      height: 60px; /* size bump: +50% for easier rotation/fit button targeting */
       border: 1px solid #7c8692;
-      border-radius: 10px;
+      border-radius: 12px;
       background: rgba(255, 255, 255, 0.9);
       color: #1a2a3a;
-      font-size: 21px;
+      font-size: 28px; /* size bump: keep glyph legible at larger button size */
       font-weight: 700;
       cursor: pointer;
       display: flex;
@@ -300,13 +323,13 @@ namespace VAICOM
       box-shadow: 0 0 0 3px rgba(134, 196, 255, 0.52), 0 0 18px rgba(80, 170, 255, 0.45);
     }
     .efbRailBtn {
-      width: 44px;
-      height: 44px;
+      width: 66px; /* size bump: +50% rail button sizing */
+      height: 66px; /* size bump: +50% rail button sizing */
       border: 1px solid #7c8692;
-      border-radius: 10px;
+      border-radius: 14px;
       background: rgba(255, 255, 255, 0.9);
       color: #1a2a3a;
-      font-size: 22px;
+      font-size: 31px; /* size bump: icon text scaled with button */
       font-weight: 700;
       cursor: pointer;
       display: flex;
@@ -330,9 +353,17 @@ namespace VAICOM
       border-color: #8bc4ff;
       box-shadow: 0 0 0 3px rgba(134, 196, 255, 0.52), 0 0 18px rgba(80, 170, 255, 0.45);
     }
+    .efbRailIconSvg {
+      width: 36px;
+      height: 36px;
+      display: block;
+      color: currentColor;
+      pointer-events: none;
+    }
+    .efbRailSpacer { width: 66px; height: 66px; pointer-events: none; }
     .efbSelectorDrawer {
       position: absolute;
-      left: 58px;
+      left: 80px;
       top: 8px;
       bottom: 8px;
       width: 340px;
@@ -362,7 +393,7 @@ namespace VAICOM
       border-bottom: 1px solid #c7d5e4;
       background: rgba(232, 241, 251, 0.92);
       padding: 8px;
-      font-size: 18px;
+      font-size: 24px; /*draw header size*/
       font-weight: 700;
       color: #1e3248;
     }
@@ -386,7 +417,7 @@ namespace VAICOM
       background: transparent;
       color: #111;
       font-family: inherit;
-      font-size: 17px;
+      font-size: 22px; /*draw airports and charts size*/
       padding: 6px 8px;
       cursor: pointer;
     }
@@ -418,7 +449,7 @@ namespace VAICOM
       border-color: #8bc4ff;
       box-shadow: 0 0 0 3px rgba(134, 196, 255, 0.52), 0 0 18px rgba(80, 170, 255, 0.45);
     }
-    .efbPickerItem { display: block; width: 100%; text-align: left; border: 0; border-bottom: 1px solid #e8edf2; background: #ffffff; color: #111; font-family: inherit; font-size: 17px; padding: 6px 8px; cursor: pointer; }
+    .efbPickerItem { display: block; width: 100%; text-align: left; border: 0; border-bottom: 1px solid #e8edf2; background: #ffffff; color: #111; font-family: inherit; font-size: 22px; padding: 6px 8px; cursor: pointer; }
     .efbPickerItem:hover { background: #e9f2fb; }
     .efbPickerItem.active { background: #dcecff; font-weight: 700; }
     .efbPickerEmpty { display: block; padding: 8px 10px; color: #5a6978; font-size: 15px; }
@@ -506,6 +537,44 @@ namespace VAICOM
           return v;
         }
       }
+
+    function resolveBuggedAirfieldIcaoFromAssetKey(data, assetKey){
+      const key = String(assetKey || '').trim();
+      if (!key) return '';
+
+      const airfields = buildMapAirfields(data);
+      if (!Array.isArray(airfields) || !airfields.length){
+        return extractIcaoToken(key) || '';
+      }
+
+      for (let i = 0; i < airfields.length; i++){
+        const p = airfields[i] || {};
+        const selectionAsset = {
+          callsign: String((p && p.callsign) || '').trim(),
+          name: String((p && p.name) || (p && p.label) || '').trim(),
+          category: 'ATC',
+          xNum: Number(p && p.xNum),
+          yNum: Number(p && p.yNum),
+        };
+        if (makeMapAssetSelectionKey(selectionAsset) !== key) continue;
+        return String((p && p.icao) || (p && p.label) || '').toUpperCase().trim();
+      }
+
+      return extractIcaoToken(key) || '';
+    }
+
+    async function tryPreloadEfbForBuggedAirfield(data, assetKey){
+      const icao = resolveBuggedAirfieldIcaoFromAssetKey(data, assetKey);
+      if (!icao) return;
+
+      await ensureEfbAirportsLoaded();
+      const airports = Array.isArray(efbAvailableAirports) ? efbAvailableAirports : [];
+      if (airports.length && airports.indexOf(icao) < 0) return;
+
+      efbManuallySelectedAirport = icao;
+      efbLastResolvedAirport = icao;
+      await ensureEfbChartsLoaded(data);
+    }
 
       for (let i = 0; i < keys.length; i++){
         const found = findFirstObjectByKeyPattern(value[keys[i]], pattern, depth + 1);
@@ -2039,16 +2108,16 @@ namespace VAICOM
       z-index: 72;
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 12px;
     }
     .overlayToggleBtn {
-      width: 50px;
-      height: 50px;
+      width: 75px; /* floating quick icon sizing */
+      height: 75px; /* floating quick icon sizing */
       border: 1px solid #7c8692;
-      border-radius: 12px;
+      border-radius: 16px;
       background: rgba(255, 255, 255, 0.9);
       color: #1a2a3a;
-      font-size: 26px;
+      font-size: 36px; /* icon glyph scaled with button */
       font-weight: 700;
       cursor: pointer;
       display: flex;
@@ -2078,24 +2147,24 @@ namespace VAICOM
       border-color: #8bc4ff;
       box-shadow: 0 0 0 3px rgba(134, 196, 255, 0.52), 0 0 18px rgba(80, 170, 255, 0.45);
     }
-    .drawOverlayToggleBtn { font-size: 24px; }
-    .helpOverlayToggleBtn { font-size: 26px; font-weight: 800; }
+    .drawOverlayToggleBtn { font-size: 34px; }
+    .helpOverlayToggleBtn { font-size: 38px; font-weight: 800; }
     .fltPlanQuickBar {
       position: fixed;
       right: 112px;
-      top: 110px;
+      top: 100px; /* standard top-line control vertical position */
       z-index: 72;
       display: flex;
       gap: 10px;
     }
     .fltPlanQuickBtn {
-      width: 50px;
-      height: 50px;
+      width: 75px; /*  FLT PLN quick icon sizing */
+      height: 75px; /*  +50% FLT PLN quick icon sizing */
       border: 1px solid #7c8692;
-      border-radius: 12px;
+      border-radius: 16px;
       background: rgba(255, 255, 255, 0.9);
       color: #1a2a3a;
-      font-size: 24px;
+      font-size: 34px; /* icon glyph scaled with button */
       font-weight: 700;
       cursor: pointer;
       display: flex;
@@ -2119,14 +2188,25 @@ namespace VAICOM
       border-color: #8bc4ff;
       box-shadow: 0 0 0 3px rgba(134, 196, 255, 0.52), 0 0 18px rgba(80, 170, 255, 0.45);
     }
-    .overlayPanel.fltPlanOverlayPanel { width: 540px; }
+    .overlayPanel.fltPlanOverlayPanel { width: 720px; max-width: calc(100vw - 32px); }
+    .overlayPanel.fltPlanOverlayPanel .overlayTitleRow { font-size: 28px; margin-bottom: 12px; }
+    .overlayPanel.fltPlanOverlayPanel .overlayCloseBtn { min-width: 46px; height: 38px; font-size: 22px; }
+    .overlayPanel.fltPlanOverlayPanel .overlayHint { font-size: 16px; line-height: 1.3; }
     .fltPlanOverlayList {
-      max-height: 420px;
+      max-height: 560px;
       overflow-y: auto;
       border: 1px solid rgba(98, 117, 138, 0.5);
       border-radius: 10px;
       background: rgba(255, 255, 255, 0.55);
-      padding: 6px;
+      padding: 8px;
+    }
+    .fltPlanOverlayList .dtcFileItem {
+      font-size: 20px;
+      padding: 6px 9px;
+      min-height: 34px;
+    }
+    .fltPlanOverlayList .dtcFileMeta {
+      font-size: 16px;
     }
     .legacyControls { display: none !important; }
     .overlayBackdrop {
@@ -2140,6 +2220,9 @@ namespace VAICOM
       justify-content: flex-end;
       padding: 16px;
       box-sizing: border-box;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 360ms ease;
     }
     .overlayBackdropTop {
       align-items: flex-start;
@@ -2159,7 +2242,15 @@ namespace VAICOM
       padding: 12px;
       box-sizing: border-box;
       color: #102336;
+      opacity: 0;
+      transform: translateY(18px) scale(0.94);
+      transform-origin: top right;
+      transition: transform 420ms ease, opacity 360ms ease;
     }
+    .overlayBackdrop.overlayBackdropTop .overlayPanel { transform: translateY(-18px) scale(0.94); }
+    .overlayBackdrop.helpOverlayBackdrop .overlayPanel { transform: translate(16px, -10px) scale(0.97); }
+    .overlayBackdrop.overlayOpen { opacity: 1; pointer-events: auto; }
+    .overlayBackdrop.overlayOpen .overlayPanel { opacity: 1; transform: translate(0, 0) scale(1); }
     .overlayTitleRow {
       display: flex;
       align-items: center;
@@ -2295,11 +2386,46 @@ namespace VAICOM
     .fltPlanHeaderCellLabel { font-size: 13px; color: #2f3d4a; margin-bottom: 2px; }
     .fltPlanHeaderCellValue { font-size: 17px; font-weight: 700; color: #111; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .fltPlanTimeGrid { display: grid; grid-template-columns: repeat(4, minmax(120px, 1fr)); gap: 6px; margin-bottom: 8px; }
-    .fltPlanTimeCell { border: 1px solid #8b96a1; background: #edf2f6; padding: 3px 5px; }
+    .fltPlanTimeCell {
+      border: 1px solid #8b96a1;
+      background: #edf2f6;
+      padding: 3px 5px;
+      position: relative;
+      overflow: visible;
+      transition: background 260ms ease;
+    }
     .fltPlanTimeCellLabel { font-size: 12px; color: #2f3d4a; }
     .fltPlanTimeCellValue { font-size: 16px; font-weight: 700; color: #111; }
     .fltPlanTimeCell.clickable { cursor: pointer; }
     .fltPlanTimeCell.clickable:hover { background: #dce8f2; }
+    .fltPlanTimeCell.expanded { z-index: 4; }
+    .fltPlanTimeCellEditor {
+      position: absolute;
+      left: var(--editor-left, 50%);
+      top: -8px;
+      min-width: 260px;
+      border: 1px solid #62758a;
+      border-radius: 14px;
+      background: rgba(239, 245, 252, 0.96);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+      padding: 8px 10px;
+      box-sizing: border-box;
+      opacity: 0;
+      pointer-events: none;
+      transform: translate(var(--editor-shift-x, -50%), -6px) scale(0.94);
+      transform-origin: top center;
+      transition: transform 520ms ease, opacity 460ms ease;
+    }
+    .fltPlanTimeCell.expanded .fltPlanTimeCellEditor {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translate(var(--editor-shift-x, -50%), 0) scale(1);
+    }
+    .fltPlanTimeCellEditor.edgeLeft { --editor-left: 0%; --editor-shift-x: 6%; }
+    .fltPlanTimeCellEditor.edgeRight { --editor-left: 100%; --editor-shift-x: -106%; }
+    .fltPlanTimeEditorRow { display: flex; align-items: center; justify-content: space-between; gap: 8px; white-space: nowrap; }
+    .fltPlanTimeEditorCenter { min-width: 92px; text-align: center; font-size: 30px; font-weight: 800; color: #102336; letter-spacing: 0.6px; }
+    .fltPlanTimeEditorBtns { display: inline-flex; align-items: center; gap: 6px; }
     .fltPlanPostFlightCell { grid-column: 2 / span 3; display: flex; align-items: center; justify-content: flex-end; }
     .fltPlanCrewWrap { border: 1px solid #8b96a1; background: #f8fafc; margin-bottom: 8px; }
     .fltPlanCrewTable { width: 100%; border-collapse: collapse; table-layout: fixed; }
@@ -2313,6 +2439,8 @@ namespace VAICOM
     .fltPlanWpTableWrap { flex: 1 1 auto; min-height: 0; overflow: auto; }
     .fltPlanWpTable th, .fltPlanWpTable td { border: 1px solid #a3adb6; padding: 3px 4px; font-size: 15px; line-height: 1.15; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: center; vertical-align: middle; }
     .fltPlanWpTable th { background: #e4e8ec; font-weight: 700; }
+    .fltPlanWpTable td.fltPlanNavEditCell { overflow: visible; position: relative; z-index: 1; }
+    .fltPlanWpTable td.fltPlanNavEditCell.expanded { z-index: 8; }
     .fltPlanWpRowSkipped { opacity: 0.45; background: #eef1f4; }
     .fltPlanWpRowDirectSource td { box-shadow: inset 0 0 0 1px rgba(31, 111, 67, 0.55); }
     .fltPlanWpRowDirectTarget td { box-shadow: inset 0 0 0 1px rgba(46, 110, 184, 0.55); }
@@ -2328,8 +2456,45 @@ namespace VAICOM
     .fltPlanAltTag { font-size: 11px; margin-left: 4px; color: #455869; }
     .fltPlanMiniBtn { font-family: inherit; font-size: 10px; line-height: 1; padding: 1px 3px; min-width: 16px; border: 1px solid #7c8692; background: #f4f7fa; color: #111; cursor: pointer; }
     .fltPlanMiniBtn:hover { background: #dce8f2; }
+    .fltPlanTimeCell .fltPlanAdjustCell { display: none; }
+    .fltPlanTimeCell.expanded .fltPlanMiniBtn {
+      font-size: 16px;
+      min-width: 30px;
+      padding: 4px 6px;
+      border-radius: 8px;
+    }
     .fltPlanSpdValue { display: inline-block; min-width: 30px; text-align: center; margin: 0 2px; }
     .fltPlanAdjustCell { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 2px; }
+    .fltPlanNavEditHost { position: relative; display: inline-block; width: 100%; }
+    .fltPlanWpTable td.fltPlanNavEditCell .fltPlanNavEditHost { overflow: visible; }
+    .fltPlanWpTable td.fltPlanNavEditCell .fltPlanNavEditHost.expanded { z-index: 9; }
+    .fltPlanNavEditReadout { display: inline-block; min-width: 42px; text-align: center; cursor: pointer; }
+    .fltPlanNavEditHost .fltPlanTimeCellEditor {
+      top: -10px;
+      min-width: 244px;
+      z-index: 5;
+      transition: transform 560ms ease, opacity 500ms ease;
+    }
+    .fltPlanNavEditHost.expanded .fltPlanMiniBtn {
+      font-size: 14px;
+      min-width: 28px;
+      padding: 3px 6px;
+      border-radius: 7px;
+    }
+    .fltPlanNavEditHost.expanded .fltPlanTimeEditorCenter {
+      font-size: 34px;
+      min-width: 100px;
+    }
+    .fltPlanNavEditHost.expanded .fltPlanTimeCellEditor {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translate(var(--editor-shift-x, -50%), 0) scale(1);
+    }
+    .fltPlanNavEditHost.closing .fltPlanTimeCellEditor {
+      opacity: 0;
+      pointer-events: none;
+      transform: translate(var(--editor-shift-x, -50%), -6px) scale(0.94);
+    }
     .fltPlanEtaWrap { display: inline-flex; align-items: center; justify-content: center; gap: 4px; }
     .fltPlanEtaWrap input { margin: 0; }
     .fltPlanEtaValue { cursor: pointer; }
@@ -2352,9 +2517,38 @@ namespace VAICOM
     .fltPlanInfoCmdsWrap { grid-area: cmds; }
     .fltPlanInfoAssetsWrap { grid-area: assets; }
     .fltPlanInfoWxWrap { grid-area: wx; }
+    .fltPlanInfoFreqWrap, .fltPlanInfoCmdsWrap, .fltPlanInfoAssetsWrap, .fltPlanInfoWxWrap { position: relative; overflow: visible; z-index: 1; }
+    .fltPlanInfoShell {
+      position: relative;
+      transform-origin: top center;
+      transition: transform 620ms ease, opacity 540ms ease, filter 320ms ease;
+      will-change: transform, opacity;
+    }
+    .fltPlanInfoFreqWrap .fltPlanInfoShell,
+    .fltPlanInfoAssetsWrap .fltPlanInfoShell { transform-origin: top left; }
+    .fltPlanInfoCmdsWrap .fltPlanInfoShell,
+    .fltPlanInfoWxWrap .fltPlanInfoShell { transform-origin: top right; }
+    .fltPlanInfoFreqWrap.expanded,
+    .fltPlanInfoCmdsWrap.expanded,
+    .fltPlanInfoAssetsWrap.expanded,
+    .fltPlanInfoWxWrap.expanded,
+    .fltPlanInfoFreqWrap.closing,
+    .fltPlanInfoCmdsWrap.closing,
+    .fltPlanInfoAssetsWrap.closing,
+    .fltPlanInfoWxWrap.closing { z-index: 12; }
+    .fltPlanInfoFreqWrap.expanded .fltPlanInfoShell { transform: translate(32px, -30px) scale(1.50); }
+    .fltPlanInfoCmdsWrap.expanded .fltPlanInfoShell { transform: translate(-30px, -30px) scale(1.50); }
+    .fltPlanInfoAssetsWrap.expanded .fltPlanInfoShell { transform: translate(24px, -80px) scale(1.50); }
+    .fltPlanInfoWxWrap.expanded .fltPlanInfoShell { transform: translate(-20px, -80px) scale(1.50); }
+    .fltPlanInfoFreqWrap.closing .fltPlanInfoShell,
+    .fltPlanInfoCmdsWrap.closing .fltPlanInfoShell,
+    .fltPlanInfoAssetsWrap.closing .fltPlanInfoShell,
+    .fltPlanInfoWxWrap.closing .fltPlanInfoShell { transform: translate(0, 0) scale(1); opacity: 0.96; }
     .fltPlanInfoBlock { border: 1px solid #8b96a1; background: #f7f9fb; min-height: 120px; display: flex; flex-direction: column; }
     .fltPlanInfoFreqWrap .fltPlanInfoBlock { min-height: 78px; }
     .fltPlanInfoTitle { border-bottom: 1px solid #8b96a1; background: #e4e8ec; font-size: 13px; font-weight: 700; padding: 3px 6px; }
+    .fltPlanInfoTitle[data-bottom-panel-toggle] { cursor: pointer; transition: border-color 180ms ease, box-shadow 220ms ease, filter 180ms ease; }
+    .fltPlanInfoTitle[data-bottom-panel-toggle]:hover { border-color: #79aef0; box-shadow: inset 0 0 0 1px rgba(121, 174, 240, 0.45), 0 0 0 1px rgba(121, 174, 240, 0.3); filter: brightness(1.03); }
     .fltPlanInfoBody { padding: 4px 6px; font-size: 13px; line-height: 1.3; overflow: auto; white-space: pre-wrap; }
     .fltPlanInfoTable { width: 100%; border-collapse: collapse; table-layout: fixed; }
     .fltPlanInfoTable th, .fltPlanInfoTable td { border: 1px solid #aeb7c0; font-size: 12px; padding: 2px 3px; text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -2364,7 +2558,8 @@ namespace VAICOM
     .fltPlanToolbar { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 4px 0 2px 0; }
     .fltPlanToolbarLeft { display: inline-flex; align-items: center; flex-wrap: wrap; }
     .fltPlanToolbarRight { margin-left: auto; display: inline-flex; align-items: center; }
-    .fltPlanPageBtn { font-size: 12px; border: 1px solid #8b96a1; background: #eceff3; padding: 2px 9px; cursor: pointer; min-height: 22px; }
+    .fltPlanPageBtn { font-size: 12px; border: 1px solid #8b96a1; background: #eceff3; padding: 2px 9px; cursor: pointer; min-height: 22px; transition: filter 120ms ease, box-shadow 160ms ease, border-color 160ms ease; }
+    .fltPlanPageBtn:hover { filter: brightness(1.08); border-color: #79aef0; box-shadow: 0 0 0 2px rgba(121, 174, 240, 0.35), 0 5px 12px rgba(32, 86, 153, 0.24); }
     .fltPlanPageBtn.active { background: #d3dae2; font-weight: 700; }
     .fltPlanMapBgStatus { font-size: 13px; color: #3a4b5d; margin-left: 6px; }
     .fltPlanPage2Grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
@@ -2466,6 +2661,8 @@ namespace VAICOM
     body.night-mode .fltPlanTimeCellLabel { color: #9eb3c8; }
     body.night-mode .fltPlanTimeCellValue { color: #e2eaf4; }
     body.night-mode .fltPlanTimeCell.clickable:hover { background: #31404f; }
+    body.night-mode .fltPlanTimeCellEditor { background: rgba(30, 40, 52, 0.95); border-color: #607183; }
+    body.night-mode .fltPlanTimeEditorCenter { color: #e2eaf2; }
     body.night-mode .fltPlanPostFlightCell { background: transparent; border: 0; }
     body.night-mode .fltPlanCrewWrap { background: #202a34; border-color: #5c6d7f; }
     body.night-mode .fltPlanCrewTable th, body.night-mode .fltPlanCrewTable td { border-color: #5a6c7f; color: #dfe8f2; }
@@ -2697,6 +2894,8 @@ namespace VAICOM
     let fltPlanPlanStateBySelection = {};
     let fltPlanDtcPageBySelection = {};
     let fltPlanDtcRouteBySelection = {};
+    let fltPlanExpandedTimeAnchorBySelection = {};
+    let fltPlanExpandedNavEditBySelection = {};
     let fltPlanMapViewBySelection = {};
     let fltPlanMapBackgroundEnabledBySelection = {};
     let fltPlanOpenFreeMapViewBySelection = {};
@@ -2741,6 +2940,7 @@ namespace VAICOM
     const nightModeStorageKey = 'vaicom.okb.nightMode';
     const dlinkOnStorageKey = 'vaicom.okb.dlinkOn';
     const contentFontSizeStorageKey = 'vaicom.okb.contentFontSize';
+    const efbPinnedChartsStorageKey = 'vaicom.okb.efbPinnedChartsByAirport';
     const drawModeTimeoutMs = 30000;
     const speedRecommendationTimeoutMs = 30000;
     const fakeMissionSpeedMin = 0.25;
@@ -2769,6 +2969,7 @@ namespace VAICOM
     let efbSelectionFlowActive = false;
     let efbPinnedChartsByAirport = {};
     let efbRightToolsOpen = false;
+    const overlayCloseHideDelayMs = 620;
 
     function clamp(v, min, max){
       return Math.max(min, Math.min(max, v));
@@ -2808,6 +3009,41 @@ namespace VAICOM
         if (window.localStorage){
           window.localStorage.setItem(dtcListCollapsedStorageKey, dtcListCollapsed ? '1' : '0');
         }
+      }catch(_){
+      }
+    }
+
+    function readPinnedChartsPreference(){
+      try{
+        if (!window.localStorage) return {};
+        const raw = window.localStorage.getItem(efbPinnedChartsStorageKey);
+        if (!raw) return {};
+        const parsed = JSON.parse(raw);
+        if (!parsed || typeof parsed !== 'object') return {};
+        const clean = {};
+        Object.keys(parsed).forEach(function(k){
+          const airport = String(k || '').toUpperCase().trim();
+          if (!airport) return;
+          const ids = Array.isArray(parsed[k]) ? parsed[k] : [];
+          const seen = {};
+          clean[airport] = ids
+            .map(function(id){ return String(id || '').trim(); })
+            .filter(function(id){
+              if (!id || seen[id]) return false;
+              seen[id] = true;
+              return true;
+            });
+        });
+        return clean;
+      }catch(_){
+        return {};
+      }
+    }
+
+    function persistPinnedChartsPreference(){
+      try{
+        if (!window.localStorage) return;
+        window.localStorage.setItem(efbPinnedChartsStorageKey, JSON.stringify(efbPinnedChartsByAirport || {}));
       }catch(_){
       }
     }
@@ -2970,6 +3206,27 @@ namespace VAICOM
       } else {
         list.push(id);
       }
+      persistPinnedChartsPreference();
+    }
+
+    function prunePinnedChartsForAirport(airportKey){
+      const airport = String(airportKey || 'UNSET').toUpperCase().trim() || 'UNSET';
+      const list = Array.isArray(efbPinnedChartsByAirport[airport]) ? efbPinnedChartsByAirport[airport] : [];
+      if (!list.length) return false;
+      const charts = Array.isArray(efbChartsByAirport[airport]) ? efbChartsByAirport[airport] : [];
+      const available = {};
+      charts.forEach(function(c){
+        const id = String((c && c.id) || '').trim();
+        if (id) available[id] = true;
+      });
+      const pruned = list.filter(function(id){ return !!available[String(id || '').trim()]; });
+      if (pruned.length === list.length) return false;
+      if (pruned.length){
+        efbPinnedChartsByAirport[airport] = pruned;
+      } else {
+        delete efbPinnedChartsByAirport[airport];
+      }
+      return true;
     }
 
     function getAllPinnedCharts(){
@@ -3023,6 +3280,9 @@ namespace VAICOM
         if (res.ok){
           const payload = await res.json();
           efbChartsByAirport[key] = Array.isArray(payload && payload.charts) ? payload.charts : [];
+          if (prunePinnedChartsForAirport(key)){
+            persistPinnedChartsPreference();
+          }
           if (!efbSelectedChartByAirport[key] && efbChartsByAirport[key].length){
             efbSelectedChartByAirport[key] = String((efbChartsByAirport[key][0] && efbChartsByAirport[key][0].id) || '');
           }
@@ -3090,14 +3350,15 @@ namespace VAICOM
         + '<div class=""efbShell"">'
         + '<div class=""efbLeftRail"">'
         + '<button id=""efbAutoAirportBtn"" type=""button"" class=""efbRailBtn"" title=""Auto-select closest airport"">A</button>'
-        + '<button id=""efbAirportToggleBtn"" type=""button"" class=""efbRailBtn"" title=""Select airport and chart"">🗼</button>'
+        + '<button id=""efbAirportToggleBtn"" type=""button"" class=""efbRailBtn"" title=""Select airport and chart""><svg class=""efbRailIconSvg"" viewBox=""0 0 64 64"" aria-hidden=""true""><path d=""M14 20h36v6h-4l2 9h-8l-2-7h-12l-2 7h-8l2-9h-4z"" fill=""currentColor""/><rect x=""27"" y=""35"" width=""10"" height=""19"" fill=""currentColor""/><rect x=""18"" y=""54"" width=""28"" height=""5"" fill=""currentColor""/><circle cx=""32"" cy=""10"" r=""2.5"" fill=""currentColor""/><path d=""M25 11a7 7 0 0 1 14 0"" fill=""none"" stroke=""currentColor"" stroke-width=""3"" stroke-linecap=""round""/><path d=""M21 11a11 11 0 0 1 22 0"" fill=""none"" stroke=""currentColor"" stroke-width=""3"" stroke-linecap=""round""/></svg></button>'
         + '<button id=""efbPinnedBtn"" type=""button"" class=""efbRailBtn"" title=""Pinned charts"">📌</button>'
         + '</div>'
         + '<div class=""efbRightRail"">'
-        + '<button id=""efbRotateToolsBtn"" type=""button"" class=""efbRailBtn"" title=""Chart orientation tools"">⤾</button>'
         + '<button id=""efbZoomOutBtn"" type=""button"" class=""efbRailBtn"" title=""Zoom out"">−</button>'
         + '<button id=""efbZoomResetBtn"" type=""button"" class=""efbRailBtn"" title=""Reset view"">⟳</button>'
         + '<button id=""efbZoomInBtn"" type=""button"" class=""efbRailBtn"" title=""Zoom in"">+</button>'
+        + '<span class=""efbRailSpacer"" aria-hidden=""true""></span>'
+        + '<button id=""efbRotateToolsBtn"" type=""button"" class=""efbRailBtn"" title=""Chart orientation tools"">⤾</button>'
         + '</div>'
         + '<div id=""efbRightActionDrawer"" class=""' + (efbRightToolsOpen ? 'efbRightActionDrawer' : 'efbRightActionDrawer closed') + '"">'
         + '<button id=""efbRotateLeftBtn"" type=""button"" class=""efbRightDrawerBtn"" title=""Rotate left"">⟲</button>'
@@ -3377,11 +3638,15 @@ namespace VAICOM
       const viewEl = document.getElementById('efbChartViewport');
       if (viewEl){
         viewEl.onmousedown = function(ev){
+          const dragAirportKey = String(airportKey || 'UNSET').toUpperCase().trim() || 'UNSET';
+          const dragViewport = getEfbViewport(dragAirportKey);
+          applyEfbViewportDefaults(dragViewport);
           efbDragState = {
+            airportKey: dragAirportKey,
             startX: ev.clientX,
             startY: ev.clientY,
-            startTx: Number(viewport.tx) || 0,
-            startTy: Number(viewport.ty) || 0,
+            startTx: Number(dragViewport.tx) || 0,
+            startTy: Number(dragViewport.ty) || 0,
           };
           ev.preventDefault();
         };
@@ -3390,10 +3655,13 @@ namespace VAICOM
       if (!bindEfbInteractions._moveRegistered){
         document.addEventListener('mousemove', function(ev){
           if (!efbDragState || selectedTab !== 'EFB') return;
-          viewport.tx = efbDragState.startTx + (ev.clientX - efbDragState.startX);
-          viewport.ty = efbDragState.startTy + (ev.clientY - efbDragState.startY);
+          const dragAirportKey = String(efbDragState.airportKey || 'UNSET').toUpperCase().trim() || 'UNSET';
+          const dragViewport = getEfbViewport(dragAirportKey);
+          applyEfbViewportDefaults(dragViewport);
+          dragViewport.tx = efbDragState.startTx + (ev.clientX - efbDragState.startX);
+          dragViewport.ty = efbDragState.startTy + (ev.clientY - efbDragState.startY);
           const image = document.getElementById('efbChartImage');
-          if (image) applyEfbViewportToImage(image, viewport);
+          if (image) applyEfbViewportToImage(image, dragViewport);
         });
 
         document.addEventListener('mouseup', function(){
@@ -3639,6 +3907,30 @@ namespace VAICOM
       if (overlayBox) overlayBox.checked = !!autoBrowse;
     }
 
+    function setOverlayAnimated(overlay, open, baseClass){
+      if (!overlay) return;
+      const base = String(baseClass || 'overlayBackdrop');
+      if (open){
+        if (overlay._closeTimer){
+          clearTimeout(overlay._closeTimer);
+          overlay._closeTimer = null;
+        }
+        overlay.className = base;
+        void overlay.offsetWidth;
+        overlay.className = base + ' overlayOpen';
+        return;
+      }
+
+      overlay.className = base;
+      if (overlay._closeTimer){
+        clearTimeout(overlay._closeTimer);
+      }
+      overlay._closeTimer = setTimeout(function(){
+        overlay.className = base + ' hidden';
+        overlay._closeTimer = null;
+      }, overlayCloseHideDelayMs);
+    }
+
     function applyDrawOverlayUi(){
       const drawBox = document.getElementById('overlayDrawMode');
       if (drawBox){
@@ -3691,7 +3983,7 @@ namespace VAICOM
       }
       const overlay = document.getElementById('settingsOverlay');
       if (!overlay) return;
-      overlay.className = settingsOverlayOpen ? 'overlayBackdrop' : 'overlayBackdrop hidden';
+      setOverlayAnimated(overlay, settingsOverlayOpen, 'overlayBackdrop');
       if (settingsOverlayOpen){
         applyAutoBrowseUi();
         applyNightModeUi();
@@ -3722,7 +4014,7 @@ namespace VAICOM
       }
       const overlay = document.getElementById('drawOverlay');
       if (!overlay) return;
-      overlay.className = drawOverlayOpen ? 'overlayBackdrop' : 'overlayBackdrop hidden';
+      setOverlayAnimated(overlay, drawOverlayOpen, 'overlayBackdrop');
       if (drawOverlayOpen){
         applyDrawOverlayUi();
       }
@@ -3736,7 +4028,7 @@ namespace VAICOM
       }
       const overlay = document.getElementById('helpOverlay');
       if (!overlay) return;
-      overlay.className = helpOverlayOpen ? 'overlayBackdrop helpOverlayBackdrop' : 'overlayBackdrop helpOverlayBackdrop hidden';
+      setOverlayAnimated(overlay, helpOverlayOpen, 'overlayBackdrop helpOverlayBackdrop');
       if (helpOverlayOpen){
         const titleEl = document.getElementById('helpOverlayTitle');
         if (titleEl){
@@ -3770,12 +4062,12 @@ namespace VAICOM
       if (fltPlanFilesOverlayOpen){
         fltPlanSessionOverlayOpen = false;
         const sessionOverlay = document.getElementById('fltPlanSessionOverlay');
-        if (sessionOverlay) sessionOverlay.className = 'overlayBackdrop hidden';
+        if (sessionOverlay) setOverlayAnimated(sessionOverlay, false, 'overlayBackdrop overlayBackdropTop');
       }
 
       const overlay = document.getElementById('fltPlanFilesOverlay');
       if (!overlay) return;
-      overlay.className = fltPlanFilesOverlayOpen ? 'overlayBackdrop overlayBackdropTop' : 'overlayBackdrop overlayBackdropTop hidden';
+      setOverlayAnimated(overlay, fltPlanFilesOverlayOpen, 'overlayBackdrop overlayBackdropTop');
     }
 
     function setFltPlanSessionOverlayOpen(open){
@@ -3783,12 +4075,12 @@ namespace VAICOM
       if (fltPlanSessionOverlayOpen){
         fltPlanFilesOverlayOpen = false;
         const filesOverlay = document.getElementById('fltPlanFilesOverlay');
-        if (filesOverlay) filesOverlay.className = 'overlayBackdrop hidden';
+        if (filesOverlay) setOverlayAnimated(filesOverlay, false, 'overlayBackdrop overlayBackdropTop');
       }
 
       const overlay = document.getElementById('fltPlanSessionOverlay');
       if (!overlay) return;
-      overlay.className = fltPlanSessionOverlayOpen ? 'overlayBackdrop overlayBackdropTop' : 'overlayBackdrop overlayBackdropTop hidden';
+      setOverlayAnimated(overlay, fltPlanSessionOverlayOpen, 'overlayBackdrop overlayBackdropTop');
     }
 
     function renderFltPlanFilesOverlay(data){
@@ -6396,7 +6688,7 @@ namespace VAICOM
 
     function getFlightPlanPlanState(selected){
       const key = getFlightPlanEtaStartKey(selected);
-      if (!key) return { speedAdjustments: {}, speedDisplayModes: {}, altAdjustments: {}, typeOverrides: {}, lockedStep: '', totSeconds: NaN, lockedStart: null, timeMarks: {}, timingLog: [], postFlightOpen: false, ataByStep: {}, speedRecommendations: {}, totPerformanceByStep: {}, lastOwnshipPos: null, deletedSteps: {}, directToSourceStep: '', directToTargetStep: '', rowActionStep: '', rowActionMode: '', rowRevealStep: '', rowRevealMode: '', coordDisplayMode: 'xy' };
+      if (!key) return { speedAdjustments: {}, speedDisplayModes: {}, altAdjustments: {}, typeOverrides: {}, lockedStep: '', totSeconds: NaN, lockedStart: null, timeMarks: {}, timingLog: [], postFlightOpen: false, ataByStep: {}, speedRecommendations: {}, totPerformanceByStep: {}, lastOwnshipPos: null, deletedSteps: {}, directToSourceStep: '', directToTargetStep: '', rowActionStep: '', rowActionMode: '', rowRevealStep: '', rowRevealMode: '', coordDisplayMode: 'xy', expandedBottomPanel: '', closingBottomPanel: '', closingBottomPanelUntilUtc: 0 };
       const existing = fltPlanPlanStateBySelection[key];
       if (existing && typeof existing === 'object'){
         if (!existing.speedAdjustments || typeof existing.speedAdjustments !== 'object') existing.speedAdjustments = {};
@@ -6418,9 +6710,12 @@ namespace VAICOM
         if (typeof existing.rowRevealStep !== 'string') existing.rowRevealStep = '';
         if (typeof existing.rowRevealMode !== 'string') existing.rowRevealMode = '';
         if (typeof existing.coordDisplayMode !== 'string') existing.coordDisplayMode = 'xy';
+        if (typeof existing.expandedBottomPanel !== 'string') existing.expandedBottomPanel = '';
+        if (typeof existing.closingBottomPanel !== 'string') existing.closingBottomPanel = '';
+        if (!isFinite(Number(existing.closingBottomPanelUntilUtc))) existing.closingBottomPanelUntilUtc = 0;
         return existing;
       }
-      const created = { speedAdjustments: {}, speedDisplayModes: {}, altAdjustments: {}, typeOverrides: {}, lockedStep: '', totSeconds: NaN, lockedStart: null, timeMarks: {}, timingLog: [], postFlightOpen: false, ataByStep: {}, speedRecommendations: {}, totPerformanceByStep: {}, lastOwnshipPos: null, deletedSteps: {}, directToSourceStep: '', directToTargetStep: '', rowActionStep: '', rowActionMode: '', rowRevealStep: '', rowRevealMode: '', coordDisplayMode: 'xy' };
+      const created = { speedAdjustments: {}, speedDisplayModes: {}, altAdjustments: {}, typeOverrides: {}, lockedStep: '', totSeconds: NaN, lockedStart: null, timeMarks: {}, timingLog: [], postFlightOpen: false, ataByStep: {}, speedRecommendations: {}, totPerformanceByStep: {}, lastOwnshipPos: null, deletedSteps: {}, directToSourceStep: '', directToTargetStep: '', rowActionStep: '', rowActionMode: '', rowRevealStep: '', rowRevealMode: '', coordDisplayMode: 'xy', expandedBottomPanel: '', closingBottomPanel: '', closingBottomPanelUntilUtc: 0 };
       fltPlanPlanStateBySelection[key] = created;
       return created;
     }
@@ -6581,6 +6876,64 @@ namespace VAICOM
     function setTakeoffByMinutesDelta(selected, minutesDelta){
       const delta = Math.round(Number(minutesDelta || 0) * 60);
       setTakeoffBySecondsDelta(selected, delta);
+    }
+
+    function setTimingAnchorBySecondsDelta(selected, anchorType, secondsDelta){
+      const delta = Math.round(Number(secondsDelta || 0));
+      if (!isFinite(delta) || delta === 0) return;
+
+      const anchor = String(anchorType || '').toUpperCase();
+      if (!anchor) return;
+      if (anchor === 'TOT'){
+        setTotBySecondsDelta(selected, delta);
+        return;
+      }
+      if (anchor === 'TAKEOFF'){
+        setTakeoffBySecondsDelta(selected, delta);
+        return;
+      }
+
+      const key = getFlightPlanEtaStartKey(selected);
+      if (!key) return;
+
+      const state = getFlightPlanPlanState(selected);
+      const marks = getResolvedTimingMarks(selected);
+      if (!isFinite(Number(marks.takeoff))){
+        const now = getCurrentFlightPlanClockSeconds();
+        const defaults = buildTimingFromTakeoff(now);
+        marks.step = defaults.step;
+        marks.start = defaults.start;
+        marks.taxi = defaults.taxi;
+        marks.takeoff = defaults.takeoff;
+      }
+
+      if (anchor === 'STEP'){
+        marks.step = Number(marks.step) + delta;
+        marks.start = Number(marks.step) + stepToStartSeconds;
+        marks.taxi = Number(marks.start) + startToTaxiSeconds;
+        marks.takeoff = Number(marks.taxi) + taxiToTakeoffSeconds;
+      } else if (anchor === 'START'){
+        marks.start = Number(marks.start) + delta;
+        marks.taxi = Number(marks.start) + startToTaxiSeconds;
+        marks.takeoff = Number(marks.taxi) + taxiToTakeoffSeconds;
+      } else if (anchor === 'TAXI'){
+        marks.taxi = Number(marks.taxi) + delta;
+        marks.takeoff = Number(marks.taxi) + taxiToTakeoffSeconds;
+      } else {
+        return;
+      }
+
+      state.timeMarks = {
+        step: marks.step,
+        start: marks.start,
+        taxi: marks.taxi,
+        takeoff: marks.takeoff,
+      };
+
+      if (isFinite(Number(marks.takeoff))){
+        fltPlanEtaStartBySelection[key] = Number(marks.takeoff);
+      }
+      appendTimingLog(selected, anchor + ' ADJ', marks);
     }
 
     function resolveWaypointNorthEast(wp){
@@ -6915,6 +7268,104 @@ namespace VAICOM
 
     function getFlightPlanEtaStartKey(selected){
       return String(selected || '');
+    }
+
+    function getExpandedTimeAnchor(selected){
+      const key = getFlightPlanEtaStartKey(selected);
+      if (!key) return '';
+      return String(fltPlanExpandedTimeAnchorBySelection[key] || '').toUpperCase();
+    }
+
+    function setExpandedTimeAnchor(selected, anchor){
+      const key = getFlightPlanEtaStartKey(selected);
+      if (!key) return;
+      const value = String(anchor || '').toUpperCase();
+      if (value){
+        fltPlanExpandedTimeAnchorBySelection[key] = value;
+      } else {
+        delete fltPlanExpandedTimeAnchorBySelection[key];
+      }
+    }
+
+    function getExpandedNavEdit(selected){
+      const key = getFlightPlanEtaStartKey(selected);
+      if (!key) return { step: '', field: '' };
+      const state = getExpandedNavEditState(selected);
+      if (!state || typeof state !== 'object') return { step: '', field: '' };
+      return {
+        step: String(state.step || ''),
+        field: String(state.field || '').toUpperCase(),
+      };
+    }
+
+    function getExpandedNavEditState(selected){
+      const key = getFlightPlanEtaStartKey(selected);
+      if (!key) return null;
+      let state = fltPlanExpandedNavEditBySelection[key];
+      if (!state || typeof state !== 'object'){
+        state = {
+          step: '',
+          field: '',
+          closingStep: '',
+          closingField: '',
+          closingUntilUtc: 0,
+        };
+        fltPlanExpandedNavEditBySelection[key] = state;
+      }
+      const until = Number(state.closingUntilUtc || 0);
+      if (!isFinite(until) || until <= 0 || Date.now() >= until){
+        state.closingStep = '';
+        state.closingField = '';
+        state.closingUntilUtc = 0;
+      }
+      return state;
+    }
+
+    function setExpandedNavEdit(selected, step, field){
+      const key = getFlightPlanEtaStartKey(selected);
+      if (!key) return;
+      const stepKey = String(step || '');
+      const fieldKey = String(field || '').toUpperCase();
+      const state = getExpandedNavEditState(selected);
+      if (!state) return;
+      if (!stepKey || !fieldKey){
+        state.step = '';
+        state.field = '';
+        state.closingStep = '';
+        state.closingField = '';
+        state.closingUntilUtc = 0;
+        return;
+      }
+      state.step = stepKey;
+      state.field = fieldKey;
+    }
+
+    function closeExpandedNavEditAnimated(selected){
+      const state = getExpandedNavEditState(selected);
+      if (!state) return false;
+      const stepKey = stepToKey(state.step);
+      const fieldKey = String(state.field || '').toUpperCase();
+      if (!stepKey || !fieldKey) return false;
+      state.closingStep = stepKey;
+      state.closingField = fieldKey;
+      state.closingUntilUtc = Date.now() + overlayCloseHideDelayMs;
+      state.step = '';
+      state.field = '';
+      return true;
+    }
+
+    function isClosingNavEdit(selected, step, field){
+      const state = getExpandedNavEditState(selected);
+      if (!state) return false;
+      const until = Number(state.closingUntilUtc || 0);
+      if (!isFinite(until) || until <= 0 || Date.now() >= until){
+        state.closingStep = '';
+        state.closingField = '';
+        state.closingUntilUtc = 0;
+        return false;
+      }
+      return stepToKey(state.closingStep) === stepToKey(step)
+        && String(state.closingField || '').toUpperCase() === String(field || '').toUpperCase();
     }
 
     function getActiveFlightPlanSelection(data){
@@ -8494,7 +8945,74 @@ namespace VAICOM
       return { unit: unit, freq: freq };
     }
 
-    function formatFrequenciesBlockHtml(data){
+    function normalizeBottomPanelKey(panel){
+      const key = String(panel || '').trim().toUpperCase();
+      return (key === 'FREQ' || key === 'CMDS' || key === 'ASSETS' || key === 'WX') ? key : '';
+    }
+
+    function getExpandedBottomPanel(selected){
+      const state = getFlightPlanPlanState(selected);
+      if (!state) return '';
+      return normalizeBottomPanelKey(state.expandedBottomPanel);
+    }
+
+    function setExpandedBottomPanel(selected, panel){
+      const state = getFlightPlanPlanState(selected);
+      if (!state) return;
+      const key = normalizeBottomPanelKey(panel);
+      state.expandedBottomPanel = key;
+      if (key){
+        state.closingBottomPanel = '';
+        state.closingBottomPanelUntilUtc = 0;
+      }
+    }
+
+    function closeExpandedBottomPanelAnimated(selected){
+      const state = getFlightPlanPlanState(selected);
+      if (!state) return false;
+      const current = normalizeBottomPanelKey(state.expandedBottomPanel);
+      if (!current) return false;
+      state.closingBottomPanel = current;
+      state.closingBottomPanelUntilUtc = Date.now() + overlayCloseHideDelayMs;
+      state.expandedBottomPanel = '';
+      return true;
+    }
+
+    function isClosingBottomPanel(selected, panel){
+      const state = getFlightPlanPlanState(selected);
+      if (!state) return false;
+      const until = Number(state.closingBottomPanelUntilUtc || 0);
+      if (!isFinite(until) || until <= 0 || Date.now() >= until){
+        state.closingBottomPanel = '';
+        state.closingBottomPanelUntilUtc = 0;
+        return false;
+      }
+      return normalizeBottomPanelKey(state.closingBottomPanel) === normalizeBottomPanelKey(panel);
+    }
+
+    function getBottomPanelShellClass(selected, panel){
+      const key = normalizeBottomPanelKey(panel);
+      if (!key) return 'fltPlanInfoShell';
+      if (getExpandedBottomPanel(selected) === key) return 'fltPlanInfoShell expanded';
+      if (isClosingBottomPanel(selected, key)) return 'fltPlanInfoShell closing';
+      return 'fltPlanInfoShell';
+    }
+
+    function getBottomPanelClassSuffix(selected, panel){
+      const key = normalizeBottomPanelKey(panel);
+      if (!key) return '';
+      if (getExpandedBottomPanel(selected) === key) return ' expanded';
+      if (isClosingBottomPanel(selected, key)) return ' closing';
+      return '';
+    }
+
+    function getBottomPanelTitleAttrs(selected, panel){
+      const key = normalizeBottomPanelKey(panel);
+      if (!key) return '';
+      return ' data-bottom-panel-toggle=""' + key + '"" title=""Click to expand/collapse panel""';
+    }
+
+    function formatFrequenciesBlockHtml(data, selected){
       const atcRaw = pickClosestLines(getMergedList(data && data.Units, 'ATC'), 4);
       const flightRaw = pickClosestLines(getMergedList(data && data.Units, 'FLIGHT'), 4);
       const entries = atcRaw.concat(flightRaw)
@@ -8507,10 +9025,11 @@ namespace VAICOM
       });
       if (!rows.length){ rows.push('<tr><td colspan=""2"">No frequency data.</td></tr>'); }
 
-      return '<div class=""fltPlanInfoBlock""><div class=""fltPlanInfoTitle"">FREQUENCIES</div><div class=""fltPlanInfoBody""><table class=""fltPlanInfoTable""><thead><tr><th>UNIT</th><th>UHF/VHF</th></tr></thead><tbody>' + rows.join('') + '</tbody></table></div></div>';
+      const titleAttrs = getBottomPanelTitleAttrs(selected, 'FREQ');
+      return '<div class=""fltPlanInfoBlock""><div class=""fltPlanInfoTitle""' + titleAttrs + '>FREQUENCIES</div><div class=""fltPlanInfoBody""><table class=""fltPlanInfoTable""><thead><tr><th>UNIT</th><th>UHF/VHF</th></tr></thead><tbody>' + rows.join('') + '</tbody></table></div></div>';
     }
 
-    function formatAssetsBlockHtml(data){
+    function formatAssetsBlockHtml(data, selected){
       const tanker = pickClosestLines(getMergedList(data && data.Units, 'TANKER'), 3);
       const awacs = pickClosestLines(getMergedList(data && data.Units, 'AWACS'), 2);
       const jtac = pickClosestLines(getMergedList(data && data.Units, 'JTAC'), 2);
@@ -8521,10 +9040,11 @@ namespace VAICOM
       });
       if (!rows.length){ rows.push('<tr><td>No asset data.</td></tr>'); }
 
-      return '<div class=""fltPlanInfoBlock""><div class=""fltPlanInfoTitle"">ASSETS</div><div class=""fltPlanInfoBody""><table class=""fltPlanInfoTable""><thead><tr><th>CALLSIGN / UNIT / FREQ / TACAN</th></tr></thead><tbody>' + rows.join('') + '</tbody></table></div></div>';
+      const titleAttrs = getBottomPanelTitleAttrs(selected, 'ASSETS');
+      return '<div class=""fltPlanInfoBlock""><div class=""fltPlanInfoTitle""' + titleAttrs + '>ASSETS</div><div class=""fltPlanInfoBody""><table class=""fltPlanInfoTable""><thead><tr><th>CALLSIGN / UNIT / FREQ / TACAN</th></tr></thead><tbody>' + rows.join('') + '</tbody></table></div></div>';
     }
 
-    function formatMetarBlockHtml(data){
+    function formatMetarBlockHtml(data, selected){
       const server = (data && data.Server) || {};
       const metars = server.AtcMetars || {};
       const atcLines = pickClosestLines(getMergedList(data && data.Units, 'ATC'), 8);
@@ -8553,7 +9073,8 @@ namespace VAICOM
       });
       if (!rows.length){ rows.push('<tr><td>No METAR data.</td></tr>'); }
 
-      return '<div class=""fltPlanInfoBlock""><div class=""fltPlanInfoTitle"">WX</div><div class=""fltPlanInfoBody""><table class=""fltPlanInfoTable""><thead><tr><th>METAR</th></tr></thead><tbody>' + rows.join('') + '</tbody></table></div></div>';
+      const titleAttrs = getBottomPanelTitleAttrs(selected, 'WX');
+      return '<div class=""fltPlanInfoBlock""><div class=""fltPlanInfoTitle""' + titleAttrs + '>WX</div><div class=""fltPlanInfoBody""><table class=""fltPlanInfoTable""><thead><tr><th>METAR</th></tr></thead><tbody>' + rows.join('') + '</tbody></table></div></div>';
     }
 
     function estimateCruiseKcasForAltitude(altFeet){
@@ -8917,6 +9438,17 @@ namespace VAICOM
       fltPlanEtaStartBySelection[key] = getCurrentFlightPlanClockSeconds();
     }
 
+    function getTimingClockTextForAnchor(selected, anchorType){
+      const timing = getFlightPlanTimingDisplay(selected);
+      const anchor = String(anchorType || '').toUpperCase();
+      if (anchor === 'STEP') return String((timing && timing.step) || '-');
+      if (anchor === 'START') return String((timing && timing.start) || '-');
+      if (anchor === 'TAXI') return String((timing && timing.taxi) || '-');
+      if (anchor === 'TAKEOFF') return String((timing && timing.takeoff) || '-');
+      if (anchor === 'TOT') return String((timing && timing.tot) || '-');
+      return '-';
+    }
+
     function setTakeoffTimeByAnchorFromNow(selected, anchorType){
       const key = getFlightPlanEtaStartKey(selected);
       if (!key) return;
@@ -9255,7 +9787,7 @@ namespace VAICOM
       }).filter(function(wp){ return !!wp; });
     }
 
-    function formatDtcCmdsBlockHtml(root){
+    function formatDtcCmdsBlockHtml(root, selected){
       function collectCmdsSettings(value, depth, found){
         if (depth > 10 || value === null || value === undefined) return;
         if (Array.isArray(value)){
@@ -9368,7 +9900,8 @@ namespace VAICOM
         rows.push('<tr><td style=""width:50%;"">' + left + '</td><td>' + right + '</td></tr>');
       }
 
-      return '<div class=""fltPlanInfoBlock""><div class=""fltPlanInfoTitle"">CMDS</div><div class=""fltPlanInfoBody""><table class=""fltPlanInfoTable""><tbody>' + rows.join('') + '</tbody></table></div></div>';
+      const titleAttrs = getBottomPanelTitleAttrs(selected, 'CMDS');
+      return '<div class=""fltPlanInfoBlock""><div class=""fltPlanInfoTitle""' + titleAttrs + '>CMDS</div><div class=""fltPlanInfoBody""><table class=""fltPlanInfoTable""><tbody>' + rows.join('') + '</tbody></table></div></div>';
     }
 
     function formatDtcCommPanelHtml(root, emptyWhenMissing){
@@ -9624,16 +10157,17 @@ namespace VAICOM
       return '<div class=""fltPlanPage2Section""><div class=""fltPlanPage2Title"">CMDS</div><div class=""fltPlanPage2Body"">No runtime CMDS data.</div></div>';
     }
 
-    function formatRuntimeCmdsInfoBlockHtml(data){
+    function formatRuntimeCmdsInfoBlockHtml(data, selected){
       const server = (data && data.Server) || {};
       const roots = [server.Payload, server.Diagnostics];
       for (let i = 0; i < roots.length; i++){
         const root = roots[i];
         if (!root || typeof root !== 'object') continue;
-        const block = formatDtcCmdsBlockHtml(root);
+        const block = formatDtcCmdsBlockHtml(root, selected);
         if (block) return block;
       }
-      return '<div class=""fltPlanInfoBlock""><div class=""fltPlanInfoTitle"">CMDS</div><div class=""fltPlanInfoBody"">None</div></div>';
+      const titleAttrs = getBottomPanelTitleAttrs(selected, 'CMDS');
+      return '<div class=""fltPlanInfoBlock""><div class=""fltPlanInfoTitle""' + titleAttrs + '>CMDS</div><div class=""fltPlanInfoBody"">None</div></div>';
     }
 
     function formatRuntimePage2Html(data, pageSwitcherHtml, selected){
@@ -11970,12 +12504,43 @@ namespace VAICOM
         html += '<div class=""fltPlanToolbar""><span class=""fltPlanToolbarLeft""></span><span class=""fltPlanToolbarRight""><button type=""button"" class=""fltPlanPageBtn"" data-postflight-toggle=""1"">' + (postFlightOpen ? 'Hide POST FLT' : 'POST FLT') + '</button></span></div>';
       }
 
+      const expandedAnchor = getExpandedTimeAnchor(selected);
+      const stepExpandedClass = expandedAnchor === 'STEP' ? ' expanded' : '';
+      const startExpandedClass = expandedAnchor === 'START' ? ' expanded' : '';
+      const taxiExpandedClass = expandedAnchor === 'TAXI' ? ' expanded' : '';
+      const takeoffExpandedClass = expandedAnchor === 'TAKEOFF' ? ' expanded' : '';
+      const totExpandedClass = expandedAnchor === 'TOT' ? ' expanded' : '';
+      const stepClock = getTimingClockTextForAnchor(selected, 'STEP');
+      const startClock = getTimingClockTextForAnchor(selected, 'START');
+      const taxiClock = getTimingClockTextForAnchor(selected, 'TAXI');
+      const takeoffClock = getTimingClockTextForAnchor(selected, 'TAKEOFF');
+      const totClock = getTimingClockTextForAnchor(selected, 'TOT');
+      const navEdit = getExpandedNavEdit(selected);
+
+      function navPopupClass(stepKey, fieldKey){
+        const step = String(stepKey || '');
+        const field = String(fieldKey || '').toUpperCase();
+        if (navEdit.step === step && navEdit.field === field) return ' expanded';
+        if (isClosingNavEdit(selected, step, field)) return ' closing';
+        return '';
+      }
+
+      function navPopupEditor(edgeClass, leftAttr, rightAttr, valueText){
+        return '<div class=""fltPlanTimeCellEditor ' + edgeClass + '"">'
+          + '<div class=""fltPlanTimeEditorRow"">'
+          + '<span class=""fltPlanTimeEditorBtns""><button type=""button"" class=""fltPlanMiniBtn"" ' + leftAttr + '>◀</button></span>'
+          + '<span class=""fltPlanTimeEditorCenter"">' + escapeHtml(String(valueText || '-')) + '</span>'
+          + '<span class=""fltPlanTimeEditorBtns""><button type=""button"" class=""fltPlanMiniBtn"" ' + rightAttr + '>▶</button></span>'
+          + '</div>'
+          + '</div>';
+      }
+
       html += '<div class=""fltPlanTimeGrid"">';
-      html += '<div class=""fltPlanTimeCell clickable"" data-tko-anchor=""STEP"" title=""Set STEP to current clock (Takeoff auto = STEP +35m)""><div class=""fltPlanTimeCellLabel"">STEP</div><div class=""fltPlanTimeCellValue"">' + escapeHtml(timing.step) + '</div></div>';
-      html += '<div class=""fltPlanTimeCell clickable"" data-tko-anchor=""START"" title=""Set START to current clock (Takeoff auto = START +25m)""><div class=""fltPlanTimeCellLabel"">START</div><div class=""fltPlanTimeCellValue"">' + escapeHtml(timing.start) + '</div></div>';
-      html += '<div class=""fltPlanTimeCell clickable"" data-tko-anchor=""TAXI"" title=""Set TAXI to current clock (Takeoff auto = TAXI +15m)""><div class=""fltPlanTimeCellLabel"">TAXI</div><div class=""fltPlanTimeCellValue"">' + escapeHtml(timing.taxi) + '</div></div>';
-      html += '<div class=""fltPlanTimeCell clickable"" data-tko-anchor=""TAKEOFF"" title=""Set TAKEOFF to current clock""><div class=""fltPlanTimeCellLabel"">TAKEOFF</div><div class=""fltPlanTimeCellValue""><div class=""fltPlanAdjustCell""><button type=""button"" class=""fltPlanMiniBtn"" data-tko-adjust-sec=""-1"" title=""-1 second"">«</button><button type=""button"" class=""fltPlanMiniBtn"" data-tko-adjust=""-60"" title=""-1 minute"">◀</button><span class=""fltPlanSpdValue"">' + escapeHtml(timing.takeoff) + '</span><button type=""button"" class=""fltPlanMiniBtn"" data-tko-adjust=""60"" title=""+1 minute"">▶</button><button type=""button"" class=""fltPlanMiniBtn"" data-tko-adjust-sec=""1"" title=""+1 second"">»</button></div></div></div>';
-      html += '<div class=""fltPlanTimeCell""><div class=""fltPlanTimeCellLabel"">TOT</div><div class=""fltPlanTimeCellValue""><div class=""fltPlanAdjustCell""><button type=""button"" class=""fltPlanMiniBtn"" data-tot-adjust-sec=""-1"" title=""-1 second"">«</button><button type=""button"" class=""fltPlanMiniBtn"" data-tot-adjust=""-60"" title=""-1 minute"">◀</button><span class=""fltPlanSpdValue"">' + escapeHtml(timing.tot) + '</span><button type=""button"" class=""fltPlanMiniBtn"" data-tot-adjust=""60"" title=""+1 minute"">▶</button><button type=""button"" class=""fltPlanMiniBtn"" data-tot-adjust-sec=""1"" title=""+1 second"">»</button></div></div></div>';
+      html += '<div class=""fltPlanTimeCell clickable' + stepExpandedClass + '"" data-tko-anchor=""STEP"" data-time-anchor=""STEP"" title=""Set STEP to current clock (Takeoff auto = STEP +35m)""><div class=""fltPlanTimeCellLabel"">STEP</div><div class=""fltPlanTimeCellValue"">' + escapeHtml(stepClock) + '</div><div class=""fltPlanTimeCellEditor edgeLeft""><div class=""fltPlanTimeEditorRow""><span class=""fltPlanTimeEditorBtns""><button type=""button"" class=""fltPlanMiniBtn"" data-time-adjust-anchor=""STEP"" data-time-adjust-sec=""-1"" title=""-1 second"">«</button><button type=""button"" class=""fltPlanMiniBtn"" data-time-adjust-anchor=""STEP"" data-time-adjust-sec=""-60"" title=""-1 minute"">◀</button></span><span class=""fltPlanTimeEditorCenter"">' + escapeHtml(stepClock) + '</span><span class=""fltPlanTimeEditorBtns""><button type=""button"" class=""fltPlanMiniBtn"" data-time-adjust-anchor=""STEP"" data-time-adjust-sec=""60"" title=""+1 minute"">▶</button><button type=""button"" class=""fltPlanMiniBtn"" data-time-adjust-anchor=""STEP"" data-time-adjust-sec=""1"" title=""+1 second"">»</button></span></div></div></div>';
+      html += '<div class=""fltPlanTimeCell clickable' + startExpandedClass + '"" data-tko-anchor=""START"" data-time-anchor=""START"" title=""Set START to current clock (Takeoff auto = START +25m)""><div class=""fltPlanTimeCellLabel"">START</div><div class=""fltPlanTimeCellValue"">' + escapeHtml(startClock) + '</div><div class=""fltPlanTimeCellEditor""><div class=""fltPlanTimeEditorRow""><span class=""fltPlanTimeEditorBtns""><button type=""button"" class=""fltPlanMiniBtn"" data-time-adjust-anchor=""START"" data-time-adjust-sec=""-1"" title=""-1 second"">«</button><button type=""button"" class=""fltPlanMiniBtn"" data-time-adjust-anchor=""START"" data-time-adjust-sec=""-60"" title=""-1 minute"">◀</button></span><span class=""fltPlanTimeEditorCenter"">' + escapeHtml(startClock) + '</span><span class=""fltPlanTimeEditorBtns""><button type=""button"" class=""fltPlanMiniBtn"" data-time-adjust-anchor=""START"" data-time-adjust-sec=""60"" title=""+1 minute"">▶</button><button type=""button"" class=""fltPlanMiniBtn"" data-time-adjust-anchor=""START"" data-time-adjust-sec=""1"" title=""+1 second"">»</button></span></div></div></div>';
+      html += '<div class=""fltPlanTimeCell clickable' + taxiExpandedClass + '"" data-tko-anchor=""TAXI"" data-time-anchor=""TAXI"" title=""Set TAXI to current clock (Takeoff auto = TAXI +15m)""><div class=""fltPlanTimeCellLabel"">TAXI</div><div class=""fltPlanTimeCellValue"">' + escapeHtml(taxiClock) + '</div><div class=""fltPlanTimeCellEditor""><div class=""fltPlanTimeEditorRow""><span class=""fltPlanTimeEditorBtns""><button type=""button"" class=""fltPlanMiniBtn"" data-time-adjust-anchor=""TAXI"" data-time-adjust-sec=""-1"" title=""-1 second"">«</button><button type=""button"" class=""fltPlanMiniBtn"" data-time-adjust-anchor=""TAXI"" data-time-adjust-sec=""-60"" title=""-1 minute"">◀</button></span><span class=""fltPlanTimeEditorCenter"">' + escapeHtml(taxiClock) + '</span><span class=""fltPlanTimeEditorBtns""><button type=""button"" class=""fltPlanMiniBtn"" data-time-adjust-anchor=""TAXI"" data-time-adjust-sec=""60"" title=""+1 minute"">▶</button><button type=""button"" class=""fltPlanMiniBtn"" data-time-adjust-anchor=""TAXI"" data-time-adjust-sec=""1"" title=""+1 second"">»</button></span></div></div></div>';
+      html += '<div class=""fltPlanTimeCell clickable' + takeoffExpandedClass + '"" data-tko-anchor=""TAKEOFF"" data-time-anchor=""TAKEOFF"" title=""Set TAKEOFF to current clock""><div class=""fltPlanTimeCellLabel"">TAKEOFF</div><div class=""fltPlanTimeCellValue"">' + escapeHtml(takeoffClock) + '</div><div class=""fltPlanTimeCellEditor edgeRight""><div class=""fltPlanTimeEditorRow""><span class=""fltPlanTimeEditorBtns""><button type=""button"" class=""fltPlanMiniBtn"" data-time-adjust-anchor=""TAKEOFF"" data-time-adjust-sec=""-1"" title=""-1 second"">«</button><button type=""button"" class=""fltPlanMiniBtn"" data-time-adjust-anchor=""TAKEOFF"" data-time-adjust-sec=""-60"" title=""-1 minute"">◀</button></span><span class=""fltPlanTimeEditorCenter"">' + escapeHtml(takeoffClock) + '</span><span class=""fltPlanTimeEditorBtns""><button type=""button"" class=""fltPlanMiniBtn"" data-time-adjust-anchor=""TAKEOFF"" data-time-adjust-sec=""60"" title=""+1 minute"">▶</button><button type=""button"" class=""fltPlanMiniBtn"" data-time-adjust-anchor=""TAKEOFF"" data-time-adjust-sec=""1"" title=""+1 second"">»</button></span></div></div></div>';
+      html += '<div class=""fltPlanTimeCell clickable' + totExpandedClass + '"" data-time-anchor=""TOT"" title=""Adjust TOT""><div class=""fltPlanTimeCellLabel"">TOT</div><div class=""fltPlanTimeCellValue"">' + escapeHtml(totClock) + '</div><div class=""fltPlanTimeCellEditor edgeLeft""><div class=""fltPlanTimeEditorRow""><span class=""fltPlanTimeEditorBtns""><button type=""button"" class=""fltPlanMiniBtn"" data-time-adjust-anchor=""TOT"" data-time-adjust-sec=""-1"" title=""-1 second"">«</button><button type=""button"" class=""fltPlanMiniBtn"" data-time-adjust-anchor=""TOT"" data-time-adjust-sec=""-60"" title=""-1 minute"">◀</button></span><span class=""fltPlanTimeEditorCenter"">' + escapeHtml(totClock) + '</span><span class=""fltPlanTimeEditorBtns""><button type=""button"" class=""fltPlanMiniBtn"" data-time-adjust-anchor=""TOT"" data-time-adjust-sec=""60"" title=""+1 minute"">▶</button><button type=""button"" class=""fltPlanMiniBtn"" data-time-adjust-anchor=""TOT"" data-time-adjust-sec=""1"" title=""+1 second"">»</button></span></div></div></div>';
       html += '</div>';
       if (postFlightOpen){
         html += '<div class=""fltPlanInfoBlock"" style=""min-height:0; margin-bottom:8px;"">';
@@ -12043,20 +12608,20 @@ namespace VAICOM
           if (wp.isStart){
             html += '<td>' + escapeHtml(wp.type) + '</td>';
           } else {
-            html += '<td><div class=""fltPlanAdjustCell""><button type=""button"" class=""fltPlanMiniBtn"" data-type-step=""' + escapeHtml(stepKey) + '"" data-type-current=""' + escapeHtml(wp.type) + '"" data-type-delta=""-1"">◀</button><span class=""fltPlanSpdValue"">' + escapeHtml(wp.type) + '</span><button type=""button"" class=""fltPlanMiniBtn"" data-type-step=""' + escapeHtml(stepKey) + '"" data-type-current=""' + escapeHtml(wp.type) + '"" data-type-delta=""1"">▶</button></div></td>';
+            html += '<td class=""fltPlanNavEditCell' + navPopupClass(stepKey, 'TYPE') + '""><div class=""fltPlanNavEditHost' + navPopupClass(stepKey, 'TYPE') + '"" data-nav-edit-host=""1"" data-nav-edit-step=""' + escapeHtml(stepKey) + '"" data-nav-edit-field=""TYPE""><span class=""fltPlanNavEditReadout"" data-nav-edit-toggle=""1"" data-nav-edit-step=""' + escapeHtml(stepKey) + '"" data-nav-edit-field=""TYPE"">' + escapeHtml(wp.type) + '</span>' + navPopupEditor('edgeLeft', 'data-type-step=""' + escapeHtml(stepKey) + '"" data-type-current=""' + escapeHtml(wp.type) + '"" data-type-delta=""-1"" title=""Prev type""', 'data-type-step=""' + escapeHtml(stepKey) + '"" data-type-current=""' + escapeHtml(wp.type) + '"" data-type-delta=""1"" title=""Next type""', wp.type) + '</div></td>';
           }
           html += '<td>' + escapeHtml(wp.name || '-') + '</td>';
           if (wp.isStart){
             html += '<td class=""fltPlanCellNum"">' + formatAltCellHtml(wp) + '</td>';
           } else {
-            html += '<td class=""fltPlanCellNum""><div class=""fltPlanAdjustCell""><button type=""button"" class=""fltPlanMiniBtn"" data-alt-step=""' + escapeHtml(stepKey) + '"" data-alt-dir=""-1"" data-alt-current=""' + escapeHtml(String(wp.altFeet)) + '"" title=""Adjust altitude"">◀</button><span class=""fltPlanSpdValue"">' + formatAltCellHtml(wp) + '</span><button type=""button"" class=""fltPlanMiniBtn"" data-alt-step=""' + escapeHtml(stepKey) + '"" data-alt-dir=""1"" data-alt-current=""' + escapeHtml(String(wp.altFeet)) + '"" title=""Adjust altitude"">▶</button></div></td>';
+            html += '<td class=""fltPlanCellNum fltPlanNavEditCell' + navPopupClass(stepKey, 'ALT') + '""><div class=""fltPlanNavEditHost' + navPopupClass(stepKey, 'ALT') + '"" data-nav-edit-host=""1"" data-nav-edit-step=""' + escapeHtml(stepKey) + '"" data-nav-edit-field=""ALT""><span class=""fltPlanNavEditReadout"" data-nav-edit-toggle=""1"" data-nav-edit-step=""' + escapeHtml(stepKey) + '"" data-nav-edit-field=""ALT"">' + formatAltCellHtml(wp) + '</span>' + navPopupEditor('', 'data-alt-step=""' + escapeHtml(stepKey) + '"" data-alt-dir=""-1"" data-alt-current=""' + escapeHtml(String(wp.altFeet)) + '"" title=""Lower altitude""', 'data-alt-step=""' + escapeHtml(stepKey) + '"" data-alt-dir=""1"" data-alt-current=""' + escapeHtml(String(wp.altFeet)) + '"" title=""Raise altitude""', String(wp.altFeet || '-')) + '</div></td>';
           }
           if (wp.isStart){
             html += '<td class=""fltPlanCellNum"">' + escapeHtml(wp.hdg || '-') + '</td>';
             html += '<td class=""fltPlanCellNum"">' + escapeHtml(wp.spd || '-') + '</td>';
           } else {
             html += '<td class=""fltPlanCellNum"">' + escapeHtml(wp.hdg || '-') + '</td>';
-            html += '<td class=""fltPlanCellNum""><div class=""fltPlanAdjustCell""><button type=""button"" class=""fltPlanMiniBtn"" data-spd-step=""' + escapeHtml(stepKey) + '"" data-spd-dir=""-1"" data-spd-alt=""' + escapeHtml(String(wp.altFeet)) + '"" title=""' + escapeHtml(speedStepTitle) + '"">◀</button><span class=""fltPlanSpdValue' + (speedRec ? ' fltPlanRecSpeed' : '') + '"" data-speed-mode-step=""' + escapeHtml(stepKey) + '"" data-speed-alt=""' + escapeHtml(String(wp.altFeet)) + '""' + (speedRec ? ' data-speed-rec-step=""' + escapeHtml(stepKey) + '""' : '') + ' title=""' + escapeHtml(speedRec ? 'Recommended speed: click to accept' : speedClickTitle) + '"">' + escapeHtml(speedDisplay) + '</span><button type=""button"" class=""fltPlanMiniBtn"" data-spd-step=""' + escapeHtml(stepKey) + '"" data-spd-dir=""1"" data-spd-alt=""' + escapeHtml(String(wp.altFeet)) + '"" title=""' + escapeHtml(speedStepTitle) + '"">▶</button></div></td>';
+            html += '<td class=""fltPlanCellNum fltPlanNavEditCell' + navPopupClass(stepKey, 'SPD') + '""><div class=""fltPlanNavEditHost' + navPopupClass(stepKey, 'SPD') + '"" data-nav-edit-host=""1"" data-nav-edit-step=""' + escapeHtml(stepKey) + '"" data-nav-edit-field=""SPD""><span class=""fltPlanNavEditReadout fltPlanSpdValue' + (speedRec ? ' fltPlanRecSpeed' : '') + '"" data-nav-edit-toggle=""1"" data-nav-edit-step=""' + escapeHtml(stepKey) + '"" data-nav-edit-field=""SPD"" data-speed-mode-step=""' + escapeHtml(stepKey) + '"" data-speed-alt=""' + escapeHtml(String(wp.altFeet)) + '""' + (speedRec ? ' data-speed-rec-step=""' + escapeHtml(stepKey) + '""' : '') + ' title=""' + escapeHtml(speedRec ? 'Recommended speed: click to accept' : speedClickTitle) + '"">' + escapeHtml(speedDisplay) + '</span>' + navPopupEditor('', 'data-spd-step=""' + escapeHtml(stepKey) + '"" data-spd-dir=""-1"" data-spd-alt=""' + escapeHtml(String(wp.altFeet)) + '"" title=""' + escapeHtml(speedStepTitle) + '""', 'data-spd-step=""' + escapeHtml(stepKey) + '"" data-spd-dir=""1"" data-spd-alt=""' + escapeHtml(String(wp.altFeet)) + '"" title=""' + escapeHtml(speedStepTitle) + '""', speedDisplay) + '</div></td>';
           }
           html += '<td class=""fltPlanCellNum"">' + escapeHtml(wp.dist || '-') + '</td>';
           if (wp.isStart){
@@ -12077,13 +12642,17 @@ namespace VAICOM
       }
 
       html += '</tbody></table></div></div>';
+      const freqWrapClass = 'fltPlanInfoFreqWrap' + getBottomPanelClassSuffix(selected, 'FREQ');
+      const cmdsWrapClass = 'fltPlanInfoCmdsWrap' + getBottomPanelClassSuffix(selected, 'CMDS');
+      const assetsWrapClass = 'fltPlanInfoAssetsWrap' + getBottomPanelClassSuffix(selected, 'ASSETS');
+      const wxWrapClass = 'fltPlanInfoWxWrap' + getBottomPanelClassSuffix(selected, 'WX');
       html += '<div class=""fltPlanBottomGrid"">';
-      html += '<div class=""fltPlanInfoFreqWrap"">' + formatFrequenciesBlockHtml(data) + '</div>';
+      html += '<div class=""' + freqWrapClass + '""><div class=""' + getBottomPanelShellClass(selected, 'FREQ') + '"">' + formatFrequenciesBlockHtml(data, selected) + '</div></div>';
       if (cmdsBlockHtml){
-        html += '<div class=""fltPlanInfoCmdsWrap"">' + cmdsBlockHtml + '</div>';
+        html += '<div class=""' + cmdsWrapClass + '""><div class=""' + getBottomPanelShellClass(selected, 'CMDS') + '"">' + cmdsBlockHtml + '</div></div>';
       }
-      html += '<div class=""fltPlanInfoAssetsWrap"">' + formatAssetsBlockHtml(data) + '</div>';
-      html += '<div class=""fltPlanInfoWxWrap"">' + formatMetarBlockHtml(data) + '</div>';
+      html += '<div class=""' + assetsWrapClass + '""><div class=""' + getBottomPanelShellClass(selected, 'ASSETS') + '"">' + formatAssetsBlockHtml(data, selected) + '</div></div>';
+      html += '<div class=""' + wxWrapClass + '""><div class=""' + getBottomPanelShellClass(selected, 'WX') + '"">' + formatMetarBlockHtml(data, selected) + '</div></div>';
       html += '</div>';
       html += '</div>';
       return html;
@@ -12132,7 +12701,7 @@ namespace VAICOM
         return html;
       }
 
-      return renderFlightPlanBoardHtml(selected, data, primaryRouteName, 'ROUTE TOOL', getPathFileName(getFltPlnPath(selected)), waypoints, formatRuntimeCmdsInfoBlockHtml(data), pageSwitcherHtml);
+      return renderFlightPlanBoardHtml(selected, data, primaryRouteName, 'ROUTE TOOL', getPathFileName(getFltPlnPath(selected)), waypoints, formatRuntimeCmdsInfoBlockHtml(data, selected), pageSwitcherHtml);
     }
 
     function parseMissionRuntimeWaypointSample(line){
@@ -12277,7 +12846,7 @@ namespace VAICOM
       if (page === 4){
         return formatDtcPage3Html(pageSwitcherHtml, rows, data, selected);
       }
-      return renderFlightPlanBoardHtml(selected, data, routeName, 'MISSION RUNTIME', '-', rows, formatRuntimeCmdsInfoBlockHtml(data), pageSwitcherHtml);
+      return renderFlightPlanBoardHtml(selected, data, routeName, 'MISSION RUNTIME', '-', rows, formatRuntimeCmdsInfoBlockHtml(data, selected), pageSwitcherHtml);
     }
 
     function formatDtcTableHtml(root, selected, data){
@@ -12297,7 +12866,7 @@ namespace VAICOM
           waypoints = applyTypeOverrides(runtimeWaypoints.slice(), '__RUNTIME_PLAYER__');
         }
       }
-      const cmdsBlockHtml = formatDtcCmdsBlockHtml(root);
+      const cmdsBlockHtml = formatDtcCmdsBlockHtml(root, selected);
       const page = getDtcPageBySelection(selected);
       const routeButtons = availableRoutes.map(function(r){
         return '<button type=""button"" class=""fltPlanPageBtn' + (routeKey === r ? ' active' : '') + '"" data-dtc-route=""' + r + '"">' + r + '</button>';
@@ -13376,6 +13945,50 @@ namespace VAICOM
       if (selectedTab === 'DTC' && latestData){
         let node = ev.target;
         while (node && node !== this){
+          if (node.getAttribute && node.getAttribute('data-nav-edit-toggle')){
+            const selected = getActiveFlightPlanSelection(latestData);
+            const step = String(node.getAttribute('data-nav-edit-step') || '');
+            const field = String(node.getAttribute('data-nav-edit-field') || '').toUpperCase();
+            if (selected && step && field){
+              const current = getExpandedNavEdit(selected);
+              if (current.step === step && current.field === field){
+                closeExpandedNavEditAnimated(selected);
+              } else {
+                closeExpandedNavEditAnimated(selected);
+                setExpandedNavEdit(selected, step, field);
+              }
+              setExpandedTimeAnchor(selected, '');
+              render(latestData);
+            }
+            return;
+          }
+          if (node.getAttribute && node.getAttribute('data-time-adjust-anchor')){
+            const selected = getActiveFlightPlanSelection(latestData);
+            const anchor = String(node.getAttribute('data-time-adjust-anchor') || '').toUpperCase();
+            const seconds = Number(node.getAttribute('data-time-adjust-sec') || 0);
+            if (selected && anchor && isFinite(seconds) && seconds !== 0){
+              setTimingAnchorBySecondsDelta(selected, anchor, seconds);
+              render(latestData);
+            }
+            return;
+          }
+          if (node.getAttribute && node.getAttribute('data-time-anchor')){
+            const selected = getActiveFlightPlanSelection(latestData);
+            const anchor = String(node.getAttribute('data-time-anchor') || '').toUpperCase();
+            if (selected && anchor){
+              const expanded = getExpandedTimeAnchor(selected);
+              if (expanded === anchor){
+                setExpandedTimeAnchor(selected, '');
+              } else {
+                if (anchor !== 'TOT'){
+                  setTakeoffTimeByAnchorFromNow(selected, anchor);
+                }
+                setExpandedTimeAnchor(selected, anchor);
+              }
+              render(latestData);
+            }
+            return;
+          }
           if (node.getAttribute && node.getAttribute('data-spd-step')){
             const selected = getActiveFlightPlanSelection(latestData);
             const step = String(node.getAttribute('data-spd-step') || '');
@@ -13536,6 +14149,21 @@ namespace VAICOM
             }
             return;
           }
+          if (node.getAttribute && node.getAttribute('data-bottom-panel-toggle')){
+            const selected = getActiveFlightPlanSelection(latestData);
+            const panel = String(node.getAttribute('data-bottom-panel-toggle') || '').toUpperCase();
+            if (selected && panel){
+              const expandedPanel = getExpandedBottomPanel(selected);
+              if (expandedPanel === panel){
+                closeExpandedBottomPanelAnimated(selected);
+              } else {
+                closeExpandedBottomPanelAnimated(selected);
+                setExpandedBottomPanel(selected, panel);
+              }
+              render(latestData);
+            }
+            return;
+          }
           if (node.getAttribute && node.getAttribute('data-eta-step')){
             const selected = getActiveFlightPlanSelection(latestData);
             const step = String(node.getAttribute('data-eta-step') || '');
@@ -13601,6 +14229,12 @@ namespace VAICOM
             }
             const current = getMapSelectedAssetKeyBySelection(selected);
             setMapSelectedAssetKeyBySelection(selected, current === assetKey ? '' : assetKey);
+            if (category === 'ATC'){
+              const nextKey = current === assetKey ? '' : assetKey;
+              if (nextKey){
+                tryPreloadEfbForBuggedAirfield(latestData, nextKey).catch(function(){});
+              }
+            }
             render(latestData);
             return;
           }
@@ -13646,6 +14280,50 @@ namespace VAICOM
             return;
           }
           node = node.parentNode;
+        }
+
+        const activeSelection = getActiveFlightPlanSelection(latestData);
+        if (activeSelection){
+          const expanded = getExpandedTimeAnchor(activeSelection);
+          const expandedNav = getExpandedNavEdit(activeSelection);
+          if (expanded){
+            const target = ev && ev.target;
+            const insideTimeCell = target && target.closest && target.closest('.fltPlanTimeCell');
+            if (!insideTimeCell){
+              setExpandedTimeAnchor(activeSelection, '');
+              if (expandedNav.step){
+                closeExpandedNavEditAnimated(activeSelection);
+              }
+              render(latestData);
+              return;
+            }
+          }
+
+          if (expandedNav.step){
+            const target = ev && ev.target;
+            const insideNavPopup = target && target.closest && target.closest('.fltPlanNavEditHost');
+            if (!insideNavPopup){
+              if (!closeExpandedNavEditAnimated(activeSelection)){
+                setExpandedNavEdit(activeSelection, '', '');
+              }
+              if (expanded){
+                setExpandedTimeAnchor(activeSelection, '');
+              }
+              render(latestData);
+              return;
+            }
+          }
+
+          const expandedBottomPanel = getExpandedBottomPanel(activeSelection);
+          if (expandedBottomPanel){
+            const target = ev && ev.target;
+            const insideBottomPanel = target && target.closest && target.closest('.fltPlanBottomGrid');
+            if (!insideBottomPanel){
+              closeExpandedBottomPanelAnimated(activeSelection);
+              render(latestData);
+              return;
+            }
+          }
         }
       }
 
@@ -13732,6 +14410,12 @@ namespace VAICOM
             }
             const current = getMapSelectedAssetKeyBySelection(selected);
             setMapSelectedAssetKeyBySelection(selected, current === assetKey ? '' : assetKey);
+            if (category === 'ATC'){
+              const nextKey = current === assetKey ? '' : assetKey;
+              if (nextKey){
+                tryPreloadEfbForBuggedAirfield(latestData, nextKey).catch(function(){});
+              }
+            }
             render(latestData);
             ev.preventDefault();
             return;
@@ -13971,6 +14655,7 @@ namespace VAICOM
 
     applyDtcListCollapsedState(readInitialDtcListCollapsed());
     applySessionCollapsedState(readInitialSessionCollapsed());
+    efbPinnedChartsByAirport = readPinnedChartsPreference();
     nightModeEnabled = readNightModePreference();
     applyNightModeUi();
     dlinkOnEnabled = readDlinkOnPreference();
