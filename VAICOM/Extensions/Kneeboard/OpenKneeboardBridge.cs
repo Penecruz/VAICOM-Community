@@ -29,6 +29,7 @@ namespace VAICOM
                 private static string lastAiCrewCommand = "";
                 private static bool captureRawServerMessages;
                 private static readonly string[] DtcFileExtensions = new[] { ".dtc", ".json" };
+                private static readonly string[] EfbChartFileExtensions = new[] { ".svg", ".png", ".jpg", ".jpeg", ".gif", ".bmp", ".webp" };
                 private const string RouteSelectionPrefix = "RTE::";
                 private const string StoreLookupJsonPlaceholder = "__VAICOM_STORE_LOOKUP_JSON__";
                 private static string storeLookupResolvedPath = "";
@@ -50,6 +51,7 @@ namespace VAICOM
       -ms-user-select: none !important;
       user-select: none !important;
     }
+
     .sheet {
       width: 100%;
       height: 100%;
@@ -126,7 +128,7 @@ namespace VAICOM
       text-transform: uppercase;
       letter-spacing: 0.5px;
     }
-    #tabTitle, #keywordTitle { font-size: 23px; }
+    #tabTitle, #keywordTitle { font-size: 23px; } /* sidebar tabs */
     .panel .content { padding: 10px; white-space: pre-wrap; word-break: break-word; overflow: auto; }
     .panel h4.clickable { cursor: pointer; user-select: none; }
     .session { margin-bottom: 8px; }
@@ -138,6 +140,17 @@ namespace VAICOM
       height: 100%;
       display: flex;
       min-height: 0;
+    }
+    @keyframes tabHoverWobble {
+      0% { transform: rotate(180deg) translateY(-1px); }
+      30% { transform: rotate(180deg) translateY(-2px) rotate(-2deg); }
+      60% { transform: rotate(180deg) translateY(-2px) rotate(2deg); }
+      100% { transform: rotate(180deg) translateY(-1px); }
+    }
+    @keyframes tabActiveGlowPulse {
+      0% { box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.22), 0 0 0 2px rgba(242, 215, 106, 0.62), 0 0 9px rgba(242, 215, 106, 0.36); filter: saturate(1.18) brightness(1.09); }
+      50% { box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.28), 0 0 0 2px rgba(242, 215, 106, 0.9), 0 0 16px rgba(242, 215, 106, 0.58); filter: saturate(1.3) brightness(1.17); }
+      100% { box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.22), 0 0 0 2px rgba(242, 215, 106, 0.62), 0 0 9px rgba(242, 215, 106, 0.36); filter: saturate(1.18) brightness(1.09); }
     }
     .tabs { display: flex; flex-direction: column; gap: 4px; height: 100%; width: 100%; }
     .tab {
@@ -157,6 +170,15 @@ namespace VAICOM
       display: flex;
       align-items: center;
       justify-content: center;
+      opacity: 0.75;
+      transition: transform 120ms ease, filter 120ms ease, box-shadow 140ms ease, border-color 140ms ease, opacity 140ms ease;
+    }
+    .tab:hover {
+      animation: tabHoverWobble 220ms ease;
+      opacity: 0.8;
+      border-color: #79aef0;
+      box-shadow: 0 0 0 2px rgba(121, 174, 240, 0.35), 0 8px 16px rgba(32, 86, 153, 0.35);
+      filter: brightness(1.1);
     }
     .tab.active {
       color: #ffffff;
@@ -166,7 +188,9 @@ namespace VAICOM
       filter: saturate(1.22) brightness(1.12);
       font-weight: 800;
       transform: rotate(180deg) scale(1.06);
+      opacity: 0.95;
       z-index: 2;
+      animation: tabActiveGlowPulse 1800ms ease-in-out infinite;
     }
 
     .tab-LOG { background: rgba(126, 85, 56, 0.82); }
@@ -177,6 +201,7 @@ namespace VAICOM
     .tab-FLIGHT { background: rgba(132, 70, 66, 0.82); }
     .tab-AOCS { background: rgba(112, 62, 143, 0.82); }
     .tab-DTC { background: rgba(66, 93, 124, 0.82); }
+    .tab-EFB { background: rgba(46, 101, 120, 0.86); }
     .tab-REF_CREW { background: rgba(130, 129, 71, 0.82); }
     .tab-NOTES { background: rgba(73, 80, 146, 0.82); }
     .tab-AI_CREW { background: rgba(131, 87, 44, 0.82); }
@@ -189,6 +214,7 @@ namespace VAICOM
     .tab.active.tab-FLIGHT,
     .tab.active.tab-AOCS,
     .tab.active.tab-DTC,
+    .tab.active.tab-EFB,
     .tab.active.tab-REF_CREW,
     .tab.active.tab-NOTES,
     .tab.active.tab-AI_CREW {
@@ -220,6 +246,217 @@ namespace VAICOM
     body.notes-tab .tabPanel { flex: 0 0 55%; }
     body.notes-tab .keywordsPanel { flex: 1 1 auto; min-height: 110px; }
     body.notes-tab .keywordsContent { max-height: 140px; }
+    body.efb-tab .tabPanel { flex: 1 1 auto !important; }
+    body.efb-tab .tabKeywordDivider { display: none !important; }
+    body.efb-tab .keywordsPanel { display: none !important; }
+    .efbShell { position: relative; height: 100%; min-height: 280px; }
+    .efbLeftRail {
+      position: absolute;
+      left: 8px;
+      top: 8px;
+      z-index: 34;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .efbRightRail {
+      position: absolute;
+      right: 8px;
+      top: 8px;
+      z-index: 34;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .efbRightActionDrawer {
+      position: absolute;
+      right: 80px;
+      top: 8px;
+      width: 76px;
+      padding: 6px;
+      border: 1px solid #6e7a87;
+      border-radius: 10px;
+      background: rgba(245, 250, 255, 0.95);
+      box-shadow: 0 8px 18px rgba(0,0,0,0.3);
+      z-index: 33;
+      transform: translateX(0);
+      opacity: 1;
+      transition: transform 260ms ease, opacity 220ms ease;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .efbRightActionDrawer.closed {
+      transform: translateX(110%);
+      opacity: 0;
+      pointer-events: none;
+    }
+    .efbRightDrawerBtn {
+      width: 60px; /* size bump: +50% for easier rotation/fit button targeting */
+      height: 60px; /* size bump: +50% for easier rotation/fit button targeting */
+      border: 1px solid #7c8692;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.9);
+      color: #1a2a3a;
+      font-size: 28px; /* size bump: keep glyph legible at larger button size */
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+      opacity: 0.5;
+      transition: transform 120ms ease, filter 120ms ease, box-shadow 140ms ease, border-color 140ms ease;
+    }
+    .efbRightDrawerBtn:hover {
+      animation: iconHoverWobble 220ms ease;
+      filter: brightness(1.1);
+      opacity: 0.8;
+      border-color: #79aef0;
+      box-shadow: 0 0 0 2px rgba(121, 174, 240, 0.35), 0 8px 16px rgba(32, 86, 153, 0.35);
+    }
+    .efbRightDrawerBtn:active {
+      transform: translateY(0);
+      filter: brightness(1.05);
+      opacity: 0.95;
+      border-color: #8bc4ff;
+      box-shadow: 0 0 0 3px rgba(134, 196, 255, 0.52), 0 0 18px rgba(80, 170, 255, 0.45);
+    }
+    .efbRailBtn {
+      width: 66px; /* size bump: +50% rail button sizing */
+      height: 66px; /* size bump: +50% rail button sizing */
+      border: 1px solid #7c8692;
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.9);
+      color: #1a2a3a;
+      font-size: 31px; /* size bump: icon text scaled with button */
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+      opacity: 0.5;
+      transition: transform 120ms ease, filter 120ms ease, box-shadow 140ms ease, border-color 140ms ease;
+    }
+    .efbRailBtn:hover {
+      animation: iconHoverWobble 220ms ease;
+      filter: brightness(1.1);
+      opacity: 0.8;
+      border-color: #79aef0;
+      box-shadow: 0 0 0 2px rgba(121, 174, 240, 0.35), 0 8px 16px rgba(32, 86, 153, 0.35);
+    }
+    .efbRailBtn:active {
+      transform: translateY(0);
+      filter: brightness(1.05);
+      opacity: 0.95;
+      border-color: #8bc4ff;
+      box-shadow: 0 0 0 3px rgba(134, 196, 255, 0.52), 0 0 18px rgba(80, 170, 255, 0.45);
+    }
+    .efbRailIconSvg {
+      width: 36px;
+      height: 36px;
+      display: block;
+      color: currentColor;
+      pointer-events: none;
+    }
+    .efbRailSpacer { width: 66px; height: 66px; pointer-events: none; }
+    .efbSelectorDrawer {
+      position: absolute;
+      left: 80px;
+      top: 8px;
+      bottom: 8px;
+      width: 340px;
+      max-width: calc(100% - 84px);
+      border: 1px solid #6e7a87;
+      border-radius: 10px;
+      background: rgba(245, 250, 255, 0.95);
+      box-shadow: 0 8px 18px rgba(0,0,0,0.3);
+      z-index: 33;
+      transform: translateX(0);
+      opacity: 1;
+      transition: transform 260ms ease, opacity 220ms ease;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .efbSelectorDrawer.closed {
+      transform: translateX(-110%);
+      opacity: 0;
+      pointer-events: none;
+    }
+    .efbDrawerHeader {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      border-bottom: 1px solid #c7d5e4;
+      background: rgba(232, 241, 251, 0.92);
+      padding: 8px;
+      font-size: 24px; /*draw header size*/
+      font-weight: 700;
+      color: #1e3248;
+    }
+    .efbDrawerCloseBtn {
+      width: 34px;
+      height: 30px;
+      border: 1px solid #7b8996;
+      border-radius: 8px;
+      background: #ffffff;
+      color: #1b2d41;
+      font-size: 18px;
+      cursor: pointer;
+    }
+    .efbDrawerList { overflow-y: auto; flex: 1 1 auto; }
+    .efbPickerRow { display: flex; align-items: center; border-bottom: 1px solid #e8edf2; background: #ffffff; }
+    .efbPickerRow.active { background: #dcecff; }
+    .efbPickerItemMain {
+      flex: 1 1 auto;
+      text-align: left;
+      border: 0;
+      background: transparent;
+      color: #111;
+      font-family: inherit;
+      font-size: 22px; /*draw airports and charts size*/
+      padding: 6px 8px;
+      cursor: pointer;
+    }
+    .efbPinBtn {
+      width: 34px;
+      height: 30px;
+      margin-right: 6px;
+      border: 1px solid #97a7b7;
+      border-radius: 8px;
+      background: rgba(255,255,255,0.9);
+      color: #4a5d71;
+      cursor: pointer;
+      font-size: 16px;
+      opacity: 0.5;
+      transition: transform 120ms ease, filter 120ms ease, box-shadow 140ms ease, border-color 140ms ease;
+    }
+    .efbPinBtn.pinned { color: #184f88; border-color: #79aef0; background: #e7f2ff; }
+    .efbPinBtn:hover {
+      animation: iconHoverWobble 220ms ease;
+      filter: brightness(1.1);
+      opacity: 0.8;
+      border-color: #79aef0;
+      box-shadow: 0 0 0 2px rgba(121, 174, 240, 0.35), 0 8px 16px rgba(32, 86, 153, 0.35);
+    }
+    .efbPinBtn:active {
+      transform: translateY(0);
+      filter: brightness(1.05);
+      opacity: 0.95;
+      border-color: #8bc4ff;
+      box-shadow: 0 0 0 3px rgba(134, 196, 255, 0.52), 0 0 18px rgba(80, 170, 255, 0.45);
+    }
+    .efbPickerItem { display: block; width: 100%; text-align: left; border: 0; border-bottom: 1px solid #e8edf2; background: #ffffff; color: #111; font-family: inherit; font-size: 22px; padding: 6px 8px; cursor: pointer; }
+    .efbPickerItem:hover { background: #e9f2fb; }
+    .efbPickerItem.active { background: #dcecff; font-weight: 700; }
+    .efbPickerEmpty { display: block; padding: 8px 10px; color: #5a6978; font-size: 15px; }
+    .efbViewport { position: relative; height: 100%; min-height: 260px; overflow: hidden; border: 1px solid #516070; background: #fafafa; cursor: grab; }
+    .efbViewport:active { cursor: grabbing; }
+    .efbChartImage { display: block; max-width: none; width: 100%; height: auto; transform-origin: center center; transition: filter 160ms ease; }
+    .efbEmpty { font-size: 18px; color: #4d5f71; padding: 14px; }
     .mainContent { font-size: var(--contentFontSize); line-height: 1.32; }
     .mainContent.fltPlanContent,
     .mainContent.fltPlanContent * {
@@ -300,6 +537,44 @@ namespace VAICOM
           return v;
         }
       }
+
+    function resolveBuggedAirfieldIcaoFromAssetKey(data, assetKey){
+      const key = String(assetKey || '').trim();
+      if (!key) return '';
+
+      const airfields = buildMapAirfields(data);
+      if (!Array.isArray(airfields) || !airfields.length){
+        return extractIcaoToken(key) || '';
+      }
+
+      for (let i = 0; i < airfields.length; i++){
+        const p = airfields[i] || {};
+        const selectionAsset = {
+          callsign: String((p && p.callsign) || '').trim(),
+          name: String((p && p.name) || (p && p.label) || '').trim(),
+          category: 'ATC',
+          xNum: Number(p && p.xNum),
+          yNum: Number(p && p.yNum),
+        };
+        if (makeMapAssetSelectionKey(selectionAsset) !== key) continue;
+        return String((p && p.icao) || (p && p.label) || '').toUpperCase().trim();
+      }
+
+      return extractIcaoToken(key) || '';
+    }
+
+    async function tryPreloadEfbForBuggedAirfield(data, assetKey){
+      const icao = resolveBuggedAirfieldIcaoFromAssetKey(data, assetKey);
+      if (!icao) return;
+
+      await ensureEfbAirportsLoaded();
+      const airports = Array.isArray(efbAvailableAirports) ? efbAvailableAirports : [];
+      if (airports.length && airports.indexOf(icao) < 0) return;
+
+      efbManuallySelectedAirport = icao;
+      efbLastResolvedAirport = icao;
+      await ensureEfbChartsLoaded(data);
+    }
 
       for (let i = 0; i < keys.length; i++){
         const found = findFirstObjectByKeyPattern(value[keys[i]], pattern, depth + 1);
@@ -1826,6 +2101,261 @@ namespace VAICOM
       opacity: 0.6;
       cursor: default;
     }
+    .bottomQuickBar {
+      position: fixed;
+      left: 12px;
+      bottom: 18px;
+      z-index: 72;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .overlayToggleBtn {
+      width: 75px; /* floating quick icon sizing */
+      height: 75px; /* floating quick icon sizing */
+      border: 1px solid #7c8692;
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.9);
+      color: #1a2a3a;
+      font-size: 36px; /* icon glyph scaled with button */
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+      opacity: 0.5;
+      transition: transform 120ms ease, filter 120ms ease, box-shadow 140ms ease, border-color 140ms ease;
+    }
+    @keyframes iconHoverWobble {
+      0% { transform: translateY(-1px) rotate(0deg); }
+      30% { transform: translateY(-2px) rotate(-2.2deg); }
+      60% { transform: translateY(-2px) rotate(2.2deg); }
+      100% { transform: translateY(-1px) rotate(0deg); }
+    }
+    .overlayToggleBtn:hover {
+      animation: iconHoverWobble 220ms ease;
+      filter: brightness(1.1);
+      opacity: 0.8;
+      border-color: #79aef0;
+      box-shadow: 0 0 0 2px rgba(121, 174, 240, 0.35), 0 8px 16px rgba(32, 86, 153, 0.35);
+    }
+    .overlayToggleBtn:active {
+      transform: translateY(0);
+      filter: brightness(1.05);
+      opacity: 0.95;
+      border-color: #8bc4ff;
+      box-shadow: 0 0 0 3px rgba(134, 196, 255, 0.52), 0 0 18px rgba(80, 170, 255, 0.45);
+    }
+    .drawOverlayToggleBtn { font-size: 34px; }
+    .helpOverlayToggleBtn { font-size: 38px; font-weight: 800; }
+    .fltPlanQuickBar {
+      position: fixed;
+      right: 112px;
+      top: 100px; /* standard top-line control vertical position */
+      z-index: 72;
+      display: flex;
+      gap: 10px;
+    }
+    .fltPlanQuickBtn {
+      width: 75px; /*  FLT PLN quick icon sizing */
+      height: 75px; /*  +50% FLT PLN quick icon sizing */
+      border: 1px solid #7c8692;
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.9);
+      color: #1a2a3a;
+      font-size: 34px; /* icon glyph scaled with button */
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+      opacity: 0.5;
+      transition: transform 120ms ease, filter 120ms ease, box-shadow 140ms ease, border-color 140ms ease;
+    }
+    .fltPlanQuickBtn:hover {
+      animation: iconHoverWobble 220ms ease;
+      filter: brightness(1.1);
+      opacity: 0.8;
+      border-color: #79aef0;
+      box-shadow: 0 0 0 2px rgba(121, 174, 240, 0.35), 0 8px 16px rgba(32, 86, 153, 0.35);
+    }
+    .fltPlanQuickBtn:active {
+      transform: translateY(0);
+      filter: brightness(1.05);
+      opacity: 0.95;
+      border-color: #8bc4ff;
+      box-shadow: 0 0 0 3px rgba(134, 196, 255, 0.52), 0 0 18px rgba(80, 170, 255, 0.45);
+    }
+    .overlayPanel.fltPlanOverlayPanel { width: 720px; max-width: calc(100vw - 32px); }
+    .overlayPanel.fltPlanOverlayPanel .overlayTitleRow { font-size: 28px; margin-bottom: 12px; }
+    .overlayPanel.fltPlanOverlayPanel .overlayCloseBtn { min-width: 46px; height: 38px; font-size: 22px; }
+    .overlayPanel.fltPlanOverlayPanel .overlayHint { font-size: 16px; line-height: 1.3; }
+    .fltPlanOverlayList {
+      max-height: 560px;
+      overflow-y: auto;
+      border: 1px solid rgba(98, 117, 138, 0.5);
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.55);
+      padding: 8px;
+    }
+    .fltPlanOverlayList .dtcFileItem {
+      font-size: 20px;
+      padding: 6px 9px;
+      min-height: 34px;
+    }
+    .fltPlanOverlayList .dtcFileMeta {
+      font-size: 16px;
+    }
+    .legacyControls { display: none !important; }
+    .overlayBackdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(24, 34, 48, 0.28);
+      backdrop-filter: blur(1px);
+      z-index: 80;
+      display: flex;
+      align-items: flex-end;
+      justify-content: flex-end;
+      padding: 16px;
+      box-sizing: border-box;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 360ms ease;
+    }
+    .overlayBackdropTop {
+      align-items: flex-start;
+      justify-content: flex-end;
+      padding-top: 76px;
+      padding-left: 12px;
+      padding-right: 112px;
+      padding-bottom: 12px;
+    }
+    .overlayPanel {
+      width: 360px;
+      max-width: calc(100vw - 24px);
+      border: 1px solid #62758a;
+      border-radius: 14px;
+      background: rgba(239, 245, 252, 0.92);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+      padding: 12px;
+      box-sizing: border-box;
+      color: #102336;
+      opacity: 0;
+      transform: translateY(18px) scale(0.94);
+      transform-origin: top right;
+      transition: transform 420ms ease, opacity 360ms ease;
+    }
+    .overlayBackdrop.overlayBackdropTop .overlayPanel { transform: translateY(-18px) scale(0.94); }
+    .overlayBackdrop.helpOverlayBackdrop .overlayPanel { transform: translate(16px, -10px) scale(0.97); }
+    .overlayBackdrop.overlayOpen { opacity: 1; pointer-events: auto; }
+    .overlayBackdrop.overlayOpen .overlayPanel { opacity: 1; transform: translate(0, 0) scale(1); }
+    .overlayTitleRow {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+      font-size: 20px;
+      font-weight: 700;
+    }
+    .overlayCloseBtn {
+      min-width: 40px;
+      height: 34px;
+      border: 1px solid #7c8692;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.9);
+      color: #1b2d41;
+      font-size: 18px;
+      cursor: pointer;
+    }
+    .overlayOption {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 8px 0;
+      font-size: 20px;
+      font-weight: 600;
+      padding: 8px 10px;
+      border: 1px solid rgba(116, 133, 151, 0.45);
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.65);
+    }
+    .overlayOption input[type='checkbox'] {
+      width: 24px;
+      height: 24px;
+    }
+    .overlayHint {
+      margin-top: 10px;
+      font-size: 13px;
+      color: #30465d;
+    }
+    .helpOverlayBackdrop {
+      align-items: stretch;
+      justify-content: stretch;
+      padding: 84px 128px 92px 20px;
+      background: transparent;
+      backdrop-filter: none;
+      pointer-events: none;
+      z-index: 70;
+    }
+    .overlayPanel.helpOverlayPanel {
+      width: calc(100vw - 148px);
+      max-width: none;
+      height: calc(100vh - 188px);
+      margin: 0;
+      border-radius: 12px;
+      pointer-events: auto;
+      display: flex;
+      flex-direction: column;
+      padding: 10px;
+    }
+    .helpOverlayContent {
+      flex: 1 1 auto;
+      min-height: 0;
+      overflow-y: auto;
+      border: 1px solid rgba(116, 133, 151, 0.45);
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.7);
+      padding: 12px;
+      box-sizing: border-box;
+      font-size: 17px;
+      line-height: 1.35;
+      white-space: normal;
+      color: #1a2d42;
+    }
+    .helpOverlayContent h3 {
+      margin: 0 0 10px 0;
+      font-size: 20px;
+    }
+    .helpOverlayContent p { margin: 0 0 10px 0; }
+    .helpOverlayContent ul {
+      margin: 0 0 12px 18px;
+      padding: 0;
+    }
+    .helpOverlayContent li { margin: 4px 0; }
+    .helpOverlayContent a {
+      color: #1a4b84;
+      text-decoration: underline;
+      font-weight: 600;
+    }
+    .overlayOption.sliderOption {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      align-items: center;
+      gap: 10px;
+    }
+    .overlayOption.sliderOption input[type='range'] {
+      width: 100%;
+      min-width: 160px;
+      height: 26px;
+    }
+    .overlayOption.sliderOption .sliderValue {
+      min-width: 36px;
+      text-align: right;
+      font-weight: 700;
+    }
+    .hiddenFloatingBtn { display: none !important; }
     .drawTimer {
       min-width: 62px;
       font-size: 17px;
@@ -1856,11 +2386,46 @@ namespace VAICOM
     .fltPlanHeaderCellLabel { font-size: 13px; color: #2f3d4a; margin-bottom: 2px; }
     .fltPlanHeaderCellValue { font-size: 17px; font-weight: 700; color: #111; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .fltPlanTimeGrid { display: grid; grid-template-columns: repeat(4, minmax(120px, 1fr)); gap: 6px; margin-bottom: 8px; }
-    .fltPlanTimeCell { border: 1px solid #8b96a1; background: #edf2f6; padding: 3px 5px; }
+    .fltPlanTimeCell {
+      border: 1px solid #8b96a1;
+      background: #edf2f6;
+      padding: 3px 5px;
+      position: relative;
+      overflow: visible;
+      transition: background 260ms ease;
+    }
     .fltPlanTimeCellLabel { font-size: 12px; color: #2f3d4a; }
     .fltPlanTimeCellValue { font-size: 16px; font-weight: 700; color: #111; }
     .fltPlanTimeCell.clickable { cursor: pointer; }
     .fltPlanTimeCell.clickable:hover { background: #dce8f2; }
+    .fltPlanTimeCell.expanded { z-index: 4; }
+    .fltPlanTimeCellEditor {
+      position: absolute;
+      left: var(--editor-left, 50%);
+      top: -8px;
+      min-width: 260px;
+      border: 1px solid #62758a;
+      border-radius: 14px;
+      background: rgba(239, 245, 252, 0.96);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+      padding: 8px 10px;
+      box-sizing: border-box;
+      opacity: 0;
+      pointer-events: none;
+      transform: translate(var(--editor-shift-x, -50%), -6px) scale(0.94);
+      transform-origin: top center;
+      transition: transform 520ms ease, opacity 460ms ease;
+    }
+    .fltPlanTimeCell.expanded .fltPlanTimeCellEditor {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translate(var(--editor-shift-x, -50%), 0) scale(1);
+    }
+    .fltPlanTimeCellEditor.edgeLeft { --editor-left: 0%; --editor-shift-x: 6%; }
+    .fltPlanTimeCellEditor.edgeRight { --editor-left: 100%; --editor-shift-x: -106%; }
+    .fltPlanTimeEditorRow { display: flex; align-items: center; justify-content: space-between; gap: 8px; white-space: nowrap; }
+    .fltPlanTimeEditorCenter { min-width: 92px; text-align: center; font-size: 30px; font-weight: 800; color: #102336; letter-spacing: 0.6px; }
+    .fltPlanTimeEditorBtns { display: inline-flex; align-items: center; gap: 6px; }
     .fltPlanPostFlightCell { grid-column: 2 / span 3; display: flex; align-items: center; justify-content: flex-end; }
     .fltPlanCrewWrap { border: 1px solid #8b96a1; background: #f8fafc; margin-bottom: 8px; }
     .fltPlanCrewTable { width: 100%; border-collapse: collapse; table-layout: fixed; }
@@ -1874,6 +2439,8 @@ namespace VAICOM
     .fltPlanWpTableWrap { flex: 1 1 auto; min-height: 0; overflow: auto; }
     .fltPlanWpTable th, .fltPlanWpTable td { border: 1px solid #a3adb6; padding: 3px 4px; font-size: 15px; line-height: 1.15; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: center; vertical-align: middle; }
     .fltPlanWpTable th { background: #e4e8ec; font-weight: 700; }
+    .fltPlanWpTable td.fltPlanNavEditCell { overflow: visible; position: relative; z-index: 1; }
+    .fltPlanWpTable td.fltPlanNavEditCell.expanded { z-index: 8; }
     .fltPlanWpRowSkipped { opacity: 0.45; background: #eef1f4; }
     .fltPlanWpRowDirectSource td { box-shadow: inset 0 0 0 1px rgba(31, 111, 67, 0.55); }
     .fltPlanWpRowDirectTarget td { box-shadow: inset 0 0 0 1px rgba(46, 110, 184, 0.55); }
@@ -1889,8 +2456,45 @@ namespace VAICOM
     .fltPlanAltTag { font-size: 11px; margin-left: 4px; color: #455869; }
     .fltPlanMiniBtn { font-family: inherit; font-size: 10px; line-height: 1; padding: 1px 3px; min-width: 16px; border: 1px solid #7c8692; background: #f4f7fa; color: #111; cursor: pointer; }
     .fltPlanMiniBtn:hover { background: #dce8f2; }
+    .fltPlanTimeCell .fltPlanAdjustCell { display: none; }
+    .fltPlanTimeCell.expanded .fltPlanMiniBtn {
+      font-size: 16px;
+      min-width: 30px;
+      padding: 4px 6px;
+      border-radius: 8px;
+    }
     .fltPlanSpdValue { display: inline-block; min-width: 30px; text-align: center; margin: 0 2px; }
     .fltPlanAdjustCell { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 2px; }
+    .fltPlanNavEditHost { position: relative; display: inline-block; width: 100%; }
+    .fltPlanWpTable td.fltPlanNavEditCell .fltPlanNavEditHost { overflow: visible; }
+    .fltPlanWpTable td.fltPlanNavEditCell .fltPlanNavEditHost.expanded { z-index: 9; }
+    .fltPlanNavEditReadout { display: inline-block; min-width: 42px; text-align: center; cursor: pointer; }
+    .fltPlanNavEditHost .fltPlanTimeCellEditor {
+      top: -10px;
+      min-width: 244px;
+      z-index: 5;
+      transition: transform 560ms ease, opacity 500ms ease;
+    }
+    .fltPlanNavEditHost.expanded .fltPlanMiniBtn {
+      font-size: 14px;
+      min-width: 28px;
+      padding: 3px 6px;
+      border-radius: 7px;
+    }
+    .fltPlanNavEditHost.expanded .fltPlanTimeEditorCenter {
+      font-size: 34px;
+      min-width: 100px;
+    }
+    .fltPlanNavEditHost.expanded .fltPlanTimeCellEditor {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translate(var(--editor-shift-x, -50%), 0) scale(1);
+    }
+    .fltPlanNavEditHost.closing .fltPlanTimeCellEditor {
+      opacity: 0;
+      pointer-events: none;
+      transform: translate(var(--editor-shift-x, -50%), -6px) scale(0.94);
+    }
     .fltPlanEtaWrap { display: inline-flex; align-items: center; justify-content: center; gap: 4px; }
     .fltPlanEtaWrap input { margin: 0; }
     .fltPlanEtaValue { cursor: pointer; }
@@ -1913,9 +2517,38 @@ namespace VAICOM
     .fltPlanInfoCmdsWrap { grid-area: cmds; }
     .fltPlanInfoAssetsWrap { grid-area: assets; }
     .fltPlanInfoWxWrap { grid-area: wx; }
+    .fltPlanInfoFreqWrap, .fltPlanInfoCmdsWrap, .fltPlanInfoAssetsWrap, .fltPlanInfoWxWrap { position: relative; overflow: visible; z-index: 1; }
+    .fltPlanInfoShell {
+      position: relative;
+      transform-origin: top center;
+      transition: transform 620ms ease, opacity 540ms ease, filter 320ms ease;
+      will-change: transform, opacity;
+    }
+    .fltPlanInfoFreqWrap .fltPlanInfoShell,
+    .fltPlanInfoAssetsWrap .fltPlanInfoShell { transform-origin: top left; }
+    .fltPlanInfoCmdsWrap .fltPlanInfoShell,
+    .fltPlanInfoWxWrap .fltPlanInfoShell { transform-origin: top right; }
+    .fltPlanInfoFreqWrap.expanded,
+    .fltPlanInfoCmdsWrap.expanded,
+    .fltPlanInfoAssetsWrap.expanded,
+    .fltPlanInfoWxWrap.expanded,
+    .fltPlanInfoFreqWrap.closing,
+    .fltPlanInfoCmdsWrap.closing,
+    .fltPlanInfoAssetsWrap.closing,
+    .fltPlanInfoWxWrap.closing { z-index: 12; }
+    .fltPlanInfoFreqWrap.expanded .fltPlanInfoShell { transform: translate(32px, -30px) scale(1.50); }
+    .fltPlanInfoCmdsWrap.expanded .fltPlanInfoShell { transform: translate(-30px, -30px) scale(1.50); }
+    .fltPlanInfoAssetsWrap.expanded .fltPlanInfoShell { transform: translate(24px, -80px) scale(1.50); }
+    .fltPlanInfoWxWrap.expanded .fltPlanInfoShell { transform: translate(-20px, -80px) scale(1.50); }
+    .fltPlanInfoFreqWrap.closing .fltPlanInfoShell,
+    .fltPlanInfoCmdsWrap.closing .fltPlanInfoShell,
+    .fltPlanInfoAssetsWrap.closing .fltPlanInfoShell,
+    .fltPlanInfoWxWrap.closing .fltPlanInfoShell { transform: translate(0, 0) scale(1); opacity: 0.96; }
     .fltPlanInfoBlock { border: 1px solid #8b96a1; background: #f7f9fb; min-height: 120px; display: flex; flex-direction: column; }
     .fltPlanInfoFreqWrap .fltPlanInfoBlock { min-height: 78px; }
     .fltPlanInfoTitle { border-bottom: 1px solid #8b96a1; background: #e4e8ec; font-size: 13px; font-weight: 700; padding: 3px 6px; }
+    .fltPlanInfoTitle[data-bottom-panel-toggle] { cursor: pointer; transition: border-color 180ms ease, box-shadow 220ms ease, filter 180ms ease; }
+    .fltPlanInfoTitle[data-bottom-panel-toggle]:hover { border-color: #79aef0; box-shadow: inset 0 0 0 1px rgba(121, 174, 240, 0.45), 0 0 0 1px rgba(121, 174, 240, 0.3); filter: brightness(1.03); }
     .fltPlanInfoBody { padding: 4px 6px; font-size: 13px; line-height: 1.3; overflow: auto; white-space: pre-wrap; }
     .fltPlanInfoTable { width: 100%; border-collapse: collapse; table-layout: fixed; }
     .fltPlanInfoTable th, .fltPlanInfoTable td { border: 1px solid #aeb7c0; font-size: 12px; padding: 2px 3px; text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -1925,7 +2558,8 @@ namespace VAICOM
     .fltPlanToolbar { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 4px 0 2px 0; }
     .fltPlanToolbarLeft { display: inline-flex; align-items: center; flex-wrap: wrap; }
     .fltPlanToolbarRight { margin-left: auto; display: inline-flex; align-items: center; }
-    .fltPlanPageBtn { font-size: 12px; border: 1px solid #8b96a1; background: #eceff3; padding: 2px 9px; cursor: pointer; min-height: 22px; }
+    .fltPlanPageBtn { font-size: 12px; border: 1px solid #8b96a1; background: #eceff3; padding: 2px 9px; cursor: pointer; min-height: 22px; transition: filter 120ms ease, box-shadow 160ms ease, border-color 160ms ease; }
+    .fltPlanPageBtn:hover { filter: brightness(1.08); border-color: #79aef0; box-shadow: 0 0 0 2px rgba(121, 174, 240, 0.35), 0 5px 12px rgba(32, 86, 153, 0.24); }
     .fltPlanPageBtn.active { background: #d3dae2; font-weight: 700; }
     .fltPlanMapBgStatus { font-size: 13px; color: #3a4b5d; margin-left: 6px; }
     .fltPlanPage2Grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
@@ -1976,6 +2610,44 @@ namespace VAICOM
     body.night-mode .controls { color: #d1dce8; }
     body.night-mode .meta.liveRefreshToggle.liveRefreshOn { color: #8ccaa5; }
     body.night-mode .controls button { background: #2b3541; color: #e2eaf2; border-color: #607183; }
+    body.night-mode .overlayToggleBtn { background: rgba(43, 53, 65, 0.92); color: #e2eaf2; border-color: #607183; }
+    body.night-mode .fltPlanQuickBtn { background: rgba(43, 53, 65, 0.92); color: #e2eaf2; border-color: #607183; }
+    body.night-mode .overlayToggleBtn:hover,
+    body.night-mode .fltPlanQuickBtn:hover {
+      border-color: #82bbff;
+      box-shadow: 0 0 0 2px rgba(130, 187, 255, 0.38), 0 8px 16px rgba(70, 152, 235, 0.35);
+    }
+    body.night-mode .overlayToggleBtn:active,
+    body.night-mode .fltPlanQuickBtn:active {
+      border-color: #9dd0ff;
+      box-shadow: 0 0 0 3px rgba(157, 208, 255, 0.55), 0 0 18px rgba(90, 176, 255, 0.48);
+    }
+    body.night-mode .overlayBackdrop { background: rgba(8, 12, 18, 0.46); }
+    body.night-mode .overlayPanel { background: rgba(30, 40, 52, 0.92); border-color: #607183; color: #e2eaf2; }
+    body.night-mode .overlayCloseBtn { background: rgba(43, 53, 65, 0.92); color: #e2eaf2; border-color: #607183; }
+    body.night-mode .overlayOption { background: rgba(45, 57, 72, 0.7); border-color: #5f7184; color: #e2eaf2; }
+    body.night-mode .overlayHint { color: #9db3c8; }
+    body.night-mode .overlayPanel.helpOverlayPanel { background: rgba(24, 34, 46, 0.94); border-color: #607183; }
+    body.night-mode .helpOverlayContent { background: rgba(45, 57, 72, 0.76); border-color: #5f7184; color: #dfe8f2; }
+    body.night-mode .helpOverlayContent a { color: #9bc8ff; }
+    body.night-mode .efbRailBtn { background: rgba(43, 53, 65, 0.92); color: #e2eaf2; border-color: #607183; }
+    body.night-mode .efbRightActionDrawer { background: rgba(33, 44, 58, 0.95); border-color: #607183; }
+    body.night-mode .efbRightDrawerBtn { background: #2b3541; color: #e2eaf2; border-color: #607183; }
+    body.night-mode .efbSelectorDrawer { background: rgba(33, 44, 58, 0.95); border-color: #607183; }
+    body.night-mode .efbDrawerHeader { background: rgba(45, 59, 77, 0.94); border-bottom-color: #607183; color: #e2eaf2; }
+    body.night-mode .efbDrawerCloseBtn { background: #2b3541; color: #e2eaf2; border-color: #607183; }
+    body.night-mode .efbPickerRow { background: #2a3440; border-bottom-color: #3b4a5a; }
+    body.night-mode .efbPickerRow.active { background: #3f5f87; }
+    body.night-mode .efbPickerItemMain { color: #e2eaf2; }
+    body.night-mode .efbPinBtn { background: #2b3541; color: #c3d0de; border-color: #607183; }
+    body.night-mode .efbPinBtn.pinned { color: #b9dcff; border-color: #79aef0; background: #32465f; }
+    body.night-mode .efbPickerItem { background: #2a3440; color: #e2eaf2; border-bottom-color: #3b4a5a; }
+    body.night-mode .efbPickerItem:hover { background: #334355; }
+    body.night-mode .efbPickerItem.active { background: #3f5f87; color: #f7fbff; }
+    body.night-mode .efbPickerEmpty { color: #9fb2c6; }
+    body.night-mode .efbViewport { background: #121920; border-color: #607183; }
+    body.night-mode .efbEmpty { color: #9fb4c9; }
+    body.night-mode .efbChartImage { filter: brightness(0.62) contrast(1.08) saturate(0.92); }
     body.night-mode .fltPlanSelected { color: #9fb6cb; }
     body.night-mode .missionClockLabel { color: #9fb6cb; }
     body.night-mode .dtcFileItem { background: #1f2731; color: #e2eaf4; border-color: #5a6b7c; }
@@ -1989,6 +2661,8 @@ namespace VAICOM
     body.night-mode .fltPlanTimeCellLabel { color: #9eb3c8; }
     body.night-mode .fltPlanTimeCellValue { color: #e2eaf4; }
     body.night-mode .fltPlanTimeCell.clickable:hover { background: #31404f; }
+    body.night-mode .fltPlanTimeCellEditor { background: rgba(30, 40, 52, 0.95); border-color: #607183; }
+    body.night-mode .fltPlanTimeEditorCenter { color: #e2eaf2; }
     body.night-mode .fltPlanPostFlightCell { background: transparent; border: 0; }
     body.night-mode .fltPlanCrewWrap { background: #202a34; border-color: #5c6d7f; }
     body.night-mode .fltPlanCrewTable th, body.night-mode .fltPlanCrewTable td { border-color: #5a6c7f; color: #dfe8f2; }
@@ -2061,18 +2735,18 @@ namespace VAICOM
 
     <div class='kneeLayout'>
       <div class='leftColumn'>
-        <div id='dtcControls' class='controls fltPlanControls hidden'>
+        <div id='dtcControls' class='controls fltPlanControls hidden legacyControls'>
           <button id='dtcRefresh' type='button'>Refresh FLT PLN</button>
           <span id='dtcSelectedFileLabel' class='fltPlanSelected'>No FLT PLN selected</span>
           <span id='missionClockLabel' class='missionClockLabel'>Mission Time - (- UTC)</span>
         </div>
 
-        <div id='dtcSelector' class='panel hidden'>
+        <div id='dtcSelector' class='panel hidden legacyControls'>
           <h4 id='dtcSelectorHeader' class='clickable'>FLT PLN Files ▼</h4>
           <div id='dtcFileList' class='content dtcFileList'></div>
         </div>
 
-        <div class='panel session'>
+        <div class='panel session legacyControls'>
           <h4 id='sessionHeader' class='clickable'>Session ▼</h4>
           <div id='session' class='content'></div>
         </div>
@@ -2095,7 +2769,7 @@ namespace VAICOM
       </div>
     </div>
 
-    <div class='controls'>
+    <div class='controls legacyControls'>
       <label><input id='autoBrowse' type='checkbox' checked> Auto Browse</label>
       <label><input id='nightMode' type='checkbox'> Night Mode</label>
       <label><input id='dlinkOn' type='checkbox' checked> DLink ON</label>
@@ -2111,15 +2785,88 @@ namespace VAICOM
   </div>
   </div>
 
+  <div id='bottomQuickBar' class='bottomQuickBar'>
+    <button id='overlayToggleBtn' class='overlayToggleBtn' type='button' title='Open quick settings'>⚙</button>
+    <button id='helpOverlayToggleBtn' class='overlayToggleBtn helpOverlayToggleBtn' type='button' title='Help'>?</button>
+    <button id='drawOverlayToggleBtn' class='overlayToggleBtn drawOverlayToggleBtn hiddenFloatingBtn' type='button' title='Draw mode'>✎</button>
+  </div>
+
+  <div id='fltPlanQuickBar' class='fltPlanQuickBar hidden'>
+    <button id='fltPlanFileBtn' class='fltPlanQuickBtn' type='button' title='Flight plan files'>☰</button>
+    <button id='fltPlanSessionBtn' class='fltPlanQuickBtn' type='button' title='Session information'>ℹ</button>
+  </div>
+
+  <div id='helpOverlay' class='overlayBackdrop helpOverlayBackdrop hidden'>
+    <div class='overlayPanel helpOverlayPanel'>
+      <div class='overlayTitleRow'>
+        <span id='helpOverlayTitle'>OKB Out Help</span>
+        <button id='helpOverlayCloseBtn' class='overlayCloseBtn' type='button'>✕</button>
+      </div>
+      <div id='helpOverlayContent' class='helpOverlayContent'>
+        <h3>Help content placeholder</h3>
+        <p>Help for this tab will be loaded from an external OKB Out HTML help document.</p>
+        <p>Planned behavior:</p>
+        <ul>
+          <li>Tab-specific help sections</li>
+          <li>Scrollable instructions and control reference</li>
+          <li>Embedded images and rich formatting</li>
+          <li>Hyperlinked navigation</li>
+        </ul>
+        <p>Document wiring can be connected later.</p>
+      </div>
+    </div>
+  </div>
+
+  <div id='fltPlanFilesOverlay' class='overlayBackdrop overlayBackdropTop hidden'>
+    <div class='overlayPanel fltPlanOverlayPanel'>
+      <div class='overlayTitleRow'>
+        <span>FLT PLN Files</span>
+        <button id='fltPlanFilesCloseBtn' class='overlayCloseBtn' type='button'>✕</button>
+      </div>
+      <div id='fltPlanOverlaySelectedLabel' class='overlayHint'>No FLT PLN selected</div>
+      <div id='fltPlanOverlayMissionClock' class='overlayHint'>Mission Time - (- UTC)</div>
+      <div id='fltPlanOverlayFileList' class='fltPlanOverlayList'>Loading...</div>
+    </div>
+  </div>
+
+  <div id='fltPlanSessionOverlay' class='overlayBackdrop overlayBackdropTop hidden'>
+    <div class='overlayPanel fltPlanOverlayPanel'>
+      <div class='overlayTitleRow'>
+        <span>Session</span>
+        <button id='fltPlanSessionCloseBtn' class='overlayCloseBtn' type='button'>✕</button>
+      </div>
+      <pre id='fltPlanSessionOverlayText' class='fltPlanPlain'></pre>
+    </div>
+  </div>
+  <div id='settingsOverlay' class='overlayBackdrop hidden'>
+    <div id='settingsOverlayPanel' class='overlayPanel'>
+      <div class='overlayTitleRow'>
+        <span>Quick Settings</span>
+        <button id='overlayCloseBtn' class='overlayCloseBtn' type='button'>✕</button>
+      </div>
+      <label class='overlayOption'><input id='overlayAutoBrowse' type='checkbox'> Auto Browse</label>
+      <label class='overlayOption'><input id='overlayNightMode' type='checkbox'> Night Mode</label>
+      <label class='overlayOption'><input id='overlayDlinkOn' type='checkbox'> DLink ON</label>
+      <label class='overlayOption sliderOption'><span>Font Size</span><input id='overlayFontSizeSlider' type='range' min='18' max='34' step='1' value='24'><span id='overlayFontSizeValue' class='sliderValue'>24</span></label>
+      <label id='overlayShowRawWrap' class='overlayOption'><input id='overlayShowRaw' type='checkbox'> Show raw JSON</label>
+      <label id='overlayShowServerWrap' class='overlayOption'><input id='overlayShowServer' type='checkbox'> Show server messages</label>
+      <div class='overlayHint'>Tap outside this panel to close.</div>
+    </div>
+  </div>
+
+  <div id='drawOverlay' class='overlayBackdrop hidden'>
+    <div id='drawOverlayPanel' class='overlayPanel'>
+      <div class='overlayTitleRow'>
+        <span>Draw Mode</span>
+        <button id='drawOverlayCloseBtn' class='overlayCloseBtn' type='button'>✕</button>
+      </div>
+      <label class='overlayOption'><input id='overlayDrawMode' type='checkbox'> Draw ON</label>
+      <div id='overlayDrawTimer' class='overlayHint'>30s</div>
+      <div class='overlayHint'>Draw mode behavior and timeout unchanged.</div>
+    </div>
+  </div>
+
   <script>
-    document.addEventListener('selectstart', function(ev){
-      if (ev && ev.preventDefault) ev.preventDefault();
-    }, true);
-
-    document.addEventListener('dragstart', function(ev){
-      if (ev && ev.preventDefault) ev.preventDefault();
-    }, true);
-
     const TABS = ['LOG','DTC','ATC','AWACS','JTAC','TANKER','AOCS','FLIGHT','AI CREW','GND CREW','NOTES'];
     const OKB_TAB_TYPE_ID = 'VAICOM-Community;okb-out';
     const OKB_CUSTOM_ACTION_PREFIX = OKB_TAB_TYPE_ID + ';';
@@ -2147,6 +2894,8 @@ namespace VAICOM
     let fltPlanPlanStateBySelection = {};
     let fltPlanDtcPageBySelection = {};
     let fltPlanDtcRouteBySelection = {};
+    let fltPlanExpandedTimeAnchorBySelection = {};
+    let fltPlanExpandedNavEditBySelection = {};
     let fltPlanMapViewBySelection = {};
     let fltPlanMapBackgroundEnabledBySelection = {};
     let fltPlanOpenFreeMapViewBySelection = {};
@@ -2191,6 +2940,7 @@ namespace VAICOM
     const nightModeStorageKey = 'vaicom.okb.nightMode';
     const dlinkOnStorageKey = 'vaicom.okb.dlinkOn';
     const contentFontSizeStorageKey = 'vaicom.okb.contentFontSize';
+    const efbPinnedChartsStorageKey = 'vaicom.okb.efbPinnedChartsByAirport';
     const drawModeTimeoutMs = 30000;
     const speedRecommendationTimeoutMs = 30000;
     const fakeMissionSpeedMin = 0.25;
@@ -2199,6 +2949,27 @@ namespace VAICOM
     let nightModeEnabled = false;
     let dlinkOnEnabled = true;
     let contentFontSizePx = 24;
+    let settingsOverlayOpen = false;
+    let drawOverlayOpen = false;
+    let helpOverlayOpen = false;
+    let helpOverlayLoadedTab = '';
+    let fltPlanFilesOverlayOpen = false;
+    let fltPlanSessionOverlayOpen = false;
+    let efbAvailableAirports = null;
+    let efbManuallySelectedAirport = '';
+    let efbChartsByAirport = {};
+    let efbSelectedChartByAirport = {};
+    let efbViewportByAirport = {};
+    let efbDragState = null;
+    let efbUiDirty = true;
+    let efbLastResolvedAirport = '';
+    let efbPickerDocumentHandlerBound = false;
+    let efbDrawerOpen = false;
+    let efbDrawerMode = 'airport';
+    let efbSelectionFlowActive = false;
+    let efbPinnedChartsByAirport = {};
+    let efbRightToolsOpen = false;
+    const overlayCloseHideDelayMs = 620;
 
     function clamp(v, min, max){
       return Math.max(min, Math.min(max, v));
@@ -2242,6 +3013,41 @@ namespace VAICOM
       }
     }
 
+    function readPinnedChartsPreference(){
+      try{
+        if (!window.localStorage) return {};
+        const raw = window.localStorage.getItem(efbPinnedChartsStorageKey);
+        if (!raw) return {};
+        const parsed = JSON.parse(raw);
+        if (!parsed || typeof parsed !== 'object') return {};
+        const clean = {};
+        Object.keys(parsed).forEach(function(k){
+          const airport = String(k || '').toUpperCase().trim();
+          if (!airport) return;
+          const ids = Array.isArray(parsed[k]) ? parsed[k] : [];
+          const seen = {};
+          clean[airport] = ids
+            .map(function(id){ return String(id || '').trim(); })
+            .filter(function(id){
+              if (!id || seen[id]) return false;
+              seen[id] = true;
+              return true;
+            });
+        });
+        return clean;
+      }catch(_){
+        return {};
+      }
+    }
+
+    function persistPinnedChartsPreference(){
+      try{
+        if (!window.localStorage) return;
+        window.localStorage.setItem(efbPinnedChartsStorageKey, JSON.stringify(efbPinnedChartsByAirport || {}));
+      }catch(_){
+      }
+    }
+
     function safe(v){ return (v === null || v === undefined || v === '') ? '-' : String(v); }
 
     function formatUtcToSeconds(v){
@@ -2249,6 +3055,621 @@ namespace VAICOM
       const d = new Date(v);
       if (!isFinite(d.getTime())) return String(v);
       return d.toISOString().replace(/\.\d{3}Z$/, 'Z');
+    }
+
+    function resolveEfbSelectedAirport(data){
+      try{
+        const selected = getActiveFlightPlanSelection(data);
+        if (selected){
+          const routeRows = getPlanWaypointsForRecommendations(selected);
+          const picks = [];
+          if (routeRows.length){
+            picks.push(routeRows[routeRows.length - 1]);
+            picks.push(routeRows[0]);
+          }
+
+          for (let i = 0; i < picks.length; i++){
+            const wp = picks[i] || {};
+            const text = String(wp.name || wp.nameRaw || wp.type || wp.typeRaw || '');
+            const icao = text.toUpperCase().match(/\b[A-Z]{4}\b/);
+            if (icao && icao[0]){
+              return icao[0];
+            }
+          }
+        }
+
+        const airfields = buildMapAirfields(data);
+        if (!Array.isArray(airfields) || !airfields.length){
+          return '';
+        }
+
+        const server = (data && data.Server) || {};
+        const px = Number(server.PlayerPosX);
+        const py = Number(server.PlayerPosY);
+        let nearest = null;
+        let nearestDist = Number.POSITIVE_INFINITY;
+
+        airfields.forEach(function(a){
+          if (!a) return;
+          if (!isFinite(Number(a.xNum)) || !isFinite(Number(a.yNum))) return;
+
+          const dx = Number(a.xNum) - px;
+          const dy = Number(a.yNum) - py;
+          const d2 = (isFinite(px) && isFinite(py)) ? ((dx * dx) + (dy * dy)) : 0;
+          if (d2 < nearestDist){
+            nearestDist = d2;
+            nearest = a;
+          }
+        });
+
+        if (!nearest){
+          return '';
+        }
+
+        const nearestIcao = String(nearest.icao || '').toUpperCase().trim();
+        if (nearestIcao) return nearestIcao;
+        return String(nearest.name || nearest.callsign || nearest.label || '').trim();
+      }catch(_){
+        return '';
+      }
+    }
+
+    function getEfbAirportKey(data){
+      const manual = String(efbManuallySelectedAirport || '').toUpperCase().trim();
+      if (manual) return manual;
+
+      const available = Array.isArray(efbAvailableAirports) ? efbAvailableAirports : [];
+
+      const sticky = String(efbLastResolvedAirport || '').toUpperCase().trim();
+      if (sticky && (!available.length || available.indexOf(sticky) >= 0)){
+        return sticky;
+      }
+
+      const server = (data && data.Server) || {};
+      const haveMission = !!(server.Aircraft || server.MissionTitle || server.Theater);
+
+      if (haveMission){
+        const inferred = String(resolveEfbSelectedAirport(data) || '').toUpperCase().trim();
+        if (inferred && (!available.length || available.indexOf(inferred) >= 0)){
+          return inferred;
+        }
+      }
+
+      if (available.length){
+        return String(available[0] || '').toUpperCase().trim() || 'UNSET';
+      }
+
+      return 'UNSET';
+    }
+
+    async function ensureEfbAirportsLoaded(){
+      if (Array.isArray(efbAvailableAirports)) return;
+
+      try{
+        const res = await fetch('/okb/efb/airports', { cache: 'no-store' });
+        if (res.ok){
+          const payload = await res.json();
+          const airports = Array.isArray(payload && payload.airports) ? payload.airports : [];
+          efbAvailableAirports = airports
+            .map(function(v){ return String(v || '').toUpperCase().trim(); })
+            .filter(function(v){ return !!v; });
+        } else {
+          efbAvailableAirports = [];
+        }
+      }catch(_){
+        efbAvailableAirports = [];
+      }
+    }
+
+    function getEfbViewport(key){
+      const k = String(key || 'UNSET');
+      if (!efbViewportByAirport[k]){
+        efbViewportByAirport[k] = { scale: 1, tx: 0, ty: 0 };
+      }
+      return efbViewportByAirport[k];
+    }
+
+    function openEfbDrawer(mode){
+      efbDrawerMode = mode === 'chart'
+        ? 'chart'
+        : (mode === 'pinned' ? 'pinned' : 'airport');
+      efbDrawerOpen = true;
+      efbSelectionFlowActive = true;
+    }
+
+    function closeEfbDrawer(){
+      efbDrawerOpen = false;
+      efbSelectionFlowActive = false;
+    }
+
+    function getPinnedChartsForAirport(airportKey){
+      const k = String(airportKey || 'UNSET').toUpperCase().trim() || 'UNSET';
+      if (!Array.isArray(efbPinnedChartsByAirport[k])){
+        efbPinnedChartsByAirport[k] = [];
+      }
+      return efbPinnedChartsByAirport[k];
+    }
+
+    function isChartPinned(airportKey, chartId){
+      const id = String(chartId || '');
+      if (!id) return false;
+      return getPinnedChartsForAirport(airportKey).indexOf(id) >= 0;
+    }
+
+    function togglePinnedChart(airportKey, chartId){
+      const id = String(chartId || '');
+      if (!id) return;
+      const list = getPinnedChartsForAirport(airportKey);
+      const idx = list.indexOf(id);
+      if (idx >= 0){
+        list.splice(idx, 1);
+      } else {
+        list.push(id);
+      }
+      persistPinnedChartsPreference();
+    }
+
+    function prunePinnedChartsForAirport(airportKey){
+      const airport = String(airportKey || 'UNSET').toUpperCase().trim() || 'UNSET';
+      const list = Array.isArray(efbPinnedChartsByAirport[airport]) ? efbPinnedChartsByAirport[airport] : [];
+      if (!list.length) return false;
+      const charts = Array.isArray(efbChartsByAirport[airport]) ? efbChartsByAirport[airport] : [];
+      const available = {};
+      charts.forEach(function(c){
+        const id = String((c && c.id) || '').trim();
+        if (id) available[id] = true;
+      });
+      const pruned = list.filter(function(id){ return !!available[String(id || '').trim()]; });
+      if (pruned.length === list.length) return false;
+      if (pruned.length){
+        efbPinnedChartsByAirport[airport] = pruned;
+      } else {
+        delete efbPinnedChartsByAirport[airport];
+      }
+      return true;
+    }
+
+    function getAllPinnedCharts(){
+      const rows = [];
+      const byAirport = efbPinnedChartsByAirport || {};
+      Object.keys(byAirport).forEach(function(k){
+        const airport = String(k || '').toUpperCase().trim() || 'UNSET';
+        const ids = Array.isArray(byAirport[k]) ? byAirport[k] : [];
+        const charts = Array.isArray(efbChartsByAirport[airport]) ? efbChartsByAirport[airport] : [];
+        ids.forEach(function(idRaw){
+          const id = String(idRaw || '');
+          if (!id) return;
+          const chart = charts.find(function(c){ return String((c && c.id) || '') === id; }) || null;
+          const name = String((chart && chart.name) || id || 'Chart');
+          rows.push({ airport: airport, id: id, name: name });
+        });
+      });
+      return rows;
+    }
+
+    function applyEfbViewportToImage(img, viewport){
+      if (!img || !viewport) return;
+      const s = clamp(Number(viewport.scale) || 1, 0.5, 3.5);
+      const tx = Number(viewport.tx) || 0;
+      const ty = Number(viewport.ty) || 0;
+      const rot = Number(viewport.rot) || 0;
+      img.style.transformOrigin = 'center center';
+      img.style.transform = 'translate(' + tx + 'px,' + ty + 'px) rotate(' + rot + 'deg) scale(' + s + ')';
+    }
+
+    function normalizeRotationDeg(v){
+      let d = Number(v) || 0;
+      while (d >= 180) d -= 360;
+      while (d < -180) d += 360;
+      return d;
+    }
+
+    function applyEfbViewportDefaults(viewport){
+      viewport.scale = clamp(Number(viewport.scale) || 1, 0.5, 3.5);
+      viewport.tx = Number(viewport.tx) || 0;
+      viewport.ty = Number(viewport.ty) || 0;
+      viewport.rot = normalizeRotationDeg(Number(viewport.rot) || 0);
+    }
+
+    async function ensureEfbChartsLoaded(data){
+      const key = getEfbAirportKey(data);
+      if (efbChartsByAirport[key]) return key;
+
+      try{
+        const res = await fetch('/okb/efb/charts?airport=' + encodeURIComponent(key), { cache: 'no-store' });
+        if (res.ok){
+          const payload = await res.json();
+          efbChartsByAirport[key] = Array.isArray(payload && payload.charts) ? payload.charts : [];
+          if (prunePinnedChartsForAirport(key)){
+            persistPinnedChartsPreference();
+          }
+          if (!efbSelectedChartByAirport[key] && efbChartsByAirport[key].length){
+            efbSelectedChartByAirport[key] = String((efbChartsByAirport[key][0] && efbChartsByAirport[key][0].id) || '');
+          }
+        } else {
+          efbChartsByAirport[key] = [];
+        }
+      }catch(_){
+        efbChartsByAirport[key] = [];
+      }
+
+      return key;
+    }
+
+    function formatEfbTabContentHtml(data){
+      const airportKey = getEfbAirportKey(data);
+      const charts = efbChartsByAirport[airportKey] || [];
+      const airports = Array.isArray(efbAvailableAirports) ? efbAvailableAirports : [];
+      const selected = String(efbSelectedChartByAirport[airportKey] || (charts[0] && charts[0].id) || '');
+      if (!efbSelectedChartByAirport[airportKey] && selected){
+        efbSelectedChartByAirport[airportKey] = selected;
+      }
+
+      const airportOptions = airports.map(function(a){
+        const code = String(a || '').toUpperCase().trim();
+        if (!code) return '';
+        const sel = code === airportKey ? ' selected' : '';
+        return '<button type=""button"" class=""efbPickerItem' + (sel ? ' active' : '') + '"" data-efb-airport=""' + escapeHtml(code) + '"">' + escapeHtml(code) + '</button>';
+      }).join('');
+
+      const options = charts.map(function(c){
+        const id = String((c && c.id) || '');
+        const label = String((c && c.name) || id || 'Chart');
+        const active = id === selected ? ' active' : '';
+        const pinnedClass = isChartPinned(airportKey, id) ? ' pinned' : '';
+        const pinTitle = isChartPinned(airportKey, id) ? 'Unpin chart' : 'Pin chart';
+        return '<div class=""efbPickerRow' + active + '""><button type=""button"" class=""efbPickerItemMain"" data-efb-chart=""' + escapeHtml(encodeURIComponent(id)) + '"">' + escapeHtml(label) + '</button><button type=""button"" class=""efbPinBtn' + pinnedClass + '"" data-efb-pin-toggle=""' + escapeHtml(encodeURIComponent(id)) + '"" title=""' + escapeHtml(pinTitle) + '"">📌</button></div>';
+      }).join('');
+
+      const selectedChart = charts.find(function(c){ return String((c && c.id) || '') === selected; }) || null;
+      const chartUrl = selectedChart ? ('/okb/efb/chart?id=' + encodeURIComponent(String(selectedChart.id || ''))) : '';
+      const drawerTitle = efbDrawerMode === 'chart'
+        ? ('Charts · ' + escapeHtml(airportKey || 'UNSET'))
+        : (efbDrawerMode === 'pinned' ? ('Pinned · ' + escapeHtml(airportKey || 'UNSET'))
+        : 'Airports');
+      const pinned = getPinnedChartsForAirport(airportKey);
+      const pinnedRows = charts
+        .filter(function(c){
+          const id = String((c && c.id) || '');
+          return id && pinned.indexOf(id) >= 0;
+        })
+        .map(function(c){
+          const id = String((c && c.id) || '');
+          const label = String((c && c.name) || id || 'Chart');
+          const active = id === selected ? ' active' : '';
+          return '<div class=""efbPickerRow' + active + '""><button type=""button"" class=""efbPickerItemMain"" data-efb-chart=""' + escapeHtml(encodeURIComponent(id)) + '"">' + escapeHtml(label) + '</button><button type=""button"" class=""efbPinBtn pinned"" data-efb-pin-toggle=""' + escapeHtml(encodeURIComponent(id)) + '"" title=""Unpin chart"">📌</button></div>';
+        }).join('');
+      const drawerRows = efbDrawerMode === 'chart'
+        ? (options || '<span class=""efbPickerEmpty"">No charts for this airport</span>')
+        : (efbDrawerMode === 'pinned'
+            ? (pinnedRows || '<span class=""efbPickerEmpty"">No pinned charts for this airport</span>')
+            : (airportOptions || '<span class=""efbPickerEmpty"">No airport folders</span>'));
+      const drawerClass = efbDrawerOpen ? 'efbSelectorDrawer' : 'efbSelectorDrawer closed';
+
+      return ''
+        + '<div class=""efbShell"">'
+        + '<div class=""efbLeftRail"">'
+        + '<button id=""efbAutoAirportBtn"" type=""button"" class=""efbRailBtn"" title=""Auto-select closest airport"">A</button>'
+        + '<button id=""efbAirportToggleBtn"" type=""button"" class=""efbRailBtn"" title=""Select airport and chart""><svg class=""efbRailIconSvg"" viewBox=""0 0 64 64"" aria-hidden=""true""><path d=""M14 20h36v6h-4l2 9h-8l-2-7h-12l-2 7h-8l2-9h-4z"" fill=""currentColor""/><rect x=""27"" y=""35"" width=""10"" height=""19"" fill=""currentColor""/><rect x=""18"" y=""54"" width=""28"" height=""5"" fill=""currentColor""/><circle cx=""32"" cy=""10"" r=""2.5"" fill=""currentColor""/><path d=""M25 11a7 7 0 0 1 14 0"" fill=""none"" stroke=""currentColor"" stroke-width=""3"" stroke-linecap=""round""/><path d=""M21 11a11 11 0 0 1 22 0"" fill=""none"" stroke=""currentColor"" stroke-width=""3"" stroke-linecap=""round""/></svg></button>'
+        + '<button id=""efbPinnedBtn"" type=""button"" class=""efbRailBtn"" title=""Pinned charts"">📌</button>'
+        + '</div>'
+        + '<div class=""efbRightRail"">'
+        + '<button id=""efbZoomOutBtn"" type=""button"" class=""efbRailBtn"" title=""Zoom out"">−</button>'
+        + '<button id=""efbZoomResetBtn"" type=""button"" class=""efbRailBtn"" title=""Reset view"">⟳</button>'
+        + '<button id=""efbZoomInBtn"" type=""button"" class=""efbRailBtn"" title=""Zoom in"">+</button>'
+        + '<span class=""efbRailSpacer"" aria-hidden=""true""></span>'
+        + '<button id=""efbRotateToolsBtn"" type=""button"" class=""efbRailBtn"" title=""Chart orientation tools"">⤾</button>'
+        + '</div>'
+        + '<div id=""efbRightActionDrawer"" class=""' + (efbRightToolsOpen ? 'efbRightActionDrawer' : 'efbRightActionDrawer closed') + '"">'
+        + '<button id=""efbRotateLeftBtn"" type=""button"" class=""efbRightDrawerBtn"" title=""Rotate left"">⟲</button>'
+        + '<button id=""efbRotateRightBtn"" type=""button"" class=""efbRightDrawerBtn"" title=""Rotate right"">⟳</button>'
+        + '<button id=""efbFitHorizontalBtn"" type=""button"" class=""efbRightDrawerBtn"" title=""Fit horizontally"">↔</button>'
+        + '<button id=""efbFitVerticalBtn"" type=""button"" class=""efbRightDrawerBtn"" title=""Fit vertically"">↕</button>'
+        + '</div>'
+        + '<div id=""efbSelectorDrawer"" class=""' + drawerClass + '"">'
+        + '<div class=""efbDrawerHeader""><span id=""efbDrawerTitle"">' + drawerTitle + '</span><button id=""efbDrawerCloseBtn"" class=""efbDrawerCloseBtn"" type=""button"">✕</button></div>'
+        + '<div id=""efbDrawerList"" class=""efbDrawerList"">' + drawerRows + '</div>'
+        + '</div>'
+        + '<div id=""efbChartViewport"" class=""efbViewport"">'
+        + (chartUrl
+            ? ('<img id=""efbChartImage"" class=""efbChartImage"" src=""' + chartUrl + '"" alt=""EFB chart"">')
+            : '<div class=""efbEmpty"">No chart available for selected airport.</div>')
+        + '</div>'
+        + '</div>';
+    }
+
+    function bindEfbInteractions(data){
+      const airportKey = getEfbAirportKey(data);
+      const viewport = getEfbViewport(airportKey);
+      applyEfbViewportDefaults(viewport);
+
+      function applyEfbDrawerUi(){
+        const drawer = document.getElementById('efbSelectorDrawer');
+        const title = document.getElementById('efbDrawerTitle');
+        const list = document.getElementById('efbDrawerList');
+        if (!drawer || !title || !list) return;
+
+        drawer.className = efbDrawerOpen ? 'efbSelectorDrawer' : 'efbSelectorDrawer closed';
+        title.textContent = efbDrawerMode === 'chart'
+          ? ('Charts · ' + (airportKey || 'UNSET'))
+          : (efbDrawerMode === 'pinned' ? 'Pinned charts' : 'Airports');
+
+        if (efbDrawerMode === 'chart'){
+          const charts = efbChartsByAirport[airportKey] || [];
+          const selected = String(efbSelectedChartByAirport[airportKey] || (charts[0] && charts[0].id) || '');
+          const rows = charts.map(function(c){
+            const id = String((c && c.id) || '');
+            const label = String((c && c.name) || id || 'Chart');
+            const active = id === selected ? ' active' : '';
+            const pinnedClass = isChartPinned(airportKey, id) ? ' pinned' : '';
+            const pinTitle = isChartPinned(airportKey, id) ? 'Unpin chart' : 'Pin chart';
+            return '<div class=""efbPickerRow' + active + '""><button type=""button"" class=""efbPickerItemMain"" data-efb-chart=""' + escapeHtml(encodeURIComponent(id)) + '"">' + escapeHtml(label) + '</button><button type=""button"" class=""efbPinBtn' + pinnedClass + '"" data-efb-pin-toggle=""' + escapeHtml(encodeURIComponent(id)) + '"" title=""' + escapeHtml(pinTitle) + '"">📌</button></div>';
+          }).join('');
+          list.innerHTML = rows || '<span class=""efbPickerEmpty"">No charts for this airport</span>';
+        } else if (efbDrawerMode === 'pinned'){
+          const charts = efbChartsByAirport[airportKey] || [];
+          const selected = String(efbSelectedChartByAirport[airportKey] || (charts[0] && charts[0].id) || '');
+          const pinned = getPinnedChartsForAirport(airportKey);
+          const rows = charts
+            .filter(function(c){
+              const id = String((c && c.id) || '');
+              return id && pinned.indexOf(id) >= 0;
+            })
+            .map(function(c){
+              const id = String((c && c.id) || '');
+              const label = String((c && c.name) || id || 'Chart');
+              const active = id === selected ? ' active' : '';
+              return '<div class=""efbPickerRow' + active + '""><button type=""button"" class=""efbPickerItemMain"" data-efb-chart=""' + escapeHtml(encodeURIComponent(id)) + '"">' + escapeHtml(label) + '</button><button type=""button"" class=""efbPinBtn pinned"" data-efb-pin-toggle=""' + escapeHtml(encodeURIComponent(id)) + '"" title=""Unpin chart"">📌</button></div>';
+            }).join('');
+          list.innerHTML = rows || '<span class=""efbPickerEmpty"">No pinned charts for this airport</span>';
+        } else {
+          const airports = Array.isArray(efbAvailableAirports) ? efbAvailableAirports : [];
+          const rows = airports.map(function(a){
+            const code = String(a || '').toUpperCase().trim();
+            if (!code) return '';
+            const active = code === airportKey ? ' active' : '';
+            return '<button type=""button"" class=""efbPickerItem' + active + '"" data-efb-airport=""' + escapeHtml(code) + '"">' + escapeHtml(code) + '</button>';
+          }).join('');
+          list.innerHTML = rows || '<span class=""efbPickerEmpty"">No airport folders</span>';
+        }
+      }
+
+      const towerBtn = document.getElementById('efbAirportToggleBtn');
+      if (towerBtn){
+        towerBtn.onclick = function(ev){
+          ev.stopPropagation();
+          if (efbDrawerOpen){
+            closeEfbDrawer();
+          } else {
+            openEfbDrawer('airport');
+          }
+          applyEfbDrawerUi();
+        };
+      }
+
+      const autoBtn = document.getElementById('efbAutoAirportBtn');
+      if (autoBtn){
+        autoBtn.onclick = function(ev){
+          ev.preventDefault();
+          ev.stopPropagation();
+          efbManuallySelectedAirport = '';
+          const inferred = String(resolveEfbSelectedAirport(latestData || data) || '').toUpperCase().trim();
+          const airports = Array.isArray(efbAvailableAirports) ? efbAvailableAirports : [];
+          if (inferred && (!airports.length || airports.indexOf(inferred) >= 0)){
+            efbManuallySelectedAirport = inferred;
+          }
+          efbUiDirty = true;
+          openEfbDrawer('chart');
+          if (latestData) render(latestData);
+        };
+      }
+
+      const pinnedBtn = document.getElementById('efbPinnedBtn');
+      if (pinnedBtn){
+        pinnedBtn.onclick = function(ev){
+          ev.preventDefault();
+          ev.stopPropagation();
+          if (efbDrawerOpen && efbDrawerMode === 'pinned'){
+            closeEfbDrawer();
+          } else {
+            openEfbDrawer('pinned');
+          }
+          applyEfbDrawerUi();
+        };
+      }
+
+      const drawerCloseBtn = document.getElementById('efbDrawerCloseBtn');
+      if (drawerCloseBtn){
+        drawerCloseBtn.onclick = function(ev){
+          ev.stopPropagation();
+          closeEfbDrawer();
+          applyEfbDrawerUi();
+        };
+      }
+
+      const drawerList = document.getElementById('efbDrawerList');
+      if (drawerList){
+        drawerList.onclick = function(ev){
+          const pinItem = ev && ev.target && ev.target.closest ? ev.target.closest('[data-efb-pin-toggle]') : null;
+          if (pinItem){
+            let pinId = String(pinItem.getAttribute('data-efb-pin-toggle') || '').trim();
+            const pinAirport = String(pinItem.getAttribute('data-efb-pin-airport') || airportKey || '').toUpperCase().trim() || 'UNSET';
+            if (!pinId) return;
+            try{ pinId = decodeURIComponent(pinId); }catch(_){ }
+            togglePinnedChart(pinAirport, pinId);
+            applyEfbDrawerUi();
+            return;
+          }
+
+          const airportItem = ev && ev.target && ev.target.closest ? ev.target.closest('[data-efb-airport]') : null;
+          if (airportItem){
+            const nextAirport = String(airportItem.getAttribute('data-efb-airport') || '').toUpperCase().trim();
+            if (!nextAirport) return;
+            efbManuallySelectedAirport = nextAirport;
+            efbUiDirty = true;
+            openEfbDrawer('chart');
+            if (latestData) render(latestData);
+            return;
+          }
+
+          const item = ev && ev.target && ev.target.closest ? ev.target.closest('[data-efb-chart]') : null;
+          if (!item) return;
+          let id = String(item.getAttribute('data-efb-chart') || '').trim();
+          const sourceAirport = String(item.getAttribute('data-efb-chart-airport') || airportKey || '').toUpperCase().trim() || airportKey;
+          if (!id) return;
+          try{ id = decodeURIComponent(id); }catch(_){ }
+          efbManuallySelectedAirport = sourceAirport;
+          efbSelectedChartByAirport[sourceAirport] = id;
+          const targetViewport = getEfbViewport(sourceAirport);
+          targetViewport.scale = 1;
+          targetViewport.tx = 0;
+          targetViewport.ty = 0;
+          efbUiDirty = true;
+          closeEfbDrawer();
+          if (latestData) render(latestData);
+        };
+      }
+
+      if (!efbPickerDocumentHandlerBound){
+        document.addEventListener('click', function(ev){
+          if (selectedTab !== 'EFB') return;
+          if (efbSelectionFlowActive) return;
+          const target = ev && ev.target;
+          const insideDrawer = target && target.closest && (target.closest('.efbSelectorDrawer') || target.closest('.efbLeftRail') || target.closest('.efbRightRail') || target.closest('.efbRightActionDrawer'));
+          if (!insideDrawer){
+            closeEfbDrawer();
+            efbRightToolsOpen = false;
+            applyEfbDrawerUi();
+            const rightDrawer = document.getElementById('efbRightActionDrawer');
+            if (rightDrawer) rightDrawer.className = efbRightToolsOpen ? 'efbRightActionDrawer' : 'efbRightActionDrawer closed';
+          }
+        });
+        efbPickerDocumentHandlerBound = true;
+      }
+
+      applyEfbDrawerUi();
+
+      const img = document.getElementById('efbChartImage');
+      if (img){
+        applyEfbViewportToImage(img, viewport);
+      }
+
+      const zoomDelta = function(mult){
+        viewport.scale = clamp((Number(viewport.scale) || 1) * mult, 0.5, 3.5);
+        const image = document.getElementById('efbChartImage');
+        if (image) applyEfbViewportToImage(image, viewport);
+      };
+
+      const outBtn = document.getElementById('efbZoomOutBtn');
+      if (outBtn) outBtn.onclick = function(){ zoomDelta(0.9); };
+      const inBtn = document.getElementById('efbZoomInBtn');
+      if (inBtn) inBtn.onclick = function(){ zoomDelta(1.1); };
+      const resetBtn = document.getElementById('efbZoomResetBtn');
+      if (resetBtn) resetBtn.onclick = function(){
+        viewport.scale = 1;
+        viewport.tx = 0;
+        viewport.ty = 0;
+        viewport.rot = 0;
+        const image = document.getElementById('efbChartImage');
+        if (image) applyEfbViewportToImage(image, viewport);
+      };
+
+      const rightDrawer = document.getElementById('efbRightActionDrawer');
+      const rotateToolsBtn = document.getElementById('efbRotateToolsBtn');
+      if (rotateToolsBtn){
+        rotateToolsBtn.onclick = function(ev){
+          ev.preventDefault();
+          ev.stopPropagation();
+          efbRightToolsOpen = !efbRightToolsOpen;
+          if (rightDrawer) rightDrawer.className = efbRightToolsOpen ? 'efbRightActionDrawer' : 'efbRightActionDrawer closed';
+        };
+      }
+
+      const rotateLeftBtn = document.getElementById('efbRotateLeftBtn');
+      if (rotateLeftBtn) rotateLeftBtn.onclick = function(){
+        viewport.rot = normalizeRotationDeg((Number(viewport.rot) || 0) - 90);
+        const image = document.getElementById('efbChartImage');
+        if (image) applyEfbViewportToImage(image, viewport);
+      };
+
+      const rotateRightBtn = document.getElementById('efbRotateRightBtn');
+      if (rotateRightBtn) rotateRightBtn.onclick = function(){
+        viewport.rot = normalizeRotationDeg((Number(viewport.rot) || 0) + 90);
+        const image = document.getElementById('efbChartImage');
+        if (image) applyEfbViewportToImage(image, viewport);
+      };
+
+      const fitHorizontalBtn = document.getElementById('efbFitHorizontalBtn');
+      if (fitHorizontalBtn) fitHorizontalBtn.onclick = function(){
+        const image = document.getElementById('efbChartImage');
+        const host = document.getElementById('efbChartViewport');
+        if (!image || !host || !image.naturalWidth) return;
+        const baseWidth = host.clientWidth;
+        const baseHeight = (baseWidth * image.naturalHeight) / image.naturalWidth;
+        const rotRad = (Math.PI / 180) * (Number(viewport.rot) || 0);
+        const absCos = Math.abs(Math.cos(rotRad));
+        const absSin = Math.abs(Math.sin(rotRad));
+        const bboxWidthAtScale1 = (baseWidth * absCos) + (baseHeight * absSin);
+        const scale = clamp(host.clientWidth / Math.max(1, bboxWidthAtScale1), 0.5, 3.5);
+        viewport.scale = scale;
+        viewport.tx = 0;
+        viewport.ty = 0;
+        applyEfbViewportToImage(image, viewport);
+      };
+
+      const fitVerticalBtn = document.getElementById('efbFitVerticalBtn');
+      if (fitVerticalBtn) fitVerticalBtn.onclick = function(){
+        const image = document.getElementById('efbChartImage');
+        const host = document.getElementById('efbChartViewport');
+        if (!image || !host || !image.naturalHeight) return;
+        const baseWidth = host.clientWidth;
+        const baseHeight = (baseWidth * image.naturalHeight) / image.naturalWidth;
+        const rotRad = (Math.PI / 180) * (Number(viewport.rot) || 0);
+        const absCos = Math.abs(Math.cos(rotRad));
+        const absSin = Math.abs(Math.sin(rotRad));
+        const bboxHeightAtScale1 = (baseWidth * absSin) + (baseHeight * absCos);
+        const scale = clamp(host.clientHeight / Math.max(1, bboxHeightAtScale1), 0.5, 3.5);
+        viewport.scale = scale;
+        viewport.tx = 0;
+        viewport.ty = 0;
+        applyEfbViewportToImage(image, viewport);
+      };
+
+      const viewEl = document.getElementById('efbChartViewport');
+      if (viewEl){
+        viewEl.onmousedown = function(ev){
+          const dragAirportKey = String(airportKey || 'UNSET').toUpperCase().trim() || 'UNSET';
+          const dragViewport = getEfbViewport(dragAirportKey);
+          applyEfbViewportDefaults(dragViewport);
+          efbDragState = {
+            airportKey: dragAirportKey,
+            startX: ev.clientX,
+            startY: ev.clientY,
+            startTx: Number(dragViewport.tx) || 0,
+            startTy: Number(dragViewport.ty) || 0,
+          };
+          ev.preventDefault();
+        };
+      }
+
+      if (!bindEfbInteractions._moveRegistered){
+        document.addEventListener('mousemove', function(ev){
+          if (!efbDragState || selectedTab !== 'EFB') return;
+          const dragAirportKey = String(efbDragState.airportKey || 'UNSET').toUpperCase().trim() || 'UNSET';
+          const dragViewport = getEfbViewport(dragAirportKey);
+          applyEfbViewportDefaults(dragViewport);
+          dragViewport.tx = efbDragState.startTx + (ev.clientX - efbDragState.startX);
+          dragViewport.ty = efbDragState.startTy + (ev.clientY - efbDragState.startY);
+          const image = document.getElementById('efbChartImage');
+          if (image) applyEfbViewportToImage(image, dragViewport);
+        });
+
+        document.addEventListener('mouseup', function(){
+          efbDragState = null;
+        });
+
+        bindEfbInteractions._moveRegistered = true;
+      }
     }
 
     function normalizeCategory(cat){
@@ -2266,10 +3687,38 @@ namespace VAICOM
       return normalizeCategory(c);
     }
 
+    function getVisibleTabs(data){
+      const tabs = TABS.slice(0);
+      const efb = (data && data.Efb) || {};
+      if (efb && efb.FeatureEnabled){
+        const existingIndex = tabs.indexOf('EFB');
+        if (existingIndex >= 0){
+          tabs.splice(existingIndex, 1);
+        }
+
+        const dtcIndex = tabs.indexOf('DTC');
+        const insertIndex = dtcIndex >= 0 ? (dtcIndex + 1) : 1;
+        tabs.splice(insertIndex, 0, 'EFB');
+      }
+      return tabs;
+    }
+
     function setSelectedTab(tab){
       var normalized = normalizeCategory(tab);
       if (normalized === 'WX/ATC') normalized = 'ATC';
-      if (TABS.indexOf(normalized) < 0) return false;
+      const visibleTabs = getVisibleTabs(latestData);
+      if (visibleTabs.indexOf(normalized) < 0) return false;
+
+      const previousTab = selectedTab;
+      if (previousTab === 'EFB' && normalized !== 'EFB'){
+        efbAvailableAirports = null;
+        efbChartsByAirport = {};
+        efbSelectedChartByAirport = {};
+        efbUiDirty = true;
+        efbDrawerOpen = false;
+        efbDrawerMode = 'airport';
+        efbSelectionFlowActive = false;
+      }
 
       selectedTab = normalized;
       autoBrowse = false;
@@ -2280,19 +3729,21 @@ namespace VAICOM
     }
 
     function selectRelativeTab(step){
-      const idx = TABS.indexOf(selectedTab);
+      const tabs = getVisibleTabs(latestData);
+      const idx = tabs.indexOf(selectedTab);
       const currentIndex = idx >= 0 ? idx : 0;
       const delta = step >= 0 ? 1 : -1;
-      const nextIndex = (currentIndex + delta + TABS.length) % TABS.length;
-      setSelectedTab(TABS[nextIndex]);
+      const nextIndex = (currentIndex + delta + tabs.length) % tabs.length;
+      setSelectedTab(tabs[nextIndex]);
     }
 
     function getTabFromCustomExtraData(extraData){
       if (extraData === null || extraData === undefined) return '';
       if (typeof extraData === 'string') return extraData;
       if (typeof extraData === 'number' && isFinite(extraData)) {
-        const idx = ((Math.floor(extraData) % TABS.length) + TABS.length) % TABS.length;
-        return TABS[idx];
+        const tabs = getVisibleTabs(latestData);
+        const idx = ((Math.floor(extraData) % tabs.length) + tabs.length) % tabs.length;
+        return tabs[idx];
       }
       if (typeof extraData !== 'object') return '';
 
@@ -2301,8 +3752,9 @@ namespace VAICOM
       if (typeof extraData.name === 'string') return extraData.name;
 
       if (typeof extraData.index === 'number' && isFinite(extraData.index)) {
-        const idx = ((Math.floor(extraData.index) % TABS.length) + TABS.length) % TABS.length;
-        return TABS[idx];
+        const tabs = getVisibleTabs(latestData);
+        const idx = ((Math.floor(extraData.index) % tabs.length) + tabs.length) % tabs.length;
+        return tabs[idx];
       }
 
       return '';
@@ -2405,6 +3857,8 @@ namespace VAICOM
       document.body.classList.toggle('night-mode', !!nightModeEnabled);
       const box = document.getElementById('nightMode');
       if (box) box.checked = !!nightModeEnabled;
+      const overlayBox = document.getElementById('overlayNightMode');
+      if (overlayBox) overlayBox.checked = !!nightModeEnabled;
     }
 
     function readContentFontSizePreference(){
@@ -2442,6 +3896,220 @@ namespace VAICOM
     function applyDlinkOnUi(){
       const box = document.getElementById('dlinkOn');
       if (box) box.checked = !!dlinkOnEnabled;
+      const overlayBox = document.getElementById('overlayDlinkOn');
+      if (overlayBox) overlayBox.checked = !!dlinkOnEnabled;
+    }
+
+    function applyAutoBrowseUi(){
+      const box = document.getElementById('autoBrowse');
+      if (box) box.checked = !!autoBrowse;
+      const overlayBox = document.getElementById('overlayAutoBrowse');
+      if (overlayBox) overlayBox.checked = !!autoBrowse;
+    }
+
+    function setOverlayAnimated(overlay, open, baseClass){
+      if (!overlay) return;
+      const base = String(baseClass || 'overlayBackdrop');
+      if (open){
+        if (overlay._closeTimer){
+          clearTimeout(overlay._closeTimer);
+          overlay._closeTimer = null;
+        }
+        overlay.className = base;
+        void overlay.offsetWidth;
+        overlay.className = base + ' overlayOpen';
+        return;
+      }
+
+      overlay.className = base;
+      if (overlay._closeTimer){
+        clearTimeout(overlay._closeTimer);
+      }
+      overlay._closeTimer = setTimeout(function(){
+        overlay.className = base + ' hidden';
+        overlay._closeTimer = null;
+      }, overlayCloseHideDelayMs);
+    }
+
+    function applyDrawOverlayUi(){
+      const drawBox = document.getElementById('overlayDrawMode');
+      if (drawBox){
+        drawBox.checked = !!drawModeEnabled;
+        drawBox.disabled = !!okbDoodlesOnlyForced || selectedTab !== 'NOTES';
+      }
+
+      const timerEl = document.getElementById('overlayDrawTimer');
+      if (timerEl){
+        if (drawModeEnabled && drawModeDeadlineUtcMs > 0){
+          const remainingMs = Math.max(0, drawModeDeadlineUtcMs - Date.now());
+          const remainingSeconds = Math.ceil(remainingMs / 1000);
+          timerEl.textContent = String(remainingSeconds) + 's';
+          timerEl.className = 'overlayHint';
+        } else {
+          timerEl.textContent = '30s';
+          timerEl.className = 'overlayHint hidden';
+        }
+      }
+    }
+
+    function applyShowRawUi(show){
+      const value = !!show;
+      const box = document.getElementById('showRaw');
+      if (box) box.checked = value;
+      const overlayBox = document.getElementById('overlayShowRaw');
+      if (overlayBox) overlayBox.checked = value;
+      document.body.classList.toggle('raw-mode', value);
+      const jsonEl = document.getElementById('json');
+      if (jsonEl) jsonEl.className = value ? '' : 'hidden';
+    }
+
+    function applyShowServerUi(show){
+      const value = !!show;
+      showServerMessages = value;
+      const box = document.getElementById('showServer');
+      if (box) box.checked = value;
+      const overlayBox = document.getElementById('overlayShowServer');
+      if (overlayBox) overlayBox.checked = value;
+      const serverMessagesEl = document.getElementById('serverMessages');
+      if (serverMessagesEl) serverMessagesEl.className = value ? '' : 'hidden';
+      setServerMessageCapture(value);
+    }
+
+    function setSettingsOverlayOpen(open){
+      settingsOverlayOpen = !!open;
+      if (settingsOverlayOpen){
+        setDrawOverlayOpen(false);
+        setHelpOverlayOpen(false);
+      }
+      const overlay = document.getElementById('settingsOverlay');
+      if (!overlay) return;
+      setOverlayAnimated(overlay, settingsOverlayOpen, 'overlayBackdrop');
+      if (settingsOverlayOpen){
+        applyAutoBrowseUi();
+        applyNightModeUi();
+        applyDlinkOnUi();
+        applyContentFontSizeUi();
+        const showRawBox = document.getElementById('showRaw');
+        const showServerBox = document.getElementById('showServer');
+        applyShowRawUi(showRawBox ? !!showRawBox.checked : false);
+        applyShowServerUi(showServerBox ? !!showServerBox.checked : false);
+      }
+
+      const debugMode = !!(latestData && latestData.Server && latestData.Server.DebugMode);
+      const rawWrap = document.getElementById('overlayShowRawWrap');
+      const serverWrap = document.getElementById('overlayShowServerWrap');
+      if (rawWrap) rawWrap.style.display = debugMode ? 'flex' : 'none';
+      if (serverWrap) serverWrap.style.display = debugMode ? 'flex' : 'none';
+      if (!debugMode){
+        applyShowRawUi(false);
+        applyShowServerUi(false);
+      }
+    }
+
+    function setDrawOverlayOpen(open){
+      drawOverlayOpen = !!open;
+      if (drawOverlayOpen){
+        setSettingsOverlayOpen(false);
+        setHelpOverlayOpen(false);
+      }
+      const overlay = document.getElementById('drawOverlay');
+      if (!overlay) return;
+      setOverlayAnimated(overlay, drawOverlayOpen, 'overlayBackdrop');
+      if (drawOverlayOpen){
+        applyDrawOverlayUi();
+      }
+    }
+
+    function setHelpOverlayOpen(open){
+      helpOverlayOpen = !!open;
+      if (helpOverlayOpen){
+        setSettingsOverlayOpen(false);
+        setDrawOverlayOpen(false);
+      }
+      const overlay = document.getElementById('helpOverlay');
+      if (!overlay) return;
+      setOverlayAnimated(overlay, helpOverlayOpen, 'overlayBackdrop helpOverlayBackdrop');
+      if (helpOverlayOpen){
+        const titleEl = document.getElementById('helpOverlayTitle');
+        if (titleEl){
+          titleEl.textContent = tabLabel(selectedTab) + ' Help';
+        }
+        loadHelpOverlayContent(selectedTab);
+      } else {
+        helpOverlayLoadedTab = '';
+      }
+    }
+
+    async function loadHelpOverlayContent(tab){
+      const contentEl = document.getElementById('helpOverlayContent');
+      if (!contentEl) return;
+      const tabToken = String(tab || selectedTab || 'LOG');
+      contentEl.innerHTML = '<p>Loading help content...</p>';
+      try{
+        const res = await fetch('/okb/helpdoc?tab=' + encodeURIComponent(tabToken), { cache: 'no-store' });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const html = await res.text();
+        contentEl.innerHTML = html || '<p>No help content available for this tab.</p>';
+        helpOverlayLoadedTab = tabToken;
+      }catch(ex){
+        const msg = ex && ex.message ? String(ex.message) : 'Unknown error';
+        contentEl.innerHTML = '<p>Failed to load help content.</p><p>' + escapeHtml(msg) + '</p>';
+      }
+    }
+
+    function setFltPlanFilesOverlayOpen(open){
+      fltPlanFilesOverlayOpen = !!open;
+      if (fltPlanFilesOverlayOpen){
+        fltPlanSessionOverlayOpen = false;
+        const sessionOverlay = document.getElementById('fltPlanSessionOverlay');
+        if (sessionOverlay) setOverlayAnimated(sessionOverlay, false, 'overlayBackdrop overlayBackdropTop');
+      }
+
+      const overlay = document.getElementById('fltPlanFilesOverlay');
+      if (!overlay) return;
+      setOverlayAnimated(overlay, fltPlanFilesOverlayOpen, 'overlayBackdrop overlayBackdropTop');
+    }
+
+    function setFltPlanSessionOverlayOpen(open){
+      fltPlanSessionOverlayOpen = !!open;
+      if (fltPlanSessionOverlayOpen){
+        fltPlanFilesOverlayOpen = false;
+        const filesOverlay = document.getElementById('fltPlanFilesOverlay');
+        if (filesOverlay) setOverlayAnimated(filesOverlay, false, 'overlayBackdrop overlayBackdropTop');
+      }
+
+      const overlay = document.getElementById('fltPlanSessionOverlay');
+      if (!overlay) return;
+      setOverlayAnimated(overlay, fltPlanSessionOverlayOpen, 'overlayBackdrop overlayBackdropTop');
+    }
+
+    function renderFltPlanFilesOverlay(data){
+      const selectedLabel = document.getElementById('fltPlanOverlaySelectedLabel');
+      const missionClock = document.getElementById('fltPlanOverlayMissionClock');
+      const listEl = document.getElementById('fltPlanOverlayFileList');
+      if (!selectedLabel || !missionClock || !listEl) return;
+
+      const files = Array.isArray(data && data.DtcFiles) ? data.DtcFiles : [];
+      const selected = String((data && data.DtcSelectedFile) || '');
+      selectedLabel.textContent = selected ? ('Selected: ' + getDtcDisplayName(selected)) : 'No FLT PLN selected';
+
+      const missionClockLabel = document.getElementById('missionClockLabel');
+      missionClock.textContent = missionClockLabel && missionClockLabel.textContent
+        ? missionClockLabel.textContent
+        : 'Mission Time - (- UTC)';
+
+      if (!files.length){
+        listEl.innerHTML = '<div class=""overlayHint"">No FLT PLN files found.</div>';
+        return;
+      }
+
+      const rows = files.map(function(filePath){
+        const fp = String(filePath || '');
+        const active = selected && fp === selected;
+        const type = (fp.indexOf('RTE::') === 0 || /\.(rte|lua)$/i.test(fp)) ? 'RTE' : 'DTC';
+        return '<button type=""button"" class=""dtcFileItem' + (active ? ' active' : '') + '"" data-overlay-file=""' + encodeURIComponent(fp) + '""><span>' + escapeHtml(getDtcDisplayName(fp)) + '</span><span class=""dtcFileMeta"">' + type + '</span></button>';
+      });
+      listEl.innerHTML = rows.join('');
     }
 
     function hasAwacsAvailable(data){
@@ -2475,6 +4143,10 @@ namespace VAICOM
       if (slider) slider.value = String(safeSize);
       const value = document.getElementById('fontSizeValue');
       if (value) value.textContent = String(safeSize);
+      const overlaySlider = document.getElementById('overlayFontSizeSlider');
+      if (overlaySlider) overlaySlider.value = String(safeSize);
+      const overlayValue = document.getElementById('overlayFontSizeValue');
+      if (overlayValue) overlayValue.textContent = String(safeSize);
     }
 
     function updateFakeMissionControlsUi(){
@@ -2884,6 +4556,7 @@ namespace VAICOM
     function tabLabel(tab){
       if (tab === 'ATC') return 'WX/ATC';
       if (tab === 'DTC') return 'FLT PLN';
+      if (tab === 'EFB') return 'EFB';
       return tab;
     }
 
@@ -3064,6 +4737,7 @@ namespace VAICOM
       button.title = notesActive
         ? 'Toggle Notes drawing mode'
         : 'Switch to NOTES tab to toggle drawing';
+      applyDrawOverlayUi();
     }
 
     function setDrawInteractionInNotes(active){
@@ -3100,6 +4774,7 @@ namespace VAICOM
       const remainingMs = Math.max(0, drawModeDeadlineUtcMs - Date.now());
       const remainingSeconds = Math.ceil(remainingMs / 1000);
       timerEl.textContent = String(remainingSeconds) + 's';
+      applyDrawOverlayUi();
     }
 
     function ensureDrawCountdownTicking(){
@@ -3241,7 +4916,7 @@ namespace VAICOM
     }
 
     function applyCurrentTabKeywordsSplit(){
-      if (selectedTab === 'DTC'){
+      if (selectedTab === 'DTC' || selectedTab === 'EFB'){
         const tabPanel = document.querySelector('.tabPanel');
         const keywordPanel = document.getElementById('keywordPanel');
         if (tabPanel) tabPanel.style.flex = '1 1 auto';
@@ -5013,7 +6688,7 @@ namespace VAICOM
 
     function getFlightPlanPlanState(selected){
       const key = getFlightPlanEtaStartKey(selected);
-      if (!key) return { speedAdjustments: {}, speedDisplayModes: {}, altAdjustments: {}, typeOverrides: {}, lockedStep: '', totSeconds: NaN, lockedStart: null, timeMarks: {}, timingLog: [], postFlightOpen: false, ataByStep: {}, speedRecommendations: {}, totPerformanceByStep: {}, lastOwnshipPos: null, deletedSteps: {}, directToSourceStep: '', directToTargetStep: '', rowActionStep: '', rowActionMode: '', rowRevealStep: '', rowRevealMode: '', coordDisplayMode: 'xy' };
+      if (!key) return { speedAdjustments: {}, speedDisplayModes: {}, altAdjustments: {}, typeOverrides: {}, lockedStep: '', totSeconds: NaN, lockedStart: null, timeMarks: {}, timingLog: [], postFlightOpen: false, ataByStep: {}, speedRecommendations: {}, totPerformanceByStep: {}, lastOwnshipPos: null, deletedSteps: {}, directToSourceStep: '', directToTargetStep: '', rowActionStep: '', rowActionMode: '', rowRevealStep: '', rowRevealMode: '', coordDisplayMode: 'xy', expandedBottomPanel: '', closingBottomPanel: '', closingBottomPanelUntilUtc: 0 };
       const existing = fltPlanPlanStateBySelection[key];
       if (existing && typeof existing === 'object'){
         if (!existing.speedAdjustments || typeof existing.speedAdjustments !== 'object') existing.speedAdjustments = {};
@@ -5035,9 +6710,12 @@ namespace VAICOM
         if (typeof existing.rowRevealStep !== 'string') existing.rowRevealStep = '';
         if (typeof existing.rowRevealMode !== 'string') existing.rowRevealMode = '';
         if (typeof existing.coordDisplayMode !== 'string') existing.coordDisplayMode = 'xy';
+        if (typeof existing.expandedBottomPanel !== 'string') existing.expandedBottomPanel = '';
+        if (typeof existing.closingBottomPanel !== 'string') existing.closingBottomPanel = '';
+        if (!isFinite(Number(existing.closingBottomPanelUntilUtc))) existing.closingBottomPanelUntilUtc = 0;
         return existing;
       }
-      const created = { speedAdjustments: {}, speedDisplayModes: {}, altAdjustments: {}, typeOverrides: {}, lockedStep: '', totSeconds: NaN, lockedStart: null, timeMarks: {}, timingLog: [], postFlightOpen: false, ataByStep: {}, speedRecommendations: {}, totPerformanceByStep: {}, lastOwnshipPos: null, deletedSteps: {}, directToSourceStep: '', directToTargetStep: '', rowActionStep: '', rowActionMode: '', rowRevealStep: '', rowRevealMode: '', coordDisplayMode: 'xy' };
+      const created = { speedAdjustments: {}, speedDisplayModes: {}, altAdjustments: {}, typeOverrides: {}, lockedStep: '', totSeconds: NaN, lockedStart: null, timeMarks: {}, timingLog: [], postFlightOpen: false, ataByStep: {}, speedRecommendations: {}, totPerformanceByStep: {}, lastOwnshipPos: null, deletedSteps: {}, directToSourceStep: '', directToTargetStep: '', rowActionStep: '', rowActionMode: '', rowRevealStep: '', rowRevealMode: '', coordDisplayMode: 'xy', expandedBottomPanel: '', closingBottomPanel: '', closingBottomPanelUntilUtc: 0 };
       fltPlanPlanStateBySelection[key] = created;
       return created;
     }
@@ -5198,6 +6876,64 @@ namespace VAICOM
     function setTakeoffByMinutesDelta(selected, minutesDelta){
       const delta = Math.round(Number(minutesDelta || 0) * 60);
       setTakeoffBySecondsDelta(selected, delta);
+    }
+
+    function setTimingAnchorBySecondsDelta(selected, anchorType, secondsDelta){
+      const delta = Math.round(Number(secondsDelta || 0));
+      if (!isFinite(delta) || delta === 0) return;
+
+      const anchor = String(anchorType || '').toUpperCase();
+      if (!anchor) return;
+      if (anchor === 'TOT'){
+        setTotBySecondsDelta(selected, delta);
+        return;
+      }
+      if (anchor === 'TAKEOFF'){
+        setTakeoffBySecondsDelta(selected, delta);
+        return;
+      }
+
+      const key = getFlightPlanEtaStartKey(selected);
+      if (!key) return;
+
+      const state = getFlightPlanPlanState(selected);
+      const marks = getResolvedTimingMarks(selected);
+      if (!isFinite(Number(marks.takeoff))){
+        const now = getCurrentFlightPlanClockSeconds();
+        const defaults = buildTimingFromTakeoff(now);
+        marks.step = defaults.step;
+        marks.start = defaults.start;
+        marks.taxi = defaults.taxi;
+        marks.takeoff = defaults.takeoff;
+      }
+
+      if (anchor === 'STEP'){
+        marks.step = Number(marks.step) + delta;
+        marks.start = Number(marks.step) + stepToStartSeconds;
+        marks.taxi = Number(marks.start) + startToTaxiSeconds;
+        marks.takeoff = Number(marks.taxi) + taxiToTakeoffSeconds;
+      } else if (anchor === 'START'){
+        marks.start = Number(marks.start) + delta;
+        marks.taxi = Number(marks.start) + startToTaxiSeconds;
+        marks.takeoff = Number(marks.taxi) + taxiToTakeoffSeconds;
+      } else if (anchor === 'TAXI'){
+        marks.taxi = Number(marks.taxi) + delta;
+        marks.takeoff = Number(marks.taxi) + taxiToTakeoffSeconds;
+      } else {
+        return;
+      }
+
+      state.timeMarks = {
+        step: marks.step,
+        start: marks.start,
+        taxi: marks.taxi,
+        takeoff: marks.takeoff,
+      };
+
+      if (isFinite(Number(marks.takeoff))){
+        fltPlanEtaStartBySelection[key] = Number(marks.takeoff);
+      }
+      appendTimingLog(selected, anchor + ' ADJ', marks);
     }
 
     function resolveWaypointNorthEast(wp){
@@ -5532,6 +7268,104 @@ namespace VAICOM
 
     function getFlightPlanEtaStartKey(selected){
       return String(selected || '');
+    }
+
+    function getExpandedTimeAnchor(selected){
+      const key = getFlightPlanEtaStartKey(selected);
+      if (!key) return '';
+      return String(fltPlanExpandedTimeAnchorBySelection[key] || '').toUpperCase();
+    }
+
+    function setExpandedTimeAnchor(selected, anchor){
+      const key = getFlightPlanEtaStartKey(selected);
+      if (!key) return;
+      const value = String(anchor || '').toUpperCase();
+      if (value){
+        fltPlanExpandedTimeAnchorBySelection[key] = value;
+      } else {
+        delete fltPlanExpandedTimeAnchorBySelection[key];
+      }
+    }
+
+    function getExpandedNavEdit(selected){
+      const key = getFlightPlanEtaStartKey(selected);
+      if (!key) return { step: '', field: '' };
+      const state = getExpandedNavEditState(selected);
+      if (!state || typeof state !== 'object') return { step: '', field: '' };
+      return {
+        step: String(state.step || ''),
+        field: String(state.field || '').toUpperCase(),
+      };
+    }
+
+    function getExpandedNavEditState(selected){
+      const key = getFlightPlanEtaStartKey(selected);
+      if (!key) return null;
+      let state = fltPlanExpandedNavEditBySelection[key];
+      if (!state || typeof state !== 'object'){
+        state = {
+          step: '',
+          field: '',
+          closingStep: '',
+          closingField: '',
+          closingUntilUtc: 0,
+        };
+        fltPlanExpandedNavEditBySelection[key] = state;
+      }
+      const until = Number(state.closingUntilUtc || 0);
+      if (!isFinite(until) || until <= 0 || Date.now() >= until){
+        state.closingStep = '';
+        state.closingField = '';
+        state.closingUntilUtc = 0;
+      }
+      return state;
+    }
+
+    function setExpandedNavEdit(selected, step, field){
+      const key = getFlightPlanEtaStartKey(selected);
+      if (!key) return;
+      const stepKey = String(step || '');
+      const fieldKey = String(field || '').toUpperCase();
+      const state = getExpandedNavEditState(selected);
+      if (!state) return;
+      if (!stepKey || !fieldKey){
+        state.step = '';
+        state.field = '';
+        state.closingStep = '';
+        state.closingField = '';
+        state.closingUntilUtc = 0;
+        return;
+      }
+      state.step = stepKey;
+      state.field = fieldKey;
+    }
+
+    function closeExpandedNavEditAnimated(selected){
+      const state = getExpandedNavEditState(selected);
+      if (!state) return false;
+      const stepKey = stepToKey(state.step);
+      const fieldKey = String(state.field || '').toUpperCase();
+      if (!stepKey || !fieldKey) return false;
+      state.closingStep = stepKey;
+      state.closingField = fieldKey;
+      state.closingUntilUtc = Date.now() + overlayCloseHideDelayMs;
+      state.step = '';
+      state.field = '';
+      return true;
+    }
+
+    function isClosingNavEdit(selected, step, field){
+      const state = getExpandedNavEditState(selected);
+      if (!state) return false;
+      const until = Number(state.closingUntilUtc || 0);
+      if (!isFinite(until) || until <= 0 || Date.now() >= until){
+        state.closingStep = '';
+        state.closingField = '';
+        state.closingUntilUtc = 0;
+        return false;
+      }
+      return stepToKey(state.closingStep) === stepToKey(step)
+        && String(state.closingField || '').toUpperCase() === String(field || '').toUpperCase();
     }
 
     function getActiveFlightPlanSelection(data){
@@ -7111,7 +8945,74 @@ namespace VAICOM
       return { unit: unit, freq: freq };
     }
 
-    function formatFrequenciesBlockHtml(data){
+    function normalizeBottomPanelKey(panel){
+      const key = String(panel || '').trim().toUpperCase();
+      return (key === 'FREQ' || key === 'CMDS' || key === 'ASSETS' || key === 'WX') ? key : '';
+    }
+
+    function getExpandedBottomPanel(selected){
+      const state = getFlightPlanPlanState(selected);
+      if (!state) return '';
+      return normalizeBottomPanelKey(state.expandedBottomPanel);
+    }
+
+    function setExpandedBottomPanel(selected, panel){
+      const state = getFlightPlanPlanState(selected);
+      if (!state) return;
+      const key = normalizeBottomPanelKey(panel);
+      state.expandedBottomPanel = key;
+      if (key){
+        state.closingBottomPanel = '';
+        state.closingBottomPanelUntilUtc = 0;
+      }
+    }
+
+    function closeExpandedBottomPanelAnimated(selected){
+      const state = getFlightPlanPlanState(selected);
+      if (!state) return false;
+      const current = normalizeBottomPanelKey(state.expandedBottomPanel);
+      if (!current) return false;
+      state.closingBottomPanel = current;
+      state.closingBottomPanelUntilUtc = Date.now() + overlayCloseHideDelayMs;
+      state.expandedBottomPanel = '';
+      return true;
+    }
+
+    function isClosingBottomPanel(selected, panel){
+      const state = getFlightPlanPlanState(selected);
+      if (!state) return false;
+      const until = Number(state.closingBottomPanelUntilUtc || 0);
+      if (!isFinite(until) || until <= 0 || Date.now() >= until){
+        state.closingBottomPanel = '';
+        state.closingBottomPanelUntilUtc = 0;
+        return false;
+      }
+      return normalizeBottomPanelKey(state.closingBottomPanel) === normalizeBottomPanelKey(panel);
+    }
+
+    function getBottomPanelShellClass(selected, panel){
+      const key = normalizeBottomPanelKey(panel);
+      if (!key) return 'fltPlanInfoShell';
+      if (getExpandedBottomPanel(selected) === key) return 'fltPlanInfoShell expanded';
+      if (isClosingBottomPanel(selected, key)) return 'fltPlanInfoShell closing';
+      return 'fltPlanInfoShell';
+    }
+
+    function getBottomPanelClassSuffix(selected, panel){
+      const key = normalizeBottomPanelKey(panel);
+      if (!key) return '';
+      if (getExpandedBottomPanel(selected) === key) return ' expanded';
+      if (isClosingBottomPanel(selected, key)) return ' closing';
+      return '';
+    }
+
+    function getBottomPanelTitleAttrs(selected, panel){
+      const key = normalizeBottomPanelKey(panel);
+      if (!key) return '';
+      return ' data-bottom-panel-toggle=""' + key + '"" title=""Click to expand/collapse panel""';
+    }
+
+    function formatFrequenciesBlockHtml(data, selected){
       const atcRaw = pickClosestLines(getMergedList(data && data.Units, 'ATC'), 4);
       const flightRaw = pickClosestLines(getMergedList(data && data.Units, 'FLIGHT'), 4);
       const entries = atcRaw.concat(flightRaw)
@@ -7124,10 +9025,11 @@ namespace VAICOM
       });
       if (!rows.length){ rows.push('<tr><td colspan=""2"">No frequency data.</td></tr>'); }
 
-      return '<div class=""fltPlanInfoBlock""><div class=""fltPlanInfoTitle"">FREQUENCIES</div><div class=""fltPlanInfoBody""><table class=""fltPlanInfoTable""><thead><tr><th>UNIT</th><th>UHF/VHF</th></tr></thead><tbody>' + rows.join('') + '</tbody></table></div></div>';
+      const titleAttrs = getBottomPanelTitleAttrs(selected, 'FREQ');
+      return '<div class=""fltPlanInfoBlock""><div class=""fltPlanInfoTitle""' + titleAttrs + '>FREQUENCIES</div><div class=""fltPlanInfoBody""><table class=""fltPlanInfoTable""><thead><tr><th>UNIT</th><th>UHF/VHF</th></tr></thead><tbody>' + rows.join('') + '</tbody></table></div></div>';
     }
 
-    function formatAssetsBlockHtml(data){
+    function formatAssetsBlockHtml(data, selected){
       const tanker = pickClosestLines(getMergedList(data && data.Units, 'TANKER'), 3);
       const awacs = pickClosestLines(getMergedList(data && data.Units, 'AWACS'), 2);
       const jtac = pickClosestLines(getMergedList(data && data.Units, 'JTAC'), 2);
@@ -7138,10 +9040,11 @@ namespace VAICOM
       });
       if (!rows.length){ rows.push('<tr><td>No asset data.</td></tr>'); }
 
-      return '<div class=""fltPlanInfoBlock""><div class=""fltPlanInfoTitle"">ASSETS</div><div class=""fltPlanInfoBody""><table class=""fltPlanInfoTable""><thead><tr><th>CALLSIGN / UNIT / FREQ / TACAN</th></tr></thead><tbody>' + rows.join('') + '</tbody></table></div></div>';
+      const titleAttrs = getBottomPanelTitleAttrs(selected, 'ASSETS');
+      return '<div class=""fltPlanInfoBlock""><div class=""fltPlanInfoTitle""' + titleAttrs + '>ASSETS</div><div class=""fltPlanInfoBody""><table class=""fltPlanInfoTable""><thead><tr><th>CALLSIGN / UNIT / FREQ / TACAN</th></tr></thead><tbody>' + rows.join('') + '</tbody></table></div></div>';
     }
 
-    function formatMetarBlockHtml(data){
+    function formatMetarBlockHtml(data, selected){
       const server = (data && data.Server) || {};
       const metars = server.AtcMetars || {};
       const atcLines = pickClosestLines(getMergedList(data && data.Units, 'ATC'), 8);
@@ -7170,7 +9073,8 @@ namespace VAICOM
       });
       if (!rows.length){ rows.push('<tr><td>No METAR data.</td></tr>'); }
 
-      return '<div class=""fltPlanInfoBlock""><div class=""fltPlanInfoTitle"">WX</div><div class=""fltPlanInfoBody""><table class=""fltPlanInfoTable""><thead><tr><th>METAR</th></tr></thead><tbody>' + rows.join('') + '</tbody></table></div></div>';
+      const titleAttrs = getBottomPanelTitleAttrs(selected, 'WX');
+      return '<div class=""fltPlanInfoBlock""><div class=""fltPlanInfoTitle""' + titleAttrs + '>WX</div><div class=""fltPlanInfoBody""><table class=""fltPlanInfoTable""><thead><tr><th>METAR</th></tr></thead><tbody>' + rows.join('') + '</tbody></table></div></div>';
     }
 
     function estimateCruiseKcasForAltitude(altFeet){
@@ -7534,6 +9438,17 @@ namespace VAICOM
       fltPlanEtaStartBySelection[key] = getCurrentFlightPlanClockSeconds();
     }
 
+    function getTimingClockTextForAnchor(selected, anchorType){
+      const timing = getFlightPlanTimingDisplay(selected);
+      const anchor = String(anchorType || '').toUpperCase();
+      if (anchor === 'STEP') return String((timing && timing.step) || '-');
+      if (anchor === 'START') return String((timing && timing.start) || '-');
+      if (anchor === 'TAXI') return String((timing && timing.taxi) || '-');
+      if (anchor === 'TAKEOFF') return String((timing && timing.takeoff) || '-');
+      if (anchor === 'TOT') return String((timing && timing.tot) || '-');
+      return '-';
+    }
+
     function setTakeoffTimeByAnchorFromNow(selected, anchorType){
       const key = getFlightPlanEtaStartKey(selected);
       if (!key) return;
@@ -7872,7 +9787,7 @@ namespace VAICOM
       }).filter(function(wp){ return !!wp; });
     }
 
-    function formatDtcCmdsBlockHtml(root){
+    function formatDtcCmdsBlockHtml(root, selected){
       function collectCmdsSettings(value, depth, found){
         if (depth > 10 || value === null || value === undefined) return;
         if (Array.isArray(value)){
@@ -7985,7 +9900,8 @@ namespace VAICOM
         rows.push('<tr><td style=""width:50%;"">' + left + '</td><td>' + right + '</td></tr>');
       }
 
-      return '<div class=""fltPlanInfoBlock""><div class=""fltPlanInfoTitle"">CMDS</div><div class=""fltPlanInfoBody""><table class=""fltPlanInfoTable""><tbody>' + rows.join('') + '</tbody></table></div></div>';
+      const titleAttrs = getBottomPanelTitleAttrs(selected, 'CMDS');
+      return '<div class=""fltPlanInfoBlock""><div class=""fltPlanInfoTitle""' + titleAttrs + '>CMDS</div><div class=""fltPlanInfoBody""><table class=""fltPlanInfoTable""><tbody>' + rows.join('') + '</tbody></table></div></div>';
     }
 
     function formatDtcCommPanelHtml(root, emptyWhenMissing){
@@ -8241,16 +10157,17 @@ namespace VAICOM
       return '<div class=""fltPlanPage2Section""><div class=""fltPlanPage2Title"">CMDS</div><div class=""fltPlanPage2Body"">No runtime CMDS data.</div></div>';
     }
 
-    function formatRuntimeCmdsInfoBlockHtml(data){
+    function formatRuntimeCmdsInfoBlockHtml(data, selected){
       const server = (data && data.Server) || {};
       const roots = [server.Payload, server.Diagnostics];
       for (let i = 0; i < roots.length; i++){
         const root = roots[i];
         if (!root || typeof root !== 'object') continue;
-        const block = formatDtcCmdsBlockHtml(root);
+        const block = formatDtcCmdsBlockHtml(root, selected);
         if (block) return block;
       }
-      return '<div class=""fltPlanInfoBlock""><div class=""fltPlanInfoTitle"">CMDS</div><div class=""fltPlanInfoBody"">None</div></div>';
+      const titleAttrs = getBottomPanelTitleAttrs(selected, 'CMDS');
+      return '<div class=""fltPlanInfoBlock""><div class=""fltPlanInfoTitle""' + titleAttrs + '>CMDS</div><div class=""fltPlanInfoBody"">None</div></div>';
     }
 
     function formatRuntimePage2Html(data, pageSwitcherHtml, selected){
@@ -10587,12 +12504,43 @@ namespace VAICOM
         html += '<div class=""fltPlanToolbar""><span class=""fltPlanToolbarLeft""></span><span class=""fltPlanToolbarRight""><button type=""button"" class=""fltPlanPageBtn"" data-postflight-toggle=""1"">' + (postFlightOpen ? 'Hide POST FLT' : 'POST FLT') + '</button></span></div>';
       }
 
+      const expandedAnchor = getExpandedTimeAnchor(selected);
+      const stepExpandedClass = expandedAnchor === 'STEP' ? ' expanded' : '';
+      const startExpandedClass = expandedAnchor === 'START' ? ' expanded' : '';
+      const taxiExpandedClass = expandedAnchor === 'TAXI' ? ' expanded' : '';
+      const takeoffExpandedClass = expandedAnchor === 'TAKEOFF' ? ' expanded' : '';
+      const totExpandedClass = expandedAnchor === 'TOT' ? ' expanded' : '';
+      const stepClock = getTimingClockTextForAnchor(selected, 'STEP');
+      const startClock = getTimingClockTextForAnchor(selected, 'START');
+      const taxiClock = getTimingClockTextForAnchor(selected, 'TAXI');
+      const takeoffClock = getTimingClockTextForAnchor(selected, 'TAKEOFF');
+      const totClock = getTimingClockTextForAnchor(selected, 'TOT');
+      const navEdit = getExpandedNavEdit(selected);
+
+      function navPopupClass(stepKey, fieldKey){
+        const step = String(stepKey || '');
+        const field = String(fieldKey || '').toUpperCase();
+        if (navEdit.step === step && navEdit.field === field) return ' expanded';
+        if (isClosingNavEdit(selected, step, field)) return ' closing';
+        return '';
+      }
+
+      function navPopupEditor(edgeClass, leftAttr, rightAttr, valueText){
+        return '<div class=""fltPlanTimeCellEditor ' + edgeClass + '"">'
+          + '<div class=""fltPlanTimeEditorRow"">'
+          + '<span class=""fltPlanTimeEditorBtns""><button type=""button"" class=""fltPlanMiniBtn"" ' + leftAttr + '>◀</button></span>'
+          + '<span class=""fltPlanTimeEditorCenter"">' + escapeHtml(String(valueText || '-')) + '</span>'
+          + '<span class=""fltPlanTimeEditorBtns""><button type=""button"" class=""fltPlanMiniBtn"" ' + rightAttr + '>▶</button></span>'
+          + '</div>'
+          + '</div>';
+      }
+
       html += '<div class=""fltPlanTimeGrid"">';
-      html += '<div class=""fltPlanTimeCell clickable"" data-tko-anchor=""STEP"" title=""Set STEP to current clock (Takeoff auto = STEP +35m)""><div class=""fltPlanTimeCellLabel"">STEP</div><div class=""fltPlanTimeCellValue"">' + escapeHtml(timing.step) + '</div></div>';
-      html += '<div class=""fltPlanTimeCell clickable"" data-tko-anchor=""START"" title=""Set START to current clock (Takeoff auto = START +25m)""><div class=""fltPlanTimeCellLabel"">START</div><div class=""fltPlanTimeCellValue"">' + escapeHtml(timing.start) + '</div></div>';
-      html += '<div class=""fltPlanTimeCell clickable"" data-tko-anchor=""TAXI"" title=""Set TAXI to current clock (Takeoff auto = TAXI +15m)""><div class=""fltPlanTimeCellLabel"">TAXI</div><div class=""fltPlanTimeCellValue"">' + escapeHtml(timing.taxi) + '</div></div>';
-      html += '<div class=""fltPlanTimeCell clickable"" data-tko-anchor=""TAKEOFF"" title=""Set TAKEOFF to current clock""><div class=""fltPlanTimeCellLabel"">TAKEOFF</div><div class=""fltPlanTimeCellValue""><div class=""fltPlanAdjustCell""><button type=""button"" class=""fltPlanMiniBtn"" data-tko-adjust-sec=""-1"" title=""-1 second"">«</button><button type=""button"" class=""fltPlanMiniBtn"" data-tko-adjust=""-60"" title=""-1 minute"">◀</button><span class=""fltPlanSpdValue"">' + escapeHtml(timing.takeoff) + '</span><button type=""button"" class=""fltPlanMiniBtn"" data-tko-adjust=""60"" title=""+1 minute"">▶</button><button type=""button"" class=""fltPlanMiniBtn"" data-tko-adjust-sec=""1"" title=""+1 second"">»</button></div></div></div>';
-      html += '<div class=""fltPlanTimeCell""><div class=""fltPlanTimeCellLabel"">TOT</div><div class=""fltPlanTimeCellValue""><div class=""fltPlanAdjustCell""><button type=""button"" class=""fltPlanMiniBtn"" data-tot-adjust-sec=""-1"" title=""-1 second"">«</button><button type=""button"" class=""fltPlanMiniBtn"" data-tot-adjust=""-60"" title=""-1 minute"">◀</button><span class=""fltPlanSpdValue"">' + escapeHtml(timing.tot) + '</span><button type=""button"" class=""fltPlanMiniBtn"" data-tot-adjust=""60"" title=""+1 minute"">▶</button><button type=""button"" class=""fltPlanMiniBtn"" data-tot-adjust-sec=""1"" title=""+1 second"">»</button></div></div></div>';
+      html += '<div class=""fltPlanTimeCell clickable' + stepExpandedClass + '"" data-tko-anchor=""STEP"" data-time-anchor=""STEP"" title=""Set STEP to current clock (Takeoff auto = STEP +35m)""><div class=""fltPlanTimeCellLabel"">STEP</div><div class=""fltPlanTimeCellValue"">' + escapeHtml(stepClock) + '</div><div class=""fltPlanTimeCellEditor edgeLeft""><div class=""fltPlanTimeEditorRow""><span class=""fltPlanTimeEditorBtns""><button type=""button"" class=""fltPlanMiniBtn"" data-time-adjust-anchor=""STEP"" data-time-adjust-sec=""-1"" title=""-1 second"">«</button><button type=""button"" class=""fltPlanMiniBtn"" data-time-adjust-anchor=""STEP"" data-time-adjust-sec=""-60"" title=""-1 minute"">◀</button></span><span class=""fltPlanTimeEditorCenter"">' + escapeHtml(stepClock) + '</span><span class=""fltPlanTimeEditorBtns""><button type=""button"" class=""fltPlanMiniBtn"" data-time-adjust-anchor=""STEP"" data-time-adjust-sec=""60"" title=""+1 minute"">▶</button><button type=""button"" class=""fltPlanMiniBtn"" data-time-adjust-anchor=""STEP"" data-time-adjust-sec=""1"" title=""+1 second"">»</button></span></div></div></div>';
+      html += '<div class=""fltPlanTimeCell clickable' + startExpandedClass + '"" data-tko-anchor=""START"" data-time-anchor=""START"" title=""Set START to current clock (Takeoff auto = START +25m)""><div class=""fltPlanTimeCellLabel"">START</div><div class=""fltPlanTimeCellValue"">' + escapeHtml(startClock) + '</div><div class=""fltPlanTimeCellEditor""><div class=""fltPlanTimeEditorRow""><span class=""fltPlanTimeEditorBtns""><button type=""button"" class=""fltPlanMiniBtn"" data-time-adjust-anchor=""START"" data-time-adjust-sec=""-1"" title=""-1 second"">«</button><button type=""button"" class=""fltPlanMiniBtn"" data-time-adjust-anchor=""START"" data-time-adjust-sec=""-60"" title=""-1 minute"">◀</button></span><span class=""fltPlanTimeEditorCenter"">' + escapeHtml(startClock) + '</span><span class=""fltPlanTimeEditorBtns""><button type=""button"" class=""fltPlanMiniBtn"" data-time-adjust-anchor=""START"" data-time-adjust-sec=""60"" title=""+1 minute"">▶</button><button type=""button"" class=""fltPlanMiniBtn"" data-time-adjust-anchor=""START"" data-time-adjust-sec=""1"" title=""+1 second"">»</button></span></div></div></div>';
+      html += '<div class=""fltPlanTimeCell clickable' + taxiExpandedClass + '"" data-tko-anchor=""TAXI"" data-time-anchor=""TAXI"" title=""Set TAXI to current clock (Takeoff auto = TAXI +15m)""><div class=""fltPlanTimeCellLabel"">TAXI</div><div class=""fltPlanTimeCellValue"">' + escapeHtml(taxiClock) + '</div><div class=""fltPlanTimeCellEditor""><div class=""fltPlanTimeEditorRow""><span class=""fltPlanTimeEditorBtns""><button type=""button"" class=""fltPlanMiniBtn"" data-time-adjust-anchor=""TAXI"" data-time-adjust-sec=""-1"" title=""-1 second"">«</button><button type=""button"" class=""fltPlanMiniBtn"" data-time-adjust-anchor=""TAXI"" data-time-adjust-sec=""-60"" title=""-1 minute"">◀</button></span><span class=""fltPlanTimeEditorCenter"">' + escapeHtml(taxiClock) + '</span><span class=""fltPlanTimeEditorBtns""><button type=""button"" class=""fltPlanMiniBtn"" data-time-adjust-anchor=""TAXI"" data-time-adjust-sec=""60"" title=""+1 minute"">▶</button><button type=""button"" class=""fltPlanMiniBtn"" data-time-adjust-anchor=""TAXI"" data-time-adjust-sec=""1"" title=""+1 second"">»</button></span></div></div></div>';
+      html += '<div class=""fltPlanTimeCell clickable' + takeoffExpandedClass + '"" data-tko-anchor=""TAKEOFF"" data-time-anchor=""TAKEOFF"" title=""Set TAKEOFF to current clock""><div class=""fltPlanTimeCellLabel"">TAKEOFF</div><div class=""fltPlanTimeCellValue"">' + escapeHtml(takeoffClock) + '</div><div class=""fltPlanTimeCellEditor edgeRight""><div class=""fltPlanTimeEditorRow""><span class=""fltPlanTimeEditorBtns""><button type=""button"" class=""fltPlanMiniBtn"" data-time-adjust-anchor=""TAKEOFF"" data-time-adjust-sec=""-1"" title=""-1 second"">«</button><button type=""button"" class=""fltPlanMiniBtn"" data-time-adjust-anchor=""TAKEOFF"" data-time-adjust-sec=""-60"" title=""-1 minute"">◀</button></span><span class=""fltPlanTimeEditorCenter"">' + escapeHtml(takeoffClock) + '</span><span class=""fltPlanTimeEditorBtns""><button type=""button"" class=""fltPlanMiniBtn"" data-time-adjust-anchor=""TAKEOFF"" data-time-adjust-sec=""60"" title=""+1 minute"">▶</button><button type=""button"" class=""fltPlanMiniBtn"" data-time-adjust-anchor=""TAKEOFF"" data-time-adjust-sec=""1"" title=""+1 second"">»</button></span></div></div></div>';
+      html += '<div class=""fltPlanTimeCell clickable' + totExpandedClass + '"" data-time-anchor=""TOT"" title=""Adjust TOT""><div class=""fltPlanTimeCellLabel"">TOT</div><div class=""fltPlanTimeCellValue"">' + escapeHtml(totClock) + '</div><div class=""fltPlanTimeCellEditor edgeLeft""><div class=""fltPlanTimeEditorRow""><span class=""fltPlanTimeEditorBtns""><button type=""button"" class=""fltPlanMiniBtn"" data-time-adjust-anchor=""TOT"" data-time-adjust-sec=""-1"" title=""-1 second"">«</button><button type=""button"" class=""fltPlanMiniBtn"" data-time-adjust-anchor=""TOT"" data-time-adjust-sec=""-60"" title=""-1 minute"">◀</button></span><span class=""fltPlanTimeEditorCenter"">' + escapeHtml(totClock) + '</span><span class=""fltPlanTimeEditorBtns""><button type=""button"" class=""fltPlanMiniBtn"" data-time-adjust-anchor=""TOT"" data-time-adjust-sec=""60"" title=""+1 minute"">▶</button><button type=""button"" class=""fltPlanMiniBtn"" data-time-adjust-anchor=""TOT"" data-time-adjust-sec=""1"" title=""+1 second"">»</button></span></div></div></div>';
       html += '</div>';
       if (postFlightOpen){
         html += '<div class=""fltPlanInfoBlock"" style=""min-height:0; margin-bottom:8px;"">';
@@ -10660,20 +12608,20 @@ namespace VAICOM
           if (wp.isStart){
             html += '<td>' + escapeHtml(wp.type) + '</td>';
           } else {
-            html += '<td><div class=""fltPlanAdjustCell""><button type=""button"" class=""fltPlanMiniBtn"" data-type-step=""' + escapeHtml(stepKey) + '"" data-type-current=""' + escapeHtml(wp.type) + '"" data-type-delta=""-1"">◀</button><span class=""fltPlanSpdValue"">' + escapeHtml(wp.type) + '</span><button type=""button"" class=""fltPlanMiniBtn"" data-type-step=""' + escapeHtml(stepKey) + '"" data-type-current=""' + escapeHtml(wp.type) + '"" data-type-delta=""1"">▶</button></div></td>';
+            html += '<td class=""fltPlanNavEditCell' + navPopupClass(stepKey, 'TYPE') + '""><div class=""fltPlanNavEditHost' + navPopupClass(stepKey, 'TYPE') + '"" data-nav-edit-host=""1"" data-nav-edit-step=""' + escapeHtml(stepKey) + '"" data-nav-edit-field=""TYPE""><span class=""fltPlanNavEditReadout"" data-nav-edit-toggle=""1"" data-nav-edit-step=""' + escapeHtml(stepKey) + '"" data-nav-edit-field=""TYPE"">' + escapeHtml(wp.type) + '</span>' + navPopupEditor('edgeLeft', 'data-type-step=""' + escapeHtml(stepKey) + '"" data-type-current=""' + escapeHtml(wp.type) + '"" data-type-delta=""-1"" title=""Prev type""', 'data-type-step=""' + escapeHtml(stepKey) + '"" data-type-current=""' + escapeHtml(wp.type) + '"" data-type-delta=""1"" title=""Next type""', wp.type) + '</div></td>';
           }
           html += '<td>' + escapeHtml(wp.name || '-') + '</td>';
           if (wp.isStart){
             html += '<td class=""fltPlanCellNum"">' + formatAltCellHtml(wp) + '</td>';
           } else {
-            html += '<td class=""fltPlanCellNum""><div class=""fltPlanAdjustCell""><button type=""button"" class=""fltPlanMiniBtn"" data-alt-step=""' + escapeHtml(stepKey) + '"" data-alt-dir=""-1"" data-alt-current=""' + escapeHtml(String(wp.altFeet)) + '"" title=""Adjust altitude"">◀</button><span class=""fltPlanSpdValue"">' + formatAltCellHtml(wp) + '</span><button type=""button"" class=""fltPlanMiniBtn"" data-alt-step=""' + escapeHtml(stepKey) + '"" data-alt-dir=""1"" data-alt-current=""' + escapeHtml(String(wp.altFeet)) + '"" title=""Adjust altitude"">▶</button></div></td>';
+            html += '<td class=""fltPlanCellNum fltPlanNavEditCell' + navPopupClass(stepKey, 'ALT') + '""><div class=""fltPlanNavEditHost' + navPopupClass(stepKey, 'ALT') + '"" data-nav-edit-host=""1"" data-nav-edit-step=""' + escapeHtml(stepKey) + '"" data-nav-edit-field=""ALT""><span class=""fltPlanNavEditReadout"" data-nav-edit-toggle=""1"" data-nav-edit-step=""' + escapeHtml(stepKey) + '"" data-nav-edit-field=""ALT"">' + formatAltCellHtml(wp) + '</span>' + navPopupEditor('', 'data-alt-step=""' + escapeHtml(stepKey) + '"" data-alt-dir=""-1"" data-alt-current=""' + escapeHtml(String(wp.altFeet)) + '"" title=""Lower altitude""', 'data-alt-step=""' + escapeHtml(stepKey) + '"" data-alt-dir=""1"" data-alt-current=""' + escapeHtml(String(wp.altFeet)) + '"" title=""Raise altitude""', String(wp.altFeet || '-')) + '</div></td>';
           }
           if (wp.isStart){
             html += '<td class=""fltPlanCellNum"">' + escapeHtml(wp.hdg || '-') + '</td>';
             html += '<td class=""fltPlanCellNum"">' + escapeHtml(wp.spd || '-') + '</td>';
           } else {
             html += '<td class=""fltPlanCellNum"">' + escapeHtml(wp.hdg || '-') + '</td>';
-            html += '<td class=""fltPlanCellNum""><div class=""fltPlanAdjustCell""><button type=""button"" class=""fltPlanMiniBtn"" data-spd-step=""' + escapeHtml(stepKey) + '"" data-spd-dir=""-1"" data-spd-alt=""' + escapeHtml(String(wp.altFeet)) + '"" title=""' + escapeHtml(speedStepTitle) + '"">◀</button><span class=""fltPlanSpdValue' + (speedRec ? ' fltPlanRecSpeed' : '') + '"" data-speed-mode-step=""' + escapeHtml(stepKey) + '"" data-speed-alt=""' + escapeHtml(String(wp.altFeet)) + '""' + (speedRec ? ' data-speed-rec-step=""' + escapeHtml(stepKey) + '""' : '') + ' title=""' + escapeHtml(speedRec ? 'Recommended speed: click to accept' : speedClickTitle) + '"">' + escapeHtml(speedDisplay) + '</span><button type=""button"" class=""fltPlanMiniBtn"" data-spd-step=""' + escapeHtml(stepKey) + '"" data-spd-dir=""1"" data-spd-alt=""' + escapeHtml(String(wp.altFeet)) + '"" title=""' + escapeHtml(speedStepTitle) + '"">▶</button></div></td>';
+            html += '<td class=""fltPlanCellNum fltPlanNavEditCell' + navPopupClass(stepKey, 'SPD') + '""><div class=""fltPlanNavEditHost' + navPopupClass(stepKey, 'SPD') + '"" data-nav-edit-host=""1"" data-nav-edit-step=""' + escapeHtml(stepKey) + '"" data-nav-edit-field=""SPD""><span class=""fltPlanNavEditReadout fltPlanSpdValue' + (speedRec ? ' fltPlanRecSpeed' : '') + '"" data-nav-edit-toggle=""1"" data-nav-edit-step=""' + escapeHtml(stepKey) + '"" data-nav-edit-field=""SPD"" data-speed-mode-step=""' + escapeHtml(stepKey) + '"" data-speed-alt=""' + escapeHtml(String(wp.altFeet)) + '""' + (speedRec ? ' data-speed-rec-step=""' + escapeHtml(stepKey) + '""' : '') + ' title=""' + escapeHtml(speedRec ? 'Recommended speed: click to accept' : speedClickTitle) + '"">' + escapeHtml(speedDisplay) + '</span>' + navPopupEditor('', 'data-spd-step=""' + escapeHtml(stepKey) + '"" data-spd-dir=""-1"" data-spd-alt=""' + escapeHtml(String(wp.altFeet)) + '"" title=""' + escapeHtml(speedStepTitle) + '""', 'data-spd-step=""' + escapeHtml(stepKey) + '"" data-spd-dir=""1"" data-spd-alt=""' + escapeHtml(String(wp.altFeet)) + '"" title=""' + escapeHtml(speedStepTitle) + '""', speedDisplay) + '</div></td>';
           }
           html += '<td class=""fltPlanCellNum"">' + escapeHtml(wp.dist || '-') + '</td>';
           if (wp.isStart){
@@ -10694,13 +12642,17 @@ namespace VAICOM
       }
 
       html += '</tbody></table></div></div>';
+      const freqWrapClass = 'fltPlanInfoFreqWrap' + getBottomPanelClassSuffix(selected, 'FREQ');
+      const cmdsWrapClass = 'fltPlanInfoCmdsWrap' + getBottomPanelClassSuffix(selected, 'CMDS');
+      const assetsWrapClass = 'fltPlanInfoAssetsWrap' + getBottomPanelClassSuffix(selected, 'ASSETS');
+      const wxWrapClass = 'fltPlanInfoWxWrap' + getBottomPanelClassSuffix(selected, 'WX');
       html += '<div class=""fltPlanBottomGrid"">';
-      html += '<div class=""fltPlanInfoFreqWrap"">' + formatFrequenciesBlockHtml(data) + '</div>';
+      html += '<div class=""' + freqWrapClass + '""><div class=""' + getBottomPanelShellClass(selected, 'FREQ') + '"">' + formatFrequenciesBlockHtml(data, selected) + '</div></div>';
       if (cmdsBlockHtml){
-        html += '<div class=""fltPlanInfoCmdsWrap"">' + cmdsBlockHtml + '</div>';
+        html += '<div class=""' + cmdsWrapClass + '""><div class=""' + getBottomPanelShellClass(selected, 'CMDS') + '"">' + cmdsBlockHtml + '</div></div>';
       }
-      html += '<div class=""fltPlanInfoAssetsWrap"">' + formatAssetsBlockHtml(data) + '</div>';
-      html += '<div class=""fltPlanInfoWxWrap"">' + formatMetarBlockHtml(data) + '</div>';
+      html += '<div class=""' + assetsWrapClass + '""><div class=""' + getBottomPanelShellClass(selected, 'ASSETS') + '"">' + formatAssetsBlockHtml(data, selected) + '</div></div>';
+      html += '<div class=""' + wxWrapClass + '""><div class=""' + getBottomPanelShellClass(selected, 'WX') + '"">' + formatMetarBlockHtml(data, selected) + '</div></div>';
       html += '</div>';
       html += '</div>';
       return html;
@@ -10749,7 +12701,7 @@ namespace VAICOM
         return html;
       }
 
-      return renderFlightPlanBoardHtml(selected, data, primaryRouteName, 'ROUTE TOOL', getPathFileName(getFltPlnPath(selected)), waypoints, formatRuntimeCmdsInfoBlockHtml(data), pageSwitcherHtml);
+      return renderFlightPlanBoardHtml(selected, data, primaryRouteName, 'ROUTE TOOL', getPathFileName(getFltPlnPath(selected)), waypoints, formatRuntimeCmdsInfoBlockHtml(data, selected), pageSwitcherHtml);
     }
 
     function parseMissionRuntimeWaypointSample(line){
@@ -10894,7 +12846,7 @@ namespace VAICOM
       if (page === 4){
         return formatDtcPage3Html(pageSwitcherHtml, rows, data, selected);
       }
-      return renderFlightPlanBoardHtml(selected, data, routeName, 'MISSION RUNTIME', '-', rows, formatRuntimeCmdsInfoBlockHtml(data), pageSwitcherHtml);
+      return renderFlightPlanBoardHtml(selected, data, routeName, 'MISSION RUNTIME', '-', rows, formatRuntimeCmdsInfoBlockHtml(data, selected), pageSwitcherHtml);
     }
 
     function formatDtcTableHtml(root, selected, data){
@@ -10914,7 +12866,7 @@ namespace VAICOM
           waypoints = applyTypeOverrides(runtimeWaypoints.slice(), '__RUNTIME_PLAYER__');
         }
       }
-      const cmdsBlockHtml = formatDtcCmdsBlockHtml(root);
+      const cmdsBlockHtml = formatDtcCmdsBlockHtml(root, selected);
       const page = getDtcPageBySelection(selected);
       const routeButtons = availableRoutes.map(function(r){
         return '<button type=""button"" class=""fltPlanPageBtn' + (routeKey === r ? ' active' : '') + '"" data-dtc-route=""' + r + '"">' + r + '</button>';
@@ -11139,6 +13091,34 @@ namespace VAICOM
       const atcMetars = (server && server.AtcMetars) || {};
       const parts = [];
 
+      if (tab === 'EFB'){
+        const efb = (data && data.Efb) || {};
+        const state = String(efb.State || 'Signed out');
+        const message = String(efb.Message || '');
+        const selectedAirport = resolveEfbSelectedAirport(data);
+        const lines = [];
+        lines.push('Navigraph EFB');
+        lines.push('State: ' + state);
+        lines.push('Feature enabled: ' + (efb.FeatureEnabled ? 'Yes' : 'No'));
+        lines.push('Auth blob present: ' + (efb.HasAuthBlob ? 'Yes' : 'No'));
+        lines.push('Auth readable: ' + (efb.AuthReadable ? 'Yes' : 'No'));
+        if (selectedAirport) lines.push('Airport context: ' + selectedAirport);
+        if (message) lines.push(message);
+
+        if (state === 'EFB loaded'){
+          lines.push('');
+          lines.push('EFB loaded for this spike.');
+          lines.push('Navigraph chart API rendering will be added in a later staged step.');
+        }
+
+        if (state === 'Ready/no live DCS'){
+          lines.push('');
+          lines.push('Data rendering is gated until a live DCS mission session is available.');
+        }
+
+        return lines.join('\n');
+      }
+
       if (tab === 'LOG'){
         const briefing = String(server.MissionBriefing || '').trim();
         const details = String(server.MissionDetails || '').trim();
@@ -11334,13 +13314,14 @@ namespace VAICOM
     function renderTabs(data){
       const tabsEl = document.getElementById('tabs');
       tabsEl.innerHTML = '';
+      const visibleTabs = getVisibleTabs(data);
       const active = normalizeActiveCategory(data.ActiveCategory, data);
-      if (autoBrowse && TABS.indexOf(active) >= 0){
+      if (autoBrowse && visibleTabs.indexOf(active) >= 0){
         selectedTab = active;
       }
-      if (TABS.indexOf(selectedTab) < 0) selectedTab = 'LOG';
+      if (visibleTabs.indexOf(selectedTab) < 0) selectedTab = 'LOG';
 
-      TABS.forEach(function(tab){
+      visibleTabs.forEach(function(tab){
         const btn = document.createElement('button');
         btn.className = 'tab ' + tabCssClass(tab) + (tab === selectedTab ? ' active' : '');
         btn.textContent = tabLabel(tab);
@@ -11353,6 +13334,16 @@ namespace VAICOM
 
     function render(data){
       latestData = data;
+
+      if (selectedTab === 'EFB'){
+        const activeEl = document.activeElement;
+        const activeId = activeEl && activeEl.id ? String(activeEl.id) : '';
+        const isEfbSelectFocused = (activeId === 'efbAirportSelect' || activeId === 'efbChartSelect');
+        if (isEfbSelectFocused && !efbUiDirty){
+          return;
+        }
+      }
+
       updateFakeMissionControlsUi();
       const displayData = getDisplayData(data);
       maybeResetFlightPlanStateForMission(data);
@@ -11389,6 +13380,22 @@ namespace VAICOM
         dlinkBox.checked = !!dlinkOnEnabled;
       }
 
+      const quickBar = document.getElementById('fltPlanQuickBar');
+      if (quickBar){
+        quickBar.className = 'fltPlanQuickBar';
+      }
+      const fileQuickBtn = document.getElementById('fltPlanFileBtn');
+      if (fileQuickBtn){
+        fileQuickBtn.className = selectedTab === 'DTC' ? 'fltPlanQuickBtn' : 'fltPlanQuickBtn hidden';
+      }
+      const sessionQuickBtn = document.getElementById('fltPlanSessionBtn');
+      if (sessionQuickBtn){
+        sessionQuickBtn.className = 'fltPlanQuickBtn';
+      }
+      if (selectedTab !== 'DTC'){
+        setFltPlanFilesOverlayOpen(false);
+      }
+
       document.getElementById('session').textContent = [
         'Active Category : ' + safe(normalizeActiveCategory(displayData.ActiveCategory, displayData)),
         'Updated (UTC)   : ' + formatUtcToSeconds(displayData.UpdatedUtc),
@@ -11402,11 +13409,42 @@ namespace VAICOM
         'Multiplayer     : ' + (server.Multiplayer ? 'Yes' : 'No')
       ].join('\n');
 
+      const sessionPanel = document.querySelector('.panel.session');
+      if (sessionPanel && sessionPanel.classList){
+        sessionPanel.classList.add('hidden');
+        sessionPanel.classList.add('legacyControls');
+      }
+
+      const sessionOverlayText = document.getElementById('fltPlanSessionOverlayText');
+      if (sessionOverlayText){
+        sessionOverlayText.textContent = document.getElementById('session').textContent || '';
+      }
+
       renderTabs(displayData);
       updateDtcControls(displayData);
+      if (fltPlanFilesOverlayOpen){
+        renderFltPlanFilesOverlay(displayData);
+      }
       applyCurrentTabKeywordsSplit();
+      const drawOverlayBtn = document.getElementById('drawOverlayToggleBtn');
+      if (drawOverlayBtn){
+        const showDrawBtn = selectedTab === 'NOTES';
+        drawOverlayBtn.classList.add('overlayToggleBtn', 'drawOverlayToggleBtn');
+        drawOverlayBtn.classList.toggle('hiddenFloatingBtn', !showDrawBtn);
+      }
+      if (selectedTab !== 'NOTES'){
+        setDrawOverlayOpen(false);
+      }
       document.body.classList.toggle('notes-tab', selectedTab === 'NOTES');
       document.body.classList.toggle('flt-plan-tab', selectedTab === 'DTC');
+      document.body.classList.toggle('efb-tab', selectedTab === 'EFB');
+      if (helpOverlayOpen && helpOverlayLoadedTab !== selectedTab){
+        const titleEl = document.getElementById('helpOverlayTitle');
+        if (titleEl){
+          titleEl.textContent = tabLabel(selectedTab) + ' Help';
+        }
+        loadHelpOverlayContent(selectedTab);
+      }
       if (selectedTab !== 'NOTES' || !drawModeEnabled){
         setDrawInteractionInNotes(false);
         clearDrawModeDisableTimer();
@@ -11503,7 +13541,37 @@ namespace VAICOM
         if (activeDtcSelection){
           updateDtcRouteButtonUi(activeDtcSelection);
         }
+      } else if (selectedTab === 'EFB'){
+        tabBody.className = 'content mainContent';
+        if (!Array.isArray(efbAvailableAirports)){
+          tabBody.innerHTML = '<div class=""efbEmpty"">Loading EFB airports...</div>';
+          ensureEfbAirportsLoaded().then(function(){
+            efbUiDirty = true;
+            if (latestData && selectedTab === 'EFB') render(latestData);
+          });
+        } else {
+          const airportKey = getEfbAirportKey(displayData);
+
+          if (!efbChartsByAirport[airportKey]){
+            tabBody.innerHTML = '<div class=""efbEmpty"">Loading EFB charts...</div>';
+            ensureEfbChartsLoaded(displayData).then(function(){
+              efbUiDirty = true;
+              if (latestData && selectedTab === 'EFB') render(latestData);
+            });
+          } else {
+            const hasRenderedEfb = !!document.getElementById('efbAirportToggleBtn');
+            if (!hasRenderedEfb || efbUiDirty){
+              tabBody.innerHTML = formatEfbTabContentHtml(displayData);
+              bindEfbInteractions(displayData);
+              efbLastResolvedAirport = airportKey;
+              efbUiDirty = false;
+            }
+          }
+        }
       } else {
+        efbDrawerOpen = false;
+        efbDrawerMode = 'airport';
+        efbSelectionFlowActive = false;
         tabBody.className = 'content mainContent';
         tabBody.textContent = formatTabContent(displayData, selectedTab);
       }
@@ -11521,7 +13589,7 @@ namespace VAICOM
         ? formatAiCrewPhaseLabel(displayData.AiCrewPhase)
         : '';
       const keywordPanelEl = document.getElementById('keywordPanel');
-      if (selectedTab === 'DTC'){
+      if (selectedTab === 'DTC' || selectedTab === 'EFB'){
         if (keywordPanelEl) keywordPanelEl.style.display = 'none';
       } else {
         if (keywordPanelEl) keywordPanelEl.style.display = 'flex';
@@ -11569,11 +13637,9 @@ namespace VAICOM
       const missionClockLabel = document.getElementById('missionClockLabel');
       if (!wrap || !selector || !listEl || !selectedLabel) return;
 
-      const visible = selectedTab === 'DTC';
-      wrap.className = visible ? 'controls fltPlanControls' : 'controls fltPlanControls hidden';
-      selector.className = visible ? 'panel dtcSelector' : 'panel dtcSelector hidden';
-      if (missionClockLabel) missionClockLabel.style.display = visible ? 'inline-block' : 'none';
-      if (!visible) return;
+      wrap.className = 'controls fltPlanControls hidden legacyControls';
+      selector.className = 'panel dtcSelector hidden legacyControls';
+      if (missionClockLabel) missionClockLabel.style.display = 'none';
 
       updateMissionClockLabel(data);
 
@@ -11596,6 +13662,10 @@ namespace VAICOM
       });
       listEl.innerHTML = rows.join('');
       applyDtcListCollapsedState(dtcListCollapsed);
+
+      if (fltPlanFilesOverlayOpen){
+        renderFltPlanFilesOverlay(data);
+      }
     }
 
     async function setServerMessageCapture(enabled){
@@ -11698,12 +13768,12 @@ namespace VAICOM
     }
 
     document.getElementById('showRaw').addEventListener('change', function(ev){
-      document.body.classList.toggle('raw-mode', ev.target.checked);
-      document.getElementById('json').className = ev.target.checked ? '' : 'hidden';
+      applyShowRawUi(!!ev.target.checked);
     });
 
     document.getElementById('autoBrowse').addEventListener('change', function(ev){
       autoBrowse = ev.target.checked;
+      applyAutoBrowseUi();
       if (latestData) render(latestData);
     });
 
@@ -11722,7 +13792,107 @@ namespace VAICOM
     document.getElementById('dlinkOn').addEventListener('change', function(ev){
       dlinkOnEnabled = !!ev.target.checked;
       persistDlinkOnPreference();
+      applyDlinkOnUi();
       if (latestData && selectedTab === 'DTC') render(latestData);
+    });
+
+    document.getElementById('overlayAutoBrowse').addEventListener('change', function(ev){
+      autoBrowse = !!ev.target.checked;
+      applyAutoBrowseUi();
+      if (latestData) render(latestData);
+    });
+
+    document.getElementById('overlayNightMode').addEventListener('change', function(ev){
+      nightModeEnabled = !!ev.target.checked;
+      persistNightModePreference();
+      applyNightModeUi();
+    });
+
+    document.getElementById('overlayDlinkOn').addEventListener('change', function(ev){
+      dlinkOnEnabled = !!ev.target.checked;
+      persistDlinkOnPreference();
+      applyDlinkOnUi();
+      if (latestData && selectedTab === 'DTC') render(latestData);
+    });
+
+    document.getElementById('overlayFontSizeSlider').addEventListener('input', function(ev){
+      contentFontSizePx = clamp(parseInt(ev.target.value, 10) || 24, 18, 34);
+      applyContentFontSizeUi();
+      persistContentFontSizePreference();
+    });
+
+    document.getElementById('overlayToggleBtn').addEventListener('click', function(ev){
+      ev.preventDefault();
+      ev.stopPropagation();
+      setSettingsOverlayOpen(!settingsOverlayOpen);
+    });
+
+    document.getElementById('drawOverlayToggleBtn').addEventListener('click', function(ev){
+      ev.preventDefault();
+      ev.stopPropagation();
+      setDrawOverlayOpen(!drawOverlayOpen);
+    });
+
+    document.getElementById('helpOverlayToggleBtn').addEventListener('click', function(ev){
+      ev.preventDefault();
+      ev.stopPropagation();
+      setHelpOverlayOpen(!helpOverlayOpen);
+    });
+
+    document.getElementById('overlayCloseBtn').addEventListener('click', function(ev){
+      ev.preventDefault();
+      ev.stopPropagation();
+      setSettingsOverlayOpen(false);
+    });
+
+    document.getElementById('drawOverlayCloseBtn').addEventListener('click', function(ev){
+      ev.preventDefault();
+      ev.stopPropagation();
+      setDrawOverlayOpen(false);
+    });
+
+    document.getElementById('helpOverlayCloseBtn').addEventListener('click', function(ev){
+      ev.preventDefault();
+      ev.stopPropagation();
+      setHelpOverlayOpen(false);
+    });
+
+    document.getElementById('settingsOverlay').addEventListener('click', function(ev){
+      if (ev.target && ev.target.id === 'settingsOverlay'){
+        setSettingsOverlayOpen(false);
+      }
+    });
+
+    document.getElementById('drawOverlay').addEventListener('click', function(ev){
+      if (ev.target && ev.target.id === 'drawOverlay'){
+        setDrawOverlayOpen(false);
+      }
+    });
+
+    document.getElementById('helpOverlay').addEventListener('click', function(ev){
+      if (ev.target && ev.target.id === 'helpOverlay'){
+        setHelpOverlayOpen(false);
+      }
+    });
+
+    document.getElementById('overlayDrawMode').addEventListener('change', function(ev){
+      const shouldEnable = !!ev.target.checked;
+      if (okbDoodlesOnlyForced || selectedTab !== 'NOTES'){
+        applyDrawOverlayUi();
+        return;
+      }
+
+      if (shouldEnable){
+        drawModeEnabled = true;
+        setDrawInteractionInNotes(true);
+        scheduleDrawModeAutoOff();
+      } else {
+        disableDrawMode();
+      }
+
+      persistDrawModePreference();
+      updateDrawModeToggleUi();
+      updateCursorModeForTab();
     });
 
     document.getElementById('drawModeToggle').addEventListener('click', function(){
@@ -11775,6 +13945,50 @@ namespace VAICOM
       if (selectedTab === 'DTC' && latestData){
         let node = ev.target;
         while (node && node !== this){
+          if (node.getAttribute && node.getAttribute('data-nav-edit-toggle')){
+            const selected = getActiveFlightPlanSelection(latestData);
+            const step = String(node.getAttribute('data-nav-edit-step') || '');
+            const field = String(node.getAttribute('data-nav-edit-field') || '').toUpperCase();
+            if (selected && step && field){
+              const current = getExpandedNavEdit(selected);
+              if (current.step === step && current.field === field){
+                closeExpandedNavEditAnimated(selected);
+              } else {
+                closeExpandedNavEditAnimated(selected);
+                setExpandedNavEdit(selected, step, field);
+              }
+              setExpandedTimeAnchor(selected, '');
+              render(latestData);
+            }
+            return;
+          }
+          if (node.getAttribute && node.getAttribute('data-time-adjust-anchor')){
+            const selected = getActiveFlightPlanSelection(latestData);
+            const anchor = String(node.getAttribute('data-time-adjust-anchor') || '').toUpperCase();
+            const seconds = Number(node.getAttribute('data-time-adjust-sec') || 0);
+            if (selected && anchor && isFinite(seconds) && seconds !== 0){
+              setTimingAnchorBySecondsDelta(selected, anchor, seconds);
+              render(latestData);
+            }
+            return;
+          }
+          if (node.getAttribute && node.getAttribute('data-time-anchor')){
+            const selected = getActiveFlightPlanSelection(latestData);
+            const anchor = String(node.getAttribute('data-time-anchor') || '').toUpperCase();
+            if (selected && anchor){
+              const expanded = getExpandedTimeAnchor(selected);
+              if (expanded === anchor){
+                setExpandedTimeAnchor(selected, '');
+              } else {
+                if (anchor !== 'TOT'){
+                  setTakeoffTimeByAnchorFromNow(selected, anchor);
+                }
+                setExpandedTimeAnchor(selected, anchor);
+              }
+              render(latestData);
+            }
+            return;
+          }
           if (node.getAttribute && node.getAttribute('data-spd-step')){
             const selected = getActiveFlightPlanSelection(latestData);
             const step = String(node.getAttribute('data-spd-step') || '');
@@ -11935,6 +14149,21 @@ namespace VAICOM
             }
             return;
           }
+          if (node.getAttribute && node.getAttribute('data-bottom-panel-toggle')){
+            const selected = getActiveFlightPlanSelection(latestData);
+            const panel = String(node.getAttribute('data-bottom-panel-toggle') || '').toUpperCase();
+            if (selected && panel){
+              const expandedPanel = getExpandedBottomPanel(selected);
+              if (expandedPanel === panel){
+                closeExpandedBottomPanelAnimated(selected);
+              } else {
+                closeExpandedBottomPanelAnimated(selected);
+                setExpandedBottomPanel(selected, panel);
+              }
+              render(latestData);
+            }
+            return;
+          }
           if (node.getAttribute && node.getAttribute('data-eta-step')){
             const selected = getActiveFlightPlanSelection(latestData);
             const step = String(node.getAttribute('data-eta-step') || '');
@@ -12000,6 +14229,12 @@ namespace VAICOM
             }
             const current = getMapSelectedAssetKeyBySelection(selected);
             setMapSelectedAssetKeyBySelection(selected, current === assetKey ? '' : assetKey);
+            if (category === 'ATC'){
+              const nextKey = current === assetKey ? '' : assetKey;
+              if (nextKey){
+                tryPreloadEfbForBuggedAirfield(latestData, nextKey).catch(function(){});
+              }
+            }
             render(latestData);
             return;
           }
@@ -12045,6 +14280,50 @@ namespace VAICOM
             return;
           }
           node = node.parentNode;
+        }
+
+        const activeSelection = getActiveFlightPlanSelection(latestData);
+        if (activeSelection){
+          const expanded = getExpandedTimeAnchor(activeSelection);
+          const expandedNav = getExpandedNavEdit(activeSelection);
+          if (expanded){
+            const target = ev && ev.target;
+            const insideTimeCell = target && target.closest && target.closest('.fltPlanTimeCell');
+            if (!insideTimeCell){
+              setExpandedTimeAnchor(activeSelection, '');
+              if (expandedNav.step){
+                closeExpandedNavEditAnimated(activeSelection);
+              }
+              render(latestData);
+              return;
+            }
+          }
+
+          if (expandedNav.step){
+            const target = ev && ev.target;
+            const insideNavPopup = target && target.closest && target.closest('.fltPlanNavEditHost');
+            if (!insideNavPopup){
+              if (!closeExpandedNavEditAnimated(activeSelection)){
+                setExpandedNavEdit(activeSelection, '', '');
+              }
+              if (expanded){
+                setExpandedTimeAnchor(activeSelection, '');
+              }
+              render(latestData);
+              return;
+            }
+          }
+
+          const expandedBottomPanel = getExpandedBottomPanel(activeSelection);
+          if (expandedBottomPanel){
+            const target = ev && ev.target;
+            const insideBottomPanel = target && target.closest && target.closest('.fltPlanBottomGrid');
+            if (!insideBottomPanel){
+              closeExpandedBottomPanelAnimated(activeSelection);
+              render(latestData);
+              return;
+            }
+          }
         }
       }
 
@@ -12131,6 +14410,12 @@ namespace VAICOM
             }
             const current = getMapSelectedAssetKeyBySelection(selected);
             setMapSelectedAssetKeyBySelection(selected, current === assetKey ? '' : assetKey);
+            if (category === 'ATC'){
+              const nextKey = current === assetKey ? '' : assetKey;
+              if (nextKey){
+                tryPreloadEfbForBuggedAirfield(latestData, nextKey).catch(function(){});
+              }
+            }
             render(latestData);
             ev.preventDefault();
             return;
@@ -12212,13 +14497,82 @@ namespace VAICOM
     });
 
     document.getElementById('showServer').addEventListener('change', function(ev){
-      showServerMessages = ev.target.checked;
-      document.getElementById('serverMessages').className = showServerMessages ? '' : 'hidden';
-      setServerMessageCapture(showServerMessages);
+      applyShowServerUi(!!ev.target.checked);
+    });
+
+    document.getElementById('overlayShowRaw').addEventListener('change', function(ev){
+      applyShowRawUi(!!ev.target.checked);
+    });
+
+    document.getElementById('overlayShowServer').addEventListener('change', function(ev){
+      applyShowServerUi(!!ev.target.checked);
     });
 
     document.getElementById('dtcRefresh').addEventListener('click', function(){
       refreshDtcFiles();
+    });
+
+    document.getElementById('fltPlanFileBtn').addEventListener('click', async function(ev){
+      ev.preventDefault();
+      ev.stopPropagation();
+      if (selectedTab !== 'DTC') return;
+
+      if (fltPlanFilesOverlayOpen){
+        setFltPlanFilesOverlayOpen(false);
+        return;
+      }
+
+      await refreshDtcFiles();
+      setFltPlanFilesOverlayOpen(true);
+      if (latestData) renderFltPlanFilesOverlay(getDisplayData(latestData));
+    });
+
+    document.getElementById('fltPlanSessionBtn').addEventListener('click', function(ev){
+      ev.preventDefault();
+      ev.stopPropagation();
+      setFltPlanSessionOverlayOpen(!fltPlanSessionOverlayOpen);
+    });
+
+    document.getElementById('fltPlanFilesCloseBtn').addEventListener('click', function(ev){
+      ev.preventDefault();
+      ev.stopPropagation();
+      setFltPlanFilesOverlayOpen(false);
+    });
+
+    document.getElementById('fltPlanSessionCloseBtn').addEventListener('click', function(ev){
+      ev.preventDefault();
+      ev.stopPropagation();
+      setFltPlanSessionOverlayOpen(false);
+    });
+
+    document.getElementById('fltPlanFilesOverlay').addEventListener('click', function(ev){
+      if (ev.target && ev.target.id === 'fltPlanFilesOverlay'){
+        setFltPlanFilesOverlayOpen(false);
+      }
+    });
+
+    document.getElementById('fltPlanSessionOverlay').addEventListener('click', function(ev){
+      if (ev.target && ev.target.id === 'fltPlanSessionOverlay'){
+        setFltPlanSessionOverlayOpen(false);
+      }
+    });
+
+    document.getElementById('fltPlanOverlayFileList').addEventListener('click', async function(ev){
+      let node = ev.target;
+      while (node && node !== this && !(node.getAttribute && node.getAttribute('data-overlay-file'))){
+        node = node.parentNode;
+      }
+      if (!node || node === this) return;
+
+      const encoded = String(node.getAttribute('data-overlay-file') || '');
+      if (!encoded) return;
+
+      const file = decodeURIComponent(encoded);
+      await selectDtcFile(file);
+      if (latestData){
+        render(latestData);
+      }
+      setFltPlanFilesOverlayOpen(false);
     });
 
     document.getElementById('dtcFileList').addEventListener('click', function(ev){
@@ -12301,10 +14655,12 @@ namespace VAICOM
 
     applyDtcListCollapsedState(readInitialDtcListCollapsed());
     applySessionCollapsedState(readInitialSessionCollapsed());
+    efbPinnedChartsByAirport = readPinnedChartsPreference();
     nightModeEnabled = readNightModePreference();
     applyNightModeUi();
     dlinkOnEnabled = readDlinkOnPreference();
     applyDlinkOnUi();
+    applyAutoBrowseUi();
     contentFontSizePx = readContentFontSizePreference();
     applyContentFontSizeUi();
     drawModeEnabled = readDrawModePreference();
@@ -12785,6 +15141,11 @@ namespace VAICOM
                                         {
                                             ID = OpenKneeboardPluginTabId + ";tab-notes",
                                             Name = "Tab NOTES",
+                                        },
+                                        new
+                                        {
+                                            ID = OpenKneeboardPluginTabId + ";tab-efb",
+                                            Name = "Tab EFB",
                                         },
                                     },
                                     Implementation = "WebBrowser",
@@ -13855,6 +16216,67 @@ namespace VAICOM
                         return;
                     }
 
+                    if (path == "/okb/efb/charts")
+                    {
+                        string airport = context.Request.QueryString["airport"] ?? "";
+                        WriteJson(context.Response, BuildEfbChartsJson(airport));
+                        return;
+                    }
+
+                    if (path == "/okb/efb/airports")
+                    {
+                        WriteJson(context.Response, BuildEfbAirportsJson());
+                        return;
+                    }
+
+                    if (path == "/okb/efb/chart")
+                    {
+                        string chartId = context.Request.QueryString["id"] ?? "";
+                        string contentType;
+                        byte[] chartBytes = ReadEfbChartBytes(chartId, out contentType);
+                        if (chartBytes == null || chartBytes.Length == 0)
+                        {
+                            context.Response.StatusCode = 404;
+                            context.Response.Close();
+                            return;
+                        }
+
+                        WriteBinary(context.Response, chartBytes, contentType);
+                        return;
+                    }
+
+                    if (path == "/okb/helpdoc")
+                    {
+                        string tab = context.Request.QueryString["tab"] ?? "";
+                        string payload = BuildHelpDocTabHtml(tab);
+                        if (string.Equals(payload, "<p>Help document not found.</p>", StringComparison.Ordinal))
+                        {
+                            string resolved = ResolveHelpDocPath();
+                            if (!string.IsNullOrWhiteSpace(resolved))
+                            {
+                                payload = "<p>Help document not found at startup location.</p><p>Resolved candidate: " + WebUtility.HtmlEncode(resolved) + "</p>";
+                            }
+                        }
+                        WriteText(context.Response, payload, "text/html; charset=utf-8");
+                        return;
+                    }
+
+                    if (path == "/okb/helpimg")
+                    {
+                        string file = context.Request.QueryString["name"] ?? "";
+                        string contentType;
+                        byte[] imageBytes = ReadHelpDocImageBytes(file, out contentType);
+                        if (imageBytes == null || imageBytes.Length == 0)
+                        {
+                            context.Response.StatusCode = 404;
+                            context.Response.Close();
+                            return;
+                        }
+
+                        WriteBinary(context.Response, imageBytes, contentType);
+                        return;
+                    }
+
                     context.Response.StatusCode = 404;
                     context.Response.Close();
                 }
@@ -14009,6 +16431,505 @@ namespace VAICOM
                     }
                 }
 
+                private static string BuildHelpDocTabHtml(string tab)
+                {
+                    try
+                    {
+                        EnsureHelpDocInVaAppsDocumentation();
+                        string path = ResolveHelpDocPath();
+                        if (string.IsNullOrWhiteSpace(path) || !File.Exists(path))
+                        {
+                            return "<p>Help document not found.</p>";
+                        }
+
+                        string html = File.ReadAllText(path);
+                        if (string.IsNullOrWhiteSpace(html))
+                        {
+                            return "<p>Help document is empty.</p>";
+                        }
+
+                        string globalSection = ExtractSectionById(html, "global");
+                        string tabSection = ExtractSectionById(html, NormalizeHelpDocSectionId(tab));
+
+                        if (string.IsNullOrWhiteSpace(globalSection) && string.IsNullOrWhiteSpace(tabSection))
+                        {
+                            return "<p>No help content found for this tab.</p>";
+                        }
+
+                        string scopedStyle = "<style>"
+                            + ".okbHelpDocScope{font-family:'Segoe UI',Tahoma,Arial,sans-serif;color:#14263a !important;line-height:1.45;background:transparent;}"
+                            + ".okbHelpDocScope *{writing-mode:horizontal-tb !important;text-orientation:mixed !important;transform:none !important;}"
+                            + ".okbHelpDocScope,.okbHelpDocScope p,.okbHelpDocScope li,.okbHelpDocScope span,.okbHelpDocScope div{color:#14263a !important;}"
+                            + ".okbHelpDocScope h2{margin:0 0 10px 0;font-size:22px;border-bottom:1px solid #c7d3df;padding-bottom:4px;color:#0f2438 !important;}"
+                            + ".okbHelpDocScope h3{margin:12px 0 8px 0;font-size:18px;color:#16324b !important;}"
+                            + ".okbHelpDocScope h4,.okbHelpDocScope h5,.okbHelpDocScope h6{margin:10px 0 6px 0;color:#1b3953 !important;}"
+                            + ".okbHelpDocScope p{margin:8px 0;}"
+                            + ".okbHelpDocScope ul,.okbHelpDocScope ol{margin:6px 0 10px 24px;padding:0;text-align:left !important;list-style-position:outside;}"
+                            + ".okbHelpDocScope li{margin:4px 0;}"
+                            + ".okbHelpDocScope strong,.okbHelpDocScope b{color:#0f2a43 !important;font-weight:700;}"
+                            + ".okbHelpDocScope em,.okbHelpDocScope i{color:#1a3a56 !important;}"
+                            + ".okbHelpDocScope code{background:#eaf1f8;border:1px solid #d5e2ef;border-radius:4px;padding:1px 5px;}"
+                            + ".okbHelpDocScope pre{background:#eef4fb;border:1px solid #d5e2ef;border-radius:8px;padding:8px;overflow:auto;color:#11283f !important;}"
+                            + ".okbHelpDocScope .tab{background:#ffffff;border:1px solid #c7d3df;border-radius:10px;padding:12px;margin-bottom:12px;display:block;}"
+                            + ".okbHelpDocScope .controls{display:block !important;border-left:4px solid #9fb8d4;padding-left:10px;margin-top:10px;text-align:left !important;background:rgba(245,249,255,0.62);border-radius:0 6px 6px 0;}"
+                            + ".okbHelpDocScope .controls > h3{display:block !important;margin:0 0 6px 0 !important;text-align:left !important;clear:both;}"
+                            + ".okbHelpDocScope .controls > ul,.okbHelpDocScope .controls > ol{display:block !important;margin:0 0 12px 28px !important;padding:0 !important;text-align:left !important;clear:both;}"
+                            + ".okbHelpDocScope a{color:#1a4b84;text-decoration:underline;font-weight:600;}"
+                            + ".okbHelpDocScope table{width:100%;border-collapse:collapse;margin:10px 0;color:#112a42 !important;}"
+                            + ".okbHelpDocScope th,.okbHelpDocScope td{border:1px solid #c7d3df;padding:6px 8px;text-align:left;vertical-align:top;}"
+                            + ".okbHelpDocScope th{background:#edf3fa;color:#0f2a43 !important;}"
+                            + ".okbHelpDocScope hr{border:none;border-top:1px solid #c7d3df;margin:14px 0;}"
+                            + ".okbHelpDocScope .helpImage{display:block;max-width:92%;height:auto;margin:12px auto;border:1px solid #c7d3df;border-radius:8px;background:#fff;}"
+                            + ".okbHelpDocScope .helpImageCaption{margin:4px auto 12px auto;text-align:center;font-size:14px;color:#3c5166;}"
+                            + "body.night-mode .okbHelpDocScope{color:#dfe8f2;}"
+                            + "body.night-mode .okbHelpDocScope,body.night-mode .okbHelpDocScope p,body.night-mode .okbHelpDocScope li,body.night-mode .okbHelpDocScope span,body.night-mode .okbHelpDocScope div{color:#dfe8f2 !important;}"
+                            + "body.night-mode .okbHelpDocScope .tab{background:rgba(45,57,72,0.62);border-color:#5f7184;}"
+                            + "body.night-mode .okbHelpDocScope h2{border-bottom-color:#5f7184;color:#eef5ff !important;}"
+                            + "body.night-mode .okbHelpDocScope h3{color:#d7e8ff !important;}"
+                            + "body.night-mode .okbHelpDocScope h4,body.night-mode .okbHelpDocScope h5,body.night-mode .okbHelpDocScope h6{color:#cfe1f7 !important;}"
+                            + "body.night-mode .okbHelpDocScope strong,body.night-mode .okbHelpDocScope b{color:#f0f7ff !important;}"
+                            + "body.night-mode .okbHelpDocScope em,body.night-mode .okbHelpDocScope i{color:#d2e7ff !important;}"
+                            + "body.night-mode .okbHelpDocScope code{background:rgba(52,67,84,0.9);border-color:#5f7184;color:#e7eef8;}"
+                            + "body.night-mode .okbHelpDocScope pre{background:rgba(41,54,69,0.9);border-color:#5f7184;color:#e7eef8 !important;}"
+                            + "body.night-mode .okbHelpDocScope .controls{background:rgba(49,64,81,0.65);border-left-color:#7fa6ce;}"
+                            + "body.night-mode .okbHelpDocScope a{color:#9bc8ff;}"
+                            + "body.night-mode .okbHelpDocScope table,body.night-mode .okbHelpDocScope th,body.night-mode .okbHelpDocScope td{border-color:#5f7184;color:#e2ebf6 !important;}"
+                            + "body.night-mode .okbHelpDocScope th{background:rgba(57,72,90,0.92);color:#f0f7ff !important;}"
+                            + "body.night-mode .okbHelpDocScope hr{border-top-color:#5f7184;}"
+                            + "body.night-mode .okbHelpDocScope .helpImage{border-color:#5f7184;background:rgba(35,47,61,0.9);}"
+                            + "body.night-mode .okbHelpDocScope .helpImageCaption{color:#bfd5ec;}"
+                            + "</style>";
+
+                        string merged = string.IsNullOrWhiteSpace(globalSection)
+                            ? (tabSection ?? "")
+                            : (string.IsNullOrWhiteSpace(tabSection) ? globalSection : (globalSection + "\n" + tabSection));
+
+                        return scopedStyle + "<div class='okbHelpDocScope'>" + merged + "</div>";
+                    }
+                    catch (Exception ex)
+                    {
+                        return "<p>Failed to load help content: " + WebUtility.HtmlEncode(ex.Message) + "</p>";
+                    }
+                }
+
+                private static string ResolveHelpDocPath()
+                {
+                    try
+                    {
+                        string baseDir = AppDomain.CurrentDomain.BaseDirectory;
+                        string asmDir = "";
+                        try
+                        {
+                            string asmPath = typeof(OpenKneeboardBridge).Assembly.Location;
+                            asmDir = string.IsNullOrWhiteSpace(asmPath) ? "" : Path.GetDirectoryName(asmPath);
+                        }
+                        catch
+                        {
+                        }
+
+                        string vaAppsDocPath = GetVaAppsHelpDocPath();
+
+                        string[] candidates = new[]
+                        {
+                            vaAppsDocPath,
+                            Path.Combine(baseDir, "Extensions", "Kneeboard", "OKBHelpDoc.html"),
+                            Path.Combine(baseDir, "OKBHelpDoc.html"),
+                            Path.Combine(asmDir ?? "", "Extensions", "Kneeboard", "OKBHelpDoc.html"),
+                            Path.Combine(asmDir ?? "", "OKBHelpDoc.html")
+                        };
+
+                        foreach (string candidate in candidates)
+                        {
+                            if (!string.IsNullOrWhiteSpace(candidate) && File.Exists(candidate))
+                            {
+                                return candidate;
+                            }
+                        }
+                    }
+                    catch
+                    {
+                    }
+
+                    return "";
+                }
+
+                private static string GetVaAppsHelpDocPath()
+                {
+                    try
+                    {
+                        string appsRoot = string.IsNullOrWhiteSpace(State.VA_APPS)
+                            ? (State.Proxy == null ? "" : Convert.ToString(State.Proxy.SessionState["VA_APPS"]))
+                            : State.VA_APPS;
+
+                        if (string.IsNullOrWhiteSpace(appsRoot))
+                        {
+                            try
+                            {
+                                string roaming = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+                                if (!string.IsNullOrWhiteSpace(roaming))
+                                {
+                                    appsRoot = Path.Combine(roaming, "VoiceAttack", "Apps");
+                                }
+                            }
+                            catch
+                            {
+                            }
+                        }
+
+                        if (string.IsNullOrWhiteSpace(appsRoot))
+                        {
+                            return "";
+                        }
+
+                        string docFolder = AppData.SubFolders.ContainsKey("documentation")
+                            ? AppData.SubFolders["documentation"]
+                            : "Documentation";
+
+                        string pluginRoot = Path.Combine(appsRoot, Products.Products.Families.Vaicom.VaicomProPlugin.rootfoldername);
+                        return Path.Combine(pluginRoot, docFolder, "OKBHelpDoc.html");
+                    }
+                    catch
+                    {
+                        return "";
+                    }
+                }
+
+                private static string GetVaAppsHelpDocImageFolder()
+                {
+                    try
+                    {
+                        string helpDocPath = GetVaAppsHelpDocPath();
+                        if (string.IsNullOrWhiteSpace(helpDocPath))
+                        {
+                            return "";
+                        }
+
+                        string docDir = Path.GetDirectoryName(helpDocPath);
+                        if (string.IsNullOrWhiteSpace(docDir))
+                        {
+                            return "";
+                        }
+
+                        return Path.Combine(docDir, "Images");
+                    }
+                    catch
+                    {
+                        return "";
+                    }
+                }
+
+                private static void EnsureHelpDocInVaAppsDocumentation()
+                {
+                    try
+                    {
+                        string targetPath = GetVaAppsHelpDocPath();
+                        if (string.IsNullOrWhiteSpace(targetPath))
+                        {
+                            return;
+                        }
+
+                        string targetDir = Path.GetDirectoryName(targetPath);
+                        if (string.IsNullOrWhiteSpace(targetDir))
+                        {
+                            return;
+                        }
+
+                        string imageDir = GetVaAppsHelpDocImageFolder();
+                        if (!string.IsNullOrWhiteSpace(imageDir))
+                        {
+                            Directory.CreateDirectory(imageDir);
+                            EnsureBundledHelpImagesInVaAppsDocumentation(imageDir);
+                        }
+
+                        string sourceHtml = GetBundledHelpDocHtml();
+                        if (string.IsNullOrWhiteSpace(sourceHtml))
+                        {
+                            return;
+                        }
+
+                        Directory.CreateDirectory(targetDir);
+
+                        if (!File.Exists(targetPath))
+                        {
+                            File.WriteAllText(targetPath, sourceHtml, new UTF8Encoding(false));
+                            return;
+                        }
+
+                        string existing = "";
+                        try
+                        {
+                            existing = File.ReadAllText(targetPath);
+                        }
+                        catch
+                        {
+                        }
+
+                        if (!string.Equals(existing ?? "", sourceHtml, StringComparison.Ordinal))
+                        {
+                            File.WriteAllText(targetPath, sourceHtml, new UTF8Encoding(false));
+                        }
+                    }
+                    catch
+                    {
+                    }
+                }
+
+                private static void EnsureBundledHelpImagesInVaAppsDocumentation(string imageRoot)
+                {
+                    try
+                    {
+                        if (string.IsNullOrWhiteSpace(imageRoot))
+                        {
+                            return;
+                        }
+
+                        Assembly asm = typeof(OpenKneeboardBridge).Assembly;
+                        string[] resources = asm.GetManifestResourceNames()
+                            .Where(n => n.StartsWith("OKBHelpImages/", StringComparison.OrdinalIgnoreCase)
+                                || n.StartsWith("OKBHelpImages\\", StringComparison.OrdinalIgnoreCase)
+                                || n.IndexOf("OKBHelpImages/", StringComparison.OrdinalIgnoreCase) >= 0
+                                || n.IndexOf("OKBHelpImages\\", StringComparison.OrdinalIgnoreCase) >= 0)
+                            .ToArray();
+
+                        foreach (string resourceName in resources)
+                        {
+                            string relative = GetHelpImageRelativePathFromResource(resourceName);
+                            if (string.IsNullOrWhiteSpace(relative))
+                            {
+                                continue;
+                            }
+
+                            string targetPath = Path.GetFullPath(Path.Combine(imageRoot, relative));
+                            string fullRoot = Path.GetFullPath(imageRoot);
+                            if (!targetPath.StartsWith(fullRoot, StringComparison.OrdinalIgnoreCase))
+                            {
+                                continue;
+                            }
+
+                            string targetDir = Path.GetDirectoryName(targetPath);
+                            if (!string.IsNullOrWhiteSpace(targetDir))
+                            {
+                                Directory.CreateDirectory(targetDir);
+                            }
+
+                            using (Stream stream = asm.GetManifestResourceStream(resourceName))
+                            {
+                                if (stream == null) continue;
+
+                                using (MemoryStream ms = new MemoryStream())
+                                {
+                                    stream.CopyTo(ms);
+                                    byte[] payload = ms.ToArray();
+
+                                    bool shouldWrite = true;
+                                    if (File.Exists(targetPath))
+                                    {
+                                        try
+                                        {
+                                            byte[] existing = File.ReadAllBytes(targetPath);
+                                            shouldWrite = !existing.SequenceEqual(payload);
+                                        }
+                                        catch
+                                        {
+                                            shouldWrite = true;
+                                        }
+                                    }
+
+                                    if (shouldWrite)
+                                    {
+                                        File.WriteAllBytes(targetPath, payload);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    catch
+                    {
+                    }
+                }
+
+                private static string GetHelpImageRelativePathFromResource(string resourceName)
+                {
+                    try
+                    {
+                        if (string.IsNullOrWhiteSpace(resourceName))
+                        {
+                            return "";
+                        }
+
+                        string token = "OKBHelpImages";
+                        int idxSlash = resourceName.IndexOf(token + "/", StringComparison.OrdinalIgnoreCase);
+                        int idxBackslash = resourceName.IndexOf(token + "\\", StringComparison.OrdinalIgnoreCase);
+                        int idx = idxSlash >= 0 ? idxSlash : idxBackslash;
+                        if (idx < 0)
+                        {
+                            return "";
+                        }
+
+                        string rel = resourceName.Substring(idx + token.Length + 1);
+                        rel = rel.Replace('/', Path.DirectorySeparatorChar).Replace('\\', Path.DirectorySeparatorChar);
+                        rel = rel.Trim();
+                        if (string.IsNullOrWhiteSpace(rel) || rel.Contains(".."))
+                        {
+                            return "";
+                        }
+
+                        return rel;
+                    }
+                    catch
+                    {
+                        return "";
+                    }
+                }
+
+                private static string GetBundledHelpDocHtml()
+                {
+                    try
+                    {
+                        Assembly asm = typeof(OpenKneeboardBridge).Assembly;
+                        string resourceName = asm
+                            .GetManifestResourceNames()
+                            .FirstOrDefault(n => n.EndsWith("Extensions.Kneeboard.OKBHelpDoc.html", StringComparison.OrdinalIgnoreCase)
+                                || n.EndsWith("OKBHelpDoc.html", StringComparison.OrdinalIgnoreCase));
+
+                        if (!string.IsNullOrWhiteSpace(resourceName))
+                        {
+                            using (Stream stream = asm.GetManifestResourceStream(resourceName))
+                            {
+                                if (stream != null)
+                                {
+                                    using (StreamReader reader = new StreamReader(stream, Encoding.UTF8, true))
+                                    {
+                                        string embedded = reader.ReadToEnd();
+                                        if (!string.IsNullOrWhiteSpace(embedded))
+                                        {
+                                            return embedded;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        string path = ResolveHelpDocPath();
+                        if (!string.IsNullOrWhiteSpace(path) && File.Exists(path))
+                        {
+                            return File.ReadAllText(path);
+                        }
+                    }
+                    catch
+                    {
+                    }
+
+                    return "";
+                }
+
+                private static string NormalizeHelpDocSectionId(string tab)
+                {
+                    string token = (tab ?? "").Trim().ToUpperInvariant();
+                    switch (token)
+                    {
+                        case "DTC":
+                        case "FLT PLN":
+                        case "FLTPLN":
+                            return "fltpln";
+                        case "ATC":
+                        case "WX/ATC":
+                            return "atc";
+                        case "AWACS":
+                            return "awacs";
+                        case "JTAC":
+                            return "jtac";
+                        case "TANKER":
+                            return "tanker";
+                        case "AOCS":
+                            return "aocs";
+                        case "FLIGHT":
+                            return "flight";
+                        case "AI CREW":
+                        case "AICREW":
+                            return "aicrew";
+                        case "GND CREW":
+                        case "GNDCREW":
+                            return "gndcrew";
+                        case "NOTES":
+                            return "notes";
+                        case "EFB":
+                            return "efb";
+                        case "LOG":
+                        default:
+                            return "log";
+                    }
+                }
+
+                private static string ExtractSectionById(string html, string sectionId)
+                {
+                    if (string.IsNullOrWhiteSpace(html) || string.IsNullOrWhiteSpace(sectionId))
+                    {
+                        return "";
+                    }
+
+                    string pattern = "<section\\b[^>]*\\bid\\s*=\\s*['\\\"]" + Regex.Escape(sectionId) + "['\\\"][^>]*>.*?</section>";
+                    Match match = Regex.Match(html, pattern, RegexOptions.IgnoreCase | RegexOptions.Singleline);
+                    return match.Success ? match.Value : "";
+                }
+
+                private static byte[] ReadHelpDocImageBytes(string fileName, out string contentType)
+                {
+                    contentType = "application/octet-stream";
+
+                    try
+                    {
+                        string normalized = (fileName ?? "").Trim();
+                        if (string.IsNullOrWhiteSpace(normalized))
+                        {
+                            return null;
+                        }
+
+                        normalized = normalized.Replace('/', Path.DirectorySeparatorChar).Replace('\\', Path.DirectorySeparatorChar);
+                        if (normalized.Contains(".."))
+                        {
+                            return null;
+                        }
+
+                        string ext = (Path.GetExtension(normalized) ?? "").ToLowerInvariant();
+                        switch (ext)
+                        {
+                            case ".png": contentType = "image/png"; break;
+                            case ".jpg":
+                            case ".jpeg": contentType = "image/jpeg"; break;
+                            case ".gif": contentType = "image/gif"; break;
+                            case ".bmp": contentType = "image/bmp"; break;
+                            case ".webp": contentType = "image/webp"; break;
+                            case ".svg": contentType = "image/svg+xml"; break;
+                            default: return null;
+                        }
+
+                        string baseFolder = GetVaAppsHelpDocImageFolder();
+                        if (string.IsNullOrWhiteSpace(baseFolder) || !Directory.Exists(baseFolder))
+                        {
+                            return null;
+                        }
+
+                        string fullPath = Path.GetFullPath(Path.Combine(baseFolder, normalized));
+                        string fullBase = Path.GetFullPath(baseFolder);
+                        if (!fullPath.StartsWith(fullBase, StringComparison.OrdinalIgnoreCase))
+                        {
+                            return null;
+                        }
+
+                        if (!File.Exists(fullPath))
+                        {
+                            return null;
+                        }
+
+                        return File.ReadAllBytes(fullPath);
+                    }
+                    catch
+                    {
+                        return null;
+                    }
+                }
+
                 private static string BuildSnapshotJson()
                 {
                     OpenKneeboardSnapshot responseModel;
@@ -14016,6 +16937,14 @@ namespace VAICOM
                     lock (Sync)
                     {
                         responseModel = snapshot.Clone();
+                    }
+
+                    try
+                    {
+                        responseModel.Efb = OpenKneeboardNavigraphEfbState.BuildSnapshot(responseModel.Server);
+                    }
+                    catch
+                    {
                     }
 
                     try
@@ -14059,6 +16988,7 @@ namespace VAICOM
                             UnitDetails = responseModel.UnitDetails,
                             AliasesChunk0 = responseModel.AliasesChunk0,
                             AliasesChunk1 = responseModel.AliasesChunk1,
+                            Efb = responseModel.Efb,
                             DtcFiles = responseModel.DtcFiles,
                             DtcSelectedFile = responseModel.DtcSelectedFile,
                             DtcJson = responseModel.DtcJson,
@@ -14113,6 +17043,258 @@ namespace VAICOM
                     };
 
                     return JsonConvert.SerializeObject(payload, Formatting.None);
+                }
+
+                private static string BuildEfbAirportsJson()
+                {
+                    List<string> airports = new List<string>();
+                    string chartsRoot = GetEfbChartsRootPath();
+
+                    try
+                    {
+                        if (Directory.Exists(chartsRoot))
+                        {
+                            foreach (string dir in Directory.GetDirectories(chartsRoot, "*", SearchOption.TopDirectoryOnly))
+                            {
+                                string airport = (Path.GetFileName(dir) ?? "").Trim().ToUpperInvariant();
+                                if (string.IsNullOrWhiteSpace(airport))
+                                {
+                                    continue;
+                                }
+
+                                bool hasChartFiles = false;
+                                try
+                                {
+                                    hasChartFiles = Directory.GetFiles(dir, "*.*", SearchOption.AllDirectories)
+                                        .Any(path => IsSupportedEfbChartExtension(Path.GetExtension(path)));
+                                }
+                                catch
+                                {
+                                }
+
+                                if (hasChartFiles)
+                                {
+                                    airports.Add(airport);
+                                }
+                            }
+                        }
+                    }
+                    catch
+                    {
+                    }
+
+                    airports = airports
+                        .Distinct(StringComparer.OrdinalIgnoreCase)
+                        .OrderBy(a => a, StringComparer.OrdinalIgnoreCase)
+                        .ToList();
+
+                    var payload = new
+                    {
+                        root = chartsRoot,
+                        airports = airports,
+                    };
+
+                    return JsonConvert.SerializeObject(payload, Formatting.None);
+                }
+
+                private static string BuildEfbChartsJson(string airport)
+                {
+                    string normalizedAirport = string.IsNullOrWhiteSpace(airport)
+                        ? "UNSET"
+                        : airport.Trim().ToUpperInvariant();
+
+                    string chartsRoot = GetEfbChartsRootPath();
+                    string airportFolder = Path.Combine(chartsRoot, normalizedAirport);
+                    List<object> charts = new List<object>();
+
+                    try
+                    {
+                        if (Directory.Exists(airportFolder))
+                        {
+                            string[] files = Directory.GetFiles(airportFolder, "*.*", SearchOption.AllDirectories)
+                                .Where(path => IsSupportedEfbChartExtension(Path.GetExtension(path)))
+                                .OrderBy(path => path, StringComparer.OrdinalIgnoreCase)
+                                .ToArray();
+
+                            foreach (string file in files)
+                            {
+                                string chartId = BuildEfbChartId(normalizedAirport, airportFolder, file);
+                                if (string.IsNullOrWhiteSpace(chartId))
+                                {
+                                    continue;
+                                }
+
+                                string displayName = BuildEfbChartDisplayName(airportFolder, file);
+                                charts.Add(new
+                                {
+                                    id = chartId,
+                                    name = displayName,
+                                    type = "AIRPORT",
+                                });
+                            }
+                        }
+                    }
+                    catch
+                    {
+                    }
+
+                    var payload = new
+                    {
+                        airport = normalizedAirport,
+                        charts = charts
+                    };
+
+                    return JsonConvert.SerializeObject(payload, Formatting.None);
+                }
+
+                private static string GetEfbChartsRootPath()
+                {
+                    string profile = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+                    return Path.Combine(profile, "Saved Games", "DCS", "Kneeboard", "Vaicom Charts");
+                }
+
+                private static bool IsSupportedEfbChartExtension(string extension)
+                {
+                    string ext = string.IsNullOrWhiteSpace(extension) ? "" : extension.Trim();
+                    return EfbChartFileExtensions.Any(supported => string.Equals(supported, ext, StringComparison.OrdinalIgnoreCase));
+                }
+
+                private static string BuildEfbChartId(string airport, string airportFolder, string fullFilePath)
+                {
+                    try
+                    {
+                        if (string.IsNullOrWhiteSpace(fullFilePath))
+                        {
+                            return "";
+                        }
+
+                        string relative = fullFilePath;
+                        if (!string.IsNullOrWhiteSpace(airportFolder)
+                            && fullFilePath.StartsWith(airportFolder, StringComparison.OrdinalIgnoreCase))
+                        {
+                            relative = fullFilePath.Substring(airportFolder.Length)
+                                .TrimStart(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+                        }
+
+                        if (string.IsNullOrWhiteSpace(relative))
+                        {
+                            return "";
+                        }
+
+                        string normalizedRelative = relative
+                            .Replace(Path.DirectorySeparatorChar, '/')
+                            .Replace(Path.AltDirectorySeparatorChar, '/');
+
+                        return string.Concat(airport, "/", normalizedRelative);
+                    }
+                    catch
+                    {
+                        return "";
+                    }
+                }
+
+                private static string BuildEfbChartDisplayName(string airportFolder, string fullFilePath)
+                {
+                    try
+                    {
+                        string relative = fullFilePath;
+                        if (!string.IsNullOrWhiteSpace(airportFolder) && !string.IsNullOrWhiteSpace(fullFilePath)
+                            && fullFilePath.StartsWith(airportFolder, StringComparison.OrdinalIgnoreCase))
+                        {
+                            relative = fullFilePath.Substring(airportFolder.Length).TrimStart(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+                        }
+
+                        string noExt = Path.ChangeExtension(relative, null) ?? relative;
+                        return noExt.Replace(Path.DirectorySeparatorChar, '/').Replace(Path.AltDirectorySeparatorChar, '/');
+                    }
+                    catch
+                    {
+                        return Path.GetFileNameWithoutExtension(fullFilePath) ?? "Chart";
+                    }
+                }
+
+                private static byte[] ReadEfbChartBytes(string chartId, out string contentType)
+                {
+                    contentType = "application/octet-stream";
+
+                    if (string.IsNullOrWhiteSpace(chartId))
+                    {
+                        return null;
+                    }
+
+                    string[] parts = chartId.Split(new[] { '/' }, 2, StringSplitOptions.RemoveEmptyEntries);
+                    if (parts.Length != 2)
+                    {
+                        return null;
+                    }
+
+                    string airport = (parts[0] ?? "").Trim().ToUpperInvariant();
+                    string fileName = (parts[1] ?? "").Trim();
+                    if (string.IsNullOrWhiteSpace(airport) || string.IsNullOrWhiteSpace(fileName))
+                    {
+                        return null;
+                    }
+
+                    string chartsRoot = GetEfbChartsRootPath();
+                    string airportFolder = Path.Combine(chartsRoot, airport);
+                    string fullPath;
+
+                    try
+                    {
+                        fullPath = Path.GetFullPath(Path.Combine(airportFolder, fileName));
+                    }
+                    catch
+                    {
+                        return null;
+                    }
+
+                    string allowedRoot;
+                    try
+                    {
+                        allowedRoot = Path.GetFullPath(airportFolder).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)
+                            + Path.DirectorySeparatorChar;
+                    }
+                    catch
+                    {
+                        return null;
+                    }
+
+                    if (!fullPath.StartsWith(allowedRoot, StringComparison.OrdinalIgnoreCase))
+                    {
+                        return null;
+                    }
+
+                    string extension = Path.GetExtension(fullPath);
+                    if (!IsSupportedEfbChartExtension(extension) || !File.Exists(fullPath))
+                    {
+                        return null;
+                    }
+
+                    contentType = GetEfbChartContentType(extension);
+                    return File.ReadAllBytes(fullPath);
+                }
+
+                private static string GetEfbChartContentType(string extension)
+                {
+                    string ext = string.IsNullOrWhiteSpace(extension) ? "" : extension.Trim().ToLowerInvariant();
+                    switch (ext)
+                    {
+                        case ".svg":
+                            return "image/svg+xml";
+                        case ".png":
+                            return "image/png";
+                        case ".jpg":
+                        case ".jpeg":
+                            return "image/jpeg";
+                        case ".gif":
+                            return "image/gif";
+                        case ".bmp":
+                            return "image/bmp";
+                        case ".webp":
+                            return "image/webp";
+                        default:
+                            return "application/octet-stream";
+                    }
                 }
 
                 private static void WriteJson(HttpListenerResponse response, string payload)
@@ -15525,6 +18707,7 @@ namespace VAICOM
                 public Dictionary<string, List<string>> UnitDetails { get; set; } = new Dictionary<string, List<string>>();
                 public Dictionary<string, Dictionary<string, List<string>>> AliasesChunk0 { get; set; } = new Dictionary<string, Dictionary<string, List<string>>>();
                 public Dictionary<string, Dictionary<string, List<string>>> AliasesChunk1 { get; set; } = new Dictionary<string, Dictionary<string, List<string>>>();
+                public OpenKneeboardNavigraphEfbState.OpenKneeboardEfbSnapshot Efb { get; set; } = new OpenKneeboardNavigraphEfbState.OpenKneeboardEfbSnapshot();
                 public List<string> DtcFiles { get; set; } = new List<string>();
                 public string DtcSelectedFile { get; set; } = "";
                 public string DtcJson { get; set; } = "";
@@ -15548,6 +18731,7 @@ namespace VAICOM
                         UnitDetails = CloneListMap(UnitDetails),
                         AliasesChunk0 = CloneAliasMap(AliasesChunk0),
                         AliasesChunk1 = CloneAliasMap(AliasesChunk1),
+                        Efb = Efb == null ? new OpenKneeboardNavigraphEfbState.OpenKneeboardEfbSnapshot() : Efb.Clone(),
                         DtcFiles = new List<string>(DtcFiles ?? new List<string>()),
                         DtcSelectedFile = DtcSelectedFile,
                         DtcJson = DtcJson,

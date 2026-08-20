@@ -342,6 +342,20 @@
     <None Include="FodyWeavers.xml" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="Extensions\Kneeboard\OKBHelpDoc.html">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <TargetPath>Extensions\Kneeboard\OKBHelpDoc.html</TargetPath>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Extensions\Kneeboard\OKBHelpDoc.html" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Extensions\Kneeboard\HelpImages\**\*.*">
+      <LogicalName>OKBHelpImages/%(RecursiveDir)%(Filename)%(Extension)</LogicalName>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
     <Compile Remove="App.xaml.cs" />
   </ItemGroup>
   <ItemGroup>

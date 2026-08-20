@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>VAICOM Kneeboard - OKB Out Help</title>
+  <style>
+    :root {
+      --bg: #f3f6fa;
+      --panel: #ffffff;
+      --text: #14263a;
+      --muted: #475d74;
+      --line: #c7d3df;
+      --accent: #2b6cb0;
+    }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Tahoma, Arial, sans-serif;
+      color: var(--text);
+      background: var(--bg);
+      line-height: 1.45;
+    }
+    .wrap {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 16px;
+      box-sizing: border-box;
+    }
+    .header {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 14px;
+      margin-bottom: 14px;
+    }
+    h1 { margin: 0 0 6px 0; font-size: 28px; }
+    h2 {
+      margin: 24px 0 10px 0;
+      font-size: 22px;
+      border-bottom: 1px solid var(--line);
+      padding-bottom: 4px;
+    }
+    h3 { margin: 14px 0 8px 0; font-size: 18px; }
+    p { margin: 8px 0; }
+    .muted { color: var(--muted); }
+    .toc {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 12px;
+      margin-bottom: 14px;
+    }
+    .toc a {
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 600;
+      margin-right: 10px;
+      white-space: nowrap;
+      display: inline-block;
+      margin-bottom: 6px;
+    }
+    .tab {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 12px;
+      margin-bottom: 12px;
+    }
+    ul { margin: 6px 0 10px 18px; }
+    li { margin: 4px 0; }
+    .controls {
+      border-left: 4px solid #9fb8d4;
+      padding-left: 10px;
+      margin-top: 10px;
+    }
+    code {
+      background: #eaf1f8;
+      border: 1px solid #d5e2ef;
+      border-radius: 4px;
+      padding: 1px 5px;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="header">
+      <h1>OKB Out Help Document</h1>
+      <p class="muted">Draft v0.1 - baseline text-only structure for all tabs and controls. Add images/screenshots later.</p>
+      <p>This document is intended to be loaded into the OKB Out Help overlay and can be expanded over time.</p>
+    </div>
+
+    <div class="toc">
+      <h3>Quick Navigation</h3>
+      <a href="#global">Global Controls</a>
+      <a href="#log">LOG</a>
+      <a href="#fltpln">FLT PLN</a>
+      <a href="#atc">ATC</a>
+      <a href="#awacs">AWACS</a>
+      <a href="#jtac">JTAC</a>
+      <a href="#tanker">TANKER</a>
+      <a href="#aocs">AOCS</a>
+      <a href="#flight">FLIGHT</a>
+      <a href="#aicrew">AI CREW</a>
+      <a href="#gndcrew">GND CREW</a>
+      <a href="#notes">NOTES</a>
+      <a href="#efb">EFB</a>
+    </div>
+
+    <section id="global" class="tab">
+      <h2>Global Controls</h2>
+      <p>These controls are available from floating icon bars and impact all or multiple tabs.</p>
+      <div class="controls">
+        <h3>Bottom Quick Bar</h3>
+        <ul>
+          <li><strong>Settings (⚙)</strong>: Opens Quick Settings overlay.</li>
+          <li><strong>Help (?)</strong>: Opens this help document overlay.</li>
+          <li><strong>Draw (✎)</strong>: Visible on <code>NOTES</code> tab only; opens draw mode controls.</li>
+        </ul>
+
+        <h3>Top Quick Bar (FLT PLN context)</h3>
+        <ul>
+          <li><strong>Files (☰)</strong>: Opens FLT PLN file picker overlay.</li>
+          <li><strong>Session (ℹ)</strong>: Opens session information overlay.</li>
+        </ul>
+
+        <h3>Quick Settings Overlay</h3>
+        <ul>
+          <li><strong>Auto Browse</strong>: Auto-switches tabs based on session events.</li>
+          <li><strong>Night Mode</strong>: Applies darkened styling for low-light readability.</li>
+          <li><strong>DLink ON</strong>: Enables DLink-related behavior where applicable.</li>
+          <li><strong>Font Size</strong>: Scales dashboard text content.</li>
+          <li><strong>Show raw JSON</strong>: Debug output panel for data payloads.</li>
+          <li><strong>Show server messages</strong>: Debug panel for server-side messages.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="log" class="tab">
+      <h2>LOG Tab</h2>
+      <p><strong>Overview:</strong> Primary operational feed for live recognition and command/event logging.</p>
+      <p><strong>Contains:</strong> Session status, recent operational lines, and quick diagnostics text.</p>
+      <div class="controls">
+        <h3>Controls</h3>
+        <ul>
+          <li>No tab-specific picker controls currently. Uses global controls only.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="fltpln" class="tab">
+      <h2>FLT PLN Tab</h2>
+      <p><strong>Overview:</strong> Flight plan viewer for DTC and RouteTool sourced files.</p>
+      <p><strong>Contains:</strong> Structured table views of selected file content, mission timing hints, route data, page views (Time/NAVLOG/COM/CMDS/MAP), and map interaction readouts.</p>
+      <p><strong>Purpose:</strong> This tab is intended as the mission planning and in-flight quick-reference board for timing, communications, commands, and route/map awareness.</p>
+
+      <h3>Workflow</h3>
+      <ol>
+        <li>
+          <strong>Load the mission route package</strong>
+          <ul>
+            <li>Open <strong>Files (☰)</strong> and choose the active FLT PLN source (DTC or RouteTool).</li>
+            <li>Confirm the header updates with the selected package and route context.</li>
+            <li>If the expected file is missing, recheck export location and refresh file list workflow.</li>
+          </ul>
+        </li>
+        <li>
+          <strong>Validate session and mission context</strong>
+          <ul>
+            <li>Open <strong>Session (ℹ)</strong> and verify aircraft, theatre, mission title, and current mission state.</li>
+            <li>Confirm route package aligns with the current sortie (avoid stale file from prior mission).</li>
+            <li>Close Session and return to FLT PLN for execution setup.</li>
+          </ul>
+        </li>
+        <li>
+          <strong>Build your timing plan (TIME page)</strong>
+          <ul>
+            <li>Set/verify TOT as mission anchor timing.</li>
+            <li>Use mission-time readout to determine ahead/behind status against route progression.</li>
+            <li>Apply recommended speed schedule adjustments where needed to recover timing drift.</li>
+            <li>Mark ATA checkpoints as you progress through the mission.</li>
+          </ul>
+        </li>
+        <li>
+          <strong>Cross-check route geometry and nav sequence (NAVLOG page)</strong>
+          <ul>
+            <li>Validate waypoint order, leg continuity, and key route values before push.</li>
+            <li>Use table/cell controls to inspect and adjust supported parameters.</li>
+            <li>Use NAVLOG as primary reference during enroute checks and reattacks.</li>
+          </ul>
+        </li>
+        <li>
+          <strong>Configure support systems (COM / STORES / CMDS pages)</strong>
+          <ul>
+            <li><strong>COM:</strong> Confirm frequencies/channels match current tasking and expected comm plan.</li>
+            <li><strong>STORES:</strong> Validate payload, station assignment, and any mission-critical store constraints.</li>
+            <li><strong>CMDS:</strong> Confirm loaded countermeasure programs and expected timing/sequences from DTC data.</li>
+          </ul>
+        </li>
+        <li>
+          <strong>Maintain tactical picture (MAP page)</strong>
+          <ul>
+            <li>Toggle <strong>BG ON/OFF</strong> based on readability and mission need.</li>
+            <li>Use zoom/pan to inspect route legs, target area geometry, and divert options.</li>
+            <li>Use selection readouts for asset context and BRA/B-E style awareness where available.</li>
+            <li>Keep <strong>D-LINK ON</strong> when coalition datalink overlays are required.</li>
+          </ul>
+        </li>
+        <li>
+          <strong>Execute in-mission update loop</strong>
+          <ul>
+            <li>Cycle pages as needed: TIME (timing), NAVLOG (route), COM (radios), CMDS/STORES (systems), MAP (SA).</li>
+            <li>Re-check timing after major events (takeoff, push, IP, target actions, egress, divert).</li>
+            <li>Use debug views only when troubleshooting data mismatches (raw JSON / server messages).</li>
+          </ul>
+        </li>
+        <li>
+          <strong>Postflight capture and review</strong>
+          <ul>
+            <li>Use postflight controls/pages to record mission completion state and timing results.</li>
+            <li>Capture deviations between planned and actual timeline for follow-up tuning.</li>
+            <li>Retain the route package for debrief reference or refinement in next sortie.</li>
+          </ul>
+        </li>
+      </ol>
+
+      <h3>Top Floating Controls</h3>
+      <div class="controls">
+          <img class="helpImage" src="/okb/helpimg?name=fltpln/FLT_PLN_Header.png" alt="FLT PLN Header and datablock" />
+          <div class="helpImageCaption">Figure 0. FLT PLN Plan Selection and pre populated data.</div>
+
+          <ul>
+              <li><strong>Files (☰)</strong>: Lists detected FLT PLN files and lets you select one.</li>
+              <li><strong>Session (ℹ)</strong>: Displays current mission/session state in a popup.</li>
+              <li><strong>Refresh behavior</strong>: File list refresh is managed through current workflow and runtime updates.</li>
+          </ul>
+      </div>
+
+      <h3>Page Selection Modes</h3>
+      <div class="controls">
+          <h3>PAGE SELECTION</h3>
+          <img class="helpImage" src="/okb/helpimg?name=fltpln/FLT_PLN_Pages_postflight.png" alt="FLT PLN Pages and Postflight" />
+          <div class="helpImageCaption">Figure 1. FLT PLN Page Selection and Postflight.</div>
+          <ul>
+              <li>Mission-time and timing-centric readout panel. Can be clicked to mark current time and update mission clock context.</li>
+              <li>TOT can be edited to provide updated timing information and recommended speed schedule.</li>
+              <li>Used to mark ATAs at route checkpoints against mission clock context.</li>
+              <li>Supports quick verification of ahead and behind timings at route checkpoints.</li>
+              <li>Buttons for page navigation, DTC Route selection and postflight actions. See below for related information and usage.</li>
+          </ul>
+
+          <h3>NAVLOG</h3>
+          <img class="helpImage" src="/okb/helpimg?name=fltpln/FLT_PLN_Navlog.png" alt="FLT PLN NAVLOG" />
+          <div class="helpImageCaption">Figure 2. FLT PLN NAVLOG and waypoint management.</div>
+          <ul>
+              <li>Primary navigation log view for route legs and waypoint sequencing.</li>
+              <li>Focuses on route progression, leg continuity, and planning data readability.</li>
+              <li>In cell controls allow adjustment of waypoint parameters. Clicking on cell headers change data units if applicable.</li>
+              <li>Useful for cockpit cross-check against aircraft systems and required TOT, ATA and ETAs.</li>
+          </ul>
+
+          <h3>COM</h3>
+          <ul>
+              <li>Communications reference page for channels/frequencies/related comm data when present in the mission or loaded via a DTC.</li>
+              <li>Intended for rapid radio setup and in-flight comms validation.</li>
+              <li>Pairs well with ATC/AWACS/JTAC workflow tabs for live operations.</li>
+          </ul>
+
+          <h3>STORES</h3>
+          <ul>
+              <li>Stores reference page for munitions, fuel, and other external stores when loaded on the jet.</li>
+              <li>Updated dynamically and allows rapidin-flight validation.</li>
+              <li>Ideal for confirming stores station position, hung ordnance, and other critical information.</li>
+          </ul>
+
+          <h3>CMDS</h3>
+          <ul>
+              <li>DTC generated countermeasures program information.</li>
+              <li>Includes details on deployment sequences and timing.</li>
+              <li>This is data passed via DTC, does not reflect changes made by the pilot using the cockpit controls.</li>
+          </ul>
+
+          <h3>MAP</h3>
+          <ul>
+              <li>SA map visualization page with overlays and contextual annotations.</li>
+              <li>Supports mission route geometry review, selected asset context, data and own ship position information. Also provides B/E and BRA-style readouts when assets are bugged.</li>
+              <li>Support own coalition Datalink assets (D-LINK selected on) that are updated in real time.</li>
+          </ul>
+      </div>
+
+      <h3>MAP Controls and Readouts</h3>
+      <div class="controls">
+        <ul>
+          <li><strong>BG ON/OFF</strong>: Background map layer toggle.</li>
+          <li><strong>Zoom/Pan controls</strong>: Used to inspect route sections and overlay details.</li>
+          <li><strong>Selection readout</strong>: Displays selected element information when available.</li>
+          <li><strong>Status line</strong>: Shows map/background availability state for current theatre/data.</li>
+          <li><strong>Overlay content</strong>: May include route lines, destination points, airfield overlays, and tactical context markers.</li>
+        </ul>
+      </div>
+
+      <h3>Data Sources and Notes</h3>
+      <div class="controls">
+        <ul>
+          <li><strong>DTC files</strong>: Loaded from Saved Games DTC export paths when available.</li>
+          <li><strong>RouteTool files</strong>: Parsed from RouteTool preset output where supported.</li>
+          <li><strong>Fallback behavior</strong>: If structured rendering is unavailable, a plain formatted data view is shown.</li>
+          <li><strong>Debug support</strong>: Use global debug toggles (raw JSON/server messages) for troubleshooting content flow.</li>
+        </ul>
+      </div>
+
+      <h3>Planned Expansion</h3>
+      <div class="controls">
+        <ul>
+          <li>Add annotated screenshots for each page mode (TIME/NAVLOG/COM/CMDS/MAP).</li>
+          <li>Add icon callouts tied to actual button locations.</li>
+          <li>Add sample mission walkthrough blocks with expected outputs.</li>
+          <li>Add troubleshooting matrix for missing route/map data conditions.</li>
+        </ul>
+      </div>
+
+      <div class="controls">
+        <h3>Controls</h3>
+        <ul>
+          <li><strong>Files (☰)</strong>: Lists detected FLT PLN files and lets you select one.</li>
+          <li><strong>Session (ℹ)</strong>: Displays current mission/session state in a popup.</li>
+          <li><strong>Refresh behavior</strong>: File list refresh is managed through current workflow and runtime updates.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="atc" class="tab">
+      <h2>ATC Tab</h2>
+      <p><strong>Overview:</strong> Air Traffic Control context and call/reference information.</p>
+      <p><strong>Contains:</strong> ATC lines, relevant references, and airport/report-related text as available.</p>
+      <div class="controls">
+        <h3>Controls</h3>
+        <ul>
+          <li>No dedicated floating tab-specific controls at this stage.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="awacs" class="tab">
+      <h2>AWACS Tab</h2>
+      <p><strong>Overview:</strong> AWACS command/reference and response surface.</p>
+      <p><strong>Contains:</strong> Situation and command-oriented text returned through active session data.</p>
+      <div class="controls">
+        <h3>Controls</h3>
+        <ul>
+          <li>No dedicated tab-specific controls; uses global settings/help controls.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="jtac" class="tab">
+      <h2>JTAC Tab</h2>
+      <p><strong>Overview:</strong> JTAC-focused communications and support references.</p>
+      <p><strong>Contains:</strong> Tasking/dialog snippets and keyword guidance where available.</p>
+      <div class="controls">
+        <h3>Controls</h3>
+        <ul>
+          <li>No dedicated tab controls currently beyond global overlays.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="tanker" class="tab">
+      <h2>TANKER Tab</h2>
+      <p><strong>Overview:</strong> Air-to-air refueling contact and comms support view.</p>
+      <p><strong>Contains:</strong> Tanker-related communication references and response lines.</p>
+      <div class="controls">
+        <h3>Controls</h3>
+        <ul>
+          <li>No dedicated tab controls currently beyond global overlays.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="aocs" class="tab">
+      <h2>AOCS Tab</h2>
+      <p><strong>Overview:</strong> Air operations/coordination support tab output.</p>
+      <p><strong>Contains:</strong> Session-specific lines and keyword references as provided by runtime data.</p>
+      <div class="controls">
+        <h3>Controls</h3>
+        <ul>
+          <li>No dedicated tab controls currently beyond global overlays.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="flight" class="tab">
+      <h2>FLIGHT Tab</h2>
+      <p><strong>Overview:</strong> Flight-level information and route/aircraft context.</p>
+      <p><strong>Contains:</strong> Flight context data, references, and textual summary blocks.</p>
+      <div class="controls">
+        <h3>Controls</h3>
+        <ul>
+          <li>No dedicated floating tab controls currently.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="aicrew" class="tab">
+      <h2>AI CREW Tab</h2>
+      <p><strong>Overview:</strong> AI crew command/reference workspace.</p>
+      <p><strong>Contains:</strong> AI crew interactions and operational command cueing text.</p>
+      <div class="controls">
+        <h3>Controls</h3>
+        <ul>
+          <li>No dedicated tab controls currently beyond global overlays.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="gndcrew" class="tab">
+      <h2>GND CREW Tab</h2>
+      <p><strong>Overview:</strong> Ground crew command/reference workspace.</p>
+      <p><strong>Contains:</strong> Ground servicing command lines and related textual responses.</p>
+      <div class="controls">
+        <h3>Controls</h3>
+        <ul>
+          <li>No dedicated tab controls currently beyond global overlays.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="notes" class="tab">
+      <h2>NOTES Tab</h2>
+      <p><strong>Overview:</strong> Freeform notes and in-kneeboard mark-up support.</p>
+      <p><strong>Contains:</strong> Notes text area/content and user annotations.</p>
+      <div class="controls">
+        <h3>Controls</h3>
+        <ul>
+          <li><strong>Draw (✎)</strong>: Opens draw mode overlay.</li>
+          <li><strong>Draw ON/OFF</strong>: Toggle annotation mode.</li>
+          <li><strong>Draw timer</strong>: Shows auto-off timeout status for draw mode.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="efb" class="tab">
+      <h2>EFB Tab</h2>
+      <p><strong>Overview:</strong> Electronic Flight Bag workspace for chart viewing with a floating icon rail workflow and pinned favorites list.</p>
+      <p><strong>Contains:</strong> Auto/manual airport selection, chart list drawer, global pinned chart drawer, local-file chart rendering, and viewport pan/zoom controls.</p>
+      <div class="controls">
+        <h3>Left Rail Controls</h3>
+        <ul>
+          <li><strong>Auto (A)</strong>: Resolves/selects airport from current mission context, then opens the chart list for that airport.</li>
+          <li><strong>Airport (🗼)</strong>: Opens airport list drawer first; selecting an airport opens its chart list.</li>
+          <li><strong>Pinned (📌)</strong>: Opens pinned drawer (favorites) showing only charts explicitly pinned from chart rows.</li>
+        </ul>
+
+        <h3>Drawer Lists and Pinning</h3>
+        <ul>
+          <li><strong>Chart list rows</strong>: Each chart row has a line pin icon. Toggle to pin/unpin that chart.</li>
+          <li><strong>Pinned drawer behavior</strong>: Shows pinned charts from <em>any</em> airport as a global favorites list.</li>
+          <li><strong>Pinned row format</strong>: Rows display <code>AIRPORT · CHART NAME</code> for clarity across multiple fields.</li>
+          <li><strong>Unpin paths</strong>: You can unpin from either the airport chart list or from the pinned drawer itself.</li>
+          <li><strong>Selecting pinned charts</strong>: Choosing a pinned row switches to that chart's airport and loads the selected chart.</li>
+        </ul>
+
+        <h3>Right Rail and Viewport Controls</h3>
+        <ul>
+          <li><strong>Zoom Out (−)</strong>: Decreases chart zoom.</li>
+          <li><strong>Recenter (⟳)</strong>: Resets zoom and pan to default centered view.</li>
+          <li><strong>Zoom In (+)</strong>: Increases chart zoom.</li>
+          <li><strong>Pan/drag</strong>: Click-drag in chart viewport to move the chart image.</li>
+        </ul>
+
+        <h3>Night Mode and Chart Sources</h3>
+        <ul>
+          <li><strong>Local folder charts</strong>: Night mode darkens chart brightness/contrast without hue swapping, so blue water and brown/orange terrain remain correct.</li>
+          <li><strong>Navigraph charts</strong>: Dedicated provider-rendered night chart styling is expected when Navigraph chart mode is enabled.</li>
+        </ul>
+      </div>
+    </section>
+  </div>
+</body>
+</html>
