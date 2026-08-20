@@ -1,3 +1,4 @@
+-- Appended by Vaicom for Mini Wheel Jester AI Page
 dofile(LockOn_Options.script_path.."paths.lua")
 dofile(LockOn_Options.common_script_path.."devices_defs.lua")
 dofile(LockOn_Options.common_script_path.."ViewportHandling.lua")
@@ -42,7 +43,7 @@ IndTexture_Path = base_script_path.."Resources/IndicationTextures/"
 
 
 
-local alpha = 190
+local alpha = 0
 
 
 local BaseCircleMat = MakeMaterial(IndTexture_Path.."JUI_Base_Circle.dds", {255, 255, 255, alpha})
@@ -76,7 +77,8 @@ local string_shift_large = large_font_scale * string_shift
 
 local grid_origin = create_origin()
 grid_origin.init_pos = {cx * aspect, -cy, 0}
-grid_origin.controllers = {{"show"}}
+grid_origin.element_params = {"JESTER_WHEEL_VISIBLE"}
+grid_origin.controllers = {{"show"}, {"parameter_in_range", 0, 0.9, 1.1}}
 
 local small = 0.01 * scale
 
@@ -84,20 +86,7 @@ function MakePieNumber(index,pos_x,pos_y,press_x,press_y)
 	local pie_origin = create_origin(create_guid_string())
 		pie_origin.parent_element = grid_origin.name
 		pie_origin.init_pos = {pos_x * scale, pos_y * scale}
-	local dbg_vert = create_textured_box(0,0,64,64,256,64)
-		dbg_vert.name = create_guid_string()
-		dbg_vert.vertices = {{-small, small},
-                        { small, small},
-                        { small,-small},
-                        {-small,-small}}
-		dbg_vert.parent_element = pie_origin.name
-		dbg_vert.init_pos		= {0,0}
-		dbg_vert.material = CategoriesMat
-		dbg_vert.isdraw = true
-		dbg_vert.use_mipfilter = true
-		dbg_vert.additive_alpha = false
-	--AddElement(dbg_vert)
-		
+
 	local pie_num_str           = CreateElement "ceStringPoly"
 		pie_num_str.name            = create_guid_string()
 		pie_num_str.material        = "font_JesterUI_Grey"
@@ -108,21 +97,11 @@ function MakePieNumber(index,pos_x,pos_y,press_x,press_y)
 		pie_num_str.controllers 		= {{"rosetext",index, 1}}
 		pie_num_str.isdraw = false
 	AddElement(pie_num_str)
-	local press = CreateElement "ceStringPoly"
-		press.name            = create_guid_string()
-		press.material        = "font_JesterUI_Grey"
-		press.parent_element = pie_num_str.name
-		press.stringdefs    = jester_stringdef_small
-		press.init_pos		    = {press_x * scale, press_y * scale}
-		press.alignment     = "LeftBotom"
-		--press.controllers 		= {{"rosetextcenter", 1}}
-		press.value = "PRESS"
-		press.isdraw = true	
-	AddElement(press)	
 end
 
 -- Pixel art Jester portrait
 local SHOW_MASKS = false
+local SHOW_CENTER_PORTRAIT = false
 -- Portrait sprite-sheet material name. Registered in materials.lua so this
 -- page and JesterSubtitle_Page reference the same underlying material by
 -- name (avoids the double-free at teardown from creating two materials
@@ -169,8 +148,8 @@ local camera_back          = CreateElement "ceMeshPoly"
 									{-0.40 * scale,-0.40 * scale}}
     camera_back.indices = {0,1,2,0,2,3}
     camera_back.parent_element = grid_origin.name
-	camera_back.isdraw         = true
-	camera_back.isvisible      = true
+	camera_back.isdraw         = SHOW_CENTER_PORTRAIT
+	camera_back.isvisible      = SHOW_CENTER_PORTRAIT
     camera_back.controllers = {{"jestercam"}}
     camera_back.h_clip_relation = h_clip_relations.COMPARE
     camera_back.level			= INDICATOR_LEVEL
@@ -190,8 +169,8 @@ local function make_sprite(name_suffix, u1, v1, u2, v2, half_w, half_h, parent, 
 	elem.material = JesterBUMat
 	elem.parent_element = parent
 	elem.init_pos = {0, 0, 0}
-	elem.isdraw = true
-	elem.isvisible = true
+	elem.isdraw = SHOW_CENTER_PORTRAIT
+	elem.isvisible = SHOW_CENTER_PORTRAIT
 	elem.h_clip_relation = h_clip_relations.COMPARE
 	elem.level = INDICATOR_LEVEL
 	elem.vertices = {
@@ -223,8 +202,8 @@ local JesterSky = CreateElement "ceTexPoly"
 	JesterSky.material = "JesterViewMaterial"
 	JesterSky.parent_element = camera_back.name
 	JesterSky.init_pos = {0, portrait_y_offset, 0}
-	JesterSky.isdraw = true
-	JesterSky.isvisible = true
+	JesterSky.isdraw = SHOW_CENTER_PORTRAIT
+	JesterSky.isvisible = SHOW_CENTER_PORTRAIT
 	JesterSky.h_clip_relation = h_clip_relations.COMPARE
 	JesterSky.level = INDICATOR_LEVEL
 	JesterSky.vertices = {
@@ -245,7 +224,8 @@ make_sprite("seat", 0.5, 0.0, 1.0, 0.25, ps*2.75, ps*1.6, camera_back.name, {{"j
 -- Layer 6: Jester portraits (one per state, controller toggles visibility)
 -- 0=forward (r0c0), 1=left (r0c1), 2=right (r1c0), 3=dead (r1c1),
 -- 4=highG (r1c2), 5=midG (r1c3), 6=negG (r2c0), 7=lookDown (r2c1),
--- 8=stressed (r2c2), 9=lookUp (r2c3)
+-- 8=stressed (r2c2), 9=lookUp (r2c3), 10=fullLeft (r3c0), 11=fullRight (r3c1),
+-- 12=deadLowG (r3c2)
 local py = portrait_y_offset + 0.07 * scale
 make_sprite("portrait_fwd",      0.0,  0.0,  0.25, 0.25, ps, ps, camera_back.name, {{"jester_portrait", 0, py}})
 make_sprite("portrait_left",     0.25, 0.0,  0.5,  0.25, ps, ps, camera_back.name, {{"jester_portrait", 1, py}})
@@ -257,6 +237,35 @@ make_sprite("portrait_negg",     0.0,  0.5,  0.25, 0.75, ps, ps, camera_back.nam
 make_sprite("portrait_lookdown", 0.25, 0.5,  0.5,  0.75, ps, ps, camera_back.name, {{"jester_portrait", 7, py}})
 make_sprite("portrait_stressed", 0.5,  0.5,  0.75, 0.75, ps, ps, camera_back.name, {{"jester_portrait", 8, py}})
 make_sprite("portrait_lookup",   0.75, 0.5,  1.0,  0.75, ps, ps, camera_back.name, {{"jester_portrait", 9, py}})
+make_sprite("portrait_fullleft", 0.0,  0.75, 0.25, 1.0,  ps, ps, camera_back.name, {{"jester_portrait", 10, py}})
+make_sprite("portrait_fullright",0.25, 0.75, 0.5,  1.0,  ps, ps, camera_back.name, {{"jester_portrait", 11, py}})
+make_sprite("portrait_dead_lowg",0.5,  0.75, 0.75, 1.0,  ps, ps, camera_back.name, {{"jester_portrait", 12, py}})
+
+
+if get_aircraft_type() == "F-14BU" then
+	local scanline_size = 0.40 * scale
+	local ScanlinesOverlay = CreateElement "ceTexPoly"
+		ScanlinesOverlay.name = "jester_scanlines"
+		ScanlinesOverlay.material = MakeMaterial(IndTexture_Path.."scanlines.png", {255, 255, 255, 255})
+		ScanlinesOverlay.parent_element = camera_back.name
+		ScanlinesOverlay.init_pos = {0, 0, 0}
+		ScanlinesOverlay.isdraw = SHOW_CENTER_PORTRAIT
+		ScanlinesOverlay.isvisible = SHOW_CENTER_PORTRAIT
+		ScanlinesOverlay.h_clip_relation = h_clip_relations.COMPARE
+		ScanlinesOverlay.level = INDICATOR_LEVEL
+		ScanlinesOverlay.blend_mode = 6 -- multiply
+		ScanlinesOverlay.vertices = {
+			{-scanline_size, scanline_size},
+			{ scanline_size, scanline_size},
+			{ scanline_size, -scanline_size},
+			{-scanline_size, -scanline_size}
+		}
+		ScanlinesOverlay.tex_coords = {
+			{0, 0}, {1, 0}, {1, 1}, {0, 1}
+		}
+		ScanlinesOverlay.indices = {0, 1, 2, 0, 2, 3}
+	AddElement(ScanlinesOverlay)
+end
 
 local status_bar_x = 0.305
 --local status_bar_y1 = -0.007812

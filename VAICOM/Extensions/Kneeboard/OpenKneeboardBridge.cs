@@ -34,6 +34,8 @@ namespace VAICOM
                 private static string storeLookupResolvedPath = "";
                 private static DateTime storeLookupLastWriteUtc = DateTime.MinValue;
                 private static string storeLookupMapJson = "{}";
+                private static string selectedTab = "";
+
                 private static readonly string IndexHtml = @"<!doctype html>
 <html>
 <head>
@@ -3322,7 +3324,7 @@ namespace VAICOM
       const server = (data && data.Server) || {};
       const aircraft = String(server.Aircraft || '').toUpperCase();
 
-      if (aircraft.indexOf('F-14') >= 0) return ['RIO','ICEMAN','AI CREW','REF','CREW','REF/CREW','GND CREW'];
+      if (aircraft.indexOf('F-14') >= 0) return ['RIO','ICEMAN','AI CREW'];
       if (aircraft.indexOf('F-4') >= 0) return ['WSO','AIWSO','AI CREW','REF','CREW','REF/CREW','GND CREW'];
       if (aircraft.indexOf('AH-64') >= 0 || aircraft.indexOf('AH64') >= 0) return ['GEORGE','CPG','AICPG','AI CREW','REF','CREW','REF/CREW','GND CREW'];
 
@@ -3360,6 +3362,93 @@ namespace VAICOM
       const server = (data && data.Server) || {};
       const aircraft = String(server.Aircraft || '').toUpperCase();
       return aircraft.indexOf('F-4') >= 0;
+    }
+
+    function isF14Aircraft(data){
+      const server = (data && data.Server) || {};
+      const aircraft = String(server.Aircraft || '').toUpperCase();
+      return aircraft.indexOf('F-14') >= 0 || aircraft.indexOf('F14') >= 0;
+    }
+
+    function getF14AiCrewKeywordGroups(data, phrases){
+      const sectionOrder = [
+        'Startup and Shutdown',
+        'Radio',
+        'Radar',
+        'Utility/Navigation',
+        'Weapons',
+        'LANTIRN',
+        'Defensive/Countermeasures',
+        'Datalink',
+        'TACAN',
+        'Walkman',
+        'Crew Contract',
+        'Miscellaneous',
+        'Supercarriers',
+        'AI Pilot'
+      ];
+
+      const sectionMap = (data && data.AiCrewKeywordSections) || {};
+      const rows = Array.isArray(phrases) ? phrases : [];
+      if (!rows.length) return [];
+
+      let hasAnySection = false;
+      for (let i = 0; i < sectionOrder.length; i++){
+        const vals = sectionMap[sectionOrder[i]];
+        if (Array.isArray(vals) && vals.length){
+          hasAnySection = true;
+          break;
+        }
+      }
+      if (!hasAnySection && !isF14Aircraft(data)) return [];
+
+      function classifyF14Phrase(text){
+        const t = String(text || '').toLowerCase();
+        if (!t) return '';
+        if (t.indexOf('radar ') === 0 || t.indexOf('track ') === 0 || t.indexOf('scan ') === 0 || t.indexOf('tid ') === 0 || t.indexOf('vsl ') === 0 || t.indexOf('break lock') === 0 || t.indexOf('go bvr') === 0 || t.indexOf('go active') === 0 || t.indexOf('go standby') === 0 || t.indexOf('switch stt') === 0) return 'Radar';
+        if (t.indexOf('lantern') >= 0 || t.indexOf('lantirn') >= 0 || t.indexOf('look for ') === 0 || t.indexOf('arm laser') === 0 || t.indexOf('aspect switch') === 0) return 'LANTIRN';
+        if (t.indexOf('weapon ') >= 0 || t.indexOf('attack mode') === 0 || t.indexOf('air to ground') >= 0 || t.indexOf('air to air') >= 0 || t.indexOf('drop ') === 0 || t.indexOf('set ripple ') === 0 || t.indexOf('select stations') === 0 || t.indexOf('send pre planned') === 0 || t.indexOf('send designation') === 0) return 'Weapons';
+        if (t.indexOf('radio ') === 0) return 'Radio';
+        if (t.indexOf('link ') === 0) return 'Datalink';
+        if (t.indexOf('tacan') === 0) return 'TACAN';
+        if (t.indexOf('navigate') === 0 || t.indexOf('direct steerpoint') === 0 || t.indexOf('nav mode') === 0 || t.indexOf('restore') === 0 || t.indexOf('load flight plan') === 0 || t.indexOf('reload flight plan') === 0 || t.indexOf('grid ') === 0) return 'Utility/Navigation';
+        if (t.indexOf('rock and roll') === 0 || t.indexOf('cut it out') === 0 || t.indexOf('skip this part') === 0 || t.indexOf('go back a little') === 0) return 'Walkman';
+        if (t.indexOf('contract') === 0 || t.indexOf('no talking') === 0 || t.indexOf('talk to me') === 0 || t.indexOf('set eject') === 0 || t.indexOf('landing callouts') === 0 || t.indexOf('back to work') === 0 || t.indexOf('knock it off') === 0 || t.indexOf('wake up') === 0) return 'Crew Contract';
+        if (t.indexOf('link host ') === 0 || t.indexOf('tacan tune ') === 0) return 'Supercarriers';
+        if (t.indexOf('chaff') === 0 || t.indexOf('flare') === 0 || t.indexOf('flares') === 0 || t.indexOf('countermeasure') === 0 || t.indexOf('jammer') === 0 || t.indexOf('black hot') === 0 || t.indexOf('white hot') === 0) return 'Defensive/Countermeasures';
+        if (t.indexOf('startup') === 0 || t.indexOf('assisted startup') === 0 || t.indexOf('align ') === 0 || t.indexOf('abort startup') === 0 || t.indexOf('commence shutdown') === 0 || t === 'check' || t.indexOf('hold it') === 0 || t.indexOf('loud and clear') === 0) return 'Startup and Shutdown';
+        if (t.indexOf('open canopy') === 0 || t.indexOf('close canopy') === 0 || t.indexOf('open menu') === 0 || t.indexOf('close menu') === 0 || t.indexOf('toggle menu') === 0 || t.indexOf('do option ') === 0 || t.indexOf('do menu ') === 0) return 'Miscellaneous';
+        if (t.indexOf('set altitude') === 0 || t.indexOf('go angels') === 0 || t.indexOf('change altitude') === 0 || t.indexOf('climb ') === 0 || t.indexOf('descent ') === 0 || t.indexOf('slow down') === 0 || t.indexOf('speed up') === 0 || t.indexOf('heading ') === 0 || t.indexOf('set heading') === 0 || t.indexOf('turn ') === 0 || t.indexOf('change speed') === 0 || t.indexOf('fly to destination') === 0 || t.indexOf('orbit destination') === 0 || t.indexOf('head straight') === 0) return 'AI Pilot';
+        return '';
+      }
+
+      const canonicalByKey = {};
+      rows.forEach(function(p){
+        const text = String(p || '').replace(/\s+/g, ' ').trim();
+        if (!text) return;
+        canonicalByKey[text.toUpperCase()] = text;
+      });
+
+      const groups = [];
+      sectionOrder.forEach(function(section){
+        let sectionItems = Array.isArray(sectionMap[section]) ? sectionMap[section] : [];
+        if (!hasAnySection){
+          sectionItems = rows.filter(function(item){ return classifyF14Phrase(item) === section; });
+        }
+        const unique = [];
+        sectionItems.forEach(function(item){
+          const text = String(item || '').replace(/\s+/g, ' ').trim();
+          if (!text) return;
+          const canonical = canonicalByKey[text.toUpperCase()] || text;
+          if (unique.indexOf(canonical) < 0) unique.push(canonical);
+        });
+
+        if (!unique.length) return;
+        unique.sort(function(a, b){ return String(a).localeCompare(String(b)); });
+        groups.push({ title: section, items: unique });
+      });
+
+      return groups;
     }
 
     function rankF4KeywordByPhase(phase, phrase){
@@ -3952,6 +4041,11 @@ namespace VAICOM
       }
 
       if (tab === 'AI CREW'){
+        if (isF14Aircraft(data)){
+          const f14Groups = getF14AiCrewKeywordGroups(data, rows);
+          if (f14Groups.length) return f14Groups;
+        }
+
         const suffix = formatAiCrewPhaseLabel(data && data.AiCrewPhase);
         return [{ title: 'Primary' + suffix, items: rows }];
       }
@@ -4071,8 +4165,13 @@ namespace VAICOM
 
       if (tab === 'GND CREW'){
         const filtered = [];
+        const aiCrewSet = new Set((Array.isArray(data.AiCrewKeywords) ? data.AiCrewKeywords : []).map(function(k){
+          return String(k || '').replace(/\s+/g, ' ').trim().toUpperCase();
+        }).filter(function(k){ return k.length > 0; }));
+
         phrases.forEach(function(p){
-          if (!/^George\s/i.test(p)) filtered.push(p);
+          const normalized = String(p || '').replace(/\s+/g, ' ').trim().toUpperCase();
+          if (!/^George\s/i.test(p) && !aiCrewSet.has(normalized)) filtered.push(p);
         });
         return reorderGroundCrewPhrasesForFlow(filtered);
       }
@@ -11560,7 +11659,7 @@ namespace VAICOM
 
     async function tick(){
       try{
-        const r = await fetch('state', { cache: 'no-store' });
+        const r = await fetch(`state?selectedTab=${selectedTab}`, { cache: 'no-store' });
         const j = await r.json();
         try{
           render(j);
@@ -12250,6 +12349,7 @@ namespace VAICOM
 
                 public static void Initialize()
                 {
+                    ResetRawServerMessagesLog();
                     ResetSnapshot();
                     RefreshDtcFilesSnapshot();
                     SetPluginRegistration(State.activeconfig != null && State.activeconfig.OpenKneeboard_Out);
@@ -13183,6 +13283,7 @@ namespace VAICOM
                     {
                         snapshot.Server = BuildServerSnapshot();
                         snapshot.AiCrewKeywords = BuildAiCrewKeywords();
+                        snapshot.AiCrewKeywordSections = BuildAiCrewKeywordSections();
                         snapshot.UpdatedUtc = DateTime.UtcNow;
                     }
                 }
@@ -13217,6 +13318,273 @@ namespace VAICOM
                     }
                 }
 
+                private static readonly string[] F14AiCrewKeywordSectionOrder = new[]
+                {
+                    "Startup and Shutdown",
+                    "Radio",
+                    "Radar",
+                    "Utility/Navigation",
+                    "Weapons",
+                    "LANTIRN",
+                    "Defensive/Countermeasures",
+                    "Datalink",
+                    "TACAN",
+                    "Walkman",
+                    "Crew Contract",
+                    "Miscellaneous",
+                    "Supercarriers",
+                    "AI Pilot",
+                };
+
+                private static readonly HashSet<string> F14SupercarrierCommandIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+                {
+                    "wMsgJ_RAD_DL_HOST_WASH",
+                    "wMsgJ_RAD_DL_HOST_ROOS",
+                    "wMsgJ_RAD_DL_HOST_LINC",
+                    "wMsgJ_RAD_DL_HOST_TRUM",
+                    "wMsgJ_RAD_DL_HOST_TICO",
+                    "wMsgJ_RAD_DL_HOST_FORE",
+                    "wMsgJ_RAD_DL_HOST_BURK",
+                    "wMsgJ_RAD_TCN_TAC_WASH",
+                    "wMsgJ_RAD_TCN_TAC_ROOS",
+                    "wMsgJ_RAD_TCN_TAC_LINC",
+                    "wMsgJ_RAD_TCN_TAC_TRUM",
+                    "wMsgJ_RAD_TCN_TAC_FORE",
+                };
+
+                private static Dictionary<string, List<string>> BuildAiCrewKeywordSections()
+                {
+                    try
+                    {
+                        string moduleId = State.currentmodule?.Id ?? string.Empty;
+                        if (moduleId.StartsWith("F-14", StringComparison.OrdinalIgnoreCase)
+                            || moduleId.StartsWith("F14", StringComparison.OrdinalIgnoreCase)
+                            || moduleId.IndexOf("F-14", StringComparison.OrdinalIgnoreCase) >= 0
+                            || moduleId.IndexOf("F14", StringComparison.OrdinalIgnoreCase) >= 0)
+                        {
+                            return BuildF14AiCrewKeywordSections();
+                        }
+                    }
+                    catch
+                    {
+                    }
+
+                    return new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
+                }
+
+                private static Dictionary<string, List<string>> BuildF14AiCrewKeywordSections()
+                {
+                    Dictionary<string, SortedSet<string>> buckets = new Dictionary<string, SortedSet<string>>(StringComparer.OrdinalIgnoreCase);
+                    foreach (string section in F14AiCrewKeywordSectionOrder)
+                    {
+                        buckets[section] = new SortedSet<string>(StringComparer.OrdinalIgnoreCase);
+                    }
+
+                    foreach (KeyValuePair<string, string> alias in Extensions.RIO.Aliases.aicommands)
+                    {
+                        string phrase = (alias.Key ?? string.Empty).Trim();
+                        string commandId = alias.Value ?? string.Empty;
+                        if (string.IsNullOrWhiteSpace(phrase) || string.IsNullOrWhiteSpace(commandId))
+                        {
+                            continue;
+                        }
+
+                        string section = ClassifyF14AiCrewKeywordSection(commandId);
+                        if (string.IsNullOrWhiteSpace(section))
+                        {
+                            continue;
+                        }
+
+                        if (buckets.TryGetValue(section, out SortedSet<string> set))
+                        {
+                            set.Add(phrase);
+                        }
+                    }
+
+                    foreach (KeyValuePair<string, IEnumerable<string>> extra in GetF14ManualAiCrewKeywordSections())
+                    {
+                        if (string.IsNullOrWhiteSpace(extra.Key) || extra.Value == null)
+                        {
+                            continue;
+                        }
+
+                        if (!buckets.TryGetValue(extra.Key, out SortedSet<string> set))
+                        {
+                            continue;
+                        }
+
+                        foreach (string keyword in extra.Value)
+                        {
+                            if (!string.IsNullOrWhiteSpace(keyword))
+                            {
+                                set.Add(keyword.Trim());
+                            }
+                        }
+                    }
+
+                    Dictionary<string, List<string>> sections = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
+                    foreach (string section in F14AiCrewKeywordSectionOrder)
+                    {
+                        if (!buckets.TryGetValue(section, out SortedSet<string> set) || set.Count == 0)
+                        {
+                            continue;
+                        }
+
+                        sections[section] = set.ToList();
+                    }
+
+                    return sections;
+                }
+
+                private static Dictionary<string, IEnumerable<string>> GetF14ManualAiCrewKeywordSections()
+                {
+                    return new Dictionary<string, IEnumerable<string>>(StringComparer.OrdinalIgnoreCase)
+                    {
+                        {
+                            "Radio",
+                            new[]
+                            {
+                                "Radio Frequency [0..3] [0..9] [0..9] [Point; Decimal] [0..9] [0; 2 5; 5 0; 7 5]"
+                            }
+                        },
+                        {
+                            "Datalink",
+                            new[]
+                            {
+                                "Link Tune [0..9] [0..9] [Point; Decimal] [0..9]"
+                            }
+                        },
+                        {
+                            "TACAN",
+                            new[]
+                            {
+                                "TACAN Tune [X-Ray; Yankee] [0..1] [0..9] [0..9]"
+                            }
+                        },
+                        {
+                            "Radar",
+                            new[]
+                            {
+                                "Scan Range [0..30,5] [Angels; on] [the deck; 1..4,5]"
+                            }
+                        },
+                        {
+                            "LANTIRN",
+                            new[]
+                            {
+                                "Track Marker [0..10]",
+                                "Laser Code [5..7] [1..8] [1..8]"
+                            }
+                        },
+                        {
+                            "Weapons",
+                            new[]
+                            {
+                                "Pre Planned [1..8] To Station [3..6]"
+                            }
+                        },
+                        {
+                            "Utility/Navigation",
+                            new[]
+                            {
+                                "Map Marker [0..10] to [Waypoint 1; Waypoint 2; Waypoint 3; Steerpoint]",
+                                "Map Marker [0..10] to Grid",
+                                "[Fly; Orbit] Marker [0..10]",
+                                "Direct [Waypoint; Steerpoint] [1..50]"
+                            }
+                        }
+                    };
+                }
+
+                private static string ClassifyF14AiCrewKeywordSection(string commandId)
+                {
+                    if (string.IsNullOrWhiteSpace(commandId))
+                    {
+                        return null;
+                    }
+
+                    if (commandId.StartsWith("wMsgJ_RDR_", StringComparison.OrdinalIgnoreCase))
+                    {
+                        return "Radar";
+                    }
+
+                    if (commandId.StartsWith("wMsgJ_LAN_", StringComparison.OrdinalIgnoreCase)
+                        || commandId.StartsWith("wMsgLANTIRN_", StringComparison.OrdinalIgnoreCase))
+                    {
+                        return "LANTIRN";
+                    }
+
+                    if (commandId.StartsWith("wMsgJ_WPN_", StringComparison.OrdinalIgnoreCase))
+                    {
+                        return "Weapons";
+                    }
+
+                    if (commandId.StartsWith("wMsgJ_RAD_182_", StringComparison.OrdinalIgnoreCase))
+                    {
+                        return "Radio";
+                    }
+
+                    if (F14SupercarrierCommandIds.Contains(commandId))
+                    {
+                        return "Supercarriers";
+                    }
+
+                    if (commandId.StartsWith("wMsgJ_RAD_DL_", StringComparison.OrdinalIgnoreCase))
+                    {
+                        return "Datalink";
+                    }
+
+                    if (commandId.StartsWith("wMsgJ_RAD_TCN_", StringComparison.OrdinalIgnoreCase))
+                    {
+                        return "TACAN";
+                    }
+
+                    if (commandId.StartsWith("wMsgJ_UTIL_NAV_", StringComparison.OrdinalIgnoreCase))
+                    {
+                        return "Utility/Navigation";
+                    }
+
+                    if (commandId.StartsWith("wMsgJ_WLKMN_", StringComparison.OrdinalIgnoreCase))
+                    {
+                        return "Walkman";
+                    }
+
+                    if (commandId.StartsWith("wMsgJ_UTIL_CONTR_", StringComparison.OrdinalIgnoreCase)
+                        || commandId.Equals("wMsgJ_RESET", StringComparison.OrdinalIgnoreCase))
+                    {
+                        return "Crew Contract";
+                    }
+
+                    if (commandId.StartsWith("wMsgJ_DEF_", StringComparison.OrdinalIgnoreCase))
+                    {
+                        return "Defensive/Countermeasures";
+                    }
+
+                    if (commandId.StartsWith("wMsgJ_STRT_", StringComparison.OrdinalIgnoreCase))
+                    {
+                        return "Startup and Shutdown";
+                    }
+
+                    if (commandId.StartsWith("wMsgJ_SDWN_", StringComparison.OrdinalIgnoreCase))
+                    {
+                        return "Startup and Shutdown";
+                    }
+
+                    if (commandId.StartsWith("wMsgJ_CANOPY_", StringComparison.OrdinalIgnoreCase)
+                        || commandId.StartsWith("wMsgJ_MENU_", StringComparison.OrdinalIgnoreCase)
+                        || commandId.StartsWith("wMsgJ_UTIL_", StringComparison.OrdinalIgnoreCase))
+                    {
+                        return "Miscellaneous";
+                    }
+
+                    if (commandId.StartsWith("wMsgI_", StringComparison.OrdinalIgnoreCase))
+                    {
+                        return "AI Pilot";
+                    }
+
+                    return null;
+                }
+
                 private static List<string> BuildAiCrewKeywords()
                 {
                     try
@@ -13224,11 +13592,23 @@ namespace VAICOM
                         string moduleId = State.currentmodule?.Id ?? string.Empty;
                         HashSet<string> keywords = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-                        if (moduleId.StartsWith("F-14", StringComparison.OrdinalIgnoreCase))
+                        if (moduleId.StartsWith("F-14", StringComparison.OrdinalIgnoreCase)
+                            || moduleId.StartsWith("F14", StringComparison.OrdinalIgnoreCase)
+                            || moduleId.IndexOf("F-14", StringComparison.OrdinalIgnoreCase) >= 0
+                            || moduleId.IndexOf("F14", StringComparison.OrdinalIgnoreCase) >= 0)
                         {
-                            foreach (string key in Extensions.RIO.Aliases.aicommands.Keys)
+                            Dictionary<string, List<string>> sections = BuildF14AiCrewKeywordSections();
+                            foreach (string sectionName in F14AiCrewKeywordSectionOrder)
                             {
-                                keywords.Add(key);
+                                if (!sections.TryGetValue(sectionName, out List<string> sectionKeywords))
+                                {
+                                    continue;
+                                }
+
+                                foreach (string key in sectionKeywords)
+                                {
+                                    keywords.Add(key);
+                                }
                             }
                         }
                         else if (moduleId.Equals("F-4E-45MC", StringComparison.OrdinalIgnoreCase))
@@ -13406,6 +13786,13 @@ namespace VAICOM
 
                     if (path == "/okb/state" || path == "/okb/index.json")
                     {
+                        // Extract the currently selected tab from the query string
+                        string queryParams = context.Request.Url.Query;
+                        if (queryParams.Contains("selectedTab"))
+                        {
+                            selectedTab = queryParams.Substring(queryParams.LastIndexOf('=') + 1);
+                        }
+
                         WriteJson(context.Response, BuildSnapshotJson());
                         return;
                     }
@@ -13470,6 +13857,11 @@ namespace VAICOM
 
                     context.Response.StatusCode = 404;
                     context.Response.Close();
+                }
+
+                public static bool IsFlightPlanTabSelected()
+                {
+                    return !string.IsNullOrEmpty(selectedTab) && selectedTab.Equals("DTC");
                 }
 
                 private static string GetIndexHtmlWithStoreLookup()
@@ -13660,6 +14052,7 @@ namespace VAICOM
                             },
                             Status = responseModel.Status,
                             AiCrewKeywords = responseModel.AiCrewKeywords,
+                            AiCrewKeywordSections = responseModel.AiCrewKeywordSections,
                             RawServerMessages = responseModel.RawServerMessages,
                             Logs = responseModel.Logs,
                             Units = responseModel.Units,
@@ -13816,6 +14209,26 @@ namespace VAICOM
                         {
                             Directory.CreateDirectory(logsFolder);
                             File.AppendAllText(filePath, DateTime.UtcNow.ToString("o") + " | " + rawMessage + Environment.NewLine);
+                        }
+                    }
+                    catch
+                    {
+                    }
+                }
+
+                private static void ResetRawServerMessagesLog()
+                {
+                    try
+                    {
+                        string logsFolder = Path.Combine(State.VA_APPS, Products.Products.Families.Vaicom.VaicomProPlugin.rootfoldername, AppData.SubFolders["logfiles"]);
+                        string filePath = Path.Combine(logsFolder, "VAICOMPRO.ServerMessages.log");
+
+                        lock (RawServerLogSync)
+                        {
+                            if (File.Exists(filePath))
+                            {
+                                File.Delete(filePath);
+                            }
                         }
                     }
                     catch
@@ -15105,6 +15518,7 @@ namespace VAICOM
                 public OpenKneeboardServerSnapshot Server { get; set; } = new OpenKneeboardServerSnapshot();
                 public OpenKneeboardStatusSnapshot Status { get; set; } = new OpenKneeboardStatusSnapshot();
                 public List<string> AiCrewKeywords { get; set; } = new List<string>();
+                public Dictionary<string, List<string>> AiCrewKeywordSections { get; set; } = new Dictionary<string, List<string>>();
                 public List<string> RawServerMessages { get; set; } = new List<string>();
                 public Dictionary<string, string> Logs { get; set; } = new Dictionary<string, string>();
                 public Dictionary<string, List<string>> Units { get; set; } = new Dictionary<string, List<string>>();
@@ -15127,6 +15541,7 @@ namespace VAICOM
                         Server = Server == null ? new OpenKneeboardServerSnapshot() : Server.Clone(),
                         Status = Status == null ? new OpenKneeboardStatusSnapshot() : Status.Clone(),
                         AiCrewKeywords = new List<string>(AiCrewKeywords ?? new List<string>()),
+                        AiCrewKeywordSections = CloneListMap(AiCrewKeywordSections),
                         RawServerMessages = new List<string>(RawServerMessages ?? new List<string>()),
                         Logs = new Dictionary<string, string>(Logs),
                         Units = CloneListMap(Units),

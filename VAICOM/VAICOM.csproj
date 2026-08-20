@@ -202,6 +202,7 @@
     <Resource Include="Resources\Images\YouTubePlay.png" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\..\..\..\OneDrive\Desktop\VAICOM F-14 Update.vap" Link="Resources\Files\VAICOM F-14 Update.vap" />
     <None Include="Fonts\MS33558.ttf" />
     <EmbeddedResource Include="Helpers\StoreClsidLookup.json">
       <LogicalName>VAICOM.Helpers.StoreClsidLookup.json</LogicalName>
@@ -222,7 +223,6 @@
     <EmbeddedResource Include="Resources\Files\options.dlg" />
     <EmbeddedResource Include="Resources\Files\optionsData.lua" />
     <EmbeddedResource Include="Resources\Files\optionsDb.lua" />
-    <EmbeddedResource Include="Resources\Files\VAICOM PRO for DCS World.vap" />
     <EmbeddedResource Include="Resources\Fonts\FRADM.TTF" />
     <EmbeddedResource Include="Resources\Fonts\FRADMCN.TTF" />
     <EmbeddedResource Include="Resources\Fonts\FRADMIT.TTF" />
@@ -241,7 +241,6 @@
     <None Include="Resources\Files\Append.Core.TabSheetBar.lua" />
     <None Include="Resources\Files\Append.Core.VAICOMPRO.export.lua" />
     <None Include="Resources\Files\Append.F14.JesterAI_Page.lua" />
-    <None Include="Resources\Files\Append.F14.JesterInit.lua" />
     <None Include="Resources\Files\Append.Kneeboard.1.lua" />
     <None Include="Resources\Files\Append.Kneeboard.command_defs.lua" />
     <None Include="Resources\Files\Append.Kneeboard.declare_VAICOMPRO_device.lua" />
@@ -260,7 +259,6 @@
     <None Include="Resources\Files\Orig.Core.TabSheetBar.lua" />
     <None Include="Resources\Files\Orig.Core.VAICOMPRO.export.lua" />
     <None Include="Resources\Files\Orig.F14.JesterAI_Page.lua" />
-    <None Include="Resources\Files\Orig.F14.JesterInit.lua" />
     <None Include="Resources\Files\Orig.F4E.Jester.Renderer.js" />
     <None Include="Resources\Files\Orig.F4E.Jester.Dialog.Interface.js" />
     <None Include="Resources\Files\Orig.ReplaceString.F14.JesterAI_Page.lua" />

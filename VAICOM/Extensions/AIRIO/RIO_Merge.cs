@@ -35,35 +35,55 @@ namespace VAICOM
                 {
                     CommandCategories output = CommandCategories.RIO;
 
+                    // RIO blocks from RIO/Commands.cs
+                    // menu:       23200 - 23239
+                    // radar:      23240 - 23329
+                    // lantirn:    23330 - 23399
+                    // weapons:    23400 - 23499
+                    // radio:      23500 - 23599
+                    // d-link:     23600 - 23649
+                    // utility:    23650 - 23799  (navigation/util + walkman/polaroid)
+                    // defensive:  23800 - 23879
+                    // rio misc:   23880 - 23919
+                    // ai pilot:   23920 - 23999
+
                     if (id >= 23200 && id <= 23239)
                     {
                         return CommandCategories.RIO_menu;
                     }
-                    if (id >= 23240 && id <= 23299)
+                    if (id >= 23240 && id <= 23329)
                     {
                         return CommandCategories.RIO_radar;
                     }
-                    if (id >= 23300 && id <= 23399)
+                    if (id >= 23330 && id <= 23399)
                     {
-                        return CommandCategories.RIO_weapons;
+                        return CommandCategories.RIO_lantirn;
                     }
                     if (id >= 23400 && id <= 23499)
                     {
-                        return CommandCategories.RIO_radio;
+                        return CommandCategories.RIO_weapons;
                     }
                     if (id >= 23500 && id <= 23599)
                     {
+                        return CommandCategories.RIO_radio;
+                    }
+                    if (id >= 23600 && id <= 23649)
+                    {
+                        return CommandCategories.RIO_dlink;
+                    }
+                    if (id >= 23650 && id <= 23799)
+                    {
                         return CommandCategories.RIO_utility;
                     }
-                    if (id >= 23600 && id <= 23699)
+                    if (id >= 23800 && id <= 23879)
                     {
                         return CommandCategories.RIO_defensive;
                     }
-                    if (id >= 23700 && id <= 23799)
+                    if (id >= 23880 && id <= 23919)
                     {
                         return CommandCategories.RIO_misc;
                     }
-                    if (id >= 23800 && id <= 23999)
+                    if (id >= 23920 && id <= 23999)
                     {
                         return CommandCategories.AI_pilot;
                     }

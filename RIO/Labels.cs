@@ -102,13 +102,13 @@ namespace VAICOM.Extensions.RIO
             {"wMsgJ_RDR_GO_ACTIVE",                 "Switch Radar Transmit"             },
             {"wMsgJ_RDR_GO_SILENT",                 "Switch Radar Standby"              },
 
-            {"wMsgJ_RDR_SCAN_DIST",                 "Scan Range"                        }, // not endpoint, show hint
-            {"wMsgJ_RDR_RNG_AUTO",                  "Scan Range Automatic"              },
-            {"wMsgJ_RDR_RNG_25",                    "Scan Range 25"                     },
-            {"wMsgJ_RDR_RNG_50",                    "Scan Range 50"                     },
-            {"wMsgJ_RDR_RNG_100",                   "Scan Range 100"                    },
-            {"wMsgJ_RDR_RNG_200",                   "Scan Range 200"                    },
-            {"wMsgJ_RDR_RNG_400",                   "Scan Range 400"                    },
+            {"wMsgJ_RDR_SCAN_DIST",                 "TID Range"                        }, // not endpoint, show hint
+            {"wMsgJ_RDR_RNG_AUTO",                  "TID Range Automatic"              },
+            {"wMsgJ_RDR_RNG_25",                    "TID Range 25"                     },
+            {"wMsgJ_RDR_RNG_50",                    "TID Range 50"                     },
+            {"wMsgJ_RDR_RNG_100",                   "TID Range 100"                    },
+            {"wMsgJ_RDR_RNG_200",                   "TID Range 200"                    },
+            {"wMsgJ_RDR_RNG_400",                   "TID Range 400"                    },
 
             {"wMsgJ_RDR_SCAN_AZ",                   "Scan Azimuth"                      }, // not endpoint, show hint
             {"wMsgJ_RDR_POS",                       "Scan Azimuth Automatic"            },
@@ -117,6 +117,10 @@ namespace VAICOM.Extensions.RIO
             {"wMsgJ_RDR_POS_CTR_R",                 "Scan Azimuth Center Right"         },
             {"wMsgJ_RDR_POS_L",                     "Scan Azimuth Left"                 },
             {"wMsgJ_RDR_POS_R",                     "Scan Azimuth Right"                },
+            {"wMsgJ_RDR_POS_L20",                   "Scan Azimuth Left 20"              },
+            {"wMsgJ_RDR_POS_R20",                   "Scan Azimuth Right 20"             },
+            {"wMsgJ_RDR_POS_L55",                   "Scan Azimuth Hard Left"            },
+            {"wMsgJ_RDR_POS_R55",                   "Scan Azimuth Hard Right"           },
 
             {"wMsgJ_RDR_SCAN_ELEV",                 "Scan Elevation"                    }, // not endpoint, show hint
             {"wMsgJ_RDR_AUTO",                      "Scan Elevation Automatic"          },
@@ -125,6 +129,21 @@ namespace VAICOM.Extensions.RIO
             {"wMsgJ_RDR_POS_MID",                   "Scan Elevation Level"              },
             {"wMsgJ_RDR_POS_MID_HI",                "Scan Elevation Level High"         },
             {"wMsgJ_RDR_POS_MID_LO",                "Scan Elevation Level Low"          },
+            {"wMsgJ_RDR_ELEV_CLOSE_LOW",            "Scan Close Low"                    },
+            {"wMsgJ_RDR_ELEV_CLOSE_MID_LO",         "Scan Close Level Low"              },
+            {"wMsgJ_RDR_ELEV_CLOSE_MID",            "Scan Close Level"                  },
+            {"wMsgJ_RDR_ELEV_CLOSE_MID_HI",         "Scan Close Level High"             },
+            {"wMsgJ_RDR_ELEV_CLOSE_HI",             "Scan Close High"                   },
+            {"wMsgJ_RDR_ELEV_MID_LOW",              "Scan Mid Low"                      },
+            {"wMsgJ_RDR_ELEV_MID_MID_LO",           "Scan Mid Level Low"                },
+            {"wMsgJ_RDR_ELEV_MID_MID",              "Scan Mid Level"                    },
+            {"wMsgJ_RDR_ELEV_MID_MID_HI",           "Scan Mid Level High"               },
+            {"wMsgJ_RDR_ELEV_MID_HI",               "Scan Mid High"                     },
+            {"wMsgJ_RDR_ELEV_LONG_LOW",             "Scan Long Low"                     },
+            {"wMsgJ_RDR_ELEV_LONG_MID_LO",          "Scan Long Level Low"               },
+            {"wMsgJ_RDR_ELEV_LONG_MID",             "Scan Long Level"                   },
+            {"wMsgJ_RDR_ELEV_LONG_MID_HI",          "Scan Long Level High"              },
+            {"wMsgJ_RDR_ELEV_LONG_HI",              "Scan Long High"                    },
 
             {"wMsgJ_RDR_MODE_AUTO",                 "Radar Mode Automatic"          },
             {"wMsgJ_RDR_MODE_TWS",                  "Radar Mode TWS"                },
@@ -151,6 +170,7 @@ namespace VAICOM.Extensions.RIO
             {"wMsgJ_RDR_MODE_SIZE_M",               "Target Size Normal"             },
             {"wMsgJ_RDR_MODE_SIZE_L",               "Target Size Large"              },
             {"wMsgJ_RDR_MODE_SIZE_S",               "Target Size Small"              },
+            {"wMsgJ_RDR_TID_EXP",                   "TID Expand Toggle"              },
 
             // block: weapons
             {"wMsgJ_WPN_AG_SORDN",              "AG Select Stores"              }, //hint
@@ -164,11 +184,16 @@ namespace VAICOM.Extensions.RIO
             {"wMsgJ_WPN_AG_SORDN_WPN_8",        "AG Select GBUs"                },
             {"wMsgJ_WPN_AG_SORDN_WPN_9",        "AG Select BDUs"                },
             {"wMsgJ_WPN_AG_SORDN_WPN_10",       "AG Select TALD"                },
+            {"wMsgJ_WPN_AG_SORDN_WPN_11",       "AG Select JDAM"                },
+            {"wMsgJ_WPN_AG_SORDN_WPN_12",       "AG Select GBU31"               },
+            {"wMsgJ_WPN_AG_SORDN_WPN_13",       "AG Select GBU38"               },
 
             {"wMsgJ_WPN_AG_SPOT",               "AG Weapon Spot"                }, // not used
 
             {"wMsgJ_WPN_AG_SET_COMP_TGT",       "AG Attack Mode Target"         },
+            {"wMsgJ_WPN_AG_SET_COMP_IP",        "AG Attack Mode IP"             },
             {"wMsgJ_WPN_AG_SET_COMP_PILOT",     "AG Attack Mode Pilot"          },
+            {"wMsgJ_WPN_AG_SET_MAN",            "AG Attack Mode Manual"         },
 
             {"wMsgJ_WPN_AG_SET_SNGL",           "Set Release Single"            },
             {"wMsgJ_WPN_AG_SET_PAIRS",          "Set Release Pairs"             },
@@ -223,6 +248,17 @@ namespace VAICOM.Extensions.RIO
             {"wMsgJ_WPN_AG_STN_36",             "Select Stations 3,6"           },
             {"wMsgJ_WPN_AG_STN_45",             "Select Stations 4,5"           },
 
+            {"wMsgJ_WPN_AG_JDAM_WPT_TO_GGW",    "Send Waypoint to GGW"          },
+            {"wMsgJ_WPN_AG_JDAM_DESIG_TO_STN",  "Send Designation to Station"   },
+            {"wMsgJ_WPN_AG_JDAM_PP_ALL_STN_1",  "PP 1 to GGW ALL STN"           },
+            {"wMsgJ_WPN_AG_JDAM_PP_ALL_STN_2",  "PP 2 to GGW ALL STN"           },
+            {"wMsgJ_WPN_AG_JDAM_PP_ALL_STN_3",  "PP 3 to GGW ALL STN"           },
+            {"wMsgJ_WPN_AG_JDAM_PP_ALL_STN_4",  "PP 4 to GGW ALL STN"           },
+            {"wMsgJ_WPN_AG_JDAM_PP_ALL_STN_5",  "PP 5 to GGW ALL STN"           },
+            {"wMsgJ_WPN_AG_JDAM_PP_ALL_STN_6",  "PP 6 to GGW ALL STN"           },
+            {"wMsgJ_WPN_AG_JDAM_PP_ALL_STN_7",  "PP 7 to GGW ALL STN"           },
+            {"wMsgJ_WPN_AG_JDAM_PP_ALL_STN_8",  "PP 8 to GGW ALL STN"           },
+
             //{"wMsgPlaceHolder155",              "PlaceHolder155"                },
             //{"wMsgPlaceHolder156",              "PlaceHolder156"                },
             //{"wMsgPlaceHolder157",              "PlaceHolder157"                },
@@ -270,40 +306,9 @@ namespace VAICOM.Extensions.RIO
             //{"wMsgPlaceHolder199",              "PlaceHolder199"                },
 
             // block: radio
-            {"wMsgJ_RAD_159",                   "Radio 1"                       },
-            {"wMsgJ_RAD_159_USE_GUARD",         "Radio 1 Use Guard"             },
-            {"wMsgJ_RAD_159_USE_MANUAL",        "Radio 1 Use Manual"            },
-            {"wMsgJ_RAD_159_USE_CHAN",          "Radio 1 Use Channel"           },
-            {"wMsgJ_RAD_159_USE_CHAN_1",        "Radio 1 Use Channel 1"         },
-            {"wMsgJ_RAD_159_USE_CHAN_2",        "Radio 1 Use Channel 2"         },
-            {"wMsgJ_RAD_159_USE_CHAN_3",        "Radio 1 Use Channel 3"         },
-            {"wMsgJ_RAD_159_USE_CHAN_4",        "Radio 1 Use Channel 4"         },
-            {"wMsgJ_RAD_159_USE_CHAN_5",        "Radio 1 Use Channel 5"         },
-            {"wMsgJ_RAD_159_USE_CHAN_6",        "Radio 1 Use Channel 6"         },
-            {"wMsgJ_RAD_159_USE_CHAN_7",        "Radio 1 Use Channel 7"         },
-            {"wMsgJ_RAD_159_USE_CHAN_8",        "Radio 1 Use Channel 8"         },
-            {"wMsgJ_RAD_159_TUNE_MAN",          "Radio 1 Tune Manual"           },
-            {"wMsgJ_RAD_159_SELECT_CHAN",       "Radio 1 Select Channel"        },
-            {"wMsgJ_RAD_159_SELECT_MODE",       "Radio 1 Select Mode"           },
-            {"wMsgJ_RAD_159_TUNE_ATC",          "Radio 1 Tune ATC"              },
-            {"wMsgJ_RAD_159_TUNE_TAC",          "Radio 1 Tune TAC"              },
-            {"wMsgJ_RAD_182",                   "Radio 2"                       },
             {"wMsgJ_RAD_182_USE_GUARD",         "AN/ARC-182 Use Guard"          },
-            {"wMsgJ_RAD_182_USE_MANUAL",        "Radio 2 Use Manual"            },
-            {"wMsgJ_RAD_182_USE_CHAN",          "Radio 2 Use Channel"           },
-            {"wMsgJ_RAD_182_USE_CHAN_1",        "Radio 2 Use Channel 1"         },
-            {"wMsgJ_RAD_182_USE_CHAN_2",        "Radio 2 Use Channel 2"         },
-            {"wMsgJ_RAD_182_USE_CHAN_3",        "Radio 2 Use Channel 3"         },
-            {"wMsgJ_RAD_182_USE_CHAN_4",        "Radio 2 Use Channel 4"         },
-            {"wMsgJ_RAD_182_USE_CHAN_5",        "Radio 2 Use Channel 5"         },
-            {"wMsgJ_RAD_182_USE_CHAN_6",        "Radio 2 Use Channel 6"         },
-            {"wMsgJ_RAD_182_USE_CHAN_7",        "Radio 2 Use Channel 7"         },
-            {"wMsgJ_RAD_182_USE_CHAN_8",        "Radio 2 Use Channel 8"         },
-            {"wMsgJ_RAD_182_TUNE_MAN",          "Radio 2 Tune Manual"           },
-            {"wMsgJ_RAD_182_SELECT_CHAN",       "Radio 2 Select Channel"        },
-            {"wMsgJ_RAD_182_SELECT_MODE",       "Radio 2 Select Mode"           },
-            {"wMsgJ_RAD_182_TUNE_ATC",          "Radio 2 Tune ATC"              },
-            {"wMsgJ_RAD_182_TUNE_TAC",          "Radio 2 Tune TAC"              },
+            {"wMsgJ_RAD_182_USE_MANUAL",        "Radio Use Manual"              },
+            {"wMsgJ_RAD_182_USE_CHAN",          "Radio Use Preset"              },
 
             // Datalink
             {"wMsgJ_RAD_DL",                    "Datalink"                      },
@@ -402,6 +407,14 @@ namespace VAICOM.Extensions.RIO
             {"wMsgJ_UTIL_NAV_MAP_SPT_4",        "Map Steerpoint 4"              }, // 4-8 not used
             {"wMsgJ_UTIL_NAV_MAP_SPT_5",        "Map Steerpoint 5"              },
             {"wMsgJ_UTIL_NAV_MAP_SPT_6",        "Map Steerpoint 6"              },
+            {"wMsgJ_UTIL_NAV_MAP_SPT_7",        "Map Steerpoint 7"              },
+            {"wMsgJ_UTIL_NAV_MAP_SPT_8",        "Map Steerpoint 8"              },
+            {"wMsgJ_UTIL_NAV_MAP_SPT_9",        "Map Steerpoint 9"              },
+            {"wMsgJ_UTIL_NAV_MAP_SPT_10",       "Map Steerpoint 10"             },
+            {"wMsgJ_UTIL_NAV_MAP_SPT_11",       "Map Steerpoint 11"             },
+            {"wMsgJ_UTIL_NAV_MAP_SPT_12",       "Map Steerpoint 12"             },
+            {"wMsgJ_UTIL_NAV_MAP_SPT_13",       "Map Steerpoint 13"             },
+            {"wMsgJ_UTIL_NAV_MAP_SPT_14",       "Map Steerpoint 14"             },
 
             {"wMsgJ_UTIL_NAV_MAP_FIX_PNT",      "Navigate Fixed Point"          },
             {"wMsgJ_UTIL_NAV_MAP_INIT_PNT",     "Navigate Initial Point"        },
@@ -421,6 +434,35 @@ namespace VAICOM.Extensions.RIO
             {"wMsgJ_UTIL_NAV_DEF_PNT",          "Restore Defense Point"         },
             {"wMsgJ_UTIL_NAV_HSTZONE",          "Restore Hostile Zone"          }, //
 
+            {"wMsgJ_UTIL_NAV_LOAD_FLT_PLAN_1",  "Load Flight Plan 1"            }, //f-14B(U) Flight Plan managment
+            {"wMsgJ_UTIL_NAV_LOAD_FLT_PLAN_2",  "Load Flight Plan 2"            },
+            {"wMsgJ_UTIL_NAV_LOAD_FLT_PLAN_3",  "Load Flight Plan 3"            },
+            {"wMsgJ_UTIL_NAV_LOAD_FLT_PLAN_4",  "Load Flight Plan 4"            },
+            {"wMsgJ_UTIL_NAV_LOAD_FLT_PLAN_5",  "Load Flight Plan 5"            },
+            {"wMsgJ_UTIL_NAV_LOAD_FLT_PLAN_6",  "Load Flight Plan 6"            },
+            {"wMsgJ_UTIL_NAV_LOAD_FLT_PLAN_7",  "Load Flight Plan 7"            },
+            {"wMsgJ_UTIL_NAV_RELOAD_FLT_PLAN",  "Reload Flight Plan"            },
+            {"wMsgJ_UTIL_NAV_DIR_SPT_1",        "Direct Steerpoint 1"           },
+            {"wMsgJ_UTIL_NAV_DIR_SPT_2",        "Direct Steerpoint 2"           },
+            {"wMsgJ_UTIL_NAV_DIR_SPT_3",        "Direct Steerpoint 3"           },
+            {"wMsgJ_UTIL_NAV_DIR_SPT_4",        "Direct Steerpoint 4"           },
+            {"wMsgJ_UTIL_NAV_DIR_SPT_5",        "Direct Steerpoint 5"           },
+            {"wMsgJ_UTIL_NAV_DIR_SPT_6",        "Direct Steerpoint 6"           },
+            {"wMsgJ_UTIL_NAV_DIR_SPT_7",        "Direct Steerpoint 7"           },
+            {"wMsgJ_UTIL_NAV_DIR_SPT_8",        "Direct Steerpoint 8"           },
+            {"wMsgJ_UTIL_NAV_DIR_SPT_9",        "Direct Steerpoint 9"           },
+            {"wMsgJ_UTIL_NAV_DIR_SPT_10",       "Direct Steerpoint 10"          },
+            {"wMsgJ_UTIL_NAV_DIR_SPT_11",       "Direct Steerpoint 11"          },
+            {"wMsgJ_UTIL_NAV_DIR_SPT_12",       "Direct Steerpoint 12"          },
+            {"wMsgJ_UTIL_NAV_DIR_SPT_13",       "Direct Steerpoint 13"          },
+            {"wMsgJ_UTIL_NAV_DIR_SPT_14",       "Direct Steerpoint 14"          },
+            {"wMsgJ_UTIL_NAV_MODE_EGI",         "Nav Mode EGI"                  },
+            {"wMsgJ_UTIL_NAV_MODE_DEST",        "Nav Mode Destination"          },
+            {"wMsgJ_UTIL_NAV_SEQ_AUTO",         "Nav Sequence Auto"             },
+            {"wMsgJ_UTIL_NAV_SEQ_OFLY",         "Nav Sequence Overfly"          },
+            {"wMsgJ_UTIL_NAV_SEQ_MAN",          "Nav Sequence Manual"           },
+            {"wMsgJ_UTIL_NAV_BHDI_FLY",         "Nav Backup to Selected"        },
+
             {"wMsgJ_UTIL_CONTR",                "Utility Contract"              }, //na
             {"wMsgJ_UTIL_CONTR_NO_TALK",        "No Talking"                    },
             {"wMsgJ_UTIL_CONTR_TALK",           "Talking Allowed"               },
@@ -430,6 +472,12 @@ namespace VAICOM.Extensions.RIO
             {"wMsgJ_UTIL_CONTR_NO_CALL",        "No landing callouts"           },
             {"wMsgJ_UTIL_CONTR_ACTIVE",         "Jester resume"                 },//na
             {"wMsgJ_UTIL_CONTR_INACTIVE",       "Jester suspend"                },//na
+            {"wMsgJ_UTIL_CONTR_AUTO_EXPAND",    "Enable Auto Expand"            },
+            {"wMsgJ_UTIL_CONTR_AUTO_VID",       "Disable Auto VID"              },
+            {"wMsgJ_UTIL_CONTR_NO_IFF_REPLY_BANDIT", "Treat no-reply as bandit" },
+            {"wMsgJ_UTIL_CONTR_DISABLE_AUTO_EXPAND", "Disable Auto Expand"       },
+            {"wMsgJ_UTIL_CONTR_ENABLE_AUTO_VID", "Enable Auto VID"              },
+            {"wMsgJ_UTIL_CONTR_NO_IFF_REPLY_BOGEY", "Treat no-reply as bogey"   },
 
             {"wMsgJ_RESET",                     "Reset"                         },
             // Supercarriers
@@ -487,6 +535,7 @@ namespace VAICOM.Extensions.RIO
             {"wMsgJ_UTIL_NAV_GRD_5SCTR",        "Grid 5 Sectors"                },
             {"wMsgJ_UTIL_NAV_GRD_6SCTR",        "Grid 6 Sectors"                },
             {"wMsgJ_UTIL_NAV_GRD_MARKER",       "J_UTIL_NAV_GRD_MARKER"         },
+            
             //{"wMsgPlaceHolder383",              "PlaceHolder383"                },
             //{"wMsgPlaceHolder384",              "PlaceHolder384"                },
             //{"wMsgPlaceHolder385",              "PlaceHolder385"                },
@@ -502,23 +551,32 @@ namespace VAICOM.Extensions.RIO
             {"wMsgJ_WLKMN_NEXT",                "Fast Forward"                  },
             {"wMsgJ_WLKMN_PREV",                "Rewind"                        },
 
-            {"wMsgJ_RDR_ASP_BEAM",              "Aspect Switch Beam"                },
-            {"wMsgJ_RDR_ASP_NOSE",              "Aspect Switch Nose"                },
-            {"wMsgJ_RDR_ASP_TAIL",              "Aspect Switch Tail"                },
+            {"wMsgJ_RDR_ASP_BEAM",              "Aspect Switch Beam"            },
+            {"wMsgJ_RDR_ASP_NOSE",              "Aspect Switch Nose"            },
+            {"wMsgJ_RDR_ASP_TAIL",              "Aspect Switch Tail"            },
             //{"wMsgPlaceHolder397",              "PlaceHolder397"                },
             //{"wMsgPlaceHolder398",              "PlaceHolder398"                },
             //{"wMsgPlaceHolder399",              "PlaceHolder399"                },
 
             // block: defensive
-            {"wMsgJ_DEF_CMS_MOD",               "CMS Mode"                      }, // indirect
-            {"wMsgJ_DEF_CMS_MOD_OFF",           "CMS Mode Off"                  },
-            {"wMsgJ_DEF_CMS_MOD_MAN",           "CMS Mode Manual"               },
-            {"wMsgJ_DEF_CMS_MOD_AUTO",          "CMS Mode Auto"                 },
+            {"wMsgJ_DEF_CMS_MOD",               "CMS/CMDS Mode"                 }, // indirect
+            {"wMsgJ_DEF_CMS_MOD_OFF",           "CMS/CMDS Mode Off"             },
+            {"wMsgJ_DEF_CMS_MOD_MAN",           "CMS/CMDS Mode Manual"          },
+            {"wMsgJ_DEF_CMS_MOD_AUTO",          "CMS/CMDS Mode Auto"            },
+            {"wMsgJ_DEF_CMS_MOD_SBY",           "CMDS Mode Standby"             },
+            {"wMsgJ_DEF_CMS_MOD_SEMI",          "CMDS Mode Semi"                },
+            {"wMsgJ_DEF_CMS_MOD_BYP",           "CMDS Mode Bypass"              },
 
             {"wMsgJ_DEF_FLR_MOD",               "Flares Mode"                   }, // not endpoint
             {"wMsgJ_DEF_FLR_MOD_PILOT",         "Flares Mode to Pilot"          },
             {"wMsgJ_DEF_FLR_MOD_NORM",          "Flares Mode to Normal"         },
             {"wMsgJ_DEF_FLR_MOD_MULTI",         "Flares Mode to Multi"          },
+
+            {"wMsgJ_DEF_MAN_PGM",               "Manual CMDS Program"                },
+            {"wMsgJ_DEF_MAN_PGM_1",             "Manual CMDS Program 1"              },
+            {"wMsgJ_DEF_MAN_PGM_2",             "Manual CMDS Program 2"              },
+            {"wMsgJ_DEF_MAN_PGM_3",             "Manual CMDS Program 3"              },
+            {"wMsgJ_DEF_MAN_PGM_4",             "Manual CMDS Program 4"              },
 
             {"wMsgJ_DEF_CHF_PGM",               "Chaff Program"                         },
             {"wMsgJ_DEF_CHF_PGM_RR_12",         "Chaff Program 1 (RR 12)"               },
@@ -528,7 +586,14 @@ namespace VAICOM.Extensions.RIO
             {"wMsgJ_DEF_CHF_PGM_20_84",         "Chaff Program 5 (20 84)"               },
             {"wMsgJ_DEF_CHF_PGM_40_44",         "Chaff Program 6 (40 44)"               },
             {"wMsgJ_DEF_CHF_PGM_40_84",         "Chaff Program 7 (40 84)"               },
-            {"wMsgJ_DEF_CHF_PGM_R1_12",         "Chaff Program 8 (R1 12)"               },
+            {"wMsgJ_DEF_CHF_PGM_R1_82",         "Chaff Program 8 (R1 82)"               },
+            {"wMsgJ_DEF_CMDS_IHBT_1",           "CMDS Inhibit Chaff"                    },
+            {"wMsgJ_DEF_CMDS_IHBT_2",           "CMDS Inhibit Flares"                   },
+            {"wMsgJ_DEF_CMDS_IHBT_3",           "CMDS Inhibit 01"                       },
+            {"wMsgJ_DEF_CMDS_IHBT_4",           "CMDS Inhibit 02"                       },
+            {"wMsgJ_DEF_CMDS_IHBT_5",           "CMDS Inhibit RWR"                      },
+            {"wMsgJ_DEF_CMDS_IHBT_6",           "CMDS Inhibit MWS"                      },
+            {"wMsgJ_DEF_CMDS_IHBT_7",           "CMDS Inhibit Jammer"                   },
 
             {"wMsgJ_DEF_RWR_DSP_TYP",           "RWR Display Type"              },
             {"wMsgJ_DEF_RWR_AIRB",              "RWR Mode Airborne"             },
@@ -626,16 +691,17 @@ namespace VAICOM.Extensions.RIO
 
             // startup
             {"wMsgJ_STRT_ABORT",                "Cancel Procedure"              },
-            {"wMsgJ_STRT_INS_FINE",             "INS Alignment Fine"                },
-            {"wMsgJ_STRT_INS_MIN_WPN",          "INS Alignment Minimum"             },
-            {"wMsgJ_STRT_INS_COARSE",           "INS Alignment Coarse"              },
-            {"wMsgJ_STRT_INS_NOW",              "INS Alignment Now"                 },
+            {"wMsgJ_STRT_INS_FINE",             "INS Alignment Fine"            },
+            {"wMsgJ_STRT_INS_MIN_WPN",          "INS Alignment Minimum"         },
+            {"wMsgJ_STRT_INS_COARSE",           "INS Alignment Coarse"          },
+            {"wMsgJ_STRT_INS_NOW",              "INS Alignment Now"             },
 
             {"wMsgJ_STRT_CHECK",                "Confirm Checkpoint"            },
             {"wMsgJ_STRT_LOUD_CLR",             "Confirm ICS test"              },
             {"wMsgJ_STRT_PAUSE",                "Pause"                         },
             {"wMsgJ_STRT_STARTUP",              "Perform Start Procedure"       },
             {"wMsgJ_STRT_ASSISTED",             "Assisted Start Procedure"      },
+            {"wMsgJ_SDWN_SHUTDOWN",             "Postflight Shutdown"           },
 
             // 600-700 AI pilot
             {"wMsgI_ALT",                       "Go Altitude"                           },

@@ -36,16 +36,35 @@ namespace VAICOM
                         State.currentmessage.type = Messagetypes.DeviceControl;
                         State.currentmessage.extsequence = new List<Extensions.RIO.DeviceAction>();
 
+                        bool isTomcatBU = IsF14BUActive();
+
                         State.currentmessage.extsequence.AddRange(VAICOM.Extensions.RIO.DeviceActionsLibrary.Sequences.Macro.Seq_J_MENU_MAIN); // includes close first
-                        State.currentmessage.extsequence.AddRange(VAICOM.Extensions.RIO.DeviceActionsLibrary.Sequences.Macro.Seq_J_RDR_BVR); // 2 2
-                        State.currentmessage.extsequence.AddRange(VAICOM.Extensions.RIO.DeviceActionsLibrary.Sequences.Macro.Seq_J_INPUT_NUM_2); // submenu 2
+
+                        if (isTomcatBU)
+                        {
+                            State.currentmessage.extsequence.AddRange(VAICOM.Extensions.RIO.DeviceActionsLibrary.Sequences.Macro.Seq_J_INPUT_NUM_2);
+                            State.currentmessage.extsequence.AddRange(VAICOM.Extensions.RIO.DeviceActionsLibrary.Sequences.Macro.Seq_J_INPUT_NUM_1);
+                            State.currentmessage.extsequence.AddRange(VAICOM.Extensions.RIO.DeviceActionsLibrary.Sequences.Macro.Seq_J_INPUT_NUM_2);
+                        }
+                        else
+                        {
+                            State.currentmessage.extsequence.AddRange(VAICOM.Extensions.RIO.DeviceActionsLibrary.Sequences.Macro.Seq_J_RDR_BVR); // 2 2
+                            State.currentmessage.extsequence.AddRange(VAICOM.Extensions.RIO.DeviceActionsLibrary.Sequences.Macro.Seq_J_INPUT_NUM_2); // submenu 2
+                        }
 
                         string header = State.Proxy.Utility.ParseTokens("{CMDSEGMENT:0}");
                         //Log.Write("Segment 0 = " + header, Colors.Warning);
 
                         int scanrange;
-                        Int32.TryParse(State.Proxy.Utility.ParseTokens("{CMDSEGMENT:3}"), out scanrange);
-                        //Log.Write("Segment 3 = " + scanrange, Colors.Warning);
+                        bool hasRange = Int32.TryParse(State.Proxy.Utility.ParseTokens("{CMDSEGMENT:1}"), out scanrange);
+
+                        // Backward compatibility with previous command input ordering.
+                        if (!hasRange)
+                        {
+                            Int32.TryParse(State.Proxy.Utility.ParseTokens("{CMDSEGMENT:3}"), out scanrange);
+                        }
+
+                        //Log.Write("Range = " + scanrange, Colors.Warning);
                         switch (scanrange)
                         {
                             default:
@@ -85,8 +104,21 @@ namespace VAICOM
                         }
 
                         int scanaltitude;
-                        Int32.TryParse(State.Proxy.Utility.ParseTokens("{CMDSEGMENT:1}"), out scanaltitude);
-                        //Log.Write("Segment 1 = " + scanaltitude, Colors.Warning);
+                        bool altitudeIsDeck = false;
+                        string altitudeToken = State.Proxy.Utility.ParseTokens("{CMDSEGMENT:3}");
+
+                        if (!string.IsNullOrWhiteSpace(altitudeToken) && altitudeToken.IndexOf("deck", StringComparison.OrdinalIgnoreCase) >= 0)
+                        {
+                            scanaltitude = 0;
+                            altitudeIsDeck = true;
+                        }
+                        else if (!Int32.TryParse(altitudeToken, out scanaltitude))
+                        {
+                            // Backward compatibility with previous command input ordering.
+                            Int32.TryParse(State.Proxy.Utility.ParseTokens("{CMDSEGMENT:1}"), out scanaltitude);
+                        }
+
+                        //Log.Write("Altitude = " + scanaltitude, Colors.Warning);
                         switch (scanaltitude)
                         {
                             case 0:
@@ -144,15 +176,12 @@ namespace VAICOM
                                 break;
                         }
 
-                        string majval2 = State.Proxy.Utility.ParseTokens("{CMDSEGMENT:2}");
-                        //Log.Write("Segment 2 = " + majval2, Colors.Warning);
-
-
-                        string message = scanaltitude.ToString() + ".000ft " + majval2.ToString() + " " + scanrange.ToString() + "NM";
+                        string altitudeLabel = altitudeIsDeck ? "DECK" : (scanaltitude.ToString() + ".000ft");
+                        string message = "Range " + scanrange.ToString() + "NM, Elevation " + altitudeLabel;
 
                         if (State.activeconfig.RIO_Messages && !State.activeconfig.RIO_Hints_Only)
                         {
-                            State.currentmessage.dspmsg = "AIRIO : " + "Radar Scan Sector " + message;
+                            State.currentmessage.dspmsg = "AIRIO : " + "Radar Scan " + message;
                             State.currentmessage.msgdur = 5;
                         }
 
@@ -175,11 +204,11 @@ namespace VAICOM
                         // for single:
                         if (PTT.IsPTTModeSingle()) // for single mode
                         {
-                            Log.Write(State.currentTXnode.name + " | " + PTT.RadioDevices.SEL.name + ": [ " + "RIO" + " ],[ " + " ],[ " + " ] " + "Radar Scan Sector " + message + " [ " + " ] [ " + " ]", Colors.Message);
+                            Log.Write(State.currentTXnode.name + " | " + PTT.RadioDevices.SEL.name + ": [ " + "RIO" + " ],[ " + " ],[ " + " ] " + "Radar Scan " + message + " [ " + " ] [ " + " ]", Colors.Message);
                         }
                         else // for multi:
                         {
-                            Log.Write(State.currentTXnode.name + " | " + State.currentTXnode.radios[0].name + ": [ " + "RIO" + " ],[ " + " ],[ " + " ] " + "Radar Scan Sector " + message + " [ " + " ] [ " + " ]", Colors.Message);
+                            Log.Write(State.currentTXnode.name + " | " + State.currentTXnode.radios[0].name + ": [ " + "RIO" + " ],[ " + " ],[ " + " ] " + "Radar Scan " + message + " [ " + " ] [ " + " ]", Colors.Message);
                         }
 
                         // for hotmic:

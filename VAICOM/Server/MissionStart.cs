@@ -19,9 +19,9 @@ namespace VAICOM
 
             public static bool DetectNewMission()
             {
-                bool newmissiondetect = ((State.previousstate.id != State.currentstate.id) || 
-                                         (State.previousstate.playerunitid != State.currentstate.playerunitid) || 
-                                         (State.previousstate.missiontitle != State.currentstate.missiontitle) || 
+                bool newmissiondetect = ((State.previousstate.id != State.currentstate.id) ||
+                                         (State.previousstate.playerunitid != State.currentstate.playerunitid) ||
+                                         (State.previousstate.missiontitle != State.currentstate.missiontitle) ||
                                          (State.previousstate.easycomms != State.currentstate.easycomms));
 
                 if (!newmissionflag && newmissiondetect)
@@ -70,6 +70,15 @@ namespace VAICOM
                 State.messagelog = "";
                 State.lastmessagelog = "";
                 State.nineline = "";
+
+                State.F14WheelChocksState = State.WheelChocksState.Unknown;
+                State.F14WheelChocksStateAssumed = false;
+                if (State.IsAirioTomcatModule())
+                {
+                    State.F14WheelChocksState = State.WheelChocksState.On;
+                    State.F14WheelChocksStateAssumed = true;
+                    Log.Write("F-14 wheel chocks state initialized to ON (assumed).", Colors.Text);
+                }
 
                 tables.resetriomenustate();
                 helper.getAGweaponsstate();

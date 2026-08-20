@@ -499,7 +499,7 @@ namespace VAICOM
                                  x.Value.Equals(unit.fullname) ||
                                  x.Value.Equals(unit.fullname.ToLower()))).Key;
 
-                            if (!FoundKey.Equals(null))
+                            if (FoundKey != null)
                             {
                                 descr.alias = FoundKey;
                             }

@@ -526,21 +526,33 @@ namespace VAICOM
                 AliasEditor.TrainingStartStop();
             }
 
-            private void KeywordsToClipboard(object sender, RoutedEventArgs e)
+            private void FinishKeywords(object sender, RoutedEventArgs e)
             {
                 try
                 {
-                    FileHandler.Database.ExportMasterKeywordString();
-                    FileHandler.Database.WriteAllCategoriesToFile(true);
-                    Message.Text = "Keywords exported. Follow instructions to update VA profile.";
-                    string caption = "Modified database";
-                    string message = "The keywords database was updated.\n\nIMPORTANT: YOU MUST NOW UPDATE THE VOICEATTACK PROFILE.\n\nThe updated keyword set was placed in Windows clipboard.\nOpen the VoiceAttack window now and edit the profile (pencil icon).\n\nIn the profile, double-click the 'AI Communications' command (category Keywords collection) and clear all existing keywords in the 'When I Say' field (use Ctrl+A, then Delete key).\nThen apply Paste (Ctrl+V) to place the new keyword set and press Apply/Done to store.\n\nNOTES:\nIn VA make sure multipart commands are consolidated.\n";
-                    System.Windows.MessageBox.Show(message, caption, MessageBoxButton.OK, MessageBoxImage.Information);
-                    Message.Text = "";
-                    State.activeconfig.Editorunsavedchanges = false;
-                    Settings.ConfigFile.WriteConfigToFile(true);
-                    Reflectunsavedchanges();
-                    Aliases.SetAOCSCallsign();
+                    string keywords = FileHandler.Database.ExportMasterKeywordString();
+                    if (!string.IsNullOrEmpty(keywords))
+                    {
+                        FileHandler.Database.WriteAllCategoriesToFile(true);
+                        // Copy the keywords to the Windows clipboard
+                        System.Windows.Clipboard.SetDataObject(keywords);
+                        // Set the keywords into the variable used in the VoiceAttack profile
+                        State.Proxy.SetText("vaicom.keywords", keywords, true);
+                        Message.Text = "VoiceAttack profile keywords updated.";
+                        string caption = "VAICOM database keywords updated";
+                        string message = "The VoiceAttack profile has been updated with the VAICOM keywords. The profile will be automatically reloaded.\n";
+                        System.Windows.MessageBox.Show(message, caption, MessageBoxButton.OK, MessageBoxImage.Information);
+                        Message.Text = "";
+                        State.activeconfig.Editorunsavedchanges = false;
+                        Settings.ConfigFile.WriteConfigToFile(true);
+                        Reflectunsavedchanges();
+                        // Reload the current profile to pick up the variable change
+                        State.Proxy.Profile.Reset();
+                    }
+                    else
+                    {
+                        Log.Write("No keywords located in database", Colors.Warning);
+                    }
                 }
                 catch
                 {

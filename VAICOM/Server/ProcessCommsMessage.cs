@@ -173,6 +173,25 @@ namespace VAICOM
                     State.currentstate.fsmstate = message.fsm;
                     Processor.commcat sendercat = Processor.SenderCatByEvent(message.eventid);
 
+                    if (message.eventid == 4479)
+                    {
+                        State.F14WheelChocksState = State.WheelChocksState.On;
+                        State.F14WheelChocksStateAssumed = false;
+                        if (State.IsAirioTomcatModule())
+                        {
+                            Log.Write("F-14 wheel chocks state confirmed: ON.", Colors.Inline);
+                        }
+                    }
+                    else if (message.eventid == 4480)
+                    {
+                        State.F14WheelChocksState = State.WheelChocksState.Off;
+                        State.F14WheelChocksStateAssumed = false;
+                        if (State.IsAirioTomcatModule())
+                        {
+                            Log.Write("F-14 wheel chocks state confirmed: OFF.", Colors.Inline);
+                        }
+                    }
+
                     // Handle WSO-specific messages
                     if (message.eventkey.StartsWith("wMsgWSO"))
                     {

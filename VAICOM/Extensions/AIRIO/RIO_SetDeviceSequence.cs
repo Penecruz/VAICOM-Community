@@ -372,6 +372,10 @@ namespace VAICOM
 
                     helper.getDLstate();
 
+                    bool isTomcatBU = State.currentstate != null
+                        && !string.IsNullOrWhiteSpace(State.currentstate.id)
+                        && State.currentstate.id.Equals("F-14BU", StringComparison.OrdinalIgnoreCase);
+
                     Extensions.RIO.DeviceAction action = new Extensions.RIO.DeviceAction();
 
                     string unitstr = "";
@@ -427,7 +431,14 @@ namespace VAICOM
                         {
                             State.currentmessage.extsequence = new List<Extensions.RIO.DeviceAction>();
                             State.currentmessage.extsequence.AddRange(DeviceActionsLibrary.Sequences.Macro.Seq_J_MENU_MAIN);
-                            State.currentmessage.extsequence.AddRange(DeviceActionsLibrary.Sequences.Macro.Seq_J_RAD_DL_SET_HOST);
+                            if (isTomcatBU)
+                            {
+                                State.currentmessage.extsequence.AddRange(DeviceActionsLibrary.Sequences.Macro.Seq_J_RAD_DL_SET_HOST_BU);
+                            }
+                            else
+                            {
+                                State.currentmessage.extsequence.AddRange(DeviceActionsLibrary.Sequences.Macro.Seq_J_RAD_DL_SET_HOST);
+                            }
                             State.currentmessage.extsequence.Add(action);
 
                         }
@@ -491,6 +502,15 @@ namespace VAICOM
                             case "wMsgJ_WPN_AG_SORDN_WPN_10": // 
                                 weaponstr = "TALD";
                                 break;
+                            case "wMsgJ_WPN_AG_SORDN_WPN_11": //
+                                weaponstr = "JDAM";
+                                break;
+                            case "wMsgJ_WPN_AG_SORDN_WPN_12": //
+                                weaponstr = "GBU31";
+                                break;
+                            case "wMsgJ_WPN_AG_SORDN_WPN_13": //
+                                weaponstr = "GBU38";
+                                break;
 
                         }
 
@@ -514,6 +534,20 @@ namespace VAICOM
                             if (have_GBU10) { action = action_GBU10; }
                         }
 
+                        if (weaponstr.Equals("JDAM"))
+                        {
+                            action = DeviceActionsLibrary.RIO.Atom_J_VOID;
+
+                            Extensions.RIO.DeviceAction action_GBU31 = helper.AGweaponsstate["GBU31"];
+                            Extensions.RIO.DeviceAction action_GBU38 = helper.AGweaponsstate["GBU38"];
+
+                            bool have_GBU31 = !action_GBU31.Equals(DeviceActionsLibrary.RIO.Atom_J_VOID);
+                            bool have_GBU38 = !action_GBU38.Equals(DeviceActionsLibrary.RIO.Atom_J_VOID);
+
+                            if (have_GBU38) { action = action_GBU38; }
+                            if (have_GBU31) { action = action_GBU31; }
+                        }
+
                         if (weaponstr.Equals("Mk82"))
                         {
                             action = DeviceActionsLibrary.RIO.Atom_J_VOID;
@@ -532,7 +566,7 @@ namespace VAICOM
                         }
                         else
                         {
-                            if (!weaponstr.Equals("GBU"))
+                            if (!weaponstr.Equals("GBU") && !weaponstr.Equals("JDAM"))
                             {
                                 action = helper.AGweaponsstate[weaponstr];
                             }
@@ -584,7 +618,7 @@ namespace VAICOM
                 }
 
                 // reject attack mode
-                if ((State.currentstate.riostate.amt && State.currentkey["command"].Equals("wMsgJ_WPN_AG_SET_COMP_TGT")) || (!State.currentstate.riostate.amt && State.currentkey["command"].Equals("wMsgJ_WPN_AG_SET_COMP_PILOT")))
+                if (State.currentstate.riostate.amt && State.currentkey["command"].Equals("wMsgJ_WPN_AG_SET_COMP_TGT"))
                 {
                     State.currentmessage.dspmsg = "AIRIO : Already done!\n";
                     State.currentmessage.msgdur = 5;
@@ -692,13 +726,168 @@ namespace VAICOM
 
             public static partial class Message
             {
+                private static bool TryHandleTomcatShutdownAlias(string cmd)
+                {
+                    if (!string.Equals(cmd, "wMsgJ_SDWN_SHUTDOWN", StringComparison.OrdinalIgnoreCase))
+                    {
+                        return false;
+                    }
+
+                    if (State.currentmessage.extsequence == null)
+                    {
+                        State.currentmessage.extsequence = new List<Extensions.RIO.DeviceAction>();
+                    }
+                    else
+                    {
+                        State.currentmessage.extsequence.Clear();
+                    }
+
+                    bool isF14BU = IsF14BUActive();
+                    BuildTomcatShutdownSequence(State.currentmessage.extsequence, isF14BU);
+
+                    if (State.currentmessage.extsequence != null && State.currentmessage.extsequence.Count > 0)
+                    {
+                        PlayShutdownStartVoiceAck();
+                        QueueShutdownCompletionCue(State.currentmessage.extsequence);
+                    }
+
+                    if (State.activeconfig != null && State.activeconfig.Debugmode)
+                    {
+                        Log.Write("AIRIO shutdown alias seq | cmd=" + cmd + " | isF14BU=" + isF14BU.ToString() + " | actions=" + State.currentmessage.extsequence.Count.ToString(), Colors.Inline);
+                    }
+
+                    return true;
+                }
+
+                private static bool IsF14BUActive()
+                {
+                    try
+                    {
+                        string stateId = (State.currentstate != null && !string.IsNullOrWhiteSpace(State.currentstate.id))
+                            ? State.currentstate.id.Trim()
+                            : string.Empty;
+
+                        if (!string.IsNullOrWhiteSpace(stateId))
+                        {
+                            if (stateId.Equals("F-14BU", StringComparison.OrdinalIgnoreCase)
+                                || stateId.Equals("F-14B(U)", StringComparison.OrdinalIgnoreCase)
+                                || stateId.Equals("F14BU", StringComparison.OrdinalIgnoreCase)
+                                || (stateId.IndexOf("F-14B", StringComparison.OrdinalIgnoreCase) >= 0
+                                    && stateId.IndexOf("U", StringComparison.OrdinalIgnoreCase) >= 0))
+                            {
+                                return true;
+                            }
+                        }
+
+                        string rioMod = !string.IsNullOrWhiteSpace(State.riomod)
+                            ? State.riomod.Trim()
+                            : string.Empty;
+
+                        if (!string.IsNullOrWhiteSpace(rioMod)
+                            && (rioMod.Equals("F-14BU", StringComparison.OrdinalIgnoreCase)
+                                || rioMod.Equals("F-14B(U)", StringComparison.OrdinalIgnoreCase)
+                                || rioMod.Equals("F14BU", StringComparison.OrdinalIgnoreCase)))
+                        {
+                            return true;
+                        }
+                    }
+                    catch
+                    {
+                    }
+
+                    return false;
+                }
+
                 public static void SetRioDeviceSequence()
                 {
                     try
                     {
 
+                        string cmd = State.currentkey["command"];
+
+                        if (TryHandleTomcatShutdownAlias(cmd))
+                        {
+                            return;
+                        }
+
+                        Dictionary<string, List<List<Extensions.RIO.DeviceAction>>> commandTable = Extensions.RIO.DeviceActionsLibrary.Sequences.RioCommands;
+
+                        bool isF14BU = IsF14BUActive();
+
+                        string stateIdForLog = (State.currentstate != null && !string.IsNullOrWhiteSpace(State.currentstate.id))
+                            ? State.currentstate.id
+                            : "<null>";
+                        string rioModForLog = !string.IsNullOrWhiteSpace(State.riomod)
+                            ? State.riomod
+                            : "<null>";
+
+                        Log.Write("AIRIO module detect | cmd=" + cmd + " | state.id=" + stateIdForLog + " | riomod=" + rioModForLog + " | isF14BU=" + isF14BU, Colors.Text);
+
+                        if (isF14BU)
+                        {
+                            string overrideKey = "F-14BU:" + cmd;
+                            if (Extensions.RIO.DeviceActionsLibrary.Sequences.AuxCommands.ContainsKey(overrideKey))
+                            {
+                                commandTable = Extensions.RIO.DeviceActionsLibrary.Sequences.AuxCommands;
+                                cmd = overrideKey;
+
+                                if (commandTable[cmd].Count == 0)
+                                {
+                                    State.currentmessage.dspmsg = "AIRIO : Command N/A to F-14B(U)\n";
+                                    State.currentmessage.msgdur = 3;
+                                    State.currentmessage.extsequence = new List<Extensions.RIO.DeviceAction>();
+                                    State.currentmessage.extsequence.Add(new Extensions.RIO.DeviceAction()
+                                    {
+                                        device = 62,
+                                        command = 3725,
+                                        value = 1
+                                    });
+                                    return;
+                                }
+                            }
+                        }
+                        else
+                        {
+                            string buOnlyKey = "F-14BU:" + cmd;
+                            bool hasBUOverride = Extensions.RIO.DeviceActionsLibrary.Sequences.AuxCommands.ContainsKey(buOnlyKey);
+                            bool hasABEntry = commandTable.ContainsKey(cmd);
+                            bool isABEmpty = hasABEntry && commandTable[cmd].Count == 0;
+
+                            if (hasBUOverride && (!hasABEntry || isABEmpty))
+                            {
+                                State.currentmessage.dspmsg = "AIRIO : Command N/A to F-14A/B\n";
+                                State.currentmessage.msgdur = 3;
+                                State.currentmessage.extsequence = new List<Extensions.RIO.DeviceAction>();
+                                State.currentmessage.extsequence.Add(new Extensions.RIO.DeviceAction()
+                                {
+                                    device = 62,
+                                    command = 3725,
+                                    value = 1
+                                });
+                                return;
+                            }
+                        }
+
+                        if (!commandTable.ContainsKey(cmd))
+                        {
+                            if (isF14BU)
+                            {
+                                State.currentmessage.dspmsg = "AIRIO : Command N/A to F-14B(U)\n";
+                                State.currentmessage.msgdur = 3;
+                                State.currentmessage.extsequence = new List<Extensions.RIO.DeviceAction>();
+                                State.currentmessage.extsequence.Add(new Extensions.RIO.DeviceAction()
+                                {
+                                    device = 62,
+                                    command = 3725,
+                                    value = 1
+                                });
+                                return;
+                            }
+                            return;
+                        }
+
                         List<Extensions.RIO.DeviceAction> cache = new List<Extensions.RIO.DeviceAction>();
-                        foreach (List<Extensions.RIO.DeviceAction> actionlist in Extensions.RIO.DeviceActionsLibrary.Sequences.RioCommands[State.currentkey["command"]])
+                        foreach (List<Extensions.RIO.DeviceAction> actionlist in commandTable[cmd])
                         {
                             cache.AddRange(actionlist);
                         }
@@ -706,12 +895,38 @@ namespace VAICOM
                         // always close menu wheel: add at the end
 
 
+                        bool explicitWheelInvocation = State.currentcommand != null
+                            && (State.currentcommand.isMenu() || State.currentcommand.isOptions());
+
+                        bool useMiniWheelVisibilityGate = State.activeconfig != null
+                            && State.activeconfig.RIO_MiniWheel_Enabled;
+
+                        if (useMiniWheelVisibilityGate && !explicitWheelInvocation)
+                        {
+                            State.currentmessage.extsequence.Add(new Extensions.RIO.DeviceAction()
+                            {
+                                device = Extensions.RIO.DeviceActionsLibrary.Devices.PROXY,
+                                command = 10079,
+                                value = 0
+                            });
+                        }
+
                         for (int i = 0; i < cache.Count; i++)
                         {
-                            State.currentmessage.extsequence.Add(new Extensions.RIO.DeviceAction());
-                            State.currentmessage.extsequence[i].command = cache[i].command;
-                            State.currentmessage.extsequence[i].device = cache[i].device;
-                            State.currentmessage.extsequence[i].value = cache[i].value;
+                            Extensions.RIO.DeviceAction source = cache[i];
+
+                            if (source == null)
+                            {
+                                continue;
+                            }
+
+                            State.currentmessage.extsequence.Add(new Extensions.RIO.DeviceAction()
+                            {
+                                command = source.command,
+                                device = source.device,
+                                value = source.value,
+                                delayMs = source.delayMs
+                            });
                         }
 
                         List<Extensions.RIO.DeviceAction> closemenu = new List<Extensions.RIO.DeviceAction>();

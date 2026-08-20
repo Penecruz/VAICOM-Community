@@ -23,7 +23,7 @@ namespace VAICOM.Extensions.RIO
 
             // alias                        // command unique internal name
 
-            // block: menu control
+            // Menu Control
             {"Toggle Menu",                 "wMsgJ_MENU_TOGGLE"                 }, // block disabled: aliases not used
             {"Do Option 1",                 "wMsgJ_MENU_OPTION_1"               },
             {"Do Option 2",                 "wMsgJ_MENU_OPTION_2"               },
@@ -48,29 +48,7 @@ namespace VAICOM.Extensions.RIO
             {"Close Context Menu",          "wMsgJ_MENU_CTXT_CLOSE"             },
             {"Close Main Menu",             "wMsgJ_MENU_MAIN_CLOSE"             },
 
-            {"Don't Auto Designate",        "wMsgJESTER_LANTIRN_inhibit_auto_designate"         },
-            {"Track Point",                 "wMsgJESTER_LANTIRN_track_target_id"                }, //na
-            {"Track Area",                  "wMsgJESTER_LANTIRN_track_zone_id"                  }, //na
-            {"Designate",                   "wMsgJESTER_LANTIRN_designate"                      },
-            //{"Laser 100",                   "wMsgKNEEBOARD_Laser100"                            },
-            //{"Laser 10",                    "wMsgKNEEBOARD_Laser10"                             },
-            //{"Laser 1",                     "wMsgKNEEBOARD_Laser1"                              },
-            // end of menu control
-
-            // spare block
-            {"Black Hot",                   "wMsgLANTIRN_ToggleWHOTBHOT"                }, // TESTED OK
-            {"White Hot",                   "wMsgLANTIRN_ToggleWHOTBHOT"                }, // TESTED OK
-            {"Latch Laser",                 "wMsgLANTIRN_LaserLatched"                  }, // TESTED OK
-            {"Arm Laser",                   "wMsgLANTIRN_Laser_ARM"                     }, // TESTED OK
-            {"Toggle Laser",                "wMsgLANTIRN_Laser_ARM_Toggle"              }, // TESTED OK
-            {"Undesignate",                 "wMsgLANTIRN_Undesignate"                   }, // TESTED OK
-            {"Track Boresight",             "wMsgLANTIRN_QHUD_QADL"                     }, // TESTED OK
-            {"Snow Plow",                   "wMsgLANTIRN_QSNO"                          }, // TESTED OK
-            {"Track Designation",           "wMsgLANTIRN_QDES"                          },
-            {"Previous Target",             "wMsgLANTIRN_QWP_Minus"                     }, // not used
-            {"Next Target",                 "wMsgLANTIRN_QWP_Plus"                      },
-
-            // block: radar (DONE)
+            // radar
 
             {"Go BVR",                      "wMsgJ_RDR_BVR"                     },// disabled
             {"Go Active",                   "wMsgJ_RDR_GO_ACTIVE"               },
@@ -99,37 +77,63 @@ namespace VAICOM.Extensions.RIO
             {"Track Single Target 8",       "wMsgJ_RDR_STT_TWS_TGT_8"           },
             {"Track Single Target X",       "wMsgJ_RDR_STT_CHOOSE_SPECIFIC_TGT" }, // disabled //
 
-            {"Scan Range",                  "wMsgJ_RDR_SCAN_DIST"               },// not endpoint //
-            {"Scan Range Auto",             "wMsgJ_RDR_RNG_AUTO"                },
-            {"Scan Range 25",               "wMsgJ_RDR_RNG_25"                      },
-            {"Scan Range 50",               "wMsgJ_RDR_RNG_50"                      },
-            {"Scan Range 100",              "wMsgJ_RDR_RNG_100"                     },
-            {"Scan Range 200",              "wMsgJ_RDR_RNG_200"                     },
-            {"Scan Range 400",              "wMsgJ_RDR_RNG_400"                     },
+            {"TID Range",                   "wMsgJ_RDR_SCAN_DIST"               },// not endpoint //
+            {"TID Range Auto",              "wMsgJ_RDR_RNG_AUTO"                },// for TID Range
+            {"TID Range 25",                "wMsgJ_RDR_RNG_25"                  },
+            {"TID Range 50",                "wMsgJ_RDR_RNG_50"                  },
+            {"TID Range 100",               "wMsgJ_RDR_RNG_100"                 },
+            {"TID Range 200",               "wMsgJ_RDR_RNG_200"                 },
+            {"TID Range 400",               "wMsgJ_RDR_RNG_400"                 },
 
             {"Scan Azimuth",                "wMsgJ_RDR_SCAN_AZ"                 },// not endpoint //
-            {"Scan Azimuth Auto",           "wMsgJ_RDR_POS"                     },
-            {"Scan Center",                 "wMsgJ_RDR_POS_CTR"                 },
+            {"Scan Azimuth Auto",           "wMsgJ_RDR_POS"                     },// for Azimuth
             {"Scan Center Left",            "wMsgJ_RDR_POS_CTR_L"               },
+            {"Scan Center",                 "wMsgJ_RDR_POS_CTR"                 },
             {"Scan Center Right",           "wMsgJ_RDR_POS_CTR_R"               },
             {"Scan Left",                   "wMsgJ_RDR_POS_L"                   },
             {"Scan Right",                  "wMsgJ_RDR_POS_R"                   },
+            {"Scan Left 20",                "wMsgJ_RDR_POS_L20"                 },
+            {"Scan Right 20",               "wMsgJ_RDR_POS_R20"                 },
+            {"Scan Hard Left",              "wMsgJ_RDR_POS_L55"                 },
+            {"Scan Hard Right",             "wMsgJ_RDR_POS_R55"                 },
 
             {"Scan Elevation",              "wMsgJ_RDR_SCAN_ELEV"               },// not endpoint, hint
-            {"Scan Elevation Auto",         "wMsgJ_RDR_AUTO"                    }, // for elev
-            {"Scan High",                   "wMsgJ_RDR_POS_HI"                  },
-            {"Scan Low",                    "wMsgJ_RDR_POS_LO"                  },
-            {"Scan Level",                  "wMsgJ_RDR_POS_MID"                 },
-            {"Scan Level High",             "wMsgJ_RDR_POS_MID_HI"              },
-            {"Scan Level Low",              "wMsgJ_RDR_POS_MID_LO"              },
+            {"Scan Elevation Auto",         "wMsgJ_RDR_AUTO"                    }, // for Elevation
+            {"Scan Close Low",              "wMsgJ_RDR_ELEV_CLOSE_LOW"          },
+            {"Scan Close Level Low",        "wMsgJ_RDR_ELEV_CLOSE_MID_LO"       },
+            {"Scan Close Level",            "wMsgJ_RDR_ELEV_CLOSE_MID"          },
+            {"Scan Close Level High",       "wMsgJ_RDR_ELEV_CLOSE_MID_HI"       },
+            {"Scan Close High",             "wMsgJ_RDR_ELEV_CLOSE_HI"           },
+            {"Scan Low",                    "wMsgJ_RDR_ELEV_MID_LOW"            },
+            {"Scan Level Low",              "wMsgJ_RDR_ELEV_MID_MID_LO"         },
+            {"Scan Level",                  "wMsgJ_RDR_ELEV_MID_MID"            },
+            {"Scan Level High",             "wMsgJ_RDR_ELEV_MID_MID_HI"         },
+            {"Scan High",                   "wMsgJ_RDR_ELEV_MID_HI"             },
+            {"Scan Long Low",               "wMsgJ_RDR_ELEV_LONG_LOW"           },
+            {"Scan Long Level Low",         "wMsgJ_RDR_ELEV_LONG_MID_LO"        },
+            {"Scan Long Level",             "wMsgJ_RDR_ELEV_LONG_MID"           },
+            {"Scan Long Level High",        "wMsgJ_RDR_ELEV_LONG_MID_HI"        },
+            {"Scan Long High",              "wMsgJ_RDR_ELEV_LONG_HI"            },
 
-            {"Radar Mode Automatic",        "wMsgJ_RDR_MODE_AUTO"               },
+            {"Radar Mode",                  "wMsgJ_RDR_MODE"                    }, // Not Endpoint
+            {"Radar Mode Automatic",        "wMsgJ_RDR_MODE_AUTO"               }, //Modes
             {"Radar Mode TWS",              "wMsgJ_RDR_MODE_TWS"                },
-            {"Radar Mode RWS",              "wMsgJ_RDR_MODE_RWS"                },
-            {"Radar Mode",                  "wMsgJ_RDR_MODE"                    },
+            {"Radar Mode RWS",              "wMsgJ_RDR_MODE_RWS"                },         
+            {"Radar Mode TWS Manual",       "wMsgJ_RDR_MODE_TWS_MAN"            },
+            {"Look For A regular Target",   "wMsgJ_RDR_MODE_SIZE_M"             },
+            {"Look For A Big Target",       "wMsgJ_RDR_MODE_SIZE_L"             },
+            {"Look For A Small Target",     "wMsgJ_RDR_MODE_SIZE_S"             },
+
+            {"TID Expand",                  "wMsgJ_RDR_TID_EXP"                 },
+            {"TID Collapse",                "wMsgJ_RDR_TID_EXP"                 },// TID expand/collapse toggle
+
+            {"Aspect Switch Beam",          "wMsgJ_RDR_ASP_BEAM"                },
+            {"Aspect Switch Nose",          "wMsgJ_RDR_ASP_NOSE"                },
+            {"Aspect Switch Tail",          "wMsgJ_RDR_ASP_TAIL"                },
+
             // end of radar
 
-            // spare block
+            // LANTIRN
             {"Stabilize",                   "wMsgJ_RDR_STAB"                    },
             {"Stabilize 15 Seconds",        "wMsgJ_RDR_STAB_15"                 },
             {"Stabilize 30 Seconds",        "wMsgJ_RDR_STAB_30"                 },
@@ -138,19 +142,39 @@ namespace VAICOM.Extensions.RIO
             {"Stabilize Hold",              "wMsgJ_RDR_STAB_INDEF"              },
             {"Area Track",                  "wMsgJ_RDR_STAB_GROUND"             },
 
-            {"Eyeballs",                    "wMsgLANTIRN_Head_Eyeball"         },
-            {"Head Control",                 "wMsgLANTIRN_Head_Head"                },
-            //{"PlaceHolder098",              "wMsgPlaceHolder098"                },
-            //{"PlaceHolder099",              "wMsgPlaceHolder099"                },
+            {"Eyeballs",                    "wMsgLANTIRN_Head_Eyeball"          },
+            {"Head Control",                 "wMsgLANTIRN_Head_Head"            },
+            {"Don't Auto Designate",        "wMsgJESTER_LANTIRN_inhibit_auto_designate"         },
+            {"Track Point",                 "wMsgJESTER_LANTIRN_track_target_id"                }, //na
+            {"Track Area",                  "wMsgJESTER_LANTIRN_track_zone_id"                  }, //na
+            {"Designate",                   "wMsgJESTER_LANTIRN_designate"                      },
+            //{"Laser 100",                   "wMsgKNEEBOARD_Laser100"                            },
+            //{"Laser 10",                    "wMsgKNEEBOARD_Laser10"                             },
+            //{"Laser 1",                     "wMsgKNEEBOARD_Laser1"                              },       
+            {"Black Hot",                   "wMsgLANTIRN_ToggleWHOTBHOT"                }, // TESTED OK
+            {"White Hot",                   "wMsgLANTIRN_ToggleWHOTBHOT"                }, // TESTED OK
+            {"Latch Laser",                 "wMsgLANTIRN_LaserLatched"                  }, // TESTED OK
+            {"Arm Laser",                   "wMsgLANTIRN_Laser_ARM"                     }, // TESTED OK
+            {"Toggle Laser",                "wMsgLANTIRN_Laser_ARM_Toggle"              }, // TESTED OK
+            {"Undesignate",                 "wMsgLANTIRN_Undesignate"                   }, // TESTED OK
+            {"Track Boresight",             "wMsgLANTIRN_QHUD_QADL"                     }, // TESTED OK
+            {"Snow Plow",                   "wMsgLANTIRN_QSNO"                          }, // TESTED OK
+            {"Track Designation",           "wMsgLANTIRN_QDES"                          },
+            {"Previous Target",             "wMsgLANTIRN_QWP_Minus"                     }, // not used
+            {"Next Target",                 "wMsgLANTIRN_QWP_Plus"                      },
+            {"Track Steerpoint 1",          "wMsgJESTER_Steerpoint_SP1"             }, // TESTED OK
+            {"Track Steerpoint 2",          "wMsgJESTER_Steerpoint_SP2"             }, // TESTED OK
+            {"Track Steerpoint 3",          "wMsgJESTER_Steerpoint_SP3"             }, // TESTED OK
+            {"Track Fixed Point",           "wMsgJESTER_Steerpoint_FP"              }, // TESTED OK
+            {"Track IP",                    "wMsgJESTER_Steerpoint_IP"              }, // TESTED OK
+            {"Track Surface Target",        "wMsgJESTER_Steerpoint_ST"              }, // TESTED OK
+            {"Track Home Base",             "wMsgJESTER_Steerpoint_HB"              }, // TESTED OK
+            {"Track Defense Point",         "wMsgJESTER_Steerpoint_MAN"             }, // TESTED OK
+            {"Reset Lantern",               "wMsgLANTIRN_GPSZero"                   }, // TESTED OK
+            {"Toggle View",                 "wMsgLANTIRN_ToggleFOV"                 }, // TESTED OK
+            // End of LANTIRN
 
-            //New
-
-            {"Radar Mode TWS Manual",       "wMsgJ_RDR_MODE_TWS_MAN"            },
-            {"Look For A regular Target",   "wMsgJ_RDR_MODE_SIZE_M"             },
-            {"Look For A Big Target",       "wMsgJ_RDR_MODE_SIZE_L"             },
-            {"Look For A Small Target",     "wMsgJ_RDR_MODE_SIZE_S"             },
-
-            // block: weapons (DONE)
+            // Weapons
             // section: AG
             {"Select Stores",               "wMsgJ_WPN_AG_SORDN"                },
             {"Select Zunis",                "wMsgJ_WPN_AG_SORDN_WPN_1"          },
@@ -163,11 +187,16 @@ namespace VAICOM.Extensions.RIO
             {"Select Paveways",             "wMsgJ_WPN_AG_SORDN_WPN_8"          },
             {"Select Bee Dee Yous",         "wMsgJ_WPN_AG_SORDN_WPN_9"          },
             {"Select TALD",                 "wMsgJ_WPN_AG_SORDN_WPN_10"         },
+            {"Select J DAMS",               "wMsgJ_WPN_AG_SORDN_WPN_11"         },            
+            {"Select Thirty Ones",          "wMsgJ_WPN_AG_SORDN_WPN_12"         },
+            {"Select Thirty Eights",        "wMsgJ_WPN_AG_SORDN_WPN_13"         },
 
             {"AG Weapon Spot",              "wMsgJ_WPN_AG_SPOT"                 }, // not used
 
             {"Attack Mode Target",          "wMsgJ_WPN_AG_SET_COMP_TGT"         },
+            {"Attack Mode I P",             "wMsgJ_WPN_AG_SET_COMP_IP"          },
             {"Attack Mode Pilot",           "wMsgJ_WPN_AG_SET_COMP_PILOT"       },
+            {"Attack Mode Manual",          "wMsgJ_WPN_AG_SET_MAN"              },
 
             {"Set Release Single",          "wMsgJ_WPN_AG_SET_SNGL"             },
             {"Set Release Pairs",           "wMsgJ_WPN_AG_SET_PAIRS"            },
@@ -186,6 +215,8 @@ namespace VAICOM.Extensions.RIO
             {"Set Ripple Quantity 4",       "wMsgJ_WPN_AG_RIP_QTY_10"           }, //4
             {"Set Ripple Quantity 6",       "wMsgJ_WPN_AG_RIP_QTY_20"           }, //6
             {"Set Ripple Quantity 8",       "wMsgJ_WPN_AG_RIP_QTY_30"           }, //8
+            {"Set Ripple Quantity 16",      "wMsgJ_WPN_AG_RIP_QTY_16"           }, //16
+            {"Set Ripple Quantity 28",      "wMsgJ_WPN_AG_RIP_QTY_28"           }, //28
 
             {"Set Ripple Time",             "wMsgJ_WPN_AG_RIP_TIME"             }, // not endpoint
             {"Set Ripple Time Step",        "wMsgJ_WPN_AG_RIP_TIME_STEP"        },
@@ -207,12 +238,12 @@ namespace VAICOM.Extensions.RIO
             {"Set Ripple Distance 200",     "wMsgJ_WPN_AG_RIP_DIST_200"         },
             {"Set Ripple Distance 400",     "wMsgJ_WPN_AG_RIP_DIST_400"         },
 
-            {"Drop Weapons",                "wMsgJ_WPN_AG_JETT"                 },
+            {"Drop Weapons",                "wMsgJ_WPN_AG_JETT"                 }, //Jettison
             {"Drop Tanks",                  "wMsgJ_WPN_AG_DROP_TANKS"           },
 
             {"Switch Lantern",              "wMsgJ_WPN_AG_UTIL_LANTIRN"         },
 
-            {"Go Air to Ground",            "wMsgJ_WPN_AG"                      }, // not use
+            {"Go Air to Ground",            "wMsgJ_WPN_AG"                      }, // not used
             {"Go Air to Air",               "wMsgJ_WPN_AA"                      }, // not used
 
             {"Select Stations",             "wMsgJ_WPN_AG_STN"                  },
@@ -222,87 +253,29 @@ namespace VAICOM.Extensions.RIO
             {"Select Stations 3 6",         "wMsgJ_WPN_AG_STN_36"               },
             {"Select Stations 4 5",         "wMsgJ_WPN_AG_STN_45"               },
 
-            //{"PlaceHolder155",              "wMsgPlaceHolder155"                },
-            //{"PlaceHolder156",              "wMsgPlaceHolder156"                },
-            //{"PlaceHolder157",              "wMsgPlaceHolder157"                },
-            //{"PlaceHolder158",              "wMsgPlaceHolder158"                },
-            //{"PlaceHolder159",              "wMsgPlaceHolder159"                },
-            //{"PlaceHolder160",              "wMsgPlaceHolder160"                },
-            //{"PlaceHolder161",              "wMsgPlaceHolder161"                },
-            //{"PlaceHolder162",              "wMsgPlaceHolder162"                },
-            //{"PlaceHolder163",              "wMsgPlaceHolder163"                },
-            //{"PlaceHolder164",              "wMsgPlaceHolder164"                },
-            //{"PlaceHolder165",              "wMsgPlaceHolder165"                },
-            //{"PlaceHolder166",              "wMsgPlaceHolder166"                },
-            //{"PlaceHolder167",              "wMsgPlaceHolder167"                },
-            //{"PlaceHolder168",              "wMsgPlaceHolder168"                },
-            //{"PlaceHolder169",              "wMsgPlaceHolder169"                },
-            //{"PlaceHolder170",              "wMsgPlaceHolder170"                },
-            //{"PlaceHolder171",              "wMsgPlaceHolder171"                },
-            //{"PlaceHolder172",              "wMsgPlaceHolder172"                },
-            //{"PlaceHolder173",              "wMsgPlaceHolder173"                },
-            //{"PlaceHolder174",              "wMsgPlaceHolder174"                },
-            //{"PlaceHolder175",              "wMsgPlaceHolder175"                },
-            //{"PlaceHolder176",              "wMsgPlaceHolder176"                },
-            //{"PlaceHolder177",              "wMsgPlaceHolder177"                },
-            //{"PlaceHolder178",              "wMsgPlaceHolder178"                },
-            //{"PlaceHolder179",              "wMsgPlaceHolder179"                },
-            //{"PlaceHolder180",              "wMsgPlaceHolder180"                },
-            //{"PlaceHolder181",              "wMsgPlaceHolder181"                },
-            //{"PlaceHolder182",              "wMsgPlaceHolder182"                },
-            //{"PlaceHolder183",              "wMsgPlaceHolder183"                },
-            //{"PlaceHolder184",              "wMsgPlaceHolder184"                },
-            //{"PlaceHolder185",              "wMsgPlaceHolder185"                },
-            //{"PlaceHolder186",              "wMsgPlaceHolder186"                },
-            //{"PlaceHolder187",              "wMsgPlaceHolder187"                },
-            {"Set Ripple Quantity 16",      "wMsgJ_WPN_AG_RIP_QTY_16"           },
-            {"Set Ripple Quantity 28",      "wMsgJ_WPN_AG_RIP_QTY_28"           },
-            // end of weapons
+            {"Send Waypoint to G G W",      "wMsgJ_WPN_AG_JDAM_WPT_TO_GGW"        },
+            {"Send Pre Planned one to All",    "wMsgJ_WPN_AG_JDAM_PP_ALL_STN_1"    },
+            {"Send Pre Planned two to All",    "wMsgJ_WPN_AG_JDAM_PP_ALL_STN_2"    },
+            {"Send Pre Planned three to All",  "wMsgJ_WPN_AG_JDAM_PP_ALL_STN_3"    },
+            {"Send Pre Planned four to All",   "wMsgJ_WPN_AG_JDAM_PP_ALL_STN_4"    },
+            {"Send Pre Planned five to All",   "wMsgJ_WPN_AG_JDAM_PP_ALL_STN_5"    },
+            {"Send Pre Planned six to All",    "wMsgJ_WPN_AG_JDAM_PP_ALL_STN_6"    },
+            {"Send Pre Planned seven to All",  "wMsgJ_WPN_AG_JDAM_PP_ALL_STN_7"    },
+            {"Send Pre Planned eight to All",  "wMsgJ_WPN_AG_JDAM_PP_ALL_STN_8"    },
+            {"Send Designation to Station", "wMsgJ_WPN_AG_JDAM_DESIG_TO_STN"      },            
 
-            // spare table
-
-            //{"PlaceHolder194",              "wMsgPlaceHolder194"                },
-            //{"PlaceHolder195",              "wMsgPlaceHolder195"                },
-            //{"PlaceHolder196",              "wMsgPlaceHolder196"                },
-            //{"PlaceHolder197",              "wMsgPlaceHolder197"                },
-            //{"PlaceHolder198",              "wMsgPlaceHolder198"                },
-            //{"PlaceHolder199",              "wMsgPlaceHolder199"                },
-
-            // block: radio
-            {"Radio 1",                     "wMsgJ_RAD_159"                     },
-            {"Radio 1 Use Guard",           "wMsgJ_RAD_159_USE_GUARD"           },
-            {"Radio 1 Use Manual",          "wMsgJ_RAD_159_USE_MANUAL"          },
-            {"Radio 1 Use Channel",         "wMsgJ_RAD_159_USE_CHAN"            },
-            {"Radio 1 Use Channel 1",       "wMsgJ_RAD_159_USE_CHAN_1"          },
-            {"Radio 1 Use Channel 2",       "wMsgJ_RAD_159_USE_CHAN_2"          },
-            {"Radio 1 Use Channel 3",       "wMsgJ_RAD_159_USE_CHAN_3"          },
-            {"Radio 1 Use Channel 4",       "wMsgJ_RAD_159_USE_CHAN_4"          },
-            {"Radio 1 Use Channel 5",       "wMsgJ_RAD_159_USE_CHAN_5"          },
-            {"Radio 1 Use Channel 6",       "wMsgJ_RAD_159_USE_CHAN_6"          },
-            {"Radio 1 Use Channel 7",       "wMsgJ_RAD_159_USE_CHAN_7"          },
-            {"Radio 1 Use Channel 8",       "wMsgJ_RAD_159_USE_CHAN_8"          },
-            {"Radio 1 Tune Manual",         "wMsgJ_RAD_159_TUNE_MAN"            },
-            {"Radio 1 Select Channel",      "wMsgJ_RAD_159_SELECT_CHAN"         },
-            {"Radio 1 Select Mode",         "wMsgJ_RAD_159_SELECT_MODE"         },
-            {"Radio 1 Tune ATC",            "wMsgJ_RAD_159_TUNE_ATC"            },
-            {"Radio 1 Tune TAC",            "wMsgJ_RAD_159_TUNE_TAC"            },
-            {"Radio 2",                     "wMsgJ_RAD_182"                     },
+            // Radio
             {"Radio Use Guard",             "wMsgJ_RAD_182_USE_GUARD"           },
-            {"Radio 2 Use Manual",          "wMsgJ_RAD_182_USE_MANUAL"          },
-            {"Radio Use Channel",         "wMsgJ_RAD_182_USE_CHAN"            },
-            {"Radio Use Channel 1",       "wMsgJ_RAD_182_USE_CHAN_1"          },
-            {"Radio Use Channel 2",       "wMsgJ_RAD_182_USE_CHAN_2"          },
-            {"Radio Use Channel 3",       "wMsgJ_RAD_182_USE_CHAN_3"          },
-            {"Radio Use Channel 4",       "wMsgJ_RAD_182_USE_CHAN_4"          },
-            {"Radio Use Channel 5",       "wMsgJ_RAD_182_USE_CHAN_5"          },
-            {"Radio Use Channel 6",       "wMsgJ_RAD_182_USE_CHAN_6"          },
-            {"Radio Use Channel 7",       "wMsgJ_RAD_182_USE_CHAN_7"          },
-            {"Radio Use Channel 8",       "wMsgJ_RAD_182_USE_CHAN_8"          },
-            {"Radio 2 Tune Manual",         "wMsgJ_RAD_182_TUNE_MAN"            },
-            {"Radio 2 Select Channel",      "wMsgJ_RAD_182_SELECT_CHAN"         },
-            {"Radio 2 Select Mode",         "wMsgJ_RAD_182_SELECT_MODE"         },
-            {"Radio 2 Tune ATC",            "wMsgJ_RAD_182_TUNE_ATC"            },
-            {"Radio 2 Tune TAC",            "wMsgJ_RAD_182_TUNE_TAC"            },
+            {"Radio Use Manual",            "wMsgJ_RAD_182_USE_MANUAL"          },
+            {"Radio Use Preset",            "wMsgJ_RAD_182_USE_CHAN"            },
+            {"Radio Mode",                  "wMsgJ_RAD_182_MODE"                },
+            {"Radio Mode TR",               "wMsgJ_RAD_182_MODE_TR"             },
+            {"Radio Mode TRG",              "wMsgJ_RAD_182_MODE_TRG"            },
+            {"Radio Mode DF",               "wMsgJ_RAD_182_MODE_DF"             },
+            {"Radio Mode Test",             "wMsgJ_RAD_182_MODE_TEST"           },
+            {"Radio Mode AM",               "wMsgJ_RAD_182_MODE_AM"             },
+            {"Radio Mode FM",               "wMsgJ_RAD_182_MODE_FM"             },            
+            {"Radio Mode Off",              "wMsgJ_RAD_182_MODE_OFF"            },
 
             // Datalink
             {"Link",                        "wMsgJ_RAD_DL"                      },
@@ -373,22 +346,9 @@ namespace VAICOM.Extensions.RIO
             {"TACAN Mike Alfa",                 "wMsgJ_RAD_TCN_T_PG_MA"                 },
             {"TACAN Sierra Yankee Zulu",        "wMsgJ_RAD_TCN_T_PG_SYZI"               },
             {"TACAN Sierra Tango November",     "wMsgJ_RAD_TCN_T_STN"                   },
+            // end of TACAN
 
-            {"Radio Mode TR",                   "wMsgJ_RAD_182_MODE_TR"                 },
-            {"Radio Mode TRG",                  "wMsgJ_RAD_182_MODE_TRG"                },
-            {"Radio Mode DF",                   "wMsgJ_RAD_182_MODE_DF"                 },
-            {"Radio Mode Test",                 "wMsgJ_RAD_182_MODE_TEST"               },
-            // end of radio
-
-            // spare table
-            {"Radio Mode AM",               "wMsgJ_RAD_182_MODE_AM"                     },
-            {"Radio Mode FM",               "wMsgJ_RAD_182_MODE_FM"                     },
-            {"Radio Mode",                  "wMsgJ_RAD_182_MODE"                        },
-            {"Radio Mode Off",              "wMsgJ_RAD_182_MODE_OFF"                    },
-
-
-
-            // block:utility NAV
+            // Utility/Navigation
             {"Utility Navigation",              "wMsgJ_UTIL_NAV"                }, //na
             {"Select Destination Steerpoint",   "wMsgJ_UTIL_NAV_SEL_DEST_SPT"   }, //na
             {"Restore Mission Point",           "wMsgJ_UTIL_NAV_REST_MSN_SPT"   }, //na
@@ -398,13 +358,43 @@ namespace VAICOM.Extensions.RIO
             {"Navigate Steerpoint 1",           "wMsgJ_UTIL_NAV_MAP_SPT_1"      },
             {"Navigate Steerpoint 2",           "wMsgJ_UTIL_NAV_MAP_SPT_2"      },
             {"Navigate Steerpoint 3",           "wMsgJ_UTIL_NAV_MAP_SPT_3"      },
-            {"Navigate Steerpoint 4",           "wMsgJ_UTIL_NAV_MAP_SPT_4"      }, // 4-8 not used
-            {"Navigate Steerpoint 5",           "wMsgJ_UTIL_NAV_MAP_SPT_5"      }, // na
-            {"Navigate Steerpoint 6",           "wMsgJ_UTIL_NAV_MAP_SPT_6"      }, // na
+            {"Navigate Steerpoint 4",           "wMsgJ_UTIL_NAV_MAP_SPT_4"      }, // 4-14 not used by F-14A/B 
+            {"Navigate Steerpoint 5",           "wMsgJ_UTIL_NAV_MAP_SPT_5"      }, 
+            {"Navigate Steerpoint 6",           "wMsgJ_UTIL_NAV_MAP_SPT_6"      }, 
+            {"Navigate Steerpoint 7",           "wMsgJ_UTIL_NAV_MAP_SPT_7"      },
+            {"Navigate Steerpoint 8",           "wMsgJ_UTIL_NAV_MAP_SPT_8"      },
+            {"Navigate Steerpoint 9",           "wMsgJ_UTIL_NAV_MAP_SPT_9"      },
+            {"Navigate Steerpoint 10",          "wMsgJ_UTIL_NAV_MAP_SPT_10"     },
+            {"Navigate Steerpoint 11",          "wMsgJ_UTIL_NAV_MAP_SPT_11"     },
+            {"Navigate Steerpoint 12",          "wMsgJ_UTIL_NAV_MAP_SPT_12"     },
+            {"Navigate Steerpoint 13",          "wMsgJ_UTIL_NAV_MAP_SPT_13"     },
+            {"Navigate Steerpoint 14",          "wMsgJ_UTIL_NAV_MAP_SPT_14"     },
+
             {"Navigate Fixed Point",            "wMsgJ_UTIL_NAV_MAP_FIX_PNT"    },
             {"Navigate Initial Point",          "wMsgJ_UTIL_NAV_MAP_INIT_PNT"   },
             {"Navigate Target",                 "wMsgJ_UTIL_NAV_SURF_TGT"       },
             {"Navigate Home Base",              "wMsgJ_UTIL_NAV_HOME_BASE"      },
+
+            {"Nav Mode E G I",                  "wMsgJ_UTIL_NAV_MODE_EGI"       },
+            {"Nav Mode G P S",                  "wMsgJ_UTIL_NAV_MODE_EGI"       },//F-14B(U) Nav mode selection
+            {"Nav Mode Destination",            "wMsgJ_UTIL_NAV_MODE_DEST"      },
+
+            {"Nav Sequence Auto",               "wMsgJ_UTIL_NAV_SEQ_AUTO"       },
+            {"Nav Sequence Overfly",            "wMsgJ_UTIL_NAV_SEQ_OFLY"       },//F-14B(U) Nav Wayoint Sequencin
+            {"Nav Sequence Manual",             "wMsgJ_UTIL_NAV_SEQ_MAN"        },
+
+            {"Nav Backup to Selected",          "wMsgJ_UTIL_NAV_BHDI_FLY"       }, //F-14B(U) Nav Backup to Selected Steerpoint
+            
+            {"Nav Backup to Steerpoint 1",      "wMsgJ_UTIL_NAV_BHDI_SPT_1"     },
+            {"Nav Backup to Steerpoint 2",      "wMsgJ_UTIL_NAV_BHDI_SPT_2"     },
+            {"Nav Backup to Steerpoint 3",      "wMsgJ_UTIL_NAV_BHDI_SPT_3"     },
+            {"Nav Backup to Initial Point",     "wMsgJ_UTIL_NAV_BHDI_INIT_PT"   },
+            {"Nav Backup to Fixed Point",       "wMsgJ_UTIL_NAV_BHDI_FIX_PT"    },
+            {"Nav Backup to Mission Steerpoint","wMsgJ_UTIL_NAV_BHDI_MN_FIX_PT" }, //na
+            {"Nav Backup to Target",            "wMsgJ_UTIL_NAV_BHDI_STGT_1"    },
+            {"Nav Backup to Home Base",         "wMsgJ_UTIL_NAV_BHDI_HOME"      },
+            {"Nav Backup to Defense Point",     "wMsgJ_UTIL_NAV_DEF_PNT"        }, // testc?
+            {"Nav Backup to Hostile Zone",      "wMsgJ_UTIL_NAV_HSTZONE"        }, //
 
             {"Restore",                         "wMsgJ_UTIL_NAV_REST_MORE"      }, // show hint
             {"Restore Steerpoint 1",            "wMsgJ_UTIL_NAV_REST_MSN_SPT_1" },
@@ -419,18 +409,38 @@ namespace VAICOM.Extensions.RIO
             {"Restore Defense Point",           "wMsgJ_UTIL_NAV_DEF_PNT"        }, // testc?
             {"Restore Hostile Zone",            "wMsgJ_UTIL_NAV_HSTZONE"        }, //
 
-            // Contract
+            {"Load Flight Plan 1",          "wMsgJ_UTIL_NAV_LOAD_FLT_PLAN_1"    }, //F-14B(U) Flight Plan management
+            {"Load Flight Plan 2",          "wMsgJ_UTIL_NAV_LOAD_FLT_PLAN_2"    },
+            {"Load Flight Plan 3",          "wMsgJ_UTIL_NAV_LOAD_FLT_PLAN_3"    },
+            {"Load Flight Plan 4",          "wMsgJ_UTIL_NAV_LOAD_FLT_PLAN_4"    },
+            {"Load Flight Plan 5",          "wMsgJ_UTIL_NAV_LOAD_FLT_PLAN_5"    },
+            {"Load Flight Plan 6",          "wMsgJ_UTIL_NAV_LOAD_FLT_PLAN_6"    },
+            {"Load Flight Plan 7",          "wMsgJ_UTIL_NAV_LOAD_FLT_PLAN_7"    },
+            {"Reload Flight Plan",          "wMsgJ_UTIL_NAV_RELOAD_FLT_PLAN"    },
+
+            // Crew Contract
             {"Contract",                        "wMsgJ_UTIL_CONTR"              }, // not endpoint, disable
             {"Keep it quiet back there",        "wMsgJ_UTIL_CONTR_NO_TALK"      },
+            {"No Talking",                  "wMsgJ_UTIL_CONTR_NO_TALK"      },
             {"You can talk again",              "wMsgJ_UTIL_CONTR_TALK"         },
+            {"Talk to me Jester",                 "wMsgJ_UTIL_CONTR_TALK"         },
             {"Set Eject for Both",              "wMsgJ_UTIL_CONTR_EJECT_BTH"    },
+            {"Set Eject Both",               "wMsgJ_UTIL_CONTR_EJECT_BTH"    },
             {"Set Eject for Single",            "wMsgJ_UTIL_CONTR_EJECT_SNG"    },
+            {"Set Eject Single",             "wMsgJ_UTIL_CONTR_EJECT_SNG"    },
             {"OK for landing calls",            "wMsgJ_UTIL_CONTR_CALL"         },
+            {"Landing Callouts Enable",  "wMsgJ_UTIL_CONTR_CALL"         },
             {"No landing calls",                "wMsgJ_UTIL_CONTR_NO_CALL"      },
+            {"Landing Callouts Disable", "wMsgJ_UTIL_CONTR_NO_CALL"      },
 
             {"Back to work",                    "wMsgJ_UTIL_CONTR_ACTIVE"       }, //new
             {"Knock it off",                    "wMsgJ_UTIL_CONTR_INACTIVE"     }, //new
-
+            {"Enable Auto Expand",              "wMsgJ_UTIL_CONTR_AUTO_EXPAND"  },
+            {"Disable Auto VID",                "wMsgJ_UTIL_CONTR_AUTO_VID"     },
+            {"Treat No-Reply as Bandit",        "wMsgJ_UTIL_CONTR_NO_IFF_REPLY_BANDIT" },
+            {"Disable Auto Expand",             "wMsgJ_UTIL_CONTR_DISABLE_AUTO_EXPAND" },
+            {"Enable Auto VID",                 "wMsgJ_UTIL_CONTR_ENABLE_AUTO_VID" },
+            {"Treat No-Reply as Bogey",         "wMsgJ_UTIL_CONTR_NO_IFF_REPLY_BOGEY" },
             {"Wake Up",                         "wMsgJ_RESET"                   },
             
             // Supercarriers
@@ -447,18 +457,9 @@ namespace VAICOM.Extensions.RIO
             {"TACAN Tune Roosevelt",        "wMsgJ_RAD_TCN_TAC_ROOS"                },
             {"TACAN Tune Lincoln",          "wMsgJ_RAD_TCN_TAC_LINC"                },
             {"TACAN Tune Truman",           "wMsgJ_RAD_TCN_TAC_TRUM"                },
-            {"TACAN Tune Forrestal",        "wMsgJ_RAD_TCN_TAC_FORE"                }, // Forrestal
-            {"Track Steerpoint 1",          "wMsgJESTER_Steerpoint_SP1"             }, // TESTED OK
-            {"Track Steerpoint 2",          "wMsgJESTER_Steerpoint_SP2"             }, // TESTED OK
-            {"Track Steerpoint 3",          "wMsgJESTER_Steerpoint_SP3"             }, // TESTED OK
-            {"Track Fixed Point",           "wMsgJESTER_Steerpoint_FP"              }, // TESTED OK
-            {"Track IP",                    "wMsgJESTER_Steerpoint_IP"              }, // TESTED OK
-            {"Track Surface Target",        "wMsgJESTER_Steerpoint_ST"              }, // TESTED OK
-            {"Track Home Base",             "wMsgJESTER_Steerpoint_HB"              }, // TESTED OK
-            {"Track Defense Point",         "wMsgJESTER_Steerpoint_MAN"             }, // TESTED OK
-            {"Reset Lantern",               "wMsgLANTIRN_GPSZero"                   }, // TESTED OK
-            {"Toggle View",                 "wMsgLANTIRN_ToggleFOV"                 }, // TESTED OK
-            {"J_UTIL_NAV_MAP_MARKER",       "wMsgJ_UTIL_NAV_MAP_MARKER"         },
+            {"TACAN Tune Forrestal",        "wMsgJ_RAD_TCN_TAC_FORE"                }, // Forrestal            
+
+            //{"J_UTIL_NAV_MAP_MARKER",       "wMsgJ_UTIL_NAV_MAP_MARKER"         }, // Not endpoin managed by RIO_SetDeviceSequenceMapSteerpoints.cs
             {"Grid Enable",                 "wMsgJ_UTIL_NAV_GRD_ENABLE"         },
             {"Grid Disable",                "wMsgJ_UTIL_NAV_GRD_DSABLE"         },
             {"Grid Center",                 "wMsgJ_UTIL_NAV_GRD_CENTER"         },
@@ -488,14 +489,8 @@ namespace VAICOM.Extensions.RIO
             {"Grid 4 Sectors",              "wMsgJ_UTIL_NAV_GRD_4SCTR"                },
             {"Grid 5 Sectors",              "wMsgJ_UTIL_NAV_GRD_5SCTR"                },
             {"Grid 6 Sectors",              "wMsgJ_UTIL_NAV_GRD_6SCTR"                },
-            {"J_UTIL_NAV_GRD_MARKER",       "wMsgJ_UTIL_NAV_GRD_MARKER"               },
-            {"PlaceHolder383",              "wMsgPlaceHolder383"                },
-            {"PlaceHolder384",              "wMsgPlaceHolder384"                },
-            {"PlaceHolder385",              "wMsgPlaceHolder385"                },
-            {"PlaceHolder386",              "wMsgPlaceHolder386"                },
-            {"PlaceHolder387",              "wMsgPlaceHolder387"                },
-            {"PlaceHolder388",              "wMsgPlaceHolder388"                },
-            {"PlaceHolder389",              "wMsgPlaceHolder389"                },
+            //{"J_UTIL_NAV_GRD_MARKER",       "wMsgJ_UTIL_NAV_GRD_MARKER"               }, // Not endpoint managed by (RIO_SetDeviceSequenceGridMapMarkers.cs            
+            
             // end of utility
 
             // WALKMAN
@@ -503,24 +498,27 @@ namespace VAICOM.Extensions.RIO
             {"Cut it out",                  "wMsgJ_WLKMN_STOP"                  },
             {"Skip this part",              "wMsgJ_WLKMN_NEXT"                  },
             {"Go back a little",            "wMsgJ_WLKMN_PREV"                  },
-
-            {"Aspect Switch Beam",              "wMsgJ_RDR_ASP_BEAM"                },
-            {"Aspect Switch Nose",              "wMsgJ_RDR_ASP_NOSE"                },
-            {"Aspect Switch Tail",              "wMsgJ_RDR_ASP_TAIL"                },
-            {"PlaceHolder397",              "wMsgPlaceHolder397"                },
-            {"PlaceHolder398",              "wMsgPlaceHolder398"                },
-            {"PlaceHolder399",              "wMsgPlaceHolder399"                },
-
-            // block:defensive
-            {"Countermeasures Mode",        "wMsgJ_DEF_CMS_MOD"                 }, //
+            
+            
+            // Defensive/Countermeasures
+            {"Countermeasures Mode",        "wMsgJ_DEF_CMS_MOD"                 }, //A/B and B(U)
             {"Countermeasures Off",         "wMsgJ_DEF_CMS_MOD_OFF"             },
             {"Countermeasures Manual",      "wMsgJ_DEF_CMS_MOD_MAN"             },
             {"Countermeasures Auto",        "wMsgJ_DEF_CMS_MOD_AUTO"            },
+            {"Countermeasures Standby",     "wMsgJ_DEF_CMS_MOD_SBY"             }, //B(U) Only
+            {"Countermeasures Semi",        "wMsgJ_DEF_CMS_MOD_SEMI"            }, //
+            {"Countermeasures Bypass",      "wMsgJ_DEF_CMS_MOD_BYP"             }, //
 
             {"Flares Mode",                 "wMsgJ_DEF_FLR_MOD"                 }, //
             {"Flares Mode Pilot",           "wMsgJ_DEF_FLR_MOD_PILOT"           },
             {"Flares Mode Normal",          "wMsgJ_DEF_FLR_MOD_NORM"            },
             {"Flares Mode Multi",           "wMsgJ_DEF_FLR_MOD_MULTI"           },
+
+            {"Manual Program",               "wMsgJ_DEF_MAN_PGM"                }, // hint
+            {"Manual Program 1",             "wMsgJ_DEF_MAN_PGM_1"              }, //B(U) Only
+            {"Manual Program 2",             "wMsgJ_DEF_MAN_PGM_2"              },
+            {"Manual Program 3",             "wMsgJ_DEF_MAN_PGM_3"              },
+            {"Manual Program 4",             "wMsgJ_DEF_MAN_PGM_4"              },
 
             {"Chaff Program",               "wMsgJ_DEF_CHF_PGM"                 }, // hint
             {"Chaff Program 1",             "wMsgJ_DEF_CHF_PGM_RR_12"           },
@@ -530,7 +528,16 @@ namespace VAICOM.Extensions.RIO
             {"Chaff Program 5",             "wMsgJ_DEF_CHF_PGM_20_84"           },
             {"Chaff Program 6",             "wMsgJ_DEF_CHF_PGM_40_44"           },
             {"Chaff Program 7",             "wMsgJ_DEF_CHF_PGM_40_84"           },
-            {"Chaff Program 8",             "wMsgJ_DEF_CHF_PGM_R1_12"           },
+            {"Chaff Program 8",             "wMsgJ_DEF_CHF_PGM_R1_82"           },
+
+            {"Inhibit Chaff",               "wMsgJ_DEF_CMDS_IHBT_1"             }, //B(U) only CMDS Inhibits 1-7
+            {"Inhibit Flares",              "wMsgJ_DEF_CMDS_IHBT_2"             },
+            {"Inhibit Zero One",            "wMsgJ_DEF_CMDS_IHBT_3"             },
+            {"Inhibit Zero Two",            "wMsgJ_DEF_CMDS_IHBT_4"             },
+            {"Inhibit R W R",               "wMsgJ_DEF_CMDS_IHBT_5"             },
+            {"Inhibit M W S",               "wMsgJ_DEF_CMDS_IHBT_6"             },
+            {"Inhibit Jammer",              "wMsgJ_DEF_CMDS_IHBT_7"             },
+
 
             {"Display",                     "wMsgJ_DEF_RWR_DSP_TYP"             }, // show hint: RWR options: Airborne/Normal/AAA/Unknown/Friendly
             {"Display Airborne",            "wMsgJ_DEF_RWR_AIRB"                },
@@ -568,65 +575,9 @@ namespace VAICOM.Extensions.RIO
             {"Look for SAMs",                       "wMsgLANTIRN_Srch_SAM_Active"           },
             {"Look for Tanks",                      "wMsgLANTIRN_Srch_Armor_Active"         },
             {"Look for Movers",                     "wMsgLANTIRN_Srch_Vehicle"              },
-            {"Look for Ships",                      "wMsgLANTIRN_Ships_Active"              },
-            //{"PlaceHolder449",              "wMsgPlaceHolder449"                },
-            //{"PlaceHolder450",              "wMsgPlaceHolder450"                },
-            //{"PlaceHolder451",              "wMsgPlaceHolder451"                },
-            //{"PlaceHolder452",              "wMsgPlaceHolder452"                },
-            //{"PlaceHolder453",              "wMsgPlaceHolder453"                },
-            //{"PlaceHolder454",              "wMsgPlaceHolder454"                },
-            //{"PlaceHolder455",              "wMsgPlaceHolder455"                },
-            //{"PlaceHolder456",              "wMsgPlaceHolder456"                },
-            //{"PlaceHolder457",              "wMsgPlaceHolder457"                },
-            //{"PlaceHolder458",              "wMsgPlaceHolder458"                },
-            //{"PlaceHolder459",              "wMsgPlaceHolder459"                },
-            //{"PlaceHolder460",              "wMsgPlaceHolder460"                },
-            //{"PlaceHolder461",              "wMsgPlaceHolder461"                },
-            //{"PlaceHolder462",              "wMsgPlaceHolder462"                },
-            //{"PlaceHolder463",              "wMsgPlaceHolder463"                },
-            //{"PlaceHolder464",              "wMsgPlaceHolder464"                },
-            //{"PlaceHolder465",              "wMsgPlaceHolder465"                },
-            //{"PlaceHolder466",              "wMsgPlaceHolder466"                },
-            //{"PlaceHolder467",              "wMsgPlaceHolder467"                },
-            //{"PlaceHolder468",              "wMsgPlaceHolder468"                },
-            //{"PlaceHolder469",              "wMsgPlaceHolder469"                },
-            //{"PlaceHolder470",              "wMsgPlaceHolder470"                },
-            //{"PlaceHolder471",              "wMsgPlaceHolder471"                },
-            //{"PlaceHolder472",              "wMsgPlaceHolder472"                },
-            //{"PlaceHolder473",              "wMsgPlaceHolder473"                },
-            //{"PlaceHolder474",              "wMsgPlaceHolder474"                },
-            //{"PlaceHolder475",              "wMsgPlaceHolder475"                },
-            //{"PlaceHolder476",              "wMsgPlaceHolder476"                },
-            //{"PlaceHolder477",              "wMsgPlaceHolder477"                },
-            //{"PlaceHolder478",              "wMsgPlaceHolder478"                },
-            //{"PlaceHolder479",              "wMsgPlaceHolder479"                },
-            //{"PlaceHolder480",              "wMsgPlaceHolder480"                },
-            //{"PlaceHolder481",              "wMsgPlaceHolder481"                },
-            //{"PlaceHolder482",              "wMsgPlaceHolder482"                },
-            //{"PlaceHolder483",              "wMsgPlaceHolder483"                },
-            //{"PlaceHolder484",              "wMsgPlaceHolder484"                },
-            //{"PlaceHolder485",              "wMsgPlaceHolder485"                },
-            //{"PlaceHolder486",              "wMsgPlaceHolder486"                },
-            //{"PlaceHolder487",              "wMsgPlaceHolder487"                },
-            //{"PlaceHolder488",              "wMsgPlaceHolder488"                },
-            //{"PlaceHolder489",              "wMsgPlaceHolder489"                },
-            // end of defensive
-
-            // spare table
-            //{"PlaceHolder490",              "wMsgPlaceHolder490"                },
-            //{"PlaceHolder491",              "wMsgPlaceHolder491"                },
-            //{"PlaceHolder492",              "wMsgPlaceHolder492"                },
-            //{"PlaceHolder493",              "wMsgPlaceHolder493"                },
-            //{"PlaceHolder494",              "wMsgPlaceHolder494"                },
-            //{"PlaceHolder495",              "wMsgPlaceHolder495"                },
-            //{"PlaceHolder496",              "wMsgPlaceHolder496"                },
-            //{"PlaceHolder497",              "wMsgPlaceHolder497"                },
-            //{"PlaceHolder498",              "wMsgPlaceHolder498"                },
-            //{"PlaceHolder499",              "wMsgPlaceHolder499"                },
-
-            // 500-600 RIO misc
+            {"Look for Ships",                      "wMsgLANTIRN_Ships_Active"              },            
             
-            // startup
+            // Startup and Shutdown
             {"Abort Startup",               "wMsgJ_STRT_ABORT"                  },
             {"Align Fine",                  "wMsgJ_STRT_INS_FINE"               },
             {"Align Minimum",               "wMsgJ_STRT_INS_MIN_WPN"            },
@@ -638,8 +589,9 @@ namespace VAICOM.Extensions.RIO
             {"Hold it",                     "wMsgJ_STRT_PAUSE"                  },
             {"Startup",                     "wMsgJ_STRT_STARTUP"                },
             {"Assisted Startup",            "wMsgJ_STRT_ASSISTED"               },
+            {"Commence Shutdown",           "wMsgJ_SDWN_SHUTDOWN"               },
 
-            // 600-700 AI pilot
+            // AI pilot
             {"Set Altitude",                "wMsgI_ALT"                         },
             {"Go Angels 1",                 "wMsgI_ALT_ANG_1"                   },
             {"Go Angels 5",                 "wMsgI_ALT_ANG_5"                   },
@@ -684,66 +636,9 @@ namespace VAICOM.Extensions.RIO
             {"Turn Right 30",               "wMsgI_DIR_CHG_R30"                 },
             {"Turn Right 45",               "wMsgI_DIR_CHG_R45"                 },
             {"Change Speed",                "wMsgI_SPD"                         },
-
-            {"Fly to Destination",                "wMsgI_SPT_FLYTO"                },
+            {"Fly to Destination",                "wMsgI_SPT_FLYTO"             },
             {"Orbit Destination",              "wMsgI_SPT_ORBIT"                },
-            //{"PlaceHolder646",              "wMsgPlaceHolder646"                },
-            //{"PlaceHolder647",              "wMsgPlaceHolder647"                },
-            //{"PlaceHolder648",              "wMsgPlaceHolder648"                },
-            //{"PlaceHolder649",              "wMsgPlaceHolder649"                },
-            //{"PlaceHolder650",              "wMsgPlaceHolder650"                },
-            //{"PlaceHolder651",              "wMsgPlaceHolder651"                },
-            //{"PlaceHolder652",              "wMsgPlaceHolder652"                },
-            //{"PlaceHolder653",              "wMsgPlaceHolder653"                },
-            //{"PlaceHolder654",              "wMsgPlaceHolder654"                },
-            //{"PlaceHolder655",              "wMsgPlaceHolder655"                },
-            //{"PlaceHolder656",              "wMsgPlaceHolder656"                },
-            //{"PlaceHolder657",              "wMsgPlaceHolder657"                },
-            //{"PlaceHolder658",              "wMsgPlaceHolder658"                },
-            //{"PlaceHolder659",              "wMsgPlaceHolder659"                },
-            //{"PlaceHolder660",              "wMsgPlaceHolder660"                },
-            //{"PlaceHolder661",              "wMsgPlaceHolder661"                },
-            //{"PlaceHolder662",              "wMsgPlaceHolder662"                },
-            //{"PlaceHolder663",              "wMsgPlaceHolder663"                },
-            //{"PlaceHolder664",              "wMsgPlaceHolder664"                },
-            //{"PlaceHolder665",              "wMsgPlaceHolder665"                },
-            //{"PlaceHolder666",              "wMsgPlaceHolder666"                },
-            //{"PlaceHolder667",              "wMsgPlaceHolder667"                },
-            //{"PlaceHolder668",              "wMsgPlaceHolder668"                },
-            //{"PlaceHolder669",              "wMsgPlaceHolder669"                },
-            //{"PlaceHolder670",              "wMsgPlaceHolder670"                },
-            //{"PlaceHolder671",              "wMsgPlaceHolder671"                },
-            //{"PlaceHolder672",              "wMsgPlaceHolder672"                },
-            //{"PlaceHolder673",              "wMsgPlaceHolder673"                },
-            //{"PlaceHolder674",              "wMsgPlaceHolder674"                },
-            //{"PlaceHolder675",              "wMsgPlaceHolder675"                },
-            //{"PlaceHolder676",              "wMsgPlaceHolder676"                },
-            //{"PlaceHolder677",              "wMsgPlaceHolder677"                },
-            //{"PlaceHolder678",              "wMsgPlaceHolder678"                },
-            //{"PlaceHolder679",              "wMsgPlaceHolder679"                },
-            //{"PlaceHolder680",              "wMsgPlaceHolder680"                },
-            //{"PlaceHolder681",              "wMsgPlaceHolder681"                },
-            //{"PlaceHolder682",              "wMsgPlaceHolder682"                },
-            //{"PlaceHolder683",              "wMsgPlaceHolder683"                },
-            //{"PlaceHolder684",              "wMsgPlaceHolder684"                },
-            //{"PlaceHolder685",              "wMsgPlaceHolder685"                },
-            //{"PlaceHolder686",              "wMsgPlaceHolder686"                },
-            //{"PlaceHolder687",              "wMsgPlaceHolder687"                },
-            //{"PlaceHolder688",              "wMsgPlaceHolder688"                },
-            //{"PlaceHolder689",              "wMsgPlaceHolder689"                },
-            // end of AI pilot
-
-            // spare table
-            //{"PlaceHolder690",              "wMsgPlaceHolder690"                },
-            //{"PlaceHolder691",              "wMsgPlaceHolder691"                },
-            //{"PlaceHolder692",              "wMsgPlaceHolder692"                },
-            //{"PlaceHolder693",              "wMsgPlaceHolder693"                },
-            //{"PlaceHolder694",              "wMsgPlaceHolder694"                },
-            //{"PlaceHolder695",              "wMsgPlaceHolder695"                },
-            //{"PlaceHolder696",              "wMsgPlaceHolder696"                },
-            //{"PlaceHolder697",              "wMsgPlaceHolder697"                },
-            //{"PlaceHolder698",              "wMsgPlaceHolder698"                },
-            //{"PlaceHolder699",              "wMsgPlaceHolder699"                },
+            
         };
 
     }

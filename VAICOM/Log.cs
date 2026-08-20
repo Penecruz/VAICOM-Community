@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using VAICOM.Static;
 
 namespace VAICOM
@@ -72,7 +73,8 @@ namespace VAICOM
                     State.Proxy.WriteToLog(writestring, color);
                     try
                     {
-                        using (StreamWriter writer = new StreamWriter(State.logfile, true)) { writer.Write(writestring + "\n"); };
+                        string timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
+                        using (StreamWriter writer = new StreamWriter(State.logfile, true)) { writer.Write($"{timestamp} {writestring}" + "\n"); };
                     }
                     catch
                     {

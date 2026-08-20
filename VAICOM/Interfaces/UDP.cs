@@ -61,8 +61,10 @@ namespace VAICOM
                     State.SendSocket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
                     State.SendIpEndPoint = new IPEndPoint(IPAddress.Parse(State.activeconfig.ClientSendIP), State.activeconfig.ClientSendPort);
                     State.ReceivingUdpClient = new UdpClient(State.activeconfig.ClientReceivePort);
+                    // Increase the OS receive buffer to handle bursts of packets, this helps prevent
+                    // server update message chunks from being dropped.
+                    State.ReceivingUdpClient.Client.ReceiveBufferSize = 4 * 1024 * 1024; // 4 MB
                     State.ReceiveIpEndPoint = new IPEndPoint(IPAddress.Any, State.activeconfig.ClientReceivePort);
-
 
                     // Log final port allocations for DCS JSON I/O
                     Log.Write($"DCS JSON I/O - Send IP: {State.activeconfig.ClientSendIP}, Send Port: {State.activeconfig.ClientSendPort}, Receive Port: {State.activeconfig.ClientReceivePort}", Colors.Text);

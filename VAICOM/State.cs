@@ -27,7 +27,7 @@ namespace VAICOM
     {
 
         // ------------------------------------------------------------------------------------------------------------
-        // general
+        // general setup target build type Beta or Release
 
 
         public static bool versionbeta = false; //set if Beta version
@@ -38,7 +38,7 @@ namespace VAICOM
         public static string clientmode = ClientModes.Normal; //set to Normal for release, Debug for development
 
         public static string versionstring = "";
-        public static string pluginversionnumber = "3.1.5"; // used by Theme (Special page)
+        public static string pluginversionnumber = "3.1.6"; // used by Theme (Special page)
         public static string vaminversion = "1.16";
         public static string defProfileName = "VAICOM for DCS World";
         // Add a new property to control Voice Access priority
@@ -103,6 +103,16 @@ namespace VAICOM
             return currentstate.id.Equals("F-14AB", StringComparison.OrdinalIgnoreCase)
                 || currentstate.id.Equals("F-14BU", StringComparison.OrdinalIgnoreCase);
         }
+
+        public enum WheelChocksState
+        {
+            Unknown = 0,
+            On = 1,
+            Off = 2
+        }
+
+        public static WheelChocksState F14WheelChocksState = WheelChocksState.Unknown;
+        public static bool F14WheelChocksStateAssumed = false;
 
         // ------------------------------------------------------------------------------------------------------------
         // VA system environment

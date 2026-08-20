@@ -1,6 +1,6 @@
--- VAICOM PRO server-side script
+-- VAICOM server-side script
 -- RadioCommandDialogsPanel.lua (append)
--- www.vaicompro.com
+-- https://github.com/Penecruz/VAICOM-Community
 
 base.package.path  = base.package.path..";.\\LuaSocket\\?.lua;"
 base.package.cpath = base.package.cpath..";.\\LuaSocket\\?.dll;"
@@ -146,21 +146,22 @@ function selectCommunicatorDeviceId(targetCommunicator)
 		return nil
 	end
 
-			local function callMethod(obj, methodName)
-				if obj == nil then
-					return nil
-				end
-				local okCall, result = base.pcall(function()
-					if obj[methodName] then
-						return obj[methodName](obj)
-					end
-					return nil
-				end)
-				if okCall and result ~= nil then
-					return result
-				end
-				return nil
+	local function callMethod(obj, methodName)
+		if obj == nil then
+			return nil
+		end
+		local okCall, result = base.pcall(function()
+			if obj[methodName] then
+				return obj[methodName](obj)
 			end
+			return nil
+		end)
+		if okCall and result ~= nil then
+			return result
+		end
+		return nil
+	end
+
 	if targetCommunicator == nil then
 		return data.intercomId
 	end
@@ -475,7 +476,7 @@ function getSelectedRadio(dcsId)
 				selectedRadio = findRadioDisplayName("AN/ARC-134", "ARC-134", "VHF AM") or selectedRadio
 			end
 		end
- elseif dcsId == "F-100D" then
+	elseif dcsId == "F-100D" then
 		selectedRadio = findRadioDisplayName("UHF Radio AN/ARC-34", "Radio AN/ARC-34", "AN/ARC-34") or selectedRadio
 	end
 	return selectedRadio
@@ -560,10 +561,9 @@ function DecodeMessage(rawdata)
 		return nil
 	end
 	base.vaicom.state.activemessage = msg		
-  return true
+	return true
 end		
 function ProcessRemoteCommand()
-
 	if not DecodeMessage(base.vaicom.state.rawcommand) then
 		socket.try(base.vaicom.sender:send(base.vaicom.flags.raw))
 		return
@@ -571,8 +571,18 @@ function ProcessRemoteCommand()
 	
 	local clientmessage = base.vaicom.state.activemessage 
 	
-	updateMainCaption()	
-	base.vaicom.state.update.all()
+	updateMainCaption()
+
+	-- update.all() rebuilds every recipient list (DCS queries + distance + sort)
+	-- and refreshes player/riostate state. This is only required for some message types
+	-- that need this updated state to be sent back to the server.
+	-- Ignore updating for other types, e.g. device controls or displaying messages
+	-- to the user so we don't trigger a full rebuild of all the state.
+	if clientmessage.exec ~= nil
+		or clientmessage.type == base.vaicom.messagetype.requestupdate
+		or clientmessage.type == base.vaicom.messagetype.aicomms then
+			base.vaicom.state.update.all()
+	end
 	
 	if clientmessage.dspmsg 									~=nil	then
 		base.trigger.action.outTextForGroup(data.pUnit:getGroup().id_, clientmessage.dspmsg,clientmessage.msgdur or 5)
@@ -592,11 +602,12 @@ function ProcessRemoteCommand()
 	if clientmessage.type == base.vaicom.messagetype.settingschange 	then		
 		socket.try(base.vaicom.sender:send(base.vaicom.flags.raw))
 		return
-	end		
-	if clientmessage.type == base.vaicom.messagetype.requestupdate  	then			
-		base.vaicom.state.sendupdateall()		
+	end
+	if clientmessage.type == base.vaicom.messagetype.requestupdate  	then
+		base.vaicom.state.includediagnostics = clientmessage.includediagnostics
+		base.vaicom.state.sendupdateall()
 		return
-	end				
+	end
 	if clientmessage.type == base.vaicom.messagetype.devicecontrol  	then
 		local now = base.Export.LoGetModelTime and base.Export.LoGetModelTime() or 0
 		local cumulativeDelay = 0
@@ -629,7 +640,7 @@ function ProcessRemoteCommand()
 		end
 		for i= 1, #clientmessage.cmdsequence do
 		  base.Export.LoSetCommand(clientmessage.cmdsequence[i])
-		end	
+		end
 		socket.try(base.vaicom.sender:send(base.vaicom.flags.raw))
 		return
 	end
@@ -689,7 +700,6 @@ function ProcessRemoteCommand()
 		base.setmetatable(purgeMessage, sendMessage)
 		purgeMessage:perform()
 	end			
-
 end
 function ApplySettings(message)
 	base.vaicom.set.debugmode(message.debug)
@@ -704,17 +714,17 @@ function ApplySettings(message)
 	if message.disableplayervoice 	~= nil 			then
 		local on = message.disableplayervoice	
 		base.vaicom.settings.playervoicedisabled = on
-			if on then
-				base.common.role.PLAYER.dir = 'DISABLED_Player'
-				if base.common.role.PLAYER_NAVY then
-					base.common.role.PLAYER_NAVY.dir = 'DISABLED_Player'
-				end
-			else
-				base.common.role.PLAYER.dir = 'PLAYER'
-				if base.common.role.PLAYER_NAVY then
-					base.common.role.PLAYER_NAVY.dir = 'NAVY_Player'
-				end
+		if on then
+			base.common.role.PLAYER.dir = 'DISABLED_Player'
+			if base.common.role.PLAYER_NAVY then
+				base.common.role.PLAYER_NAVY.dir = 'DISABLED_Player'
 			end
+		else
+			base.common.role.PLAYER.dir = 'PLAYER'
+			if base.common.role.PLAYER_NAVY then
+				base.common.role.PLAYER_NAVY.dir = 'NAVY_Player'
+			end
+		end
 	end		
 	if message.forcelanguage      	~= nil 			then
 		base.vaicom.settings.forcelanguage = message.forcelanguage
@@ -859,15 +869,15 @@ function SetTargetComm(sendevent)
 end
 function SetParameters(recipientcomm)
 	local returnparams = {}
-		if base.vaicom.state.activemessage.insert then 
+	if base.vaicom.state.activemessage.insert then 
 		base.table.insert(returnparams,recipientcomm)  
-		end	
-		if base.vaicom.state.activemessage.parameters then	
-			for i= 1, #base.vaicom.state.activemessage.parameters do
-				local paramval = base.vaicom.state.activemessage.parameters[i]
-				base.table.insert(returnparams,paramval)
-			end			
-		end
+	end	
+	if base.vaicom.state.activemessage.parameters then	
+		for i= 1, #base.vaicom.state.activemessage.parameters do
+			local paramval = base.vaicom.state.activemessage.parameters[i]
+			base.table.insert(returnparams,paramval)
+		end			
+	end
 	return returnparams		
 end
 function onMsgStart(pMessage, pRecepient, text)
@@ -970,7 +980,7 @@ local function vaicom_loop()
 		base.print("KILL VAICOM LOOP")
 		Gui.EnableHighSpeedUpdate(true) -- default = false Pene WIP run high speed true for testing
 		Gui.RemoveUpdateCallback(vaicom_loop)
-		end
+	end
 end
 base.vaicom.config = {
 	sendaddress 		= "127.0.0.1", 
@@ -987,8 +997,8 @@ base.vaicom.flags = {
 	raw					= 4000,
 	remote				= false,
 }
+
 base.vaicom.settings = {
-	
 	menuinvisible			= false,
 	redirect_world_speech	= false,
 	operatedial				= false,
@@ -999,7 +1009,6 @@ base.vaicom.settings = {
 	forcecallsigns			= false,
 	forcedcallsigns			= 'ENG',
 	carriersuppressauto		= false,
-
 }
 base.vaicom.messagetype = {
 	undefined			= "sim.undefined",
@@ -1031,19 +1040,80 @@ base.vaicom.categories = {
 					[2] 	= "blue",	
 				},		
 }
+
+-- Per-update memoization for DCS engine boundary calls.
+-- getCommunicator/getDesc/getPlayerName/range are queried by many properties for the
+-- same Locator within a single update.all sendupdateall pass. The object identities are
+-- stable across one pass (live values like frequency are still read off the
+-- cached communicator each time), so we cache them and clear the cache at the
+-- start of every sendupdateall to avoid cross-update staleness.
+local propcache = { comm = {}, desc = {}, pname = {}, range = {} }
+local function resetPropCache()
+	propcache.comm = {}
+	propcache.desc = {}
+	propcache.pname = {}
+	propcache.range = {}
+end
+local function getCommunicatorCached(Locator)
+	if Locator == nil then return nil end
+	local cached = propcache.comm[Locator]
+	if cached == nil then
+		cached = Locator:getCommunicator()
+		if cached == nil then cached = false end -- memoize the "no communicator" result
+		propcache.comm[Locator] = cached
+	end
+	if cached == false then return nil end
+	return cached
+end
+local function getDescCached(Locator)
+	if Locator == nil then return nil end
+	local cached = propcache.desc[Locator]
+	if cached == nil then
+		cached = Locator:getDesc()
+		if cached == nil then cached = false end
+		propcache.desc[Locator] = cached
+	end
+	if cached == false then return nil end
+	return cached
+end
+local function getPlayerNameCached(Locator)
+	if Locator == nil then return nil end
+	local cached = propcache.pname[Locator]
+	if cached == nil then
+		if Locator.getPlayerName then
+			cached = Locator:getPlayerName()
+		end
+		if cached == nil then cached = false end
+		propcache.pname[Locator] = cached
+	end
+	if cached == false then return nil end
+	return cached
+end
+local function getRangeCached(Locator)
+	if Locator == nil then return nil end
+	local cached = propcache.range[Locator]
+	if cached == nil then
+		local selfPoint = base.vaicom.state.playerpoint
+		if not selfPoint then
+			selfPoint = Locator:getPoint()
+		end
+		local ipoint = Locator:getPoint()
+		local distsq = (ipoint.x - selfPoint.x) * (ipoint.x - selfPoint.x) + (ipoint.z - selfPoint.z) * (ipoint.z - selfPoint.z)
+		cached = base.math.floor(base.math.sqrt(distsq))
+		if cached == nil then cached = false end
+		propcache.range[Locator] = cached
+	end
+	if cached == false then return nil end
+	return cached
+end
+
 base.vaicom.properties = {
 	range = function(Locator)
-		local range = 0
-		if Locator ~= nil then
-			local selfPoint = data.pUnit and data.pUnit:getPosition().p 
-			if not selfPoint then
-				selfPoint = Locator:getPoint()
-			end
-			local ipoint = Locator:getPoint()
-			local distsq = (ipoint.x - selfPoint.x) * (ipoint.x - selfPoint.x) + (ipoint.z - selfPoint.z) * (ipoint.z - selfPoint.z)
-			range = base.math.floor(base.math.sqrt(distsq))
+		local range = getRangeCached(Locator)
+		if range ~= nil then
+			return range
 		end
-		return range
+		return 0
 	end,
 	pos = function(Locator)
 		if Locator ~= nil and Locator.getPoint then
@@ -1053,36 +1123,36 @@ base.vaicom.properties = {
 		end
 	end,
 	displayname = function(Locator)
-		displaystr = Locator:getDesc() and Locator:getDesc().displayName or "unknown"
-		return displaystr
+		local displayname = getDescCached(Locator).displayName
+		if displayname ~= nil then
+			return displayname
+		end
+		return "unknown"
 	end,
 	typename = function(Locator)
-		local displaystr = "unknown"
-		if Locator:getDesc() ~= nil then
-			displaystr = Locator:getDesc().typeName
+		local typename = getDescCached(Locator).typeName
+		if typename ~= nil then
+			return typename
 		end
-		return displaystr
+		return "unknown"
 	end,
 	attributes = function(Locator)
-		local attr = {}
-		if Locator:getDesc().attributes then
-			attr = Locator:getDesc().attributes
+		local attr = getDescCached(Locator).attributes
+		if attr ~= nil then
+			return attr
 		end
-		return attr
+		return {}
 	end,
 	description = function(Locator)
-	local descr = {}
-		if Locator:getDesc() then
-			descr = Locator:getDesc()
+		local descr = getDescCached(Locator)
+		if descr ~= nil then
+			return descr
 		end
-	return descr
+		return {}
 	end,
 	missioncallsign = function(Locator)
 		local callsignStr = "unknown"
-		local UnitCommunicator = nil
-		if Locator ~= nil then
-			UnitCommunicator = Locator:getCommunicator()
-		end
+		local UnitCommunicator = getCommunicatorCached(Locator)
 		if UnitCommunicator then
 			local useprotocol = base.speech.defaultProtocol
 			if base.vaicom.settings.forcecallsigns then
@@ -1147,12 +1217,9 @@ base.vaicom.properties = {
 		return ID	
 	end,
 	modulation = function(Locator)
-		local UnitCommunicator = nil
 		local Modulation = nil
 		local Modulationstr = "XX"
-		if Locator ~= nil then
-         UnitCommunicator = Locator:getCommunicator()
-		end
+        local UnitCommunicator = getCommunicatorCached(Locator)
 		if UnitCommunicator then
 			local okMod, mod = base.pcall(function()
 				return UnitCommunicator:getModulation()
@@ -1178,11 +1245,8 @@ base.vaicom.properties = {
 		return Modulationstr
 	end,
 	frequency = function(Locator)
-		local UnitCommunicator
 		local Frequency = "0"
-		if Locator ~= nil then
-			UnitCommunicator = Locator:getCommunicator()
-		end
+		local UnitCommunicator = getCommunicatorCached(Locator)
 		if UnitCommunicator then
             local okFreq, freq = base.pcall(function()
 				return UnitCommunicator:getFrequency()
@@ -1208,12 +1272,9 @@ base.vaicom.properties = {
 		return Frequency
 	end,
 	altfreq = function(Locator)
-		local UnitCommunicator = nil
 		local FreqTbl = {}
 		local counter = 0
-		if Locator ~= nil then
-			UnitCommunicator = Locator:getCommunicator()
-		end
+		local UnitCommunicator = getCommunicatorCached(Locator)
 		if UnitCommunicator then
             local okCount, count = base.pcall(function()
 				return UnitCommunicator:countTransivers()
@@ -1285,7 +1346,7 @@ base.vaicom.properties = {
 					"channel", "Channel", "channelNumber", "tacanChannel", "TACANChannel",
 					"getChannel", "get_channel", "getChannelNumber", "getTacanChannel", "getTACANChannel"
 				})
-              if channel == nil then
+				if channel == nil then
 					channel = callMethod(beaconObj, "getChannel") or callMethod(beaconObj, "get_channel") or callMethod(beaconObj, "getChannelNumber") or callMethod(beaconObj, "getTacanChannel") or callMethod(beaconObj, "getTACANChannel")
 				end
 				if channel == nil then
@@ -1309,7 +1370,7 @@ base.vaicom.properties = {
 			local beacon = nil
 			local okBeacon = false
 			okBeacon, beacon = base.pcall(function() return Locator:getBeacon() end)
-         if not okBeacon then
+			if not okBeacon then
 				beacon = nil
 			end
 			if (not okBeacon) or beacon == nil then
@@ -1352,7 +1413,7 @@ base.vaicom.properties = {
 
 		return tacan
 	end,
-  unitdiagnostics = function(Locator)
+	unitdiagnostics = function(Locator)
 		local probe = ""
 		local okProbe, result = base.pcall(function()
 			if Locator == nil then
@@ -1453,30 +1514,23 @@ base.vaicom.properties = {
 		return probe
 	end,
 	freqmods = function(Locator)
-		local UnitCommunicator = nil
 		local FreqTbl = {}
-		local counter = 0
-		if Locator ~= nil then
-			UnitCommunicator = Locator:getCommunicator()
-		end
+		local UnitCommunicator = getCommunicatorCached(Locator)
 		if UnitCommunicator then
 			FreqTbl = UnitCommunicator:getFrequenciesModulations()
 		end
 		return FreqTbl
 	end,
 	human = function(Locator)
-		return Locator.getPlayerName and Locator:getPlayerName() and true or false		
+		return Locator.getPlayerName and getPlayerNameCached(Locator) and true or false
 	end,
 	playerid = function(Locator)
-		return Locator.getPlayerName and Locator:getPlayerName() or "" 	
+		return Locator.getPlayerName and getPlayerNameCached(Locator) or ""
 	end,
 	commstatus = function(Locator)
 		local State = nil
-		local UnitCommunicator =nil
 		local Statestring = "unknown"
-		if Locator ~= nil then
-			UnitCommunicator = Locator:getCommunicator()
-		end
+		local UnitCommunicator = getCommunicatorCached(Locator)
 		if UnitCommunicator then
 			State = getRecepientState(UnitCommunicator)
 		else
@@ -1492,7 +1546,7 @@ base.vaicom.properties = {
 		local returnstr ="unknown"
 		local Coalition = nil
 		if Locator ~= nil then
-		Coalition = Locator:getCoalition()
+			Coalition = Locator:getCoalition()
 		end
 		if Coalition == base.coalition.side.NEUTRAL then returnstr = "NEUTRAL" end
 		if Coalition == base.coalition.side.BLUE then returnstr = "BLUE" end
@@ -1500,21 +1554,19 @@ base.vaicom.properties = {
 		return returnstr
 	end,
 	hasradio = function(Locator)
-		local result = false
-		if Locator:getCommunicator() then
-			if Locator:getCommunicator():hasTransiver() then
-			result = true
-			end
+		local communicator = getCommunicatorCached(Locator)
+		if communicator ~= nil and communicator:hasTransiver() then
+			return true
 		end
-		return result
+		return false
 	end,
 	isplayerunit = function(Locator)
-	local playerunitID = data.pUnit.id_
-	local locatorID = Locator.id_
-	return locatorID == playerunitID
+		local playerunitID = data.pUnit.id_
+		local locatorID = Locator.id_
+		return locatorID == playerunitID
 	end,
 	refuelable = function(Locator)
-		return Locator:getDesc().attributes.Refuelable
+		return getDescCached(Locator).attributes.Refuelable
 	end,
 }
 base.vaicom.helper = {	
@@ -1531,7 +1583,7 @@ base.vaicom.helper = {
 	tablelength = function(inputlist)
 		local count = 0
 		if inputlist ~= nil and base.type(inputlist) == 'table'  then
-				for _ in base.pairs(inputlist) do count = count + 1 end	
+			for _ in base.pairs(inputlist) do count = count + 1 end
 		end
 		return count
 	end,
@@ -1562,8 +1614,8 @@ base.vaicom.filter = {
 	hasradio = function(Units)
 		local Collection = {}
 		if base.vaicom.helper.tablelength(Units) > 0 then
-			for i, unit in base.pairs(Units) do
-				local communicator = unit:getCommunicator()
+			for _, unit in base.pairs(Units) do
+				local communicator = getCommunicatorCached(unit)
 				if communicator ~= nil and communicator:hasTransiver() then
 					base.table.insert(Collection, unit)
 				end	
@@ -1615,14 +1667,40 @@ base.vaicom.filter = {
 		end
 		return Collection
 	end,
-	}
+}
+
 base.vaicom.objects = {
+	getGroups = function(coalition, category)
+		return base.coalition.getGroups and base.coalition.getGroups(coalition, category)
+	end,
+	getUnits = function(group)
+		return group:getUnits()
+	end,
+	getMissionCallsign = function(unit)
+		return base.vaicom.properties and base.vaicom.properties.missioncallsign and base.vaicom.properties.missioncallsign(unit) or ""
+	end,
+	addUniqueUnit = function(collection, unit)
+		if unit == nil then return end
+		-- Filter out late activation units that aren't activated yet
+		if unit.isActive and not unit:isActive() then return end
+		local uid = unit.id_
+		if uid == nil then
+			base.table.insert(collection, unit)
+			return
+		end
+		for _, existing in base.pairs(collection) do
+			if existing ~= nil and existing.id_ == uid then
+				return
+			end
+		end
+		base.table.insert(collection, unit)
+	end,
 	localRadios = function() 
 		local Collection = {}
 		if data.communicators ~= {} and base.vaicom.helper.tablelength(data.communicators) > 0 then
-		Collection = data.communicators
+			Collection = data.communicators
 		else
-		Collection = {}
+			Collection = {}
 		end
 		return Collection
 	end,
@@ -1635,40 +1713,25 @@ base.vaicom.objects = {
 		local Collection = {}
 		for i =1,4 do
 			local wingman = data.pUnit and data.pUnit:getGroup():getUnit(i)
-			if wingman then 
-			base.table.insert(Collection, wingman)
+			if wingman then
+				base.table.insert(Collection, wingman)
 			end
 		end
 		return Collection
 	end,	
 	localJTACs = function(getside)
 		local Collection = {}	
-			Collection = base.coalition.getServiceProviders(getside, base.coalition.service.FAC)
+		Collection = base.coalition.getServiceProviders(getside, base.coalition.service.FAC)
 		return Collection
 	end,	
 	localATCs = function(getside)
 		local Collection = {}
-			Collection = base.coalition.getServiceProviders(getside, base.coalition.service.ATC)
+		Collection = base.coalition.getServiceProviders(getside, base.coalition.service.ATC)
 		return Collection	
 	end,
 	localAWACSs = function(getside)
 		local Collection = {}
-          Collection = base.coalition.getServiceProviders(getside, base.coalition.service.AWACS)
-
-		local function addUniqueUnit(unit)
-			if unit == nil then return end
-			local uid = unit.id_
-			if uid == nil then
-				base.table.insert(Collection, unit)
-				return
-			end
-			for _, existing in base.pairs(Collection) do
-				if existing ~= nil and existing.id_ == uid then
-					return
-				end
-			end
-			base.table.insert(Collection, unit)
-		end
+		Collection = base.coalition.getServiceProviders(getside, base.coalition.service.AWACS)
 
 		local function isAwacsLikeUnit(unit)
 			if unit == nil then return false end
@@ -1702,9 +1765,7 @@ base.vaicom.objects = {
 			end
 
 			local callsign = ""
-			local okCallsign, valueCallsign = base.pcall(function()
-				return base.vaicom.properties and base.vaicom.properties.missioncallsign and base.vaicom.properties.missioncallsign(unit) or ""
-			end)
+			local okCallsign, valueCallsign = base.pcall(base.vaicom.objects.getMissionCallsign, unit)
 			if okCallsign and valueCallsign ~= nil then
 				callsign = base.string.upper(base.tostring(valueCallsign))
 			end
@@ -1721,16 +1782,16 @@ base.vaicom.objects = {
 			return false
 		end
 
-		local okGroups, planeGroups = base.pcall(function()
-			return base.coalition.getGroups and base.coalition.getGroups(getside, base.Group.Category.AIRPLANE)
-		end)
+		local okGroups, planeGroups = base.pcall(base.vaicom.objects.getGroups, getside, base.Group.Category.AIRPLANE)
 		if okGroups and planeGroups ~= nil and base.type(planeGroups) == "table" then
 			for _, g in base.pairs(planeGroups) do
-				local okUnits, units = base.pcall(function() return g:getUnits() end)
+				local okUnits, units = base.pcall(base.vaicom.objects.getUnits, g)
 				if okUnits and units ~= nil and base.type(units) == "table" then
 					for _, u in base.pairs(units) do
-						if isAwacsLikeUnit(u) then
-							addUniqueUnit(u)
+						-- Check for late activation units and filter out if not activated
+						local inactive = (u.isActive and not u:isActive()) or false 
+						if not inactive and isAwacsLikeUnit(u) then
+							base.vaicom.objects.addUniqueUnit(Collection, u)
 						end
 					end
 				end
@@ -1740,7 +1801,7 @@ base.vaicom.objects = {
 	end,	
 	localTankers = function(getside)
 		local Collection = {}
-			Collection = base.coalition.getServiceProviders(getside, base.coalition.service.TANKER)
+		Collection = base.coalition.getServiceProviders(getside, base.coalition.service.TANKER)
 		return Collection
 	end,	
 	localCrew = function(getside)
@@ -1761,114 +1822,53 @@ base.vaicom.objects = {
 	end,
 	localAllies = function(getside)
 		local Collection = {}
-			Collection = base.coalition.getPlayers and base.coalition.getPlayers(getside)
-
-		local function addUniqueUnit(unit)
-			if unit == nil then return end
-			local uid = unit.id_
-			if uid == nil then
-				base.table.insert(Collection, unit)
-				return
-			end
-			for _, existing in base.pairs(Collection) do
-				if existing ~= nil and existing.id_ == uid then
-					return
-				end
-			end
-			base.table.insert(Collection, unit)
-		end
+		Collection = base.coalition.getPlayers and base.coalition.getPlayers(getside)
 
 		local function addGroupUnits(group)
 			if group == nil then return end
-			local okUnits, units = base.pcall(function() return group:getUnits() end)
+			local okUnits, units = base.pcall(base.vaicom.objects.getUnits, group)
 			if okUnits and units ~= nil and base.type(units) == "table" then
 				for _, u in base.pairs(units) do
-					addUniqueUnit(u)
+					base.vaicom.objects.addUniqueUnit(Collection, u)
 				end
 			end
 		end
 
-		local okPlaneGroups, planeGroups = base.pcall(function()
-			return base.coalition.getGroups and base.coalition.getGroups(getside, base.Group.Category.AIRPLANE)
-		end)
+		local okPlaneGroups, planeGroups = base.pcall(base.vaicom.objects.getGroups, getside, base.Group.Category.AIRPLANE)
 		if okPlaneGroups and planeGroups ~= nil and base.type(planeGroups) == "table" then
 			for _, g in base.pairs(planeGroups) do
 				addGroupUnits(g)
 			end
 		end
 
-		local okHeliGroups, heliGroups = base.pcall(function()
-			return base.coalition.getGroups and base.coalition.getGroups(getside, base.Group.Category.HELICOPTER)
-		end)
+		local okHeliGroups, heliGroups = base.pcall(base.vaicom.objects.getGroups, getside, base.Group.Category.HELICOPTER)
 		if okHeliGroups and heliGroups ~= nil and base.type(heliGroups) == "table" then
 			for _, g in base.pairs(heliGroups) do
 				addGroupUnits(g)
 			end
 		end
 		return Collection
-	end,	
-   localOpposition = function(getside)
+	end,
+	localOpposition = function(getside)
 		local Collection = {}
 		local opposite = nil
 		if getside == base.coalition.side.BLUE then opposite = base.coalition.side.RED end
 		if getside == base.coalition.side.RED then opposite = base.coalition.side.BLUE end
 
-		local function addUniqueUnit(unit)
-			if unit == nil then return end
-			local uid = unit.id_
-			if uid == nil then
-				base.table.insert(Collection, unit)
-				return
-			end
-			for _, existing in base.pairs(Collection) do
-				if existing ~= nil and existing.id_ == uid then
-					return
-				end
-			end
-			base.table.insert(Collection, unit)
-		end
-
 		local function addUnits(units)
 			if units ~= nil and base.type(units) == "table" then
 				for _, u in base.pairs(units) do
-					addUniqueUnit(u)
+					base.vaicom.objects.addUniqueUnit(Collection, u)
 				end
 			end
 		end
 
-		local function addGroupAircraft(group)
-			if group == nil then return end
-			local okUnits, units = base.pcall(function() return group:getUnits() end)
-			if okUnits and units ~= nil and base.type(units) == "table" then
-				for _, u in base.pairs(units) do
-					addUniqueUnit(u)
-				end
-			end
-		end
 		if opposite then
-           addUnits(base.vaicom.objects.localJTACs(opposite))
+			addUnits(base.vaicom.objects.localJTACs(opposite))
 			addUnits(base.vaicom.objects.localAWACSs(opposite))
 			addUnits(base.vaicom.objects.localTankers(opposite))
 			addUnits(base.vaicom.objects.localATCs(opposite))
 			addUnits(base.vaicom.objects.localAllies(opposite))
-
-			local okPlaneGroups, planeGroups = base.pcall(function()
-				return base.coalition.getGroups and base.coalition.getGroups(opposite, base.Group.Category.AIRPLANE)
-			end)
-			if okPlaneGroups and planeGroups ~= nil and base.type(planeGroups) == "table" then
-				for _, g in base.pairs(planeGroups) do
-					addGroupAircraft(g)
-				end
-			end
-
-			local okHeliGroups, heliGroups = base.pcall(function()
-				return base.coalition.getGroups and base.coalition.getGroups(opposite, base.Group.Category.HELICOPTER)
-			end)
-			if okHeliGroups and heliGroups ~= nil and base.type(heliGroups) == "table" then
-				for _, g in base.pairs(heliGroups) do
-					addGroupAircraft(g)
-				end
-			end
 		end
 		return Collection
 	end,
@@ -1940,9 +1940,7 @@ base.vaicom.list = {
 				descName = base.string.upper(base.tostring(desc.displayName or desc.typeName or ""))
 			end
 			local cs = ""
-			local okCs, vCs = base.pcall(function()
-				return base.vaicom.properties and base.vaicom.properties.missioncallsign and base.vaicom.properties.missioncallsign(locator) or ""
-			end)
+			local okCs, vCs = base.pcall(base.vaicom.objects.getMissionCallsign, locator)
 			if okCs and vCs ~= nil then
 				cs = base.string.upper(base.tostring(vCs))
 			end
@@ -1992,7 +1990,7 @@ base.vaicom.list = {
 		if coalition then
 			Listing = base.vaicom.helper.mergetables(Listing, base.vaicom.objects.localTankers(coalition))
 		end
-      local isMultiplayerNow = data.initialized and base.DCS.isMultiplayer() or false
+		local isMultiplayerNow = data.initialized and base.DCS.isMultiplayer() or false
 		if (not isMultiplayerNow) and (not selectstr or selectstr == "radio") then
 			Listing = base.vaicom.filter.hasradio(Listing)
 		end
@@ -2026,28 +2024,28 @@ base.vaicom.list = {
 		end
 		return Listing
 	end,
-   localOpposition = function(selectstr)
+	localOpposition = function(selectstr)
 		local Listing = {}
 		local coalition = data.pUnit and data.pUnit:getCoalition()
 		if coalition then
 			Listing = base.vaicom.helper.mergetables(Listing, base.vaicom.objects.localOpposition(coalition))
 		end
 		if Listing ~= nil and #Listing > 1 then
-			base.table.sort(Listing, base.vaicom.helper.sortby.distance)
-		end
+            base.table.sort(Listing, base.vaicom.helper.sortby.distance)
+        end
 		return Listing
 	end,
 }
 base.vaicom.get = { 
-	serverdata  ={	
+	serverdata = {
 		dcsversion = function()
 			local fullversionstring = base.tostring(base._ED_VERSION)
 			local versionnumber = base.string.sub(fullversionstring,5,9) or "X.X"
 			return versionnumber
-		end,				
-				}, 		
-	missiondata ={	
-		listby ={					
+		end,
+	},
+	missiondata = {
+		listby = {
 				Radio 	= function(sortfunction)
 					local Stack = base.vaicom.list.localRadios()
 					if Stack ~=nil and #Stack > 1 then base.table.sort(Stack, sortfunction) end 								
@@ -2069,8 +2067,8 @@ base.vaicom.get = {
 					return Stack
 				end,									
 				ATC 	= function(sortfunction, radio)
-					local Stack = base.vaicom.list.localATCs(radio)		
-					if Stack ~=nil and #Stack > 1 then base.table.sort(Stack, sortfunction) end 
+					local Stack = base.vaicom.list.localATCs(radio)
+					if Stack ~=nil and #Stack > 1 then base.table.sort(Stack, sortfunction) end
 					return Stack
 				end,									
 				AWACS 	= function(sortfunction, radio)
@@ -2103,19 +2101,17 @@ base.vaicom.get = {
 					local Stack = base.vaicom.list.localAllies(radio)
 					return Stack	
 				end,
-              Opposition  = function(sortfunction, radio)
+				Opposition  = function(sortfunction, radio)
 					local Stack = base.vaicom.list.localOpposition(radio)
 					return Stack	
 				end,
 				},
-				markers = function()
-					local details = base.vaicom.get.missiondata.markerdetails()
-					return (base.type(details) == "table") and #details or 0
-				end,
 				markerdetails = function()
 					local details = {}
 					local Stack = base.world.getMarkPanels()
-					if base.type(Stack) ~= "table" then return details end
+					-- Only build the map marker details if there are 64 or less as some
+					-- large missions can have over a thousand markers, which we don't send
+					if base.type(Stack) ~= "table" or #Stack >= 64 then return details end
 					local function tryget(fn)
 						local ok, value = base.pcall(fn)
 						if ok then return value end
@@ -2225,12 +2221,15 @@ base.vaicom.set = {
 	debugmode 	= function(setmode)
 		if setmode ~= base.vaicom.state.debugmode then
 			base.vaicom.state.debugmode = setmode
+			base.vaicom.state.profiling = setmode
 			dcsoptions.setOption("plugins.VAICOM.VAICOMDebugModeEnabled", setmode)
 		end
 	end,	
 }
 base.vaicom.state = {
 		debugmode 				= false,
+		profiling				= false, -- Logs performance timings to the DCS log when true.
+		includediagnostics		= false,
 		dcsversion 				= base.vaicom.get.serverdata.dcsversion(),
 		root 					= base.tostring(base.lfs.writedir()),
 		currentdir 				= base.tostring(base.lfs.currentdir()),
@@ -2248,6 +2247,7 @@ base.vaicom.state = {
 		airborne				= false, 
 		timer					= 0,
 		playerunit				= data.pUnit,
+		playerpoint				= data.pUnit and data.pUnit:getPosition().p,
 		payload					= {},
 		bpos					= {},
 		cpos					= {},
@@ -2265,7 +2265,7 @@ base.vaicom.state = {
 									ATC				= {},
 									AWACS			= {}, 
 									Tanker			= {},
-                                   Opposition		= {},
+									Opposition		= {},
 									Crew			= {},
 									Aux				= {},
 									Moose		    = {}, -- Add moose
@@ -2299,40 +2299,60 @@ base.vaicom.state = {
 									[base.vaicom.categories.recipient.Cargo] 	= nil,
 									[base.vaicom.categories.recipient.Allies] 	= nil,										
 									},																	
-		update =					{		
+		update =					{
 			all = function()
+				-- Lightweight profiling
+				local profiling = base.vaicom.state.profiling
+				local profClock = profiling and socket.gettime or nil
+				local profStart = profiling and profClock() or 0
+				local profLast = profStart
+				local function profMark(label)
+					if not profiling then return end
+					local now = profClock()
+					base.print(base.string.format("VAICOM profiling (update.all) | %-40s %8.3f ms", label, (now - profLast) * 1000))
+					profLast = now
+				end
+
+				-- Start each pass with a fresh per-Locator engine-call cache
+				-- This will be used by the sendupdateall function as well as this
+				-- is called after the update.all. This cache will be cleared once
+				-- the sendupdateall call completes to free up memory.
+				resetPropCache()
+
 				base.vaicom.state.timer								= data.initialized and base.Export.LoGetModelTime()
 				base.vaicom.state.tod								= data.initialized and base.Export.LoGetMissionStartTime()
 				base.vaicom.state.playerunit 						= data.initialized and data.pUnit
+				base.vaicom.state.playerpoint						= data.initialized and data.pUnit and data.pUnit:getPosition().p
 				base.vaicom.state.payload 							= data.initialized and base.Export.LoGetPayloadInfo()
 				base.vaicom.state.bpos								= data.initialized and base.Export.LoGetSelfData() and base.Export.LoGetSelfData().Position or nil
 				base.vaicom.state.cpos.type							= data.initialized and base.view.getCamType()
 				base.vaicom.state.cpos.loc							= data.initialized and base.view.getCamPoint()
-				base.vaicom.state.playercoalition 					= data.pUnit and base.DCS.getPlayerCoalition() or base.coalition.side.NEUTRAL	
+				base.vaicom.state.playercoalition 					= data.pUnit and base.DCS.getPlayerCoalition() or base.coalition.side.NEUTRAL
 				base.vaicom.state.riostate.canopy					= base.vaicom.state.activemessage.AIRIO and (data.initialized and base.Export.LoGetMechInfo().canopy and (base.Export.LoGetMechInfo().canopy.value >0)) or false
 				base.vaicom.state.riostate.rdr						= base.vaicom.state.activemessage.AIRIO and (data.initialized and base.GetDevice(0).get_argument_value and (base.GetDevice(0):get_argument_value(2012) >0)) or false
 				base.vaicom.state.riostate.pdstt					= base.vaicom.state.activemessage.AIRIO and (data.initialized and base.GetDevice(0).get_argument_value and (base.GetDevice(0):get_argument_value(11503) >0)) or false
 				base.vaicom.state.riostate.pstt						= base.vaicom.state.activemessage.AIRIO and (data.initialized and base.GetDevice(0).get_argument_value and (base.GetDevice(0):get_argument_value(11504) >0)) or false
 				base.vaicom.state.riostate.amt						= base.vaicom.state.activemessage.AIRIO and (data.initialized and base.GetDevice(0).get_argument_value and (base.GetDevice(0):get_argument_value(2022) == 0)) or false
 				base.vaicom.state.riostate.tcn						= base.vaicom.state.activemessage.AIRIO and (data.initialized and base.GetDevice(0).get_argument_value and (base.GetDevice(0):get_argument_value(374))) or 0
-               local f4eICSHot = false
+
+				local f4eICSHot = false
 				local ah64ICSHot = false
 				local dcsId = base.vaicom.state.dcsid or ""
 				local isF4E = base.string.find(dcsId, "F-4E", 1, true) ~= nil
 				if data.initialized and isF4E and base.GetDevice(0) and base.GetDevice(0).get_argument_value then
 					local pilotIcs = base.GetDevice(0):get_argument_value(1378)
-                 local seatProxyLod = base.GetDevice(0):get_argument_value(3060)
+					local seatProxyLod = base.GetDevice(0):get_argument_value(3060)
 					if seatProxyLod == nil then
 						seatProxyLod = base.GetDevice(0):get_argument_value(3048)
 					end
-				   base.vaicom.state.riostate.f4ePilotIcs = pilotIcs or 0
-                   base.vaicom.state.riostate.f4eSeat = seatProxyLod or -1
-                 -- F-4E ICS selector: cold mic is negative, hot mic is centered, radio override is positive.
+					base.vaicom.state.riostate.f4ePilotIcs = pilotIcs or 0
+					base.vaicom.state.riostate.f4eSeat = seatProxyLod or -1
+					-- F-4E ICS selector: cold mic is negative, hot mic is centered, radio override is positive.
 					-- Treat HOT MIC and radio override as active intercom states. (Off is inactive)
-                   f4eICSHot = (pilotIcs ~= nil and pilotIcs > -0.1)
+					f4eICSHot = (pilotIcs ~= nil and pilotIcs > -0.1)
 				else
 					base.vaicom.state.riostate.f4ePilotIcs = 0
-                 base.vaicom.state.riostate.f4eSeat = -1
+					base.vaicom.state.riostate.f4eSeat = -1
 				end
 
 				if data.initialized and base.GetDevice(0) and base.GetDevice(0).get_argument_value and base.string.find(dcsId, "AH-64D", 1, true) ~= nil then
@@ -2349,20 +2369,24 @@ base.vaicom.state = {
 						ah64ICSHot = (pltIcsMode ~= nil and pltIcsMode < 0.5) or (cpgIcsMode ~= nil and cpgIcsMode < 0.5)
 					end
 				end
-			   base.vaicom.state.riostate.ics						= (base.vaicom.state.activemessage.AIRIO and (data.initialized and base.GetDevice(0).get_argument_value and (base.GetDevice(0):get_argument_value(2044) > -1))) or f4eICSHot or ah64ICSHot -- Check for F-14 ICS state, F-4E pilot ICS hot mic position, or AH-64 ICS hot mic position
+
+				-- Map markers are used by OKB so only include if we are retrieving this data (diagnostics probe)
+				local markerdetails = (base.vaicom.state.includediagnostics and data.initialized and base.vaicom.get.missiondata.markerdetails()) or {}
+				base.vaicom.state.riostate.markerdetails = markerdetails
+				base.vaicom.state.riostate.markers = #markerdetails
+
+				base.vaicom.state.riostate.ics						= (base.vaicom.state.activemessage.AIRIO and (data.initialized and base.GetDevice(0).get_argument_value and (base.GetDevice(0):get_argument_value(2044) > -1))) or f4eICSHot or ah64ICSHot -- Check for F-14 ICS state, F-4E pilot ICS hot mic position, or AH-64 ICS hot mic position
 				base.vaicom.state.riostate.sngl						= base.vaicom.state.activemessage.AIRIO and (data.initialized and base.GetDevice(0).get_argument_value and (base.GetDevice(0):get_argument_value(60) >0)) or false
 				base.vaicom.state.riostate.jmr						= base.vaicom.state.activemessage.AIRIO and (data.initialized and base.GetDevice(0).get_argument_value and (base.GetDevice(0):get_argument_value(151) ==1)) or false
 				base.vaicom.state.riostate.AM182					= base.vaicom.state.activemessage.AIRIO and (data.initialized and base.GetDevice(0).get_argument_value and (base.GetDevice(0):get_argument_value(359) ==1)) or false
 				base.vaicom.state.riostate.ejsn						= base.vaicom.state.activemessage.AIRIO and (data.initialized and base.GetDevice(0).get_argument_value and (base.GetDevice(0):get_argument_value(2049) ==1)) or false
-				base.vaicom.state.riostate.markers					= (data.initialized and base.vaicom.get.missiondata.markers()) or 0
-				base.vaicom.state.riostate.markerdetails				= (data.initialized and base.vaicom.get.missiondata.markerdetails()) or {}
 				base.vaicom.state.availablerecipients.Player 		= data.initialized and base.vaicom.get.missiondata.listby.Player(base.vaicom.helper.sortby.index)
 				base.vaicom.state.availablerecipients.Flight 		= data.initialized and base.vaicom.get.missiondata.listby.Flight(base.vaicom.helper.sortby.index,	"radio")					
 				base.vaicom.state.availablerecipients.JTAC			= data.initialized and base.vaicom.get.missiondata.listby.JTAC(base.vaicom.helper.sortby.distance,	"radio")
 				base.vaicom.state.availablerecipients.ATC			= data.initialized and base.vaicom.get.missiondata.listby.ATC(base.vaicom.helper.sortby.distance, 	"radio")
 				base.vaicom.state.availablerecipients.AWACS			= data.initialized and base.vaicom.get.missiondata.listby.AWACS(base.vaicom.helper.sortby.distance, "radio")
 				base.vaicom.state.availablerecipients.Tanker		= data.initialized and base.vaicom.get.missiondata.listby.Tanker(base.vaicom.helper.sortby.distance,"radio") 
-               base.vaicom.state.availablerecipients.Opposition	= data.initialized and base.vaicom.get.missiondata.listby.Opposition(base.vaicom.helper.sortby.distance, "radio")
+				base.vaicom.state.availablerecipients.Opposition	= data.initialized and base.vaicom.get.missiondata.listby.Opposition(base.vaicom.helper.sortby.distance, "radio")
 				base.vaicom.state.availablerecipients.Crew			= data.initialized and base.vaicom.get.missiondata.listby.Crew(base.vaicom.helper.sortby.distance, 	"radio") 
 				base.vaicom.state.availablerecipients.Aux			= data.initialized and base.vaicom.get.missiondata.listby.Aux(base.vaicom.helper.sortby.distance, 	"radio")
 				base.vaicom.state.availablerecipients.Moose			= data.initialized and base.vaicom.get.missiondata.listby.Moose(base.vaicom.helper.sortby.distance, "radio") -- Add moose
@@ -2376,7 +2400,6 @@ base.vaicom.state = {
 				base.vaicom.state.dcsversion						= data.initialized and base.vaicom.get.serverdata.dcsversion()
 				base.vaicom.state.easycomms							= data.initialized and data.radioAutoTune
 				base.vaicom.state.options							= {}
-				base.vaicom.state.options.plugins					= data.initialized and dcsoptions.getOption("plugins") or {}
 				base.vaicom.state.options.sound						= data.initialized and dcsoptions.getOption("sound") or {}
 				base.vaicom.state.pause								= data.initialized and base.DCS.getPause() or false
 				base.vaicom.state.theatre							= data.initialized and base.env.mission.theatre or ""
@@ -2387,11 +2410,27 @@ base.vaicom.state = {
 				base.vaicom.state.vrmode 							= data.initialized and base.DCS.HMD_isActive() or false
 				base.vaicom.state.dcsid 							= data.initialized and base.DCS.getPlayerUnitType()
 				base.vaicom.state.dcsmodulecat						= data.initialized and data.pUnit and data.pUnit:getDesc().attributes and data.pUnit:getDesc().attributes.Helicopters and 'Helicopters' or 'Planes'
-				base.vaicom.state.airborne							= data.initialized and data.pUnit and data.pUnit:inAir()		
+				base.vaicom.state.airborne							= data.initialized and data.pUnit and data.pUnit:inAir()
+
+				if profiling then
+					base.print(base.string.format("VAICOM profiling (update.all) | %-40s %8.3f ms", "TOTAL", (profClock() - profStart) * 1000))
+				end
 			end,
 									},								
 			sendupdateall = function()
-               local function getMissionObject()
+				-- Lightweight profiling
+				local profiling = base.vaicom.state.profiling
+				local profClock = profiling and socket.gettime or nil
+				local profStart = profiling and profClock() or 0
+				local profLast = profStart
+				local function profMark(label)
+					if not profiling then return end
+					local now = profClock()
+					base.print(base.string.format("VAICOM profiling (sendupdateall) | %-40s %8.3f ms", label, (now - profLast) * 1000))
+					profLast = now
+				end
+				
+				local function getMissionObject()
 					local function tryget(fn)
 						local ok, value = base.pcall(fn)
 						if ok then return value end
@@ -2424,8 +2463,8 @@ base.vaicom.state = {
 					if base.vaicom.state.icaooverrides.lastload and (now - base.vaicom.state.icaooverrides.lastload) < 30 then
 						return base.vaicom.state.icaooverrides.table or {}
 					end
-
-                 local overrides = {}
+					
+					local overrides = {}
 					local runtimeLoad = base.loadfile or loadfile
 					local candidatePaths = {}
 					if base.lfs and base.lfs.writedir then
@@ -2515,27 +2554,19 @@ base.vaicom.state = {
 					return nil
 				end
 
-				local function resolveIcaoForAtc(callsign, atcName)
-					local mappedMeta = resolveIcaoMetaForAtc(callsign, atcName)
-					if mappedMeta ~= nil and mappedMeta.icao ~= nil then
-						return mappedMeta.icao
+				-- Resolve every ATC's callsign/name/icao/meta/point exactly once per
+				-- sendupdateall pass.
+				local atcDescriptors = nil -- memoized for this pass
+				local function buildAtcDescriptors()
+					if atcDescriptors ~= nil then
+						return atcDescriptors
 					end
-
-					local direct = extractIcaoToken(callsign)
-					if direct ~= nil then
-						return direct
-					end
-
-					return nil
-				end
-
-				local function buildAllAtcIcaoTypes()
-					local result = {}
+					local list = {}
 					local atcs = base.vaicom.state and base.vaicom.state.availablerecipients and base.vaicom.state.availablerecipients.ATC
 					if base.type(atcs) ~= "table" then
-						return result
+						atcDescriptors = list
+						return list
 					end
-
 					for _, atc in base.pairs(atcs) do
 						if atc then
 							local callsign = ""
@@ -2546,15 +2577,59 @@ base.vaicom.state = {
 								callsign = base.tostring(valueCallsign)
 							end
 
+							local atcDesc = base.vaicom.properties.description(atc)
 							local atcName = ""
-							local okDescName, atcDesc = base.pcall(function() return atc:getDesc() end)
-							if okDescName and atcDesc ~= nil then
+							if atcDesc ~= nil then
 								atcName = base.tostring(atcDesc.displayName or atcDesc.typeName or "")
 							end
 
+							local shortCallsign = ""
+							local okShort, valueShort = base.pcall(function()
+								return base.vaicom.properties and base.vaicom.properties.callsign and base.vaicom.properties.callsign(atc) or ""
+							end)
+							if okShort and valueShort ~= nil then
+								shortCallsign = base.tostring(valueShort)
+							end
+
+							local meta = resolveIcaoMetaForAtc(callsign, atcName)
+							local icao
+							if meta ~= nil and meta.icao ~= nil then
+								icao = meta.icao
+							else
+								icao = extractIcaoToken(callsign)
+							end
+
+							local point = nil
+							if atc.getPoint then
+								point = atc:getPoint()
+							end
+
+							base.table.insert(list, {
+								locator = atc,
+								point = point,
+								callsign = callsign,
+								shortCallsign = shortCallsign,
+								atcName = atcName,
+								meta = meta,
+								icao = icao,
+							})
+						end
+					end
+					atcDescriptors = list
+					return list
+				end
+
+				local function buildAllAtcIcaoTypes()
+					local result = {}
+					for _, d in base.pairs(buildAtcDescriptors()) do
+						local atc = d.locator
+						if atc then
+							local callsign = d.callsign
+							local atcName = d.atcName
+
 							local normalizedCallsign = normalizeIcaoKey(callsign)
 							local normalizedAtcName = normalizeIcaoKey(atcName)
-							local meta = resolveIcaoMetaForAtc(callsign, atcName)
+							local meta = d.meta
 							if meta ~= nil then
 								local typeCode = base.string.upper(base.tostring(meta.type or ""))
 								if typeCode == "MIL" or typeCode == "CIV" or typeCode == "JOINT" then
@@ -2574,13 +2649,7 @@ base.vaicom.state = {
 										result[upperCallsign] = typeCode
 									end
 
-									local shortCallsign = ""
-									local okShort, valueShort = base.pcall(function()
-										return base.vaicom.properties and base.vaicom.properties.callsign and base.vaicom.properties.callsign(atc) or ""
-									end)
-									if okShort and valueShort ~= nil then
-										shortCallsign = base.string.upper(base.tostring(valueShort))
-									end
+									local shortCallsign = base.string.upper(base.tostring(d.shortCallsign or ""))
 									if shortCallsign ~= "" then
 										result[shortCallsign] = typeCode
 									end
@@ -2592,7 +2661,7 @@ base.vaicom.state = {
 					return result
 				end
 
-              local function buildMetarForAtcInfo(atcInfoOverride)
+				local function buildMetarForAtcInfo(atcInfoOverride)
 					local missionObj = getMissionObject()
 					if base.type(missionObj) ~= "table" then
 						return ""
@@ -2616,79 +2685,42 @@ base.vaicom.state = {
 						return false
 					end
 
-					local function isHeliportAtc(locator)
-						if locator == nil then return false end
-						local descName = ""
-						local okDesc, desc = base.pcall(function() return locator:getDesc() end)
-						if okDesc and desc ~= nil then
-							descName = base.string.upper(base.tostring(desc.displayName or desc.typeName or ""))
-						end
-						local cs = ""
-						local okCs, vCs = base.pcall(function()
-							return base.vaicom.properties and base.vaicom.properties.missioncallsign and base.vaicom.properties.missioncallsign(locator) or ""
-						end)
-						if okCs and vCs ~= nil then
-							cs = base.string.upper(base.tostring(vCs))
-						end
-						local full = descName .. " " .. cs
-						return base.string.find(full, "HELI", 1, true) ~= nil
-							or base.string.find(full, "HELIPAD", 1, true) ~= nil
-							or base.string.find(full, "HELIPORT", 1, true) ~= nil
-							or base.string.find(full, "FARP", 1, true) ~= nil
-					end
-
-                  local function getClosestAtcInfo()
-						if not (data and data.pUnit and data.pUnit.getPoint) then
+					local function getClosestAtcInfo()
+						if not base.vaicom.state.playerpoint then
                             return { icao = "DCS", elevationFt = 0 }
 						end
 
-						local playerPoint = data.pUnit:getPoint()
-						local atcs = base.vaicom.state and base.vaicom.state.availablerecipients and base.vaicom.state.availablerecipients.ATC
-						if base.type(atcs) ~= "table" then
-                        return { icao = "DCS", elevationFt = 0 }
-						end
+						local playerPoint = base.vaicom.state.playerpoint
+						local rotor = isRotorModule()
 
-                     local closestIcao = nil
+						local closestIcao = nil
 						local closestElevationFt = 0
 						local closestDist = nil
 
-						for _, atc in base.pairs(atcs) do
-							if atc and atc.getPoint then
-								local atcPoint = atc:getPoint()
-								if atcPoint then
-									local dx = (atcPoint.x or 0) - (playerPoint.x or 0)
-									local dz = (atcPoint.z or 0) - (playerPoint.z or 0)
-									local distSq = (dx * dx) + (dz * dz)
+						for _, d in base.pairs(buildAtcDescriptors()) do
+							local atcPoint = d.point
+							if atcPoint then
+								local dx = (atcPoint.x or 0) - (playerPoint.x or 0)
+								local dz = (atcPoint.z or 0) - (playerPoint.z or 0)
+								local distSq = (dx * dx) + (dz * dz)
 
-									local callsign = ""
-									local okCallsign, valueCallsign = base.pcall(function()
-										return base.vaicom.properties and base.vaicom.properties.missioncallsign and base.vaicom.properties.missioncallsign(atc) or ""
-									end)
-									if okCallsign and valueCallsign ~= nil then
-										callsign = base.tostring(valueCallsign)
-									end
-
-									local atcName = ""
-									local okDescName, atcDesc = base.pcall(function() return atc:getDesc() end)
-									if okDescName and atcDesc ~= nil then
-										atcName = base.tostring(atcDesc.displayName or atcDesc.typeName or "")
-									end
-
-									local icao = resolveIcaoForAtc(callsign, atcName)
-									local rotor = isRotorModule()
-									local heliport = isHeliportAtc(atc)
-									if (rotor and icao ~= nil) or ((not rotor) and icao ~= nil and (not heliport)) then
-										if closestDist == nil or distSq < closestDist then
-											closestDist = distSq
-											closestIcao = icao
-                                         closestElevationFt = (base.tonumber(atcPoint.y) or 0) * 3.28084
-										end
+								local icao = d.icao
+								local full = base.string.upper(d.atcName) .. " " .. base.string.upper(d.callsign)
+								local heliport = base.string.find(full, "HELI", 1, true) ~= nil
+									or base.string.find(full, "HELIPAD", 1, true) ~= nil
+									or base.string.find(full, "HELIPORT", 1, true) ~= nil
+									or base.string.find(full, "FARP", 1, true) ~= nil
+								if (rotor and icao ~= nil) or ((not rotor) and icao ~= nil and (not heliport)) then
+									if closestDist == nil or distSq < closestDist then
+										closestDist = distSq
+										closestIcao = icao
+										closestElevationFt = (base.tonumber(atcPoint.y) or 0) * 3.28084
 									end
 								end
 							end
 						end
 
-                     return {
+						return {
 							icao = closestIcao or "DCS",
 							elevationFt = closestElevationFt or 0
 						}
@@ -2699,7 +2731,7 @@ base.vaicom.state = {
 						return ""
 					end
 
-                 local missionDate = missionObj.date or {}
+					local missionDate = missionObj.date or {}
 					local reportDay = base.tonumber(missionDate.Day or missionDate.day) or 1
 					if reportDay < 1 then reportDay = 1 end
 					if reportDay > 31 then reportDay = 31 end
@@ -2710,7 +2742,7 @@ base.vaicom.state = {
 					local reportHour = base.math.floor(reportSec / 3600)
 					local reportMin = base.math.floor((reportSec - (reportHour * 3600)) / 60)
 
-                 local atcInfo = atcInfoOverride or getClosestAtcInfo()
+					local atcInfo = atcInfoOverride or getClosestAtcInfo()
 					local stationElevationFt = base.tonumber(atcInfo and atcInfo.elevationFt or 0) or 0
 					local groundWindDir = weather.wind and weather.wind.atGround and weather.wind.atGround.dir or nil
 					local groundWindSpd = base.tonumber(weather.wind and weather.wind.atGround and weather.wind.atGround.speed)
@@ -2727,13 +2759,13 @@ base.vaicom.state = {
 							local t = (stationElevationFt - 1599) / 1600
 							if t < 0 then t = 0 end
 							if t > 1 then t = 1 end
-                          windSpd = groundWindSpd + ((upperAdjustedSpd - groundWindSpd) * t)
+							windSpd = groundWindSpd + ((upperAdjustedSpd - groundWindSpd) * t)
 						else
-                          windSpd = upperAdjustedSpd
+							windSpd = upperAdjustedSpd
 						end
 					end
-                   local vis = weather.visibility and weather.visibility.distance or nil
-				   local temp = weather.season and weather.season.temperature or nil
+					local vis = weather.visibility and weather.visibility.distance or nil
+					local temp = weather.season and weather.season.temperature or nil
 					local stationTemp = base.tonumber(temp)
 					if stationTemp ~= nil then
 						stationTemp = stationTemp - (stationElevationFt / 1000) * 2
@@ -2820,7 +2852,7 @@ base.vaicom.state = {
 						fogVis = minPositive(fogVis, weather.fog2.visibility or weather.fog2.distance)
 						fogVis = minPositive(fogVis, findFog2Visibility(weather.fog2, 0))
 					end
-                 local dustVis = nil
+					local dustVis = nil
 					if weather.enable_dust and (base.tonumber(weather.dust_density) or 0) > 0 then
 						dustVis = base.tonumber(weather.dust_density)
 					end
@@ -2834,7 +2866,7 @@ base.vaicom.state = {
 					end
 					if qnhHpa == nil then qnhHpa = 1013 end
 
-                 local presetName = base.string.upper(base.tostring(clouds.preset or clouds.name or ""))
+					local presetName = base.string.upper(base.tostring(clouds.preset or clouds.name or ""))
 					if (base.tonumber(cloudsDensity) or 0) <= 0 and presetName ~= "" then
 						if base.string.find(presetName, "OVC", 1, true) or base.string.find(presetName, "OVERCAST", 1, true) then
 							cloudsDensity = 8
@@ -2857,21 +2889,21 @@ base.vaicom.state = {
 					if cloudsDensity >= 6 and cloudsDensity <= 7 then cloudCode = "BKN" end
 					if cloudsDensity >= 8 then cloudCode = "OVC" end
 
-                 local cloudPart = cloudCode
+					local cloudPart = cloudCode
 					local cloudAtGround = false
 					local cloudBaseMslFt = nil
 					local cloudBaseAglFt = nil
 					if cloudsBase ~= nil then
-                     cloudBaseMslFt = base.tonumber(cloudsBase)
+						cloudBaseMslFt = base.tonumber(cloudsBase)
 						if cloudBaseMslFt ~= nil then
 							cloudBaseMslFt = cloudBaseMslFt * 3.28084
 							cloudBaseAglFt = cloudBaseMslFt - stationElevationFt
 						end
 					end
 					if cloudCode ~= "SKC" and cloudsBase ~= nil then
-                      local baseHundredsFt = toInt((cloudBaseAglFt or 0) / 100)
+						local baseHundredsFt = toInt((cloudBaseAglFt or 0) / 100)
 						if baseHundredsFt ~= nil and baseHundredsFt < 0 then baseHundredsFt = 0 end
-                      if (cloudBaseAglFt or 0) <= 0 then cloudAtGround = true end
+						if (cloudBaseAglFt or 0) <= 0 then cloudAtGround = true end
 						if (baseHundredsFt or 0) < 1 then baseHundredsFt = 1 end
 						cloudPart = cloudCode .. pad3(baseHundredsFt)
 					end
@@ -2880,7 +2912,7 @@ base.vaicom.state = {
 					if weather.enable_dust and (base.tonumber(weather.dust_density) or 0) > 0 then
 						base.table.insert(wx, "DU")
 					end
-                 local fog2Active = weather.fog2 and base.type(weather.fog2) == "table" and ((base.tonumber(weather.fog2.mode) or 0) > 0)
+					local fog2Active = weather.fog2 and base.type(weather.fog2) == "table" and ((base.tonumber(weather.fog2.mode) or 0) > 0)
 					if (weather.enable_fog and weather.fog and (base.tonumber(weather.fog.visibility) or 0) > 0)
 						or (fog2Active and (base.tonumber(fogVis) or 0) > 0)
 					then
@@ -2937,7 +2969,7 @@ base.vaicom.state = {
 						end
 						if p >= 2 then precipCode = "TSRA" end
 					end
-                   if precipCode == nil then
+					if precipCode == nil then
 						if presetName ~= "" and base.string.find(presetName, "RAIN", 1, true) then
                            local t = stationTemp
 							if t ~= nil then
@@ -2971,7 +3003,7 @@ base.vaicom.state = {
 					end
 
 					local tempPart = "--"
-                 local tempInt = toInt(stationTemp)
+					local tempInt = toInt(stationTemp)
 					if tempInt ~= nil then
 						if tempInt < 0 then
 							tempPart = "M" .. pad2(-tempInt)
@@ -3009,7 +3041,7 @@ base.vaicom.state = {
 					local noCloudBelow5000 = false
 					if cloudCode == "SKC" then
 						noCloudBelow5000 = true
-                  elseif cloudBaseAglFt ~= nil and cloudBaseAglFt >= 5000 then
+					elseif cloudBaseAglFt ~= nil and cloudBaseAglFt >= 5000 then
 						noCloudBelow5000 = true
 					end
 					if visM >= 9999 and noCloudBelow5000 then
@@ -3031,16 +3063,16 @@ base.vaicom.state = {
 					end
 
 					local rmkPart = ""
-                   if turbulence ~= nil then
+					if turbulence ~= nil then
 						if turbulence > 40 then
 							rmkPart = " RMK SEV TURB B050"
-                     elseif turbulence > 27 and turbulence <= 40 then
+						elseif turbulence > 27 and turbulence <= 40 then
 							rmkPart = " RMK MOD TURB B050"
 						end
 					end
 
-                  local station = atcInfo and atcInfo.icao or "DCS"
-                 local metarTime = pad2(reportDay) .. pad2(reportHour) .. pad2(reportMin) .. "Z"
+					local station = atcInfo and atcInfo.icao or "DCS"
+					local metarTime = pad2(reportDay) .. pad2(reportHour) .. pad2(reportMin) .. "Z"
 					return "METAR " .. station .. " " .. metarTime .. " " .. windPart .. windVarPart .. " " .. skyPart .. " " .. tempPart .. " Q" .. base.string.format("%04d", qnhHpa) .. rmkPart
 				end
 
@@ -3050,55 +3082,30 @@ base.vaicom.state = {
 
 				local function buildAllAtcMetars()
 					local result = {}
-					local atcs = base.vaicom.state and base.vaicom.state.availablerecipients and base.vaicom.state.availablerecipients.ATC
-					if base.type(atcs) ~= "table" then
-						return result
-					end
+					for _, d in base.pairs(buildAtcDescriptors()) do
+						local atc = d.locator
+						if atc and d.point then
+							local atcPoint = d.point
+							local callsign = d.callsign
+							local icao = d.icao
+							local stationInfo = {
+								icao = icao or "DCS",
+								elevationFt = (base.tonumber(atcPoint.y) or 0) * 3.28084
+							}
+							local metar = buildMetarForAtcInfo(stationInfo)
 
-					for _, atc in base.pairs(atcs) do
-						if atc and atc.getPoint then
-							local atcPoint = atc:getPoint()
-							if atcPoint then
-								local callsign = ""
-								local okCallsign, valueCallsign = base.pcall(function()
-									return base.vaicom.properties and base.vaicom.properties.missioncallsign and base.vaicom.properties.missioncallsign(atc) or ""
-								end)
-								if okCallsign and valueCallsign ~= nil then
-									callsign = base.tostring(valueCallsign)
-								end
+							if icao ~= nil and icao ~= "" then
+								result[icao] = metar
+							end
 
-                              local atcName = ""
-								local okDescName, atcDesc = base.pcall(function() return atc:getDesc() end)
-								if okDescName and atcDesc ~= nil then
-									atcName = base.tostring(atcDesc.displayName or atcDesc.typeName or "")
-								end
+							local upperCallsign = base.string.upper(base.tostring(callsign or ""))
+							if upperCallsign ~= "" then
+								result[upperCallsign] = metar
+							end
 
-								local icao = resolveIcaoForAtc(callsign, atcName)
-								local stationInfo = {
-									icao = icao or "DCS",
-									elevationFt = (base.tonumber(atcPoint.y) or 0) * 3.28084
-								}
-								local metar = buildMetarForAtcInfo(stationInfo)
-
-								if icao ~= nil and icao ~= "" then
-									result[icao] = metar
-								end
-
-								local upperCallsign = base.string.upper(base.tostring(callsign or ""))
-								if upperCallsign ~= "" then
-									result[upperCallsign] = metar
-								end
-
-								local shortCallsign = ""
-								local okShort, valueShort = base.pcall(function()
-									return base.vaicom.properties and base.vaicom.properties.callsign and base.vaicom.properties.callsign(atc) or ""
-								end)
-								if okShort and valueShort ~= nil then
-									shortCallsign = base.string.upper(base.tostring(valueShort))
-								end
-								if shortCallsign ~= "" then
-									result[shortCallsign] = metar
-								end
+							local shortCallsign = base.string.upper(base.tostring(d.shortCallsign or ""))
+							if shortCallsign ~= "" then
+								result[shortCallsign] = metar
 							end
 						end
 					end
@@ -3106,7 +3113,7 @@ base.vaicom.state = {
 					return result
 				end
 
-              local function normalizeBand(v)
+				local function normalizeBand(v)
 					if v == nil then return "" end
 					local s = base.tostring(v)
 					if s == "" then return "" end
@@ -3130,8 +3137,8 @@ base.vaicom.state = {
 						id = taskObj.action.id or id
 						params = taskObj.action.params or params
 					end
-
-                  local idStr = base.tostring(id or "")
+					
+					local idStr = base.tostring(id or "")
 					local idLower = base.string.lower(idStr)
 					local isBeaconTask = (id == "ActivateBeacon") or (idLower ~= "" and base.string.find(idLower, "beacon") ~= nil)
 
@@ -3235,7 +3242,7 @@ base.vaicom.state = {
 					return candidates
 				end
 
-             local function resolveTacanFromGroupMap(groupName, sourceMap)
+				local function resolveTacanFromGroupMap(groupName, sourceMap)
 					for _, candidate in base.pairs(getGroupNameCandidates(groupName)) do
                       local tac = normalizeTacanValue(sourceMap[candidate])
 						if tac ~= "" then return tac end
@@ -3248,6 +3255,15 @@ base.vaicom.state = {
 					local missionObj = getMissionObject()
 					if base.type(missionObj) ~= "table" then
 						return result
+					end
+
+					-- Mission group TACAN assignments are static for a given mission.
+					-- Cache the built map against the mission object identity so it is
+					-- only built once per mission (rebuilds on load).
+					local missionRef = base.tostring(missionObj)
+					local cache = base.vaicom.state and base.vaicom.state.grouptacancache
+					if base.type(cache) == "table" and cache.missionRef == missionRef and base.type(cache.map) == "table" then
+						return cache.map
 					end
 
 					local coal = missionObj.coalition
@@ -3287,27 +3303,29 @@ base.vaicom.state = {
 						end
 					end
 
+					base.vaicom.state.grouptacancache = { missionRef = base.tostring(missionObj), map = result }
+
 					return result
 				end
 
-               local function getChunk12Diagnostics()
+            	local function getChunk12Diagnostics()
 					local probe = {
 						missionType = "nil",
 						missionCmdsType = "nil",
-                       missionKeys = {},
+						missionKeys = {},
 						missionCmdsKeys = {},
 						beaconEntries = {},
-                       keyHits = {},
-                        tankerTaskEntries = {},
-                        waypointSamples = {},
-                   runtimeRadioDevices = {},
-					runtimeRadioChannels = {},
-                   missionRadioChannels = {},
-					playerMissionRadioChannels = {},
-					runtimeCmdsHits = {},
-					payloadKeys = {},
+						keyHits = {},
+						tankerTaskEntries = {},
+						waypointSamples = {},
+						runtimeRadioDevices = {},
+						runtimeRadioChannels = {},
+						missionRadioChannels = {},
+						playerMissionRadioChannels = {},
+						runtimeCmdsHits = {},
+						payloadKeys = {},
 						playerGroup = "",
-                      playerUnitId = 0,
+						playerUnitId = 0,
 						playerUnitName = "",
 						playerCallsign = "",
 						playerGroupMatchReason = "",
@@ -3317,10 +3335,14 @@ base.vaicom.state = {
 						bullseyeY = 0,
 						bullseyeCoalition = "",
 						bullseyeValid = false,
-                       weatherType = "nil",
+						weatherType = "nil",
 						weatherKeys = {},
 						weatherSummary = {},
 					}
+
+					if base.vaicom.state and not base.vaicom.state.includediagnostics then
+						return probe
+					end
 
 					local diagnosticsDebug = base.vaicom.state and base.vaicom.state.debugmode
 
@@ -3330,246 +3352,247 @@ base.vaicom.state = {
 						return nil
 					end
 
-				local function addProbeRow(target, value, maxItems)
-					if base.type(target) ~= "table" then return end
-					if #target >= (maxItems or 40) then return end
-					base.table.insert(target, base.tostring(value))
-				end
+					local function addProbeRow(target, value, maxItems)
+						if base.type(target) ~= "table" then return end
+						if #target >= (maxItems or 40) then return end
+						base.table.insert(target, base.tostring(value))
+					end
 
-				local function copyStringList(src)
-					local result = {}
-					if base.type(src) ~= "table" then
+					local function copyStringList(src)
+						local result = {}
+						if base.type(src) ~= "table" then
+							return result
+						end
+						for i, v in base.pairs(src) do
+							result[i] = base.tostring(v)
+						end
 						return result
 					end
-					for i, v in base.pairs(src) do
-						result[i] = base.tostring(v)
-					end
-					return result
-				end
 
-				local function tryCallMethod(obj, methodName, arg)
-					if obj == nil then return nil end
-					local fn = tryget(function() return obj[methodName] end)
-					if base.type(fn) ~= "function" then return nil end
-					local ok, value = base.pcall(function()
-						if arg ~= nil then
-							return fn(obj, arg)
-						end
-						return fn(obj)
-					end)
-					if ok then return value end
-					return nil
-				end
-
-				local function scanKeywordTree(root, path, depth, maxDepth, target, maxHits, keywords, seen)
-					if base.type(root) ~= "table" then return end
-					if depth > maxDepth or #target >= maxHits then return end
-					if seen[root] then return end
-					seen[root] = true
-
-					for k, v in base.pairs(root) do
-						if #target >= maxHits then break end
-						local key = base.tostring(k)
-						local lowerKey = base.string.lower(key)
-						local keyMatch = false
-						for _, kw in base.pairs(keywords) do
-							if base.string.find(lowerKey, kw, 1, true) then
-								keyMatch = true
-								break
+					local function tryCallMethod(obj, methodName, arg)
+						if obj == nil then return nil end
+						local fn = tryget(function() return obj[methodName] end)
+						if base.type(fn) ~= "function" then return nil end
+						local ok, value = base.pcall(function()
+							if arg ~= nil then
+								return fn(obj, arg)
 							end
-						end
-
-						local valueType = base.type(v)
-						if keyMatch then
-							if valueType == "string" or valueType == "number" or valueType == "boolean" then
-								addProbeRow(target, path.."."..key.."="..base.tostring(v), maxHits)
-							else
-								addProbeRow(target, path.."."..key.."("..valueType..")", maxHits)
-							end
-						end
-
-						if valueType == "table" then
-							scanKeywordTree(v, path.."."..key, depth + 1, maxDepth, target, maxHits, keywords, seen)
-						end
-					end
-				end
-
-				local function collectRuntimeRadioProbe()
-					if base.type(data) ~= "table" or base.type(data.communicators) ~= "table" then
-						return
+							return fn(obj)
+						end)
+						if ok then return value end
+						return nil
 					end
 
-					local deviceCount = 0
-					for n, k in base.pairs(data.communicators) do
-						if #probe.runtimeRadioDevices >= 24 then break end
-						deviceCount = deviceCount + 1
-						if deviceCount > 24 then break end
+					local function scanKeywordTree(root, path, depth, maxDepth, target, maxHits, keywords, seen)
+						if base.type(root) ~= "table" then return end
+						if depth > maxDepth or #target >= maxHits then return end
+						if seen[root] then return end
+						seen[root] = true
 
-						local dev = tryget(function() return base.GetDevice(n) end)
-						local name = k and k.displayName or ""
-						local freq = tryCallMethod(dev, "get_frequency") or tryCallMethod(dev, "getFrequency")
-						local mod = tryCallMethod(dev, "get_modulation") or tryCallMethod(dev, "getModulation")
-						local on = tryCallMethod(dev, "is_on")
-						addProbeRow(
-							probe.runtimeRadioDevices,
-							"dev="..base.tostring(n)
-							.."|name="..base.tostring(name)
-							.."|type="..base.type(dev)
-							.."|on="..base.tostring(on)
-							.."|freq="..base.tostring(freq)
-							.."|mod="..base.tostring(mod),
-							24
-						)
-
-                      local commChannelTable = k and (k.channels or k.Channels or k.presets or k.Presets) or nil
-						local commChannelNames = k and (k.channelsNames or k.channelNames or k.ChannelsNames or k.names or k.Names) or nil
-						if base.type(commChannelTable) == "table" then
-							for chIdx, chValue in base.pairs(commChannelTable) do
-								if #probe.runtimeRadioChannels >= 80 then break end
-								local chName = ""
-								if base.type(commChannelNames) == "table" then
-									chName = base.tostring(commChannelNames[chIdx] or "")
-								end
-								addProbeRow(
-									probe.runtimeRadioChannels,
-									"src=communicator|dev="..base.tostring(n)
-									.."|idx="..base.tostring(chIdx)
-									.."|freq="..base.tostring(chValue)
-									.."|name="..chName,
-									80
-								)
-							end
-						end
-
-						if dev ~= nil then
-							for _, methodName in base.pairs({
-								"get_channel", "getChannel", "get_selected_channel", "getSelectedChannel",
-								"get_preset", "getPreset", "get_channel_count", "getChannelCount",
-								"count_channels", "countChannels", "get_preset_count", "getPresetCount",
-								"get_channel_frequency", "getChannelFrequency", "get_frequency_for_channel", "getFrequencyForChannel"
-							}) do
-								local mv = tryget(function() return dev[methodName] end)
-								if mv ~= nil then
-									addProbeRow(probe.runtimeRadioChannels, "dev="..base.tostring(n).."|method="..methodName.."|type="..base.type(mv), 80)
+						for k, v in base.pairs(root) do
+							if #target >= maxHits then break end
+							local key = base.tostring(k)
+							local lowerKey = base.string.lower(key)
+							local keyMatch = false
+							for _, kw in base.pairs(keywords) do
+								if base.string.find(lowerKey, kw, 1, true) then
+									keyMatch = true
+									break
 								end
 							end
 
-							local count = tryCallMethod(dev, "get_channel_count")
-							if count == nil then count = tryCallMethod(dev, "getChannelCount") end
-							if count == nil then count = tryCallMethod(dev, "count_channels") end
-							if count == nil then count = tryCallMethod(dev, "countChannels") end
-							if count == nil then count = tryCallMethod(dev, "get_preset_count") end
-							if count == nil then count = tryCallMethod(dev, "getPresetCount") end
+							local valueType = base.type(v)
+							if keyMatch then
+								if valueType == "string" or valueType == "number" or valueType == "boolean" then
+									addProbeRow(target, path.."."..key.."="..base.tostring(v), maxHits)
+								else
+									addProbeRow(target, path.."."..key.."("..valueType..")", maxHits)
+								end
+							end
 
-							local channelCount = base.tonumber(count)
-							if channelCount ~= nil and channelCount > 0 then
-								local maxIdx = base.math.min(base.math.floor(channelCount) - 1, 39)
-								for idx = 0, maxIdx do
+							if valueType == "table" then
+								scanKeywordTree(v, path.."."..key, depth + 1, maxDepth, target, maxHits, keywords, seen)
+							end
+						end
+					end
+
+					local function collectRuntimeRadioProbe()
+						if base.type(data) ~= "table" or base.type(data.communicators) ~= "table" then
+							return
+						end
+
+						local deviceCount = 0
+						for n, k in base.pairs(data.communicators) do
+							if #probe.runtimeRadioDevices >= 24 then break end
+							deviceCount = deviceCount + 1
+							if deviceCount > 24 then break end
+
+							local dev = tryget(function() return base.GetDevice(n) end)
+							local name = k and k.displayName or ""
+							local freq = tryCallMethod(dev, "get_frequency") or tryCallMethod(dev, "getFrequency")
+							local mod = tryCallMethod(dev, "get_modulation") or tryCallMethod(dev, "getModulation")
+							local on = tryCallMethod(dev, "is_on")
+							addProbeRow(
+								probe.runtimeRadioDevices,
+								"dev="..base.tostring(n)
+								.."|name="..base.tostring(name)
+								.."|type="..base.type(dev)
+								.."|on="..base.tostring(on)
+								.."|freq="..base.tostring(freq)
+								.."|mod="..base.tostring(mod),
+								24
+							)
+
+							local commChannelTable = k and (k.channels or k.Channels or k.presets or k.Presets) or nil
+							local commChannelNames = k and (k.channelsNames or k.channelNames or k.ChannelsNames or k.names or k.Names) or nil
+							if base.type(commChannelTable) == "table" then
+								for chIdx, chValue in base.pairs(commChannelTable) do
 									if #probe.runtimeRadioChannels >= 80 then break end
-									local ch = tryCallMethod(dev, "get_channel", idx)
-									if ch == nil then ch = tryCallMethod(dev, "getChannel", idx) end
-									if ch == nil then ch = tryCallMethod(dev, "get_preset", idx) end
-									if ch == nil then ch = tryCallMethod(dev, "getPreset", idx) end
+									local chName = ""
+									if base.type(commChannelNames) == "table" then
+										chName = base.tostring(commChannelNames[chIdx] or "")
+									end
+									addProbeRow(
+										probe.runtimeRadioChannels,
+										"src=communicator|dev="..base.tostring(n)
+										.."|idx="..base.tostring(chIdx)
+										.."|freq="..base.tostring(chValue)
+										.."|name="..chName,
+										80
+									)
+								end
+							end
 
-									local chFreq = tryCallMethod(dev, "get_channel_frequency", idx)
-									if chFreq == nil then chFreq = tryCallMethod(dev, "getChannelFrequency", idx) end
-									if chFreq == nil then chFreq = tryCallMethod(dev, "get_frequency_for_channel", idx) end
-									if chFreq == nil then chFreq = tryCallMethod(dev, "getFrequencyForChannel", idx) end
+							if dev ~= nil then
+								for _, methodName in base.pairs({
+									"get_channel", "getChannel", "get_selected_channel", "getSelectedChannel",
+									"get_preset", "getPreset", "get_channel_count", "getChannelCount",
+									"count_channels", "countChannels", "get_preset_count", "getPresetCount",
+									"get_channel_frequency", "getChannelFrequency", "get_frequency_for_channel", "getFrequencyForChannel"
+								}) do
+									local mv = tryget(function() return dev[methodName] end)
+									if mv ~= nil then
+										addProbeRow(probe.runtimeRadioChannels, "dev="..base.tostring(n).."|method="..methodName.."|type="..base.type(mv), 80)
+									end
+								end
 
-									if ch ~= nil or chFreq ~= nil then
-										addProbeRow(
-											probe.runtimeRadioChannels,
-											"dev="..base.tostring(n)
-											.."|idx="..base.tostring(idx)
-											.."|ch="..base.tostring(ch)
-											.."|freq="..base.tostring(chFreq),
-											80
-										)
+								local count = tryCallMethod(dev, "get_channel_count")
+								if count == nil then count = tryCallMethod(dev, "getChannelCount") end
+								if count == nil then count = tryCallMethod(dev, "count_channels") end
+								if count == nil then count = tryCallMethod(dev, "countChannels") end
+								if count == nil then count = tryCallMethod(dev, "get_preset_count") end
+								if count == nil then count = tryCallMethod(dev, "getPresetCount") end
+
+								local channelCount = base.tonumber(count)
+								if channelCount ~= nil and channelCount > 0 then
+									local maxIdx = base.math.min(base.math.floor(channelCount) - 1, 39)
+									for idx = 0, maxIdx do
+										if #probe.runtimeRadioChannels >= 80 then break end
+										local ch = tryCallMethod(dev, "get_channel", idx)
+										if ch == nil then ch = tryCallMethod(dev, "getChannel", idx) end
+										if ch == nil then ch = tryCallMethod(dev, "get_preset", idx) end
+										if ch == nil then ch = tryCallMethod(dev, "getPreset", idx) end
+
+										local chFreq = tryCallMethod(dev, "get_channel_frequency", idx)
+										if chFreq == nil then chFreq = tryCallMethod(dev, "getChannelFrequency", idx) end
+										if chFreq == nil then chFreq = tryCallMethod(dev, "get_frequency_for_channel", idx) end
+										if chFreq == nil then chFreq = tryCallMethod(dev, "getFrequencyForChannel", idx) end
+
+										if ch ~= nil or chFreq ~= nil then
+											addProbeRow(
+												probe.runtimeRadioChannels,
+												"dev="..base.tostring(n)
+												.."|idx="..base.tostring(idx)
+												.."|ch="..base.tostring(ch)
+												.."|freq="..base.tostring(chFreq),
+												80
+											)
+										end
 									end
 								end
 							end
 						end
 					end
-				end
 
-				local function collectRuntimeCmdsProbe()
-					local payload = tryget(function() return base.vaicom.state and base.vaicom.state.payload end)
-					if base.type(payload) == "table" then
-						local keyCount = 0
-						for k, _ in base.pairs(payload) do
-                            if base.string.lower(base.tostring(k)) ~= "cannon" then
-								keyCount = keyCount + 1
-								if keyCount > 24 then break end
-								addProbeRow(probe.payloadKeys, base.tostring(k), 24)
+					local function collectRuntimeCmdsProbe()
+						local payload = tryget(function() return base.vaicom.state and base.vaicom.state.payload end)
+						if base.type(payload) == "table" then
+							local keyCount = 0
+							for k, _ in base.pairs(payload) do
+								if base.string.lower(base.tostring(k)) ~= "cannon" then
+									keyCount = keyCount + 1
+									if keyCount > 24 then break end
+									addProbeRow(probe.payloadKeys, base.tostring(k), 24)
+								end
 							end
+						end
+
+					local cmdKeywords = { "cmds", "countermeasure", "cms", "program", "chaff", "flare", "ecm", "jammer" }
+						scanKeywordTree(payload, "payload", 0, 7, probe.runtimeCmdsHits, 80, cmdKeywords, {})
+						if base.type(payload) == "table" then
+							scanKeywordTree(payload.Stations, "payload.Stations", 0, 6, probe.runtimeCmdsHits, 80, cmdKeywords, {})
+							scanKeywordTree(payload.CurrentStation, "payload.CurrentStation", 0, 4, probe.runtimeCmdsHits, 80, cmdKeywords, {})
 						end
 					end
 
-                   local cmdKeywords = { "cmds", "countermeasure", "cms", "program", "chaff", "flare", "ecm", "jammer" }
-					scanKeywordTree(payload, "payload", 0, 7, probe.runtimeCmdsHits, 80, cmdKeywords, {})
-					if base.type(payload) == "table" then
-						scanKeywordTree(payload.Stations, "payload.Stations", 0, 6, probe.runtimeCmdsHits, 80, cmdKeywords, {})
-						scanKeywordTree(payload.CurrentStation, "payload.CurrentStation", 0, 4, probe.runtimeCmdsHits, 80, cmdKeywords, {})
-					end
-				end
+					local function collectMissionRadioChannelLists(root)
+						local coal = root and root.coalition
+						if base.type(coal) ~= "table" then return end
 
-				local function collectMissionRadioChannelLists(root)
-					local coal = root and root.coalition
-					if base.type(coal) ~= "table" then return end
+						local function normalizeName(v)
+							local s = base.tostring(v or "")
+							s = base.string.gsub(s, "^%s+", "")
+							s = base.string.gsub(s, "%s+$", "")
+							return s
+						end
 
-					local function normalizeName(v)
-						local s = base.tostring(v or "")
-						s = base.string.gsub(s, "^%s+", "")
-						s = base.string.gsub(s, "%s+$", "")
-						return s
-					end
+						local playerGroupKey = base.string.upper(normalizeName(probe.playerGroup))
 
-					local playerGroupKey = base.string.upper(normalizeName(probe.playerGroup))
+						for coalName, coalData in base.pairs(coal) do
+							if #probe.missionRadioChannels >= 120 and #probe.playerMissionRadioChannels >= 80 then break end
+							if base.type(coalData) == "table" and base.type(coalData.country) == "table" then
+								for _, country in base.pairs(coalData.country) do
+									if #probe.missionRadioChannels >= 120 and #probe.playerMissionRadioChannels >= 80 then break end
+									for _, catName in base.pairs({"plane", "helicopter", "ship"}) do
+										local cat = country and country[catName]
+										if base.type(cat) == "table" and base.type(cat.group) == "table" then
+											for _, group in base.pairs(cat.group) do
+												if #probe.missionRadioChannels >= 120 and #probe.playerMissionRadioChannels >= 80 then break end
+												local groupName = normalizeName(group and group.name)
+												local groupTag = "coal="..base.tostring(coalName).."|group="..groupName
+												local groupKey = base.string.upper(groupName)
+												local isPlayerGroup = (playerGroupKey ~= "" and groupKey == playerGroupKey) or groupName == "- Player"
+												local units = group and group.units
+												if base.type(units) == "table" then
+													for uidx, unitObj in base.pairs(units) do
+														if #probe.missionRadioChannels >= 120 and #probe.playerMissionRadioChannels >= 80 then break end
+														local unitName = normalizeName(unitObj and unitObj.name)
+														local radios = unitObj and (unitObj.Radio or unitObj.radio)
+														if base.type(radios) == "table" then
+															for ridx, radioObj in base.pairs(radios) do
+																if #probe.missionRadioChannels >= 120 and #probe.playerMissionRadioChannels >= 80 then break end
+																local channels = radioObj and (radioObj.channels or radioObj.Channels)
+																local names = radioObj and (radioObj.channelsNames or radioObj.channelNames or radioObj.ChannelsNames)
+																if base.type(channels) == "table" then
+																	for chIdx, chFreq in base.pairs(channels) do
+																		local chName = ""
+																		if base.type(names) == "table" then
+																			chName = normalizeName(names[chIdx])
+																		end
+																		local row = groupTag
+																			.."|unitIdx="..base.tostring(uidx)
+																			.."|unit="..unitName
+																			.."|radio="..base.tostring(ridx)
+																			.."|ch="..base.tostring(chIdx)
+																			.."|freq="..base.tostring(chFreq)
+																			.."|name="..chName
 
-					for coalName, coalData in base.pairs(coal) do
-						if #probe.missionRadioChannels >= 120 and #probe.playerMissionRadioChannels >= 80 then break end
-						if base.type(coalData) == "table" and base.type(coalData.country) == "table" then
-							for _, country in base.pairs(coalData.country) do
-								if #probe.missionRadioChannels >= 120 and #probe.playerMissionRadioChannels >= 80 then break end
-								for _, catName in base.pairs({"plane", "helicopter", "ship"}) do
-									local cat = country and country[catName]
-									if base.type(cat) == "table" and base.type(cat.group) == "table" then
-										for _, group in base.pairs(cat.group) do
-											if #probe.missionRadioChannels >= 120 and #probe.playerMissionRadioChannels >= 80 then break end
-											local groupName = normalizeName(group and group.name)
-											local groupTag = "coal="..base.tostring(coalName).."|group="..groupName
-											local groupKey = base.string.upper(groupName)
-											local isPlayerGroup = (playerGroupKey ~= "" and groupKey == playerGroupKey) or groupName == "- Player"
-											local units = group and group.units
-											if base.type(units) == "table" then
-												for uidx, unitObj in base.pairs(units) do
-													if #probe.missionRadioChannels >= 120 and #probe.playerMissionRadioChannels >= 80 then break end
-													local unitName = normalizeName(unitObj and unitObj.name)
-													local radios = unitObj and (unitObj.Radio or unitObj.radio)
-													if base.type(radios) == "table" then
-														for ridx, radioObj in base.pairs(radios) do
-															if #probe.missionRadioChannels >= 120 and #probe.playerMissionRadioChannels >= 80 then break end
-															local channels = radioObj and (radioObj.channels or radioObj.Channels)
-															local names = radioObj and (radioObj.channelsNames or radioObj.channelNames or radioObj.ChannelsNames)
-															if base.type(channels) == "table" then
-																for chIdx, chFreq in base.pairs(channels) do
-																	local chName = ""
-																	if base.type(names) == "table" then
-																		chName = normalizeName(names[chIdx])
-																	end
-																	local row = groupTag
-																		.."|unitIdx="..base.tostring(uidx)
-																		.."|unit="..unitName
-																		.."|radio="..base.tostring(ridx)
-																		.."|ch="..base.tostring(chIdx)
-																		.."|freq="..base.tostring(chFreq)
-																		.."|name="..chName
-
-																	if #probe.missionRadioChannels < 120 then
-																		addProbeRow(probe.missionRadioChannels, row, 120)
-																	end
-																	if isPlayerGroup and #probe.playerMissionRadioChannels < 80 then
-																		addProbeRow(probe.playerMissionRadioChannels, row, 80)
+																		if #probe.missionRadioChannels < 120 then
+																			addProbeRow(probe.missionRadioChannels, row, 120)
+																		end
+																		if isPlayerGroup and #probe.playerMissionRadioChannels < 80 then
+																			addProbeRow(probe.playerMissionRadioChannels, row, 80)
+																		end
 																	end
 																end
 															end
@@ -3583,7 +3606,6 @@ base.vaicom.state = {
 							end
 						end
 					end
-				end
 
                     local missionObj = getMissionObject()
 
@@ -3612,7 +3634,7 @@ base.vaicom.state = {
 					end
 
 					local nowTick = base.tonumber(base.vaicom.state and base.vaicom.state.timer) or 0
-					local shouldRefreshStatic = nowTick - (diagCache.staticAt or -10000) >= 86400
+					local shouldRefreshStatic = (diagCache.staticAt == nil or diagCache.staticAt == -10000) or ((nowTick - diagCache.staticAt) >= 86400)
 					local missionRef = base.tostring(missionObj)
 					if diagCache.missionRef ~= missionRef then
 						diagCache.missionRef = missionRef
@@ -3941,7 +3963,7 @@ base.vaicom.state = {
 							local coal = root and root.coalition
 							if base.type(coal) ~= "table" then return end
 
-                          local function normalizeName(v)
+                          	local function normalizeName(v)
 								local s = base.tostring(v or "")
 								s = base.string.gsub(s, "^%s+", "")
 								s = base.string.gsub(s, "%s+$", "")
@@ -4083,13 +4105,13 @@ base.vaicom.state = {
 												for _, group in base.pairs(cat.group) do
 													local routePoints = getRoutePoints(group)
 													if base.type(routePoints) == "table" then
-                                                       local gname = normalizeName(group.name)
+                                                    	local gname = normalizeName(group.name)
 														local tag = "coal="..base.tostring(coalName).."|group="..gname
 
-                                                      local isPlayerGroup, matchReason = groupMatchesPlayer(group, gname)
+                                                      	local isPlayerGroup, matchReason = groupMatchesPlayer(group, gname)
 														if isPlayerGroup then
 															probe.playerGroupRouteFound = true
-                                                         if probe.playerGroup == "" then
+                                                        	if probe.playerGroup == "" then
 																probe.playerGroup = gname
 															end
 															if probe.playerGroupMatchReason == "" then
@@ -4217,7 +4239,7 @@ base.vaicom.state = {
 							probe.playerMissionRadioChannels = copyStringList(diagCache.playerMissionRadioChannels)
 						end
 
-						if nowTick - (diagCache.weatherAt or -10000) >= 86400 then
+						if (diagCache.weatherAt == nil or diagCache.weatherAt == -10000) or ((nowTick - diagCache.weatherAt) >= 86400) then
 							collectWeatherSummary(missionObj)
 							diagCache.weatherAt = nowTick
 							diagCache.weatherType = probe.weatherType
@@ -4233,8 +4255,13 @@ base.vaicom.state = {
 					return probe
 				end
 
-                local chunk = {}	
-            local missionGroupTacanMap = buildMissionGroupTacanMap()
+				local selectedRadio = getSelectedRadio(base.vaicom.state.dcsid)
+				profMark("getSelectedRadio")
+            	
+				local missionGroupTacanMap = buildMissionGroupTacanMap()
+				profMark("buildMissionGroupTacanMap")
+				
+                local chunk = {}
 				chunk[1] 		= {
 									dcsversion			= base.vaicom.state.dcsversion,
 									root				= base.vaicom.state.root,
@@ -4261,7 +4288,7 @@ base.vaicom.state = {
 									airborne			= base.vaicom.state.airborne,								
 									intercom			= data.intercomId,
 									fsmstate 			= base.tostring(base.fsm.state),
-									selectedradio		= getSelectedRadio(base.vaicom.state.dcsid), 
+									selectedradio		= selectedRadio,
 									radios				= {},
 								  }
 				chunk[3] 		= {		
@@ -4276,9 +4303,9 @@ base.vaicom.state = {
 																JTAC 		= {},
 																AWACS		= {},
 																Tanker		= {},
-                                   Opposition	= {},
+																Opposition	= {},
 																Crew		= {},
-																Aux			= {},		
+																Aux			= {},
 																Cargo		= {},
 																Moose		= {}, -- Add Moose
 															}		
@@ -4315,16 +4342,26 @@ base.vaicom.state = {
 				chunk[11] 		= {
 									payload	 = base.vaicom.state.payload or nil,
 								  }
-             chunk[12] 		= {
-									metar = buildAtcMetar(),
-									atcmetars = buildAllAtcMetars(),
-									atcicaotypes = buildAllAtcIcaoTypes(),
-									diagnostics = getChunk12Diagnostics(),
+				profMark("chunks 1-11")
+				
+				local metar = buildAtcMetar()
+				profMark("chunk12 buildAtcMetar")
+				local atcmetars = buildAllAtcMetars()
+				profMark("chunk12 buildAllAtcMetars")
+				local atcicaotypes = buildAllAtcIcaoTypes()
+				profMark("chunk12 buildAllAtcIcaoTypes")
+				local diagnostics = getChunk12Diagnostics()
+				profMark("chunk12 getChunk12Diagnostics")
+             	chunk[12] 		= {
+									metar = metar,
+									atcmetars = atcmetars,
+									atcicaotypes = atcicaotypes,
+									diagnostics = diagnostics,
 								  }
 				if base.vaicom and base.vaicom.state then
 					base.vaicom.state.atcicaotypes = chunk[12].atcicaotypes
 				end
-				local selectedRadio = getSelectedRadio(base.vaicom.state.dcsid)
+
 				for n,k in base.pairs(data.communicators) do
 					local Viper_VHF = (base.vaicom.state.dcsid == "F-16C_50" and n == 38) 
 					local ICS = (n == data.intercomId)
@@ -4343,20 +4380,29 @@ base.vaicom.state = {
 									modulation = ( ICS_set and (( (not ICS) and base.GetDevice(n) and base.GetDevice(n).get_modulation and (((base.GetDevice(n):get_modulation() == 1) and "FM") or "AM") ) or "XX")) or "XX", 
 									}						
 					base.table.insert(chunk[2].radios, radio)
-				end					
+				end
+				profMark("radios list")
+				
 				for recipientclass,_ in base.pairs(base.vaicom.state.availablerecipients) do
-                 for n,k in base.pairs(base.vaicom.state.availablerecipients[recipientclass]) do
-					   local unitDiagnostics = ""
-						if base.vaicom.state.debugmode and (recipientclass == "Tanker" or recipientclass == "ATC" or recipientclass == "AWACS" or recipientclass == "Flight") then
-                            unitDiagnostics = base.tostring(base.vaicom.properties.unitdiagnostics(k))
+                	for n,k in base.pairs(base.vaicom.state.availablerecipients[recipientclass]) do
+						-- We only send the first 50 for some recipient classes
+						if (recipientclass == "ATC" or recipientclass == "Allies") and n >= 50 then
+							break
 						end
+
+						-- This is currently unused and will be used in the future.
+						-- local unitDiagnostics = ""
+						-- if base.vaicom.state.debugmode and (recipientclass == "Tanker" or recipientclass == "ATC" or recipientclass == "AWACS" or recipientclass == "Flight") then
+                        --     unitDiagnostics = base.tostring(base.vaicom.properties.unitdiagnostics(k))
+						-- end
+
                         local tacanValue = normalizeTacanValue(base.vaicom.properties.tacan(k))
-                       if tacanValue == "" and (recipientclass == "Tanker" or recipientclass == "ATC" or recipientclass == "AWACS" or recipientclass == "Flight") then
+                       	if tacanValue == "" and (recipientclass == "Tanker" or recipientclass == "ATC" or recipientclass == "AWACS" or recipientclass == "Flight") then
 							local okGroup, groupObj = base.pcall(function() return k:getGroup() end)
 							if okGroup and groupObj and groupObj.getName then
 								local okName, groupName = base.pcall(function() return groupObj:getName() end)
-                            if okName and groupName ~= nil then
-                               tacanValue = resolveTacanFromGroupMap(groupName, missionGroupTacanMap)
+                            	if okName and groupName ~= nil then
+                            		tacanValue = resolveTacanFromGroupMap(groupName, missionGroupTacanMap)
 								end
 							end
 						end
@@ -4364,14 +4410,13 @@ base.vaicom.state = {
 										index = n,
 										id_ = base.vaicom.properties.id(k),
 										callsign = base.tostring(base.vaicom.properties.missioncallsign(k)),
-                                    typename = base.tostring(base.vaicom.properties.typename(k)),
+                                    	typename = base.tostring(base.vaicom.properties.typename(k)),
 										range = base.vaicom.properties.range(k),
 										pos = base.vaicom.properties.pos(k),
 										fullname = base.tostring(base.vaicom.properties.displayname(k)),
 										coalition = base.tostring(base.vaicom.properties.coalition(k)),
 										altfreq = base.vaicom.properties.altfreq(k),
-                                      tacan = tacanValue,
-                                      unitdiagnostics = unitDiagnostics,
+                                    	tacan = tacanValue,
 										freq = base.tostring(base.vaicom.properties.frequency(k)),
 										mod = base.tostring(base.vaicom.properties.modulation(k)),
 										ishuman = base.vaicom.properties.human(k),
@@ -4389,10 +4434,12 @@ base.vaicom.state = {
 						end
 						if tbl then
 							base.table.insert(chunk[tbl].availablerecipients[recipientclass], dcsunit)
-						end		
-								
+						end
+
 					end
 				end
+				profMark("recipients list")
+				
 				local function sendChunk(payload, chunkId)
 					local ok, err = base.pcall(function()
 						socket.try(base.vaicom.sender:send(payload))
@@ -4413,24 +4460,36 @@ base.vaicom.state = {
 				-- Maximum udp packet size for localhost
 				-- (64K - 20 IP header - 8 UDP header)
 				local maxSize = (64 * 1024) - 20 - 8
-              for chunkId = 1, 12 do
+              	for chunkId = 1, 12 do
 					local chunkPayload = addChunkHeader(chunk[chunkId], chunkId)
 					local payload = JSON:encode(chunkPayload)
-					if chunkId == 9 then
-						-- Large menus that exceed the maximum payload cause errors
-						-- during sending and prevent sending all chunks to VAICOM.
-						if #payload < maxSize then
-							sendChunk(payload, chunkId)
-						else
-							-- Send empty menu items if menu too large
-							local menuPayload = { menuaux = { items = {}, name = "other" } }
-							chunkPayload = addChunkHeader(menuPayload, chunkId)
-							payload = JSON:encode(chunkPayload)
-							sendChunk(payload, chunkId)
-						end
+					if chunkId == 9 and (#payload > maxSize) then
+						-- Large menus that exceed the maximum payload cause udp errors
+						-- and prevent sending the chunk to VAICOM. Send empty menu item
+						-- if menus are too large.
+						local menuPayload = { menuaux = { items = {}, name = "Other" } }
+						chunkPayload = addChunkHeader(menuPayload, chunkId)
+						sendChunk(JSON:encode(chunkPayload), chunkId)
+					elseif chunkId == 10 and (#payload > maxSize) then
+						-- Large numbers of markers that exceed the maximum payload cause udp errors
+						-- and prevent sending the chunk to VAICOM. Set these to an empty array.
+						chunkPayload.riostate.markerdetails = {}
+						sendChunk(JSON:encode(chunkPayload), chunkId)
 					else
 						sendChunk(payload, chunkId)
 					end
+				end
+				
+				-- Send chunk indicating that all chunks have been sent and now ready for processing.
+				local completedPayload = { completed = true }
+				sendChunk(JSON:encode(addChunkHeader(completedPayload, 13)), 13)
+				profMark("encode+send chunks")
+
+				-- Clear receipients list Locator properties cache
+				resetPropCache()
+
+				if profiling then
+					base.print(base.string.format("VAICOM profiling (sendupdateall) | %-40s %8.3f ms", "TOTAL", (profClock() - profStart) * 1000))
 				end
 			end,
 }
@@ -4452,7 +4511,7 @@ base.vaicom.init = {
 		base.vaicom.relay = socket.try(socket.udp()) 
 		socket.try(base.vaicom.relay:setpeername(base.vaicom.config.relayaddress,base.vaicom.config.relayport))
 		socket.try(base.vaicom.relay:settimeout(base.vaicom.config.relaytimeout))
-end,
+	end,
 	stop = function(self)
 		if base.vaicom.sender then
 			socket.try(base.vaicom.sender:close())

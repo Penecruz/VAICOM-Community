@@ -96,7 +96,8 @@ namespace VAICOM
                 public List<string> altfreq;
                 public string mod;
                 public string tacan;
-                public string unitdiagnostics;
+                // This is currently unused and will be used in the future
+                //public string unitdiagnostics;
                 public string tacanprobe;
                 public string status;
                 public bool ishuman;
@@ -190,14 +191,11 @@ namespace VAICOM
             public class DcsOptions
             {
                 public DcsSoundConfig sound;
-                public DcsPluginsConfig plugins;
 
                 public DcsOptions()
                 {
                     sound = new DcsSoundConfig();
-                    plugins = new DcsPluginsConfig();
                 }
-
             }
 
             public class TomcatState
@@ -418,10 +416,7 @@ namespace VAICOM
                 public ServerAuxmenu menuaux;
                 public ServerAuxmenu menucargo;
 
-                public int parts;
-                public int part;
-                public string segment;
-
+                public bool completed;
             }
 
         }

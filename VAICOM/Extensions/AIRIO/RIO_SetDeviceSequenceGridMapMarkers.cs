@@ -39,7 +39,22 @@ namespace VAICOM
 
                         // start menu sequence1
                         State.currentmessage.extsequence.AddRange(VAICOM.Extensions.RIO.DeviceActionsLibrary.Sequences.Macro.Seq_J_MENU_MAIN); // includes close first
-                        State.currentmessage.extsequence.AddRange(VAICOM.Extensions.RIO.DeviceActionsLibrary.Sequences.Macro.Seq_J_UTIL_NAV_GRD_MARKER);
+
+                        bool isTomcatBU = State.currentstate != null
+                            && !string.IsNullOrWhiteSpace(State.currentstate.id)
+                            && State.currentstate.id.Equals("F-14BU", StringComparison.OrdinalIgnoreCase);
+
+                        if (isTomcatBU)
+                        {
+                            State.currentmessage.extsequence.AddRange(VAICOM.Extensions.RIO.DeviceActionsLibrary.Sequences.Macro.Seq_J_MENU_OPTION_5);
+                            State.currentmessage.extsequence.AddRange(VAICOM.Extensions.RIO.DeviceActionsLibrary.Sequences.Macro.Seq_J_MENU_OPTION_8);
+                            State.currentmessage.extsequence.AddRange(VAICOM.Extensions.RIO.DeviceActionsLibrary.Sequences.Macro.Seq_J_MENU_OPTION_5);
+                            State.currentmessage.extsequence.AddRange(VAICOM.Extensions.RIO.DeviceActionsLibrary.Sequences.Macro.Seq_J_MENU_OPTION_3);
+                        }
+                        else
+                        {
+                            State.currentmessage.extsequence.AddRange(VAICOM.Extensions.RIO.DeviceActionsLibrary.Sequences.Macro.Seq_J_UTIL_NAV_GRD_MARKER);
+                        }
 
                         string header = State.Proxy.Utility.ParseTokens("{CMDSEGMENT:0}"); // Map Marker
                                                                                            //Log.Write("Segment 0 = " + header, Colors.Warning);

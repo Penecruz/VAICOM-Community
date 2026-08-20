@@ -26,6 +26,8 @@ namespace VAICOM
                     {"GBU12",       null }, //DeviceActionsLibrary.RIO.Atom_J_VOID  },
                     {"GBU16",       null }, // DeviceActionsLibrary.RIO.Atom_J_VOID  },
                     {"GBU24",       null }, //DeviceActionsLibrary.RIO.Atom_J_VOID  },
+                    {"GBU31",       null }, //DeviceActionsLibrary.RIO.Atom_J_VOID  },
+                    {"GBU38",       null }, //DeviceActionsLibrary.RIO.Atom_J_VOID  },
                     {"Mk20",        null }, //DeviceActionsLibrary.RIO.Atom_J_VOID  },
                     {"LUU2",        null }, //DeviceActionsLibrary.RIO.Atom_J_VOID  },
                     {"BDU33",       null }, //DeviceActionsLibrary.RIO.Atom_J_VOID  },
@@ -34,6 +36,27 @@ namespace VAICOM
                     {"TALD",        null }, //DeviceActionsLibrary.RIO.Atom_J_VOID  },
                     {"default",     null }, //DeviceActionsLibrary.RIO.Atom_J_VOID  },
 
+                };
+
+                private static readonly string[] AGweaponsmenuorder = new string[]
+                {
+                    "Mk81",
+                    "Mk82",
+                    "Mk83",
+                    "Mk84",
+                    "Zuni",
+                    "GBU10",
+                    "GBU12",
+                    "GBU16",
+                    "GBU24",
+                    "GBU31",
+                    "GBU38",
+                    "Mk20",
+                    "LUU2",
+                    "BDU33",
+                    "Mk82A",
+                    "Mk82SE",
+                    "TALD"
                 };
 
                 public static DeviceAction GetAtom(int num)
@@ -66,6 +89,8 @@ namespace VAICOM
                     AGweaponsstate["GBU12"] = DeviceActionsLibrary.RIO.Atom_J_VOID;
                     AGweaponsstate["GBU16"] = DeviceActionsLibrary.RIO.Atom_J_VOID;
                     AGweaponsstate["GBU24"] = DeviceActionsLibrary.RIO.Atom_J_VOID;
+                    AGweaponsstate["GBU31"] = DeviceActionsLibrary.RIO.Atom_J_VOID;
+                    AGweaponsstate["GBU38"] = DeviceActionsLibrary.RIO.Atom_J_VOID;
                     AGweaponsstate["Mk20"] = DeviceActionsLibrary.RIO.Atom_J_VOID;
                     AGweaponsstate["LUU2"] = DeviceActionsLibrary.RIO.Atom_J_VOID;
                     AGweaponsstate["BDU33"] = DeviceActionsLibrary.RIO.Atom_J_VOID;
@@ -101,6 +126,8 @@ namespace VAICOM
                     if (classid.Contains("GBU") && classid.Contains("12")) { return "GBU12"; }
                     if (classid.Contains("GBU") && classid.Contains("16")) { return "GBU16"; }
                     if (classid.Contains("GBU") && classid.Contains("24")) { return "GBU24"; }
+                    if (classid.Contains("GBU") && classid.Contains("31")) { return "GBU31"; }
+                    if (classid.Contains("GBU") && classid.Contains("38")) { return "GBU38"; }
                     if (classid.Contains("MK") && classid.Contains("20")) { return "Mk20"; }
                     if (classid.Contains("SUU") && classid.Contains("25")) { return "LUU2"; }
                     if (classid.Contains("BDU")) { return "BDU33"; }
@@ -132,16 +159,14 @@ namespace VAICOM
                         resetAGweapons();
                         int counter = 0;
 
-                        Dictionary<string, DeviceAction> readdict = new Dictionary<string, DeviceAction>(AGweaponsstate);
-
-                        foreach (KeyValuePair<string, DeviceAction> entry in readdict)
+                        foreach (string weapon in AGweaponsmenuorder)
                         {
-                            if (entry.Value.Equals(DeviceActionsLibrary.RIO.Atom_J_VOID)) // wpn not identified yet
+                            if (AGweaponsstate[weapon].Equals(DeviceActionsLibrary.RIO.Atom_J_VOID)) // wpn not identified yet
                             {
                                 foreach (Server.payloadstation station in State.currentstate.payload.Stations)
                                 {
                                     string wpn = extractweapon(station.CLSID);
-                                    if (entry.Key.Equals(wpn) && station.count > 0)
+                                    if (weapon.Equals(wpn) && station.count > 0)
                                     {
                                         Log.Write("found new AG weapon!" + wpn, Colors.Inline);
                                         counter += 1;
@@ -249,6 +274,8 @@ namespace VAICOM
                     // 1= OK
                     // 2= NOK
                     // 3 =hmm
+                    // 4 = checklist completion cue
+                    // 4 = Right Throttle to Idle
 
                     List<string> filelist = new List<string>();
 
@@ -274,6 +301,10 @@ namespace VAICOM
                             {
                                 filename = "misc/uhm";
                             }
+                            if (type.Equals(4))
+                            {
+                                filename = "checklists/rightthrottleidle";
+                            }
                             break;
 
                         default:
@@ -290,13 +321,17 @@ namespace VAICOM
                             {
                                 filename = "misc/uhm"; // nothing
                             }
+                            if (type.Equals(4))
+                            {
+                                filename = "checklists/rightthrottleidle";
+                            }
                             break;
 
                     }
 
                     //now add random extension (1-17)
                     //Random rnd = new Random();
-                    int checkmax = 17;
+                    int checkmax = type.Equals(4) ? 9 : 17;
                     int dice = State.random2.Next(1, 1 + checkmax);
                     string append = dice.ToString();
 
@@ -327,6 +362,9 @@ namespace VAICOM
 
             public class menuhelper
             {
+                private const string CmsModeHintAB = "\"Countermeasures [ Off | Manual | Auto ] \"\nSets CMS operation mode";
+                private const string CmsModeHintBU = "\"Countermeasures Mode [ Off | Bypass | Manual | Semi | Auto ] \"\nSets CMDS operation mode";
+
                 public static Dictionary<string, string> optionhints = new Dictionary<string, string>()
                 {
 
@@ -337,11 +375,11 @@ namespace VAICOM
                     { "wMsgJ_RDR_STT_TWS_TGT_NUM"   ,"\"Track Single Target [ Ahead | First | [1-8] ]\"\nSelect STT Target to track" }, // <-- disabled
                     { "wMsgJ_RDR_SCAN_ELEV"         ,"\"Scan [ Auto | <Middle> [High | Low] ]\"\nSelect Radar Scan Elevation" },
                     { "wMsgJ_RDR_SCAN_AZ"           ,"\"Scan [ Auto | <Center> [Left | Right] ]\"\nSelect Radar Scan Azimuth"   },
-                    { "wMsgJ_RDR_SCAN_DIST"         ,"\"Scan Range [ Auto | 25 | 50 | 100 | 200 | 400 ]\"\nSelect Radar Scan Range"   },
+                    { "wMsgJ_RDR_SCAN_DIST"         ,"\"TID Range [ Auto | 25 | 50 | 100 | 200 | 400 ]\"\nSelect TID Range"   },
                     { "wMsgJ_RDR_STAB"              ,"\"Stabilize [ 15 Seconds | 30 Seconds | 1 Minute | 2 Minutes | Hold | Ground ]\"\nStabilize radar for time period."   },
                     { "wMsgJ_RDR_MODE"              ,"\"Radar Mode [ Automatic | TWS | RWS ] \"\nSet radar scan / search mode" },
                     // Weapon
-                    { "wMsgJ_WPN_AG_SORDN"         ,"\"Select [ Mk81s | Mk82s | Mk83s | Mk84s | Zunis | Paveways | Rockeyes | LUUs | BDUs | TALD ]\"\nSelect AG Weapon."   },
+                    { "wMsgJ_WPN_AG_SORDN"         ,"\"Select [ Mk81s | Mk82s | Mk83s | Mk84s | Zunis | Paveways | Rockeyes | LUUs | BDUs | TALD | JDAM | 31s | 38s ]\"\nSelect AG Weapon."   },
                     { "wMsgJ_WPN_AG_RIP"           ,"\"Set Ripple [ Quantity.. | Time.. | Distance.. ]\"\nSet Ripple Parameters"   },
                     { "wMsgJ_WPN_AG_RIP_QTY"       ,"\"Set Ripple Quantity [ 2 | 3 | 4 | 6 | 8 | 16 | 28 ]\"\nSet Ripple Quantity parameter"   },
                     { "wMsgJ_WPN_AG_RIP_TIME"      ,"\"Set Ripple Time [ 10 | 20 | 50 | 100 | 200 | 500 | 990 ]\"\nSet Ripple Timer parameter (in ms)"   },
@@ -364,7 +402,7 @@ namespace VAICOM
                     { "wMsgJ_DEF_CMS_CTL_ORD"       ,"\"Dispense Order [ Chaff | Flare ] [ Program | Single | Tight ] \"\nSet sequence order for chaff/flares countermeasures" },
                     { "wMsgJ_DEF_FLR_PGM"           ,"\"Flares Program [ 2x2 | 4x2 | 10x2 | 4x6 | 8x6 | 10x6 | 6x10 | 10x10 ]\"\nSet Flares countermeasures program (qty by sec)" },
                     { "wMsgJ_DEF_CHF_PGM"           ,"\"Chaff Program [1-8]\"\nSet Chaff countermeasures program number" },
-                    { "wMsgJ_DEF_CMS_MOD"           ,"\"Countermeasures [ Off | Manual | Auto ] \"\nSets CMS operation mode" },
+                    { "wMsgJ_DEF_CMS_MOD"           ,CmsModeHintAB },
                     { "wMsgJ_DEF_FLR_MOD"           ,"\"Flares Mode [ Pilot | Normal | Multi ] \"\nSets Flares dispense mode" },
 
                     //Datalink
@@ -379,6 +417,58 @@ namespace VAICOM
                     { "wMsgI_DIR"                   ,"\"Heading [ Straight | North | NorthEast | East | SouthEast | South | SouthWest | West | NorthWest ] \"\nSelects heading" },
                     { "wMsgI_DIR_CHG"               ,"\"Turn [ Left | Right ] [ 5 | 10 | 30 | 45 ] \"\nCommand turn (angle)" },
                 };
+
+                public static bool TryGetOptionHint(string commandId, out string hint) //New logic to return different hint for F-14B(U) vs F-14A/B if required.
+                {
+                    hint = null;
+
+                    if (string.IsNullOrWhiteSpace(commandId))
+                    {
+                        return false;
+                    }
+
+                    if (commandId.Equals("wMsgJ_DEF_CMS_MOD", StringComparison.OrdinalIgnoreCase))
+                    {
+                        hint = IsF14BUActiveForHints() ? CmsModeHintBU : CmsModeHintAB;
+                        return true;
+                    }
+
+                    return optionhints.TryGetValue(commandId, out hint);
+                }
+
+                private static bool IsF14BUActiveForHints()
+                {
+                    try
+                    {
+                        string stateId = (State.currentstate != null && !string.IsNullOrWhiteSpace(State.currentstate.id))
+                            ? State.currentstate.id.Trim()
+                            : string.Empty;
+
+                        if (!string.IsNullOrWhiteSpace(stateId)
+                            && (stateId.Equals("F-14BU", StringComparison.OrdinalIgnoreCase)
+                                || stateId.Equals("F-14B(U)", StringComparison.OrdinalIgnoreCase)
+                                || stateId.Equals("F14BU", StringComparison.OrdinalIgnoreCase)
+                                || (stateId.IndexOf("F-14B", StringComparison.OrdinalIgnoreCase) >= 0
+                                    && stateId.IndexOf("U", StringComparison.OrdinalIgnoreCase) >= 0)))
+                        {
+                            return true;
+                        }
+
+                        string rioMod = !string.IsNullOrWhiteSpace(State.riomod)
+                            ? State.riomod.Trim()
+                            : string.Empty;
+
+                        return !string.IsNullOrWhiteSpace(rioMod)
+                            && (rioMod.Equals("F-14BU", StringComparison.OrdinalIgnoreCase)
+                                || rioMod.Equals("F-14B(U)", StringComparison.OrdinalIgnoreCase)
+                                || rioMod.Equals("F14BU", StringComparison.OrdinalIgnoreCase));
+                    }
+                    catch
+                    {
+                    }
+
+                    return false;
+                }
             }
 
         }

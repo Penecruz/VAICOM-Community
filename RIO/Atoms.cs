@@ -68,7 +68,7 @@
             public static DeviceAction Atom_J_RDR_GO_SILENT = new DeviceAction() { device = Devices.RIO, command = 3564, value = 1 }; // JESTER_Quiet
             public static DeviceAction Atom_J_RDR_SPOT = new DeviceAction() { device = Devices.RIO, command = 3563, value = 1 }; // JESTER_Spot
             public static DeviceAction Atom_J_RDR_BREAK_LOCK = new DeviceAction() { device = Devices.RIO, command = 3577, value = 1 }; // JESTER_BreakLock
-            public static DeviceAction Atom_J_RDR_TO_PSTT = new DeviceAction() { device = Devices.RIO, command = start + 0, value = 0 };
+            public static DeviceAction Atom_J_RDR_TO_PSTT = new DeviceAction() { device = Devices.RIO, command = 3576, value = 1 }; //JESTER_TogglePDorPStt
             public static DeviceAction Atom_J_RDR_SCAN_ELEV = new DeviceAction() { device = Devices.RIO, command = start + 0, value = 0 };
             public static DeviceAction Atom_J_RDR_SCAN_AZ = new DeviceAction() { device = Devices.RIO, command = start + 0, value = 0 };
             public static DeviceAction Atom_J_RDR_SCAN_DIST = new DeviceAction() { device = Devices.RIO, command = start + 0, value = 0 };
@@ -109,7 +109,7 @@
             public static DeviceAction Atom_J_RDR_STT_TWS_TGT_8 = new DeviceAction() { device = Devices.RIO, command = start + 0, value = 0 };
             public static DeviceAction Atom_J_RDR_RNG_25 = new DeviceAction() { device = Devices.RIO, command = 3579, value = 1 }; //JESTER_Range_25
             public static DeviceAction Atom_J_RDR_RNG_50 = new DeviceAction() { device = Devices.RIO, command = 3580, value = 1 }; //JESTER_Range_50
-            public static DeviceAction Atom_J_RDR_RNG_AUTO = new DeviceAction() { device = Devices.RIO, command = 3578, value = 1 }; //JESTER_Range_Auto
+            public static DeviceAction Atom_J_RDR_RNG_AUTO = new DeviceAction() { device = Devices.RIO, command = 3578, value = 1 }; //JESTER_Range
 
 
             public static DeviceAction Atom_J_RDR_MODE_AUTO = new DeviceAction() { device = Devices.RIO, command = start + 0, value = 0 };
@@ -415,6 +415,43 @@
 
             public static DeviceAction Atom_J_UTIL_NAV_MAP_MARKER = new DeviceAction() { device = Devices.RIO, command = start + 0, value = 0 };
 
+            public static DeviceAction Atom_J_PROXY_BU_DIRECT_TO_SELECTED = new DeviceAction() { device = Devices.PROXY, command = 10042, value = 1.0 };
+
+            public static DeviceAction Atom_J_PROXY_BU_DIRECT_TO_SELECTED_DELAYED(int delayMs)
+            {
+                if (delayMs < 0)
+                {
+                    delayMs = 0;
+                }
+
+                return new DeviceAction()
+                {
+                    device = Devices.PROXY,
+                    command = 10042,
+                    value = 1.0,
+                    delayMs = delayMs
+                };
+            }
+
+            public static DeviceAction Atom_J_PROXY_BU_SELECT_WAYPOINT(int waypointNumber)
+            {
+                if (waypointNumber < 0)
+                {
+                    waypointNumber = 0;
+                }
+                else if (waypointNumber > 99)
+                {
+                    waypointNumber = 99;
+                }
+
+                return new DeviceAction()
+                {
+                    device = Devices.PROXY,
+                    command = 10037,
+                    value = waypointNumber / 100.0
+                };
+            }
+
             public static DeviceAction Atom_J_UTIL_NAV_GRD_ENABLE = new DeviceAction() { device = Devices.RIO, command = start + 0, value = 0 };
             public static DeviceAction Atom_J_UTIL_NAV_GRD_DSABLE = new DeviceAction() { device = Devices.RIO, command = start + 0, value = 0 };
             public static DeviceAction Atom_J_UTIL_NAV_GRD_CENTER = new DeviceAction() { device = Devices.RIO, command = start + 0, value = 0 };
@@ -487,7 +524,7 @@
             public static DeviceAction Atom_J_DEF_CHF_PGM_20_84 = new DeviceAction() { device = Devices.RIO, command = start + 0, value = 0 };
             public static DeviceAction Atom_J_DEF_CHF_PGM_40_44 = new DeviceAction() { device = Devices.RIO, command = start + 0, value = 0 };
             public static DeviceAction Atom_J_DEF_CHF_PGM_40_84 = new DeviceAction() { device = Devices.RIO, command = start + 0, value = 0 };
-            public static DeviceAction Atom_J_DEF_CHF_PGM_R1_12 = new DeviceAction() { device = Devices.RIO, command = start + 0, value = 0 };
+            public static DeviceAction Atom_J_DEF_CHF_PGM_R1_82 = new DeviceAction() { device = Devices.RIO, command = start + 0, value = 0 };
 
             public static DeviceAction Atom_J_DEF_RWR_DSP_TYP = new DeviceAction() { device = Devices.RIO, command = start + 0, value = 0 };
             public static DeviceAction Atom_J_DEF_RWR_AIRB = new DeviceAction() { device = Devices.RIO, command = start + 0, value = 0 };
