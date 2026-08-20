@@ -15292,9 +15292,9 @@ namespace VAICOM
                         return "REF";
                     }
 
-                    if (cat.Equals("Allies", StringComparison.OrdinalIgnoreCase))
+                    if (cat.Equals("FLIGHT", StringComparison.OrdinalIgnoreCase) || cat.Equals("Allies", StringComparison.OrdinalIgnoreCase))
                     {
-                        return "FLIGHT";
+                        return "Flight";
                     }
 
                     if (cat.IndexOf("ATC", StringComparison.OrdinalIgnoreCase) >= 0)
@@ -15309,7 +15309,7 @@ namespace VAICOM
 
                     if (cat.IndexOf("TANK", StringComparison.OrdinalIgnoreCase) >= 0)
                     {
-                        return "TANKER";
+                        return "Tanker";
                     }
 
                     if (cat.IndexOf("JTAC", StringComparison.OrdinalIgnoreCase) >= 0)
