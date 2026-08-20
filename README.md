@@ -74,37 +74,32 @@ Flashing Comms Menu after DCS World update is a known issue and can be resolved 
 ## Patch Notes
 
 
-This update adds more functionality for OpenKneeboard Out and fixes some errors in the previous version, it also introduces the FLT PLN Tab Stores Page to OpenKneeboard Out, that will list the stores loaded on the aircraft by station number in real time. It expands the FLT PLN Tab SA Map capabilities and update rate including the ability to bug a D-Link target and receive BRA and Bullseye information for the bugged unit. Lots of Fixes and backend refinements.
+This update is focused on two key areas, the F-14 Tomcat and Vaicom performance. It restores previous functionality for the F-14A/B and adds a couple of changes to keywords and fixes up some non-functioning commands and removes some that were never wired in previously. It adds functionality for the F-14B(U) and as a first pass and this we will make changes in future releases based on user feedback. It also adds new coding to block the flashing of the Jester Wheel when some commands were issued.
+On the performance side a massive code cleanup of the communications between Vaicom and DCS with increased use of caching and removing data not used from the network traffic. With the rise of OpenKneeboard Out Vaicom was grabbing more data from DCS, this was causing frame rate latency issues for some users, particularly on very busy missions or servers with lots of units and client slots. 
 
 New
-- Added F-4E WSO additional Ground commands.
-- Added OpenKneeboard connection notifier on the VAICOM PTT tab.
-- Added OKB Out tab to the VAICOM UI and moved related features from the Expansion tab.
-- Added OKB Out FLT PLN STORES page to show runtime aircraft stores.
-- Added SA MAP B/E marker support with D-Link asset bugging for B/E and BRA readout.
-- Added NAVLOG DIR TO and DEL step actions.
-- Added flight pilot list view for Single Player / Multiplayer in FLT PLN (WIP).
-- Added multiplayer-safe F-14 AIRIO handling for servers requiring pure client scripts (mini wheel unavailable in this mode).
+- Added Tomcat shutdown command and sequence handling, including F-14B(U)-specific routing, cue playback, and alias registration.
+- Added module-aware AIRIO context-key flows, including EGI direct waypoint support.
+- Added Flight Plan tab-aware diagnostics collection (now tied to FLT PLN tab view).
+- Added expanded map-marker diagnostics support with increased marker cap (20 → 64).
+- Added expanded AI CREW keyword categories in kneeboard output, including Startup, Shutdown, Walkman, and Miscellaneous etc.
 
 Improved
-- Improved OKB FLT PLN tab behavior and client display name detection.
-- Improved DTC import handling for F-16C in OKB Out FLT PLN.
-- Improved D-Link target labels and asset validation in OKB Out.
-- Improved DIR TO / DEL STP action robustness with armed-state handling and clearer row highlighting.
-- Improved Saved Games folder discovery for OKB flight plan files.
-- Improved logging and snapshot update efficiency to reduce unnecessary server-process updates (performance).
-- Improved Auto Browse behavior by decoupling DCS kneeboard and OKB Out settings.
+- Refreshed F-14/AIRIO Jester script mappings and command coverage across radar, weapons, LANTIRN, datalink, TACAN, NAV/utility, CMDS/defensive, and GGW/JDAM behaviors.
+- Modernized AIRIO command architecture: improved command wiring, labels/hints, routing/validation, and proxy timing reliability.
+- Improved AIRIO option-hint selection and EGI direct-waypoint sequencing reliability.
+- Improved AIRIO GGW preplanned command handling with broader spoken-number parsing, clearer pass/fail logging, explicit sequence dispatch, and queued feedback cues.
+- Improved OpenKneeboard AI CREW rendering/grouping and tightened AI CREW vs GND CREW separation behavior.
+- Improved profile deployment/update flow, including auto keyword finish and stronger embedded resource handling integrity.
+- Improved F-14 wheel chocks/miniwheel runtime handling to reduce desync and visibility issues.
+- Added caching in update/data paths to reduce runtime overhead.
+- Removed redundant opposition aircraft/helicopter build pass to reduce duplicate update work.
+- Simplified F-14 Jester integration by removing obsolete JesterInit patch resources and handling legacy miniwheel suppression directly in appended JesterAI page.
 
 Fixed
-- Fixed Krasnodar-Pashkovsky airbase name truncation.
-- Fixed F-4E dialog visibility issue.
-- Fixed Execute external plugin OKB commands when auto-browse is disabled.
-- Fixed minor NAVLOG refresh loop caused by player callsign updates.
-- Fixed text selection/highlighting with stylus in OKB Out.
-- Fixed Jester Mini Wheel checkbox persistence (now remembers configuration).
+- Fixed a null-pointer issue that could prevent some units from being collected for kneeboard output.
 
 Known Issues
-
 - C-130J Select Tunes radio command will tune radio but not change AMU or CNI-MU display.
 - George AI the AH-64D M299_EMPTY racks if loaded with other missiles break direct weapon selection (still working a fix for this).
 
@@ -119,4 +114,4 @@ If you want to donate a beer, visit the Official Vaicom Patreon.
 
 
 #### Beta Team
-104th_Aeons, GSG-3|Turbine|202, DrChainsaw, Jaeger, Nicola, Padinn, SPAZ-505, tomeye, Virus, Bonz RexExGSR, LawnBoy, Scotia and MrAxen 
+104th_Aeons, GSG-3|Turbine|202, DrChainsaw, Jaeger, Nicola, Padinn, SPAZ-505, tomeye, Virus, Bonz RexExGSR, LawnBoy, Scotia, MrAxen, Haack, Contour, DragonBlade117, apogeo, ApocV, Goose, UnseenKill and Trigger.
