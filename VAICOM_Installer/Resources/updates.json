@@ -6,11 +6,11 @@
       "isbeta": false,
       "isdev": false,
       "productid": 1,
-      "releasedate": 20260726,
-      "version": 3153,
-      "versionstring": "3.1.5.3",
-      "downloadurl": "https://github.com/Penecruz/VAICOM-Community/releases/download/v3.1.5.3/VAICOMPRO.zip",
-      "releasenotes": "Release 3.1.5.3\n\nFixed\n• Unchecking F14 Mini Wheel on the Vaicom Expansions tab again allows F-14A/B and F-14B(U) to be used on servers requiring pure client scripts."
+      "releasedate": 20260821,
+      "version": 3161,
+      "versionstring": "3.1.6.1",
+      "downloadurl": "https://github.com/Penecruz/VAICOM-Community/releases/download/v3.1.6.1/VAICOMPRO.zip",
+      "releasenotes": "Release 3.1.6.1\n\nNew\n• Added Tomcat shutdown command and sequence handling, including F-14B(U)-specific routing, cue playback, and alias registration.\n• Added module-aware AIRIO context-key flows, including EGI direct waypoint support.\n• Added Flight Plan tab-aware diagnostics collection (now tied to FLT PLN tab view).\n• Added expanded map-marker diagnostics support with increased marker cap (20 → 64).\n• Added expanded AI CREW keyword categories in kneeboard output, including Startup, Shutdown, Walkman, and Miscellaneous.\n\nImproved\n• Refreshed F-14/AIRIO Jester script mappings and command coverage across radar, weapons, LANTIRN, datalink, TACAN, NAV/utility, CMDS/defensive, and GGW/JDAM behaviors.\n• Modernized AIRIO command architecture: improved command wiring, labels/hints, routing/validation, and proxy timing reliability.\n• Improved AIRIO option-hint selection and EGI direct-waypoint sequencing reliability.\n• Improved AIRIO GGW preplanned command handling with broader spoken-number parsing, clearer pass/fail logging, explicit sequence dispatch, and queued feedback cues.\n• Improved OpenKneeboard AI CREW rendering/grouping and tightened AI CREW vs GND CREW separation behavior.\n• Improved profile deployment/update flow, including auto keyword finish and stronger embedded resource handling integrity.\n• Improved wheel/chocks/miniwheel runtime handling to reduce desync and visibility issues.\n• Added caching in update/data paths to reduce runtime overhead.\n• Removed redundant opposition aircraft/helicopter build pass to reduce duplicate update work.\n• Simplified F-14 Jester integration by removing obsolete JesterInit patch resources and handling legacy miniwheel suppression directly in appended JesterAI page.\n\nFixed\n• Fixed a null-pointer issue that could prevent some units from being collected for kneeboard output."
     }
   ]
 }
