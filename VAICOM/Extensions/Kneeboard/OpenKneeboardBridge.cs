@@ -35,7 +35,7 @@ namespace VAICOM
                 private static string storeLookupResolvedPath = "";
                 private static DateTime storeLookupLastWriteUtc = DateTime.MinValue;
                 private static string storeLookupMapJson = "{}";
-                private static string selectedTab = "";
+                private static string currentSelectedTab = "";
 
                 private static readonly string IndexHtml = @"<!doctype html>
 <html>
@@ -16147,11 +16147,15 @@ namespace VAICOM
 
                     if (path == "/okb/state" || path == "/okb/index.json")
                     {
-                        // Extract the currently selected tab from the query string
-                        string queryParams = context.Request.Url.Query;
-                        if (queryParams.Contains("selectedTab"))
+                        // Update the selected category data and associated units if the tab has been changed to display a different category.
+                        string selectedTab = context.Request.QueryString["selectedTab"] ?? "";
+                        if (!currentSelectedTab.Equals(selectedTab, StringComparison.OrdinalIgnoreCase))
                         {
-                            selectedTab = queryParams.Substring(queryParams.LastIndexOf('=') + 1);
+                            currentSelectedTab = selectedTab;
+                            if (!IsFlightPlanTabSelected())
+                            {
+                                UpdateActiveCategory(currentSelectedTab);
+                            }
                         }
 
                         WriteJson(context.Response, BuildSnapshotJson());
@@ -16283,7 +16287,7 @@ namespace VAICOM
 
                 public static bool IsFlightPlanTabSelected()
                 {
-                    return !string.IsNullOrEmpty(selectedTab) && selectedTab.Equals("DTC");
+                    return !string.IsNullOrEmpty(currentSelectedTab) && currentSelectedTab.Equals("DTC");
                 }
 
                 private static string GetIndexHtmlWithStoreLookup()
