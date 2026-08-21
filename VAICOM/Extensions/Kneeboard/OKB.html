@@ -526,6 +526,205 @@
       transform: none;
     }
 
+    .efbSearchOverlay {
+      position: absolute;
+      left: 82px;
+      right: 82px;
+      top: 66px;
+      bottom: 8px;
+      z-index: 35;
+      display: flex;
+      align-items: flex-start;
+      justify-content: flex-start;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 220ms ease;
+    }
+
+    .efbSearchOverlay.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .efbSearchPanel {
+      width: 360px;
+      max-width: 100%;
+      position: relative;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      max-height: calc(100% - 4px);
+      box-sizing: border-box;
+      transform: translateX(-112%);
+      opacity: 0.98;
+      transition: transform 260ms ease, opacity 220ms ease;
+      will-change: transform;
+    }
+
+    .efbSearchOverlay.open .efbSearchPanel {
+      transform: translateX(0);
+      opacity: 1;
+    }
+
+    .efbSearchCloseBtn {
+      position: absolute;
+      right: 4px;
+      top: 2px;
+      width: 34px;
+      height: 30px;
+      border: 1px solid #7b8996;
+      border-radius: 8px;
+      background: #ffffff;
+      color: #1f3142;
+      font-size: 20px;
+      cursor: pointer;
+    }
+
+    .efbSearchWheelWrap {
+      position: relative;
+      width: 340px;
+      height: 340px;
+      margin: 0 auto;
+      border-radius: 50%;
+      background: radial-gradient(circle at 50% 50%, rgba(232, 241, 251, 0.92) 0%, rgba(219, 232, 245, 0.6) 48%, rgba(203, 222, 240, 0.34) 100%);
+      border: 1px solid rgba(89, 120, 150, 0.34);
+    }
+
+    .efbSearchRingBtn {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform-origin: center center;
+      border: 1px solid #7c8692;
+      background: rgba(255, 255, 255, 0.94);
+      color: #123149;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+      transition: filter 120ms ease, transform 120ms ease, border-color 140ms ease;
+    }
+
+    .efbSearchRingBtn:hover {
+      filter: brightness(1.1);
+      border-color: #79aef0;
+    }
+
+    .efbSearchOuterBtn {
+      width: 34px;
+      height: 34px;
+      border-radius: 17px;
+      font-size: 16px;
+    }
+
+    .efbSearchInnerBtn {
+      width: 38px;
+      height: 38px;
+      border-radius: 19px;
+      font-size: 19px;
+    }
+
+    .efbSearchCenter {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      width: 160px;
+      min-height: 118px;
+      border: 1px solid #73859a;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.92);
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.45);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 8px;
+      box-sizing: border-box;
+    }
+
+    .efbSearchToken {
+      font-size: 28px;
+      font-weight: 800;
+      letter-spacing: 3px;
+      color: #152e44;
+      min-height: 36px;
+      line-height: 1;
+      text-transform: uppercase;
+    }
+
+    .efbSearchCenterActions {
+      display: flex;
+      gap: 8px;
+      width: 100%;
+      justify-content: center;
+    }
+
+    .efbSearchActionBtn {
+      min-width: 64px;
+      height: 30px;
+      border: 1px solid #7c8692;
+      border-radius: 8px;
+      background: #ffffff;
+      color: #14324a;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .efbSearchResults {
+      border: 1px solid #9dafc0;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.86);
+      display: flex;
+      flex-direction: column;
+      min-height: 220px;
+      overflow: hidden;
+    }
+
+    .efbSearchResultsHead {
+      border-bottom: 1px solid #c0d1e2;
+      background: rgba(232, 241, 251, 0.92);
+      padding: 8px 10px;
+      font-size: 20px;
+      font-weight: 700;
+      color: #1e3248;
+    }
+
+    .efbSearchCandidates {
+      overflow-y: auto;
+      flex: 1 1 auto;
+      padding: 5px;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .efbSearchCandidateBtn {
+      border: 1px solid #c4d0dc;
+      background: #ffffff;
+      color: #13283b;
+      border-radius: 8px;
+      font-size: 20px;
+      font-family: inherit;
+      font-weight: 700;
+      text-align: left;
+      padding: 4px 8px;
+      cursor: pointer;
+    }
+
+    .efbSearchCandidateBtn:hover {
+      background: #e8f2fc;
+      border-color: #8db6e4;
+    }
+
+    .efbSearchEmpty {
+      color: #5a6978;
+      font-size: 18px;
+      padding: 10px 8px;
+    }
+
     .efbRightActionDrawer {
       position: absolute;
       right: 80px;
@@ -1050,6 +1249,11 @@
     .overlayPanel.fltPlanOverlayPanel {
       width: 720px;
       max-width: calc(100vw - 32px);
+    }
+
+    #fltPlanSessionOverlay .overlayPanel.fltPlanOverlayPanel {
+      width: 860px;
+      max-width: calc(100vw - 36px);
     }
 
     .overlayPanel.fltPlanOverlayPanel .overlayTitleRow {
@@ -2161,6 +2365,13 @@
       overflow: auto;
     }
 
+    #fltPlanSessionOverlayText.fltPlanPlain {
+      font-size: 20px;
+      line-height: 1.28;
+      min-height: 460px;
+      max-height: 70vh;
+    }
+
     pre {
       background: #ffffff;
       border: 1px solid #b7b7b7;
@@ -2429,6 +2640,54 @@
 
     body.night-mode .efbChartImage {
       filter: brightness(0.62) contrast(1.08) saturate(0.92);
+    }
+
+    body.night-mode .efbSearchPanel {
+      background: rgba(33, 44, 58, 0.9);
+      border-color: #607183;
+    }
+
+    body.night-mode .efbSearchCloseBtn,
+    body.night-mode .efbSearchActionBtn,
+    body.night-mode .efbSearchRingBtn {
+      background: #2b3541;
+      color: #e2eaf2;
+      border-color: #607183;
+    }
+
+    body.night-mode .efbSearchCenter {
+      background: rgba(43, 53, 65, 0.95);
+      border-color: #607183;
+    }
+
+    body.night-mode .efbSearchToken {
+      color: #e2eaf2;
+    }
+
+    body.night-mode .efbSearchResults {
+      background: rgba(42, 52, 64, 0.88);
+      border-color: #607183;
+    }
+
+    body.night-mode .efbSearchResultsHead {
+      background: rgba(45, 59, 77, 0.94);
+      border-bottom-color: #607183;
+      color: #e2eaf2;
+    }
+
+    body.night-mode .efbSearchCandidateBtn {
+      background: #2b3541;
+      color: #e2eaf2;
+      border-color: #607183;
+    }
+
+    body.night-mode .efbSearchCandidateBtn:hover {
+      background: #334355;
+      border-color: #82bbff;
+    }
+
+    body.night-mode .efbSearchEmpty {
+      color: #9fb2c6;
     }
 
     body.night-mode .fltPlanSelected {
@@ -2950,6 +3209,9 @@
     let efbPinnedChartsByAirport = {};
     let efbRightToolsOpen = false;
     let efbAutoSelectOnEnter = false;
+    let efbSearchOverlayOpen = false;
+    let efbSearchToken = '';
+    let efbSearchAnimateOpenOnce = false;
     const overlayCloseHideDelayMs = 620;
 
     function clamp(v, min, max) {
@@ -5095,6 +5357,45 @@
       return key;
     }
 
+    function normalizeEfbSearchToken(value) {
+      return String(value || '')
+        .toUpperCase()
+        .replace(/[^A-Z0-9]/g, '')
+        .slice(0, 4);
+    }
+
+    function getEfbSearchCandidates(token, maxRows) {
+      const list = Array.isArray(efbAvailableAirports) ? efbAvailableAirports : [];
+      const rows = list
+        .map(function (v) { return String(v || '').toUpperCase().trim(); })
+        .filter(function (v) { return !!v; });
+      if (!rows.length) return [];
+
+      const seen = {};
+      const deduped = rows.filter(function (v) {
+        if (seen[v]) return false;
+        seen[v] = true;
+        return true;
+      }).sort();
+
+      const t = normalizeEfbSearchToken(token);
+      if (!t) return deduped.slice(0, maxRows || 120);
+
+      const prefix = deduped.filter(function (v) { return v.indexOf(t) === 0; });
+      const contains = deduped.filter(function (v) { return v.indexOf(t) > 0; });
+      return prefix.concat(contains).slice(0, maxRows || 120);
+    }
+
+    function buildEfbSearchRingButtons(chars, radius, className) {
+      const rows = Array.isArray(chars) ? chars : [];
+      if (!rows.length) return '';
+      return rows.map(function (ch, i) {
+        const angle = (360 / rows.length) * i;
+        const style = 'transform:translate(-50%,-50%) rotate(' + angle.toFixed(2) + 'deg) translateY(-' + radius + 'px) rotate(' + (-angle).toFixed(2) + 'deg);';
+        return '<button type="button" class="efbSearchRingBtn ' + className + '" style="' + style + '" data-efb-search-char="' + escapeHtml(ch) + '">' + escapeHtml(ch) + '</button>';
+      }).join('');
+    }
+
     function formatEfbTabContentHtml(data) {
       const airportKey = getEfbAirportKey(data);
       const charts = efbChartsByAirport[airportKey] || [];
@@ -5105,6 +5406,17 @@
         efbSelectedChartByAirport[airportKey] = selected;
       }
       const canCycle = cycleCharts.length > 1;
+      const searchToken = normalizeEfbSearchToken(efbSearchToken);
+      const searchCandidates = getEfbSearchCandidates(searchToken, 120);
+      const outerChars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+      const innerChars = '0123456789'.split('');
+      const wheelOuterHtml = buildEfbSearchRingButtons(outerChars, 154, 'efbSearchOuterBtn');
+      const wheelInnerHtml = buildEfbSearchRingButtons(innerChars, 106, 'efbSearchInnerBtn');
+      const tokenDisplay = searchToken || '----';
+      const searchRows = searchCandidates.map(function (code) {
+        const active = code === airportKey ? ' active' : '';
+        return '<button type="button" class="efbSearchCandidateBtn' + active + '" data-efb-search-candidate="' + escapeHtml(code) + '">' + escapeHtml(code) + '</button>';
+      }).join('');
 
       const airportOptions = airports.map(function (a) {
         const code = String(a || '').toUpperCase().trim();
@@ -5157,6 +5469,7 @@
         + '<button id="efbAutoAirportBtn" type="button" class="efbRailBtn" title="Auto-select closest airport">A</button>'
         + '<button id="efbAirportToggleBtn" type="button" class="efbRailBtn" title="Select airport and chart"><svg class="efbRailIconSvg" viewBox="0 0 64 64" aria-hidden="true"><path d="M14 20h36v6h-4l2 9h-8l-2-7h-12l-2 7h-8l2-9h-4z" fill="currentColor"/><rect x="27" y="35" width="10" height="19" fill="currentColor"/><rect x="18" y="54" width="28" height="5" fill="currentColor"/><circle cx="32" cy="10" r="2.5" fill="currentColor"/><path d="M25 11a7 7 0 0 1 14 0" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/><path d="M21 11a11 11 0 0 1 22 0" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg></button>'
         + '<button id="efbPinnedBtn" type="button" class="efbRailBtn" title="Pinned charts">📌</button>'
+        + '<button id="efbSearchToggleBtn" type="button" class="efbRailBtn" title="Search charts">⌕</button>'
         + '</div>'
         + '<div class="efbRightRail">'
         + '<button id="efbZoomOutBtn" type="button" class="efbRailBtn" title="Zoom out">−</button>'
@@ -5174,6 +5487,26 @@
         + '<div id="efbLeftActionDrawer" class="' + drawerClass + '">'
         + '<div class="efbDrawerHeader"><span id="efbDrawerTitle">' + drawerTitle + '</span><button id="efbDrawerCloseBtn" class="efbDrawerCloseBtn" type="button">✕</button></div>'
         + '<div id="efbDrawerList" class="efbDrawerList">' + drawerRows + '</div>'
+        + '</div>'
+        + '<div id="efbSearchOverlay" class="' + ((efbSearchOverlayOpen && !efbSearchAnimateOpenOnce) ? 'efbSearchOverlay open' : 'efbSearchOverlay') + '">'
+        + '<div class="efbSearchPanel">'
+        + '<button id="efbSearchCloseBtn" class="efbSearchCloseBtn" type="button">✕</button>'
+        + '<div class="efbSearchWheelWrap">'
+        + wheelOuterHtml
+        + wheelInnerHtml
+        + '<div class="efbSearchCenter">'
+        + '<div id="efbSearchToken" class="efbSearchToken">' + escapeHtml(tokenDisplay) + '</div>'
+        + '<div class="efbSearchCenterActions">'
+        + '<button type="button" class="efbSearchActionBtn" data-efb-search-action="back">Back</button>'
+        + '<button type="button" class="efbSearchActionBtn" data-efb-search-action="clear">Clear</button>'
+        + '</div>'
+        + '</div>'
+        + '</div>'
+        + '<div class="efbSearchResults">'
+        + '<div class="efbSearchResultsHead">Code · ' + escapeHtml(tokenDisplay) + '</div>'
+        + '<div id="efbSearchCandidates" class="efbSearchCandidates">' + (searchRows || '<div class="efbSearchEmpty">No matching airports.</div>') + '</div>'
+        + '</div>'
+        + '</div>'
         + '</div>'
         + '<div id="efbChartViewport" class="efbViewport">'
         + (chartUrl
@@ -5279,6 +5612,118 @@
         };
       }
 
+      const searchToggleBtn = document.getElementById('efbSearchToggleBtn');
+      const closeSearchOverlayAnimated = function (afterClose) {
+        const finalizeClose = function () {
+          efbSearchOverlayOpen = false;
+          efbSearchAnimateOpenOnce = false;
+          if (typeof afterClose === 'function') {
+            afterClose();
+          }
+          efbUiDirty = true;
+          if (latestData) render(latestData);
+        };
+
+        const overlay = document.getElementById('efbSearchOverlay');
+        if (!efbSearchOverlayOpen || !overlay) {
+          finalizeClose();
+          return;
+        }
+
+        overlay.classList.remove('open');
+        window.setTimeout(finalizeClose, 280);
+      };
+
+      if (searchToggleBtn) {
+        searchToggleBtn.onclick = function (ev) {
+          ev.preventDefault();
+          ev.stopPropagation();
+          const willOpen = !efbSearchOverlayOpen;
+          if (willOpen) {
+            efbSearchOverlayOpen = true;
+            closeEfbDrawer();
+            efbRightToolsOpen = false;
+            efbSearchAnimateOpenOnce = true;
+            efbUiDirty = true;
+            if (latestData) {
+              render(latestData);
+              window.requestAnimationFrame(function () {
+                const overlay = document.getElementById('efbSearchOverlay');
+                if (overlay) overlay.classList.add('open');
+                efbSearchAnimateOpenOnce = false;
+              });
+            } else {
+              efbSearchAnimateOpenOnce = false;
+            }
+            return;
+          }
+          closeSearchOverlayAnimated(function () {
+            efbSearchToken = '';
+          });
+        };
+      }
+
+      const searchCloseBtn = document.getElementById('efbSearchCloseBtn');
+      if (searchCloseBtn) {
+        searchCloseBtn.onclick = function (ev) {
+          ev.preventDefault();
+          ev.stopPropagation();
+          closeSearchOverlayAnimated(function () {
+            efbSearchToken = '';
+          });
+        };
+      }
+
+      const searchOverlay = document.getElementById('efbSearchOverlay');
+      if (searchOverlay) {
+        searchOverlay.onclick = function (ev) {
+          const target = ev && ev.target;
+          if (!target) return;
+
+          if (target === searchOverlay) {
+            closeSearchOverlayAnimated(function () {
+              efbSearchToken = '';
+            });
+            return;
+          }
+
+          const charBtn = target.closest ? target.closest('[data-efb-search-char]') : null;
+          if (charBtn) {
+            const ch = String(charBtn.getAttribute('data-efb-search-char') || '').trim().toUpperCase();
+            if (ch && normalizeEfbSearchToken(efbSearchToken).length < 4) {
+              efbSearchToken = normalizeEfbSearchToken(efbSearchToken + ch);
+              efbUiDirty = true;
+              if (latestData) render(latestData);
+            }
+            return;
+          }
+
+          const actionBtn = target.closest ? target.closest('[data-efb-search-action]') : null;
+          if (actionBtn) {
+            const action = String(actionBtn.getAttribute('data-efb-search-action') || '').toLowerCase();
+            if (action === 'back') {
+              efbSearchToken = normalizeEfbSearchToken(efbSearchToken).slice(0, -1);
+            } else if (action === 'clear') {
+              efbSearchToken = '';
+            }
+            efbUiDirty = true;
+            if (latestData) render(latestData);
+            return;
+          }
+
+          const candidateBtn = target.closest ? target.closest('[data-efb-search-candidate]') : null;
+          if (candidateBtn) {
+            const nextAirport = String(candidateBtn.getAttribute('data-efb-search-candidate') || '').toUpperCase().trim();
+            if (!nextAirport) return;
+            closeSearchOverlayAnimated(function () {
+              efbManuallySelectedAirport = nextAirport;
+              efbSearchToken = '';
+              openEfbDrawer('chart');
+            });
+          }
+        };
+      }
+
       const drawerCloseBtn = document.getElementById('efbDrawerCloseBtn');
       if (drawerCloseBtn) {
         drawerCloseBtn.onclick = function (ev) {
@@ -5336,13 +5781,19 @@
           if (selectedTab !== 'EFB') return;
           if (efbSelectionFlowActive) return;
           const target = ev && ev.target;
-          const insideDrawer = target && target.closest && (target.closest('.efbLeftActionDrawer') || target.closest('.efbLeftRail') || target.closest('.efbRightRail') || target.closest('.efbRightActionDrawer'));
+          const insideDrawer = target && target.closest && (target.closest('.efbLeftActionDrawer') || target.closest('.efbLeftRail') || target.closest('.efbRightRail') || target.closest('.efbRightActionDrawer') || target.closest('.efbSearchOverlay'));
           if (!insideDrawer) {
+            const wasSearchOpen = efbSearchOverlayOpen;
             closeEfbDrawer();
             efbRightToolsOpen = false;
             applyEfbDrawerUi();
             const rightDrawer = document.getElementById('efbRightActionDrawer');
             if (rightDrawer) rightDrawer.className = efbRightToolsOpen ? 'efbRightActionDrawer' : 'efbRightActionDrawer closed';
+            if (wasSearchOpen) {
+              closeSearchOverlayAnimated(function () {
+                efbSearchToken = '';
+              });
+            }
           }
         });
         efbPickerDocumentHandlerBound = true;
@@ -5553,6 +6004,9 @@
         efbDrawerOpen = false;
         efbDrawerMode = 'airport';
         efbSelectionFlowActive = false;
+        efbSearchOverlayOpen = false;
+        efbSearchAnimateOpenOnce = false;
+        efbSearchToken = '';
       }
 
       selectedTab = normalized;

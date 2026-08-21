@@ -16,17 +16,18 @@
 ## DCS Map Marker Panel
 - DCS map marker panel entries in this project are expected to look like `{ idx, time, initiator, coalition, groupID, text, pos=vec3 }`, with `pos` as the runtime coordinate source.
 
-## F-4E ICS Implementation
-- For F-4E ICS hot mic implementation, ignore WSO ICS state entirely and use only pilot ICS switch state because WSO seat occupancy disables WSO functions.
-
-## TX5 Intercom Implementation
-- For TX5 intercom hot mic, allow Options and menu navigation commands (e.g., Take 1..12) without requiring PTT press.
-
 ## OpenKneeboard Implementation
 - For OpenKneeboard FLT PLN tab, prefer a full-window, scrollable, table-like kneeboard layout and avoid large path/header blocks above route data.
 - For OpenKneeboard DTC map overlays, GEO_LINES should be treated as route-agnostic and displayed regardless of selected route (R1/R2/R3).
 - Disable text selection across the entire OpenKneeboard Out console UI to avoid messy selection highlights.
 - For OpenKneeboard SA map integration, attribution is already auto-rendered in the map UI, so do not add an extra footer attribution block.
+- For OKB work, keep HTML separated from OpenKneeboardBridge.cs in dedicated HTML files (e.g., OKB.html) and continue separating OKB UI code from bridge logic going forward.
+
+## F-4E ICS Implementation
+- For F-4E ICS hot mic implementation, ignore WSO ICS state entirely and use only pilot ICS switch state because WSO seat occupancy disables WSO functions.
+
+## TX5 Intercom Implementation
+- For TX5 intercom hot mic, allow Options and menu navigation commands (e.g., Take 1..12) without requiring PTT press.
 
 ## F-14BU DTC Handling
 - For F-14BU DTC handling, NAV[0] (Primary) must always map to Route 1 (R1), and runtime NAVLOG route is always R1; F-14BU DTC can contain up to 12 routes.
