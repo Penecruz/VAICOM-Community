@@ -268,15 +268,72 @@ namespace VAICOM
       flex-direction: column;
       gap: 8px;
     }
+    .efbTopNav {
+      position: absolute;
+      left: 82px;
+      right: 82px;
+      top: 8px;
+      z-index: 34;
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      pointer-events: none;
+    }
+    .efbTopNavBtn {
+      min-width: 132px;
+      height: 50px;
+      border: 1px solid #7c8692;
+      border-radius: 11px;
+      background: rgba(255, 255, 255, 0.9);
+      color: #1a2a3a;
+      font-size: 22px;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+      opacity: 0.5;
+      transition: transform 120ms ease, filter 120ms ease, box-shadow 140ms ease, border-color 140ms ease;
+      pointer-events: auto;
+      white-space: nowrap;
+      padding: 0 12px;
+    }
+    .efbTopNavBtn:hover {
+      animation: iconHoverWobble 220ms ease;
+      filter: brightness(1.1);
+      opacity: 0.8;
+      border-color: #79aef0;
+      box-shadow: 0 0 0 2px rgba(121, 174, 240, 0.35), 0 8px 16px rgba(32, 86, 153, 0.35);
+    }
+    .efbTopNavBtn:active {
+      transform: translateY(0);
+      filter: brightness(1.05);
+      opacity: 0.95;
+      border-color: #8bc4ff;
+      box-shadow: 0 0 0 3px rgba(134, 196, 255, 0.52), 0 0 18px rgba(80, 170, 255, 0.45);
+    }
+    .efbTopNavBtn:disabled,
+    .efbTopNavBtn:disabled:hover,
+    .efbTopNavBtn:disabled:active {
+      cursor: default;
+      opacity: 0.32;
+      animation: none;
+      filter: none;
+      border-color: #7c8692;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.14);
+      transform: none;
+    }
     .efbRightActionDrawer {
       position: absolute;
       right: 80px;
-      top: 8px;
+      top: 66px;
       width: 76px;
       padding: 6px;
       border: 1px solid #6e7a87;
       border-radius: 10px;
-      background: rgba(245, 250, 255, 0.95);
+      background: rgba(245, 250, 255, 0.82);
       box-shadow: 0 8px 18px rgba(0,0,0,0.3);
       z-index: 33;
       transform: translateX(0);
@@ -361,16 +418,16 @@ namespace VAICOM
       pointer-events: none;
     }
     .efbRailSpacer { width: 66px; height: 66px; pointer-events: none; }
-    .efbSelectorDrawer {
+    .efbLeftActionDrawer {
       position: absolute;
       left: 80px;
-      top: 8px;
+      top: 66px;
       bottom: 8px;
       width: 340px;
       max-width: calc(100% - 84px);
       border: 1px solid #6e7a87;
       border-radius: 10px;
-      background: rgba(245, 250, 255, 0.95);
+      background: rgba(245, 250, 255, 0.82);
       box-shadow: 0 8px 18px rgba(0,0,0,0.3);
       z-index: 33;
       transform: translateX(0);
@@ -380,7 +437,7 @@ namespace VAICOM
       flex-direction: column;
       overflow: hidden;
     }
-    .efbSelectorDrawer.closed {
+    .efbLeftActionDrawer.closed {
       transform: translateX(-110%);
       opacity: 0;
       pointer-events: none;
@@ -539,12 +596,17 @@ namespace VAICOM
       }
 
     function resolveBuggedAirfieldIcaoFromAssetKey(data, assetKey){
+      function tokenIcao(value){
+        const m = String(value || '').toUpperCase().match(/\b([A-Z]{4})\b/);
+        return m ? String(m[1] || '') : '';
+      }
+
       const key = String(assetKey || '').trim();
       if (!key) return '';
 
       const airfields = buildMapAirfields(data);
       if (!Array.isArray(airfields) || !airfields.length){
-        return extractIcaoToken(key) || '';
+        return tokenIcao(key) || '';
       }
 
       for (let i = 0; i < airfields.length; i++){
@@ -557,14 +619,21 @@ namespace VAICOM
           yNum: Number(p && p.yNum),
         };
         if (makeMapAssetSelectionKey(selectionAsset) !== key) continue;
-        return String((p && p.icao) || (p && p.label) || '').toUpperCase().trim();
+        const resolved = tokenIcao(p && p.icao)
+          || tokenIcao(p && p.label)
+          || tokenIcao(p && p.name)
+          || tokenIcao(p && p.callsign)
+          || '';
+        return String(resolved || '').toUpperCase().trim();
       }
 
-      return extractIcaoToken(key) || '';
+      return tokenIcao(key) || '';
     }
 
     async function tryPreloadEfbForBuggedAirfield(data, assetKey){
-      const icao = resolveBuggedAirfieldIcaoFromAssetKey(data, assetKey);
+      const icao = (typeof resolveMapSelectedAirfieldIcao === 'function')
+        ? resolveMapSelectedAirfieldIcao(data, assetKey)
+        : resolveBuggedAirfieldIcaoFromAssetKey(data, assetKey);
       if (!icao) return;
 
       await ensureEfbAirportsLoaded();
@@ -574,6 +643,10 @@ namespace VAICOM
       efbManuallySelectedAirport = icao;
       efbLastResolvedAirport = icao;
       await ensureEfbChartsLoaded(data);
+      if (selectedTab === 'EFB' && latestData){
+        efbUiDirty = true;
+        render(latestData);
+      }
     }
 
       for (let i = 0; i < keys.length; i++){
@@ -2631,9 +2704,10 @@ namespace VAICOM
     body.night-mode .helpOverlayContent { background: rgba(45, 57, 72, 0.76); border-color: #5f7184; color: #dfe8f2; }
     body.night-mode .helpOverlayContent a { color: #9bc8ff; }
     body.night-mode .efbRailBtn { background: rgba(43, 53, 65, 0.92); color: #e2eaf2; border-color: #607183; }
-    body.night-mode .efbRightActionDrawer { background: rgba(33, 44, 58, 0.95); border-color: #607183; }
+    body.night-mode .efbTopNavBtn { background: rgba(43, 53, 65, 0.92); color: #e2eaf2; border-color: #607183; }
+    body.night-mode .efbRightActionDrawer { background: rgba(33, 44, 58, 0.82); border-color: #607183; }
     body.night-mode .efbRightDrawerBtn { background: #2b3541; color: #e2eaf2; border-color: #607183; }
-    body.night-mode .efbSelectorDrawer { background: rgba(33, 44, 58, 0.95); border-color: #607183; }
+    body.night-mode .efbLeftActionDrawer { background: rgba(33, 44, 58, 0.82); border-color: #607183; }
     body.night-mode .efbDrawerHeader { background: rgba(45, 59, 77, 0.94); border-bottom-color: #607183; color: #e2eaf2; }
     body.night-mode .efbDrawerCloseBtn { background: #2b3541; color: #e2eaf2; border-color: #607183; }
     body.night-mode .efbPickerRow { background: #2a3440; border-bottom-color: #3b4a5a; }
@@ -2969,6 +3043,7 @@ namespace VAICOM
     let efbSelectionFlowActive = false;
     let efbPinnedChartsByAirport = {};
     let efbRightToolsOpen = false;
+    let efbAutoSelectOnEnter = false;
     const overlayCloseHideDelayMs = 620;
 
     function clamp(v, min, max){
@@ -3057,8 +3132,144 @@ namespace VAICOM
       return d.toISOString().replace(/\.\d{3}Z$/, 'Z');
     }
 
+    function resolveClosestAirfieldIcao(data, allowedAirports){
+      function tokenIcao(value){
+        const m = String(value || '').toUpperCase().match(/\b([A-Z]{4})\b/);
+        return m ? String(m[1] || '') : '';
+      }
+
+      const airfields = buildMapAirfields(data);
+      if (!Array.isArray(airfields) || !airfields.length) return '';
+
+      const own = getPlayerMapPoint(data);
+      if (!own || !isFinite(Number(own.xNum)) || !isFinite(Number(own.yNum))) return '';
+
+      const allow = Array.isArray(allowedAirports) ? allowedAirports : [];
+      const allowSet = {};
+      if (allow.length){
+        allow.forEach(function(code){
+          const key = String(code || '').toUpperCase().trim();
+          if (key) allowSet[key] = true;
+        });
+      }
+
+      let nearest = null;
+      let nearestDist = Number.POSITIVE_INFINITY;
+      airfields.forEach(function(a){
+        if (!a) return;
+        const ax = Number(a.xNum);
+        const ay = Number(a.yNum);
+        if (!isFinite(ax) || !isFinite(ay)) return;
+
+        const icao = String(tokenIcao(a.icao) || tokenIcao(a.label) || tokenIcao(a.name) || tokenIcao(a.callsign) || '').toUpperCase().trim();
+        if (!icao) return;
+        if (allow.length && !allowSet[icao]) return;
+
+        const dx = ax - Number(own.xNum);
+        const dy = ay - Number(own.yNum);
+        const d2 = (dx * dx) + (dy * dy);
+        if (d2 < nearestDist){
+          nearestDist = d2;
+          nearest = icao;
+        }
+      });
+
+      return String(nearest || '').toUpperCase().trim();
+    }
+
+    function resolveAtcContextIcao(data, allowedAirports){
+      const server = (data && data.Server) || {};
+      const atcMetars = (server && server.AtcMetars && typeof server.AtcMetars === 'object') ? server.AtcMetars : {};
+      const available = Array.isArray(allowedAirports) ? allowedAirports : [];
+
+      function acceptIcao(icaoCandidate){
+        const icaoMatch = String(icaoCandidate || '').toUpperCase().match(/\b([A-Z]{4})\b/);
+        const icao = icaoMatch ? String(icaoMatch[1] || '') : '';
+        if (!icao) return '';
+        if (available.length && available.indexOf(icao) < 0) return '';
+        return icao;
+      }
+
+      const selectedMetarKey = String(selectedAtcMetarKey || '').toUpperCase().trim();
+      if (selectedMetarKey){
+        const metarText = String(atcMetars[selectedMetarKey] || '');
+        const selectedIcao = acceptIcao(selectedMetarKey)
+          || acceptIcao(metarText);
+        if (selectedIcao) return selectedIcao;
+      }
+
+      const atcLines = getMergedList(data && data.Units, 'ATC');
+      for (let i = 0; i < atcLines.length; i++){
+        const line = String(atcLines[i] || '').trim();
+        if (!line) continue;
+        if (/^METAR\b/i.test(line) || /^WEATHER\s*:/i.test(line)) continue;
+        const key = resolveAtcMetarKey(line, atcMetars);
+        if (!key) continue;
+        const metarText = String(atcMetars[key] || '');
+        const lineIcao = acceptIcao(key)
+          || acceptIcao(metarText)
+          || acceptIcao(line);
+        if (lineIcao) return lineIcao;
+      }
+
+      return '';
+    }
+
+    function resolveMapSelectedAirfieldIcao(data, assetKey){
+      function tokenIcao(value){
+        const m = String(value || '').toUpperCase().match(/\b([A-Z]{4})\b/);
+        return m ? String(m[1] || '') : '';
+      }
+
+      const key = String(assetKey || '').trim();
+      if (!key) return '';
+
+      const parts = key.split('|').map(function(v){ return String(v || '').toUpperCase().trim(); });
+      const keyCallsign = String(parts[0] || '');
+      const keyName = String(parts[1] || '');
+
+      const airfields = (typeof buildMapAirfields === 'function') ? buildMapAirfields(data) : [];
+      if (Array.isArray(airfields) && airfields.length){
+        for (let i = 0; i < airfields.length; i++){
+          const p = airfields[i] || {};
+          const callsign = String((p && p.callsign) || '').toUpperCase().trim();
+          const name = String((p && p.name) || (p && p.label) || '').toUpperCase().trim();
+          const selectionAsset = {
+            callsign: String((p && p.callsign) || '').trim(),
+            name: String((p && p.name) || (p && p.label) || '').trim(),
+            category: 'ATC',
+            xNum: Number(p && p.xNum),
+            yNum: Number(p && p.yNum),
+          };
+          const selectionKey = (typeof makeMapAssetSelectionKey === 'function') ? String(makeMapAssetSelectionKey(selectionAsset) || '') : '';
+          if (selectionKey === key || (keyCallsign && keyCallsign === callsign) || (keyName && keyName === name)){
+            const resolved = tokenIcao(p && p.icao)
+              || tokenIcao(p && p.label)
+              || tokenIcao(p && p.name)
+              || tokenIcao(p && p.callsign)
+              || '';
+            if (resolved) return resolved;
+          }
+        }
+      }
+
+      return tokenIcao(key);
+    }
+
+    function setEfbDebugState(next){
+      return;
+    }
+
     function resolveEfbSelectedAirport(data){
       try{
+        const available = Array.isArray(efbAvailableAirports) ? efbAvailableAirports : [];
+
+        const atcIcao = resolveAtcContextIcao(data, available);
+        if (atcIcao) return atcIcao;
+
+        const nearestIcao = resolveClosestAirfieldIcao(data, available);
+        if (nearestIcao) return nearestIcao;
+
         const selected = getActiveFlightPlanSelection(data);
         if (selected){
           const routeRows = getPlanWaypointsForRecommendations(selected);
@@ -3078,51 +3289,84 @@ namespace VAICOM
           }
         }
 
-        const airfields = buildMapAirfields(data);
-        if (!Array.isArray(airfields) || !airfields.length){
-          return '';
-        }
-
-        const server = (data && data.Server) || {};
-        const px = Number(server.PlayerPosX);
-        const py = Number(server.PlayerPosY);
-        let nearest = null;
-        let nearestDist = Number.POSITIVE_INFINITY;
-
-        airfields.forEach(function(a){
-          if (!a) return;
-          if (!isFinite(Number(a.xNum)) || !isFinite(Number(a.yNum))) return;
-
-          const dx = Number(a.xNum) - px;
-          const dy = Number(a.yNum) - py;
-          const d2 = (isFinite(px) && isFinite(py)) ? ((dx * dx) + (dy * dy)) : 0;
-          if (d2 < nearestDist){
-            nearestDist = d2;
-            nearest = a;
-          }
-        });
-
-        if (!nearest){
-          return '';
-        }
-
-        const nearestIcao = String(nearest.icao || '').toUpperCase().trim();
-        if (nearestIcao) return nearestIcao;
-        return String(nearest.name || nearest.callsign || nearest.label || '').trim();
+        return resolveClosestAirfieldIcao(data, null);
       }catch(_){
         return '';
       }
     }
 
     function getEfbAirportKey(data){
-      const manual = String(efbManuallySelectedAirport || '').toUpperCase().trim();
-      if (manual) return manual;
-
       const available = Array.isArray(efbAvailableAirports) ? efbAvailableAirports : [];
 
+      function tokenIcao(value){
+        const m = String(value || '').toUpperCase().match(/\b([A-Z]{4})\b/);
+        return m ? String(m[1] || '') : '';
+      }
+
+      function resolveMapIcaoFromKey(assetKey){
+        const key = String(assetKey || '').trim();
+        if (!key) return '';
+        if (typeof resolveMapSelectedAirfieldIcao === 'function'){
+          const fromGlobal = String(resolveMapSelectedAirfieldIcao(data, key) || '').toUpperCase().trim();
+          if (fromGlobal) return fromGlobal;
+        }
+        if (typeof resolveBuggedAirfieldIcaoFromAssetKey === 'function'){
+          const fromLegacy = String(resolveBuggedAirfieldIcaoFromAssetKey(data, key) || '').toUpperCase().trim();
+          if (fromLegacy) return fromLegacy;
+        }
+        return tokenIcao(key);
+      }
+
+      const selected = getActiveFlightPlanSelection(data);
+      const selectedMapAssetKey = selected ? String(getMapSelectedAssetKeyBySelection(selected) || '').trim() : '';
+      if (selectedMapAssetKey){
+        const mapIcao = String(resolveMapIcaoFromKey(selectedMapAssetKey) || '').toUpperCase().trim();
+        if (mapIcao && (!available.length || available.indexOf(mapIcao) >= 0)){
+          efbManuallySelectedAirport = mapIcao;
+          efbLastResolvedAirport = mapIcao;
+          setEfbDebugState({
+            source: 'map-selected',
+            mapAssetKey: selectedMapAssetKey,
+            mapIcao: mapIcao,
+            manual: String(efbManuallySelectedAirport || '').toUpperCase().trim(),
+            sticky: String(efbLastResolvedAirport || '').toUpperCase().trim(),
+            finalAirportKey: mapIcao,
+          });
+          return mapIcao;
+        }
+      }
+
+      const manual = String(efbManuallySelectedAirport || '').toUpperCase().trim();
+      if (manual){
+        setEfbDebugState({
+          source: 'manual',
+          manual: manual,
+          sticky: String(efbLastResolvedAirport || '').toUpperCase().trim(),
+          atcIcao: '',
+          nearestIcao: '',
+          finalAirportKey: manual,
+        });
+        return manual;
+      }
+
       const sticky = String(efbLastResolvedAirport || '').toUpperCase().trim();
-      if (sticky && (!available.length || available.indexOf(sticky) >= 0)){
-        return sticky;
+      const atcIcao = String(resolveAtcContextIcao(data, available) || '').toUpperCase().trim();
+      const nearestIcao = String(resolveClosestAirfieldIcao(data, available) || '').toUpperCase().trim();
+
+      function finalize(source, key){
+        const resolved = String(key || '').toUpperCase().trim() || 'UNSET';
+        setEfbDebugState({
+          source: source,
+          manual: '',
+          sticky: sticky,
+          atcIcao: atcIcao,
+          nearestIcao: nearestIcao,
+          availableCount: available.length,
+          containsAtc: !!(atcIcao && available.indexOf(atcIcao) >= 0),
+          containsNearest: !!(nearestIcao && available.indexOf(nearestIcao) >= 0),
+          finalAirportKey: resolved,
+        });
+        return resolved;
       }
 
       const server = (data && data.Server) || {};
@@ -3131,15 +3375,43 @@ namespace VAICOM
       if (haveMission){
         const inferred = String(resolveEfbSelectedAirport(data) || '').toUpperCase().trim();
         if (inferred && (!available.length || available.indexOf(inferred) >= 0)){
-          return inferred;
+          return finalize('mission-inferred', inferred);
         }
       }
 
-      if (available.length){
-        return String(available[0] || '').toUpperCase().trim() || 'UNSET';
+      if (sticky && (!available.length || available.indexOf(sticky) >= 0)){
+        return finalize('sticky', sticky);
       }
 
-      return 'UNSET';
+      if (available.length){
+        return finalize('available-first', String(available[0] || '').toUpperCase().trim() || 'UNSET');
+      }
+
+      return finalize('unset', 'UNSET');
+    }
+
+    function applyEfbAutoNearestAirport(data){
+      const available = Array.isArray(efbAvailableAirports) ? efbAvailableAirports : [];
+      const inferred = String(resolveEfbSelectedAirport(data) || '').toUpperCase().trim();
+      if (!inferred) return '';
+      if (available.length && available.indexOf(inferred) < 0){
+        setEfbDebugState({
+          source: 'auto-nearest-rejected',
+          inferredIcao: inferred,
+          availableCount: available.length,
+          finalAirportKey: String(getEfbAirportKey(data) || 'UNSET'),
+        });
+        return '';
+      }
+      efbManuallySelectedAirport = inferred;
+      efbLastResolvedAirport = inferred;
+      setEfbDebugState({
+        source: 'auto-nearest-applied',
+        inferredIcao: inferred,
+        availableCount: available.length,
+        finalAirportKey: inferred,
+      });
+      return inferred;
     }
 
     async function ensureEfbAirportsLoaded(){
@@ -3247,6 +3519,25 @@ namespace VAICOM
       return rows;
     }
 
+    function getEfbCycleChartsForAirport(airportKey){
+      const airport = String(airportKey || 'UNSET').toUpperCase().trim() || 'UNSET';
+      const charts = Array.isArray(efbChartsByAirport[airport]) ? efbChartsByAirport[airport] : [];
+      if (!charts.length) return [];
+
+      const byId = {};
+      charts.forEach(function(c){
+        const id = String((c && c.id) || '').trim();
+        if (id) byId[id] = c;
+      });
+
+      const pinnedIds = getPinnedChartsForAirport(airport);
+      const pinnedCharts = pinnedIds
+        .map(function(id){ return byId[String(id || '').trim()] || null; })
+        .filter(function(c){ return !!c; });
+
+      return pinnedCharts.length ? pinnedCharts : charts;
+    }
+
     function applyEfbViewportToImage(img, viewport){
       if (!img || !viewport) return;
       const s = clamp(Number(viewport.scale) || 1, 0.5, 3.5);
@@ -3299,11 +3590,13 @@ namespace VAICOM
     function formatEfbTabContentHtml(data){
       const airportKey = getEfbAirportKey(data);
       const charts = efbChartsByAirport[airportKey] || [];
+      const cycleCharts = getEfbCycleChartsForAirport(airportKey);
       const airports = Array.isArray(efbAvailableAirports) ? efbAvailableAirports : [];
       const selected = String(efbSelectedChartByAirport[airportKey] || (charts[0] && charts[0].id) || '');
       if (!efbSelectedChartByAirport[airportKey] && selected){
         efbSelectedChartByAirport[airportKey] = selected;
       }
+      const canCycle = cycleCharts.length > 1;
 
       const airportOptions = airports.map(function(a){
         const code = String(a || '').toUpperCase().trim();
@@ -3344,10 +3637,14 @@ namespace VAICOM
         : (efbDrawerMode === 'pinned'
             ? (pinnedRows || '<span class=""efbPickerEmpty"">No pinned charts for this airport</span>')
             : (airportOptions || '<span class=""efbPickerEmpty"">No airport folders</span>'));
-      const drawerClass = efbDrawerOpen ? 'efbSelectorDrawer' : 'efbSelectorDrawer closed';
+      const drawerClass = efbDrawerOpen ? 'efbLeftActionDrawer' : 'efbLeftActionDrawer closed';
 
       return ''
         + '<div class=""efbShell"">'
+        + '<div class=""efbTopNav"">'
+        + '<button id=""efbPrevChartBtn"" type=""button"" class=""efbTopNavBtn"" title=""Previous chart (uses pinned charts when available)""' + (canCycle ? '' : ' disabled') + '>&lt;&lt; PREV</button>'
+        + '<button id=""efbNextChartBtn"" type=""button"" class=""efbTopNavBtn"" title=""Next chart (uses pinned charts when available)""' + (canCycle ? '' : ' disabled') + '>NEXT &gt;&gt;</button>'
+        + '</div>'
         + '<div class=""efbLeftRail"">'
         + '<button id=""efbAutoAirportBtn"" type=""button"" class=""efbRailBtn"" title=""Auto-select closest airport"">A</button>'
         + '<button id=""efbAirportToggleBtn"" type=""button"" class=""efbRailBtn"" title=""Select airport and chart""><svg class=""efbRailIconSvg"" viewBox=""0 0 64 64"" aria-hidden=""true""><path d=""M14 20h36v6h-4l2 9h-8l-2-7h-12l-2 7h-8l2-9h-4z"" fill=""currentColor""/><rect x=""27"" y=""35"" width=""10"" height=""19"" fill=""currentColor""/><rect x=""18"" y=""54"" width=""28"" height=""5"" fill=""currentColor""/><circle cx=""32"" cy=""10"" r=""2.5"" fill=""currentColor""/><path d=""M25 11a7 7 0 0 1 14 0"" fill=""none"" stroke=""currentColor"" stroke-width=""3"" stroke-linecap=""round""/><path d=""M21 11a11 11 0 0 1 22 0"" fill=""none"" stroke=""currentColor"" stroke-width=""3"" stroke-linecap=""round""/></svg></button>'
@@ -3366,7 +3663,7 @@ namespace VAICOM
         + '<button id=""efbFitHorizontalBtn"" type=""button"" class=""efbRightDrawerBtn"" title=""Fit horizontally"">↔</button>'
         + '<button id=""efbFitVerticalBtn"" type=""button"" class=""efbRightDrawerBtn"" title=""Fit vertically"">↕</button>'
         + '</div>'
-        + '<div id=""efbSelectorDrawer"" class=""' + drawerClass + '"">'
+        + '<div id=""efbLeftActionDrawer"" class=""' + drawerClass + '"">'
         + '<div class=""efbDrawerHeader""><span id=""efbDrawerTitle"">' + drawerTitle + '</span><button id=""efbDrawerCloseBtn"" class=""efbDrawerCloseBtn"" type=""button"">✕</button></div>'
         + '<div id=""efbDrawerList"" class=""efbDrawerList"">' + drawerRows + '</div>'
         + '</div>'
@@ -3384,12 +3681,12 @@ namespace VAICOM
       applyEfbViewportDefaults(viewport);
 
       function applyEfbDrawerUi(){
-        const drawer = document.getElementById('efbSelectorDrawer');
+        const drawer = document.getElementById('efbLeftActionDrawer');
         const title = document.getElementById('efbDrawerTitle');
         const list = document.getElementById('efbDrawerList');
         if (!drawer || !title || !list) return;
 
-        drawer.className = efbDrawerOpen ? 'efbSelectorDrawer' : 'efbSelectorDrawer closed';
+        drawer.className = efbDrawerOpen ? 'efbLeftActionDrawer' : 'efbLeftActionDrawer closed';
         title.textContent = efbDrawerMode === 'chart'
           ? ('Charts · ' + (airportKey || 'UNSET'))
           : (efbDrawerMode === 'pinned' ? 'Pinned charts' : 'Airports');
@@ -3453,11 +3750,7 @@ namespace VAICOM
           ev.preventDefault();
           ev.stopPropagation();
           efbManuallySelectedAirport = '';
-          const inferred = String(resolveEfbSelectedAirport(latestData || data) || '').toUpperCase().trim();
-          const airports = Array.isArray(efbAvailableAirports) ? efbAvailableAirports : [];
-          if (inferred && (!airports.length || airports.indexOf(inferred) >= 0)){
-            efbManuallySelectedAirport = inferred;
-          }
+          applyEfbAutoNearestAirport(latestData || data);
           efbUiDirty = true;
           openEfbDrawer('chart');
           if (latestData) render(latestData);
@@ -3535,7 +3828,7 @@ namespace VAICOM
           if (selectedTab !== 'EFB') return;
           if (efbSelectionFlowActive) return;
           const target = ev && ev.target;
-          const insideDrawer = target && target.closest && (target.closest('.efbSelectorDrawer') || target.closest('.efbLeftRail') || target.closest('.efbRightRail') || target.closest('.efbRightActionDrawer'));
+          const insideDrawer = target && target.closest && (target.closest('.efbLeftActionDrawer') || target.closest('.efbLeftRail') || target.closest('.efbRightRail') || target.closest('.efbRightActionDrawer'));
           if (!insideDrawer){
             closeEfbDrawer();
             efbRightToolsOpen = false;
@@ -3558,6 +3851,40 @@ namespace VAICOM
         viewport.scale = clamp((Number(viewport.scale) || 1) * mult, 0.5, 3.5);
         const image = document.getElementById('efbChartImage');
         if (image) applyEfbViewportToImage(image, viewport);
+      };
+
+      const cycleChart = function(delta){
+        const cycleCharts = getEfbCycleChartsForAirport(airportKey);
+        if (!cycleCharts.length) return;
+
+        const selectedId = String(efbSelectedChartByAirport[airportKey] || (cycleCharts[0] && cycleCharts[0].id) || '');
+        let index = cycleCharts.findIndex(function(c){ return String((c && c.id) || '') === selectedId; });
+        if (index < 0) index = 0;
+
+        const nextIndex = (((index + delta) % cycleCharts.length) + cycleCharts.length) % cycleCharts.length;
+        const nextId = String((cycleCharts[nextIndex] && cycleCharts[nextIndex].id) || '');
+        if (!nextId) return;
+
+        efbSelectedChartByAirport[airportKey] = nextId;
+        viewport.scale = 1;
+        viewport.tx = 0;
+        viewport.ty = 0;
+        efbUiDirty = true;
+        if (latestData) render(latestData);
+      };
+
+      const prevChartBtn = document.getElementById('efbPrevChartBtn');
+      if (prevChartBtn) prevChartBtn.onclick = function(ev){
+        ev.preventDefault();
+        ev.stopPropagation();
+        cycleChart(-1);
+      };
+
+      const nextChartBtn = document.getElementById('efbNextChartBtn');
+      if (nextChartBtn) nextChartBtn.onclick = function(ev){
+        ev.preventDefault();
+        ev.stopPropagation();
+        cycleChart(1);
       };
 
       const outBtn = document.getElementById('efbZoomOutBtn');
@@ -8181,7 +8508,16 @@ namespace VAICOM
             const assetKey = node.getAttribute ? String(node.getAttribute('data-asset-key') || '') : '';
             if (assetKey){
               const current = getMapSelectedAssetKeyBySelection(item.selectedKey);
-              setMapSelectedAssetKeyBySelection(item.selectedKey, current === assetKey ? '' : assetKey);
+              const nextKey = current === assetKey ? '' : assetKey;
+              setMapSelectedAssetKeyBySelection(item.selectedKey, nextKey);
+              setEfbDebugState({
+                source: 'sa-map-click-openfreemap',
+                saAssetKey: String(nextKey || assetKey || ''),
+                finalAirportKey: String(getEfbAirportKey(latestData) || 'UNSET'),
+              });
+              if (nextKey){
+                tryPreloadEfbForBuggedAirfield(latestData, nextKey).catch(function(){});
+              }
               if (latestData) render(latestData);
               ev.preventDefault();
               return;
@@ -13550,6 +13886,13 @@ namespace VAICOM
             if (latestData && selectedTab === 'EFB') render(latestData);
           });
         } else {
+          if (efbAutoSelectOnEnter){
+            efbManuallySelectedAirport = '';
+            applyEfbAutoNearestAirport(displayData);
+            efbAutoSelectOnEnter = false;
+            efbUiDirty = true;
+          }
+
           const airportKey = getEfbAirportKey(displayData);
 
           if (!efbChartsByAirport[airportKey]){
@@ -14228,12 +14571,17 @@ namespace VAICOM
               assetKey = encodedKey;
             }
             const current = getMapSelectedAssetKeyBySelection(selected);
-            setMapSelectedAssetKeyBySelection(selected, current === assetKey ? '' : assetKey);
-            if (category === 'ATC'){
-              const nextKey = current === assetKey ? '' : assetKey;
-              if (nextKey){
-                tryPreloadEfbForBuggedAirfield(latestData, nextKey).catch(function(){});
-              }
+            const nextKey = current === assetKey ? '' : assetKey;
+            setMapSelectedAssetKeyBySelection(selected, nextKey);
+            setEfbDebugState({
+              source: 'sa-map-click',
+              saAssetKey: String(nextKey || assetKey || ''),
+              saCategory: category,
+              saResolvedIcao: '',
+              finalAirportKey: String(getEfbAirportKey(latestData) || 'UNSET'),
+            });
+            if (nextKey){
+              tryPreloadEfbForBuggedAirfield(latestData, nextKey).catch(function(){});
             }
             render(latestData);
             return;
@@ -14409,12 +14757,17 @@ namespace VAICOM
               assetKey = encodedKey;
             }
             const current = getMapSelectedAssetKeyBySelection(selected);
-            setMapSelectedAssetKeyBySelection(selected, current === assetKey ? '' : assetKey);
-            if (category === 'ATC'){
-              const nextKey = current === assetKey ? '' : assetKey;
-              if (nextKey){
-                tryPreloadEfbForBuggedAirfield(latestData, nextKey).catch(function(){});
-              }
+            const nextKey = current === assetKey ? '' : assetKey;
+            setMapSelectedAssetKeyBySelection(selected, nextKey);
+            setEfbDebugState({
+              source: 'sa-map-click',
+              saAssetKey: String(nextKey || assetKey || ''),
+              saCategory: category,
+              saResolvedIcao: '',
+              finalAirportKey: String(getEfbAirportKey(latestData) || 'UNSET'),
+            });
+            if (nextKey){
+              tryPreloadEfbForBuggedAirfield(latestData, nextKey).catch(function(){});
             }
             render(latestData);
             ev.preventDefault();
