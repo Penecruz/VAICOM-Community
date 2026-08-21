@@ -638,7 +638,18 @@ namespace VAICOM.Properties {
                 return ResourceManager.GetString("Append_Terrain_Siani_radio", resourceCulture);
             }
         }
-        
+
+        /// <summary>
+        ///   Index html page for OpenKneeboard (OKB) Out.
+        /// </summary>
+        public static string OKB_Out_Index_HTML
+        {
+            get
+            {
+                return ResourceManager.GetString("OKB_Out_Index_HTML", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized resource of type System.Byte[].
         /// </summary>
