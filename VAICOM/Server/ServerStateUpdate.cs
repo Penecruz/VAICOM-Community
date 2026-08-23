@@ -33,6 +33,18 @@ namespace VAICOM
 
             public static int chunkcount = 12;
 
+            private static bool IsValidOwnshipVector(Vector pos)
+            {
+                if (pos == null)
+                {
+                    return false;
+                }
+
+                return !(double.IsNaN(pos.x) || double.IsInfinity(pos.x)
+                    || double.IsNaN(pos.y) || double.IsInfinity(pos.y)
+                    || double.IsNaN(pos.z) || double.IsInfinity(pos.z));
+            }
+
             public static void ExtractAll(ServerMessage serverMessage)
             {
                 // The final received message contains the "completed" property
@@ -91,6 +103,20 @@ namespace VAICOM
 
                 State.previousstate = State.currentstate;
                 State.currentstate = new ServerState();
+
+                // Keep the last known ownship/camera position alive while new chunks stream in.
+                if (State.previousstate != null)
+                {
+                    if (IsValidOwnshipVector(State.previousstate.bpos))
+                    {
+                        State.currentstate.bpos = State.previousstate.bpos;
+                    }
+
+                    if (State.previousstate.cpos != null)
+                    {
+                        State.currentstate.cpos = State.previousstate.cpos;
+                    }
+                }
 
                 try
                 {
@@ -365,8 +391,18 @@ namespace VAICOM
                 try
                 {
                     State.currentstate.riostate = serverMessage.riostate;
-                    State.currentstate.bpos = serverMessage.bpos;
-                    State.currentstate.cpos = serverMessage.cpos;
+
+                    // Only replace ownship position when the incoming chunk contains valid numbers.
+                    if (IsValidOwnshipVector(serverMessage.bpos))
+                    {
+                        State.currentstate.bpos = serverMessage.bpos;
+                    }
+
+                    if (serverMessage.cpos != null)
+                    {
+                        State.currentstate.cpos = serverMessage.cpos;
+                    }
+
                     State.currentstate.viewexternal = !State.currentstate.cpos.type.Equals(0);
                     State.currentstate.soundsallowexternal = State.currentstate.options.sound.headphones_on_external_views;
 

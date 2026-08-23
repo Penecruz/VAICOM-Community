@@ -12,6 +12,7 @@ using System.Threading;
 using System.Runtime.InteropServices;
 using System.Reflection;
 using System.Windows;
+using System.Globalization;
 using VAICOM.Static;
 
 namespace VAICOM
@@ -25,6 +26,7 @@ namespace VAICOM
                 private static readonly object Sync = new object();
                 private static readonly object RawServerLogSync = new object();
                 private static readonly object StoreLookupSync = new object();
+                private static readonly object FastOwnshipSync = new object();
                 private static OpenKneeboardSnapshot snapshot = new OpenKneeboardSnapshot();
                 private static string lastAiCrewCommand = "";
                 private static bool captureRawServerMessages;
@@ -36,6 +38,76 @@ namespace VAICOM
                 private static DateTime storeLookupLastWriteUtc = DateTime.MinValue;
                 private static string storeLookupMapJson = "{}";
                 private static string currentSelectedTab = "";
+                private static FastOwnshipState fastOwnship = new FastOwnshipState();
+
+                private sealed class FastOwnshipState
+                {
+                    public bool HasPosition;
+                    public double X;
+                    public double Y;
+                    public double AltFeet;
+                    public double HeadingDeg;
+                    public bool HasHeading;
+                    public DateTime UpdatedUtc;
+                }
+
+                public static void UpdateFastOwnship(double x, double y, double z, double? headingDeg)
+                {
+                    if (double.IsNaN(x) || double.IsInfinity(x)
+                        || double.IsNaN(y) || double.IsInfinity(y)
+                        || double.IsNaN(z) || double.IsInfinity(z))
+                    {
+                        return;
+                    }
+
+                    lock (FastOwnshipSync)
+                    {
+                        fastOwnship.HasPosition = true;
+                        fastOwnship.X = x;
+                        fastOwnship.Y = z;
+                        fastOwnship.AltFeet = y * 3.28084;
+                        if (headingDeg.HasValue && !double.IsNaN(headingDeg.Value) && !double.IsInfinity(headingDeg.Value))
+                        {
+                            fastOwnship.HasHeading = true;
+                            double heading = headingDeg.Value;
+                            if (Math.Abs(heading) <= (Math.PI * 2.0 + 0.001))
+                            {
+                                heading = heading * 180.0 / Math.PI;
+                            }
+                            heading = heading % 360.0;
+                            if (heading < 0)
+                            {
+                                heading += 360.0;
+                            }
+                            fastOwnship.HeadingDeg = heading;
+                        }
+                        fastOwnship.UpdatedUtc = DateTime.UtcNow;
+                    }
+                }
+
+                private static bool TryGetFastOwnship(out FastOwnshipState value)
+                {
+                    lock (FastOwnshipSync)
+                    {
+                        value = new FastOwnshipState
+                        {
+                            HasPosition = fastOwnship.HasPosition,
+                            X = fastOwnship.X,
+                            Y = fastOwnship.Y,
+                            AltFeet = fastOwnship.AltFeet,
+                            HasHeading = fastOwnship.HasHeading,
+                            HeadingDeg = fastOwnship.HeadingDeg,
+                            UpdatedUtc = fastOwnship.UpdatedUtc,
+                        };
+                    }
+
+                    if (!value.HasPosition)
+                    {
+                        return false;
+                    }
+
+                    return (DateTime.UtcNow - value.UpdatedUtc) <= TimeSpan.FromSeconds(2);
+                }
 
                 private static string IndexHtml;
 
@@ -43,6 +115,7 @@ namespace VAICOM
                 private static Thread listenerThread;
                 private static bool isRunning;
                 private static long lastClientRequestUtcTicks;
+                private static long fastOwnshipLastLogUtcTicks;
                 private static readonly Guid SavedGamesFolderId = new Guid("4C5C32FF-BB9D-43B0-B5B4-2D72E54EAAA4");
 
                 [DllImport("shell32.dll")]
@@ -1526,6 +1599,12 @@ namespace VAICOM
                         return;
                     }
 
+                    if (path == "/okb/sa/ownship")
+                    {
+                        WriteJson(context.Response, BuildOwnshipJson());
+                        return;
+                    }
+
                     if (path == "/okb/dev/servermessages")
                     {
                         bool enable = string.Equals(context.Request.QueryString["enabled"], "1", StringComparison.OrdinalIgnoreCase)
@@ -2405,6 +2484,71 @@ namespace VAICOM
                     };
 
                     return JsonConvert.SerializeObject(payload, Formatting.None);
+                }
+
+                private static string BuildOwnshipJson()
+                {
+                    try
+                    {
+                        string theater = "";
+                        double posX = 0;
+                        double posY = 0;
+                        double altFeet = 0;
+                        double headingDeg = 0;
+                        bool hasHeading = false;
+                        double missionTimeSeconds = 0;
+                        bool hasPosition = false;
+
+                        FastOwnshipState ownshipFast;
+                        if (TryGetFastOwnship(out ownshipFast))
+                        {
+                            posX = ownshipFast.X;
+                            posY = ownshipFast.Y;
+                            altFeet = ownshipFast.AltFeet;
+                            hasPosition = true;
+                            hasHeading = ownshipFast.HasHeading;
+                            headingDeg = ownshipFast.HeadingDeg;
+                        }
+
+                        if (State.currentstate != null)
+                        {
+                            theater = State.currentstate.theatre ?? "";
+
+                            if (!hasPosition && State.currentstate.bpos != null)
+                            {
+                                posX = State.currentstate.bpos.x;
+                                posY = State.currentstate.bpos.z;
+                                altFeet = State.currentstate.bpos.y * 3.28084;
+                                hasPosition = true;
+                            }
+
+                            double missionStartSeconds;
+                            double missionElapsedSeconds = State.currentstate.timer;
+                            bool hasMissionStart = double.TryParse(State.currentstate.sortie ?? "", out missionStartSeconds);
+                            missionTimeSeconds = hasMissionStart && missionElapsedSeconds >= 0
+                                ? (missionStartSeconds + missionElapsedSeconds)
+                                : State.currentstate.tod;
+                        }
+
+                        var payload = new
+                        {
+                            updatedUtc = DateTime.UtcNow,
+                            theater = theater,
+                            hasPosition = hasPosition,
+                            posX = posX,
+                            posY = posY,
+                            altFeet = altFeet,
+                            hasHeading = hasHeading,
+                            headingDeg = headingDeg,
+                            missionTimeSeconds = missionTimeSeconds,
+                        };
+
+                        return JsonConvert.SerializeObject(payload, Formatting.None);
+                    }
+                    catch
+                    {
+                        return "{\"updatedUtc\":\"\",\"theater\":\"\",\"hasPosition\":false,\"posX\":0,\"posY\":0,\"altFeet\":0,\"missionTimeSeconds\":0}";
+                    }
                 }
 
                 private static string BuildEfbAirportsJson()

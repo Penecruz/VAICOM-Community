@@ -13,6 +13,64 @@ namespace VAICOM
         public static partial class Server
         {
 
+            private static bool DetectFastOwnshipState(string receivedString)
+            {
+                const string prefix = "missiondata.update.ownship";
+                receivedString = (receivedString ?? "").Trim();
+                if (string.IsNullOrEmpty(receivedString) || !receivedString.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+                {
+                    return false;
+                }
+
+                try
+                {
+                    string[] parts = receivedString.Split(';');
+                    Dictionary<string, string> values = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+
+                    for (int i = 1; i < parts.Length; i++)
+                    {
+                        string part = parts[i];
+                        int idx = part.IndexOf('=');
+                        if (idx <= 0 || idx >= part.Length - 1)
+                        {
+                            continue;
+                        }
+
+                        string key = part.Substring(0, idx).Trim();
+                        string val = part.Substring(idx + 1).Trim();
+                        if (key.Length > 0)
+                        {
+                            values[key] = val;
+                        }
+                    }
+
+                    double x;
+                    double y;
+                    double z;
+                    if (!double.TryParse(values.ContainsKey("x") ? values["x"] : "", System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out x)
+                        || !double.TryParse(values.ContainsKey("y") ? values["y"] : "", System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out y)
+                        || !double.TryParse(values.ContainsKey("z") ? values["z"] : "", System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out z))
+                    {
+                        return true;
+                    }
+
+                    double heading;
+                    double? headingOpt = null;
+                    if (double.TryParse(values.ContainsKey("hdg") ? values["hdg"] : "", System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out heading))
+                    {
+                        headingOpt = heading;
+                    }
+
+                    Extensions.Kneeboard.OpenKneeboardBridge.UpdateFastOwnship(x, y, z, headingOpt);
+                }
+                catch (Exception e)
+                {
+                    Log.Write("Problem parsing ownship state message: " + e.Message, Colors.Inline);
+                }
+
+                return true;
+            }
+
             public static void ProcessRawServerMessage(string receivedString)
             {
                 try
@@ -26,6 +84,11 @@ namespace VAICOM
                     Extensions.Kneeboard.OpenKneeboardBridge.AppendRawServerMessage(trimmed);
 
                     if (DetectAH64WeaponState(trimmed))
+                    {
+                        return;
+                    }
+
+                    if (DetectFastOwnshipState(trimmed))
                     {
                         return;
                     }

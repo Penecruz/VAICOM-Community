@@ -92,7 +92,8 @@ vaicom.config = {
     receivefromclient = { address = "*", port = 33491, timeout = 0 },
     sendtoclient = { address = "127.0.0.1", port = 33492, timeout = 0 },
     beaconclose = "missiondata.update.beacon.unlock",
-    ah64stateprefix = "missiondata.update.ah64state"
+    ah64stateprefix = "missiondata.update.ah64state",
+    ownshipprefix = "missiondata.update.ownship"
 }
 
 vaicom.insert = {
@@ -100,7 +101,7 @@ vaicom.insert = {
     probe = {
         enabled = true,
         debugenabled = false,
-        intervalSeconds = 0.25,
+        intervalSeconds = 0.1,
         lastPoll = 0,
         lastState = nil,
         lastWeaponState = nil,
@@ -238,6 +239,50 @@ vaicom.insert = {
         end
 
         self.probe.lastWeaponState = msg
+        pcall(function() vaicom.sendtoclient:send(msg) end)
+    end,
+
+    SendOwnshipStateUpdate = function(self)
+        if not vaicom.sendtoclient then return end
+
+        local x = nil
+        local y = nil
+        local z = nil
+        local hdg = nil
+
+        if type(LoGetSelfData) == "function" then
+            local ok, selfData = pcall(LoGetSelfData)
+            if ok and type(selfData) == "table" and type(selfData.Position) == "table" then
+                x = tonumber(selfData.Position.x)
+                y = tonumber(selfData.Position.y)
+                z = tonumber(selfData.Position.z)
+                hdg = tonumber(selfData.Heading)
+            end
+        end
+
+        if (x == nil or y == nil or z == nil) and type(LoGetWorldObjects) == "function" then
+            local ok, own = pcall(LoGetWorldObjects, "self")
+            if ok and type(own) == "table" and type(own.Position) == "table" then
+                x = tonumber(own.Position.x)
+                y = tonumber(own.Position.y)
+                z = tonumber(own.Position.z)
+                if hdg == nil then
+                    hdg = tonumber(own.Heading)
+                end
+            end
+        end
+
+        if x == nil or y == nil or z == nil then
+            return
+        end
+
+        local msg
+        if hdg ~= nil then
+            msg = string.format("%s;x=%.3f;y=%.3f;z=%.3f;hdg=%.3f", vaicom.config.ownshipprefix, x, y, z, hdg)
+        else
+            msg = string.format("%s;x=%.3f;y=%.3f;z=%.3f", vaicom.config.ownshipprefix, x, y, z)
+        end
+
         pcall(function() vaicom.sendtoclient:send(msg) end)
     end,
 
@@ -413,12 +458,13 @@ vaicom.insert = {
         self.probe.lastPoll = now
 
         local moduleName, unitName, payloadText, payloadTable = self:BuildProbeSnapshot()
+        local isAh64 = string.find(moduleName or "", "AH-64D", 1, true) ~= nil
 
-        if not string.find(moduleName or "", "AH-64D", 1, true) then
-            return
+        if isAh64 then
+            self:SendWeaponStateUpdate(payloadTable)
         end
 
-        self:SendWeaponStateUpdate(payloadTable)
+        self:SendOwnshipStateUpdate()
 
         local state = moduleName .. ";" .. unitName .. ";" .. payloadText
         if enableFileLogging and self.probe.logfile and state ~= self.probe.lastState then

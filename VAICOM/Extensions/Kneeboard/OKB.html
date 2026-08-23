@@ -430,6 +430,10 @@
       flex: 1 1 auto !important;
     }
 
+    body.efb-tab #tabBody {
+      padding: 0;
+    }
+
     body.efb-tab .tabKeywordDivider {
       display: none !important;
     }
@@ -441,13 +445,13 @@
     .efbShell {
       position: relative;
       height: 100%;
-      min-height: 280px;
+      min-height: 0;
     }
 
     .efbLeftRail {
       position: absolute;
       left: 8px;
-      top: 8px;
+      top: 82px;
       z-index: 34;
       display: flex;
       flex-direction: column;
@@ -457,7 +461,7 @@
     .efbRightRail {
       position: absolute;
       right: 8px;
-      top: 8px;
+      top: 82px;
       z-index: 34;
       display: flex;
       flex-direction: column;
@@ -474,6 +478,10 @@
       justify-content: space-between;
       gap: 8px;
       pointer-events: none;
+    }
+
+    .efbTopNav.efbTopNavHidden {
+      display: none;
     }
 
     .efbTopNavBtn {
@@ -771,6 +779,12 @@
       transition: transform 120ms ease, filter 120ms ease, box-shadow 140ms ease, border-color 140ms ease;
     }
 
+    .efbRailBtn.active {
+      opacity: 0.95;
+      border-color: #8bc4ff;
+      box-shadow: 0 0 0 3px rgba(134, 196, 255, 0.52), 0 0 18px rgba(80, 170, 255, 0.45);
+    }
+
     .efbRightDrawerBtn:hover {
       animation: iconHoverWobble 220ms ease;
       filter: brightness(1.1);
@@ -782,6 +796,12 @@
     .efbRightDrawerBtn:active {
       transform: translateY(0);
       filter: brightness(1.05);
+      opacity: 0.95;
+      border-color: #8bc4ff;
+      box-shadow: 0 0 0 3px rgba(134, 196, 255, 0.52), 0 0 18px rgba(80, 170, 255, 0.45);
+    }
+
+    .efbRightDrawerBtn.active {
       opacity: 0.95;
       border-color: #8bc4ff;
       box-shadow: 0 0 0 3px rgba(134, 196, 255, 0.52), 0 0 18px rgba(80, 170, 255, 0.45);
@@ -832,6 +852,10 @@
       pointer-events: none;
     }
 
+    .efbRailBtnHidden {
+      display: none;
+    }
+
     .efbRailSpacer {
       width: 66px;
       height: 66px;
@@ -859,6 +883,31 @@
     }
 
     .efbLeftActionDrawer.closed {
+      transform: translateX(-110%);
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .efbSaLayerDrawer {
+      position: absolute;
+      left: 80px;
+      top: 66px;
+      width: 76px;
+      padding: 6px;
+      border: 1px solid #6e7a87;
+      border-radius: 10px;
+      background: rgba(245, 250, 255, 0.82);
+      box-shadow: 0 8px 18px rgba(0, 0, 0, 0.3);
+      z-index: 33;
+      transform: translateX(0);
+      opacity: 1;
+      transition: transform 260ms ease, opacity 220ms ease;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .efbSaLayerDrawer.closed {
       transform: translateX(-110%);
       opacity: 0;
       pointer-events: none;
@@ -992,6 +1041,38 @@
       border: 1px solid #516070;
       background: #fafafa;
       cursor: grab;
+    }
+
+    .efbViewport.saMapMode,
+    .efbViewport.saMapMode:active {
+      cursor: grab;
+    }
+
+    .efbViewport.saMapMode:active {
+      cursor: grabbing;
+    }
+
+    .efbSaMapWrap {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      border: 0;
+      box-sizing: border-box;
+    }
+
+    .efbSaMapBraReadout {
+      position: absolute;
+      left: 8px;
+      right: 8px;
+      bottom: 106px;
+      z-index: 5;
+      margin: 0;
+      pointer-events: none;
+      background: rgba(255, 255, 255, 0.78);
+      border-color: rgba(124, 134, 146, 0.9);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+      opacity: 0.62;
     }
 
     .efbViewport:active {
@@ -1244,6 +1325,21 @@
       opacity: 0.95;
       border-color: #8bc4ff;
       box-shadow: 0 0 0 3px rgba(134, 196, 255, 0.52), 0 0 18px rgba(80, 170, 255, 0.45);
+    }
+
+    .fastOwnshipBtn {
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: 0.4px;
+      color: #2f88d6;
+      filter: saturate(1.15);
+    }
+
+    .fastOwnshipBtn.off {
+      opacity: 0.5;
+      border-color: #8f8f8f;
+      color: #1a2a3a;
+      filter: grayscale(1);
     }
 
     .overlayPanel.fltPlanOverlayPanel {
@@ -2562,6 +2658,11 @@
       border-color: #607183;
     }
 
+    body.night-mode .efbSaLayerDrawer {
+      background: rgba(33, 44, 58, 0.82);
+      border-color: #607183;
+    }
+
     body.night-mode .efbRightDrawerBtn {
       background: #2b3541;
       color: #e2eaf2;
@@ -2905,6 +3006,12 @@
       color: #dfe8f2;
     }
 
+    body.night-mode .efbSaMapBraReadout {
+      background: rgba(32, 41, 51, 0.96);
+      border-color: #5c6d7f;
+      color: #e2ecf6;
+    }
+
     body.night-mode .fltPlanStoresWrap {
       background: #202933;
       border-color: #5c6d7f;
@@ -3029,6 +3136,7 @@
 
   <div id="fltPlanQuickBar" class="fltPlanQuickBar hidden">
     <button id="fltPlanFileBtn" class="fltPlanQuickBtn" type="button" title="Flight plan files">☰</button>
+    <button id="fastOwnshipToggleBtn" class="fltPlanQuickBtn fastOwnshipBtn hidden" type="button" title="Fast ownship source">🌐GPS</button>
     <button id="fltPlanSessionBtn" class="fltPlanQuickBtn" type="button" title="Session information">ℹ</button>
   </div>
 
@@ -3155,8 +3263,11 @@
     let runtimeFlightPlanSnapshot = null;
     let runtimeFlightPlanSnapshotMissionIdentity = '';
     let runtimeFlightPlanSnapshotGroupName = '';
+    let runtimeFlightPlanUserOverride = false;
     let lastKnownPlayerCallsign = '';
     let lastKnownTheater = '';
+    let lastOwnshipPointForHeading = null;
+    let lastOwnshipHeadingDeg = NaN;
     let lastMissionIdentity = '';
     let lastMissionClockSeconds = NaN;
     let missionClockAnchorSeconds = NaN;
@@ -3180,6 +3291,11 @@
     const dlinkOnStorageKey = 'vaicom.okb.dlinkOn';
     const contentFontSizeStorageKey = 'vaicom.okb.contentFontSize';
     const efbPinnedChartsStorageKey = 'vaicom.okb.efbPinnedChartsByAirport';
+    const efbViewerModeStorageKey = 'vaicom.okb.efbViewerMode';
+    const efbSaFollowEnabledStorageKey = 'vaicom.okb.efbSaFollowEnabled';
+    const efbSaTrackUpEnabledStorageKey = 'vaicom.okb.efbSaTrackUpEnabled';
+    const efbSaAnchorModeStorageKey = 'vaicom.okb.efbSaAnchorMode';
+    const efbSaUseFastOwnshipStorageKey = 'vaicom.okb.efbSaUseFastOwnship';
     const drawModeTimeoutMs = 30000;
     const speedRecommendationTimeoutMs = 30000;
     const fakeMissionSpeedMin = 0.25;
@@ -3212,10 +3328,141 @@
     let efbSearchOverlayOpen = false;
     let efbSearchToken = '';
     let efbSearchAnimateOpenOnce = false;
+    let efbViewerMode = 'chart';
+    let efbSaShowAirports = true;
+    let efbSaShowNavlog = true;
+    let efbSaShowDtcOverlay = true;
+    let efbSaFollowOwnshipEnabled = false;
+    let efbSaTrackUpEnabled = false;
+    let efbSaAnchorMode = 'center';
+    let efbSaUseFastOwnshipEnabled = true;
+    let efbSaOwnshipFast = { hasPosition: false, posX: NaN, posY: NaN, altFeet: NaN, headingDeg: NaN, hasHeading: false, theater: '', updatedUtcMs: 0, lastPollMs: 0 };
+    let efbSaFollowSuppressUntilBySelection = {};
+    let efbSaLastCameraApplyMsBySelection = {};
+    let efbSaOwnshipMotionBySelection = {};
+    let efbSaCameraTickerId = 0;
+    let efbSaOwnshipPollTickerId = 0;
     const overlayCloseHideDelayMs = 620;
 
     function clamp(v, min, max) {
       return Math.max(min, Math.min(max, v));
+    }
+
+    function readEfbSaUseFastOwnshipPreference() {
+      try {
+        if (!window.localStorage) return true;
+        const raw = window.localStorage.getItem(efbSaUseFastOwnshipStorageKey);
+        if (raw === null || raw === undefined || raw === '') return true;
+        return raw !== '0';
+      } catch (_) {
+        return true;
+      }
+    }
+
+    function persistEfbSaUseFastOwnshipPreference() {
+      try {
+        if (!window.localStorage) return;
+        window.localStorage.setItem(efbSaUseFastOwnshipStorageKey, efbSaUseFastOwnshipEnabled ? '1' : '0');
+      } catch (_) {
+      }
+    }
+
+    function updateFastOwnshipToggleUi() {
+      const btn = document.getElementById('fastOwnshipToggleBtn');
+      if (!btn) return;
+      const hasFast = !!(efbSaOwnshipFast && efbSaOwnshipFast.hasPosition);
+      btn.className = hasFast
+        ? ('fltPlanQuickBtn fastOwnshipBtn' + (efbSaUseFastOwnshipEnabled ? '' : ' off'))
+        : 'fltPlanQuickBtn fastOwnshipBtn hidden';
+      btn.title = hasFast
+        ? (efbSaUseFastOwnshipEnabled
+          ? 'Fast ownship ON (click to force server fallback)'
+          : 'Fast ownship OFF (click to resume fast ownship)')
+        : 'Waiting for fast ownship stream...';
+    }
+
+    function normalizeEfbViewerMode(mode) {
+      const value = String(mode || '').toLowerCase().trim();
+      return value === 'sa-map' ? 'sa-map' : 'chart';
+    }
+
+    function readEfbViewerModePreference() {
+      try {
+        if (!window.localStorage) return 'chart';
+        const raw = window.localStorage.getItem(efbViewerModeStorageKey);
+        return normalizeEfbViewerMode(raw);
+      } catch (_) {
+        return 'chart';
+      }
+    }
+
+    function persistEfbViewerModePreference() {
+      try {
+        if (!window.localStorage) return;
+        window.localStorage.setItem(efbViewerModeStorageKey, normalizeEfbViewerMode(efbViewerMode));
+      } catch (_) {
+      }
+    }
+
+    function normalizeEfbSaAnchorMode(mode) {
+      const value = String(mode || '').toLowerCase().trim();
+      return value === 'lower-third' ? 'lower-third' : 'center';
+    }
+
+    function readEfbSaFollowEnabledPreference() {
+      try {
+        if (!window.localStorage) return false;
+        const raw = window.localStorage.getItem(efbSaFollowEnabledStorageKey);
+        if (raw === null || raw === undefined || raw === '') return false;
+        return raw === '1';
+      } catch (_) {
+        return false;
+      }
+    }
+
+    function persistEfbSaFollowEnabledPreference() {
+      try {
+        if (!window.localStorage) return;
+        window.localStorage.setItem(efbSaFollowEnabledStorageKey, efbSaFollowOwnshipEnabled ? '1' : '0');
+      } catch (_) {
+      }
+    }
+
+    function readEfbSaTrackUpEnabledPreference() {
+      try {
+        if (!window.localStorage) return false;
+        const raw = window.localStorage.getItem(efbSaTrackUpEnabledStorageKey);
+        if (raw === null || raw === undefined || raw === '') return false;
+        return raw === '1';
+      } catch (_) {
+        return false;
+      }
+    }
+
+    function persistEfbSaTrackUpEnabledPreference() {
+      try {
+        if (!window.localStorage) return;
+        window.localStorage.setItem(efbSaTrackUpEnabledStorageKey, efbSaTrackUpEnabled ? '1' : '0');
+      } catch (_) {
+      }
+    }
+
+    function readEfbSaAnchorModePreference() {
+      try {
+        if (!window.localStorage) return 'center';
+        const raw = window.localStorage.getItem(efbSaAnchorModeStorageKey);
+        return normalizeEfbSaAnchorMode(raw);
+      } catch (_) {
+        return 'center';
+      }
+    }
+
+    function persistEfbSaAnchorModePreference() {
+      try {
+        if (!window.localStorage) return;
+        window.localStorage.setItem(efbSaAnchorModeStorageKey, normalizeEfbSaAnchorMode(efbSaAnchorMode));
+      } catch (_) {
+      }
     }
 
     function updateKeywordBodyHtml(html) {
@@ -4189,6 +4436,10 @@
       const rows = Array.isArray(waypoints) ? waypoints.filter(function (wp) {
         return isFinite(Number(wp && wp.xNum)) && isFinite(Number(wp && wp.yNum));
       }) : [];
+      const allowNavlog = (efbSaShowNavlog !== false);
+      const allowDtcOverlay = (efbSaShowDtcOverlay !== false);
+      const allowAirports = (efbSaShowAirports !== false);
+      const visibleRows = allowNavlog ? rows : [];
       const model = data || latestData || {};
       const server = (model && model.Server) || {};
       const diagnostics = (server && server.Diagnostics) || {};
@@ -4214,7 +4465,16 @@
       }
 
       const mapOverlays = overlays && typeof overlays === 'object'
-        ? overlays
+        ? {
+          geolines: allowDtcOverlay ? (Array.isArray(overlays.geolines) ? overlays.geolines : []) : [],
+          threatPoints: allowDtcOverlay ? (Array.isArray(overlays.threatPoints) ? overlays.threatPoints : []) : [],
+          destinationPoints: allowDtcOverlay ? (Array.isArray(overlays.destinationPoints) ? overlays.destinationPoints : []) : [],
+          faorLines: allowDtcOverlay ? (Array.isArray(overlays.faorLines) ? overlays.faorLines : []) : [],
+          flotLines: allowDtcOverlay ? (Array.isArray(overlays.flotLines) ? overlays.flotLines : []) : [],
+          capPoints: allowDtcOverlay ? (Array.isArray(overlays.capPoints) ? overlays.capPoints : []) : [],
+          corridors: allowDtcOverlay ? (Array.isArray(overlays.corridors) ? overlays.corridors : []) : [],
+          airfields: allowAirports ? (Array.isArray(overlays.airfields) ? overlays.airfields : []) : [],
+        }
         : { geolines: [], threatPoints: [], destinationPoints: [], faorLines: [], flotLines: [], capPoints: [], corridors: [] };
 
       const approxCenterLonLat = getTheatreCenterLonLat(theatre);
@@ -4234,7 +4494,7 @@
           rawPoints.push({ n: n, e: e });
         }
 
-        rows.forEach(pushPoint);
+        visibleRows.forEach(pushPoint);
         (Array.isArray(mapOverlays.geolines) ? mapOverlays.geolines : []).forEach(pushPoint);
         (Array.isArray(mapOverlays.threatPoints) ? mapOverlays.threatPoints : []).forEach(pushPoint);
         (Array.isArray(mapOverlays.destinationPoints) ? mapOverlays.destinationPoints : []).forEach(pushPoint);
@@ -4344,8 +4604,8 @@
       }
 
       const byStep = {};
-      rows.forEach(function (wp) { byStep[String(wp && wp.step)] = wp; });
-      getMudMapSegments(rows).forEach(function (seg) {
+      visibleRows.forEach(function (wp) { byStep[String(wp && wp.step)] = wp; });
+      getMudMapSegments(visibleRows).forEach(function (seg) {
         const from = byStep[String(seg && seg.from && seg.from.step)] || (seg && seg.from);
         const to = byStep[String(seg && seg.to && seg.to.step)] || (seg && seg.to);
         if (!from || !to) return;
@@ -4356,7 +4616,7 @@
         });
       });
 
-      rows.forEach(function (wp) {
+      visibleRows.forEach(function (wp) {
         const step = String(wp && wp.step || '').trim();
         const name = String(wp && wp.name || '').trim();
         const label = step ? (step + (name ? (' ' + name) : '')) : name;
@@ -4515,13 +4775,21 @@
 
       const selected = getActiveFlightPlanSelection(model);
       const rawAssets = getMudMapAssets(model, dlinkOnEnabled);
+      const ownshipPoint = getPlayerMapPoint(model);
+      const ownshipHeadingResolver = (typeof getOwnshipHeadingDeg === 'function')
+        ? getOwnshipHeadingDeg
+        : function () { return NaN; };
+      const ownshipHeadingDeg = ownshipHeadingResolver(model, ownshipPoint);
       rawAssets.forEach(function (asset) {
         const category = String((asset && asset.category) || '').toUpperCase();
         if (category === 'ATC') return;
         const isPlayer = category === 'PLAYER';
+        const plotAsset = (isPlayer && ownshipPoint && isFinite(Number(ownshipPoint.xNum)) && isFinite(Number(ownshipPoint.yNum)))
+          ? Object.assign({}, asset || {}, { xNum: Number(ownshipPoint.xNum), yNum: Number(ownshipPoint.yNum) })
+          : asset;
         const callsign = String((asset && asset.callsign) || '').trim();
         const label = callsign || String((asset && asset.name) || category || 'ASSET').trim();
-        addPointFeature(asset, {
+        addPointFeature(plotAsset, {
           kind: isPlayer ? 'player' : 'asset',
           group: 'asset',
           assetKind: getMudMapAssetKind(asset),
@@ -4596,9 +4864,22 @@
       const rows = Array.isArray(waypoints) ? waypoints.filter(function (wp) {
         return isFinite(Number(wp && wp.xNum)) && isFinite(Number(wp && wp.yNum));
       }) : [];
+      const allowNavlog = (efbSaShowNavlog !== false);
+      const allowDtcOverlay = (efbSaShowDtcOverlay !== false);
+      const allowAirports = (efbSaShowAirports !== false);
       const mapOverlays = overlays && typeof overlays === 'object'
-        ? overlays
+        ? {
+          geolines: allowDtcOverlay ? (Array.isArray(overlays.geolines) ? overlays.geolines : []) : [],
+          threatPoints: allowDtcOverlay ? (Array.isArray(overlays.threatPoints) ? overlays.threatPoints : []) : [],
+          destinationPoints: allowDtcOverlay ? (Array.isArray(overlays.destinationPoints) ? overlays.destinationPoints : []) : [],
+          faorLines: allowDtcOverlay ? (Array.isArray(overlays.faorLines) ? overlays.faorLines : []) : [],
+          flotLines: allowDtcOverlay ? (Array.isArray(overlays.flotLines) ? overlays.flotLines : []) : [],
+          capPoints: allowDtcOverlay ? (Array.isArray(overlays.capPoints) ? overlays.capPoints : []) : [],
+          corridors: allowDtcOverlay ? (Array.isArray(overlays.corridors) ? overlays.corridors : []) : [],
+          airfields: allowAirports ? (Array.isArray(overlays.airfields) ? overlays.airfields : []) : [],
+        }
         : { geolines: [], threatPoints: [], destinationPoints: [], faorLines: [], flotLines: [], capPoints: [], corridors: [] };
+      const visibleRows = allowNavlog ? rows : [];
       const geolines = Array.isArray(mapOverlays.geolines) ? mapOverlays.geolines : [];
       const threatPoints = Array.isArray(mapOverlays.threatPoints) ? mapOverlays.threatPoints : [];
       const destinationPoints = Array.isArray(mapOverlays.destinationPoints) ? mapOverlays.destinationPoints : [];
@@ -4764,6 +5045,120 @@
       html += buildMudMapSvg(waypoints);
       html += '</div></div>';
       return html;
+    }
+
+    function getEfbSaMapToggleIconSvg(isSaMapMode) {
+      if (isSaMapMode) {
+        return '<svg class="efbRailIconSvg" viewBox="0 0 64 64" aria-hidden="true">'
+          + '<rect x="11" y="7" width="42" height="50" rx="2" ry="2" fill="none" stroke="currentColor" stroke-width="3.5"/>'
+          + '<line x1="11" y1="16" x2="53" y2="16" stroke="currentColor" stroke-width="2.6"/>'
+          + '<line x1="14" y1="12" x2="30" y2="12" stroke="currentColor" stroke-width="2"/>'
+          + '<line x1="34" y1="12" x2="50" y2="12" stroke="currentColor" stroke-width="2"/>'
+          + '<line x1="14" y1="21" x2="33" y2="21" stroke="currentColor" stroke-width="1.8" opacity="0.9"/>'
+          + '<line x1="14" y1="25" x2="30" y2="25" stroke="currentColor" stroke-width="1.8" opacity="0.9"/>'
+          + '<line x1="35" y1="21" x2="50" y2="21" stroke="currentColor" stroke-width="1.6" opacity="0.8"/>'
+          + '<line x1="35" y1="25" x2="48" y2="25" stroke="currentColor" stroke-width="1.6" opacity="0.8"/>'
+          + '<path d="M16 45c4-7 10-9 15-7 4 2 9 2 17-3" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"/>'
+          + '<circle cx="31" cy="37" r="2.4" fill="none" stroke="currentColor" stroke-width="1.8"/>'
+          + '<line x1="31" y1="33" x2="31" y2="41" stroke="currentColor" stroke-width="1.5"/>'
+          + '<line x1="27" y1="37" x2="35" y2="37" stroke="currentColor" stroke-width="1.5"/>'
+          + '<rect x="14" y="48" width="15" height="7" fill="none" stroke="currentColor" stroke-width="1.8"/>'
+          + '<line x1="33" y1="50" x2="50" y2="50" stroke="currentColor" stroke-width="1.8"/>'
+          + '<line x1="33" y1="54" x2="47" y2="54" stroke="currentColor" stroke-width="1.8"/>'
+          + '</svg>';
+      }
+
+      return '<svg class="efbRailIconSvg" viewBox="0 0 64 64" aria-hidden="true">'
+        + '<path d="M8 50V17l14-6 12 5 12-5v33l-12 5-12-5-14 6z" fill="none" stroke="currentColor" stroke-width="4" stroke-linejoin="round"/>'
+        + '<line x1="22" y1="11" x2="22" y2="56" stroke="currentColor" stroke-width="3"/>'
+        + '<line x1="34" y1="16" x2="34" y2="49" stroke="currentColor" stroke-width="3"/>'
+        + '<path d="M46 17c-5.4 0-9.8 4.4-9.8 9.8 0 6.8 9.8 17.1 9.8 17.1S55.8 33.6 55.8 26.8c0-5.4-4.4-9.8-9.8-9.8z" fill="none" stroke="currentColor" stroke-width="4" stroke-linejoin="round"/>'
+        + '<circle cx="46" cy="26.8" r="2.8" fill="currentColor"/>'
+        + '</svg>';
+    }
+
+    function getEfbOwnshipCenterIconSvg() {
+      return '<svg class="efbRailIconSvg" viewBox="0 0 64 64" aria-hidden="true">'
+        + '<path d="M8 30L56 8 43 56 31 43 22 49 19 39 8 30z" fill="currentColor"/>'
+        + '<path d="M14 31L48 14 30 39z" fill="#f1f1ef" opacity="0.92"/>'
+        + '</svg>';
+    }
+
+    function getEfbSaLayersIconSvg() {
+      return '<svg class="efbRailIconSvg" viewBox="0 0 64 64" aria-hidden="true">'
+        + '<rect x="10" y="12" width="44" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="3"/>'
+        + '<rect x="10" y="27" width="44" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="3"/>'
+        + '<rect x="10" y="42" width="44" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="3"/>'
+        + '</svg>';
+    }
+
+    function getEfbSaLayerDlinkIconSvg() {
+      return '<svg class="efbRailIconSvg" viewBox="0 0 64 64" aria-hidden="true">'
+        + '<text x="32" y="48" text-anchor="middle" font-size="40" font-weight="700" fill="currentColor" font-family="Consolas, monospace">DL</text>'
+        + '</svg>';
+    }
+
+    function getEfbSaLayerAirportIconSvg() {
+      return '<svg class="efbRailIconSvg" viewBox="0 0 64 64" aria-hidden="true">'
+        + '<path d="M14 24h36v6h-4l2 9h-8l-2-7h-12l-2 7h-8l2-9h-4z" fill="currentColor"/>'
+        + '<rect x="27" y="39" width="10" height="15" fill="currentColor"/>'
+        + '<rect x="18" y="54" width="28" height="4" fill="currentColor"/>'
+        + '</svg>';
+    }
+
+    function getEfbSaLayerNavlogIconSvg() {
+      return '<svg class="efbRailIconSvg" viewBox="0 0 64 64" aria-hidden="true">'
+        + '<circle cx="20" cy="32" r="7" fill="none" stroke="currentColor" stroke-width="3"/>'
+        + '<circle cx="44" cy="20" r="7" fill="none" stroke="currentColor" stroke-width="3"/>'
+        + '<circle cx="44" cy="44" r="7" fill="none" stroke="currentColor" stroke-width="3"/>'
+        + '<line x1="26" y1="30" x2="38" y2="22" stroke="currentColor" stroke-width="3"/>'
+        + '<line x1="26" y1="34" x2="38" y2="42" stroke="currentColor" stroke-width="3"/>'
+        + '</svg>';
+    }
+
+    function getEfbSaLayerOverlayIconSvg() {
+      return '<svg class="efbRailIconSvg" viewBox="0 0 64 64" aria-hidden="true">'
+        + '<rect x="12" y="12" width="40" height="40" rx="4" fill="none" stroke="currentColor" stroke-width="3"/>'
+        + '<line x1="20" y1="44" x2="44" y2="20" stroke="currentColor" stroke-width="3"/>'
+        + '<circle cx="22" cy="22" r="4" fill="none" stroke="currentColor" stroke-width="2.5"/>'
+        + '<circle cx="42" cy="42" r="4" fill="none" stroke="currentColor" stroke-width="2.5"/>'
+        + '</svg>';
+    }
+
+    function getEfbSaFollowIconSvg() {
+      return '<svg class="efbRailIconSvg" viewBox="0 0 64 64" aria-hidden="true">'
+        + '<circle cx="32" cy="32" r="14" fill="none" stroke="currentColor" stroke-width="3"/>'
+        + '<line x1="32" y1="8" x2="32" y2="20" stroke="currentColor" stroke-width="3"/>'
+        + '<line x1="32" y1="44" x2="32" y2="56" stroke="currentColor" stroke-width="3"/>'
+        + '<line x1="8" y1="32" x2="20" y2="32" stroke="currentColor" stroke-width="3"/>'
+        + '<line x1="44" y1="32" x2="56" y2="32" stroke="currentColor" stroke-width="3"/>'
+        + '<circle cx="32" cy="32" r="3.8" fill="currentColor"/>'
+        + '</svg>';
+    }
+
+    function getEfbSaTrackUpIconSvg() {
+      return '<svg class="efbRailIconSvg" viewBox="0 0 64 64" aria-hidden="true">'
+        + '<polygon points="32,8 46,46 32,38 18,46" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/>'
+        + '<line x1="32" y1="18" x2="32" y2="40" stroke="currentColor" stroke-width="3"/>'
+        + '</svg>';
+    }
+
+    function getEfbSaAnchorCenterIconSvg() {
+      return '<svg class="efbRailIconSvg" viewBox="0 0 64 64" aria-hidden="true">'
+        + '<rect x="10" y="10" width="44" height="44" rx="5" fill="none" stroke="currentColor" stroke-width="3"/>'
+        + '<line x1="32" y1="16" x2="32" y2="48" stroke="currentColor" stroke-width="3"/>'
+        + '<line x1="16" y1="32" x2="48" y2="32" stroke="currentColor" stroke-width="3"/>'
+        + '<circle cx="32" cy="32" r="3.2" fill="currentColor"/>'
+        + '</svg>';
+    }
+
+    function getEfbSaAnchorLowerThirdIconSvg() {
+      return '<svg class="efbRailIconSvg" viewBox="0 0 64 64" aria-hidden="true">'
+        + '<rect x="10" y="10" width="44" height="44" rx="5" fill="none" stroke="currentColor" stroke-width="3"/>'
+        + '<line x1="16" y1="32" x2="48" y2="32" stroke="currentColor" stroke-width="2.3" opacity="0.55"/>'
+        + '<line x1="16" y1="42" x2="48" y2="42" stroke="currentColor" stroke-width="3"/>'
+        + '<circle cx="32" cy="42" r="3.2" fill="currentColor"/>'
+        + '</svg>';
     }
 
     function formatDtcFocusedTable(root, selected) {
@@ -5214,7 +5609,9 @@
     function openEfbDrawer(mode) {
       efbDrawerMode = mode === 'chart'
         ? 'chart'
-        : (mode === 'pinned' ? 'pinned' : 'airport');
+        : (mode === 'pinned'
+          ? 'pinned'
+          : (mode === 'sa-layers' ? 'sa-layers' : 'airport'));
       efbDrawerOpen = true;
       efbSelectionFlowActive = true;
     }
@@ -5396,6 +5793,29 @@
       }).join('');
     }
 
+    function formatEfbSaMapViewportHtml(data) {
+      const context = resolveActiveSaMapContext(data || latestData);
+      if (!context || !context.selected || !context.waypoints) {
+        return '<div class="efbEmpty">SA Map unavailable for current FLT PLN selection.</div>';
+      }
+
+      const state = buildSaMapRenderState(context.waypoints, data, context.selected, context.overlays, context.root);
+      if (!state) {
+        return '<div class="efbEmpty">SA Map unavailable for current FLT PLN data.</div>';
+      }
+
+      let html = '<div class="efbSaMapWrap fltPlanOpenMapWrap" data-openfreemap-wrap="' + escapeHtml(state.openFreeMapId || '') + '">';
+      if (state.openFreeMapId) {
+        html += '<div class="fltPlanOpenMapHost" data-openfreemap-map-id="' + escapeHtml(state.openFreeMapId) + '" data-openfreemap-selection="' + escapeHtml(getFlightPlanEtaStartKey(context.selected)) + '"></div>';
+        html += '<div class="fltPlanOpenMapFallback">' + state.mapSvg + '</div>';
+      } else {
+        html += state.mapSvg;
+      }
+      html += '<div id="efbSaMapBraReadout" class="fltPlanPage3BraReadout efbSaMapBraReadout">' + escapeHtml(state.readout) + '</div>';
+      html += '</div>';
+      return html;
+    }
+
     function formatEfbTabContentHtml(data) {
       const airportKey = getEfbAirportKey(data);
       const charts = efbChartsByAirport[airportKey] || [];
@@ -5438,8 +5858,9 @@
       const chartUrl = selectedChart ? ('/okb/efb/chart?id=' + encodeURIComponent(String(selectedChart.id || ''))) : '';
       const drawerTitle = efbDrawerMode === 'chart'
         ? ('Charts · ' + escapeHtml(airportKey || 'UNSET'))
+        : (efbDrawerMode === 'sa-layers' ? 'SA Map Layers'
         : (efbDrawerMode === 'pinned' ? ('Pinned · ' + escapeHtml(airportKey || 'UNSET'))
-          : 'Airports');
+          : 'Airports'));
       const pinned = getPinnedChartsForAirport(airportKey);
       const pinnedRows = charts
         .filter(function (c) {
@@ -5452,24 +5873,35 @@
           const active = id === selected ? ' active' : '';
           return '<div class="efbPickerRow' + active + '"><button type="button" class="efbPickerItemMain" data-efb-chart="' + escapeHtml(encodeURIComponent(id)) + '">' + escapeHtml(label) + '</button><button type="button" class="efbPinBtn pinned" data-efb-pin-toggle="' + escapeHtml(encodeURIComponent(id)) + '" title="Unpin chart">📌</button></div>';
         }).join('');
+      const saLayerDrawerOpen = efbDrawerOpen && efbDrawerMode === 'sa-layers';
       const drawerRows = efbDrawerMode === 'chart'
         ? (options || '<span class="efbPickerEmpty">No charts for this airport</span>')
         : (efbDrawerMode === 'pinned'
           ? (pinnedRows || '<span class="efbPickerEmpty">No pinned charts for this airport</span>')
           : (airportOptions || '<span class="efbPickerEmpty">No airport folders</span>'));
       const drawerClass = efbDrawerOpen ? 'efbLeftActionDrawer' : 'efbLeftActionDrawer closed';
+      const isSaMapMode = normalizeEfbViewerMode(efbViewerMode) === 'sa-map';
+      const topNavClass = isSaMapMode ? 'efbTopNav efbTopNavHidden' : 'efbTopNav';
+      const saToggleTitle = isSaMapMode ? 'Switch to Chart view' : 'Switch to SA Map view';
 
       return ''
         + '<div class="efbShell">'
-        + '<div class="efbTopNav">'
+        + '<div class="' + topNavClass + '">'
         + '<button id="efbPrevChartBtn" type="button" class="efbTopNavBtn" title="Previous chart (uses pinned charts when available)"' + (canCycle ? '' : ' disabled') + '>&lt;&lt; PREV</button>'
         + '<button id="efbNextChartBtn" type="button" class="efbTopNavBtn" title="Next chart (uses pinned charts when available)"' + (canCycle ? '' : ' disabled') + '>NEXT &gt;&gt;</button>'
         + '</div>'
         + '<div class="efbLeftRail">'
-        + '<button id="efbAutoAirportBtn" type="button" class="efbRailBtn" title="Auto-select closest airport">A</button>'
-        + '<button id="efbAirportToggleBtn" type="button" class="efbRailBtn" title="Select airport and chart"><svg class="efbRailIconSvg" viewBox="0 0 64 64" aria-hidden="true"><path d="M14 20h36v6h-4l2 9h-8l-2-7h-12l-2 7h-8l2-9h-4z" fill="currentColor"/><rect x="27" y="35" width="10" height="19" fill="currentColor"/><rect x="18" y="54" width="28" height="5" fill="currentColor"/><circle cx="32" cy="10" r="2.5" fill="currentColor"/><path d="M25 11a7 7 0 0 1 14 0" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/><path d="M21 11a11 11 0 0 1 22 0" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg></button>'
-        + '<button id="efbPinnedBtn" type="button" class="efbRailBtn" title="Pinned charts">📌</button>'
-        + '<button id="efbSearchToggleBtn" type="button" class="efbRailBtn" title="Search charts">⌕</button>'
+        + '<button id="efbSaMapToggleBtn" type="button" class="efbRailBtn' + (isSaMapMode ? ' active' : '') + '" title="' + escapeHtml(saToggleTitle) + '">' + getEfbSaMapToggleIconSvg(isSaMapMode) + '</button>'
+        + '<span class="efbRailSpacer" aria-hidden="true"></span>'
+        + '<button id="efbCenterOwnshipBtn" type="button" class="efbRailBtn' + (isSaMapMode ? '' : ' efbRailBtnHidden') + '" title="Center SA Map on ownship">' + getEfbOwnshipCenterIconSvg() + '</button>'
+        + '<button id="efbSaFollowBtn" type="button" class="efbRailBtn' + (isSaMapMode ? '' : ' efbRailBtnHidden') + (efbSaFollowOwnshipEnabled ? ' active' : '') + '" title="Follow ownship ' + (efbSaFollowOwnshipEnabled ? 'ON' : 'OFF') + '">' + getEfbSaFollowIconSvg() + '</button>'
+        + '<button id="efbSaTrackUpBtn" type="button" class="efbRailBtn' + (isSaMapMode ? '' : ' efbRailBtnHidden') + (efbSaTrackUpEnabled ? ' active' : '') + '" title="Track-up ' + (efbSaTrackUpEnabled ? 'ON' : 'OFF') + '">' + getEfbSaTrackUpIconSvg() + '</button>'
+        + '<button id="efbSaAnchorBtn" type="button" class="efbRailBtn' + (isSaMapMode && efbSaFollowOwnshipEnabled ? '' : ' efbRailBtnHidden') + '" title="Anchor: ' + (normalizeEfbSaAnchorMode(efbSaAnchorMode) === 'lower-third' ? 'Lower third' : 'Center') + '">' + (normalizeEfbSaAnchorMode(efbSaAnchorMode) === 'lower-third' ? getEfbSaAnchorLowerThirdIconSvg() : getEfbSaAnchorCenterIconSvg()) + '</button>'
+        + '<button id="efbSaLayersBtn" type="button" class="efbRailBtn' + (isSaMapMode ? '' : ' efbRailBtnHidden') + (saLayerDrawerOpen ? ' active' : '') + '" title="SA map layer controls">' + getEfbSaLayersIconSvg() + '</button>'
+        + '<button id="efbSearchToggleBtn" type="button" class="efbRailBtn' + (isSaMapMode ? ' efbRailBtnHidden' : '') + '" title="Search charts">⌕</button>'
+        + '<button id="efbAutoAirportBtn" type="button" class="efbRailBtn' + (isSaMapMode ? ' efbRailBtnHidden' : '') + '" title="Auto-select closest airport">A</button>'
+        + '<button id="efbAirportToggleBtn" type="button" class="efbRailBtn' + (isSaMapMode ? ' efbRailBtnHidden' : '') + '" title="Select airport and chart"><svg class="efbRailIconSvg" viewBox="0 0 64 64" aria-hidden="true"><path d="M14 20h36v6h-4l2 9h-8l-2-7h-12l-2 7h-8l2-9h-4z" fill="currentColor"/><rect x="27" y="35" width="10" height="19" fill="currentColor"/><rect x="18" y="54" width="28" height="5" fill="currentColor"/><circle cx="32" cy="10" r="2.5" fill="currentColor"/><path d="M25 11a7 7 0 0 1 14 0" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/><path d="M21 11a11 11 0 0 1 22 0" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg></button>'
+        + '<button id="efbPinnedBtn" type="button" class="efbRailBtn' + (isSaMapMode ? ' efbRailBtnHidden' : '') + '" title="Pinned charts">📌</button>'
         + '</div>'
         + '<div class="efbRightRail">'
         + '<button id="efbZoomOutBtn" type="button" class="efbRailBtn" title="Zoom out">−</button>'
@@ -5487,6 +5919,12 @@
         + '<div id="efbLeftActionDrawer" class="' + drawerClass + '">'
         + '<div class="efbDrawerHeader"><span id="efbDrawerTitle">' + drawerTitle + '</span><button id="efbDrawerCloseBtn" class="efbDrawerCloseBtn" type="button">✕</button></div>'
         + '<div id="efbDrawerList" class="efbDrawerList">' + drawerRows + '</div>'
+        + '</div>'
+        + '<div id="efbSaLayerDrawer" class="' + (saLayerDrawerOpen ? 'efbSaLayerDrawer' : 'efbSaLayerDrawer closed') + '">'
+        + '<button type="button" class="efbRightDrawerBtn' + (dlinkOnEnabled ? ' active' : '') + '" data-efb-sa-layer="dlink" title="D-Link assets ' + (dlinkOnEnabled ? 'ON' : 'OFF') + '">' + getEfbSaLayerDlinkIconSvg() + '</button>'
+        + '<button type="button" class="efbRightDrawerBtn' + (efbSaShowAirports ? ' active' : '') + '" data-efb-sa-layer="airports" title="Airport symbols ' + (efbSaShowAirports ? 'ON' : 'OFF') + '">' + getEfbSaLayerAirportIconSvg() + '</button>'
+        + '<button type="button" class="efbRightDrawerBtn' + (efbSaShowNavlog ? ' active' : '') + '" data-efb-sa-layer="navlog" title="Navlog route and waypoints ' + (efbSaShowNavlog ? 'ON' : 'OFF') + '">' + getEfbSaLayerNavlogIconSvg() + '</button>'
+        + '<button type="button" class="efbRightDrawerBtn' + (efbSaShowDtcOverlay ? ' active' : '') + '" data-efb-sa-layer="dtc" title="DTC SA overlay ' + (efbSaShowDtcOverlay ? 'ON' : 'OFF') + '">' + getEfbSaLayerOverlayIconSvg() + '</button>'
         + '</div>'
         + '<div id="efbSearchOverlay" class="' + ((efbSearchOverlayOpen && !efbSearchAnimateOpenOnce) ? 'efbSearchOverlay open' : 'efbSearchOverlay') + '">'
         + '<div class="efbSearchPanel">'
@@ -5508,10 +5946,12 @@
         + '</div>'
         + '</div>'
         + '</div>'
-        + '<div id="efbChartViewport" class="efbViewport">'
-        + (chartUrl
-          ? ('<img id="efbChartImage" class="efbChartImage" src="' + chartUrl + '" alt="EFB chart">')
-          : '<div class="efbEmpty">No chart available for selected airport.</div>')
+        + '<div id="efbChartViewport" class="efbViewport' + (isSaMapMode ? ' saMapMode' : '') + '">'
+        + (isSaMapMode
+          ? formatEfbSaMapViewportHtml(data)
+          : (chartUrl
+            ? ('<img id="efbChartImage" class="efbChartImage" src="' + chartUrl + '" alt="EFB chart">')
+            : '<div class="efbEmpty">No chart available for selected airport.</div>'))
         + '</div>'
         + '</div>';
     }
@@ -5523,14 +5963,21 @@
 
       function applyEfbDrawerUi() {
         const drawer = document.getElementById('efbLeftActionDrawer');
+        const saLayerDrawer = document.getElementById('efbSaLayerDrawer');
         const title = document.getElementById('efbDrawerTitle');
         const list = document.getElementById('efbDrawerList');
         if (!drawer || !title || !list) return;
 
-        drawer.className = efbDrawerOpen ? 'efbLeftActionDrawer' : 'efbLeftActionDrawer closed';
+        const isSaLayerDrawer = efbDrawerOpen && efbDrawerMode === 'sa-layers';
+        drawer.className = (efbDrawerOpen && !isSaLayerDrawer) ? 'efbLeftActionDrawer' : 'efbLeftActionDrawer closed';
+        if (saLayerDrawer) {
+          saLayerDrawer.className = isSaLayerDrawer ? 'efbSaLayerDrawer' : 'efbSaLayerDrawer closed';
+        }
         title.textContent = efbDrawerMode === 'chart'
           ? ('Charts · ' + (airportKey || 'UNSET'))
-          : (efbDrawerMode === 'pinned' ? 'Pinned charts' : 'Airports');
+          : (efbDrawerMode === 'pinned'
+            ? 'Pinned charts'
+            : (efbDrawerMode === 'sa-layers' ? 'SA Map Layers' : 'Airports'));
 
         if (efbDrawerMode === 'chart') {
           const charts = efbChartsByAirport[airportKey] || [];
@@ -5560,6 +6007,8 @@
               return '<div class="efbPickerRow' + active + '"><button type="button" class="efbPickerItemMain" data-efb-chart="' + escapeHtml(encodeURIComponent(id)) + '">' + escapeHtml(label) + '</button><button type="button" class="efbPinBtn pinned" data-efb-pin-toggle="' + escapeHtml(encodeURIComponent(id)) + '" title="Unpin chart">📌</button></div>';
             }).join('');
           list.innerHTML = rows || '<span class="efbPickerEmpty">No pinned charts for this airport</span>';
+        } else if (efbDrawerMode === 'sa-layers') {
+          list.innerHTML = '';
         } else {
           const airports = Array.isArray(efbAvailableAirports) ? efbAvailableAirports : [];
           const rows = airports.map(function (a) {
@@ -5572,6 +6021,31 @@
         }
       }
 
+      function applyEfbSaLayerDrawerButtonUi() {
+        const drawer = document.getElementById('efbSaLayerDrawer');
+        if (!drawer) return;
+        const dlinkBtn = drawer.querySelector('[data-efb-sa-layer="dlink"]');
+        const airportsBtn = drawer.querySelector('[data-efb-sa-layer="airports"]');
+        const navlogBtn = drawer.querySelector('[data-efb-sa-layer="navlog"]');
+        const dtcBtn = drawer.querySelector('[data-efb-sa-layer="dtc"]');
+        if (dlinkBtn) {
+          dlinkBtn.classList.toggle('active', !!dlinkOnEnabled);
+          dlinkBtn.title = 'D-Link assets ' + (dlinkOnEnabled ? 'ON' : 'OFF');
+        }
+        if (airportsBtn) {
+          airportsBtn.classList.toggle('active', efbSaShowAirports !== false);
+          airportsBtn.title = 'Airports ' + (efbSaShowAirports !== false ? 'ON' : 'OFF');
+        }
+        if (navlogBtn) {
+          navlogBtn.classList.toggle('active', efbSaShowNavlog !== false);
+          navlogBtn.title = 'Navlog route ' + (efbSaShowNavlog !== false ? 'ON' : 'OFF');
+        }
+        if (dtcBtn) {
+          dtcBtn.classList.toggle('active', efbSaShowDtcOverlay !== false);
+          dtcBtn.title = 'DTC overlays ' + (efbSaShowDtcOverlay !== false ? 'ON' : 'OFF');
+        }
+      }
+
       const towerBtn = document.getElementById('efbAirportToggleBtn');
       if (towerBtn) {
         towerBtn.onclick = function (ev) {
@@ -5580,6 +6054,54 @@
             closeEfbDrawer();
           } else {
             openEfbDrawer('airport');
+          }
+          applyEfbDrawerUi();
+          applyEfbSaLayerDrawerButtonUi();
+        };
+      }
+
+      const saLayerDrawer = document.getElementById('efbSaLayerDrawer');
+      if (saLayerDrawer) {
+        saLayerDrawer.onclick = function (ev) {
+          const layerItem = ev && ev.target && ev.target.closest ? ev.target.closest('[data-efb-sa-layer]') : null;
+          if (!layerItem) return;
+          const layer = String(layerItem.getAttribute('data-efb-sa-layer') || '').toLowerCase();
+          if (layer === 'dlink') {
+            dlinkOnEnabled = !dlinkOnEnabled;
+            persistDlinkOnPreference();
+            applyDlinkOnUi();
+          } else if (layer === 'airports') {
+            efbSaShowAirports = !efbSaShowAirports;
+          } else if (layer === 'navlog') {
+            efbSaShowNavlog = !efbSaShowNavlog;
+          } else if (layer === 'dtc') {
+            efbSaShowDtcOverlay = !efbSaShowDtcOverlay;
+          }
+          applyEfbSaLayerDrawerButtonUi();
+          applyEfbDrawerUi();
+
+          const isSaMapMode = (selectedTab === 'EFB' && normalizeEfbViewerMode(efbViewerMode) === 'sa-map');
+          if (isSaMapMode) {
+            efbUiDirty = false;
+          } else {
+            efbUiDirty = true;
+          }
+          if (latestData) render(latestData);
+        };
+      }
+
+      applyEfbSaLayerDrawerButtonUi();
+
+      const saLayersBtn = document.getElementById('efbSaLayersBtn');
+      if (saLayersBtn) {
+        saLayersBtn.onclick = function (ev) {
+          ev.preventDefault();
+          ev.stopPropagation();
+          if (normalizeEfbViewerMode(efbViewerMode) !== 'sa-map') return;
+          if (efbDrawerOpen && efbDrawerMode === 'sa-layers') {
+            closeEfbDrawer();
+          } else {
+            openEfbDrawer('sa-layers');
           }
           applyEfbDrawerUi();
         };
@@ -5613,6 +6135,90 @@
       }
 
       const searchToggleBtn = document.getElementById('efbSearchToggleBtn');
+      const saMapToggleBtn = document.getElementById('efbSaMapToggleBtn');
+      const centerOwnshipBtn = document.getElementById('efbCenterOwnshipBtn');
+      const saFollowBtn = document.getElementById('efbSaFollowBtn');
+      const saTrackUpBtn = document.getElementById('efbSaTrackUpBtn');
+      const saAnchorBtn = document.getElementById('efbSaAnchorBtn');
+      if (saMapToggleBtn) {
+        saMapToggleBtn.onclick = function (ev) {
+          ev.preventDefault();
+          ev.stopPropagation();
+          efbViewerMode = normalizeEfbViewerMode(efbViewerMode) === 'sa-map' ? 'chart' : 'sa-map';
+          persistEfbViewerModePreference();
+          closeEfbDrawer();
+          efbRightToolsOpen = false;
+          efbSearchOverlayOpen = false;
+          efbSearchAnimateOpenOnce = false;
+          efbUiDirty = true;
+          if (latestData) render(latestData);
+        };
+      }
+
+      if (saFollowBtn) {
+        saFollowBtn.onclick = function (ev) {
+          ev.preventDefault();
+          ev.stopPropagation();
+          if (normalizeEfbViewerMode(efbViewerMode) !== 'sa-map') return;
+          efbSaFollowOwnshipEnabled = !efbSaFollowOwnshipEnabled;
+          persistEfbSaFollowEnabledPreference();
+          if (efbSaFollowOwnshipEnabled) {
+            const context = resolveActiveSaMapContext(latestData || data);
+            if (context && context.selected) {
+              const k = getFlightPlanEtaStartKey(context.selected);
+              if (k) efbSaFollowSuppressUntilBySelection[k] = 0;
+            }
+          }
+          efbUiDirty = true;
+          if (latestData) render(latestData);
+        };
+      }
+
+      if (saTrackUpBtn) {
+        saTrackUpBtn.onclick = function (ev) {
+          ev.preventDefault();
+          ev.stopPropagation();
+          if (normalizeEfbViewerMode(efbViewerMode) !== 'sa-map') return;
+          efbSaTrackUpEnabled = !efbSaTrackUpEnabled;
+          persistEfbSaTrackUpEnabledPreference();
+          efbUiDirty = true;
+          if (latestData) render(latestData);
+        };
+      }
+
+      if (saAnchorBtn) {
+        saAnchorBtn.onclick = function (ev) {
+          ev.preventDefault();
+          ev.stopPropagation();
+          if (normalizeEfbViewerMode(efbViewerMode) !== 'sa-map') return;
+          if (!efbSaFollowOwnshipEnabled) return;
+          efbSaAnchorMode = normalizeEfbSaAnchorMode(efbSaAnchorMode) === 'center' ? 'lower-third' : 'center';
+          persistEfbSaAnchorModePreference();
+          efbUiDirty = true;
+          if (latestData) render(latestData);
+        };
+      }
+
+      if (centerOwnshipBtn) {
+        centerOwnshipBtn.onclick = function (ev) {
+          ev.preventDefault();
+          ev.stopPropagation();
+          if (normalizeEfbViewerMode(efbViewerMode) !== 'sa-map') return;
+          const context = resolveActiveSaMapContext(latestData || data);
+          if (!context || !context.selected) return;
+          const mapKey = getFlightPlanEtaStartKey(context.selected);
+          if (mapKey) {
+            efbSaFollowSuppressUntilBySelection[mapKey] = 0;
+          }
+          const handled = (typeof handleOpenFreeMapCenterOwnship === 'function')
+            ? handleOpenFreeMapCenterOwnship(context.selected, latestData || data)
+            : false;
+          if (!handled && latestData) {
+            render(latestData);
+          }
+        };
+      }
+
       const closeSearchOverlayAnimated = function (afterClose) {
         const finalizeClose = function () {
           efbSearchOverlayOpen = false;
@@ -5781,7 +6387,7 @@
           if (selectedTab !== 'EFB') return;
           if (efbSelectionFlowActive) return;
           const target = ev && ev.target;
-          const insideDrawer = target && target.closest && (target.closest('.efbLeftActionDrawer') || target.closest('.efbLeftRail') || target.closest('.efbRightRail') || target.closest('.efbRightActionDrawer') || target.closest('.efbSearchOverlay'));
+          const insideDrawer = target && target.closest && (target.closest('.efbLeftActionDrawer') || target.closest('.efbSaLayerDrawer') || target.closest('.efbLeftRail') || target.closest('.efbRightRail') || target.closest('.efbRightActionDrawer') || target.closest('.efbSearchOverlay'));
           if (!insideDrawer) {
             const wasSearchOpen = efbSearchOverlayOpen;
             closeEfbDrawer();
@@ -5805,6 +6411,24 @@
       if (img) {
         applyEfbViewportToImage(img, viewport);
       }
+
+      const isSaMapMode = normalizeEfbViewerMode(efbViewerMode) === 'sa-map';
+
+      const applySaMapZoomAction = function (action) {
+        if (!isSaMapMode) return false;
+        const context = resolveActiveSaMapContext(latestData || data);
+        if (!context || !context.selected) return false;
+        const handledByWebMap = (typeof handleOpenFreeMapZoomAction === 'function')
+          ? handleOpenFreeMapZoomAction(context.selected, action)
+          : false;
+        if (!handledByWebMap) {
+          if (action === 'in') zoomMapViewBySelection(context.selected, 1.2);
+          else if (action === 'out') zoomMapViewBySelection(context.selected, 1 / 1.2);
+          else if (action === 'reset') resetMapViewBySelection(context.selected);
+          if (latestData) render(latestData);
+        }
+        return true;
+      };
 
       const zoomDelta = function (mult) {
         viewport.scale = clamp((Number(viewport.scale) || 1) * mult, 0.5, 3.5);
@@ -5847,17 +6471,27 @@
       };
 
       const outBtn = document.getElementById('efbZoomOutBtn');
-      if (outBtn) outBtn.onclick = function () { zoomDelta(0.9); };
+      if (outBtn) outBtn.onclick = function () {
+        if (!applySaMapZoomAction('out')) {
+          zoomDelta(0.9);
+        }
+      };
       const inBtn = document.getElementById('efbZoomInBtn');
-      if (inBtn) inBtn.onclick = function () { zoomDelta(1.1); };
+      if (inBtn) inBtn.onclick = function () {
+        if (!applySaMapZoomAction('in')) {
+          zoomDelta(1.1);
+        }
+      };
       const resetBtn = document.getElementById('efbZoomResetBtn');
       if (resetBtn) resetBtn.onclick = function () {
-        viewport.scale = 1;
-        viewport.tx = 0;
-        viewport.ty = 0;
-        viewport.rot = 0;
-        const image = document.getElementById('efbChartImage');
-        if (image) applyEfbViewportToImage(image, viewport);
+        if (!applySaMapZoomAction('reset')) {
+          viewport.scale = 1;
+          viewport.tx = 0;
+          viewport.ty = 0;
+          viewport.rot = 0;
+          const image = document.getElementById('efbChartImage');
+          if (image) applyEfbViewportToImage(image, viewport);
+        }
       };
 
       const rightDrawer = document.getElementById('efbRightActionDrawer');
@@ -5924,6 +6558,7 @@
       const viewEl = document.getElementById('efbChartViewport');
       if (viewEl) {
         viewEl.onmousedown = function (ev) {
+          if (normalizeEfbViewerMode(efbViewerMode) === 'sa-map') return;
           const dragAirportKey = String(airportKey || 'UNSET').toUpperCase().trim() || 'UNSET';
           const dragViewport = getEfbViewport(dragAirportKey);
           applyEfbViewportDefaults(dragViewport);
@@ -9660,9 +10295,10 @@
     function getActiveFlightPlanSelection(data) {
       const model = data || latestData || {};
       const selected = String(model.DtcSelectedFile || '');
-      if (selected) return selected;
       const runtimeWaypoints = getMissionRuntimeWaypoints(model);
       if (runtimeWaypoints.length) return '__RUNTIME_PLAYER__';
+      if (selected && runtimeFlightPlanUserOverride) return selected;
+      if (selected) return selected;
       return '';
     }
 
@@ -9716,6 +10352,9 @@
         resetRuntimeFlightPlanState();
         invalidateRuntimeFlightPlanSnapshot();
         resetMissionClockAnchor();
+        runtimeFlightPlanUserOverride = false;
+        efbSaOwnshipFast.hasPosition = false;
+        efbSaOwnshipFast.updatedUtcMs = 0;
       }
 
       if (identity) {
@@ -9729,14 +10368,14 @@
     function getDtcPageBySelection(selected) {
       const key = getFlightPlanEtaStartKey(selected);
       const v = Number(fltPlanDtcPageBySelection[key]);
-      return (v === 2 || v === 3 || v === 4) ? v : 1;
+      return (v === 2 || v === 3) ? v : 1;
     }
 
     function setDtcPageBySelection(selected, page) {
       const key = getFlightPlanEtaStartKey(selected);
       if (!key) return;
       const p = Number(page);
-      fltPlanDtcPageBySelection[key] = (p === 2 || p === 3 || p === 4) ? p : 1;
+      fltPlanDtcPageBySelection[key] = (p === 2 || p === 3) ? p : 1;
     }
 
     function isValidDtcRouteKey(route) {
@@ -10179,6 +10818,32 @@
 
                 gField.style.pointerEvents = 'none';
                 return gField;
+              }
+              if (kind === 'player') {
+                const gPlayer = makeNode('g');
+                const heading = Number(props && props.headingDeg);
+                let mapBearing = 0;
+                try {
+                  mapBearing = Number(map && map.getBearing ? map.getBearing() : 0);
+                } catch (_) {
+                  mapBearing = 0;
+                }
+                const rotation = isFinite(heading) ? normalizeHeadingDeg(heading - mapBearing) : 0;
+                gPlayer.setAttribute('transform', 'rotate(' + rotation.toFixed(1) + ' ' + p.x.toFixed(1) + ' ' + p.y.toFixed(1) + ')');
+
+                const tri = makeNode('polygon');
+                tri.setAttribute('points',
+                  p.x.toFixed(1) + ',' + (p.y - 9).toFixed(1) + ' '
+                  + (p.x - 6.8).toFixed(1) + ',' + (p.y + 6.2).toFixed(1) + ' '
+                  + p.x.toFixed(1) + ',' + (p.y + 2.5).toFixed(1) + ' '
+                  + (p.x + 6.8).toFixed(1) + ',' + (p.y + 6.2).toFixed(1));
+                tri.setAttribute('fill', '#d79cff');
+                tri.setAttribute('stroke', '#8a2f99');
+                tri.setAttribute('stroke-width', '1.4');
+                gPlayer.appendChild(tri);
+
+                gPlayer.style.pointerEvents = 'none';
+                return gPlayer;
               }
               if (kind === 'threat') {
                 const gThreat = makeNode('g');
@@ -10625,6 +11290,186 @@
       return false;
     }
 
+    function handleOpenFreeMapCenterOwnship(selected, data) {
+      const key = getFlightPlanEtaStartKey(selected);
+      if (!key) return false;
+      const containerId = String(openFreeMapContainerIdBySelectionKey[key] || '');
+      if (!containerId) return false;
+      const item = openFreeMapInstancesByContainerId[containerId];
+      if (!item || !item.map) return false;
+
+      const map = item.map;
+      const payload = item.payload || {};
+      const features = Array.isArray(payload.features) ? payload.features : [];
+      const ownshipFeature = features.find(function (f) {
+        const props = (f && f.properties) || {};
+        const geom = (f && f.geometry) || {};
+        const c = Array.isArray(geom.coordinates) ? geom.coordinates : [];
+        return String(props.kind || '').toLowerCase() === 'player'
+          && c.length >= 2
+          && isFinite(Number(c[0]))
+          && isFinite(Number(c[1]));
+      });
+
+      let centerLon = NaN;
+      let centerLat = NaN;
+      if (ownshipFeature) {
+        centerLon = Number(ownshipFeature.geometry.coordinates[0]);
+        centerLat = Number(ownshipFeature.geometry.coordinates[1]);
+      } else {
+        const model = data || latestData || {};
+        const ownship = getPlayerMapPoint(model);
+        if (!ownship || !isFinite(Number(ownship.xNum)) || !isFinite(Number(ownship.yNum))) return false;
+        const theater = String((((model && model.Server) || {}).Theater) || lastKnownTheater || '').trim();
+        const llPrimary = convertDcsXYToLatLon(theater, Number(ownship.xNum), Number(ownship.yNum));
+        const llSwap = convertDcsXYToLatLon(theater, Number(ownship.yNum), Number(ownship.xNum));
+        const ll = (llPrimary && isFinite(Number(llPrimary.lon)) && isFinite(Number(llPrimary.lat)))
+          ? llPrimary
+          : ((llSwap && isFinite(Number(llSwap.lon)) && isFinite(Number(llSwap.lat))) ? llSwap : null);
+        if (!ll) return false;
+        centerLon = Number(ll.lon);
+        centerLat = Number(ll.lat);
+      }
+
+      if (!isFinite(centerLon) || !isFinite(centerLat)) return false;
+      map.easeTo({ center: [centerLon, centerLat], duration: 0 });
+
+      const state = getOpenFreeMapViewBySelection(selected);
+      state.centerLon = centerLon;
+      state.centerLat = centerLat;
+      state.zoom = Number(map.getZoom());
+      map.easeTo({ pitch: 0, duration: 0 });
+      return true;
+    }
+
+    function applyOpenFreeMapOwnshipCamera(selected, data) {
+      const key = getFlightPlanEtaStartKey(selected);
+      if (!key || !efbSaFollowOwnshipEnabled) return false;
+
+      const suppressUntil = Number(efbSaFollowSuppressUntilBySelection[key] || 0);
+      if (isFinite(suppressUntil) && suppressUntil > Date.now()) return false;
+
+      const nowMs = Date.now();
+      const lastApplyMs = Number(efbSaLastCameraApplyMsBySelection[key] || 0);
+      if (isFinite(lastApplyMs) && (nowMs - lastApplyMs) < 40) return false;
+
+      const containerId = String(openFreeMapContainerIdBySelectionKey[key] || '');
+      if (!containerId) return false;
+      const item = openFreeMapInstancesByContainerId[containerId];
+      if (!item || !item.map || !item.payload) return false;
+
+      const map = item.map;
+      const payload = item.payload || {};
+      const features = Array.isArray(payload.features) ? payload.features : [];
+      const ownshipFeature = features.find(function (f) {
+        const props = (f && f.properties) || {};
+        const geom = (f && f.geometry) || {};
+        const c = Array.isArray(geom.coordinates) ? geom.coordinates : [];
+        return String(props.kind || '').toLowerCase() === 'player'
+          && c.length >= 2
+          && isFinite(Number(c[0]))
+          && isFinite(Number(c[1]));
+      });
+
+      let centerLon = NaN;
+      let centerLat = NaN;
+      let motionSourceLon = NaN;
+      let motionSourceLat = NaN;
+      if (ownshipFeature) {
+        centerLon = Number(ownshipFeature.geometry.coordinates[0]);
+        centerLat = Number(ownshipFeature.geometry.coordinates[1]);
+        motionSourceLon = centerLon;
+        motionSourceLat = centerLat;
+      } else {
+        const model = data || latestData || {};
+        const ownship = getPlayerMapPoint(model);
+        if (!ownship || !isFinite(Number(ownship.xNum)) || !isFinite(Number(ownship.yNum))) return false;
+        const theater = String((((model && model.Server) || {}).Theater) || lastKnownTheater || '').trim();
+        const llPrimary = convertDcsXYToLatLon(theater, Number(ownship.xNum), Number(ownship.yNum));
+        const llSwap = convertDcsXYToLatLon(theater, Number(ownship.yNum), Number(ownship.xNum));
+        const ll = (llPrimary && isFinite(Number(llPrimary.lon)) && isFinite(Number(llPrimary.lat)))
+          ? llPrimary
+          : ((llSwap && isFinite(Number(llSwap.lon)) && isFinite(Number(llSwap.lat))) ? llSwap : null);
+        if (!ll) return false;
+        centerLon = Number(ll.lon);
+        centerLat = Number(ll.lat);
+        motionSourceLon = centerLon;
+        motionSourceLat = centerLat;
+      }
+
+      if (!isFinite(centerLon) || !isFinite(centerLat)) return false;
+
+      const motionState = efbSaOwnshipMotionBySelection[key] || { lon: NaN, lat: NaN, vx: 0, vy: 0, t: 0, srcT: 0 };
+      const prevLon = Number(motionState.lon);
+      const prevLat = Number(motionState.lat);
+      const prevT = Number(motionState.t);
+      const sourceChanged = isFinite(prevLon) && isFinite(prevLat)
+        ? (Math.abs(motionSourceLon - prevLon) > 0.0000001 || Math.abs(motionSourceLat - prevLat) > 0.0000001)
+        : true;
+      if (sourceChanged && isFinite(prevLon) && isFinite(prevLat) && isFinite(prevT) && nowMs > prevT) {
+        const dtSec = (nowMs - prevT) / 1000.0;
+        if (dtSec > 0.02 && dtSec < 5.0) {
+          motionState.vx = (motionSourceLon - prevLon) / dtSec;
+          motionState.vy = (motionSourceLat - prevLat) / dtSec;
+        }
+      }
+      if (sourceChanged) {
+        motionState.lon = motionSourceLon;
+        motionState.lat = motionSourceLat;
+        motionState.srcT = nowMs;
+      }
+      motionState.t = nowMs;
+      efbSaOwnshipMotionBySelection[key] = motionState;
+
+      const staleDataMs = nowMs - Number(motionState.srcT || nowMs);
+      if (isFinite(staleDataMs) && staleDataMs > 60 && staleDataMs < 900) {
+        const dtPredSec = staleDataMs / 1000.0;
+        centerLon = Number(motionState.lon) + ((Number(motionState.vx) || 0) * dtPredSec);
+        centerLat = Number(motionState.lat) + ((Number(motionState.vy) || 0) * dtPredSec);
+      }
+
+      const anchorMode = normalizeEfbSaAnchorMode(efbSaAnchorMode);
+
+      let bearing = Number(map.getBearing ? map.getBearing() : 0);
+      if (efbSaTrackUpEnabled) {
+        const model = data || latestData || {};
+        const ownshipPoint = getPlayerMapPoint(model);
+        const heading = getOwnshipHeadingDeg(model, ownshipPoint);
+        if (isFinite(Number(heading))) {
+          bearing = normalizeHeadingDeg(Number(heading));
+        }
+      } else {
+        bearing = 0;
+      }
+
+      map.easeTo({
+        center: [centerLon, centerLat],
+        bearing: bearing,
+        pitch: 0,
+        offset: anchorMode === 'lower-third' ? [0, (map.getContainer && map.getContainer() ? Math.round((map.getContainer().clientHeight || 0) * 0.166) : 120)] : [0, 0],
+        duration: 0,
+      });
+
+      const state = getOpenFreeMapViewBySelection(selected);
+      state.centerLon = centerLon;
+      state.centerLat = centerLat;
+      state.zoom = Number(map.getZoom());
+      efbSaLastCameraApplyMsBySelection[key] = nowMs;
+      return true;
+    }
+
+    function tickEfbSaOwnshipCamera() {
+      if (efbSaCameraTickerId) return;
+      efbSaCameraTickerId = window.setInterval(function () {
+        if (selectedTab !== 'EFB') return;
+        if (normalizeEfbViewerMode(efbViewerMode) !== 'sa-map') return;
+        if (!efbSaFollowOwnshipEnabled) return;
+        const context = resolveActiveSaMapContext(latestData || null);
+        if (!context || !context.selected) return;
+        applyOpenFreeMapOwnshipCamera(context.selected, latestData || null);
+      }, 66);
+    }
+
     function initializeOpenFreeMapInstances() {
       const hosts = Array.from(document.querySelectorAll('[data-openfreemap-map-id]'));
       if (!hosts.length) return;
@@ -10689,12 +11534,22 @@
               if (!hasStoredView && bounds && bounds.length === 4) {
                 map.fitBounds([[bounds[0], bounds[1]], [bounds[2], bounds[3]]], { padding: 36, duration: 0, maxZoom: 11 });
               }
+              if (selectedKey && selectedTab === 'EFB' && normalizeEfbViewerMode(efbViewerMode) === 'sa-map') {
+                applyOpenFreeMapOwnshipCamera(selectedKey, latestData || null);
+              }
               if (fallback) fallback.style.display = 'none';
             });
 
             map.on('move', function () {
               const currentPayload = item.payload || payload;
               renderOpenFreeMapOverlay(item, currentPayload);
+            });
+
+            map.on('idle', function () {
+              if (!selectedKey) return;
+              if (selectedTab !== 'EFB') return;
+              if (normalizeEfbViewerMode(efbViewerMode) !== 'sa-map') return;
+              applyOpenFreeMapOwnshipCamera(selectedKey, latestData || null);
             });
 
             map.on('moveend', function () {
@@ -10704,6 +11559,24 @@
               state.centerLon = Number(center.lng);
               state.centerLat = Number(center.lat);
               state.zoom = Number(map.getZoom());
+            });
+
+            map.on('dragstart', function () {
+              const k = getFlightPlanEtaStartKey(selectedKey);
+              if (!k) return;
+              efbSaFollowSuppressUntilBySelection[k] = Date.now() + 12000;
+            });
+
+            map.on('zoomstart', function () {
+              const k = getFlightPlanEtaStartKey(selectedKey);
+              if (!k) return;
+              efbSaFollowSuppressUntilBySelection[k] = Date.now() + 12000;
+            });
+
+            map.on('rotatestart', function () {
+              const k = getFlightPlanEtaStartKey(selectedKey);
+              if (!k) return;
+              efbSaFollowSuppressUntilBySelection[k] = Date.now() + 12000;
             });
 
             openFreeMapInstancesByContainerId[mapId] = item;
@@ -10743,6 +11616,9 @@
     }
 
     function getPlayerMapPoint(data) {
+      const fastOwnship = getFastOwnshipMapPoint(0);
+      if (fastOwnship) return fastOwnship;
+
       const server = (data && data.Server) || {};
       const x = Number(server.PlayerPosX);
       const y = Number(server.PlayerPosY);
@@ -10755,6 +11631,237 @@
         return { xNum: Number(own.xNum), yNum: Number(own.yNum) };
       }
       return null;
+    }
+
+    function getFastOwnshipMapPoint(maxAgeMs) {
+      if (!efbSaUseFastOwnshipEnabled) return null;
+      if (!efbSaOwnshipFast || efbSaOwnshipFast.hasPosition !== true) return null;
+      const fastX = Number(efbSaOwnshipFast.posX);
+      const fastY = Number(efbSaOwnshipFast.posY);
+      if (!isFinite(fastX) || !isFinite(fastY)) return null;
+
+      const maxAge = Number(maxAgeMs);
+      if (isFinite(maxAge) && maxAge > 0) {
+        const minAge = Math.max(100, maxAge);
+        const updatedMs = Number(efbSaOwnshipFast.updatedUtcMs || 0);
+        if (updatedMs > 0) {
+          const ageMs = Date.now() - updatedMs;
+          if (isFinite(ageMs) && ageMs > minAge) return null;
+        }
+      }
+
+      return { xNum: fastX, yNum: fastY };
+    }
+
+    function applyFastOwnshipToSaMap(selected, data) {
+      const key = getFlightPlanEtaStartKey(selected);
+      if (!key) return false;
+      let containerId = String(openFreeMapContainerIdBySelectionKey[key] || '');
+      let item = containerId ? openFreeMapInstancesByContainerId[containerId] : null;
+      if (!item) {
+        const host = document.querySelector('#efbChartViewport .fltPlanOpenMapHost[data-openfreemap-map-id]');
+        const hostMapId = host ? String(host.getAttribute('data-openfreemap-map-id') || '') : '';
+        if (hostMapId) {
+          containerId = hostMapId;
+          item = openFreeMapInstancesByContainerId[containerId] || null;
+          if (item && key) {
+            openFreeMapContainerIdBySelectionKey[key] = containerId;
+          }
+        }
+      }
+      if (!item || !item.map || !item.payload) return false;
+
+      const ownship = getFastOwnshipMapPoint(0);
+      if (!ownship) return false;
+
+      const model = data || latestData || {};
+      const theater = String((((model && model.Server) || {}).Theater) || efbSaOwnshipFast.theater || lastKnownTheater || '').trim();
+      const llPrimary = convertDcsXYToLatLon(theater, Number(ownship.xNum), Number(ownship.yNum));
+      const llSwap = convertDcsXYToLatLon(theater, Number(ownship.yNum), Number(ownship.xNum));
+      const ll = (llPrimary && isFinite(Number(llPrimary.lon)) && isFinite(Number(llPrimary.lat)))
+        ? llPrimary
+        : ((llSwap && isFinite(Number(llSwap.lon)) && isFinite(Number(llSwap.lat))) ? llSwap : null);
+      if (!ll) return false;
+
+      const payload = item.payload || {};
+      if (!Array.isArray(payload.features)) return false;
+      const features = payload.features;
+      let removedStalePlayers = false;
+      for (let i = features.length - 1; i >= 0; i--) {
+        const f = features[i];
+        const props = (f && f.properties) || {};
+        if (String(props.kind || '').toLowerCase() !== 'player') continue;
+        const key = String(props.assetKey || '').toUpperCase();
+        const cat = String(props.assetCategory || '').toUpperCase();
+        if (cat === 'PLAYER' || key.indexOf('PLAYER') >= 0) continue;
+        features.splice(i, 1);
+        removedStalePlayers = true;
+      }
+      let ownshipFeature = features.find(function (f) {
+        const props = (f && f.properties) || {};
+        return String(props.kind || '').toLowerCase() === 'player';
+      });
+
+      if (!ownshipFeature) {
+        ownshipFeature = {
+          type: 'Feature',
+          geometry: { type: 'Point', coordinates: [Number(ll.lon), Number(ll.lat)] },
+          properties: {
+            kind: 'player',
+            assetCategory: 'PLAYER',
+            assetKind: 'player',
+            assetKey: 'PLAYER||PLAYER',
+            label: 'OWN',
+            fill: '#d11bff',
+            stroke: '#8307a8',
+            textColor: '#f2a8ff',
+            radius: 5,
+          },
+        };
+        features.push(ownshipFeature);
+      }
+
+      if (!ownshipFeature.geometry || !Array.isArray(ownshipFeature.geometry.coordinates)) {
+        ownshipFeature.geometry = { type: 'Point', coordinates: [Number(ll.lon), Number(ll.lat)] };
+      }
+
+      ownshipFeature.geometry.coordinates[0] = Number(ll.lon);
+      ownshipFeature.geometry.coordinates[1] = Number(ll.lat);
+
+      if (!ownshipFeature.properties || typeof ownshipFeature.properties !== 'object') {
+        ownshipFeature.properties = { kind: 'player' };
+      }
+      const heading = getOwnshipHeadingDeg(model, ownship);
+      if (isFinite(Number(heading))) {
+        ownshipFeature.properties.headingDeg = Number(heading);
+      }
+
+      if (removedStalePlayers) {
+        item.payload = payload;
+      }
+
+      renderOpenFreeMapOverlay(item, payload);
+      return true;
+    }
+
+    function getActiveEfbSaSelectionKey() {
+      try {
+        const host = document.querySelector('#efbChartViewport .fltPlanOpenMapHost[data-openfreemap-map-id]');
+        if (host) {
+          const mapId = String(host.getAttribute('data-openfreemap-map-id') || '');
+          if (mapId) {
+            const item = openFreeMapInstancesByContainerId[mapId];
+            if (item && item.selectedKey) return String(item.selectedKey);
+          }
+          const hostSelection = String(host.getAttribute('data-openfreemap-selection') || '');
+          if (hostSelection) return hostSelection;
+        }
+      } catch (_) {
+      }
+
+      const context = resolveActiveSaMapContext(latestData || null);
+      return context && context.selected ? String(context.selected) : '';
+    }
+
+    function pollEfbSaOwnshipFast() {
+      if (efbSaOwnshipPollTickerId) return;
+      efbSaOwnshipPollTickerId = window.setInterval(function () {
+        if (selectedTab !== 'EFB') return;
+        if (normalizeEfbViewerMode(efbViewerMode) !== 'sa-map') return;
+
+        const nowMs = Date.now();
+        if ((nowMs - Number(efbSaOwnshipFast.lastPollMs || 0)) < 120) return;
+        efbSaOwnshipFast.lastPollMs = nowMs;
+
+        fetch('/okb/sa/ownship', { cache: 'no-store' })
+          .then(function (res) {
+            if (!res || !res.ok) return null;
+            return res.json();
+          })
+          .then(function (payload) {
+            if (!payload || payload.hasPosition !== true) return;
+            const posX = Number(payload.posX);
+            const posY = Number(payload.posY);
+            if (!isFinite(posX) || !isFinite(posY)) return;
+            efbSaOwnshipFast.hasPosition = true;
+            efbSaOwnshipFast.posX = posX;
+            efbSaOwnshipFast.posY = posY;
+            efbSaOwnshipFast.altFeet = Number(payload.altFeet);
+            efbSaOwnshipFast.headingDeg = Number(payload.headingDeg);
+            efbSaOwnshipFast.hasHeading = payload.hasHeading === true && isFinite(Number(payload.headingDeg));
+            efbSaOwnshipFast.theater = String(payload.theater || '');
+            efbSaOwnshipFast.updatedUtcMs = Date.now();
+            updateFastOwnshipToggleUi();
+
+            if (efbSaFollowOwnshipEnabled && selectedTab === 'EFB' && normalizeEfbViewerMode(efbViewerMode) === 'sa-map') {
+              const selectedKey = getActiveEfbSaSelectionKey();
+              if (selectedKey) {
+                applyFastOwnshipToSaMap(selectedKey, latestData || null);
+                applyOpenFreeMapOwnshipCamera(selectedKey, latestData || null);
+              }
+            } else if (selectedTab === 'EFB' && normalizeEfbViewerMode(efbViewerMode) === 'sa-map') {
+              const selectedKey = getActiveEfbSaSelectionKey();
+              if (selectedKey) {
+                applyFastOwnshipToSaMap(selectedKey, latestData || null);
+              }
+            }
+          })
+          .catch(function () { });
+      }, 100);
+    }
+
+    function isUserMapInteractionEvent(ev) {
+      if (!ev || typeof ev !== 'object') return false;
+      if (ev.originalEvent) return true;
+      if (ev.type === 'wheel') return true;
+      if (typeof ev.pointerType === 'string' && ev.pointerType.length > 0) return true;
+      return false;
+    }
+
+    function getOwnshipHeadingDeg(data, ownshipPoint) {
+      if (efbSaOwnshipFast && efbSaOwnshipFast.hasHeading) {
+        const fastHeading = Number(efbSaOwnshipFast.headingDeg);
+        if (isFinite(fastHeading)) {
+          lastOwnshipHeadingDeg = normalizeHeadingDeg(fastHeading);
+        }
+      }
+
+      const server = (data && data.Server) || {};
+      const headingCandidates = [
+        Number(server.PlayerHeadingDeg),
+        Number(server.PlayerHeading),
+        Number(server.PlayerHdg),
+        Number(server.PlayerCourse),
+        Number(server.PlayerTrack),
+        Number(server.PlayerYawDeg),
+      ];
+
+      for (let i = 0; i < headingCandidates.length; i++) {
+        const v = Number(headingCandidates[i]);
+        if (isFinite(v)) {
+          lastOwnshipHeadingDeg = normalizeHeadingDeg(v);
+          break;
+        }
+      }
+
+      const pt = ownshipPoint && isFinite(Number(ownshipPoint.xNum)) && isFinite(Number(ownshipPoint.yNum))
+        ? { xNum: Number(ownshipPoint.xNum), yNum: Number(ownshipPoint.yNum) }
+        : null;
+
+      if (pt && lastOwnshipPointForHeading) {
+        const dx = pt.xNum - Number(lastOwnshipPointForHeading.xNum);
+        const dy = pt.yNum - Number(lastOwnshipPointForHeading.yNum);
+        const dist = Math.sqrt((dx * dx) + (dy * dy));
+        if (isFinite(dist) && dist >= 6) {
+          lastOwnshipHeadingDeg = normalizeHeadingDeg((Math.atan2(dy, dx) * 180.0 / Math.PI));
+        }
+      }
+
+      if (pt) {
+        lastOwnshipPointForHeading = pt;
+      }
+
+      return isFinite(Number(lastOwnshipHeadingDeg)) ? Number(lastOwnshipHeadingDeg) : NaN;
     }
 
     function computeBraBetweenPoints(fromPoint, toPoint) {
@@ -12830,7 +13937,12 @@
     function getMudMapAssets(data, includeDlinkAssets) {
       const server = (data && data.Server) || {};
       const includeDlink = (includeDlinkAssets !== false);
-      const rawAssets = includeDlink && Array.isArray(server.FriendlyAssets) ? server.FriendlyAssets : [];
+      const allFriendlyAssets = Array.isArray(server.FriendlyAssets) ? server.FriendlyAssets : [];
+      const rawAssets = allFriendlyAssets.filter(function (a) {
+        const category = String((a && a.Category) || '').trim().toUpperCase();
+        if (category === 'PLAYER') return true;
+        return includeDlink;
+      });
       const mappedAssets = rawAssets
         .map(function (a) {
           const northNum = Number(a && a.X);
@@ -13423,6 +14535,10 @@
       const rows = Array.isArray(waypoints) ? waypoints.filter(function (wp) {
         return isFinite(Number(wp && wp.xNum)) && isFinite(Number(wp && wp.yNum));
       }) : [];
+      const allowNavlog = (efbSaShowNavlog !== false);
+      const allowDtcOverlay = (efbSaShowDtcOverlay !== false);
+      const allowAirports = (efbSaShowAirports !== false);
+      const visibleRows = allowNavlog ? rows : [];
       const model = data || latestData || {};
       const server = (model && model.Server) || {};
       const diagnostics = (server && server.Diagnostics) || {};
@@ -13448,7 +14564,16 @@
       }
 
       const mapOverlays = overlays && typeof overlays === 'object'
-        ? overlays
+        ? {
+          geolines: allowDtcOverlay ? (Array.isArray(overlays.geolines) ? overlays.geolines : []) : [],
+          threatPoints: allowDtcOverlay ? (Array.isArray(overlays.threatPoints) ? overlays.threatPoints : []) : [],
+          destinationPoints: allowDtcOverlay ? (Array.isArray(overlays.destinationPoints) ? overlays.destinationPoints : []) : [],
+          faorLines: allowDtcOverlay ? (Array.isArray(overlays.faorLines) ? overlays.faorLines : []) : [],
+          flotLines: allowDtcOverlay ? (Array.isArray(overlays.flotLines) ? overlays.flotLines : []) : [],
+          capPoints: allowDtcOverlay ? (Array.isArray(overlays.capPoints) ? overlays.capPoints : []) : [],
+          corridors: allowDtcOverlay ? (Array.isArray(overlays.corridors) ? overlays.corridors : []) : [],
+          airfields: allowAirports ? (Array.isArray(overlays.airfields) ? overlays.airfields : []) : [],
+        }
         : { geolines: [], threatPoints: [], destinationPoints: [], faorLines: [], flotLines: [], capPoints: [], corridors: [] };
 
       function toLonLat(point) {
@@ -13537,8 +14662,8 @@
       }
 
       const byStep = {};
-      rows.forEach(function (wp) { byStep[String(wp && wp.step)] = wp; });
-      getMudMapSegments(rows).forEach(function (seg) {
+      visibleRows.forEach(function (wp) { byStep[String(wp && wp.step)] = wp; });
+      getMudMapSegments(visibleRows).forEach(function (seg) {
         const from = byStep[String(seg && seg.from && seg.from.step)] || (seg && seg.from);
         const to = byStep[String(seg && seg.to && seg.to.step)] || (seg && seg.to);
         if (!from || !to) return;
@@ -13549,7 +14674,7 @@
         });
       });
 
-      rows.forEach(function (wp) {
+      visibleRows.forEach(function (wp) {
         const step = String(wp && wp.step || '').trim();
         const name = String(wp && wp.name || '').trim();
         const label = step ? (step + (name ? (' ' + name) : '')) : name;
@@ -13738,21 +14863,30 @@
 
       const selected = getActiveFlightPlanSelection(model);
       const rawAssets = getMudMapAssets(model, dlinkOnEnabled);
+      const ownshipPoint = getPlayerMapPoint(model);
+      const ownshipHeadingResolver = (typeof getOwnshipHeadingDeg === 'function')
+        ? getOwnshipHeadingDeg
+        : function () { return NaN; };
+      const ownshipHeadingDeg = ownshipHeadingResolver(model, ownshipPoint);
       rawAssets.forEach(function (asset) {
         const category = String((asset && asset.category) || '').toUpperCase();
         if (category === 'ATC') return;
         const isPlayer = category === 'PLAYER';
+        const plottedAsset = (isPlayer && ownshipPoint && isFinite(Number(ownshipPoint.xNum)) && isFinite(Number(ownshipPoint.yNum)))
+          ? Object.assign({}, asset || {}, { xNum: Number(ownshipPoint.xNum), yNum: Number(ownshipPoint.yNum) })
+          : asset;
         const callsign = String((asset && asset.callsign) || '').trim();
         const label = callsign || String((asset && asset.name) || category || 'ASSET').trim();
         const assetKey = makeMapAssetSelectionKey(asset);
-        addPointFeature(asset, {
+        addPointFeature(plottedAsset, {
           kind: isPlayer ? 'player' : 'asset',
           group: isPlayer ? 'player' : 'asset',
           label: label,
-          fill: isPlayer ? '#2f9e56' : '#5a7ea5',
-          stroke: isPlayer ? '#1e6a39' : '#385676',
-          textColor: isPlayer ? '#1e6a39' : '#1f3550',
+          fill: isPlayer ? '#d79cff' : '#5a7ea5',
+          stroke: isPlayer ? '#8a2f99' : '#385676',
+          textColor: isPlayer ? '#8a2f99' : '#1f3550',
           radius: isPlayer ? 5 : 3.6,
+          headingDeg: isPlayer ? ownshipHeadingDeg : NaN,
           assetKind: getMudMapAssetKind(asset),
           assetKey: assetKey,
           callsign: String((asset && asset.callsign) || '').trim(),
@@ -13824,9 +14958,22 @@
       const rows = Array.isArray(waypoints) ? waypoints.filter(function (wp) {
         return isFinite(Number(wp && wp.xNum)) && isFinite(Number(wp && wp.yNum));
       }) : [];
+      const allowNavlog = (efbSaShowNavlog !== false);
+      const allowDtcOverlay = (efbSaShowDtcOverlay !== false);
+      const allowAirports = (efbSaShowAirports !== false);
       const mapOverlays = overlays && typeof overlays === 'object'
-        ? overlays
+        ? {
+          geolines: allowDtcOverlay ? (Array.isArray(overlays.geolines) ? overlays.geolines : []) : [],
+          threatPoints: allowDtcOverlay ? (Array.isArray(overlays.threatPoints) ? overlays.threatPoints : []) : [],
+          destinationPoints: allowDtcOverlay ? (Array.isArray(overlays.destinationPoints) ? overlays.destinationPoints : []) : [],
+          faorLines: allowDtcOverlay ? (Array.isArray(overlays.faorLines) ? overlays.faorLines : []) : [],
+          flotLines: allowDtcOverlay ? (Array.isArray(overlays.flotLines) ? overlays.flotLines : []) : [],
+          capPoints: allowDtcOverlay ? (Array.isArray(overlays.capPoints) ? overlays.capPoints : []) : [],
+          corridors: allowDtcOverlay ? (Array.isArray(overlays.corridors) ? overlays.corridors : []) : [],
+          airfields: allowAirports ? (Array.isArray(overlays.airfields) ? overlays.airfields : []) : [],
+        }
         : { geolines: [], threatPoints: [], destinationPoints: [], faorLines: [], flotLines: [], capPoints: [], corridors: [] };
+      const visibleRows = allowNavlog ? rows : [];
       const geolines = Array.isArray(mapOverlays.geolines) ? mapOverlays.geolines : [];
       const threatPoints = Array.isArray(mapOverlays.threatPoints) ? mapOverlays.threatPoints : [];
       const destinationPoints = Array.isArray(mapOverlays.destinationPoints) ? mapOverlays.destinationPoints : [];
@@ -13929,7 +15076,7 @@
         }
         : null;
 
-      if (!rows.length && !threatPoints.length && !destinationPoints.length && !geolines.length && !faorLines.length && !flotLines.length && !capPoints.length && !corridors.length && !airfields.length) {
+      if (!visibleRows.length && !threatPoints.length && !destinationPoints.length && !geolines.length && !faorLines.length && !flotLines.length && !capPoints.length && !corridors.length && !airfields.length) {
         return '<div class="fltPlanMessage">No mappable waypoint coordinates found.</div>';
       }
 
@@ -13953,7 +15100,7 @@
       pushLineGroupPoints(flotLines);
       pushLineGroupPoints(corridors);
 
-      const allPoints = rows.concat(overlayPoints);
+      const allPoints = visibleRows.concat(overlayPoints);
       const eastValues = allPoints.map(function (wp) { return Number(wp.yNum); }).filter(function (v) { return isFinite(v); });
       const northValues = allPoints.map(function (wp) { return Number(wp.xNum); }).filter(function (v) { return isFinite(v); });
       if (!eastValues.length || !northValues.length) {
@@ -13982,14 +15129,14 @@
         return { x: sx, y: sy };
       }
 
-      const mapped = rows.map(function (wp) {
+      const mapped = visibleRows.map(function (wp) {
         const p = mapPt(wp);
         return { wp: wp, x: p.x, y: p.y, kind: getMudMapPointType(wp) };
       });
 
       const byStep = {};
       mapped.forEach(function (m) { byStep[String(m.wp.step)] = m; });
-      const segments = getMudMapSegments(rows)
+      const segments = getMudMapSegments(visibleRows)
         .map(function (seg) {
           return {
             from: byStep[String(seg.from.step)],
@@ -14415,6 +15562,11 @@
 
       const selected = getActiveFlightPlanSelection((typeof data === 'undefined' ? null : data));
       const rawAssets = getMudMapAssets((typeof data === 'undefined' ? null : data), dlinkOnEnabled);
+      const ownshipPoint = getPlayerMapPoint((typeof data === 'undefined' ? null : data));
+      const ownshipHeadingResolver = (typeof getOwnshipHeadingDeg === 'function')
+        ? getOwnshipHeadingDeg
+        : function () { return NaN; };
+      const ownshipHeadingDeg = ownshipHeadingResolver((typeof data === 'undefined' ? null : data), ownshipPoint);
       const selectedAssetKey = getMapSelectedAssetKeyBySelection(selected);
       const mapAssets = rawAssets
         .map(function (asset) {
@@ -14430,11 +15582,13 @@
         .filter(function (asset) { return !!asset; })
         .map(function (asset) {
           const p = mapPt(asset);
+          const category = String((asset && asset.category) || '').toUpperCase();
           const selectionKey = makeMapAssetSelectionKey(asset);
           return {
             asset: asset,
             x: p.x,
             y: p.y,
+            headingDeg: category === 'PLAYER' ? ownshipHeadingDeg : NaN,
             selectionKey: selectionKey,
             isSelected: !!selectionKey && !!selectedAssetKey && selectionKey === selectedAssetKey,
           };
@@ -14528,8 +15682,23 @@
         + '</svg>';
     }
 
-    function formatDtcPage3Html(pageSwitcherHtml, waypoints, data, selected, overlays, root) {
-      let mapRows = applyTypeOverrides(Array.isArray(waypoints) ? waypoints.slice() : [], selected);
+    function buildSaMapRenderState(waypoints, data, selected, overlays, root, registerPayload) {
+      let mapRows = applyTypeOverrides(Array.isArray(waypoints) ? waypoints.slice() : [], selected)
+        .map(function (wp) {
+          if (!wp || typeof wp !== 'object') return wp;
+          const clone = Object.assign({}, wp);
+          if (!isFinite(Number(clone.xNum))) {
+            const xRaw = String(clone.x || '').replace(/[^0-9+\-.]/g, '');
+            const xParsed = Number(xRaw);
+            if (isFinite(xParsed)) clone.xNum = xParsed;
+          }
+          if (!isFinite(Number(clone.yNum))) {
+            const yRaw = String(clone.y || '').replace(/[^0-9+\-.]/g, '');
+            const yParsed = Number(yRaw);
+            if (isFinite(yParsed)) clone.yNum = yParsed;
+          }
+          return clone;
+        });
       let resolvedOverlays = overlays && typeof overlays === 'object'
         ? overlays
         : getDtcMapOverlays(root, getDtcRouteBySelection(selected), data);
@@ -14552,10 +15721,7 @@
         if (skippedSet[key]) return false;
         return true;
       });
-      let html = '<div class="fltPlanBoard">';
-      if (pageSwitcherHtml) {
-        html += '<div style="margin:4px 0 6px 0;">' + pageSwitcherHtml + '</div>';
-      }
+      const shouldRegisterPayload = registerPayload !== false;
       const mapBackgroundEnabled = isMapBackgroundEnabledBySelection(selected);
       if (mapBackgroundEnabled) {
         openFreeMapLastPayloadStatus = 'init';
@@ -14571,10 +15737,10 @@
       if (mapBackgroundEnabled && !openFreeMapPayload && openFreeMapLastPayloadStatus === 'init') {
         openFreeMapLastPayloadStatus = 'builder-null';
       }
-      const openFreeMapId = (openFreeMapPayload && typeof registerOpenFreeMapPayload === 'function')
+      const openFreeMapId = (shouldRegisterPayload && openFreeMapPayload && typeof registerOpenFreeMapPayload === 'function')
         ? registerOpenFreeMapPayload(selected, openFreeMapPayload)
         : '';
-      if (mapBackgroundEnabled && openFreeMapPayload && !openFreeMapId) {
+      if (shouldRegisterPayload && mapBackgroundEnabled && openFreeMapPayload && !openFreeMapId) {
         openFreeMapLastPayloadStatus = 'register-failed';
       }
       const bgStatus = !mapBackgroundEnabled
@@ -14584,7 +15750,6 @@
           : (openFreeMapPayload
             ? ('BG ready [' + openFreeMapLastPayloadStatus + ']')
             : ('BG unavailable for current theatre/data (' + String((((data && data.Server) || {}).Theater) || lastKnownTheater || '?') + ')' + (openFreeMapLastPayloadStatus ? (' [' + openFreeMapLastPayloadStatus + ']') : ''))));
-      html += '<div class="controls fltPlanControls" style="margin:0 0 6px 0;"><button type="button" class="fltPlanPageBtn" data-map-zoom="in">Map In</button><button type="button" class="fltPlanPageBtn" data-map-zoom="out">Map Out</button><button type="button" class="fltPlanPageBtn" data-map-zoom="reset">Map Reset</button><button id="mapBgToggleBtn" type="button" class="fltPlanPageBtn" data-map-bg-toggle="1">BG ' + (mapBackgroundEnabled ? 'ON' : 'OFF') + '</button><span id="mapBgStatus" class="fltPlanMapBgStatus">' + escapeHtml(bgStatus) + '</span></div>';
       const selectedAssetKey = getMapSelectedAssetKeyBySelection(selected);
       const rawAssets = getMudMapAssets(data, dlinkOnEnabled);
       const airfieldAssets = (Array.isArray(resolvedOverlays && resolvedOverlays.airfields) ? resolvedOverlays.airfields : [])
@@ -14616,21 +15781,56 @@
         }
       }
 
-      html += '<div class="fltPlanPage3Wrap">';
-      const mapSvg = buildMudMapSvg(mapRows, data, resolvedOverlays, bullseyePoint);
-      if (openFreeMapId) {
-        html += '<div class="fltPlanPage3Canvas fltPlanOpenMapWrap" data-openfreemap-wrap="' + escapeHtml(openFreeMapId) + '">';
-        html += '<div class="fltPlanOpenMapHost" data-openfreemap-map-id="' + escapeHtml(openFreeMapId) + '" data-openfreemap-selection="' + escapeHtml(getFlightPlanEtaStartKey(selected)) + '"></div>';
-        html += '<div class="fltPlanOpenMapFallback">' + mapSvg + '</div>';
-        html += '</div>';
-      } else {
-        html += mapSvg;
-      }
+      const visibleOverlays = {
+        geolines: efbSaShowDtcOverlay ? (Array.isArray(resolvedOverlays.geolines) ? resolvedOverlays.geolines : []) : [],
+        threatPoints: efbSaShowDtcOverlay ? (Array.isArray(resolvedOverlays.threatPoints) ? resolvedOverlays.threatPoints : []) : [],
+        destinationPoints: efbSaShowDtcOverlay ? (Array.isArray(resolvedOverlays.destinationPoints) ? resolvedOverlays.destinationPoints : []) : [],
+        faorLines: efbSaShowDtcOverlay ? (Array.isArray(resolvedOverlays.faorLines) ? resolvedOverlays.faorLines : []) : [],
+        flotLines: efbSaShowDtcOverlay ? (Array.isArray(resolvedOverlays.flotLines) ? resolvedOverlays.flotLines : []) : [],
+        capPoints: efbSaShowDtcOverlay ? (Array.isArray(resolvedOverlays.capPoints) ? resolvedOverlays.capPoints : []) : [],
+        corridors: efbSaShowDtcOverlay ? (Array.isArray(resolvedOverlays.corridors) ? resolvedOverlays.corridors : []) : [],
+        airfields: efbSaShowAirports ? (Array.isArray(resolvedOverlays.airfields) ? resolvedOverlays.airfields : []) : [],
+      };
+      const mapSvg = buildMudMapSvg(mapRows, data, visibleOverlays, bullseyePoint);
       let readout = formatMapBraReadout(data, selectedAsset, bullseyePoint);
       if (markerCount > 0) {
         readout += '   MKR ' + String(markerCount);
       }
-      html += '<div id="mapBraReadout" class="fltPlanPage3BraReadout">' + escapeHtml(readout) + '</div>';
+
+      return {
+        mapRows: mapRows,
+        overlays: resolvedOverlays,
+        bullseyePoint: bullseyePoint,
+        mapSvg: mapSvg,
+        openFreeMapId: openFreeMapId,
+        openFreeMapPayload: openFreeMapPayload,
+        mapBackgroundEnabled: mapBackgroundEnabled,
+        bgStatus: bgStatus,
+        readout: readout,
+      };
+    }
+
+    function formatDtcPage3Html(pageSwitcherHtml, waypoints, data, selected, overlays, root) {
+      const state = buildSaMapRenderState(waypoints, data, selected, overlays, root);
+      if (!state) {
+        return '<div class="fltPlanMessage">SA Map unavailable for current FLT PLN data.</div>';
+      }
+
+      let html = '<div class="fltPlanBoard">';
+      if (pageSwitcherHtml) {
+        html += '<div style="margin:4px 0 6px 0;">' + pageSwitcherHtml + '</div>';
+      }
+      html += '<div class="controls fltPlanControls" style="margin:0 0 6px 0;"><button type="button" class="fltPlanPageBtn" data-map-zoom="in">Map In</button><button type="button" class="fltPlanPageBtn" data-map-zoom="out">Map Out</button><button type="button" class="fltPlanPageBtn" data-map-zoom="reset">Map Reset</button><button id="mapBgToggleBtn" type="button" class="fltPlanPageBtn" data-map-bg-toggle="1">BG ' + (state.mapBackgroundEnabled ? 'ON' : 'OFF') + '</button><span id="mapBgStatus" class="fltPlanMapBgStatus">' + escapeHtml(state.bgStatus) + '</span></div>';
+      html += '<div class="fltPlanPage3Wrap">';
+      if (state.openFreeMapId) {
+        html += '<div class="fltPlanPage3Canvas fltPlanOpenMapWrap" data-openfreemap-wrap="' + escapeHtml(state.openFreeMapId) + '">';
+        html += '<div class="fltPlanOpenMapHost" data-openfreemap-map-id="' + escapeHtml(state.openFreeMapId) + '" data-openfreemap-selection="' + escapeHtml(getFlightPlanEtaStartKey(selected)) + '"></div>';
+        html += '<div class="fltPlanOpenMapFallback">' + state.mapSvg + '</div>';
+        html += '</div>';
+      } else {
+        html += state.mapSvg;
+      }
+      html += '<div id="mapBraReadout" class="fltPlanPage3BraReadout">' + escapeHtml(state.readout) + '</div>';
       html += '</div></div>';
       return html;
     }
@@ -14976,14 +16176,10 @@
         return '<tr><td style="width:56px;">' + (name === primaryRouteName ? '<strong>' + escapeHtml(name) + '</strong>' : escapeHtml(name)) + '</td><td>' + escapeHtml(String(count)) + '</td></tr>';
       });
       const routeSummaryHtml = '<div class="fltPlanPage2Section"><div class="fltPlanPage2Title">ROUTES</div><div class="fltPlanPage2Body"><table class="fltPlanPage2Table"><thead><tr><th style="width:56px;">ROUTE</th><th>WAYPOINTS</th></tr></thead><tbody>' + routeRows.join('') + '</tbody></table></div></div>';
-      const pageSwitcherHtml = '<span class="fltPlanPageSwitcher"><button type="button" class="fltPlanPageBtn' + (page === 1 ? ' active' : '') + '" data-dtc-page="1">NAVLOG</button><button type="button" class="fltPlanPageBtn' + (page === 2 ? ' active' : '') + '" data-dtc-page="2">COM/ROUTE</button><button type="button" class="fltPlanPageBtn' + (page === 3 ? ' active' : '') + '" data-dtc-page="3">STORES</button><button type="button" class="fltPlanPageBtn' + (page === 4 ? ' active' : '') + '" data-dtc-page="4">MAP</button></span>';
+      const pageSwitcherHtml = '<span class="fltPlanPageSwitcher"><button type="button" class="fltPlanPageBtn' + (page === 1 ? ' active' : '') + '" data-dtc-page="1">NAVLOG</button><button type="button" class="fltPlanPageBtn' + (page === 2 ? ' active' : '') + '" data-dtc-page="2">COM/ROUTE</button><button type="button" class="fltPlanPageBtn' + (page === 3 ? ' active' : '') + '" data-dtc-page="3">STORES</button></span>';
 
       if (page === 3) {
         return formatStoresPageHtml(pageSwitcherHtml, data);
-      }
-
-      if (page === 4) {
-        return formatDtcPage3Html(pageSwitcherHtml, waypoints, data, selected, null, root);
       }
 
       if (page === 2) {
@@ -15095,11 +16291,12 @@
     function getMissionRuntimeWaypoints(data) {
       const model = data || latestData || {};
       const selected = String(model.DtcSelectedFile || '');
+      const hasExplicitPlanSelection = !!selected && runtimeFlightPlanUserOverride;
       const missionIdentity = getMissionIdentity(model);
       const diagnostics = ((model && model.Server) || {}).Diagnostics || {};
       const liveGroupName = String(diagnostics.playerGroup || '').trim();
 
-      if (selected) {
+      if (hasExplicitPlanSelection) {
         return readMissionRuntimeWaypointsFromDiagnostics(model);
       }
 
@@ -15134,15 +16331,12 @@
       const routeName = groupName ? ('PLAYER ROUTE (' + groupName + ')') : 'PLAYER ROUTE';
       const selected = '__RUNTIME_PLAYER__';
       const page = getDtcPageBySelection(selected);
-      const pageSwitcherHtml = '<span class="fltPlanPageSwitcher"><button type="button" class="fltPlanPageBtn' + (page === 1 ? ' active' : '') + '" data-dtc-page="1">NAVLOG</button><button type="button" class="fltPlanPageBtn' + (page === 2 ? ' active' : '') + '" data-dtc-page="2">COM/ROUTE</button><button type="button" class="fltPlanPageBtn' + (page === 3 ? ' active' : '') + '" data-dtc-page="3">STORES</button><button type="button" class="fltPlanPageBtn' + (page === 4 ? ' active' : '') + '" data-dtc-page="4">MAP</button></span>';
+      const pageSwitcherHtml = '<span class="fltPlanPageSwitcher"><button type="button" class="fltPlanPageBtn' + (page === 1 ? ' active' : '') + '" data-dtc-page="1">NAVLOG</button><button type="button" class="fltPlanPageBtn' + (page === 2 ? ' active' : '') + '" data-dtc-page="2">COM/ROUTE</button><button type="button" class="fltPlanPageBtn' + (page === 3 ? ' active' : '') + '" data-dtc-page="3">STORES</button></span>';
       if (page === 2) {
         return formatRuntimePage2Html(data, pageSwitcherHtml, selected);
       }
       if (page === 3) {
         return formatStoresPageHtml(pageSwitcherHtml, data);
-      }
-      if (page === 4) {
-        return formatDtcPage3Html(pageSwitcherHtml, rows, data, selected);
       }
       return renderFlightPlanBoardHtml(selected, data, routeName, 'MISSION RUNTIME', '-', rows, formatRuntimeCmdsInfoBlockHtml(data, selected), pageSwitcherHtml);
     }
@@ -15169,12 +16363,9 @@
       const routeButtons = availableRoutes.map(function (r) {
         return '<button type="button" class="fltPlanPageBtn' + (routeKey === r ? ' active' : '') + '" data-dtc-route="' + r + '">' + r + '</button>';
       }).join('');
-      const pageSwitcherHtml = '<span class="fltPlanPageSwitcher"><button type="button" class="fltPlanPageBtn' + (page === 1 ? ' active' : '') + '" data-dtc-page="1">NAVLOG</button><button type="button" class="fltPlanPageBtn' + (page === 2 ? ' active' : '') + '" data-dtc-page="2">COM/ROUTE</button><button type="button" class="fltPlanPageBtn' + (page === 3 ? ' active' : '') + '" data-dtc-page="3">STORES</button><button type="button" class="fltPlanPageBtn' + (page === 4 ? ' active' : '') + '" data-dtc-page="4">MAP</button></span><span class="fltPlanPageSwitcher">' + routeButtons + '</span>';
+      const pageSwitcherHtml = '<span class="fltPlanPageSwitcher"><button type="button" class="fltPlanPageBtn' + (page === 1 ? ' active' : '') + '" data-dtc-page="1">NAVLOG</button><button type="button" class="fltPlanPageBtn' + (page === 2 ? ' active' : '') + '" data-dtc-page="2">COM/ROUTE</button><button type="button" class="fltPlanPageBtn' + (page === 3 ? ' active' : '') + '" data-dtc-page="3">STORES</button></span><span class="fltPlanPageSwitcher">' + routeButtons + '</span>';
       if (page === 3) {
         return formatStoresPageHtml(pageSwitcherHtml, data);
-      }
-      if (page === 4) {
-        return formatDtcPage3Html(pageSwitcherHtml, waypoints, data, selected, mapOverlays, root);
       }
       if (page === 2) {
         return formatDtcPage2Html(root, pageSwitcherHtml, allWaypoints, data, selected);
@@ -15238,7 +16429,8 @@
         const sourceType = String(data.DtcSourceType || '').toUpperCase();
         const runtimeWaypoints = getMissionRuntimeWaypoints(data);
 
-        if ((!files.length || !selected) && runtimeWaypoints.length) {
+        const hasExplicitPlanSelection = !!selected && runtimeFlightPlanUserOverride && selected !== '__RUNTIME_PLAYER__';
+        if (!hasExplicitPlanSelection && runtimeWaypoints.length) {
           return formatMissionRuntimeFlightPlanHtml(data, runtimeWaypoints);
         }
 
@@ -15276,6 +16468,125 @@
         const msg = (ex && ex.message) ? String(ex.message) : 'Unknown FLT PLN render error';
         return '<div class="fltPlanMessage">FLT PLN render error: ' + escapeHtml(msg) + '</div>';
       }
+    }
+
+    function resolveActiveSaMapContext(data) {
+      const model = data || latestData || {};
+      const selected = getActiveFlightPlanSelection(model);
+      if (!selected) return null;
+
+      if (selected === '__RUNTIME_PLAYER__') {
+        const runtimeRows = applyTypeOverrides(getMissionRuntimeWaypoints(model).slice(), '__RUNTIME_PLAYER__');
+        return {
+          selected: '__RUNTIME_PLAYER__',
+          sourceType: 'RUNTIME',
+          root: null,
+          overlays: getDtcMapOverlays(null, getDtcRouteBySelection('__RUNTIME_PLAYER__'), model),
+          waypoints: runtimeRows,
+        };
+      }
+
+      const sourceType = String(model.DtcSourceType || '').toUpperCase();
+      const jsonText = String(model.DtcJson || '').trim();
+      if (!jsonText) return null;
+
+      let parsed;
+      try {
+        parsed = JSON.parse(jsonText);
+      } catch (_) {
+        return null;
+      }
+
+      const root = (parsed && parsed.data && typeof parsed.data === 'object') ? parsed.data : parsed;
+      if (!root || typeof root !== 'object') return null;
+
+      let effectiveSourceType = sourceType;
+      if (effectiveSourceType !== 'DTC' && effectiveSourceType !== 'RTE') {
+        const inferredDtcWaypoints = getDtcWaypoints(root);
+        if (Array.isArray(inferredDtcWaypoints) && inferredDtcWaypoints.length) {
+          effectiveSourceType = 'DTC';
+        } else {
+          const rootKeys = Object.keys(root);
+          const hasRouteLikeChildren = rootKeys.some(function (name) {
+            const child = root[name];
+            if (!child || typeof child !== 'object') return false;
+            return Object.keys(child).some(function (k) { return /^\d+$/.test(String(k)); });
+          });
+          if (hasRouteLikeChildren) {
+            effectiveSourceType = 'RTE';
+          }
+        }
+      }
+
+      if (effectiveSourceType === 'RTE') {
+        const presets = root;
+        const routeNames = Object.keys(presets).sort(function (a, b) { return String(a).localeCompare(String(b)); });
+        let primaryRouteName = String(routeNames[0] || getDtcDisplayName(selected) || '-');
+        let primaryRoute = presets[primaryRouteName] || {};
+        let primaryWaypoints = getRouteWaypoints(primaryRoute);
+        if (!primaryWaypoints.some(function (wp) { return isFinite(Number(wp && wp.xNum)) && isFinite(Number(wp && wp.yNum)); })) {
+          for (let i = 0; i < routeNames.length; i++) {
+            const candidateName = String(routeNames[i] || '');
+            const candidateRoute = presets[candidateName] || {};
+            const candidateRows = getRouteWaypoints(candidateRoute);
+            if (candidateRows.some(function (wp) { return isFinite(Number(wp && wp.xNum)) && isFinite(Number(wp && wp.yNum)); })) {
+              primaryRouteName = candidateName;
+              primaryRoute = candidateRoute;
+              primaryWaypoints = candidateRows;
+              break;
+            }
+          }
+        }
+        return {
+          selected: selected,
+          sourceType: 'RTE',
+          root: root,
+          overlays: getDtcMapOverlays(root, getDtcRouteBySelection(selected), model),
+          waypoints: primaryWaypoints,
+        };
+      }
+
+      if (effectiveSourceType === 'DTC') {
+        const allWaypoints = getDtcWaypoints(root);
+        const availableRoutes = getDtcAvailableRoutes(root, allWaypoints);
+        let routeKey = getDtcRouteBySelection(selected);
+        if (availableRoutes.indexOf(routeKey) < 0) {
+          routeKey = availableRoutes[0] || 'R1';
+        }
+        const overlays = getDtcMapOverlays(root, routeKey, model);
+        const isF14 = isF14DtcContext(root, model);
+        let waypoints = applyTypeOverrides(filterDtcWaypointsByRoute(root, allWaypoints, routeKey), selected);
+        if (isF14 && routeKey === 'R1') {
+          const runtimeWaypoints = getMissionRuntimeWaypoints(model);
+          if (runtimeWaypoints.length) {
+            waypoints = applyTypeOverrides(runtimeWaypoints.slice(), '__RUNTIME_PLAYER__');
+          }
+        }
+
+        if (!waypoints.some(function (wp) { return isFinite(Number(wp && wp.xNum)) && isFinite(Number(wp && wp.yNum)); })) {
+          for (let i = 0; i < availableRoutes.length; i++) {
+            const candidateRouteKey = String(availableRoutes[i] || '').toUpperCase();
+            if (!candidateRouteKey || candidateRouteKey === routeKey) continue;
+            const candidateRows = applyTypeOverrides(filterDtcWaypointsByRoute(root, allWaypoints, candidateRouteKey), selected);
+            if (candidateRows.some(function (wp) { return isFinite(Number(wp && wp.xNum)) && isFinite(Number(wp && wp.yNum)); })) {
+              routeKey = candidateRouteKey;
+              waypoints = candidateRows;
+              setDtcRouteBySelection(selected, routeKey);
+              break;
+            }
+          }
+        }
+
+        return {
+          selected: selected,
+          sourceType: 'DTC',
+          root: root,
+          overlays: overlays,
+          waypoints: waypoints,
+        };
+      }
+
+      return null;
     }
 
     function formatDtcTabContent(data) {
@@ -15690,6 +17001,7 @@
       if (sessionQuickBtn) {
         sessionQuickBtn.className = 'fltPlanQuickBtn';
       }
+      updateFastOwnshipToggleUi();
       if (selectedTab !== 'DTC') {
         setFltPlanFilesOverlayOpen(false);
       }
@@ -15751,91 +17063,16 @@
       document.getElementById('tabTitle').textContent = 'Tab: ' + tabLabel(selectedTab);
       const tabBody = document.getElementById('tabBody');
       let activeDtcSelection = '';
-      let preserveOpenFreeMapView = false;
-      if (selectedTab === 'DTC') {
-        activeDtcSelection = getActiveFlightPlanSelection(displayData);
-        const page = activeDtcSelection ? getDtcPageBySelection(activeDtcSelection) : 1;
-        const openMapHost = (tabBody && tabBody.querySelector) ? tabBody.querySelector('[data-openfreemap-map-id]') : null;
-        const hasOpenMapHost = !!openMapHost;
-        const hostSelection = openMapHost ? String(openMapHost.getAttribute('data-openfreemap-selection') || '') : '';
-        preserveOpenFreeMapView = !!(activeDtcSelection
-          && page === 4
-          && hasOpenMapHost
-          && hostSelection === getFlightPlanEtaStartKey(activeDtcSelection)
-          && isMapBackgroundEnabledBySelection(activeDtcSelection));
-      }
+      const efbSaMapMode = selectedTab === 'EFB' && normalizeEfbViewerMode(efbViewerMode) === 'sa-map';
 
-      if (!preserveOpenFreeMapView && typeof disposeOpenFreeMapInstances === 'function') {
+      if (!efbSaMapMode && typeof disposeOpenFreeMapInstances === 'function') {
         disposeOpenFreeMapInstances();
       }
 
       if (selectedTab === 'DTC') {
+        activeDtcSelection = getActiveFlightPlanSelection(displayData);
         tabBody.className = 'content mainContent fltPlanContent';
-        if (!preserveOpenFreeMapView) {
-          tabBody.innerHTML = formatDtcTabContentHtml(displayData);
-          if (typeof initializeOpenFreeMapInstances === 'function') {
-            initializeOpenFreeMapInstances();
-          }
-        } else if (activeDtcSelection) {
-          formatDtcTabContentHtml(displayData);
-          const payload = getLatestOpenFreeMapPayloadBySelection(activeDtcSelection);
-          if (payload) {
-            syncOpenFreeMapForSelection(activeDtcSelection, payload);
-          }
-          const bgBtn = document.getElementById('mapBgToggleBtn');
-          if (bgBtn) {
-            bgBtn.textContent = 'BG ' + (isMapBackgroundEnabledBySelection(activeDtcSelection) ? 'ON' : 'OFF');
-          }
-          const bgStatusEl = document.getElementById('mapBgStatus');
-          if (bgStatusEl) {
-            const mapBackgroundEnabled = isMapBackgroundEnabledBySelection(activeDtcSelection);
-            const hasPayload = !!payload;
-            const bgStatus = !mapBackgroundEnabled
-              ? 'BG disabled'
-              : (openFreeMapRuntimeFailed
-                ? ('BG runtime unavailable' + (openFreeMapRuntimeErrorText ? (': ' + openFreeMapRuntimeErrorText) : ''))
-                : (hasPayload
-                  ? ('BG ready [' + openFreeMapLastPayloadStatus + ']')
-                  : ('BG unavailable for current theatre/data (' + String((((displayData && displayData.Server) || {}).Theater) || lastKnownTheater || '?') + ')' + (openFreeMapLastPayloadStatus ? (' [' + openFreeMapLastPayloadStatus + ']') : ''))));
-            bgStatusEl.textContent = bgStatus;
-          }
-
-          const readoutEl = document.getElementById('mapBraReadout');
-          if (readoutEl) {
-            const selectedAssetKey = getMapSelectedAssetKeyBySelection(activeDtcSelection);
-            const rawAssets = getMudMapAssets(displayData, dlinkOnEnabled);
-            const overlays = getDtcMapOverlays(null, getDtcRouteBySelection(activeDtcSelection), displayData);
-            const overlayAirfields = Array.isArray(overlays && overlays.airfields) ? overlays.airfields : [];
-            const airfieldAssets = overlayAirfields
-              .map(function (a) {
-                return {
-                  callsign: String((a && a.callsign) || '').trim(),
-                  name: String((a && a.name) || (a && a.label) || '').trim(),
-                  category: 'ATC',
-                  typeName: String((a && a.typeName) || '').trim(),
-                  frequency: String((a && a.frequency) || '').trim(),
-                  altFrequencies: Array.isArray(a && a.altFrequencies) ? a.altFrequencies.slice(0) : [],
-                  tacan: String((a && a.tacan) || '').trim(),
-                  mpClientCallsign: String((a && a.mpClientCallsign) || '').trim(),
-                  xNum: Number(a && a.xNum),
-                  yNum: Number(a && a.yNum),
-                  altFeet: Number(a && a.altFeet),
-                };
-              })
-              .filter(function (a) { return isFinite(Number(a.xNum)) && isFinite(Number(a.yNum)); });
-            const selectionPool = rawAssets.concat(airfieldAssets);
-            const selectedAsset = selectedAssetKey
-              ? (selectionPool.find(function (a) { return makeMapAssetSelectionKey(a) === selectedAssetKey; }) || null)
-              : null;
-            const bullseyePoint = getMapBullseyePoint(null, [], null, displayData);
-            let readout = formatMapBraReadout(displayData, selectedAsset, bullseyePoint);
-            const markerCount = rawAssets.filter(function (a) { return String((a && a.category) || '').toUpperCase() === 'MAP_MARKER'; }).length;
-            if (markerCount > 0) {
-              readout += '   MKR ' + String(markerCount);
-            }
-            readoutEl.textContent = readout;
-          }
-        }
+        tabBody.innerHTML = formatDtcTabContentHtml(displayData);
         if (activeDtcSelection) {
           updateDtcRouteButtonUi(activeDtcSelection);
         }
@@ -15864,12 +17101,52 @@
               if (latestData && selectedTab === 'EFB') render(latestData);
             });
           } else {
+            const isSaMapMode = normalizeEfbViewerMode(efbViewerMode) === 'sa-map';
             const hasRenderedEfb = !!document.getElementById('efbAirportToggleBtn');
             if (!hasRenderedEfb || efbUiDirty) {
               tabBody.innerHTML = formatEfbTabContentHtml(displayData);
               bindEfbInteractions(displayData);
               efbLastResolvedAirport = airportKey;
               efbUiDirty = false;
+            }
+
+            if (isSaMapMode) {
+              const saMapContext = resolveActiveSaMapContext(displayData);
+              if (saMapContext && saMapContext.selected) {
+                const saMapState = buildSaMapRenderState(saMapContext.waypoints, displayData, saMapContext.selected, saMapContext.overlays, saMapContext.root, false);
+
+                if (saMapState && saMapState.openFreeMapPayload) {
+                  const synced = syncOpenFreeMapForSelection(saMapContext.selected, saMapState.openFreeMapPayload);
+                  if (!synced) {
+                    if (typeof initializeOpenFreeMapInstances === 'function') {
+                      initializeOpenFreeMapInstances();
+                    }
+                  }
+                } else {
+                  const fallbackEl = document.querySelector('#efbChartViewport .fltPlanOpenMapFallback');
+                  if (fallbackEl) {
+                    fallbackEl.style.display = 'block';
+                  }
+                }
+
+                if (saMapState && saMapState.openFreeMapPayload && typeof initializeOpenFreeMapInstances === 'function') {
+                  const mapHostEl = document.querySelector('#efbChartViewport .fltPlanOpenMapHost');
+                  if (mapHostEl && !mapHostEl.firstChild) {
+                    if (typeof initializeOpenFreeMapInstances === 'function') {
+                      initializeOpenFreeMapInstances();
+                    }
+                  }
+                }
+
+                if (typeof applyOpenFreeMapOwnshipCamera === 'function') {
+                  applyOpenFreeMapOwnshipCamera(saMapContext.selected, displayData);
+                }
+
+                const readoutEl = document.getElementById('efbSaMapBraReadout');
+                if (readoutEl && saMapState) {
+                  readoutEl.textContent = String(saMapState.readout || '');
+                }
+              }
             }
           }
         }
@@ -15981,6 +17258,7 @@
     }
 
     async function refreshDtcFiles() {
+      runtimeFlightPlanUserOverride = false;
       invalidateRuntimeFlightPlanSnapshot();
       resetRuntimeFlightPlanState();
       try {
@@ -15995,6 +17273,7 @@
     }
 
     async function selectDtcFile(filePath) {
+      runtimeFlightPlanUserOverride = !!String(filePath || '').trim();
       try {
         await fetch('/okb/dtc/select?file=' + encodeURIComponent(filePath || ''), { method: 'POST', cache: 'no-store' });
       } catch (_) {
@@ -16098,7 +17377,10 @@
       dlinkOnEnabled = !!ev.target.checked;
       persistDlinkOnPreference();
       applyDlinkOnUi();
-      if (latestData && selectedTab === 'DTC') render(latestData);
+      if (latestData && (selectedTab === 'DTC' || selectedTab === 'EFB')) {
+        if (selectedTab === 'EFB') efbUiDirty = true;
+        render(latestData);
+      }
     });
 
     document.getElementById('overlayAutoBrowse').addEventListener('change', function (ev) {
@@ -16117,7 +17399,10 @@
       dlinkOnEnabled = !!ev.target.checked;
       persistDlinkOnPreference();
       applyDlinkOnUi();
-      if (latestData && selectedTab === 'DTC') render(latestData);
+      if (latestData && (selectedTab === 'DTC' || selectedTab === 'EFB')) {
+        if (selectedTab === 'EFB') efbUiDirty = true;
+        render(latestData);
+      }
     });
 
     document.getElementById('overlayFontSizeSlider').addEventListener('input', function (ev) {
@@ -16848,6 +18133,24 @@
       setFltPlanSessionOverlayOpen(!fltPlanSessionOverlayOpen);
     });
 
+    document.getElementById('fastOwnshipToggleBtn').addEventListener('click', function (ev) {
+      ev.preventDefault();
+      ev.stopPropagation();
+      if (!(efbSaOwnshipFast && efbSaOwnshipFast.hasPosition)) return;
+      efbSaUseFastOwnshipEnabled = !efbSaUseFastOwnshipEnabled;
+      persistEfbSaUseFastOwnshipPreference();
+      updateFastOwnshipToggleUi();
+
+      const selectedKey = getActiveEfbSaSelectionKey();
+      if (selectedKey) {
+        if (efbSaUseFastOwnshipEnabled) {
+          applyFastOwnshipToSaMap(selectedKey, latestData || null);
+        }
+        applyOpenFreeMapOwnshipCamera(selectedKey, latestData || null);
+      }
+      if (latestData) render(latestData);
+    });
+
     document.getElementById('fltPlanFilesCloseBtn').addEventListener('click', function (ev) {
       ev.preventDefault();
       ev.stopPropagation();
@@ -16971,6 +18274,11 @@
     applyDtcListCollapsedState(readInitialDtcListCollapsed());
     applySessionCollapsedState(readInitialSessionCollapsed());
     efbPinnedChartsByAirport = readPinnedChartsPreference();
+    efbViewerMode = readEfbViewerModePreference();
+    efbSaFollowOwnshipEnabled = readEfbSaFollowEnabledPreference();
+    efbSaTrackUpEnabled = readEfbSaTrackUpEnabledPreference();
+    efbSaAnchorMode = readEfbSaAnchorModePreference();
+    efbSaUseFastOwnshipEnabled = readEfbSaUseFastOwnshipPreference();
     nightModeEnabled = readNightModePreference();
     applyNightModeUi();
     dlinkOnEnabled = readDlinkOnPreference();
@@ -16993,6 +18301,9 @@
       applyCurrentTabKeywordsSplit();
     });
     configureOpenKneeboard();
+    updateFastOwnshipToggleUi();
+    tickEfbSaOwnshipCamera();
+    pollEfbSaOwnshipFast();
     updateFakeMissionControlsUi();
     tick();
     clockTick();

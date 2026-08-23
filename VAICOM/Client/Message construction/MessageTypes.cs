@@ -131,7 +131,10 @@ namespace VAICOM
                         importmenus = State.activeconfig.ImportOtherMenu;
                         dictmode = State.Proxy.Dictation.IsOn();
 
-                        includediagnostics = Extensions.Kneeboard.OpenKneeboardBridge.HasActiveConnection && Extensions.Kneeboard.OpenKneeboardBridge.IsFlightPlanTabSelected();
+                        // Keep runtime diagnostics available whenever OKB has an active client,
+                        // so FLT PLN runtime NAVLOG can populate on mission connect without
+                        // requiring a tab-specific PTT cycle.
+                        includediagnostics = Extensions.Kneeboard.OpenKneeboardBridge.HasActiveConnection;
                         
                         //kneeboard = 1; // show kneeboard on PTT press, test
                     }
