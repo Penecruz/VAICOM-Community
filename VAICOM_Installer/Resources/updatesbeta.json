@@ -8,10 +8,10 @@
       "isdev": false,
       "productid": 1,
       "releasedate": 20260824,
-      "version": 3164,
-      "versionstring": "3.1.6.4",
+      "version": 31655,
+      "versionstring": "3.1.6.5",
       "downloadurl": "https://raw.githubusercontent.com/Penecruz/VAICOM-Community/Development/VAICOM_Installer/Resources/VAICOMPRO.zip",
-      "releasenotes": "BETA 3.1.6.4 \n- OpenKneeboard Out: added Navigraph EFB integration WIP.\n- OpenKneeboard Out EFB tab: added chart rotation and fit controls.\n- OpenKneeboard Out: enhanced kneeboard EFB and FLT PLN UI behavior, presentation and controls.\n- OpenKneeboard Out EFB tab: added stylus-only radial chart search overlay with center token display and Back/Clear actions.\n- OpenKneeboard Out EFB tab: added previous and next hover icons for quick chart browsing.\n- OpenKneeboard Out EFB tab: annimated search overlay motion to slide out from and retract back into the left rail/drawer flow.\n- OpenKneeboard Out EFB tab: moved SA Map from FLT PLN into the EFB viewing area with preserved Navlog route rendering.\n- OpenKneeboard Out EFB SA Map: integrated moving-map controls using EFB follow ownship, track-up, anchor, center-ownship, and layer toggles.\n- OpenKneeboard Out EFB SA Map: added optional fast-ownship source toggle (GPS icon) for troubleshooting and legacy fallback switching.\n- OpenKneeboard Out EFB SA Map: improved ownship rendering stability during refresh and layer changes to prevent heading/follow reset and icon strobing."
+      "releasenotes": "BETA 3.1.6.5 \n- OpenKneeboard Out: added Navigraph EFB integration WIP.\n- OpenKneeboard Out EFB tab: added chart rotation and fit controls.\n- OpenKneeboard Out: enhanced kneeboard EFB and FLT PLN UI behavior, presentation and controls.\n- OpenKneeboard Out EFB tab: added stylus-only radial chart search overlay with center token display and Back/Clear actions.\n- OpenKneeboard Out EFB tab: added previous and next hover icons for quick chart browsing.\n- OpenKneeboard Out EFB tab: annimated search overlay motion to slide out from and retract back into the left rail/drawer flow.\n- OpenKneeboard Out EFB tab: moved SA Map from FLT PLN into the EFB viewing area with preserved Navlog route rendering.\n- OpenKneeboard Out EFB SA Map: integrated moving-map controls using EFB follow ownship, track-up, anchor, center-ownship, and layer toggles.\n- OpenKneeboard Out EFB SA Map: added optional fast-ownship source toggle (GPS icon) for troubleshooting and legacy fallback switching.\n- OpenKneeboard Out EFB SA Map: improved ownship rendering stability during refresh and layer changes to prevent heading/follow reset and icon strobing. \n- Fix minor regression with bugging of Map overlay assets in Track up and follow selected"
     }
   ]
 }

@@ -11129,11 +11129,24 @@
       }
 
       if (!item.overlayClickBound) {
-        overlayRoot.addEventListener('click', function (ev) {
+        let lastAssetBugEventMs = 0;
+
+        function handleOverlayAssetBugEvent(ev, immediate) {
           let node = ev.target;
           while (node && node !== overlayRoot) {
             const assetKey = node.getAttribute ? String(node.getAttribute('data-asset-key') || '') : '';
             if (assetKey) {
+              const nowMs = Date.now();
+              if (!immediate && (nowMs - lastAssetBugEventMs) < 250) {
+                ev.preventDefault();
+                return;
+              }
+              lastAssetBugEventMs = nowMs;
+
+              const suppressKey = getFlightPlanEtaStartKey(item.selectedKey);
+              if (suppressKey && efbSaFollowOwnshipEnabled) {
+                efbSaFollowSuppressUntilBySelection[suppressKey] = Date.now() + 1200;
+              }
               const current = getMapSelectedAssetKeyBySelection(item.selectedKey);
               const nextKey = current === assetKey ? '' : assetKey;
               setMapSelectedAssetKeyBySelection(item.selectedKey, nextKey);
@@ -11147,10 +11160,21 @@
               }
               if (latestData) render(latestData);
               ev.preventDefault();
+              if (typeof ev.stopPropagation === 'function') {
+                ev.stopPropagation();
+              }
               return;
             }
             node = node.parentNode;
           }
+        }
+
+        overlayRoot.addEventListener('pointerdown', function (ev) {
+          handleOverlayAssetBugEvent(ev, true);
+        });
+
+        overlayRoot.addEventListener('click', function (ev) {
+          handleOverlayAssetBugEvent(ev, false);
         });
         item.overlayClickBound = true;
       }
@@ -11561,22 +11585,32 @@
               state.zoom = Number(map.getZoom());
             });
 
-            map.on('dragstart', function () {
+            function suppressFollowByUserInput(delayMs) {
               const k = getFlightPlanEtaStartKey(selectedKey);
               if (!k) return;
-              efbSaFollowSuppressUntilBySelection[k] = Date.now() + 12000;
+              if (!efbSaFollowOwnshipEnabled) return;
+              const delay = Math.max(250, Number(delayMs) || 0);
+              efbSaFollowSuppressUntilBySelection[k] = Date.now() + delay;
+            }
+
+            map.on('mousedown', function () {
+              suppressFollowByUserInput(1800);
+            });
+
+            map.on('touchstart', function () {
+              suppressFollowByUserInput(1800);
+            });
+
+            map.on('dragstart', function () {
+              suppressFollowByUserInput(12000);
             });
 
             map.on('zoomstart', function () {
-              const k = getFlightPlanEtaStartKey(selectedKey);
-              if (!k) return;
-              efbSaFollowSuppressUntilBySelection[k] = Date.now() + 12000;
+              suppressFollowByUserInput(12000);
             });
 
             map.on('rotatestart', function () {
-              const k = getFlightPlanEtaStartKey(selectedKey);
-              if (!k) return;
-              efbSaFollowSuppressUntilBySelection[k] = Date.now() + 12000;
+              suppressFollowByUserInput(12000);
             });
 
             openFreeMapInstancesByContainerId[mapId] = item;
