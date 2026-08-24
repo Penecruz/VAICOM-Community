@@ -10295,9 +10295,9 @@
     function getActiveFlightPlanSelection(data) {
       const model = data || latestData || {};
       const selected = String(model.DtcSelectedFile || '');
+      if (selected && runtimeFlightPlanUserOverride) return selected;
       const runtimeWaypoints = getMissionRuntimeWaypoints(model);
       if (runtimeWaypoints.length) return '__RUNTIME_PLAYER__';
-      if (selected && runtimeFlightPlanUserOverride) return selected;
       if (selected) return selected;
       return '';
     }
@@ -10601,39 +10601,39 @@
         const stroke = '#1f5d93';
         if (kind === 'awacs') {
           const r = makeNode('rect');
-          r.setAttribute('x', (px - 8).toFixed(1));
-          r.setAttribute('y', (py - 6).toFixed(1));
-          r.setAttribute('width', '16');
-          r.setAttribute('height', '12');
+          r.setAttribute('x', (px - 9.6).toFixed(1));
+          r.setAttribute('y', (py - 7.2).toFixed(1));
+          r.setAttribute('width', '19.2');
+          r.setAttribute('height', '14.4');
           r.setAttribute('rx', '1.6');
           r.setAttribute('fill', fill);
           r.setAttribute('stroke', stroke);
           r.setAttribute('stroke-width', '1.3');
           g.appendChild(r);
           const l = makeNode('line');
-          l.setAttribute('x1', (px - 6).toFixed(1));
+          l.setAttribute('x1', (px - 7.2).toFixed(1));
           l.setAttribute('y1', py.toFixed(1));
-          l.setAttribute('x2', (px + 6).toFixed(1));
+          l.setAttribute('x2', (px + 7.2).toFixed(1));
           l.setAttribute('y2', py.toFixed(1));
           l.setAttribute('stroke', stroke);
           l.setAttribute('stroke-width', '1.2');
           g.appendChild(l);
           const c2 = makeNode('circle');
           c2.setAttribute('cx', px.toFixed(1));
-          c2.setAttribute('cy', (py - 9).toFixed(1));
-          c2.setAttribute('r', '2.4');
+          c2.setAttribute('cy', (py - 10.8).toFixed(1));
+          c2.setAttribute('r', '2.88');
           c2.setAttribute('fill', stroke);
           g.appendChild(c2);
         } else if (kind === 'tanker') {
           const p = makeNode('polygon');
-          p.setAttribute('points', (px - 8).toFixed(1) + ',' + py.toFixed(1) + ' ' + px.toFixed(1) + ',' + (py - 6).toFixed(1) + ' ' + (px + 8).toFixed(1) + ',' + py.toFixed(1) + ' ' + px.toFixed(1) + ',' + (py + 6).toFixed(1));
+          p.setAttribute('points', (px - 9.6).toFixed(1) + ',' + py.toFixed(1) + ' ' + px.toFixed(1) + ',' + (py - 7.2).toFixed(1) + ' ' + (px + 9.6).toFixed(1) + ',' + py.toFixed(1) + ' ' + px.toFixed(1) + ',' + (py + 7.2).toFixed(1));
           p.setAttribute('fill', fill);
           p.setAttribute('stroke', stroke);
           p.setAttribute('stroke-width', '1.3');
           g.appendChild(p);
         } else if (kind === 'jtac') {
           const p = makeNode('polygon');
-          p.setAttribute('points', px.toFixed(1) + ',' + (py - 7).toFixed(1) + ' ' + (px - 7).toFixed(1) + ',' + (py + 7).toFixed(1) + ' ' + (px + 7).toFixed(1) + ',' + (py + 7).toFixed(1));
+          p.setAttribute('points', px.toFixed(1) + ',' + (py - 8.4).toFixed(1) + ' ' + (px - 8.4).toFixed(1) + ',' + (py + 8.4).toFixed(1) + ' ' + (px + 8.4).toFixed(1) + ',' + (py + 8.4).toFixed(1));
           p.setAttribute('fill', fill);
           p.setAttribute('stroke', stroke);
           p.setAttribute('stroke-width', '1.3');
@@ -10642,24 +10642,24 @@
           const c = makeNode('circle');
           c.setAttribute('cx', px.toFixed(1));
           c.setAttribute('cy', py.toFixed(1));
-          c.setAttribute('r', '6');
+          c.setAttribute('r', '7.2');
           c.setAttribute('fill', fill);
           c.setAttribute('stroke', stroke);
           c.setAttribute('stroke-width', '1.3');
           g.appendChild(c);
           const h = makeNode('line');
-          h.setAttribute('x1', (px - 9).toFixed(1));
+          h.setAttribute('x1', (px - 10.8).toFixed(1));
           h.setAttribute('y1', py.toFixed(1));
-          h.setAttribute('x2', (px + 9).toFixed(1));
+          h.setAttribute('x2', (px + 10.8).toFixed(1));
           h.setAttribute('y2', py.toFixed(1));
           h.setAttribute('stroke', stroke);
           h.setAttribute('stroke-width', '1.2');
           g.appendChild(h);
           const v = makeNode('line');
           v.setAttribute('x1', px.toFixed(1));
-          v.setAttribute('y1', (py - 9).toFixed(1));
+          v.setAttribute('y1', (py - 10.8).toFixed(1));
           v.setAttribute('x2', px.toFixed(1));
-          v.setAttribute('y2', (py + 9).toFixed(1));
+          v.setAttribute('y2', (py + 10.8).toFixed(1));
           v.setAttribute('stroke', stroke);
           v.setAttribute('stroke-width', '1.2');
           g.appendChild(v);
@@ -10667,24 +10667,24 @@
           const c = makeNode('circle');
           c.setAttribute('cx', px.toFixed(1));
           c.setAttribute('cy', py.toFixed(1));
-          c.setAttribute('r', '6.5');
+          c.setAttribute('r', '7.8');
           c.setAttribute('fill', '#f7edf8');
           c.setAttribute('stroke', '#8a2f99');
           c.setAttribute('stroke-width', '1.4');
           g.appendChild(c);
           const h = makeNode('line');
-          h.setAttribute('x1', (px - 8).toFixed(1));
+          h.setAttribute('x1', (px - 9.6).toFixed(1));
           h.setAttribute('y1', py.toFixed(1));
-          h.setAttribute('x2', (px + 8).toFixed(1));
+          h.setAttribute('x2', (px + 9.6).toFixed(1));
           h.setAttribute('y2', py.toFixed(1));
           h.setAttribute('stroke', '#8a2f99');
           h.setAttribute('stroke-width', '1.2');
           g.appendChild(h);
           const v = makeNode('line');
           v.setAttribute('x1', px.toFixed(1));
-          v.setAttribute('y1', (py - 8).toFixed(1));
+          v.setAttribute('y1', (py - 9.6).toFixed(1));
           v.setAttribute('x2', px.toFixed(1));
-          v.setAttribute('y2', (py + 8).toFixed(1));
+          v.setAttribute('y2', (py + 9.6).toFixed(1));
           v.setAttribute('stroke', '#8a2f99');
           v.setAttribute('stroke-width', '1.2');
           g.appendChild(v);
@@ -10699,10 +10699,10 @@
           g.appendChild(c);
         } else {
           const r = makeNode('rect');
-          r.setAttribute('x', (px - 7).toFixed(1));
-          r.setAttribute('y', (py - 5.5).toFixed(1));
-          r.setAttribute('width', '14');
-          r.setAttribute('height', '11');
+          r.setAttribute('x', (px - 8.4).toFixed(1));
+          r.setAttribute('y', (py - 6.6).toFixed(1));
+          r.setAttribute('width', '16.8');
+          r.setAttribute('height', '13.2');
           r.setAttribute('fill', fill);
           r.setAttribute('stroke', stroke);
           r.setAttribute('stroke-width', '1.3');
@@ -10765,7 +10765,7 @@
                 const gField = makeNode('g');
                 const type = String((props && props.airfieldType) || 'airport').toLowerCase();
                 const military = !!(props && props.airfieldMilitary);
-                const r = 6.5;
+                const r = 7.8;
 
                 const ring = makeNode('circle');
                 ring.setAttribute('cx', p.x.toFixed(1));
@@ -10779,10 +10779,10 @@
                 if (!military) {
                   for (let i = 0; i < 6; i++) {
                     const a = i * (Math.PI / 3.0);
-                    const x1 = p.x + (Math.cos(a) * (r + 0.5));
-                    const y1 = p.y + (Math.sin(a) * (r + 0.5));
-                    const x2 = p.x + (Math.cos(a) * (r + 2.2));
-                    const y2 = p.y + (Math.sin(a) * (r + 2.2));
+                    const x1 = p.x + (Math.cos(a) * (r + 0.6));
+                    const y1 = p.y + (Math.sin(a) * (r + 0.6));
+                    const x2 = p.x + (Math.cos(a) * (r + 2.64));
+                    const y2 = p.y + (Math.sin(a) * (r + 2.64));
                     const tick = makeNode('line');
                     tick.setAttribute('x1', x1.toFixed(1));
                     tick.setAttribute('y1', y1.toFixed(1));
@@ -10797,9 +10797,9 @@
                 if (type === 'heliport') {
                   const tx = makeNode('text');
                   tx.setAttribute('x', p.x.toFixed(1));
-                  tx.setAttribute('y', (p.y + 3.8).toFixed(1));
+                  tx.setAttribute('y', (p.y + 4.56).toFixed(1));
                   tx.setAttribute('text-anchor', 'middle');
-                  tx.setAttribute('font-size', '8.8');
+                  tx.setAttribute('font-size', '10.6');
                   tx.setAttribute('font-weight', '800');
                   tx.setAttribute('fill', stroke);
                   tx.textContent = 'H';
@@ -10807,9 +10807,9 @@
                 } else if (type === 'seaplane') {
                   const tx = makeNode('text');
                   tx.setAttribute('x', p.x.toFixed(1));
-                  tx.setAttribute('y', (p.y + 3.8).toFixed(1));
+                  tx.setAttribute('y', (p.y + 4.56).toFixed(1));
                   tx.setAttribute('text-anchor', 'middle');
-                  tx.setAttribute('font-size', '9.0');
+                  tx.setAttribute('font-size', '10.8');
                   tx.setAttribute('font-weight', '700');
                   tx.setAttribute('fill', stroke);
                   tx.textContent = '\u2693';
