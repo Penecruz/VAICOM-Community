@@ -93,6 +93,7 @@ namespace VAICOM
                 {RecipientCategories.RIO,            "RIO"                                   },
                 {RecipientCategories.AI_pilot,       "AI Pilot"                              },
                 {RecipientCategories.WSO,            "WSO"                                   },
+                {RecipientCategories.GeorgeCPG,      "George CPG"                            },
                 {RecipientCategories.kneeboard,      "Interactive Kneeboard extension"       },
             };
 

@@ -186,7 +186,7 @@ namespace VAICOM
                 if ((this.uniqueid >= Commands.Table["wMsgAIPilotCmndsNull"].uniqueid) & (this.uniqueid <= Commands.Table["wMsgAIPilotCmndsMaximum"].uniqueid)) { value = Recipientclasses.AI_pilot; }
 
                 // George AI extension
-                if (this.dcsid != null && this.dcsid.StartsWith("wMsgGeorge", StringComparison.OrdinalIgnoreCase)) { value = Recipientclasses.Crew; }
+                if ((this.uniqueid >= Commands.Table["wMsgGeorgeCmndsNull"].uniqueid) & (this.uniqueid <= Commands.Table["wMsgGeorgeCmndsMaximum"].uniqueid)) { value = Recipientclasses.GeorgeCPG; }
 
                 // WSO extension
                 if ((this.uniqueid >= Commands.Table["wMsgWSOCmndsNull"].uniqueid) & (this.uniqueid <= Commands.Table["wMsgWSOCmndsMaximum"].uniqueid)) { value = Recipientclasses.WSO; }
@@ -221,7 +221,9 @@ namespace VAICOM
 
             public bool isGeorge()
             {
-                return this.dcsid != null && this.dcsid.StartsWith("wMsgGeorge", StringComparison.OrdinalIgnoreCase);
+                bool value = false;
+                if ((this.uniqueid >= Commands.Table["wMsgGeorgeCmndsNull"].uniqueid) & (this.uniqueid <= Commands.Table["wMsgGeorgeCmndsMaximum"].uniqueid)) { value = true; }
+                return value;
             }
 
             public bool isVoid()

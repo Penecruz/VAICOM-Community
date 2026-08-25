@@ -713,11 +713,6 @@ namespace VAICOM
                     string cat = (category ?? string.Empty).Trim();
                     if (string.IsNullOrWhiteSpace(cat)) return "LOG";
 
-                    if (State.AIRIOactive && (cat.Equals("RIO", StringComparison.OrdinalIgnoreCase) || cat.Equals("Iceman", StringComparison.OrdinalIgnoreCase)))
-                    {
-                        return "REF";
-                    }
-
                     if (cat.Equals("Crew", StringComparison.OrdinalIgnoreCase))
                     {
                         return "REF";

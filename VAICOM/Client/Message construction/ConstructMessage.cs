@@ -121,14 +121,10 @@ namespace VAICOM
                             // hotmic is active, RIO not called
                             if (!State.valistening) // hotmic was used
                             {
-                                bool isGeorgeCommand = State.currentcommand != null
-                                    && !string.IsNullOrEmpty(State.currentcommand.dcsid)
-                                    && State.currentcommand.dcsid.StartsWith("wMsgGeorge", StringComparison.OrdinalIgnoreCase);
-
                                 if (!State.currentrecipientclass.Equals(Recipientclasses.Crew)
                                     && !State.currentcommand.isMenu()
                                     && !State.currentcommand.isOptions()
-                                    && !isGeorgeCommand)
+                                    && !State.currentcommand.isGeorge())
                                 {
                                     Log.Write("ICS HOT MIC: Use Push-To-Talk TX nodes to transmit radio messages.", Colors.Warning);
                                     if (State.activeconfig.UIaddhints)
@@ -143,10 +139,11 @@ namespace VAICOM
                         return true;
                     }
                 }
+
                 // George AI commands are only available in AH-64D, Device Command Macros for message construction.
                 public static bool ProcessIfGeorge()
                 {
-                    if (!State.currentcommand.dcsid.StartsWith("wMsgGeorge", StringComparison.OrdinalIgnoreCase))
+                    if (!State.currentcommand.isGeorge())
                     {
                         return true;
                     }
@@ -187,8 +184,7 @@ namespace VAICOM
                             State.currentmessage.msgdur = 3;
                         }
 
-                        string contextualHint;
-                        if (georgeoptionhints.TryGetValue(State.currentkey["command"], out contextualHint))
+                        if (georgeoptionhints.TryGetValue(State.currentkey["command"], out string contextualHint))
                         {
                             State.currentmessage.dspmsg = "GEORGE command use:\n" + contextualHint;
                             State.currentmessage.msgdur = 5;
@@ -203,6 +199,7 @@ namespace VAICOM
                             georgeLog = "GEORGE | " + Database.Labels.aicommands[State.currentkey["command"]];
                         }
                         OpenKneeboardBridge.UpdateLog("AI CREW", georgeLog);
+                        OpenKneeboardBridge.SetLastAiCrewCommand(georgeLog);
                     }
                     catch
                     {
@@ -898,7 +895,6 @@ namespace VAICOM
                         catch (Exception e)
                         {
                             Log.Write("Construct RIO Message:" + e.Message + e.StackTrace, Colors.Warning);
-
                         }
 
                     }
