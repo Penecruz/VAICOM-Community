@@ -1020,7 +1020,7 @@ namespace VAICOM
                 {
                     return recipientClass.Equals(Recipientclasses.RIO)
                         || recipientClass.Equals(Recipientclasses.AI_pilot)
-                        || recipientClass == Recipientclasses.WSO
+                        || recipientClass.Equals(Recipientclasses.WSO)
                         || recipientClass.Equals(Recipientclasses.GeorgeCPG);
                 }
 

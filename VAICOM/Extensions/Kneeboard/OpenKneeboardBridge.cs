@@ -13,6 +13,7 @@ using System.Runtime.InteropServices;
 using System.Reflection;
 using System.Windows;
 using System.Globalization;
+using VAICOM.Client;
 using VAICOM.Static;
 
 namespace VAICOM
@@ -1578,7 +1579,13 @@ namespace VAICOM
                         if (!currentSelectedTab.Equals(selectedTab, StringComparison.OrdinalIgnoreCase))
                         {
                             currentSelectedTab = selectedTab;
-                            if (!IsFlightPlanTabSelected())
+                            // If we have just switched to the flight plan tab then do an
+                            // immediate server update request so we have the latest data available.
+                            if (IsFlightPlanTabSelected())
+                            {
+                                DcsClient.SendUpdateRequest();
+                            }
+                            else
                             {
                                 UpdateActiveCategory(currentSelectedTab);
                             }
@@ -1720,6 +1727,14 @@ namespace VAICOM
                 public static bool IsFlightPlanTabSelected()
                 {
                     return !string.IsNullOrEmpty(currentSelectedTab) && currentSelectedTab.Equals("DTC");
+                }
+
+                public static bool IsFlightPlanTabActive
+                {
+                    get
+                    {
+                        return HasActiveConnection && IsFlightPlanTabSelected();
+                    }
                 }
 
                 private static string GetIndexHtmlWithStoreLookup()
