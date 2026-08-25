@@ -120,6 +120,7 @@
         <h3>Top Quick Bar (FLT PLN context)</h3>
         <ul>
           <li><strong>Files (☰)</strong>: Opens FLT PLN file picker overlay.</li>
+          <li><strong>GPS (🌐GPS)</strong>: Visible when fast ownship stream is available. Click to toggle fast ownship source ON/OFF for troubleshooting versus legacy server-position fallback.</li>
           <li><strong>Session (ℹ)</strong>: Opens session information overlay.</li>
         </ul>
 
@@ -137,9 +138,23 @@
 
     <section id="log" class="tab">
       <h2>LOG Tab</h2>
-      <p><strong>Overview:</strong> Primary operational feed for live recognition and command/event logging.</p>
-      <p><strong>Contains:</strong> Session status, recent operational lines, and quick diagnostics text.</p>
+      <p><strong>Overview:</strong> Primary operational feed for the mission briefing loaded dynamically at runtime. You can review the mission briefing at any time here without pausing the mission in single player.</p>      
       <div class="controls">
+        <img class="helpImage" src="/okb/helpimg?name=log/LOG_Overview.png" alt="LOG tab overview" />
+        <div class="helpImageCaption">Figure LOG-1. LOG tab overview image.</div>
+        <h3>What You Should Use It For</h3>
+        <ul>
+          <li><strong>Briefing confirmation</strong>: Understand the mission goals and get background information on the mission scenario.</li>
+          <li><strong>Mission design awareness</strong>: Understand what you are trying to achieve in the loaded mission and gather relevant context.</li>
+          <li><strong>Session tasks and instructions</strong>: generally mission designs also place relevant tasks and instructions here.</li>
+        </ul>
+
+        <h3>How Data Is Produced</h3>
+        <ul>
+          <li>Entries are assembled from the mission designers briefing notes.</li>
+          <li>Changing missions will fetch the latest briefing notes.</li>
+        </ul>
+
         <h3>Controls</h3>
         <ul>
           <li>No tab-specific picker controls currently. Uses global controls only.</li>
@@ -149,8 +164,8 @@
 
     <section id="fltpln" class="tab">
       <h2>FLT PLN Tab</h2>
-      <p><strong>Overview:</strong> Flight plan viewer for DTC and RouteTool sourced files.</p>
-      <p><strong>Contains:</strong> Structured table views of selected file content, mission timing hints, route data, page views (Time/NAVLOG/COM/CMDS/MAP), and map interaction readouts.</p>
+      <p><strong>Overview:</strong> Flight plan viewer for Mission, DTC and RouteTool sourced files.</p>
+      <p><strong>Contains:</strong> Structured table views of selected file content, mission timing, route data, page views (Time/NAVLOG/COM/CMDS/MAP), and map interaction readouts.</p>
       <p><strong>Purpose:</strong> This tab is intended as the mission planning and in-flight quick-reference board for timing, communications, commands, and route/map awareness.</p>
 
       <h3>Workflow</h3>
@@ -254,7 +269,9 @@
           <ul>
               <li>Primary navigation log view for route legs and waypoint sequencing.</li>
               <li>Focuses on route progression, leg continuity, and planning data readability.</li>
-              <li>In cell controls allow adjustment of waypoint parameters. Clicking on cell headers change data units if applicable.</li>
+              <li>In-cell pop-up controls allow adjustment of supported waypoint parameters.</li>
+              <li>Clicking editable cells opens embedded pop-up editors (in-place) for quick value changes without leaving NAVLOG context.</li>
+              <li>Clicking certain cell headers changes data units where applicable.</li>
               <li>Useful for cockpit cross-check against aircraft systems and required TOT, ATA and ETAs.</li>
           </ul>
 
@@ -277,32 +294,14 @@
               <li>DTC generated countermeasures program information.</li>
               <li>Includes details on deployment sequences and timing.</li>
               <li>This is data passed via DTC, does not reflect changes made by the pilot using the cockpit controls.</li>
-          </ul>
-
-          <h3>MAP</h3>
-          <ul>
-              <li>SA map visualization page with overlays and contextual annotations.</li>
-              <li>Supports mission route geometry review, selected asset context, data and own ship position information. Also provides B/E and BRA-style readouts when assets are bugged.</li>
-              <li>Support own coalition Datalink assets (D-LINK selected on) that are updated in real time.</li>
-          </ul>
+          </ul>          
       </div>
-
-      <h3>MAP Controls and Readouts</h3>
-      <div class="controls">
-        <ul>
-          <li><strong>BG ON/OFF</strong>: Background map layer toggle.</li>
-          <li><strong>Zoom/Pan controls</strong>: Used to inspect route sections and overlay details.</li>
-          <li><strong>Selection readout</strong>: Displays selected element information when available.</li>
-          <li><strong>Status line</strong>: Shows map/background availability state for current theatre/data.</li>
-          <li><strong>Overlay content</strong>: May include route lines, destination points, airfield overlays, and tactical context markers.</li>
-        </ul>
-      </div>
-
       <h3>Data Sources and Notes</h3>
       <div class="controls">
         <ul>
           <li><strong>DTC files</strong>: Loaded from Saved Games DTC export paths when available.</li>
           <li><strong>RouteTool files</strong>: Parsed from RouteTool preset output where supported.</li>
+          <li><strong>Embedded edit controls</strong>: Cell-activated pop-up editors are contextual and only appear on supported fields/pages.</li>
           <li><strong>Fallback behavior</strong>: If structured rendering is unavailable, a plain formatted data view is shown.</li>
           <li><strong>Debug support</strong>: Use global debug toggles (raw JSON/server messages) for troubleshooting content flow.</li>
         </ul>
@@ -330,9 +329,26 @@
 
     <section id="atc" class="tab">
       <h2>ATC Tab</h2>
-      <p><strong>Overview:</strong> Air Traffic Control context and call/reference information.</p>
-      <p><strong>Contains:</strong> ATC lines, relevant references, and airport/report-related text as available.</p>
+      <p><strong>Overview:</strong> Air Traffic Control and weather-reference tab for current airfield-focused communications.</p>
+      <p><strong>Contains:</strong> ATC-related phrase references, active weather text, and selected-airfield METAR context when available.</p>
       <div class="controls">
+        <img class="helpImage" src="/okb/helpimg?name=atc/ATC_Overview.png" alt="ATC tab overview" />
+        <div class="helpImageCaption">Figure ATC-1. ATC tab overview (placeholder image).</div>
+
+        <h3>What Is Displayed</h3>
+        <ul>
+          <li><strong>ATC references</strong>: Phrase and context lines relevant to tower/approach interactions.</li>
+          <li><strong>METAR/weather blocks</strong>: Parsed weather strings where export/runtime provides them.</li>
+          <li><strong>Airfield context</strong>: Closest/selected field context influences which weather block is emphasized.</li>
+        </ul>
+
+        <h3>How It Is Calculated / Selected</h3>
+        <ul>
+          <li>Weather sections come from runtime weather/METAR data when present.</li>
+          <li>When multiple reports are available, user selection and click context determine the focused METAR line.</li>
+          <li>Pressure-unit toggles apply to displayed weather outputs, not mission physics.</li>
+        </ul>
+
         <h3>Controls</h3>
         <ul>
           <li>No dedicated floating tab-specific controls at this stage.</li>
@@ -341,22 +357,62 @@
     </section>
 
     <section id="awacs" class="tab">
-      <h2>AWACS Tab</h2>
-      <p><strong>Overview:</strong> AWACS command/reference and response surface.</p>
-      <p><strong>Contains:</strong> Situation and command-oriented text returned through active session data.</p>
-      <div class="controls">
-        <h3>Controls</h3>
-        <ul>
-          <li>No dedicated tab-specific controls; uses global settings/help controls.</li>
-        </ul>
-      </div>
+        <h2>AWACS Tab</h2>
+        <p><strong>Overview:</strong> AWACS command/reference and tactical air picture summary.</p>
+        <p><strong>Contains:</strong> Available AWACS/EWR contributors, detected opposition contacts, grouped aircraft tracks, and contact-specific readouts.</p>
+        <div class="controls">
+            <img class="helpImage" src="/okb/helpimg?name=awacs/AWACS_Overview.png" alt="AWACS tab overview" />
+            <div class="helpImageCaption">Figure AWACS-1. AWACS tab overview (placeholder image).</div>
+
+            <h3>What Is Displayed</h3>
+            <ul>
+                <li><strong>Contributors</strong>: Friendly AWACS/EWR sources currently reporting.</li>
+                <li><strong>Aircraft contacts</strong>: Air tracks may be grouped by proximity/formation behavior.</li>
+                <li><strong>Emitter context</strong>: Opposing EWR/emitter references when available in source data.</li>
+            </ul>
+
+            <h3>BRA / Contact Readouts</h3>
+            <ul>
+                <li><strong>BRA/Bulls style output</strong>: Bearing/range/aspect-style lines are derived from ownship and contact positions where available.</li>
+                <li><strong>Bearing</strong>: Derived from ownship-to-contact geometry and displayed in tactical heading format.</li>
+                <li><strong>Range</strong>: Derived from horizontal distance and displayed in mission-appropriate units.</li>
+                <li><strong>Altitude/aspect</strong>: Included when source contact metadata contains sufficient values.</li>
+            </ul>
+
+            <h3>Data Quality Notes</h3>
+            <ul>
+                <li>Contact grouping and labels depend on available coalition runtime sensors and exported data cadence.</li>
+                <li>Displayed tactical values are situational aids and may differ from onboard radar/FCR behavior.</li>
+            </ul>
+
+            <h3>Controls</h3>
+            <ul>
+                <li>No dedicated tab-specific controls; uses global settings/help controls.</li>
+            </ul>
+        </div>
     </section>
 
     <section id="jtac" class="tab">
       <h2>JTAC Tab</h2>
-      <p><strong>Overview:</strong> JTAC-focused communications and support references.</p>
-      <p><strong>Contains:</strong> Tasking/dialog snippets and keyword guidance where available.</p>
+      <p><strong>Overview:</strong> JTAC-focused communications, tasking context, and support cue reference panel.</p>
+      <p><strong>Contains:</strong> JTAC call snippets, target/task references, and command-keyword guidance for attack flow support.</p>
       <div class="controls">
+        <img class="helpImage" src="/okb/helpimg?name=jtac/JTAC_Overview.png" alt="JTAC tab overview" />
+        <div class="helpImageCaption">Figure JTAC-1. JTAC tab overview (placeholder image).</div>
+
+        <h3>What Is Displayed</h3>
+        <ul>
+          <li><strong>Tasking snippets</strong>: Mission-relevant JTAC lines and references surfaced from runtime/session context.</li>
+          <li><strong>Cue references</strong>: Keyword guidance for common JTAC command paths and confirmations.</li>
+          <li><strong>Support awareness</strong>: Complements map and FLT PLN references for target talk-on flow.</li>
+        </ul>
+
+        <h3>How To Use It</h3>
+        <ul>
+          <li>Use as a quick cue card while issuing JTAC commands and validating responses in LOG.</li>
+          <li>Cross-reference with EFB SA Map and FLT PLN NAVLOG for location/context alignment.</li>
+        </ul>
+
         <h3>Controls</h3>
         <ul>
           <li>No dedicated tab controls currently beyond global overlays.</li>
@@ -366,9 +422,25 @@
 
     <section id="tanker" class="tab">
       <h2>TANKER Tab</h2>
-      <p><strong>Overview:</strong> Air-to-air refueling contact and comms support view.</p>
-      <p><strong>Contains:</strong> Tanker-related communication references and response lines.</p>
+      <p><strong>Overview:</strong> Air-to-air refueling support tab for tanker availability and comm/nav setup.</p>
+      <p><strong>Contains:</strong> Tankers in active AAR state, aircraft type/callsign context, frequencies, TACAN references, and tanker command phrase support.</p>
       <div class="controls">
+        <img class="helpImage" src="/okb/helpimg?name=tanker/TANKER_Overview.png" alt="Tanker tab overview" />
+        <div class="helpImageCaption">Figure TANKER-1. TANKER tab overview (placeholder image).</div>
+
+        <h3>What Is Displayed</h3>
+        <ul>
+          <li><strong>Availability</strong>: Tankers currently detectable and offering AAR support.</li>
+          <li><strong>Comms/nav data</strong>: Frequency and TACAN lines from runtime asset metadata when present.</li>
+          <li><strong>Reference phrases</strong>: Tanker-related command/help phrases and common response cues.</li>
+        </ul>
+
+        <h3>How It Is Calculated / Filtered</h3>
+        <ul>
+          <li>Entries are filtered to tanker-role assets with valid position/metadata in current session data.</li>
+          <li>Displayed values are synchronized to latest available runtime update and may lag fast-changing mission states.</li>
+        </ul>
+
         <h3>Controls</h3>
         <ul>
           <li>No dedicated tab controls currently beyond global overlays.</li>
@@ -378,9 +450,18 @@
 
     <section id="aocs" class="tab">
       <h2>AOCS Tab</h2>
-      <p><strong>Overview:</strong> Air operations/coordination support tab output.</p>
-      <p><strong>Contains:</strong> Session-specific lines and keyword references as provided by runtime data.</p>
+      <p><strong>Overview:</strong> Air operations coordination support output for mission-level references.</p>
+      <p><strong>Contains:</strong> Session-specific coordination lines, reference phrases, and context-rich operational notes from runtime data.</p>
       <div class="controls">
+        <img class="helpImage" src="/okb/helpimg?name=aocs/AOCS_Overview.png" alt="AOCS tab overview" />
+        <div class="helpImageCaption">Figure AOCS-1. AOCS tab overview (placeholder image).</div>
+
+        <h3>What Is Displayed</h3>
+        <ul>
+          <li>Mission coordination text relevant to air operations workflow.</li>
+          <li>Reference cues that complement ATC/AWACS/FLIGHT operational pages.</li>
+        </ul>
+
         <h3>Controls</h3>
         <ul>
           <li>No dedicated tab controls currently beyond global overlays.</li>
@@ -390,9 +471,18 @@
 
     <section id="flight" class="tab">
       <h2>FLIGHT Tab</h2>
-      <p><strong>Overview:</strong> Flight-level information and route/aircraft context.</p>
-      <p><strong>Contains:</strong> Flight context data, references, and textual summary blocks.</p>
+      <p><strong>Overview:</strong> Flight-level tab for package/member context and route/aircraft reference information.</p>
+      <p><strong>Contains:</strong> Flight context summaries, supporting references, and session-driven textual blocks relevant to your formation or element.</p>
       <div class="controls">
+        <img class="helpImage" src="/okb/helpimg?name=flight/FLIGHT_Overview.png" alt="FLIGHT tab overview" />
+        <div class="helpImageCaption">Figure FLIGHT-1. FLIGHT tab overview (placeholder image).</div>
+
+        <h3>What Is Displayed</h3>
+        <ul>
+          <li>Flight/package context derived from active session and mission data.</li>
+          <li>Reference text to support formation command and coordination workflows.</li>
+        </ul>
+
         <h3>Controls</h3>
         <ul>
           <li>No dedicated floating tab controls currently.</li>
@@ -402,9 +492,24 @@
 
     <section id="aicrew" class="tab">
       <h2>AI CREW Tab</h2>
-      <p><strong>Overview:</strong> AI crew command/reference workspace.</p>
-      <p><strong>Contains:</strong> AI crew interactions and operational command cueing text.</p>
+      <p><strong>Overview:</strong> AI crew command/reference workspace for multicrew aircraft workflows.</p>
+      <p><strong>Contains:</strong> Crew-specific command phrases, contextual cueing, and recent crew-interaction status text.</p>
       <div class="controls">
+        <img class="helpImage" src="/okb/helpimg?name=aicrew/AICREW_Overview.png" alt="AI CREW tab overview" />
+        <div class="helpImageCaption">Figure AI-1. AI CREW tab overview (placeholder image).</div>
+
+        <h3>Platform Scope</h3>
+        <ul>
+          <li>Designed for multicrew-capable modules (for example F-14, F-4E, and AH-64D configurations).</li>
+          <li>Single-seat aircraft may show minimal/empty AI CREW output by design.</li>
+        </ul>
+
+        <h3>What Is Displayed</h3>
+        <ul>
+          <li>Crew command cue text and response-oriented references.</li>
+          <li>Recent crew interaction history (short rolling window) for command confirmation.</li>
+        </ul>
+
         <h3>Controls</h3>
         <ul>
           <li>No dedicated tab controls currently beyond global overlays.</li>
@@ -414,9 +519,18 @@
 
     <section id="gndcrew" class="tab">
       <h2>GND CREW Tab</h2>
-      <p><strong>Overview:</strong> Ground crew command/reference workspace.</p>
-      <p><strong>Contains:</strong> Ground servicing command lines and related textual responses.</p>
+      <p><strong>Overview:</strong> Ground crew command/reference workspace for servicing operations.</p>
+      <p><strong>Contains:</strong> Ground servicing command lines, status responses, and support references for turnaround workflows.</p>
       <div class="controls">
+        <img class="helpImage" src="/okb/helpimg?name=gndcrew/GNDCREW_Overview.png" alt="GND CREW tab overview" />
+        <div class="helpImageCaption">Figure GND-1. GND CREW tab overview (placeholder image).</div>
+
+        <h3>What Is Displayed</h3>
+        <ul>
+          <li>Ground-crew relevant command references and expected response patterns.</li>
+          <li>Useful for rearm/refuel/airframe-service interaction flow cross-checks.</li>
+        </ul>
+
         <h3>Controls</h3>
         <ul>
           <li>No dedicated tab controls currently beyond global overlays.</li>
@@ -426,9 +540,18 @@
 
     <section id="notes" class="tab">
       <h2>NOTES Tab</h2>
-      <p><strong>Overview:</strong> Freeform notes and in-kneeboard mark-up support.</p>
-      <p><strong>Contains:</strong> Notes text area/content and user annotations.</p>
+      <p><strong>Overview:</strong> Freeform notes and kneeboard annotation workspace.</p>
+      <p><strong>Contains:</strong> Textual notes content plus draw-mode annotation behavior for mission jotting/debrief marks.</p>
       <div class="controls">
+        <img class="helpImage" src="/okb/helpimg?name=notes/NOTES_Overview.png" alt="NOTES tab overview" />
+        <div class="helpImageCaption">Figure NOTES-1. NOTES tab overview (placeholder image).</div>
+
+        <h3>Use Cases</h3>
+        <ul>
+          <li>Capture transient mission details that are not represented in structured tabs.</li>
+          <li>Annotate tactics, frequencies, target remarks, and debrief notes in one place.</li>
+        </ul>
+
         <h3>Controls</h3>
         <ul>
           <li><strong>Draw (✎)</strong>: Opens draw mode overlay.</li>
@@ -440,14 +563,20 @@
 
     <section id="efb" class="tab">
       <h2>EFB Tab</h2>
-      <p><strong>Overview:</strong> Electronic Flight Bag workspace for chart viewing with a floating icon rail workflow and pinned favorites list.</p>
-      <p><strong>Contains:</strong> Auto/manual airport selection, chart list drawer, global pinned chart drawer, local-file chart rendering, and viewport pan/zoom controls.</p>
+      <p><strong>Overview:</strong> Electronic Flight Bag workspace for both chart viewing and SA Map moving-map operations using the same rail-control workflow.</p>
+      <p><strong>Contains:</strong> Chart mode, SA Map mode, auto/manual airport workflows, pinned chart favorites, map/viewport controls, layer toggles, ownship follow/track-up controls, and asset/airfield bugging support.</p>
       <div class="controls">
-        <h3>Left Rail Controls</h3>
+        <img class="helpImage" src="/okb/helpimg?name=efb/EFB_Overview.png" alt="EFB tab overview" />
+        <div class="helpImageCaption">Figure EFB-1. EFB overview (placeholder image).</div>
+
+        <h3>Mode and Left Rail Controls</h3>
         <ul>
+          <li><strong>SA Map toggle</strong>: Switches the EFB viewport between chart mode and SA Map mode.</li>
           <li><strong>Auto (A)</strong>: Resolves/selects airport from current mission context, then opens the chart list for that airport.</li>
           <li><strong>Airport (🗼)</strong>: Opens airport list drawer first; selecting an airport opens its chart list.</li>
           <li><strong>Pinned (📌)</strong>: Opens pinned drawer (favorites) showing only charts explicitly pinned from chart rows.</li>
+          <li><strong>Search</strong>: Opens the stylus-oriented chart search overlay with radial character input and center token display.</li>
+          <li><strong>Layers</strong>: Opens the SA Map layers drawer when SA Map mode is active.</li>
         </ul>
 
         <h3>Drawer Lists and Pinning</h3>
@@ -459,12 +588,51 @@
           <li><strong>Selecting pinned charts</strong>: Choosing a pinned row switches to that chart's airport and loads the selected chart.</li>
         </ul>
 
-        <h3>Right Rail and Viewport Controls</h3>
+        <h3>Chart Search Tool</h3>
+        <ul>
+          <li><strong>Radial search overlay</strong>: Designed for stylus/touch entry with wheel-based character selection.</li>
+          <li><strong>Token display</strong>: The center token shows the current ICAO/search text being built.</li>
+          <li><strong>Back</strong>: Removes the last entered character.</li>
+          <li><strong>Clear</strong>: Resets the token and search candidate list.</li>
+          <li><strong>Candidate selection</strong>: Choosing a result sets the airport/chart directly for quick access.</li>
+        </ul>
+
+        <h3>Chart View Controls</h3>
         <ul>
           <li><strong>Zoom Out (−)</strong>: Decreases chart zoom.</li>
           <li><strong>Recenter (⟳)</strong>: Resets zoom and pan to default centered view.</li>
           <li><strong>Zoom In (+)</strong>: Increases chart zoom.</li>
           <li><strong>Pan/drag</strong>: Click-drag in chart viewport to move the chart image.</li>
+        </ul>
+
+        <h3>SA Map Controls</h3>
+        <ul>
+          <li><strong>Center Ownship</strong>: Recenters the map on ownship immediately.</li>
+          <li><strong>Follow Ownship</strong>: Keeps map camera centered/anchored on ownship until explicitly turned OFF.</li>
+          <li><strong>Track-Up</strong>: Rotates map to ownship heading until explicitly turned OFF.</li>
+          <li><strong>Anchor</strong>: Toggles follow anchor position between center and lower-third framing.</li>
+          <li><strong>Map zoom controls</strong>: The same right-rail zoom controls apply in SA Map mode.</li>
+        </ul>
+
+        <h3>SA Map Layers Drawer</h3>
+        <ul>
+          <li><strong>D-Link assets</strong>: Show/hide friendly tactical assets while keeping ownship available.</li>
+          <li><strong>Airports</strong>: Show/hide airfield symbols and labels.</li>
+          <li><strong>Navlog route</strong>: Show/hide active route line and waypoint set.</li>
+          <li><strong>DTC overlays</strong>: Show/hide DTC map overlays (threats, GEO lines, points, etc.).</li>
+        </ul>
+
+        <h3>SA Map Interaction Use Cases</h3>
+        <ul>
+          <li><strong>Bug an asset/airfield</strong>: Tap/click symbols to select/deselect and show related detail context.</li>
+          <li><strong>Manual inspect while following</strong>: Drag/zoom/rotate temporarily suppresses follow recentering, then follow resumes automatically.</li>
+          <li><strong>Troubleshoot ownship source</strong>: Use the global GPS icon to compare fast ownship updates vs legacy server-position fallback.</li>
+        </ul>
+
+        <h3>Draw and Annotation Functions</h3>
+        <ul>
+          <li><strong>NOTES draw mode (✎)</strong>: Annotation draw tools remain on the NOTES tab only.</li>
+          <li><strong>EFB behavior</strong>: EFB/SA Map currently focuses on chart and map interaction, not freehand annotation layers.</li>
         </ul>
 
         <h3>Night Mode and Chart Sources</h3>

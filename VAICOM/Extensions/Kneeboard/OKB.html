@@ -1497,7 +1497,7 @@
     .helpOverlayBackdrop {
       align-items: stretch;
       justify-content: stretch;
-      padding: 84px 128px 92px 20px;
+      padding: 186px 128px 110px 20px;
       background: transparent;
       backdrop-filter: none;
       pointer-events: none;
@@ -1507,7 +1507,7 @@
     .overlayPanel.helpOverlayPanel {
       width: calc(100vw - 148px);
       max-width: none;
-      height: calc(100vh - 188px);
+      height: calc(100vh - 296px);
       margin: 0;
       border-radius: 12px;
       pointer-events: auto;
@@ -4442,23 +4442,9 @@
       const visibleRows = allowNavlog ? rows : [];
       const model = data || latestData || {};
       const server = (model && model.Server) || {};
-      const diagnostics = (server && server.Diagnostics) || {};
-      const theatreCandidates = [
-        server.Theater,
-        diagnostics.theater,
-        diagnostics.terrain,
-        diagnostics.terrainName,
-        lastKnownTheater,
-      ];
-      let theatre = '';
-      for (let i = 0; i < theatreCandidates.length; i++) {
-        const candidate = String(theatreCandidates[i] || '').trim();
-        if (!candidate) continue;
-        if (getMapProjectionByTheatre(candidate)) {
-          theatre = candidate;
-          break;
-        }
-      }
+      const theatreInfo = resolveOpenFreeMapTheatreInfo(model);
+      const theatre = String((theatreInfo && theatreInfo.theatre) || '').trim();
+      const inferredTheatre = !!(theatreInfo && theatreInfo.inferred);
       if (!theatre) {
         openFreeMapLastPayloadStatus = 'no-theatre';
         return null;
@@ -4807,12 +4793,16 @@
       });
 
       if (!pointsForBounds.length) {
-        const centerOnly = getTheatreCenterLonLat(theatre);
+        const centerOnly = inferredTheatre
+          ? (getTheatreZeroPointLonLat(theatre) || getTheatreCenterLonLat(theatre))
+          : getTheatreCenterLonLat(theatre);
         if (!centerOnly) {
           openFreeMapLastPayloadStatus = 'no-converted-points';
           return null;
         }
-        openFreeMapLastPayloadStatus = 'base-only/no-overlay-points';
+        openFreeMapLastPayloadStatus = inferredTheatre
+          ? 'base-only/inferred-theatre-zero'
+          : 'base-only/no-overlay-points';
         return {
           selected: selected,
           theatre: theatre,
@@ -4826,12 +4816,16 @@
       const lons = pointsForBounds.map(function (c) { return Number(c[0]); }).filter(function (v) { return isFinite(v); });
       const lats = pointsForBounds.map(function (c) { return Number(c[1]); }).filter(function (v) { return isFinite(v); });
       if (!lons.length || !lats.length) {
-        const centerOnly = getTheatreCenterLonLat(theatre);
+        const centerOnly = inferredTheatre
+          ? (getTheatreZeroPointLonLat(theatre) || getTheatreCenterLonLat(theatre))
+          : getTheatreCenterLonLat(theatre);
         if (!centerOnly) {
           openFreeMapLastPayloadStatus = 'invalid-bounds';
           return null;
         }
-        openFreeMapLastPayloadStatus = 'base-only/invalid-bounds';
+        openFreeMapLastPayloadStatus = inferredTheatre
+          ? 'base-only/inferred-theatre-invalid-bounds'
+          : 'base-only/invalid-bounds';
         return {
           selected: selected,
           theatre: theatre,
@@ -7196,7 +7190,7 @@
       const timing = getResolvedTimingMarks(selected);
       const takeoff = Number(timing && timing.takeoff);
       if (!isFinite(takeoff)) {
-        fakeMissionState.ownshipStarted = false;
+        fakeMissionState.ownshipStarted = true;
         return;
       }
 
@@ -7381,9 +7375,25 @@
       }
       server.Diagnostics.playerGroup = String(server.Diagnostics.playerGroup || 'SIM-FLIGHT');
 
+      const fakeSelectedFile = String(clone.DtcSelectedFile || original.DtcSelectedFile || '').trim();
+      const fakeKnownFiles = Array.isArray(clone.DtcFiles) ? clone.DtcFiles : (Array.isArray(original.DtcFiles) ? original.DtcFiles : []);
+      let fakeRouteSeedSelection = fakeSelectedFile;
+      if (!fakeRouteSeedSelection && fakeKnownFiles.length) {
+        fakeRouteSeedSelection = String(fakeKnownFiles[0] || '').trim();
+      }
+      if (!fakeRouteSeedSelection) {
+        fakeRouteSeedSelection = String(getActiveFlightPlanSelection(original) || '').trim();
+      }
+
+      if (!String(server.Theater || '').trim() && fakeRouteSeedSelection) {
+        const inferredTheatre = inferTheatreCandidateFromSelection(fakeRouteSeedSelection);
+        if (inferredTheatre && getMapProjectionByTheatre(inferredTheatre)) {
+          server.Theater = inferredTheatre;
+        }
+      }
+
       if (!Array.isArray(server.Diagnostics.playerGroupWaypoints) || !server.Diagnostics.playerGroupWaypoints.length) {
-        const sel = getActiveFlightPlanSelection(clone);
-        const routeRows = getPlanWaypointsForRecommendations(sel).filter(function (wp) {
+        const routeRows = getPlanWaypointsForRecommendations(fakeRouteSeedSelection).filter(function (wp) {
           return isFinite(Number(wp && wp.xNum)) && isFinite(Number(wp && wp.yNum));
         });
         server.Diagnostics.playerGroupWaypoints = routeRows.map(function (wp, i) {
@@ -7432,7 +7442,7 @@
         const delta = (now - fakeMissionLastRealMs) / 1000.0;
         fakeMissionLastRealMs = now;
         stepFakeMissionState(delta);
-        if (latestData && selectedTab === 'DTC') {
+        if (latestData && (selectedTab === 'DTC' || selectedTab === 'EFB')) {
           const shouldRender = (now - fakeMissionLastRenderMs) >= 350;
           if (shouldRender) {
             fakeMissionLastRenderMs = now;
@@ -8821,6 +8831,98 @@
     function getFltPlnPath(path) {
       const rte = parseRteSelectionToken(path);
       return rte ? rte.filePath : String(path || '');
+    }
+
+    function inferTheatreCandidateFromSelection(selectedPath) {
+      const fullPath = String(getFltPlnPath(selectedPath) || '').trim();
+      if (!fullPath) return '';
+      const normalized = fullPath.replace(/\\/g, '/');
+      const fileName = getPathFileName(normalized);
+      const noExt = String(fileName || '').replace(/\.[^.]+$/, '').trim();
+      if (!noExt) return '';
+      return noExt;
+    }
+
+    function resolveOpenFreeMapTheatreInfo(model) {
+      const source = model || latestData || {};
+      const server = (source && source.Server) || {};
+      const diagnostics = (server && server.Diagnostics) || {};
+
+      const liveCandidates = [
+        server.Theater,
+        diagnostics.theater,
+        diagnostics.terrain,
+        diagnostics.terrainName,
+        lastKnownTheater,
+      ];
+
+      for (let i = 0; i < liveCandidates.length; i++) {
+        const candidate = String(liveCandidates[i] || '').trim();
+        if (!candidate) continue;
+        if (getMapProjectionByTheatre(candidate)) {
+          return { theatre: candidate, inferred: false };
+        }
+      }
+
+      const selected = String(source.DtcSelectedFile || '');
+      const inferredCandidate = inferTheatreCandidateFromSelection(selected);
+      if (inferredCandidate && getMapProjectionByTheatre(inferredCandidate)) {
+        return { theatre: inferredCandidate, inferred: true };
+      }
+
+      return { theatre: '', inferred: false };
+    }
+
+    function resolveOpenFreeMapFallbackTheatreText(model) {
+      const source = model || latestData || {};
+      const server = (source && source.Server) || {};
+      const diagnostics = (server && server.Diagnostics) || {};
+
+      const liveCandidates = [
+        server.Theater,
+        diagnostics.theater,
+        diagnostics.terrain,
+        diagnostics.terrainName,
+        lastKnownTheater,
+      ];
+
+      for (let i = 0; i < liveCandidates.length; i++) {
+        const candidate = String(liveCandidates[i] || '').trim();
+        if (!candidate) continue;
+        if (getMapProjectionByTheatre(candidate)) {
+          return candidate;
+        }
+      }
+
+      const selected = String(source.DtcSelectedFile || '');
+      const inferredCandidate = inferTheatreCandidateFromSelection(selected);
+      if (inferredCandidate && getMapProjectionByTheatre(inferredCandidate)) {
+        return inferredCandidate;
+      }
+
+      return '';
+    }
+
+    function getTheatreZeroPointLonLat(theatre) {
+      function validLonLat(ll) {
+        return !!ll
+          && isFinite(Number(ll.lon))
+          && isFinite(Number(ll.lat))
+          && Math.abs(Number(ll.lat)) <= 90
+          && Math.abs(Number(ll.lon)) <= 180;
+      }
+
+      const llPrimary = convertDcsXYToLatLon(theatre, 0, 0);
+      if (validLonLat(llPrimary)) {
+        return [Number(llPrimary.lon), Number(llPrimary.lat)];
+      }
+
+      const llSwap = convertDcsXYToLatLon(theatre, 0, 0);
+      if (validLonLat(llSwap)) {
+        return [Number(llSwap.lon), Number(llSwap.lat)];
+      }
+
+      return null;
     }
 
     function getDtcDisplayName(path) {
@@ -11344,7 +11446,7 @@
         const model = data || latestData || {};
         const ownship = getPlayerMapPoint(model);
         if (!ownship || !isFinite(Number(ownship.xNum)) || !isFinite(Number(ownship.yNum))) return false;
-        const theater = String((((model && model.Server) || {}).Theater) || lastKnownTheater || '').trim();
+        const theater = String(resolveOpenFreeMapFallbackTheatreText(model) || '').trim();
         const llPrimary = convertDcsXYToLatLon(theater, Number(ownship.xNum), Number(ownship.yNum));
         const llSwap = convertDcsXYToLatLon(theater, Number(ownship.yNum), Number(ownship.xNum));
         const ll = (llPrimary && isFinite(Number(llPrimary.lon)) && isFinite(Number(llPrimary.lat)))
@@ -11408,7 +11510,7 @@
         const model = data || latestData || {};
         const ownship = getPlayerMapPoint(model);
         if (!ownship || !isFinite(Number(ownship.xNum)) || !isFinite(Number(ownship.yNum))) return false;
-        const theater = String((((model && model.Server) || {}).Theater) || lastKnownTheater || '').trim();
+        const theater = String(resolveOpenFreeMapFallbackTheatreText(model) || '').trim();
         const llPrimary = convertDcsXYToLatLon(theater, Number(ownship.xNum), Number(ownship.yNum));
         const llSwap = convertDcsXYToLatLon(theater, Number(ownship.yNum), Number(ownship.xNum));
         const ll = (llPrimary && isFinite(Number(llPrimary.lon)) && isFinite(Number(llPrimary.lat)))
@@ -11709,7 +11811,7 @@
       if (!ownship) return false;
 
       const model = data || latestData || {};
-      const theater = String((((model && model.Server) || {}).Theater) || efbSaOwnshipFast.theater || lastKnownTheater || '').trim();
+      const theater = String(resolveOpenFreeMapFallbackTheatreText(model) || efbSaOwnshipFast.theater || '').trim();
       const llPrimary = convertDcsXYToLatLon(theater, Number(ownship.xNum), Number(ownship.yNum));
       const llSwap = convertDcsXYToLatLon(theater, Number(ownship.yNum), Number(ownship.xNum));
       const ll = (llPrimary && isFinite(Number(llPrimary.lon)) && isFinite(Number(llPrimary.lat)))
@@ -15521,32 +15623,41 @@
         const fill = palette.assetBlue;
         const category = String((a && a.asset && a.asset.category) || '').toUpperCase();
         if (category === 'PLAYER') {
-          return '<g><circle cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="7.5" fill="#f2d76a" stroke="#7a6420" stroke-width="1.5" /><line x1="' + (x - 9).toFixed(1) + '" y1="' + y.toFixed(1) + '" x2="' + (x + 9).toFixed(1) + '" y2="' + y.toFixed(1) + '" stroke="#7a6420" stroke-width="1.2" /><line x1="' + x.toFixed(1) + '" y1="' + (y - 9).toFixed(1) + '" x2="' + x.toFixed(1) + '" y2="' + (y + 9).toFixed(1) + '" stroke="#7a6420" stroke-width="1.2" /></g>';
+          const heading = Number(a && a.headingDeg);
+          const resolvedHeading = isFinite(heading) ? normalizeHeadingDeg(heading) : 0;
+          return '<g transform="rotate(' + resolvedHeading.toFixed(1) + ' ' + x.toFixed(1) + ' ' + y.toFixed(1) + ')">'
+            + '<polygon points="'
+            + x.toFixed(1) + ',' + (y - 9).toFixed(1) + ' '
+            + (x - 6.8).toFixed(1) + ',' + (y + 6.2).toFixed(1) + ' '
+            + x.toFixed(1) + ',' + (y + 2.5).toFixed(1) + ' '
+            + (x + 6.8).toFixed(1) + ',' + (y + 6.2).toFixed(1)
+            + '" fill="#d79cff" stroke="#8a2f99" stroke-width="1.4" />'
+            + '</g>';
         }
         const kind = getMudMapAssetKind(a.asset);
-        if (kind === 'awacs') {
-          return '<g><rect x="' + (x - 8).toFixed(1) + '" y="' + (y - 6).toFixed(1) + '" width="16" height="12" rx="1.6" fill="' + fill + '" stroke="' + stroke + '" stroke-width="1.3" /><line x1="' + (x - 6).toFixed(1) + '" y1="' + y.toFixed(1) + '" x2="' + (x + 6).toFixed(1) + '" y2="' + y.toFixed(1) + '" stroke="' + stroke + '" stroke-width="1.2" /><circle cx="' + x.toFixed(1) + '" cy="' + (y - 9).toFixed(1) + '" r="2.4" fill="' + stroke + '" /></g>';
+          if (kind === 'awacs') {
+            return '<g><rect x="' + (x - 9.6).toFixed(1) + '" y="' + (y - 7.2).toFixed(1) + '" width="19.2" height="14.4" rx="1.6" fill="' + fill + '" stroke="' + stroke + '" stroke-width="1.3" /><line x1="' + (x - 7.2).toFixed(1) + '" y1="' + y.toFixed(1) + '" x2="' + (x + 7.2).toFixed(1) + '" y2="' + y.toFixed(1) + '" stroke="' + stroke + '" stroke-width="1.2" /><circle cx="' + x.toFixed(1) + '" cy="' + (y - 10.8).toFixed(1) + '" r="2.88" fill="' + stroke + '" /></g>';
         }
         if (kind === 'tanker') {
-          const p1 = (x - 8).toFixed(1) + ',' + y.toFixed(1);
-          const p2 = x.toFixed(1) + ',' + (y - 6).toFixed(1);
-          const p3 = (x + 8).toFixed(1) + ',' + y.toFixed(1);
-          const p4 = x.toFixed(1) + ',' + (y + 6).toFixed(1);
+            const p1 = (x - 9.6).toFixed(1) + ',' + y.toFixed(1);
+            const p2 = x.toFixed(1) + ',' + (y - 7.2).toFixed(1);
+            const p3 = (x + 9.6).toFixed(1) + ',' + y.toFixed(1);
+            const p4 = x.toFixed(1) + ',' + (y + 7.2).toFixed(1);
           return '<polygon points="' + p1 + ' ' + p2 + ' ' + p3 + ' ' + p4 + '" fill="' + fill + '" stroke="' + stroke + '" stroke-width="1.3" />';
         }
         if (kind === 'jtac') {
-          const p1 = x.toFixed(1) + ',' + (y - 7).toFixed(1);
-          const p2 = (x - 7).toFixed(1) + ',' + (y + 7).toFixed(1);
-          const p3 = (x + 7).toFixed(1) + ',' + (y + 7).toFixed(1);
+            const p1 = x.toFixed(1) + ',' + (y - 8.4).toFixed(1);
+            const p2 = (x - 8.4).toFixed(1) + ',' + (y + 8.4).toFixed(1);
+            const p3 = (x + 8.4).toFixed(1) + ',' + (y + 8.4).toFixed(1);
           return '<polygon points="' + p1 + ' ' + p2 + ' ' + p3 + '" fill="' + fill + '" stroke="' + stroke + '" stroke-width="1.3" />';
         }
         if (kind === 'rotary') {
-          return '<g><circle cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="6" fill="' + fill + '" stroke="' + stroke + '" stroke-width="1.3" /><line x1="' + (x - 9).toFixed(1) + '" y1="' + y.toFixed(1) + '" x2="' + (x + 9).toFixed(1) + '" y2="' + y.toFixed(1) + '" stroke="' + stroke + '" stroke-width="1.2" /><line x1="' + x.toFixed(1) + '" y1="' + (y - 9).toFixed(1) + '" x2="' + x.toFixed(1) + '" y2="' + (y + 9).toFixed(1) + '" stroke="' + stroke + '" stroke-width="1.2" /></g>';
+            return '<g><circle cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="7.2" fill="' + fill + '" stroke="' + stroke + '" stroke-width="1.3" /><line x1="' + (x - 10.8).toFixed(1) + '" y1="' + y.toFixed(1) + '" x2="' + (x + 10.8).toFixed(1) + '" y2="' + y.toFixed(1) + '" stroke="' + stroke + '" stroke-width="1.2" /><line x1="' + x.toFixed(1) + '" y1="' + (y - 10.8).toFixed(1) + '" x2="' + x.toFixed(1) + '" y2="' + (y + 10.8).toFixed(1) + '" stroke="' + stroke + '" stroke-width="1.2" /></g>';
         }
         if (kind === 'marker') {
-          return '<g><circle cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="6.5" fill="' + palette.markerFill + '" stroke="' + palette.markerStroke + '" stroke-width="1.4" /><line x1="' + (x - 8).toFixed(1) + '" y1="' + y.toFixed(1) + '" x2="' + (x + 8).toFixed(1) + '" y2="' + y.toFixed(1) + '" stroke="' + palette.markerStroke + '" stroke-width="1.2" /><line x1="' + x.toFixed(1) + '" y1="' + (y - 8).toFixed(1) + '" x2="' + x.toFixed(1) + '" y2="' + (y + 8).toFixed(1) + '" stroke="' + palette.markerStroke + '" stroke-width="1.2" /></g>';
+            return '<g><circle cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="7.8" fill="' + palette.markerFill + '" stroke="' + palette.markerStroke + '" stroke-width="1.4" /><line x1="' + (x - 9.6).toFixed(1) + '" y1="' + y.toFixed(1) + '" x2="' + (x + 9.6).toFixed(1) + '" y2="' + y.toFixed(1) + '" stroke="' + palette.markerStroke + '" stroke-width="1.2" /><line x1="' + x.toFixed(1) + '" y1="' + (y - 9.6).toFixed(1) + '" x2="' + x.toFixed(1) + '" y2="' + (y + 9.6).toFixed(1) + '" stroke="' + palette.markerStroke + '" stroke-width="1.2" /></g>';
         }
-        return '<rect x="' + (x - 7).toFixed(1) + '" y="' + (y - 5.5).toFixed(1) + '" width="14" height="11" fill="' + fill + '" stroke="' + stroke + '" stroke-width="1.3" />';
+          return '<rect x="' + (x - 8.4).toFixed(1) + '" y="' + (y - 6.6).toFixed(1) + '" width="16.8" height="13.2" fill="' + fill + '" stroke="' + stroke + '" stroke-width="1.3" />';
       }
 
       function formatAssetFrequencyText(value) {
@@ -15615,14 +15726,19 @@
         })
         .filter(function (asset) { return !!asset; })
         .map(function (asset) {
-          const p = mapPt(asset);
           const category = String((asset && asset.category) || '').toUpperCase();
+          const renderAsset = (category === 'PLAYER' && ownshipPoint && isFinite(Number(ownshipPoint.xNum)) && isFinite(Number(ownshipPoint.yNum)))
+            ? Object.assign({}, asset || {}, { xNum: Number(ownshipPoint.xNum), yNum: Number(ownshipPoint.yNum) })
+            : asset;
+          const p = mapPt(renderAsset);
           const selectionKey = makeMapAssetSelectionKey(asset);
           return {
-            asset: asset,
+            asset: renderAsset,
             x: p.x,
             y: p.y,
-            headingDeg: category === 'PLAYER' ? ownshipHeadingDeg : NaN,
+            headingDeg: category === 'PLAYER'
+              ? (isFinite(Number(ownshipHeadingDeg)) ? Number(ownshipHeadingDeg) : Number(renderAsset && renderAsset.headingDeg))
+              : NaN,
             selectionKey: selectionKey,
             isSelected: !!selectionKey && !!selectedAssetKey && selectionKey === selectedAssetKey,
           };
@@ -15639,6 +15755,7 @@
         const markerLabel = isMapMarker
           ? (markerText ? (markerPrefix + ': ' + markerText) : markerPrefix)
           : '';
+        const isPlayer = String((m.asset && m.asset.category) || '').toUpperCase() === 'PLAYER';
         const label = escapeHtml(markerLabel || callsignLabel || m.asset.name || m.asset.category || 'ASSET');
         const tx = (m.x + 10).toFixed(1);
         const ty = (m.y + 4).toFixed(1);
@@ -15647,7 +15764,7 @@
         const selectedRing = m.isSelected
           ? ('<circle cx="' + m.x.toFixed(1) + '" cy="' + m.y.toFixed(1) + '" r="11" fill="none" stroke="#c94444" stroke-width="2.4" />')
           : '';
-        const labelColor = isMapMarker ? palette.markerLabel : palette.assetBlueDark;
+        const labelColor = isMapMarker ? palette.markerLabel : (isPlayer ? palette.markerLabel : palette.assetBlueDark);
         let selectedInfoBlock = '';
         if (m.isSelected && !isMapMarker) {
           const infoLines = buildSelectedAssetInfoLines(m.asset);
@@ -18003,11 +18120,14 @@
     });
 
     document.getElementById('tabBody').addEventListener('pointerdown', function (ev) {
-      if (!latestData || selectedTab !== 'DTC') return;
+      if (!latestData || (selectedTab !== 'DTC' && selectedTab !== 'EFB')) return;
+      if (selectedTab === 'EFB' && normalizeEfbViewerMode(efbViewerMode) !== 'sa-map') return;
       const selected = getActiveFlightPlanSelection(latestData);
       if (!selected) return;
 
-      const page = getDtcPageBySelection(selected);
+      const page = (selectedTab === 'EFB' && normalizeEfbViewerMode(efbViewerMode) === 'sa-map')
+        ? 4
+        : getDtcPageBySelection(selected);
       if (page === 1) {
         const row = ev.target && ev.target.closest ? ev.target.closest('tr[data-navlog-row="1"]') : null;
         if (row) {

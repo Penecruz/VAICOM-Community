@@ -242,7 +242,7 @@ vaicom.insert = {
         pcall(function() vaicom.sendtoclient:send(msg) end)
     end,
 
-    SendOwnshipStateUpdate = function(self)
+    SendOwnshipStateUpdate = function(self) -- GPS simulation for VAICOM, fast position upates to ownship position with heading.
         if not vaicom.sendtoclient then return end
 
         local x = nil
@@ -267,7 +267,7 @@ vaicom.insert = {
                 y = tonumber(own.Position.y)
                 z = tonumber(own.Position.z)
                 if hdg == nil then
-                    hdg = tonumber(own.Heading)
+                    hdg = tonumber(own.Heading) --radians? (Pene)
                 end
             end
         end
@@ -278,7 +278,7 @@ vaicom.insert = {
 
         local msg
         if hdg ~= nil then
-            msg = string.format("%s;x=%.3f;y=%.3f;z=%.3f;hdg=%.3f", vaicom.config.ownshipprefix, x, y, z, hdg)
+            msg = string.format("%s;x=%.3f;y=%.3f;z=%.3f;hdg=%.3f", vaicom.config.ownshipprefix, x, y, z, hdg) -- Heading is reported in radians, as per DCS API, converted to degrees upstream in the EFB.
         else
             msg = string.format("%s;x=%.3f;y=%.3f;z=%.3f", vaicom.config.ownshipprefix, x, y, z)
         end
