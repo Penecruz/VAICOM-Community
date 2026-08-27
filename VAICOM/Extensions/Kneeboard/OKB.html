@@ -1089,7 +1089,8 @@
     }
 
     .efbEmpty {
-      font-size: 18px;
+      font-size: var(--contentFontSize);
+      line-height: 1.32;
       color: #4d5f71;
       padding: 14px;
     }
@@ -2443,8 +2444,8 @@
 
     .fltPlanMessage {
       white-space: pre-wrap;
-      font-size: 18px;
-      line-height: 1.2;
+      font-size: var(--contentFontSize);
+      line-height: 1.32;
     }
 
     .fltPlanPlain {
@@ -5748,6 +5749,26 @@
       return key;
     }
 
+    function getEfbModuleGateState(data) {
+      const efb = (data && data.Efb) || {};
+      const server = (data && data.Server) || {};
+      const hasAircraft = String(server.Aircraft || '').trim().length > 0;
+      const hasPosition = Math.abs(Number(server.PlayerPosX) || 0) > 0.001
+        || Math.abs(Number(server.PlayerPosY) || 0) > 0.001
+        || Math.abs(Number(server.PlayerAltFeet) || 0) > 0.5;
+      const liveSession = hasAircraft && hasPosition;
+      const devBypass = !!efb.DevBypass;
+      return {
+        liveSession: liveSession,
+        devBypass: devBypass,
+        allowed: liveSession || devBypass,
+      };
+    }
+
+    function getEfbNoModuleMessage() {
+      return 'No Module Connected - You must enter the cockpit for content to be displayed.';
+    }
+
     function normalizeEfbSearchToken(value) {
       return String(value || '')
         .toUpperCase()
@@ -5811,6 +5832,11 @@
     }
 
     function formatEfbTabContentHtml(data) {
+      const gate = getEfbModuleGateState(data);
+      if (!gate.allowed) {
+        return '<div class="efbEmpty">' + escapeHtml(getEfbNoModuleMessage()) + '</div>';
+      }
+
       const airportKey = getEfbAirportKey(data);
       const charts = efbChartsByAirport[airportKey] || [];
       const cycleCharts = getEfbCycleChartsForAirport(airportKey);
@@ -7098,7 +7124,8 @@
       return min + (Math.random() * (max - min));
     }
 
-    function makeFakeAsset(callsign, category, x, y, headingDeg, speedMps) {
+    function makeFakeAsset(callsign, category, x, y, headingDeg, speedMps, extras) {
+      const meta = (extras && typeof extras === 'object') ? extras : {};
       return {
         Callsign: callsign,
         Name: callsign,
@@ -7108,6 +7135,12 @@
         Y: y,
         headingDeg: headingDeg,
         speedMps: speedMps,
+        TypeName: String(meta.TypeName || ''),
+        Frequency: String(meta.Frequency || ''),
+        AltFrequencies: Array.isArray(meta.AltFrequencies) ? meta.AltFrequencies.slice(0) : [],
+        Tacan: String(meta.Tacan || ''),
+        MpClientCallsign: String(meta.MpClientCallsign || ''),
+        AltFeet: isFinite(Number(meta.AltFeet)) ? Number(meta.AltFeet) : NaN,
       };
     }
 
@@ -7158,6 +7191,7 @@
         : routeRows;
 
       return {
+        routeSelectionKey: String(selected || '').trim(),
         startMissionSeconds: startMission,
         simMissionSeconds: startMission,
         playerX: baseX,
@@ -7170,8 +7204,8 @@
         playerSpeedMps: 185,
         assets: [
           makeFakeAsset('PLAYER', 'PLAYER', baseX, baseY, 0, 0),
-          makeFakeAsset('TEXACO11', 'TANKER', baseX + 30000, baseY + 22000, 235, 210),
-          makeFakeAsset('OVERLORD1', 'AWACS', baseX - 45000, baseY + 26000, 095, 205),
+          makeFakeAsset('TEXACO11', 'TANKER', baseX + 30000, baseY + 22000, 235, 210, { TypeName: 'KC-135 MPRS', Frequency: '251.000', Tacan: '31Y', AltFeet: 22000 }),
+          makeFakeAsset('OVERLORD1', 'AWACS', baseX - 45000, baseY + 26000, 095, 205, { TypeName: 'E-3A', Frequency: '305.000', AltFeet: 28000 }),
           makeFakeAsset('AXEMAN11', 'JTAC', baseX + 14000, baseY - 22000, 330, 0),
           makeFakeAsset('VIPER12', 'FLIGHT', baseX - 18000, baseY - 12000, 025, 230),
           makeFakeAsset('COLT21', 'FLIGHT', baseX + 8000, baseY + 16000, 290, 220),
@@ -7179,11 +7213,18 @@
       };
     }
 
+    function getFakeMissionRouteSelectionKey() {
+      const active = String(getActiveFlightPlanSelection(latestData) || '').trim();
+      if (active) return active;
+      return fakeMissionState ? String(fakeMissionState.routeSelectionKey || '').trim() : '';
+    }
+
     function updateFakeOwnshipStartedState() {
       if (!fakeMissionEnabled || !fakeMissionState) return;
-      const selected = getActiveFlightPlanSelection(latestData);
+      const selected = getFakeMissionRouteSelectionKey();
       if (!selected) {
-        fakeMissionState.ownshipStarted = false;
+        const rows = Array.isArray(fakeMissionState.routeRows) ? fakeMissionState.routeRows : [];
+        fakeMissionState.ownshipStarted = rows.length >= 2;
         return;
       }
 
@@ -7199,7 +7240,7 @@
 
     function syncFakeMissionRouteRowsFromPlan() {
       if (!fakeMissionEnabled || !fakeMissionState || !latestData) return;
-      const selected = getActiveFlightPlanSelection(latestData);
+      const selected = getFakeMissionRouteSelectionKey();
       if (!selected) return;
 
       const plannedRows = getPlanWaypointsForRecommendations(selected);
@@ -7296,7 +7337,7 @@
         if (playerAsset) {
           playerAsset.X = state.playerX;
           playerAsset.Y = state.playerY;
-          const hdg = normalizeHeadingDeg((Math.atan2(dy, dx) * 180.0 / Math.PI) + 90);
+          const hdg = normalizeHeadingDeg((Math.atan2(dy, dx) * 180.0 / Math.PI));
           playerAsset.headingDeg = isFinite(hdg) ? hdg : 0;
         }
 
@@ -7414,6 +7455,12 @@
           RawLine: String(a.RawLine || ''),
           X: Number(a.X || 0),
           Y: Number(a.Y || 0),
+          TypeName: String(a.TypeName || ''),
+          Frequency: String(a.Frequency || ''),
+          AltFrequencies: Array.isArray(a.AltFrequencies) ? a.AltFrequencies.slice(0) : [],
+          Tacan: String(a.Tacan || ''),
+          MpClientCallsign: String(a.MpClientCallsign || ''),
+          AltFeet: isFinite(Number(a.AltFeet)) ? Number(a.AltFeet) : 0,
         };
       });
       return clone;
@@ -10646,6 +10693,9 @@
       if (bounds && bounds.length === 4) item.bounds = bounds;
 
       renderOpenFreeMapOverlay(item, payload);
+      const wrap = item.host && item.host.closest ? item.host.closest('[data-openfreemap-wrap]') : null;
+      const fallback = wrap ? wrap.querySelector('.fltPlanOpenMapFallback') : null;
+      if (fallback) fallback.style.display = 'none';
       return true;
     }
 
@@ -10935,10 +10985,10 @@
 
                 const tri = makeNode('polygon');
                 tri.setAttribute('points',
-                  p.x.toFixed(1) + ',' + (p.y - 9).toFixed(1) + ' '
-                  + (p.x - 6.8).toFixed(1) + ',' + (p.y + 6.2).toFixed(1) + ' '
-                  + p.x.toFixed(1) + ',' + (p.y + 2.5).toFixed(1) + ' '
-                  + (p.x + 6.8).toFixed(1) + ',' + (p.y + 6.2).toFixed(1));
+                  p.x.toFixed(1) + ',' + p.y.toFixed(1) + ' '
+                  + (p.x - 10.2).toFixed(1) + ',' + (p.y + 22.8).toFixed(1) + ' '
+                  + p.x.toFixed(1) + ',' + (p.y + 17.3).toFixed(1) + ' '
+                  + (p.x + 10.2).toFixed(1) + ',' + (p.y + 22.8).toFixed(1));
                 tri.setAttribute('fill', '#d79cff');
                 tri.setAttribute('stroke', '#8a2f99');
                 tri.setAttribute('stroke-width', '1.4');
@@ -11770,6 +11820,7 @@
     }
 
     function getFastOwnshipMapPoint(maxAgeMs) {
+      if (fakeMissionEnabled) return null;
       if (!efbSaUseFastOwnshipEnabled) return null;
       if (!efbSaOwnshipFast || efbSaOwnshipFast.hasPosition !== true) return null;
       const fastX = Number(efbSaOwnshipFast.posX);
@@ -11823,20 +11874,58 @@
       if (!Array.isArray(payload.features)) return false;
       const features = payload.features;
       let removedStalePlayers = false;
-      for (let i = features.length - 1; i >= 0; i--) {
+      const playerIndexes = [];
+      for (let i = 0; i < features.length; i++) {
         const f = features[i];
         const props = (f && f.properties) || {};
-        if (String(props.kind || '').toLowerCase() !== 'player') continue;
+        if (String(props.kind || '').toLowerCase() === 'player') {
+          playerIndexes.push(i);
+        }
+      }
+
+      let keepPlayerIndex = -1;
+      for (let i = 0; i < playerIndexes.length; i++) {
+        const idx = playerIndexes[i];
+        const f = features[idx];
+        const props = (f && f.properties) || {};
         const key = String(props.assetKey || '').toUpperCase();
         const cat = String(props.assetCategory || '').toUpperCase();
-        if (cat === 'PLAYER' || key.indexOf('PLAYER') >= 0) continue;
-        features.splice(i, 1);
-        removedStalePlayers = true;
+        const isOwnshipTagged = (cat === 'PLAYER') || key.indexOf('PLAYER') >= 0;
+        if (isOwnshipTagged) {
+          if (keepPlayerIndex < 0) {
+            keepPlayerIndex = idx;
+          } else {
+            features[idx] = null;
+            removedStalePlayers = true;
+          }
+        }
       }
-      let ownshipFeature = features.find(function (f) {
-        const props = (f && f.properties) || {};
-        return String(props.kind || '').toLowerCase() === 'player';
-      });
+
+      if (keepPlayerIndex < 0 && playerIndexes.length) {
+        keepPlayerIndex = playerIndexes[0];
+      }
+
+      for (let i = playerIndexes.length - 1; i >= 0; i--) {
+        const idx = playerIndexes[i];
+        if (idx === keepPlayerIndex) continue;
+        if (features[idx] !== null) {
+          features[idx] = null;
+          removedStalePlayers = true;
+        }
+      }
+
+      if (removedStalePlayers) {
+        for (let i = features.length - 1; i >= 0; i--) {
+          if (!features[i]) features.splice(i, 1);
+        }
+      }
+
+      let ownshipFeature = (keepPlayerIndex >= 0 && features[keepPlayerIndex])
+        ? features[keepPlayerIndex]
+        : features.find(function (f) {
+          const props = (f && f.properties) || {};
+          return String(props.kind || '').toLowerCase() === 'player';
+        });
 
       if (!ownshipFeature) {
         ownshipFeature = {
@@ -11955,7 +12044,18 @@
     }
 
     function getOwnshipHeadingDeg(data, ownshipPoint) {
-      if (efbSaOwnshipFast && efbSaOwnshipFast.hasHeading) {
+      if (fakeMissionEnabled && fakeMissionState) {
+        const simPlayer = (Array.isArray(fakeMissionState.assets) ? fakeMissionState.assets : []).find(function (a) {
+          return String((a && a.Category) || '').toUpperCase() === 'PLAYER';
+        });
+        const simHeading = Number(simPlayer && simPlayer.headingDeg);
+        if (isFinite(simHeading)) {
+          lastOwnshipHeadingDeg = normalizeHeadingDeg(simHeading);
+          return Number(lastOwnshipHeadingDeg);
+        }
+      }
+
+      if (!fakeMissionEnabled && efbSaOwnshipFast && efbSaOwnshipFast.hasHeading) {
         const fastHeading = Number(efbSaOwnshipFast.headingDeg);
         if (isFinite(fastHeading)) {
           lastOwnshipHeadingDeg = normalizeHeadingDeg(fastHeading);
@@ -15627,10 +15727,10 @@
           const resolvedHeading = isFinite(heading) ? normalizeHeadingDeg(heading) : 0;
           return '<g transform="rotate(' + resolvedHeading.toFixed(1) + ' ' + x.toFixed(1) + ' ' + y.toFixed(1) + ')">'
             + '<polygon points="'
-            + x.toFixed(1) + ',' + (y - 9).toFixed(1) + ' '
-            + (x - 6.8).toFixed(1) + ',' + (y + 6.2).toFixed(1) + ' '
-            + x.toFixed(1) + ',' + (y + 2.5).toFixed(1) + ' '
-            + (x + 6.8).toFixed(1) + ',' + (y + 6.2).toFixed(1)
+            + x.toFixed(1) + ',' + y.toFixed(1) + ' '
+            + (x - 10.2).toFixed(1) + ',' + (y + 22.8).toFixed(1) + ' '
+            + x.toFixed(1) + ',' + (y + 17.3).toFixed(1) + ' '
+            + (x + 10.2).toFixed(1) + ',' + (y + 22.8).toFixed(1)
             + '" fill="#d79cff" stroke="#8a2f99" stroke-width="1.4" />'
             + '</g>';
         }
@@ -17095,17 +17195,19 @@
     function render(data) {
       latestData = data;
 
+      const displayData = getDisplayData(data);
+      const efbGate = selectedTab === 'EFB' ? getEfbModuleGateState(displayData) : null;
+
       if (selectedTab === 'EFB') {
         const activeEl = document.activeElement;
         const activeId = activeEl && activeEl.id ? String(activeEl.id) : '';
         const isEfbSelectFocused = (activeId === 'efbAirportSelect' || activeId === 'efbChartSelect');
-        if (isEfbSelectFocused && !efbUiDirty) {
+        if (isEfbSelectFocused && !efbUiDirty && efbGate && efbGate.allowed) {
           return;
         }
       }
 
       updateFakeMissionControlsUi();
-      const displayData = getDisplayData(data);
       maybeResetFlightPlanStateForMission(data);
       const server = displayData && displayData.Server ? displayData.Server : {};
       const renderTheater = String(server.Theater || '').trim();
@@ -17229,7 +17331,16 @@
         }
       } else if (selectedTab === 'EFB') {
         tabBody.className = 'content mainContent';
-        if (!Array.isArray(efbAvailableAirports)) {
+        const efbGate = getEfbModuleGateState(displayData);
+        if (!efbGate.allowed) {
+          tabBody.innerHTML = '<div class="efbEmpty">' + escapeHtml(getEfbNoModuleMessage()) + '</div>';
+          efbUiDirty = true;
+          efbDrawerOpen = false;
+          efbSelectionFlowActive = false;
+          if (typeof disposeOpenFreeMapInstances === 'function') {
+            disposeOpenFreeMapInstances();
+          }
+        } else if (!Array.isArray(efbAvailableAirports)) {
           tabBody.innerHTML = '<div class="efbEmpty">Loading EFB airports...</div>';
           ensureEfbAirportsLoaded().then(function () {
             efbUiDirty = true;
