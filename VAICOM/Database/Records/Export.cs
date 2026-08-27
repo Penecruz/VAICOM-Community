@@ -35,11 +35,13 @@ namespace VAICOM
             {
                 int counter = 0;
                 string outputstring = "";
+                // George AI specific commands as these are prefixed with "George"
+                // and don't have a recipient segment for the keywords.
+                string georgeOutputCommandString = "";
                 // WSO commands that do not require a recipient suffix.
                 string wsoOutputCommandString = "";
                 // WSO commands that do require a recipient suffix.
                 string wsoOutputRecipientCommandString = "";
-                string wsoOutputRecipientString = "";
 
                 //----------------------------------------------------------
                 // 1) get recipients
@@ -66,6 +68,14 @@ namespace VAICOM
                             {
                                 foreach (KeyValuePair<string, string> alias in Aliases.airecipients)
                                 {
+                                    // All George CPG commands are already prefixed with "George" so is
+                                    // unnecesary to add to the recipient strings, which will also create
+                                    // redundant combinations of commands.
+                                    if (cat.Equals("aicrew") && alias.Key.Equals("George"))
+                                    {
+                                        continue;
+                                    }
+
                                     if (false) // disabled (Aliases.playercallsigns.ContainsValue(alias.Value)) // for specific JTAC names: add to player category
                                     {
                                         //if (alias.Value.Equals(dbentry.Key))
@@ -135,6 +145,7 @@ namespace VAICOM
                 // 4) get commands
 
                 Dictionary<string, string> commandstrings = new Dictionary<string, string>();
+                Dictionary<string, string> georgeCommandStrings = new Dictionary<string, string>();
                 Dictionary<string, string> wsoCommandStrings = new Dictionary<string, string>();
                 Dictionary<string, string> wsoRecipientCommandStrings = new Dictionary<string, string>();
                 foreach (string cat in CommandCategories.GetNames(typeof(CommandCategories)))
@@ -144,6 +155,10 @@ namespace VAICOM
                     {
                         wsoCommandStrings.Add(cat, "");
                         wsoRecipientCommandStrings.Add(cat, "");
+                    }
+                    else if (cat.Equals("AH64D_GeorgeAI"))
+                    {
+                        georgeCommandStrings.Add(cat, "");
                     }
                     else
                     {
@@ -181,11 +196,17 @@ namespace VAICOM
 
                                             counter = counter + 1;
                                         }
+                                        else if (cat.Equals("AH64D_GeorgeAI"))
+                                        {
+                                            string commandstring = georgeCommandStrings[cat];
+                                            AppendAliasWithGunnerVariant(ref commandstring, alias.Key, ref counter);
+                                            georgeCommandStrings[cat] = commandstring;
+                                        }
                                         else
                                         {
                                             string commandstring = commandstrings[cat];
-                                            AppendAliasWithGunnerVariant(ref commandstring, alias.Key, ref counter);
-                                            commandstrings[cat] = commandstring;
+                                            commandstrings[cat] = commandstring + alias.Key + "; ";
+                                            counter = counter + 1;
                                         }
                                     }
                                 }
@@ -271,7 +292,7 @@ namespace VAICOM
                             // George AI
                             if (cat.Equals("aicrew") && commandcat.Contains("AH64D_GeorgeAI"))
                             {
-                                outputcommandstring = outputcommandstring + commandstrings[commandcat];
+                                georgeOutputCommandString = georgeOutputCommandString + georgeCommandStrings[commandcat];
                             }
 
                             // WSO
@@ -503,13 +524,15 @@ namespace VAICOM
                 string wsoAliases = "[" + String.Join("; ", wsoRecipientStrings.Values) + "]";
                 // WSO commands that do not need a recipient suffix
                 string wsoOutputString = wsoAliases + wsoOutputCommandString + ";"; // ; required here to start all others as new commands.
-                // WSO commands that require a recipient suffix
+                // WSO commands that require a recipient suffix, e.g. airfield name
                 wsoOutputString += wsoAliases + wsoOutputRecipientCommandString + wsoOutputCommandRecipientsString + ";";
+
+                string georgeOutputString = "[" + georgeOutputCommandString + "];";
 
                 Log.Write("Exported aliases to keywords.txt, keyword count = " + counter.ToString(), Colors.Text);
 
                 // We return the WSO output string before the rest as the specific order is required.
-                return wsoOutputString + outputstring;
+                return wsoOutputString + georgeOutputString + outputstring;
             }
 
 

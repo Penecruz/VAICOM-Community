@@ -45,6 +45,9 @@
                 // WSO
                 if ((this.uniqueid >= Recipients.Table["wAIUnitFlightCrewMembersWSONull"].uniqueid) & (this.uniqueid <= Recipients.Table["wAIUnitFlightCrewMembersWSOMaximum"].uniqueid)) { value = Recipientclasses.WSO; }
 
+                // George
+                if ((this.uniqueid >= Recipients.Table["wAIUnitFlightCrewMembersGeorgeNull"].uniqueid) & (this.uniqueid <= Recipients.Table["wAIUnitFlightCrewMembersGeorgeMaximum"].uniqueid)) { value = Recipientclasses.GeorgeCPG; }
+
                 //Kneeboard
                 if ((this.uniqueid >= Recipients.Table["wAIUnitKneeboardNull"].uniqueid) & (this.uniqueid <= Recipients.Table["wAIUnitKneeboardMaximum"].uniqueid)) { value = Recipientclasses.Kneeboard; }
 
@@ -142,6 +145,9 @@
                     case ("wso"):
                         returnclass = WSO;
                         break;
+                    case ("georgecpg"):
+                        returnclass = GeorgeCPG;
+                        break;
                     case ("kneeboard"):
                         returnclass = Kneeboard;
                         break;
@@ -149,8 +155,6 @@
                     default:
                         returnclass = Undefined;
                         break;
-
-
                 }
 
                 return returnclass;
@@ -184,11 +188,9 @@
             public static Recipientclass RIO = new Recipientclass { Name = "RIO" };
             public static Recipientclass AI_pilot = new Recipientclass { Name = "Iceman" };
             public static Recipientclass WSO = new Recipientclass { Name = "WSO" };
-            public static Recipientclass Kneeboard = new Recipientclass { Name = "Kneeboard" };            
-
+            public static Recipientclass GeorgeCPG = new Recipientclass { Name = "GeorgeCPG" };
+            public static Recipientclass Kneeboard = new Recipientclass { Name = "Kneeboard" };
         }
-
-
 
         public enum RecipientCategories
         {
@@ -210,8 +212,9 @@
             RIO,
             AI_pilot,
             WSO,
+            GeorgeCPG,
             ally,
-            kneeboard,            
+            kneeboard,
         }
 
 

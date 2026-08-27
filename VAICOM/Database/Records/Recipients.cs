@@ -705,6 +705,10 @@ namespace VAICOM
                 { "wAIUnitFlightCrewMembersWSONull", new Recipient { uniqueid = 19500, category = RecipientCategories.WSO, name = "wAIUnitFlightCrewMembersWSONull", } },
                 
                 { "wAIUnitFlightCrewMembersWSOMaximum", new Recipient { uniqueid = 19599, category = RecipientCategories.WSO, name = "wAIUnitFlightCrewMembersWSOMaximum", } },
+
+                // George
+                { "wAIUnitFlightCrewMembersGeorgeNull", new Recipient { uniqueid = 19600, category = RecipientCategories.GeorgeCPG, name = "wAIUnitFlightCrewMembersGeorgeNull", } },
+                { "wAIUnitFlightCrewMembersGeorgeMaximum", new Recipient { uniqueid = 19699, category = RecipientCategories.GeorgeCPG, name = "wAIUnitFlightCrewMembersGeorgeMaximum", } },
             };
         }
     }

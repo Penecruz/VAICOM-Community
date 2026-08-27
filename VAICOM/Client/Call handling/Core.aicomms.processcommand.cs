@@ -39,7 +39,6 @@ namespace VAICOM
 
                     if (Commands.Table[State.currentkey["command"]].isSpecial()) // void cmds eventnumber.Equals(4000))
                     {
-
                         if (State.have["recipient"])
                         {
                             foundclass = classfromrecipient;
@@ -48,7 +47,12 @@ namespace VAICOM
                         else
                         {
                             State.calledisclass = true;
-                            // keep as undefined
+                            // Set the recipient to an AI Crew class, e.g. RIO, if the command is associated
+                            // with one of those classes, otherwise leave as Undefined
+                            if (IsAiCrewRecipientClass(classfromcommand))
+                            {
+                                foundclass = classfromcommand;
+                            }
                         }
                     }
                     else // normal commands
@@ -798,17 +802,8 @@ namespace VAICOM
                         bool intercomOnlyHotMic = !State.transmitting
                             && (State.IsCrewHotMicActiveOnIntercomTX() || State.IntercomHotMicLatched);
                         bool isIntercomRecipientClass = State.currentrecipientclass.Equals(Recipientclasses.Crew)
-                            || State.currentrecipientclass.Equals(Recipientclasses.RIO)
-                            || State.currentrecipientclass.Equals(Recipientclasses.AI_pilot)
-                            || State.currentrecipientclass.Equals(Recipientclasses.WSO);
-                        bool isGeorgeCommand = State.currentcommand != null
-                            && !string.IsNullOrEmpty(State.currentcommand.dcsid)
-                            && State.currentcommand.dcsid.StartsWith("wMsgGeorge", StringComparison.OrdinalIgnoreCase);
-                        bool isAirioCommand = State.currentcommand != null
-                            && State.currentcommand.isRIO();
+                            || IsAiCrewRecipientClass(State.currentrecipientclass);
                         bool isHotMicAllowedCommand = isIntercomRecipientClass
-                            || isAirioCommand
-                            || isGeorgeCommand
                             || State.currentcommand.isKneeboard()
                             || State.currentcommand.isOptions()
                             || State.currentcommand.isMenu();
@@ -886,12 +881,9 @@ namespace VAICOM
                             if (dcsKneeboardAutoBrowse || openKneeboardAutoBrowse)
                             {
                                 string cat = "";
+                                bool isAiCrewRecipient = IsAiCrewRecipientClass(State.currentrecipientclass);
 
-                                if (State.currentcommand != null && State.currentcommand.dcsid.StartsWith("wMsgGeorge", StringComparison.OrdinalIgnoreCase))
-                                {
-                                    cat = "Crew";
-                                }
-                                else if (State.have["recipient"])
+                                if (State.have["recipient"])
                                 {
                                     cat = Database.Recipients.Table[State.currentkey["recipient"]].RecipientClass().Name;
                                 }
@@ -904,10 +896,12 @@ namespace VAICOM
                                 {
                                     if (dcsKneeboardAutoBrowse)
                                     {
+                                        cat = isAiCrewRecipient ? "REF" : cat;
                                         KneeboardUpdater.SwitchPage(cat);
                                     }
-                                    else
+                                    if (openKneeboardAutoBrowse)
                                     {
+                                        cat = isAiCrewRecipient ? "AI CREW" : cat;
                                         OpenKneeboardBridge.UpdateActiveCategory(cat);
                                     }
                                 }
@@ -1020,6 +1014,14 @@ namespace VAICOM
 
                     State.processlocked = false;
                     return true;
+                }
+
+                private static bool IsAiCrewRecipientClass(Recipientclass recipientClass)
+                {
+                    return recipientClass.Equals(Recipientclasses.RIO)
+                        || recipientClass.Equals(Recipientclasses.AI_pilot)
+                        || recipientClass.Equals(Recipientclasses.WSO)
+                        || recipientClass.Equals(Recipientclasses.GeorgeCPG);
                 }
 
                 private static void RefreshKneeboardSnapshotAfterCommand()

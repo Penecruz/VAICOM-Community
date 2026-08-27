@@ -132,9 +132,9 @@ namespace VAICOM
                         dictmode = State.Proxy.Dictation.IsOn();
 
                         // Keep runtime diagnostics available whenever OKB has an active client,
-                        // so FLT PLN runtime NAVLOG can populate on mission connect without
-                        // requiring a tab-specific PTT cycle.
-                        includediagnostics = Extensions.Kneeboard.OpenKneeboardBridge.HasActiveConnection;
+                        // and FLT PLN is selected, so FLT PLN runtime NAVLOG can populate
+                        // without requiring a tab-specific PTT cycle.
+                        includediagnostics = Extensions.Kneeboard.OpenKneeboardBridge.IsFlightPlanTabActive;
                         
                         //kneeboard = 1; // show kneeboard on PTT press, test
                     }

@@ -325,7 +325,7 @@ namespace VAICOM
                 }
                 catch (Exception a)
                 {
-                    Log.Write(a.Message + "/n" + a.StackTrace, Colors.Text);
+                    Log.Write(a.Message + "\n" + a.StackTrace, Colors.Text);
                 }
 
             }
