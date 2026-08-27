@@ -140,7 +140,7 @@ namespace VAICOM.Extensions.RIO
             {"Stabilize 1 Minute",          "wMsgJ_RDR_STAB_60"                 },
             {"Stabilize 2 Minutes",         "wMsgJ_RDR_STAB_120"                },
             {"Stabilize Hold",              "wMsgJ_RDR_STAB_INDEF"              },
-            {"Area Track",                  "wMsgJ_RDR_STAB_GROUND"             },
+            {"Area Track",                  "wMsgLANTIRN_STAB_GROUND"           },
 
             {"Eyeballs",                    "wMsgLANTIRN_Head_Eyeball"          },
             {"Head Control",                 "wMsgLANTIRN_Head_Head"            },

@@ -148,7 +148,7 @@ namespace VAICOM.Extensions.RIO
             {"wMsgJ_RDR_STAB_60",               new List<List<DeviceAction>> { Macro.Seq_J_MENU_MAIN, Macro.Seq_J_RDR_STAB_60        }},
             {"wMsgJ_RDR_STAB_120",              new List<List<DeviceAction>> { Macro.Seq_J_MENU_MAIN, Macro.Seq_J_RDR_STAB_120       }},
             {"wMsgJ_RDR_STAB_INDEF",            new List<List<DeviceAction>> { Macro.Seq_J_MENU_MAIN, Macro.Seq_J_RDR_STAB_INDEF     }},
-            {"wMsgJ_RDR_STAB_GROUND",           new List<List<DeviceAction>> { Macro.Seq_J_MENU_CONTEXT, Macro.Seq_J_RDR_STAB_GROUND }},
+            {"wMsgLANTIRN_STAB_GROUND",         new List<List<DeviceAction>> { Macro.Seq_J_MENU_CONTEXT, Macro.Seq_J_RDR_STAB_GROUND }},
 
             {"wMsgLANTIRN_Head_Eyeball",        new List<List<DeviceAction>> { Macro.Seq_J_MENU_CONTEXT, Macro.Seq_LANTIRN_Head_Eyeball }},
             {"wMsgLANTIRN_Head_Head",           new List<List<DeviceAction>> { Macro.Seq_J_MENU_CONTEXT, Macro.Seq_LANTIRN_Head_Head }},
