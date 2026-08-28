@@ -708,6 +708,7 @@ namespace VAICOM
 
                 // George
                 { "wAIUnitFlightCrewMembersGeorgeNull", new Recipient { uniqueid = 19600, category = RecipientCategories.GeorgeCPG, name = "wAIUnitFlightCrewMembersGeorgeNull", } },
+                { "george", new Recipient { uniqueid = 19601, category = RecipientCategories.GeorgeCPG, name = "wAIUnitFlightCrewMembersGeorgeCPG", displayname = Labels.airecipients["george"]} },
                 { "wAIUnitFlightCrewMembersGeorgeMaximum", new Recipient { uniqueid = 19699, category = RecipientCategories.GeorgeCPG, name = "wAIUnitFlightCrewMembersGeorgeMaximum", } },
             };
         }

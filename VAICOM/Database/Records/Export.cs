@@ -527,7 +527,7 @@ namespace VAICOM
                 // WSO commands that require a recipient suffix, e.g. airfield name
                 wsoOutputString += wsoAliases + wsoOutputRecipientCommandString + wsoOutputCommandRecipientsString + ";";
 
-                string georgeOutputString = "[" + georgeOutputCommandString + "];";
+                string georgeOutputString = "[" + georgeOutputCommandString.TrimEnd("; ".ToCharArray()) + "];";
 
                 Log.Write("Exported aliases to keywords.txt, keyword count = " + counter.ToString(), Colors.Text);
 
