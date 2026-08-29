@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 using VAICOM.Servers;
 using VAICOM.Static;
 
@@ -157,7 +158,8 @@ namespace VAICOM
                     string returntext = text;
                     try
                     {
-                        returntext = text.Replace("(" + sendercallsign + ")", "").Replace("Marked by", "Mark").Replace("Heading", "Hdg").Replace("Distance", "Dist").Replace("nautical", "NM").Replace(".", " -").Replace("line is as follows\n", "").Replace("[", "").Replace("]", "").Replace("1, 2, 3 N/A", "1 -\n2 -\n3 -").Replace(":", "").Replace("Elevation", "Elev").Replace("feet", "ft").Replace("Target", "Tgt").Replace("Coordinates", "Coord").Replace("Egress", "Egr").Replace("Friendlies", "Troops").Replace("south", "S").Replace("north", "N").Replace("east", "E").Replace("west", "W");
+                        returntext = text.Replace("(" + sendercallsign + ")", "").Replace("Marked by", "Mark").Replace("Heading", "Hdg").Replace("Distance", "Dist").Replace("nautical", "NM").Replace(".", " -").Replace("line is as follows\n", "").Replace("[", "").Replace("]", "").Replace("1, 2, 3 N/A", "1 -\n2 -\n3 -").Replace(":", "").Replace("Elevation", "Elev").Replace("feet", "ft").Replace("Target", "Tgt").Replace("Coordinates", "MGRS").Replace("Coord", "MGRS").Replace("Egress", "Egr").Replace("Friendlies", "Troops").Replace("south", "S").Replace("north", "N").Replace("east", "E").Replace("west", "W");
+                        returntext = NormalizeMgrsDisplayTokens(returntext);
                     }
                     catch
                     {
@@ -170,6 +172,7 @@ namespace VAICOM
                     try
                     {
                         returntext = text.Replace("(" + sendercallsign + "):", "").Replace("\nuse ", "pref ").Replace("\nrequest ", "pref ").Replace("Final attack heading:", "in ").Replace("make your attack heading:", "in ").Replace("meters per second", "kts").Replace("m/s", "kts").Replace(" at ", " @").Replace(" and ", " + ").Replace("nautical", "NM").Replace("south", "S").Replace("north", "N").Replace("east", "E").Replace("west", "W").Replace("wind", "wnd").Replace(":", "");
+                        returntext = NormalizeMgrsDisplayTokens(returntext);
                     }
                     catch
                     {
@@ -183,12 +186,30 @@ namespace VAICOM
                     {
                         returntext = text.Replace("(" + sendercallsign + "):", "").Replace(sendercallsign + ",", "").Replace(reconstructplayercallsign() + ",", "");
                         returntext = returntext.Replace("your target is ", "tgt ");
+                        returntext = NormalizeMgrsDisplayTokens(returntext);
                         returntext = returntext.TrimStart().TrimEnd();
                     }
                     catch
                     {
                     }
                     return returntext;
+                }
+
+                private static string NormalizeMgrsDisplayTokens(string input)
+                {
+                    string text = input ?? "";
+                    if (text.Length == 0)
+                    {
+                        return text;
+                    }
+
+                    return Regex.Replace(text, @"\b([A-HJ-NP-Za-hj-np-z]{2})\s*(\d{4,5})\s*(\d{4,5})\b", m =>
+                    {
+                        string digraph = (m.Groups[1].Value ?? "").ToUpperInvariant();
+                        string easting = (m.Groups[2].Value ?? "").PadRight(5, '0').Substring(0, 5);
+                        string northing = (m.Groups[3].Value ?? "").PadRight(5, '0').Substring(0, 5);
+                        return digraph + " " + easting + " " + northing;
+                    });
                 }
                 public static string AWACS_processgeneral(string text, string sendercallsign)
                 {

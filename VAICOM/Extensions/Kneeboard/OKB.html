@@ -3333,6 +3333,7 @@
     let efbSaShowAirports = true;
     let efbSaShowNavlog = true;
     let efbSaShowDtcOverlay = true;
+    let efbSaShowJtacTargets = true;
     let efbSaFollowOwnshipEnabled = false;
     let efbSaTrackUpEnabled = false;
     let efbSaAnchorMode = 'center';
@@ -3479,6 +3480,80 @@
       }
     }
 
+    function getTheatreCenterLonLat(theatreName) {
+      const t = String(theatreName || '').replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+      const centers = {
+        CAUCASUS: [44.5, 43.4],
+        NEVADA: [-115.2, 36.2],
+        NORMANDY: [0.6, 49.2],
+        THECHANNEL: [1.2, 51.0],
+        PERSIANGULF: [56.2, 25.5],
+        SYRIA: [37.0, 35.4],
+        MARIANAISLANDS: [145.6, 15.2],
+        FALKLANDS: [-59.5, -52.1],
+        SINAIMAP: [34.2, 30.1],
+        KOLA: [29.5, 68.7],
+        AFGHANISTAN: [66.0, 34.5],
+        IRAQ: [44.8, 33.2],
+        GERMANYCW: [10.2, 51.2],
+      };
+      return centers[t] || null;
+    }
+
+    function resolveBuggedAirfieldIcaoFromAssetKey(data, assetKey) {
+      function tokenIcao(value) {
+        const m = String(value || '').toUpperCase().match(/\b([A-Z]{4})\b/);
+        return m ? String(m[1] || '') : '';
+      }
+
+      const key = String(assetKey || '').trim();
+      if (!key) return '';
+
+      const airfields = buildMapAirfields(data);
+      if (!Array.isArray(airfields) || !airfields.length) {
+        return tokenIcao(key) || '';
+      }
+
+      for (let i = 0; i < airfields.length; i++) {
+        const p = airfields[i] || {};
+        const selectionAsset = {
+          callsign: String((p && p.callsign) || '').trim(),
+          name: String((p && p.name) || (p && p.label) || '').trim(),
+          category: 'ATC',
+          xNum: Number(p && p.xNum),
+          yNum: Number(p && p.yNum),
+        };
+        if (makeMapAssetSelectionKey(selectionAsset) !== key) continue;
+        const resolved = tokenIcao(p && p.icao)
+          || tokenIcao(p && p.label)
+          || tokenIcao(p && p.name)
+          || tokenIcao(p && p.callsign)
+          || '';
+        return String(resolved || '').toUpperCase().trim();
+      }
+
+      return tokenIcao(key) || '';
+    }
+
+    async function tryPreloadEfbForBuggedAirfield(data, assetKey) {
+      const icao = (typeof resolveMapSelectedAirfieldIcao === 'function')
+        ? resolveMapSelectedAirfieldIcao(data, assetKey)
+        : resolveBuggedAirfieldIcaoFromAssetKey(data, assetKey);
+      if (!icao) return;
+
+      await ensureEfbAirportsLoaded();
+      const airports = Array.isArray(efbAvailableAirports) ? efbAvailableAirports : [];
+      if (airports.length && airports.indexOf(icao) < 0) return;
+
+      efbManuallySelectedAirport = icao;
+      efbLastResolvedAirport = icao;
+      await ensureEfbChartsLoaded(data);
+      if (selectedTab === 'EFB' && latestData) {
+        efbUiDirty = true;
+        render(latestData);
+      }
+    }
+
     function findFirstObjectByKeyPattern(value, pattern, depth) {
       if (depth > 8 || value === null || value === undefined) return null;
       if (Array.isArray(value)) {
@@ -3489,26 +3564,6 @@
         return null;
       }
 
-      function getTheatreCenterLonLat(theatreName) {
-        const t = String(theatreName || '').replace(/[^A-Za-z0-9]/g, '').toUpperCase();
-        const centers = {
-          CAUCASUS: [44.5, 43.4],
-          NEVADA: [-115.2, 36.2],
-          NORMANDY: [0.6, 49.2],
-          THECHANNEL: [1.2, 51.0],
-          PERSIANGULF: [56.2, 25.5],
-          SYRIA: [37.0, 35.4],
-          MARIANAISLANDS: [145.6, 15.2],
-          FALKLANDS: [-59.5, -52.1],
-          SINAIMAP: [34.2, 30.1],
-          KOLA: [29.5, 68.7],
-          AFGHANISTAN: [66.0, 34.5],
-          IRAQ: [44.8, 33.2],
-          GERMANYCW: [10.2, 51.2],
-        };
-        return centers[t] || null;
-      }
-
       if (typeof value !== 'object') return null;
 
       const keys = Object.keys(value);
@@ -3517,60 +3572,6 @@
         const v = value[k];
         if (pattern.test(String(k)) && v && typeof v === 'object') {
           return v;
-        }
-      }
-
-      function resolveBuggedAirfieldIcaoFromAssetKey(data, assetKey) {
-        function tokenIcao(value) {
-          const m = String(value || '').toUpperCase().match(/\b([A-Z]{4})\b/);
-          return m ? String(m[1] || '') : '';
-        }
-
-        const key = String(assetKey || '').trim();
-        if (!key) return '';
-
-        const airfields = buildMapAirfields(data);
-        if (!Array.isArray(airfields) || !airfields.length) {
-          return tokenIcao(key) || '';
-        }
-
-        for (let i = 0; i < airfields.length; i++) {
-          const p = airfields[i] || {};
-          const selectionAsset = {
-            callsign: String((p && p.callsign) || '').trim(),
-            name: String((p && p.name) || (p && p.label) || '').trim(),
-            category: 'ATC',
-            xNum: Number(p && p.xNum),
-            yNum: Number(p && p.yNum),
-          };
-          if (makeMapAssetSelectionKey(selectionAsset) !== key) continue;
-          const resolved = tokenIcao(p && p.icao)
-            || tokenIcao(p && p.label)
-            || tokenIcao(p && p.name)
-            || tokenIcao(p && p.callsign)
-            || '';
-          return String(resolved || '').toUpperCase().trim();
-        }
-
-        return tokenIcao(key) || '';
-      }
-
-      async function tryPreloadEfbForBuggedAirfield(data, assetKey) {
-        const icao = (typeof resolveMapSelectedAirfieldIcao === 'function')
-          ? resolveMapSelectedAirfieldIcao(data, assetKey)
-          : resolveBuggedAirfieldIcaoFromAssetKey(data, assetKey);
-        if (!icao) return;
-
-        await ensureEfbAirportsLoaded();
-        const airports = Array.isArray(efbAvailableAirports) ? efbAvailableAirports : [];
-        if (airports.length && airports.indexOf(icao) < 0) return;
-
-        efbManuallySelectedAirport = icao;
-        efbLastResolvedAirport = icao;
-        await ensureEfbChartsLoaded(data);
-        if (selectedTab === 'EFB' && latestData) {
-          efbUiDirty = true;
-          render(latestData);
         }
       }
 
@@ -3650,6 +3651,22 @@
       });
     }
 
+      function addLineFeature(points, props) {
+        const coords = (Array.isArray(points) ? points : [])
+          .map(function (p) { return toLonLat(p); })
+          .filter(function (c) { return Array.isArray(c) && c.length === 2; });
+        if (coords.length < 2) return;
+        coords.forEach(function (c) { pointsForBounds.push(c); });
+        features.push({
+          type: 'Feature',
+          geometry: {
+            type: 'LineString',
+            coordinates: coords,
+          },
+          properties: props || {},
+        });
+      }
+
     function getMudMapPointType(wp) {
       const typeRaw = String((wp && (wp.typeRaw || wp.type || '')) || '').toUpperCase();
       const nameRaw = String((wp && (wp.name || '')) || '').toUpperCase();
@@ -3682,9 +3699,17 @@
       return segs;
     }
 
-    function getMudMapAssets(data) {
+    function getMudMapAssets(data, includeDlinkAssets, includeJtacAssets) {
       const server = (data && data.Server) || {};
-      const rawAssets = Array.isArray(server.FriendlyAssets) ? server.FriendlyAssets : [];
+      const includeDlink = (includeDlinkAssets !== false);
+      const includeJtac = (includeJtacAssets !== false);
+      const allAssets = Array.isArray(server.FriendlyAssets) ? server.FriendlyAssets : [];
+      const rawAssets = allAssets.filter(function (a) {
+        const category = String((a && a.Category) || '').trim().toUpperCase();
+        if (category === 'PLAYER') return true;
+        if (category === 'JTAC') return includeJtac;
+        return includeDlink;
+      });
       return rawAssets
         .map(function (a) {
           const rawX = Number(a && a.X);
@@ -4015,7 +4040,7 @@
         if (!icao) return;
         const overrideType = resolveOverrideType(icao, text, metarKey);
 
-        const dedupeKey = String(icao) + '|' + String(Math.round(north)) + '|' + String(Math.round(east));
+        const dedupeKey = String(icao).toUpperCase() + '|' + String(Math.round(north / 10) * 10) + '|' + String(Math.round(east / 10) * 10);
         if (seen[dedupeKey]) return;
         seen[dedupeKey] = true;
 
@@ -4082,7 +4107,7 @@
         const type = (overrideType === 'MIL') ? 'airport'
           : (overrideType === 'JOINT' ? 'airport' : inferAirfieldType(text));
         const military = (overrideType === 'MIL' || overrideType === 'JOINT') ? true : inferAirfieldMilitary(text);
-        const dedupeKey = (icao || '-') + '|' + String(Math.round(north)) + '|' + String(Math.round(east));
+        const dedupeKey = String(icao || '-').toUpperCase() + '|' + String(Math.round(north / 10) * 10) + '|' + String(Math.round(east / 10) * 10);
         if (seen[dedupeKey]) return;
         seen[dedupeKey] = true;
 
@@ -4440,6 +4465,7 @@
       const allowNavlog = (efbSaShowNavlog !== false);
       const allowDtcOverlay = (efbSaShowDtcOverlay !== false);
       const allowAirports = (efbSaShowAirports !== false);
+      const allowJtacTargets = (efbSaShowJtacTargets !== false);
       const visibleRows = allowNavlog ? rows : [];
       const model = data || latestData || {};
       const server = (model && model.Server) || {};
@@ -4463,6 +4489,7 @@
           airfields: allowAirports ? (Array.isArray(overlays.airfields) ? overlays.airfields : []) : [],
         }
         : { geolines: [], threatPoints: [], destinationPoints: [], faorLines: [], flotLines: [], capPoints: [], corridors: [] };
+      const jtacTargets = allowJtacTargets ? parseJtacNineLineTargets(model) : [];
 
       const approxCenterLonLat = getTheatreCenterLonLat(theatre);
       let approxAnchorNorth = NaN;
@@ -4486,6 +4513,7 @@
         (Array.isArray(mapOverlays.threatPoints) ? mapOverlays.threatPoints : []).forEach(pushPoint);
         (Array.isArray(mapOverlays.destinationPoints) ? mapOverlays.destinationPoints : []).forEach(pushPoint);
         (Array.isArray(mapOverlays.capPoints) ? mapOverlays.capPoints : []).forEach(pushPoint);
+        jtacTargets.forEach(pushPoint);
 
         function pushLineGroupPoints(groups) {
           (Array.isArray(groups) ? groups : []).forEach(function (group) {
@@ -4590,6 +4618,77 @@
         });
       }
 
+      function addJtacTargetSupportFeatures(target) {
+        const t = target || {};
+        const reciprocalSector = getJtacReciprocalSectorPolygonPoints(t, 1, 5);
+        if (reciprocalSector && Array.isArray(reciprocalSector.points) && reciprocalSector.points.length >= 6) {
+          const sectorCoords = reciprocalSector.points
+            .map(function (p) { return toLonLat(p); })
+            .filter(function (c) { return Array.isArray(c) && c.length === 2; });
+          if (sectorCoords.length >= 6) {
+            sectorCoords.forEach(function (c) { pointsForBounds.push(c); });
+            features.push({
+              type: 'Feature',
+              geometry: {
+                type: 'Polygon',
+                coordinates: [sectorCoords],
+              },
+              properties: {
+                kind: 'jtac-attack-sector',
+                group: 'overlay',
+                fill: '#4faa4f',
+                fillOpacity: 0.18,
+                stroke: '#2f8a2f',
+                lineWidth: 1.4,
+                dashed: false,
+                label: 'Attack Sector',
+              },
+            });
+          }
+        }
+
+        const friendlyPoint = getJtacFriendlyPointFromTarget(t);
+        if (friendlyPoint) {
+          const friendlyLabel = (isFinite(Number(t.friendlyDistanceMeters))
+            ? ('FRND ' + String(Math.round(Number(t.friendlyDistanceMeters))) + 'm')
+            : (isFinite(Number(t.friendlyRangeNm)) ? ('FRND ' + String(Number(t.friendlyRangeNm).toFixed(1)) + 'NM') : 'FRND'));
+          addPointFeature(friendlyPoint, {
+            kind: 'jtac-friendly',
+            group: 'overlay',
+            label: friendlyLabel,
+            fill: '#3a7ec1',
+            stroke: '#1f5d93',
+            textColor: '#1f5d93',
+            radius: 4.3,
+          });
+          addLineFeature([t, friendlyPoint], {
+            stroke: '#3a7ec1',
+            lineWidth: 1.7,
+            dashed: true,
+          });
+        }
+
+        const egressPoint = getJtacEgressPointFromTarget(t, 5);
+        if (egressPoint) {
+          const targetLonLat = toLonLat(t);
+          addLineFeature([t, egressPoint], {
+            stroke: '#7f2e2e',
+            lineWidth: 2.0,
+            dashed: false,
+          });
+          addPointFeature(egressPoint, {
+            kind: 'jtac-egress',
+            group: 'overlay',
+            label: 'Egress',
+            fill: '#7f2e2e',
+            stroke: '#7f2e2e',
+            textColor: '#7f2e2e',
+            radius: 2.8,
+            parentTargetLonLat: targetLonLat,
+          });
+        }
+      }
+
       const byStep = {};
       visibleRows.forEach(function (wp) { byStep[String(wp && wp.step)] = wp; });
       getMudMapSegments(visibleRows).forEach(function (seg) {
@@ -4601,6 +4700,53 @@
           lineWidth: seg && seg.dashed ? 1.8 : 2.2,
           dashed: !!(seg && seg.dashed),
         });
+      });
+
+      jtacTargets.forEach(function (target, idx) {
+        const t = target || {};
+        const label = String(t.label || ('JTAC TGT ' + String(idx + 1))).trim();
+        const unitType = String(t.unitType || t.typeName || '').trim();
+        const mgrsText = String(t.mgrsText || '').toUpperCase().trim();
+        const elevationFeet = Number(t.elevationFeet);
+        const friendlyBearing = Number(t.friendlyBearing);
+        const friendlyRangeNm = Number(t.friendlyRangeNm);
+        const selectionAsset = {
+          callsign: String(t.callsign || 'JTAC TGT').trim(),
+          name: String(t.name || unitType || label).trim(),
+          category: 'JTAC_TARGET',
+          xNum: Number(t.xNum),
+          yNum: Number(t.yNum),
+        };
+        addPointFeature(t, {
+          kind: 'jtac-target',
+          group: 'asset',
+          assetKind: 'jtac-target',
+          assetKey: makeMapAssetSelectionKey(selectionAsset),
+          label: label,
+          fill: '#d45757',
+          stroke: '#7f2e2e',
+          textColor: '#7f2e2e',
+          radius: 4.8,
+          category: 'JTAC_TARGET',
+          typeName: unitType,
+          unitType: unitType,
+          mgrsText: mgrsText,
+          elevationFeet: isFinite(elevationFeet) ? Math.round(elevationFeet) : NaN,
+          altFeet: isFinite(elevationFeet) ? Math.round(elevationFeet) : 0,
+          friendlyBearing: isFinite(friendlyBearing) ? Math.round(friendlyBearing) : NaN,
+          friendlyRangeNm: isFinite(friendlyRangeNm) ? Number(friendlyRangeNm.toFixed(1)) : NaN,
+          attackHeadingStartDeg: Number(t.attackHeadingStartDeg),
+          attackHeadingEndDeg: Number(t.attackHeadingEndDeg),
+          nl4Text: String(t.nl4Text || '').trim(),
+          nl5Text: String(t.nl5Text || '').trim(),
+          nl6Text: String(t.nl6Text || '').trim(),
+          nl7Text: String(t.nl7Text || '').trim(),
+          nl8Text: String(t.nl8Text || '').trim(),
+          nl9Text: String(t.nl9Text || '').trim(),
+          rmkText: String(t.rmkText || '').trim(),
+          source: 'JTAC nine-line',
+        });
+        addJtacTargetSupportFeatures(t);
       });
 
       visibleRows.forEach(function (wp) {
@@ -4862,6 +5008,7 @@
       const allowNavlog = (efbSaShowNavlog !== false);
       const allowDtcOverlay = (efbSaShowDtcOverlay !== false);
       const allowAirports = (efbSaShowAirports !== false);
+      const allowJtacTargets = (efbSaShowJtacTargets !== false);
       const mapOverlays = overlays && typeof overlays === 'object'
         ? {
           geolines: allowDtcOverlay ? (Array.isArray(overlays.geolines) ? overlays.geolines : []) : [],
@@ -4874,6 +5021,7 @@
           airfields: allowAirports ? (Array.isArray(overlays.airfields) ? overlays.airfields : []) : [],
         }
         : { geolines: [], threatPoints: [], destinationPoints: [], faorLines: [], flotLines: [], capPoints: [], corridors: [] };
+      const jtacTargets = allowJtacTargets ? parseJtacNineLineTargets(data || latestData || {}) : [];
       const visibleRows = allowNavlog ? rows : [];
       const geolines = Array.isArray(mapOverlays.geolines) ? mapOverlays.geolines : [];
       const threatPoints = Array.isArray(mapOverlays.threatPoints) ? mapOverlays.threatPoints : [];
@@ -5117,6 +5265,14 @@
         + '<line x1="20" y1="44" x2="44" y2="20" stroke="currentColor" stroke-width="3"/>'
         + '<circle cx="22" cy="22" r="4" fill="none" stroke="currentColor" stroke-width="2.5"/>'
         + '<circle cx="42" cy="42" r="4" fill="none" stroke="currentColor" stroke-width="2.5"/>'
+        + '</svg>';
+    }
+
+    function getEfbSaLayerJtacIconSvg() {
+      return '<svg class="efbRailIconSvg" viewBox="0 0 64 64" aria-hidden="true">'
+        + '<polygon points="32,11 53,32 32,53 11,32" fill="none" stroke="currentColor" stroke-width="3"/>'
+        + '<line x1="32" y1="17" x2="32" y2="47" stroke="currentColor" stroke-width="3"/>'
+        + '<line x1="17" y1="32" x2="47" y2="32" stroke="currentColor" stroke-width="3"/>'
         + '</svg>';
     }
 
@@ -5942,6 +6098,7 @@
         + '</div>'
         + '<div id="efbSaLayerDrawer" class="' + (saLayerDrawerOpen ? 'efbSaLayerDrawer' : 'efbSaLayerDrawer closed') + '">'
         + '<button type="button" class="efbRightDrawerBtn' + (dlinkOnEnabled ? ' active' : '') + '" data-efb-sa-layer="dlink" title="D-Link assets ' + (dlinkOnEnabled ? 'ON' : 'OFF') + '">' + getEfbSaLayerDlinkIconSvg() + '</button>'
+        + '<button type="button" class="efbRightDrawerBtn' + (efbSaShowJtacTargets !== false ? ' active' : '') + '" data-efb-sa-layer="jtac" title="JTAC targets ' + (efbSaShowJtacTargets !== false ? 'ON' : 'OFF') + '">' + getEfbSaLayerJtacIconSvg() + '</button>'
         + '<button type="button" class="efbRightDrawerBtn' + (efbSaShowAirports ? ' active' : '') + '" data-efb-sa-layer="airports" title="Airport symbols ' + (efbSaShowAirports ? 'ON' : 'OFF') + '">' + getEfbSaLayerAirportIconSvg() + '</button>'
         + '<button type="button" class="efbRightDrawerBtn' + (efbSaShowNavlog ? ' active' : '') + '" data-efb-sa-layer="navlog" title="Navlog route and waypoints ' + (efbSaShowNavlog ? 'ON' : 'OFF') + '">' + getEfbSaLayerNavlogIconSvg() + '</button>'
         + '<button type="button" class="efbRightDrawerBtn' + (efbSaShowDtcOverlay ? ' active' : '') + '" data-efb-sa-layer="dtc" title="DTC SA overlay ' + (efbSaShowDtcOverlay ? 'ON' : 'OFF') + '">' + getEfbSaLayerOverlayIconSvg() + '</button>'
@@ -6045,12 +6202,17 @@
         const drawer = document.getElementById('efbSaLayerDrawer');
         if (!drawer) return;
         const dlinkBtn = drawer.querySelector('[data-efb-sa-layer="dlink"]');
+        const jtacBtn = drawer.querySelector('[data-efb-sa-layer="jtac"]');
         const airportsBtn = drawer.querySelector('[data-efb-sa-layer="airports"]');
         const navlogBtn = drawer.querySelector('[data-efb-sa-layer="navlog"]');
         const dtcBtn = drawer.querySelector('[data-efb-sa-layer="dtc"]');
         if (dlinkBtn) {
           dlinkBtn.classList.toggle('active', !!dlinkOnEnabled);
           dlinkBtn.title = 'D-Link assets ' + (dlinkOnEnabled ? 'ON' : 'OFF');
+        }
+        if (jtacBtn) {
+          jtacBtn.classList.toggle('active', efbSaShowJtacTargets !== false);
+          jtacBtn.title = 'JTAC targets ' + (efbSaShowJtacTargets !== false ? 'ON' : 'OFF');
         }
         if (airportsBtn) {
           airportsBtn.classList.toggle('active', efbSaShowAirports !== false);
@@ -6090,6 +6252,8 @@
             dlinkOnEnabled = !dlinkOnEnabled;
             persistDlinkOnPreference();
             applyDlinkOnUi();
+          } else if (layer === 'jtac') {
+            efbSaShowJtacTargets = !efbSaShowJtacTargets;
           } else if (layer === 'airports') {
             efbSaShowAirports = !efbSaShowAirports;
           } else if (layer === 'navlog') {
@@ -10790,6 +10954,13 @@
           p.setAttribute('stroke', stroke);
           p.setAttribute('stroke-width', '1.3');
           g.appendChild(p);
+        } else if (kind === 'jtac-target') {
+          const p = makeNode('polygon');
+          p.setAttribute('points', px.toFixed(1) + ',' + (py - 7.2).toFixed(1) + ' ' + (px - 7.2).toFixed(1) + ',' + py.toFixed(1) + ' ' + px.toFixed(1) + ',' + (py + 7.2).toFixed(1) + ' ' + (px + 7.2).toFixed(1) + ',' + py.toFixed(1));
+          p.setAttribute('fill', '#d45757');
+          p.setAttribute('stroke', '#7f2e2e');
+          p.setAttribute('stroke-width', '1.4');
+          g.appendChild(p);
         } else if (kind === 'rotary') {
           const c = makeNode('circle');
           c.setAttribute('cx', px.toFixed(1));
@@ -10863,6 +11034,36 @@
         return g;
       }
 
+      function createJtacFriendlySymbol(px, py, props) {
+        const g = makeNode('g');
+        const ring = makeNode('circle');
+        ring.setAttribute('cx', px.toFixed(1));
+        ring.setAttribute('cy', py.toFixed(1));
+        ring.setAttribute('r', '6.2');
+        ring.setAttribute('fill', 'none');
+        ring.setAttribute('stroke', '#1f5d93');
+        ring.setAttribute('stroke-width', '1.4');
+        g.appendChild(ring);
+        const h = makeNode('line');
+        h.setAttribute('x1', (px - 5.2).toFixed(1));
+        h.setAttribute('y1', py.toFixed(1));
+        h.setAttribute('x2', (px + 5.2).toFixed(1));
+        h.setAttribute('y2', py.toFixed(1));
+        h.setAttribute('stroke', '#1f5d93');
+        h.setAttribute('stroke-width', '1.3');
+        g.appendChild(h);
+        const v = makeNode('line');
+        v.setAttribute('x1', px.toFixed(1));
+        v.setAttribute('y1', (py - 5.2).toFixed(1));
+        v.setAttribute('x2', px.toFixed(1));
+        v.setAttribute('y2', (py + 5.2).toFixed(1));
+        v.setAttribute('stroke', '#1f5d93');
+        v.setAttribute('stroke-width', '1.3');
+        g.appendChild(v);
+        g.style.pointerEvents = 'none';
+        return g;
+      }
+
       orderedFeatures.forEach(function (feature) {
         if (!feature || !feature.geometry || !feature.properties) return;
         const geom = feature.geometry || {};
@@ -10884,6 +11085,27 @@
             pl.setAttribute('stroke-opacity', '0.92');
             pl.style.pointerEvents = 'none';
             overlaySvg.appendChild(pl);
+          }
+          return;
+        }
+
+        if (geom.type === 'Polygon' && Array.isArray(geom.coordinates) && geom.coordinates.length) {
+          const firstRing = Array.isArray(geom.coordinates[0]) ? geom.coordinates[0] : [];
+          const polyPts = firstRing.map(function (c) {
+            if (!Array.isArray(c) || c.length < 2) return null;
+            const p = map.project([Number(c[0]), Number(c[1])]);
+            return p ? (p.x.toFixed(1) + ',' + p.y.toFixed(1)) : null;
+          }).filter(function (v) { return !!v; });
+          if (polyPts.length >= 3) {
+            const poly = makeNode('polygon');
+            poly.setAttribute('points', polyPts.join(' '));
+            poly.setAttribute('fill', String((props && props.fill) || '#4faa4f'));
+            poly.setAttribute('fill-opacity', String(isFinite(Number(props && props.fillOpacity)) ? Number(props.fillOpacity) : 0.18));
+            poly.setAttribute('stroke', String((props && props.stroke) || '#2f8a2f'));
+            poly.setAttribute('stroke-width', String(Number((props && props.lineWidth) || 1.4)));
+            if (props && props.dashed) poly.setAttribute('stroke-dasharray', '8 6');
+            poly.style.pointerEvents = 'none';
+            overlaySvg.appendChild(poly);
           }
           return;
         }
@@ -11112,6 +11334,18 @@
                 geo.style.pointerEvents = 'none';
                 return geo;
               }
+            if (kind === 'jtac-friendly') {
+              return createJtacFriendlySymbol(p.x, p.y, props);
+            }
+            if (kind === 'jtac-egress') {
+              const tip = makeNode('polygon');
+              tip.setAttribute('points', p.x.toFixed(1) + ',' + (p.y - 4.6).toFixed(1) + ' ' + (p.x - 4.0).toFixed(1) + ',' + (p.y + 3.8).toFixed(1) + ' ' + (p.x + 4.0).toFixed(1) + ',' + (p.y + 3.8).toFixed(1));
+              tip.setAttribute('fill', '#7f2e2e');
+              tip.setAttribute('stroke', '#7f2e2e');
+              tip.setAttribute('stroke-width', '1.1');
+              tip.style.pointerEvents = 'none';
+              return tip;
+            }
               const c = makeNode('circle');
               c.setAttribute('cx', p.x.toFixed(1));
               c.setAttribute('cy', p.y.toFixed(1));
@@ -11166,6 +11400,24 @@
             overlaySvg.appendChild(text);
           }
 
+          if (geom.type === 'Point' && String((props && props.kind) || '').toLowerCase() === 'jtac-egress') {
+            const parentTarget = props && props.parentTargetLonLat;
+            if (Array.isArray(parentTarget) && parentTarget.length >= 2) {
+              const start = map.project([Number(parentTarget[0]), Number(parentTarget[1])]);
+              if (start) {
+                const egrLine = makeNode('line');
+                egrLine.setAttribute('x1', start.x.toFixed(1));
+                egrLine.setAttribute('y1', start.y.toFixed(1));
+                egrLine.setAttribute('x2', p.x.toFixed(1));
+                egrLine.setAttribute('y2', p.y.toFixed(1));
+                egrLine.setAttribute('stroke', '#7f2e2e');
+                egrLine.setAttribute('stroke-width', '2.0');
+                egrLine.style.pointerEvents = 'none';
+                overlaySvg.insertBefore(egrLine, markerNode);
+              }
+            }
+          }
+
           if (isSelectable && props.assetKey) {
             const hit = makeNode('circle');
             hit.setAttribute('cx', p.x.toFixed(1));
@@ -11202,6 +11454,18 @@
 
         const infoLines = [];
         const category = String(p.category || '').trim().toUpperCase();
+        if (category === 'JTAC_TARGET') {
+          const jtacLines = formatJtacNineLinePopupLines({
+            nl4Text: p.nl4Text,
+            nl5Text: p.nl5Text,
+            nl6Text: p.nl6Text,
+            nl7Text: p.nl7Text,
+            nl8Text: p.nl8Text,
+            nl9Text: p.nl9Text,
+            rmkText: p.rmkText,
+          });
+          jtacLines.forEach(function (x) { infoLines.push(String(x || '')); });
+        }
         const typeText = String(p.typeName || '').trim();
         const freqText = formatFreq(p.frequency);
         const altFreqs = Array.isArray(p.altFrequencies) ? p.altFrequencies : [];
@@ -11214,7 +11478,18 @@
         const vhf = normalizedFreqs.find(function (f) { return f.mhz >= 30 && f.mhz < 225; });
         const tacanText = String(p.tacan || '').trim();
         const mpText = String(p.mpClientCallsign || '').trim();
-        if (typeText) infoLines.push('TYPE: ' + typeText);
+        if (category !== 'JTAC_TARGET') {
+          if (typeText) infoLines.push('TYPE: ' + typeText);
+          const mgrsText = String(p.mgrsText || '').trim();
+          if (mgrsText) infoLines.push('MGRS: ' + mgrsText);
+          const elevFeet = Number(p.elevationFeet);
+          if (isFinite(elevFeet)) infoLines.push('ELEV: ' + String(Math.round(elevFeet)) + ' FT');
+          const friendlyBearing = Number(p.friendlyBearing);
+          const friendlyRangeNm = Number(p.friendlyRangeNm);
+          if (isFinite(friendlyBearing) && isFinite(friendlyRangeNm) && friendlyRangeNm > 0) {
+            infoLines.push('FRND: ' + formatHeadingDeg(friendlyBearing) + '/' + String(Number(friendlyRangeNm).toFixed(1)) + 'NM');
+          }
+        }
         if (category === 'ATC') {
           if (uhf && uhf.text) infoLines.push('UHF: ' + uhf.text);
           if (vhf && vhf.text) infoLines.push('VHF: ' + vhf.text);
@@ -12552,6 +12827,533 @@
       return eLetter + nLetter;
     }
 
+    function forwardTransverseMercator(lat, lon, projection) {
+      const latitude = Number(lat);
+      const longitude = Number(lon);
+      if (!isFinite(latitude) || !isFinite(longitude) || !projection) return null;
+
+      const semiMajorAxis = 6378137.0;
+      const flattening = 1.0 / 298.257223563;
+      const eccentricitySquared = flattening * (2.0 - flattening);
+      const ePrimeSquared = eccentricitySquared / (1.0 - eccentricitySquared);
+      const scaleFactor = Number(projection.scaleFactor) || 0.9996;
+
+      const latRad = toRadians(latitude);
+      const lonRad = toRadians(longitude);
+      const lonOriginRad = toRadians(Number(projection.centralMeridianDeg));
+
+      const n = semiMajorAxis / Math.sqrt(1 - eccentricitySquared * Math.sin(latRad) * Math.sin(latRad));
+      const t = Math.tan(latRad) * Math.tan(latRad);
+      const c = ePrimeSquared * Math.cos(latRad) * Math.cos(latRad);
+      const A = Math.cos(latRad) * (lonRad - lonOriginRad);
+
+      const m = semiMajorAxis
+        * ((1 - eccentricitySquared / 4 - 3 * Math.pow(eccentricitySquared, 2) / 64 - 5 * Math.pow(eccentricitySquared, 3) / 256) * latRad
+          - (3 * eccentricitySquared / 8 + 3 * Math.pow(eccentricitySquared, 2) / 32 + 45 * Math.pow(eccentricitySquared, 3) / 1024) * Math.sin(2 * latRad)
+          + (15 * Math.pow(eccentricitySquared, 2) / 256 + 45 * Math.pow(eccentricitySquared, 3) / 1024) * Math.sin(4 * latRad)
+          - (35 * Math.pow(eccentricitySquared, 3) / 3072) * Math.sin(6 * latRad));
+
+      const easting = Number(projection.falseEastingMeters)
+        + scaleFactor * n * (A
+          + (1 - t + c) * Math.pow(A, 3) / 6
+          + (5 - 18 * t + t * t + 72 * c - 58 * ePrimeSquared) * Math.pow(A, 5) / 120);
+
+      const northing = Number(projection.falseNorthingMeters)
+        + scaleFactor * (m
+          + n * Math.tan(latRad) * (Math.pow(A, 2) / 2
+            + (5 - t + 9 * c + 4 * c * c) * Math.pow(A, 4) / 24
+            + (61 - 58 * t + t * t + 600 * c - 330 * ePrimeSquared) * Math.pow(A, 6) / 720));
+
+      if (!isFinite(easting) || !isFinite(northing)) return null;
+      return {
+        xNum: northing,
+        yNum: easting,
+      };
+    }
+
+    function convertLatLonToDcsXY(theatre, lat, lon) {
+      const projection = getMapProjectionByTheatre(theatre);
+      if (!projection) return null;
+      try {
+        return forwardTransverseMercator(lat, lon, projection);
+      } catch (_) {
+        return null;
+      }
+    }
+
+    function getMgrsBandLatRange(bandLetter) {
+      const bands = 'CDEFGHJKLMNPQRSTUVWX';
+      const band = String(bandLetter || '').toUpperCase();
+      const idx = bands.indexOf(band);
+      if (idx < 0) return null;
+      const minLat = -80 + (idx * 8);
+      const maxLat = (band === 'X') ? 84 : (minLat + 8);
+      return { minLat: minLat, maxLat: maxLat };
+    }
+
+    function getMgrsEastingFromDigraph(zone, eastingLetter) {
+      const zoneNum = Number(zone);
+      const letter = String(eastingLetter || '').toUpperCase();
+      if (!isFinite(zoneNum) || zoneNum < 1 || zoneNum > 60 || !letter) return NaN;
+      const sets = ['ABCDEFGH', 'JKLMNPQR', 'STUVWXYZ'];
+      const eSet = (Math.round(zoneNum) - 1) % 3;
+      const list = sets[eSet] || '';
+      const idx = list.indexOf(letter);
+      if (idx < 0) return NaN;
+      return (idx + 1) * 100000;
+    }
+
+    function getMgrsNorthingFromDigraph(zone, northingLetter) {
+      const zoneNum = Number(zone);
+      const letter = String(northingLetter || '').toUpperCase();
+      if (!isFinite(zoneNum) || zoneNum < 1 || zoneNum > 60 || !letter) return NaN;
+      const odd = 'ABCDEFGHJKLMNPQRSTUV';
+      const even = 'FGHJKLMNPQRSTUVABCDE';
+      const list = (Math.round(zoneNum) % 2 === 0) ? even : odd;
+      const idx = list.indexOf(letter);
+      if (idx < 0) return NaN;
+      return idx * 100000;
+    }
+
+    function parseMgrsTarget(text, theatre) {
+      const input = String(text || '').toUpperCase();
+      if (!input) return null;
+
+      const zoneBandMatch = input.match(/\b(\d{1,2})([C-HJ-NP-X])\s*([A-HJ-NP-Z]{2})\s*(\d{2,5})\s*(\d{2,5})\b/);
+      const digraphMatch = input.match(/\b([A-HJ-NP-Z]{2})\s*(\d{4,5})\s*(\d{4,5})\b/);
+
+      let zone = NaN;
+      let band = '';
+      let digraph = '';
+      let eastingDigits = '';
+      let northingDigits = '';
+
+      if (zoneBandMatch) {
+        zone = Number(zoneBandMatch[1]);
+        band = String(zoneBandMatch[2] || '').toUpperCase();
+        digraph = String(zoneBandMatch[3] || '').toUpperCase();
+        eastingDigits = String(zoneBandMatch[4] || '');
+        northingDigits = String(zoneBandMatch[5] || '');
+      } else if (digraphMatch) {
+        const center = getTheatreCenterLonLat(theatre);
+        if (!Array.isArray(center) || center.length < 2) return null;
+        const utm = latLonToUtm(Number(center[1]), Number(center[0]));
+        if (!utm || !isFinite(Number(utm.zone))) return null;
+        zone = Number(utm.zone);
+        band = String(utm.band || '').toUpperCase();
+        digraph = String(digraphMatch[1] || '').toUpperCase();
+        eastingDigits = String(digraphMatch[2] || '');
+        northingDigits = String(digraphMatch[3] || '');
+      } else {
+        return null;
+      }
+
+      if (!isFinite(zone) || zone < 1 || zone > 60 || !digraph || digraph.length !== 2) return null;
+      const len = Math.min(5, Math.max(1, Math.min(eastingDigits.length, northingDigits.length)));
+      const eRaw = String(eastingDigits || '').substring(0, len).padEnd(5, '0');
+      const nRaw = String(northingDigits || '').substring(0, len).padEnd(5, '0');
+
+      const e100k = getMgrsEastingFromDigraph(zone, digraph.charAt(0));
+      const n100kBase = getMgrsNorthingFromDigraph(zone, digraph.charAt(1));
+      const easting = e100k + Number(eRaw);
+      if (!isFinite(easting) || !isFinite(n100kBase)) return null;
+
+      const bandRange = getMgrsBandLatRange(band);
+      if (!bandRange) return null;
+      const zoneCentralMeridian = ((Math.round(zone) - 1) * 6) - 180 + 3;
+      const minProbe = latLonToUtm(Number(bandRange.minLat) + 0.0001, zoneCentralMeridian);
+      const maxProbe = latLonToUtm(Number(bandRange.maxLat) - 0.0001, zoneCentralMeridian);
+      if (!minProbe || !maxProbe) return null;
+      const minNorthing = Number(minProbe.northing);
+      const maxNorthing = Number(maxProbe.northing);
+      if (!isFinite(minNorthing) || !isFinite(maxNorthing)) return null;
+
+      let northing = n100kBase + Number(nRaw);
+      while (northing < minNorthing) northing += 2000000;
+      while (northing > maxNorthing + 1000000) northing -= 2000000;
+      if (northing < minNorthing || northing > (maxNorthing + 120000)) return null;
+
+      const latLon = inverseTransverseMercator(easting, northing, {
+        centralMeridianDeg: zoneCentralMeridian,
+        falseEastingMeters: 500000,
+        falseNorthingMeters: (bandRange.maxLat <= 0 ? 10000000 : 0),
+        scaleFactor: 0.9996,
+      });
+      if (!latLon || !isFinite(Number(latLon.lat)) || !isFinite(Number(latLon.lon))) return null;
+
+      const printedMgrs = String(Math.round(zone)) + band + ' ' + digraph + ' ' + eRaw + ' ' + nRaw;
+      return {
+        zone: Math.round(zone),
+        band: band,
+        digraph: digraph,
+        eastingDigits: eRaw,
+        northingDigits: nRaw,
+        mgrsText: printedMgrs,
+        lat: Number(latLon.lat),
+        lon: Number(latLon.lon),
+      };
+    }
+
+    function formatMgrsDigraphDisplayFromParsed(parsedMgrs) {
+      const p = parsedMgrs || {};
+      const digraph = String(p.digraph || '').toUpperCase().trim();
+      const e = String(p.eastingDigits || '').replace(/[^0-9]/g, '').padEnd(5, '0').substring(0, 5);
+      const n = String(p.northingDigits || '').replace(/[^0-9]/g, '').padEnd(5, '0').substring(0, 5);
+      if (!digraph || digraph.length !== 2 || e.length !== 5 || n.length !== 5) return '';
+      return digraph + ' ' + e + ' ' + n;
+    }
+
+    function normalizeMgrsTokenDisplay(tokenText, theatre) {
+      const parsed = parseMgrsTarget(tokenText, theatre);
+      if (!parsed) return String(tokenText || '').trim();
+      const formatted = formatMgrsDigraphDisplayFromParsed(parsed);
+      return formatted || String(tokenText || '').trim();
+    }
+
+    function normalizeJtacDirectionToBearing(text) {
+      const v = String(text || '').trim().toUpperCase();
+      if (!v) return NaN;
+      if (/^\d{1,3}$/.test(v)) return normalizeHeadingDeg(Number(v));
+      const map = {
+        N: 0,
+        NORTH: 0,
+        NE: 45,
+        NORTHEAST: 45,
+        E: 90,
+        EAST: 90,
+        SE: 135,
+        SOUTHEAST: 135,
+        S: 180,
+        SOUTH: 180,
+        SW: 225,
+        SOUTHWEST: 225,
+        W: 270,
+        WEST: 270,
+        NW: 315,
+        NORTHWEST: 315,
+      };
+      return map[v] !== undefined ? Number(map[v]) : NaN;
+    }
+
+    function parseJtacLineValue(blockText, lineNo) {
+      const src = String(blockText || '').replace(/\s+/g, ' ').trim();
+      if (!src) return '';
+      const rx = new RegExp('\\b' + String(lineNo) + '\\s*[-:]\\s*(.*?)(?=\\b[1-9]\\s*[-:]|\\bRMK\\b|\\bREMARKS?\\b|$)', 'i');
+      const m = src.match(rx);
+      if (!m) return '';
+      return String(m[1] || '').replace(/\s+/g, ' ').trim();
+    }
+
+    function formatJtacNineLinePopupLines(source) {
+      const s = source || {};
+      const lines = [];
+
+      function wrapJtacPopupLine(text, maxLen) {
+        const src = String(text || '').replace(/\s+/g, ' ').trim();
+        if (!src) return [];
+        const words = src.split(' ');
+        const out = [];
+        let cur = '';
+        const limit = Math.max(24, Number(maxLen) || 48);
+        for (let i = 0; i < words.length; i++) {
+          const w = String(words[i] || '').trim();
+          if (!w) continue;
+          const next = cur ? (cur + ' ' + w) : w;
+          if (next.length <= limit) {
+            cur = next;
+            continue;
+          }
+          if (cur) out.push(cur);
+          cur = w;
+        }
+        if (cur) out.push(cur);
+        return out;
+      }
+
+      function pushWrappedPrefix(prefix, value) {
+        const v = String(value || '').trim();
+        if (!v) return;
+        const wrapped = wrapJtacPopupLine(prefix + v, 48);
+        wrapped.forEach(function (w) { lines.push(w); });
+      }
+
+      lines.push('1-2-3 N/A');
+      pushWrappedPrefix('4 - ', s.nl4Text);
+      pushWrappedPrefix('5 - ', s.nl5Text);
+      pushWrappedPrefix('6 - ', s.nl6Text);
+      pushWrappedPrefix('7 - ', s.nl7Text);
+      pushWrappedPrefix('8 - ', s.nl8Text);
+      pushWrappedPrefix('9 - ', s.nl9Text);
+      if (s.rmkText) {
+        lines.push('');
+        pushWrappedPrefix('RMK ', s.rmkText);
+      }
+      return lines;
+    }
+
+    function getJtacFriendlyPointFromTarget(target) {
+      const t = target || {};
+      const bearing = Number(t.friendlyBearing);
+      const distanceMeters = Number(t.friendlyDistanceMeters);
+      const north = Number(t.xNum);
+      const east = Number(t.yNum);
+      if (!isFinite(bearing) || !isFinite(distanceMeters) || distanceMeters <= 0) return null;
+      if (!isFinite(north) || !isFinite(east)) return null;
+      const rad = bearing * (Math.PI / 180.0);
+      return {
+        xNum: north + (Math.cos(rad) * distanceMeters),
+        yNum: east + (Math.sin(rad) * distanceMeters),
+      };
+    }
+
+    function getJtacEgressPointFromTarget(target, distanceNm) {
+      const t = target || {};
+      const heading = Number(t.egressHeadingDeg);
+      const north = Number(t.xNum);
+      const east = Number(t.yNum);
+      const nm = isFinite(Number(distanceNm)) ? Number(distanceNm) : 5;
+      if (!isFinite(heading) || !isFinite(north) || !isFinite(east) || nm <= 0) return null;
+      const distMeters = nm * 1852.0;
+      const rad = heading * (Math.PI / 180.0);
+      return {
+        xNum: north + (Math.cos(rad) * distMeters),
+        yNum: east + (Math.sin(rad) * distMeters),
+      };
+    }
+
+    function parseJtacHeadingRangeFromText(text) {
+      const src = String(text || '').toUpperCase();
+      if (!src) return null;
+      const m = src.match(/\b(\d{1,3})\s*[-–]\s*(\d{1,3})\b/);
+      if (!m) return null;
+      const startDeg = normalizeHeadingDeg(Number(m[1]));
+      const endDeg = normalizeHeadingDeg(Number(m[2]));
+      if (!isFinite(startDeg) || !isFinite(endDeg)) return null;
+      return {
+        startDeg: startDeg,
+        endDeg: endDeg,
+      };
+    }
+
+    function getJtacReciprocalSectorPolygonPoints(target, innerNm, outerNm) {
+      const t = target || {};
+      const north = Number(t.xNum);
+      const east = Number(t.yNum);
+      if (!isFinite(north) || !isFinite(east)) return null;
+
+      let attackStart = Number(t.attackHeadingStartDeg);
+      let attackEnd = Number(t.attackHeadingEndDeg);
+      if (!isFinite(attackStart) || !isFinite(attackEnd)) {
+        const parsed = parseJtacHeadingRangeFromText(t.rmkText || '');
+        if (!parsed) return null;
+        attackStart = parsed.startDeg;
+        attackEnd = parsed.endDeg;
+      }
+
+      const recipStart = normalizeHeadingDeg(attackStart + 180);
+      const recipEnd = normalizeHeadingDeg(attackEnd + 180);
+      const delta = ((recipEnd - recipStart) + 360) % 360;
+      const sweepDeg = delta === 0 ? 360 : delta;
+
+      const innerMeters = Math.max(0.1, Number(innerNm) || 1) * 1852.0;
+      const outerMeters = Math.max(innerMeters + 50, (Math.max(0.2, Number(outerNm) || 5) * 1852.0));
+      const steps = Math.max(8, Math.ceil(sweepDeg / 8));
+      const points = [];
+
+      for (let i = 0; i <= steps; i++) {
+        const bearing = normalizeHeadingDeg(recipStart + ((sweepDeg * i) / steps));
+        const rad = bearing * (Math.PI / 180.0);
+        points.push({
+          xNum: north + (Math.cos(rad) * outerMeters),
+          yNum: east + (Math.sin(rad) * outerMeters),
+        });
+      }
+      for (let i = steps; i >= 0; i--) {
+        const bearing = normalizeHeadingDeg(recipStart + ((sweepDeg * i) / steps));
+        const rad = bearing * (Math.PI / 180.0);
+        points.push({
+          xNum: north + (Math.cos(rad) * innerMeters),
+          yNum: east + (Math.sin(rad) * innerMeters),
+        });
+      }
+
+      return {
+        startDeg: recipStart,
+        endDeg: recipEnd,
+        sweepDeg: sweepDeg,
+        points: points,
+      };
+    }
+
+    function parseJtacNineLineTargets(data) {
+      const model = data || latestData || {};
+      const server = (model && model.Server) || {};
+      const theatreInfo = resolveOpenFreeMapTheatreInfo(model);
+      const theatre = String((theatreInfo && theatreInfo.theatre) || resolveOpenFreeMapFallbackTheatreText(model) || server.Theater || lastKnownTheater || '').trim();
+      if (!theatre) return [];
+
+      const logs = getMergedLog(model.Logs, 'JTAC');
+      const details = getMergedList(model.UnitDetails, 'JTAC');
+      const units = getMergedList(model.Units, 'JTAC');
+      const sourceText = [logs].concat(details).concat(units).map(function (s) { return String(s || '').trim(); }).filter(function (s) { return !!s; }).join('\n');
+      if (!sourceText) return [];
+
+      const lines = sourceText.split(/\r?\n/).map(function (l) { return String(l || '').trim(); }).filter(function (l) { return !!l; });
+      if (!lines.length) return [];
+
+      const targetRegex = /(type\s*[:\-]?\s*([^\n,;]+)|target\s*[:\-]?\s*([^\n,;]+))/i;
+      const elevRegex = /(elev(?:ation)?\s*[:\-]?\s*([0-9]{2,6})\s*(ft|feet|m|meters?)?)/i;
+      const friendBraRegex = /\bfriendly\b[^\n]*?\b(\d{3})\s*[\/-]\s*(\d{1,3}(?:\.\d+)?)\b/i;
+      const friendDirectionRegex = /\b(N|S|E|W|NE|NW|SE|SW|NORTH|SOUTH|EAST|WEST)\b[^0-9]{0,12}(\d{2,6}(?:\.\d+)?)\s*(M|METERS?|KM|NM)?\b/i;
+
+      const targets = [];
+      const seen = {};
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+        const mgrs = parseMgrsTarget(line, theatre);
+        if (!mgrs) continue;
+
+        const dcs = convertLatLonToDcsXY(theatre, mgrs.lat, mgrs.lon);
+        if (!dcs || !isFinite(Number(dcs.xNum)) || !isFinite(Number(dcs.yNum))) continue;
+
+        const key = mgrs.mgrsText + '|' + String(Math.round(Number(dcs.xNum))) + '|' + String(Math.round(Number(dcs.yNum)));
+        if (seen[key]) continue;
+        seen[key] = true;
+
+        const ctxStart = Math.max(0, i - 4);
+        const ctxEnd = Math.min(lines.length - 1, i + 4);
+        const context = lines.slice(ctxStart, ctxEnd + 1).join(' | ');
+        const flatContext = String(context || '').replace(/\|/g, ' ').replace(/\s+/g, ' ').trim();
+
+        const line4 = parseJtacLineValue(flatContext, 4);
+        const line5 = parseJtacLineValue(flatContext, 5);
+        const line6 = parseJtacLineValue(flatContext, 6);
+        const line7 = parseJtacLineValue(flatContext, 7);
+        const line8 = parseJtacLineValue(flatContext, 8);
+        const line9 = parseJtacLineValue(flatContext, 9);
+
+        const rmkMatch = flatContext.match(/\bRMK\b\s*[:\-]?\s*(.*)$/i)
+          || flatContext.match(/\bREMARKS?\b\s*[:\-]?\s*(.*)$/i)
+          || flatContext.match(/\bPREF\b\s+(.+)$/i);
+        const rmkText = rmkMatch ? String(rmkMatch[1] || '').replace(/\s+/g, ' ').trim() : '';
+        const attackHeadingRange = parseJtacHeadingRangeFromText(rmkText);
+        const attackHeadingStartDeg = attackHeadingRange ? Number(attackHeadingRange.startDeg) : NaN;
+        const attackHeadingEndDeg = attackHeadingRange ? Number(attackHeadingRange.endDeg) : NaN;
+
+        const typeMatch = context.match(targetRegex) || line.match(targetRegex);
+        let unitType = '';
+        if (typeMatch) {
+          unitType = String(typeMatch[2] || typeMatch[3] || '').trim();
+        }
+        if (!unitType && line5) {
+          unitType = String(line5).replace(/^tgt\s*/i, '').replace(/^target\s*/i, '').trim();
+        }
+        if (!unitType) {
+          unitType = 'Unknown';
+        }
+
+        const elevMatch = line4.match(elevRegex) || context.match(elevRegex) || line.match(elevRegex);
+        let elevationFeet = NaN;
+        if (elevMatch) {
+          const elevNum = Number(elevMatch[2]);
+          const elevUnit = String(elevMatch[3] || 'ft').toLowerCase();
+          if (isFinite(elevNum)) {
+            elevationFeet = elevUnit.indexOf('m') === 0 ? (elevNum * 3.28084) : elevNum;
+          }
+        }
+
+        let friendlyBearing = NaN;
+        let friendlyRangeNm = NaN;
+        let friendlyDistanceMeters = NaN;
+        const friendSource = line8 || context;
+        const fBraMatch = friendSource.match(friendBraRegex) || line.match(friendBraRegex);
+        if (fBraMatch) {
+          friendlyBearing = Number(fBraMatch[1]);
+          friendlyRangeNm = Number(fBraMatch[2]);
+          if (isFinite(friendlyRangeNm) && friendlyRangeNm > 0) {
+            friendlyDistanceMeters = friendlyRangeNm * 1852.0;
+          }
+        } else {
+          const fDirMatch = friendSource.match(friendDirectionRegex);
+          if (fDirMatch) {
+            const dirBearing = normalizeJtacDirectionToBearing(fDirMatch[1]);
+            const distRaw = Number(fDirMatch[2]);
+            const distUnit = String(fDirMatch[3] || 'm').toLowerCase();
+            if (isFinite(dirBearing)) friendlyBearing = dirBearing;
+            if (isFinite(distRaw) && distRaw > 0) {
+              if (distUnit === 'nm') {
+                friendlyRangeNm = distRaw;
+                friendlyDistanceMeters = distRaw * 1852.0;
+              } else if (distUnit === 'km') {
+                friendlyRangeNm = distRaw * 0.5399568035;
+                friendlyDistanceMeters = distRaw * 1000.0;
+              } else {
+                friendlyRangeNm = distRaw / 1852.0;
+                friendlyDistanceMeters = distRaw;
+              }
+            }
+          }
+        }
+
+        const egressSource = line9 || context;
+        const egrMatch = egressSource.match(/\b(?:EGR|EGRESS)\b[^A-Z0-9]{0,6}(NORTHWEST|NORTHEAST|SOUTHWEST|SOUTHEAST|NORTH|SOUTH|EAST|WEST|NE|NW|SE|SW|N|S|E|W|\d{1,3})\b/i)
+          || egressSource.match(/\b(NORTHWEST|NORTHEAST|SOUTHWEST|SOUTHEAST|NORTH|SOUTH|EAST|WEST|NE|NW|SE|SW|N|S|E|W|\d{1,3})\b/i);
+        const egressHeadingDeg = egrMatch ? normalizeJtacDirectionToBearing(egrMatch[1]) : NaN;
+
+        const nl4Text = line4 || (isFinite(elevationFeet) ? ('Elev ' + String(Math.round(elevationFeet)) + ' ft') : '');
+        const nl5Text = line5 || ('TGT ' + unitType);
+        const normalizedMgrsDisplay = formatMgrsDigraphDisplayFromParsed(mgrs);
+        const nl6Text = normalizedMgrsDisplay ? ('MGRS ' + normalizedMgrsDisplay) : (line6 || '');
+        const nl7Text = line7 || '';
+        const nl8Text = line8 || (isFinite(friendlyBearing) && isFinite(friendlyDistanceMeters)
+          ? ('Friendlies ' + formatHeadingDeg(friendlyBearing) + ' ' + String(Math.round(friendlyDistanceMeters)) + 'm')
+          : '');
+        const nl9Text = line9 || (isFinite(egressHeadingDeg) ? ('Egr ' + formatHeadingDeg(egressHeadingDeg)) : '');
+
+        const row = {
+          callsign: 'JTAC TGT',
+          name: unitType,
+          category: 'JTAC_TARGET',
+          typeName: unitType,
+          frequency: '',
+          tacan: '',
+          mpClientCallsign: '',
+          altFeet: isFinite(elevationFeet) ? Math.max(0, Math.round(elevationFeet)) : 0,
+          xNum: Number(dcs.xNum),
+          yNum: Number(dcs.yNum),
+          jtacTarget: true,
+          mgrsText: mgrs.mgrsText,
+          mgrsDisplayText: normalizedMgrsDisplay,
+          unitType: unitType,
+          elevationFeet: isFinite(elevationFeet) ? Math.round(elevationFeet) : NaN,
+          label: 'JTAC TGT',
+          rawLine: line,
+          nl4Text: nl4Text,
+          nl5Text: nl5Text,
+          nl6Text: nl6Text,
+          nl7Text: nl7Text,
+          nl8Text: nl8Text,
+          nl9Text: nl9Text,
+          rmkText: rmkText,
+          attackHeadingStartDeg: isFinite(attackHeadingStartDeg) ? normalizeHeadingDeg(attackHeadingStartDeg) : NaN,
+          attackHeadingEndDeg: isFinite(attackHeadingEndDeg) ? normalizeHeadingDeg(attackHeadingEndDeg) : NaN,
+          egressHeadingDeg: isFinite(egressHeadingDeg) ? normalizeHeadingDeg(egressHeadingDeg) : NaN,
+        };
+
+        if (isFinite(friendlyBearing) && isFinite(friendlyRangeNm) && friendlyRangeNm > 0) {
+          row.friendlyBearing = Math.round(friendlyBearing);
+          row.friendlyRangeNm = Number(friendlyRangeNm.toFixed(1));
+        }
+        if (isFinite(friendlyDistanceMeters) && friendlyDistanceMeters > 0) {
+          row.friendlyDistanceMeters = Number(friendlyDistanceMeters.toFixed(1));
+        }
+
+        targets.push(row);
+      }
+
+      return targets;
+    }
+
     function truncateText(value, maxLen) {
       const text = String(value || '');
       if (text.length <= maxLen) return text;
@@ -13627,12 +14429,12 @@
       const mirror1 = !!commRoot.mirror_COMM1;
       const mirror2 = !!commRoot.mirror_COMM2;
 
-      const looksLikeDefaultMirrors = mirror1
-        && mirror2
-        && looksLikeDefaultMirrorRows(rows1)
+      const looksLikeDefaultPresetRows = looksLikeDefaultMirrorRows(rows1)
         && looksLikeDefaultMirrorRows(rows2);
+      const treatAsMissingCommData = looksLikeDefaultPresetRows
+        && ((mirror1 && mirror2) || (!comm1Guard && !comm2Guard));
 
-      if (looksLikeDefaultMirrors) {
+      if (treatAsMissingCommData) {
         return emptyWhenMissing
           ? ''
           : '<div class="fltPlanPage2Section"><div class="fltPlanPage2Title">COMMS</div><div class="fltPlanPage2Body">No comm data.</div></div>';
@@ -14170,13 +14972,15 @@
       return segs;
     }
 
-    function getMudMapAssets(data, includeDlinkAssets) {
+    function getMudMapAssets(data, includeDlinkAssets, includeJtacAssets) {
       const server = (data && data.Server) || {};
       const includeDlink = (includeDlinkAssets !== false);
+      const includeJtac = (includeJtacAssets !== false);
       const allFriendlyAssets = Array.isArray(server.FriendlyAssets) ? server.FriendlyAssets : [];
       const rawAssets = allFriendlyAssets.filter(function (a) {
         const category = String((a && a.Category) || '').trim().toUpperCase();
         if (category === 'PLAYER') return true;
+        if (category === 'JTAC') return includeJtac;
         return includeDlink;
       });
       const mappedAssets = rawAssets
@@ -14251,6 +15055,7 @@
     function getMudMapAssetKind(asset) {
       const category = String((asset && asset.category) || '').toUpperCase();
       if (category === 'MAP_MARKER') return 'marker';
+      if (category === 'JTAC_TARGET') return 'jtac-target';
       if (category === 'TANKER') return 'tanker';
       if (category === 'AWACS') return 'awacs';
       if (category === 'JTAC') return 'jtac';
@@ -14400,7 +15205,8 @@
         const overrideType = resolveOverrideType(icao, text, key, a && a.IcaoType);
         const label = String((icao || (a && (a.Callsign || a.Name)) || 'ATC')).toUpperCase();
 
-        const dedupeKey = label + '|' + String(Math.round(north)) + '|' + String(Math.round(east));
+        const dedupeIcao = String(icao || label || 'ATC').toUpperCase();
+        const dedupeKey = dedupeIcao + '|' + String(Math.round(north / 10) * 10) + '|' + String(Math.round(east / 10) * 10);
         if (seen[dedupeKey]) return;
         seen[dedupeKey] = true;
 
@@ -14418,7 +15224,7 @@
           mpClientCallsign: String((a && a.MpClientCallsign) || '').trim(),
           altFeet: Number(a && a.AltFeet),
           label: label,
-          icao: String(icao || ''),
+          icao: String(icao || '').toUpperCase(),
           type: (u.indexOf('SEAPLANE') >= 0 ? 'seaplane' : (u.indexOf('HELI') >= 0 || u.indexOf('FARP') >= 0 ? 'heliport' : (overrideType === 'MIL' || overrideType === 'JOINT' ? 'airport' : 'airport'))),
           isMilitary: (overrideType === 'MIL' || overrideType === 'JOINT')
             ? true
@@ -14774,6 +15580,7 @@
       const allowNavlog = (efbSaShowNavlog !== false);
       const allowDtcOverlay = (efbSaShowDtcOverlay !== false);
       const allowAirports = (efbSaShowAirports !== false);
+      const allowJtacTargets = (efbSaShowJtacTargets !== false);
       const visibleRows = allowNavlog ? rows : [];
       const model = data || latestData || {};
       const server = (model && model.Server) || {};
@@ -14811,6 +15618,7 @@
           airfields: allowAirports ? (Array.isArray(overlays.airfields) ? overlays.airfields : []) : [],
         }
         : { geolines: [], threatPoints: [], destinationPoints: [], faorLines: [], flotLines: [], capPoints: [], corridors: [] };
+      const jtacTargets = allowJtacTargets ? parseJtacNineLineTargets(model) : [];
 
       function toLonLat(point) {
         const north = Number(point && point.xNum);
@@ -14842,26 +15650,6 @@
         }
 
         return null;
-      }
-
-      function getTheatreCenterLonLat(theatreName) {
-        const t = String(theatreName || '').replace(/[^A-Za-z0-9]/g, '').toUpperCase();
-        const centers = {
-          CAUCASUS: [44.5, 43.4],
-          NEVADA: [-115.2, 36.2],
-          NORMANDY: [0.6, 49.2],
-          THECHANNEL: [1.2, 51.0],
-          PERSIANGULF: [56.2, 25.5],
-          SYRIA: [37.0, 35.4],
-          MARIANAISLANDS: [145.6, 15.2],
-          FALKLANDS: [-59.5, -52.1],
-          SINAIMAP: [34.2, 30.1],
-          KOLA: [29.5, 68.7],
-          AFGHANISTAN: [66.0, 34.5],
-          IRAQ: [44.8, 33.2],
-          GERMANYCW: [10.2, 51.2],
-        };
-        return centers[t] || null;
       }
 
       const pointsForBounds = [];
@@ -14897,6 +15685,79 @@
         });
       }
 
+      function addJtacTargetSupportFeatures(target) {
+        const t = target || {};
+        const reciprocalSector = getJtacReciprocalSectorPolygonPoints(t, 1, 5);
+        if (reciprocalSector && Array.isArray(reciprocalSector.points) && reciprocalSector.points.length >= 6) {
+          const sectorCoords = reciprocalSector.points
+            .map(function (p) { return toLonLat(p); })
+            .filter(function (c) { return Array.isArray(c) && c.length === 2; });
+          if (sectorCoords.length >= 6) {
+            const tgtLonLat = toLonLat(t);
+            if (Array.isArray(tgtLonLat) && tgtLonLat.length === 2) pointsForBounds.push(tgtLonLat);
+            sectorCoords.forEach(function (c) { pointsForBounds.push(c); });
+            features.push({
+              type: 'Feature',
+              geometry: {
+                type: 'Polygon',
+                coordinates: [sectorCoords],
+              },
+              properties: {
+                kind: 'jtac-attack-sector',
+                group: 'overlay',
+                fill: '#4faa4f',
+                fillOpacity: 0.18,
+                stroke: '#2f8a2f',
+                lineWidth: 1.4,
+                dashed: false,
+                label: 'Attack Sector',
+              },
+            });
+          }
+        }
+
+        const friendlyPoint = getJtacFriendlyPointFromTarget(t);
+        if (friendlyPoint) {
+          const friendlyLabel = (isFinite(Number(t.friendlyDistanceMeters))
+            ? ('FRND ' + String(Math.round(Number(t.friendlyDistanceMeters))) + 'm')
+            : (isFinite(Number(t.friendlyRangeNm)) ? ('FRND ' + String(Number(t.friendlyRangeNm).toFixed(1)) + 'NM') : 'FRND'));
+          addPointFeature(friendlyPoint, {
+            kind: 'jtac-friendly',
+            group: 'overlay',
+            label: friendlyLabel,
+            fill: '#3a7ec1',
+            stroke: '#1f5d93',
+            textColor: '#1f5d93',
+            radius: 4.3,
+          });
+          addLineFeature([t, friendlyPoint], {
+            stroke: '#3a7ec1',
+            lineWidth: 1.7,
+            dashed: true,
+          });
+        }
+
+        const egressPoint = getJtacEgressPointFromTarget(t, 5);
+        if (egressPoint) {
+          const targetLonLat = toLonLat(t);
+          addLineFeature([t, egressPoint], {
+            stroke: '#7f2e2e',
+            lineWidth: 2.0,
+            dashed: false,
+          });
+          addPointFeature(egressPoint, {
+            kind: 'jtac-egress',
+            group: 'overlay',
+            label: 'Egress',
+            fill: '#7f2e2e',
+            stroke: '#7f2e2e',
+            textColor: '#7f2e2e',
+            radius: 2.8,
+            parentTargetLonLat: targetLonLat,
+          });
+        }
+      }
+
       const byStep = {};
       visibleRows.forEach(function (wp) { byStep[String(wp && wp.step)] = wp; });
       getMudMapSegments(visibleRows).forEach(function (seg) {
@@ -14910,12 +15771,64 @@
         });
       });
 
+      jtacTargets.forEach(function (target, idx) {
+        const t = target || {};
+        const unitType = String(t.unitType || t.typeName || '').trim();
+        const label = String(t.label || ('JTAC TGT ' + String(idx + 1))).trim() || ('JTAC TGT ' + String(idx + 1));
+        const mgrsText = String(t.mgrsText || '').toUpperCase().trim();
+        const elevationFeet = Number(t.elevationFeet);
+        const friendlyBearing = Number(t.friendlyBearing);
+        const friendlyRangeNm = Number(t.friendlyRangeNm);
+        const selectionAsset = {
+          callsign: String(t.callsign || 'JTAC TGT').trim(),
+          name: String(t.name || unitType || label).trim(),
+          category: 'JTAC_TARGET',
+          xNum: Number(t.xNum),
+          yNum: Number(t.yNum),
+        };
+        addPointFeature(t, {
+          kind: 'jtac-target',
+          group: 'asset',
+          assetKind: 'jtac-target',
+          assetKey: makeMapAssetSelectionKey(selectionAsset),
+          label: label,
+          fill: '#d45757',
+          stroke: '#7f2e2e',
+          textColor: '#7f2e2e',
+          radius: 4.8,
+          category: 'JTAC_TARGET',
+          callsign: String(t.callsign || 'JTAC TGT').trim(),
+          name: String(t.name || unitType || label).trim(),
+          typeName: unitType,
+          unitType: unitType,
+          mgrsText: mgrsText,
+          elevationFeet: isFinite(elevationFeet) ? Math.round(elevationFeet) : NaN,
+          altFeet: isFinite(elevationFeet) ? Math.round(elevationFeet) : 0,
+          friendlyBearing: isFinite(friendlyBearing) ? Math.round(friendlyBearing) : NaN,
+          friendlyRangeNm: isFinite(friendlyRangeNm) ? Number(friendlyRangeNm.toFixed(1)) : NaN,
+          attackHeadingStartDeg: Number(t.attackHeadingStartDeg),
+          attackHeadingEndDeg: Number(t.attackHeadingEndDeg),
+          nl4Text: String(t.nl4Text || '').trim(),
+          nl5Text: String(t.nl5Text || '').trim(),
+          nl6Text: String(t.nl6Text || '').trim(),
+          nl7Text: String(t.nl7Text || '').trim(),
+          nl8Text: String(t.nl8Text || '').trim(),
+          nl9Text: String(t.nl9Text || '').trim(),
+          rmkText: String(t.rmkText || '').trim(),
+          source: 'JTAC nine-line',
+        });
+        addJtacTargetSupportFeatures(t);
+      });
+
       visibleRows.forEach(function (wp) {
         const step = String(wp && wp.step || '').trim();
         const name = String(wp && wp.name || '').trim();
         const label = step ? (step + (name ? (' ' + name) : '')) : name;
+        const waypointKind = getMudMapPointType(wp);
         addPointFeature(wp, {
           kind: 'waypoint',
+          waypointKind: waypointKind,
+          waypointTypeRaw: String((wp && (wp.typeRaw || wp.type || 'WP')) || 'WP').toUpperCase(),
           label: label || 'WP',
           fill: '#2d8fe3',
           stroke: '#1f5d93',
@@ -15098,7 +16011,7 @@
       });
 
       const selected = getActiveFlightPlanSelection(model);
-      const rawAssets = getMudMapAssets(model, dlinkOnEnabled);
+        const rawAssets = getMudMapAssets(model, dlinkOnEnabled, allowJtacTargets);
       const ownshipPoint = getPlayerMapPoint(model);
       const ownshipHeadingResolver = (typeof getOwnshipHeadingDeg === 'function')
         ? getOwnshipHeadingDeg
@@ -15197,6 +16110,7 @@
       const allowNavlog = (efbSaShowNavlog !== false);
       const allowDtcOverlay = (efbSaShowDtcOverlay !== false);
       const allowAirports = (efbSaShowAirports !== false);
+      const allowJtacTargets = (efbSaShowJtacTargets !== false);
       const mapOverlays = overlays && typeof overlays === 'object'
         ? {
           geolines: allowDtcOverlay ? (Array.isArray(overlays.geolines) ? overlays.geolines : []) : [],
@@ -15209,6 +16123,7 @@
           airfields: allowAirports ? (Array.isArray(overlays.airfields) ? overlays.airfields : []) : [],
         }
         : { geolines: [], threatPoints: [], destinationPoints: [], faorLines: [], flotLines: [], capPoints: [], corridors: [] };
+      const jtacTargets = allowJtacTargets ? parseJtacNineLineTargets(data || latestData || {}) : [];
       const visibleRows = allowNavlog ? rows : [];
       const geolines = Array.isArray(mapOverlays.geolines) ? mapOverlays.geolines : [];
       const threatPoints = Array.isArray(mapOverlays.threatPoints) ? mapOverlays.threatPoints : [];
@@ -15312,7 +16227,7 @@
         }
         : null;
 
-      if (!visibleRows.length && !threatPoints.length && !destinationPoints.length && !geolines.length && !faorLines.length && !flotLines.length && !capPoints.length && !corridors.length && !airfields.length) {
+      if (!visibleRows.length && !threatPoints.length && !destinationPoints.length && !geolines.length && !faorLines.length && !flotLines.length && !capPoints.length && !corridors.length && !airfields.length && !jtacTargets.length) {
         return '<div class="fltPlanMessage">No mappable waypoint coordinates found.</div>';
       }
 
@@ -15326,6 +16241,7 @@
       destinationPoints.forEach(function (p) { overlayPoints.push(p); });
       capPoints.forEach(function (p) { overlayPoints.push(p); });
       airfields.forEach(function (p) { overlayPoints.push(p); });
+      jtacTargets.forEach(function (p) { overlayPoints.push(p); });
       if (bullseye) overlayPoints.push(bullseye);
       function pushLineGroupPoints(lineGroups) {
         (Array.isArray(lineGroups) ? lineGroups : []).forEach(function (group) {
@@ -15412,6 +16328,48 @@
       });
       const geoPointEls = geoMapped.map(function (m) {
         return '<circle cx="' + m.x.toFixed(1) + '" cy="' + m.y.toFixed(1) + '" r="3.8" fill="' + palette.geoLine + '" />';
+      });
+
+      const jtacSupportEls = [];
+      jtacTargets.forEach(function (t) {
+        const target = t || {};
+        const reciprocalSector = getJtacReciprocalSectorPolygonPoints(target, 1, 5);
+        if (reciprocalSector && Array.isArray(reciprocalSector.points) && reciprocalSector.points.length >= 6) {
+          const polyPoints = reciprocalSector.points
+            .map(function (p) {
+              const mp = mapPt(p);
+              return mp.x.toFixed(1) + ',' + mp.y.toFixed(1);
+            })
+            .join(' ');
+          if (polyPoints) {
+            jtacSupportEls.push('<polygon points="' + polyPoints + '" fill="#4faa4f" fill-opacity="0.18" stroke="#2f8a2f" stroke-width="1.4" />');
+          }
+        }
+
+        const friendlyPoint = getJtacFriendlyPointFromTarget(target);
+        if (friendlyPoint && isFinite(Number(friendlyPoint.xNum)) && isFinite(Number(friendlyPoint.yNum))) {
+          const fp = mapPt(friendlyPoint);
+          const tp = mapPt(target);
+          jtacSupportEls.push('<line x1="' + tp.x.toFixed(1) + '" y1="' + tp.y.toFixed(1) + '" x2="' + fp.x.toFixed(1) + '" y2="' + fp.y.toFixed(1) + '" stroke="#3a7ec1" stroke-width="1.7" stroke-dasharray="6 4" />');
+          jtacSupportEls.push('<g>'
+            + '<circle cx="' + fp.x.toFixed(1) + '" cy="' + fp.y.toFixed(1) + '" r="6.2" fill="none" stroke="#1f5d93" stroke-width="1.4" />'
+            + '<line x1="' + (fp.x - 5.2).toFixed(1) + '" y1="' + fp.y.toFixed(1) + '" x2="' + (fp.x + 5.2).toFixed(1) + '" y2="' + fp.y.toFixed(1) + '" stroke="#1f5d93" stroke-width="1.3" />'
+            + '<line x1="' + fp.x.toFixed(1) + '" y1="' + (fp.y - 5.2).toFixed(1) + '" x2="' + fp.x.toFixed(1) + '" y2="' + (fp.y + 5.2).toFixed(1) + '" stroke="#1f5d93" stroke-width="1.3" />'
+            + '</g>');
+          const frLabel = isFinite(Number(target.friendlyDistanceMeters))
+            ? ('FRND ' + String(Math.round(Number(target.friendlyDistanceMeters))) + 'm')
+            : (isFinite(Number(target.friendlyRangeNm)) ? ('FRND ' + String(Number(target.friendlyRangeNm).toFixed(1)) + 'NM') : 'FRND');
+          jtacSupportEls.push('<text x="' + (fp.x + 9).toFixed(1) + '" y="' + (fp.y + 4).toFixed(1) + '" font-size="10" fill="#1f5d93" font-weight="700">' + escapeHtml(frLabel) + '</text>');
+        }
+
+        const egrPoint = getJtacEgressPointFromTarget(target, 5);
+        if (egrPoint && isFinite(Number(egrPoint.xNum)) && isFinite(Number(egrPoint.yNum))) {
+          const ep = mapPt(egrPoint);
+          const tp = mapPt(target);
+          jtacSupportEls.push('<line x1="' + tp.x.toFixed(1) + '" y1="' + tp.y.toFixed(1) + '" x2="' + ep.x.toFixed(1) + '" y2="' + ep.y.toFixed(1) + '" stroke="#7f2e2e" stroke-width="2.0" />');
+          jtacSupportEls.push('<polygon points="' + ep.x.toFixed(1) + ',' + (ep.y - 4.6).toFixed(1) + ' ' + (ep.x - 4.0).toFixed(1) + ',' + (ep.y + 3.8).toFixed(1) + ' ' + (ep.x + 4.0).toFixed(1) + ',' + (ep.y + 3.8).toFixed(1) + '" fill="#7f2e2e" stroke="#7f2e2e" stroke-width="1.1" />');
+          jtacSupportEls.push('<text x="' + (ep.x + 8).toFixed(1) + '" y="' + (ep.y + 4).toFixed(1) + '" font-size="10" fill="#7f2e2e" font-weight="700">Egress</text>');
+        }
       });
 
       function renderLineGroups(lineGroups, strokeColor, dashPattern, strokeWidth) {
@@ -15779,6 +16737,9 @@
 
       function buildSelectedAssetInfoLines(asset) {
         if (!asset || typeof asset !== 'object') return [];
+        if (String(asset.category || '').trim().toUpperCase() === 'JTAC_TARGET') {
+          return formatJtacNineLinePopupLines(asset);
+        }
         const lines = [];
         const category = String(asset.category || '').trim().toUpperCase();
         const typeText = String(asset.typeName || '').trim();
@@ -15795,6 +16756,15 @@
         const mpText = String(asset.mpClientCallsign || '').trim();
 
         if (typeText) lines.push('TYPE: ' + typeText);
+        const mgrsText = String(asset.mgrsText || '').trim();
+        if (mgrsText) lines.push('MGRS: ' + mgrsText);
+        const elevationFeet = Number(asset.elevationFeet);
+        if (isFinite(elevationFeet)) lines.push('ELEV: ' + String(Math.round(elevationFeet)) + ' FT');
+        const friendlyBearing = Number(asset.friendlyBearing);
+        const friendlyRangeNm = Number(asset.friendlyRangeNm);
+        if (isFinite(friendlyBearing) && isFinite(friendlyRangeNm) && friendlyRangeNm > 0) {
+          lines.push('FRND: ' + formatHeadingDeg(friendlyBearing) + '/' + String(Number(friendlyRangeNm).toFixed(1)) + 'NM');
+        }
         if (category === 'ATC') {
           if (uhf && uhf.text) lines.push('UHF: ' + uhf.text);
           if (vhf && vhf.text) lines.push('VHF: ' + vhf.text);
@@ -15806,14 +16776,14 @@
       }
 
       const selected = getActiveFlightPlanSelection((typeof data === 'undefined' ? null : data));
-      const rawAssets = getMudMapAssets((typeof data === 'undefined' ? null : data), dlinkOnEnabled);
+      const rawAssets = getMudMapAssets((typeof data === 'undefined' ? null : data), dlinkOnEnabled, allowJtacTargets);
       const ownshipPoint = getPlayerMapPoint((typeof data === 'undefined' ? null : data));
       const ownshipHeadingResolver = (typeof getOwnshipHeadingDeg === 'function')
         ? getOwnshipHeadingDeg
         : function () { return NaN; };
       const ownshipHeadingDeg = ownshipHeadingResolver((typeof data === 'undefined' ? null : data), ownshipPoint);
       const selectedAssetKey = getMapSelectedAssetKeyBySelection(selected);
-      const mapAssets = rawAssets
+      const mapAssets = rawAssets.concat(jtacTargets)
         .map(function (asset) {
           const north = Number(asset.xNum);
           const east = Number(asset.yNum);
@@ -15917,6 +16887,7 @@
         + '<g data-map-content="1" transform="translate(' + panX.toFixed(1) + ' ' + panY.toFixed(1) + ') scale(' + zoom.toFixed(3) + ')">'
         + corridorEls.join('')
         + lineEls.join('')
+        + jtacSupportEls.join('')
         + geoLineEls.join('')
         + faorEls.join('')
         + flotEls.join('')
@@ -16002,7 +16973,33 @@
             ? ('BG ready [' + openFreeMapLastPayloadStatus + ']')
             : ('BG unavailable for current theatre/data (' + String((((data && data.Server) || {}).Theater) || lastKnownTheater || '?') + ')' + (openFreeMapLastPayloadStatus ? (' [' + openFreeMapLastPayloadStatus + ']') : ''))));
       const selectedAssetKey = getMapSelectedAssetKeyBySelection(selected);
-      const rawAssets = getMudMapAssets(data, dlinkOnEnabled);
+      const rawAssets = getMudMapAssets(data, dlinkOnEnabled, efbSaShowJtacTargets !== false);
+      const jtacTargets = (efbSaShowJtacTargets !== false) ? parseJtacNineLineTargets(data || latestData || {}) : [];
+      const jtacTargetAssets = jtacTargets
+        .map(function (t) {
+          const target = t || {};
+          const xNum = Number(target.xNum);
+          const yNum = Number(target.yNum);
+          if (!isFinite(xNum) || !isFinite(yNum)) return null;
+          return {
+            callsign: String(target.callsign || 'JTAC TGT').trim(),
+            name: String(target.name || target.unitType || 'Target').trim(),
+            category: 'JTAC_TARGET',
+            typeName: String(target.unitType || target.typeName || '').trim(),
+            frequency: '',
+            altFrequencies: [],
+            tacan: '',
+            mpClientCallsign: '',
+            altFeet: isFinite(Number(target.elevationFeet)) ? Math.round(Number(target.elevationFeet)) : 0,
+            xNum: xNum,
+            yNum: yNum,
+            mgrsText: String(target.mgrsText || '').toUpperCase().trim(),
+            elevationFeet: isFinite(Number(target.elevationFeet)) ? Math.round(Number(target.elevationFeet)) : NaN,
+            friendlyBearing: Number(target.friendlyBearing),
+            friendlyRangeNm: Number(target.friendlyRangeNm),
+          };
+        })
+        .filter(function (x) { return !!x; });
       const airfieldAssets = (Array.isArray(resolvedOverlays && resolvedOverlays.airfields) ? resolvedOverlays.airfields : [])
         .map(function (a) {
           return {
@@ -16020,7 +17017,7 @@
           };
         })
         .filter(function (a) { return isFinite(Number(a.xNum)) && isFinite(Number(a.yNum)); });
-      const selectionPool = rawAssets.concat(airfieldAssets);
+      const selectionPool = rawAssets.concat(airfieldAssets).concat(jtacTargetAssets);
       const markerCount = rawAssets
         .filter(function (a) { return String((a && a.category) || '').toUpperCase() === 'MAP_MARKER'; })
         .length;
@@ -17055,7 +18052,25 @@
       if (unitLines.length) parts.push('Units:\n' + unitLines.map(function (u) { return '  ' + u; }).join('\n'));
       if (details.length) parts.push('Unit Details:\n' + details.map(function (u) { return '  ' + u; }).join('\n'));
 
-      let text = parts.length ? parts.join('\n\n') : 'No data for this tab yet.';
+      let outputParts = parts;
+      if (tab === 'JTAC') {
+        function normalizeMgrsInLine(lineText) {
+          const src = String(lineText || '');
+          if (!src) return src;
+          return src.replace(/\b([A-HJ-NP-Z]{2})\s*(\d{4,5})\s*(\d{4,5})\b/gi, function (full) {
+            return normalizeMgrsTokenDisplay(full, ((data && data.Server) || {}).Theater || lastKnownTheater || '');
+          });
+        }
+
+        outputParts = parts.map(function (block) {
+          return String(block || '')
+            .split(/\r?\n/)
+            .map(function (line) { return normalizeMgrsInLine(line); })
+            .join('\n');
+        });
+      }
+
+      let text = outputParts.length ? outputParts.join('\n\n') : 'No data for this tab yet.';
 
       function metersToSmToken(visMeters) {
         const m = parseInt(visMeters, 10);
