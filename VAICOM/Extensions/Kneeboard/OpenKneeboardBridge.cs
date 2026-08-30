@@ -2665,6 +2665,47 @@ namespace VAICOM
 
                 private static string GetEfbChartsRootPath()
                 {
+                    try
+                    {
+                        foreach (string savedGames in GetSavedGamesRoots())
+                        {
+                            if (string.IsNullOrWhiteSpace(savedGames) || !Directory.Exists(savedGames))
+                            {
+                                continue;
+                            }
+
+                            try
+                            {
+                                foreach (string dcsRoot in Directory.EnumerateDirectories(savedGames, "DCS*", SearchOption.TopDirectoryOnly))
+                                {
+                                    string chartsPath = Path.Combine(dcsRoot, "Kneeboard", "Vaicom Charts");
+                                    if (Directory.Exists(chartsPath))
+                                    {
+                                        return chartsPath;
+                                    }
+                                }
+                            }
+                            catch
+                            {
+                            }
+
+                            string fallbackChartsPath = Path.Combine(savedGames, "DCS", "Kneeboard", "Vaicom Charts");
+                            if (Directory.Exists(fallbackChartsPath))
+                            {
+                                return fallbackChartsPath;
+                            }
+                        }
+
+                        string firstSavedGames = GetSavedGamesRoots().FirstOrDefault(p => !string.IsNullOrWhiteSpace(p));
+                        if (!string.IsNullOrWhiteSpace(firstSavedGames))
+                        {
+                            return Path.Combine(firstSavedGames, "DCS", "Kneeboard", "Vaicom Charts");
+                        }
+                    }
+                    catch
+                    {
+                    }
+
                     string profile = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
                     return Path.Combine(profile, "Saved Games", "DCS", "Kneeboard", "Vaicom Charts");
                 }

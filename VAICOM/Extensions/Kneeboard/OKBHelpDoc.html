@@ -402,15 +402,45 @@
 
         <h3>What Is Displayed</h3>
         <ul>
-          <li><strong>Tasking snippets</strong>: Mission-relevant JTAC lines and references surfaced from runtime/session context.</li>
-          <li><strong>Cue references</strong>: Keyword guidance for common JTAC command paths and confirmations.</li>
-          <li><strong>Support awareness</strong>: Complements map and FLT PLN references for target talk-on flow.</li>
+          <li><strong>JTAC log stream</strong>: Nine-line and follow-on JTAC calls as received in-session.</li>
+          <li><strong>Keyword references</strong>: JTAC command flow prompts and expected response cues.</li>
+          <li><strong>EFB SA Map markup context</strong>: The JTAC tab text is the source context used to interpret map target overlays.</li>
         </ul>
 
         <h3>How To Use It</h3>
         <ul>
-          <li>Use as a quick cue card while issuing JTAC commands and validating responses in LOG.</li>
-          <li>Cross-reference with EFB SA Map and FLT PLN NAVLOG for location/context alignment.</li>
+          <li>Use this tab to confirm the latest nine-line details before attacking.</li>
+          <li>Cross-reference the JTAC text with EFB SA Map symbols for rapid talk-on and run-in planning.</li>
+          <li>Use FLT PLN NAVLOG (IP/route) with JTAC attack-sector markup to build ingress alignment and attack geometry awareness.</li>
+        </ul>
+
+        <h3>EFB SA Map JTAC Markup (What Each Element Means)</h3>
+        <ul>
+          <li><strong>Active JTAC TGT</strong>: Current assigned target from the most recent valid nine-line burst.</li>
+          <li><strong>Friendly marker/line</strong>: Friendly reference from line 8 when available. A dotted line extensing from the TGT to the location of the friendly troops in contact.</li>
+          <li><strong>Egress cue</strong>: Egress direction marker/line from line 9 when available. A red arrow that shows the required egress heading extending from the TGT 5 NM.</li>
+          <li><strong>Attack sector</strong>: Reciprocal attack-heading sector from remarks/final heading constraints. A green arc sector that defines the direction to attack from, graduated in 5 NM sections.</li>
+          <li><strong>Sector range bands</strong>: 1-5nm (primary), 5-10nm (lighter), 10-15nm (lightest) for longer fast-jet run-in planning.</li>
+        </ul>
+
+        <h3>JTAC Popup Content</h3>
+        <ul>
+          <li>Click a JTAC TGT symbol to open a condensed nine-line popup.</li>
+          <li>Popup format is line-based: <code>1-2-3 N/A</code>, then lines <code>4</code> through <code>9</code>, then <code>RMK</code> if present.</li>
+          <li>Each TGT popup keeps its resolved nine-line content for that target instance (active or history) to preserve tactical context if multiple targets and 9-Lines are received from the JTAC.</li>
+        </ul>
+
+        <h3>History Targets (TGT-1, TGT-2, ...)</h3>
+        <ul>
+          <li>When a new valid nine-line target is received, the prior active target is moved to history.</li>
+          <li>History targets are drawn as black labeled markers (<code>TGT-1</code>, <code>TGT-2</code>, ...).</li>
+          <li>History is capped to recent entries (up to 10) so pilots can retain prior target awareness without cluttering indefinitely.</li>
+        </ul>
+
+        <h3>Layer Toggle (On/Off)</h3>
+        <ul>
+          <li>In the EFB tab, open <strong>Layers</strong> while SA Map is active and use the <strong>JTAC</strong> layer button to show/hide all JTAC map markup.</li>
+          <li>Disabling the JTAC layer hides active/history JTAC symbols and support geometry without changing logged JTAC text.</li>
         </ul>
 
         <h3>Controls</h3>
