@@ -30,8 +30,10 @@ namespace VAICOM
                     { "importedmenus",      Labels.importedmenus        },
                     { "playercallsigns",    Labels.playercallsigns      },
                     { "simcontrol",         Labels.simcontrol           },                    
+                    { "cpgrecipients",      Extensions.CPG.Labels.airecipients      }, // Reference CPG recipients
+                    { "cpgcommands",        Extensions.CPG.Labels.aicommands        }, // Reference CPG aliases
                     { "wsorecipients",      Extensions.WSO.Labels.airecipients      }, // Reference WSO recipients
-                    { "wsocommands",        Extensions.WSO.Labels.aicommands  }, // Reference WSO aliases
+                    { "wsocommands",        Extensions.WSO.Labels.aicommands        }, // Reference WSO aliases
                 };
 
                 if (State.dll_installed_rio)
@@ -65,6 +67,9 @@ namespace VAICOM
 
                 { "wsorecipients",      "WSO Recipients"            }, // Add WSO recipients label
                 { "wsocommands",        "WSO Commands"              }, // Add WSO commands label
+
+                { "cpgrecipients",      "CP/G Recipients"           }, // Add CPG recipients label
+                { "cpgcommands",        "CP/G Commands"             }, // Add CPG commands label
             };
 
             public static Dictionary<string, string> master = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);

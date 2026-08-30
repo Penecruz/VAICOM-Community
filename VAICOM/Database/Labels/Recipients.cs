@@ -578,9 +578,6 @@ namespace VAICOM
 
                 { "kneeboard",              "Kneeboard"             },
                 //{ "kneeboard notes",         "Flip to Notes tab"     },
-
-                { "george",                 "George"                },
-
             };
 
         }

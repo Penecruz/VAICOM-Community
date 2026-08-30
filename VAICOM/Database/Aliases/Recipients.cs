@@ -717,8 +717,6 @@ namespace VAICOM
 
                 { "Kneeboard",              "kneeboard"              },
                 { "Show Kneeboard",         "kneeboard"              },
-
-                { "George",                 "george"                },
             };
 
         }

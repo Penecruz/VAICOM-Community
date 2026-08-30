@@ -692,7 +692,6 @@ namespace VAICOM
 
                 // RIO pack
                 { "wAIUnitFlightCrewMembersNull",        new Recipient { uniqueid = 19300, category = RecipientCategories.RIO, name = "wAIUnitFlightCrewMembersNull",         } },
-                
                 { "wAIUnitFlightCrewMembersMaximum",     new Recipient { uniqueid = 19399, category = RecipientCategories.RIO, name = "wAIUnitFlightCrewMembersMaximum",      } },
 
 
@@ -703,12 +702,10 @@ namespace VAICOM
 
                 // WSO pack
                 { "wAIUnitFlightCrewMembersWSONull", new Recipient { uniqueid = 19500, category = RecipientCategories.WSO, name = "wAIUnitFlightCrewMembersWSONull", } },
-                
                 { "wAIUnitFlightCrewMembersWSOMaximum", new Recipient { uniqueid = 19599, category = RecipientCategories.WSO, name = "wAIUnitFlightCrewMembersWSOMaximum", } },
 
                 // George
                 { "wAIUnitFlightCrewMembersGeorgeNull", new Recipient { uniqueid = 19600, category = RecipientCategories.GeorgeCPG, name = "wAIUnitFlightCrewMembersGeorgeNull", } },
-                { "george", new Recipient { uniqueid = 19601, category = RecipientCategories.GeorgeCPG, name = "wAIUnitFlightCrewMembersGeorgeCPG", displayname = Labels.airecipients["george"]} },
                 { "wAIUnitFlightCrewMembersGeorgeMaximum", new Recipient { uniqueid = 19699, category = RecipientCategories.GeorgeCPG, name = "wAIUnitFlightCrewMembersGeorgeMaximum", } },
             };
         }

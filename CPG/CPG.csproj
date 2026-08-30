@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
+    <TargetFramework>net472</TargetFramework>
+    <AssemblyName>CPG</AssemblyName>
+    <RootNamespace>VAICOM.Extensions.CPG</RootNamespace>
+    <LangVersion>7.3</LangVersion>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <OutputType>Library</OutputType>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Project reference to VAICOM.Shared so CPG can use VAICOM.Shared.CommandInfo and related types -->
+    <ProjectReference Include="..\VAICOM.Shared\VAICOM.Shared.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -35,6 +35,7 @@ namespace VAICOM.Shared
         RIO_defensive,
         RIO_misc,
         AI_pilot,
+        AH64D_GeorgeAI,
         kneeboard,
         WSO,
         WSO_navigation,

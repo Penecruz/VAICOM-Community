@@ -71,7 +71,7 @@ namespace VAICOM
                                     // All George CPG commands are already prefixed with "George" so is
                                     // unnecesary to add to the recipient strings, which will also create
                                     // redundant combinations of commands.
-                                    if (cat.Equals("aicrew") && alias.Key.Equals("George"))
+                                    if (cat.Equals("GeorgeCPG") && alias.Key.Equals("George"))
                                     {
                                         continue;
                                     }
