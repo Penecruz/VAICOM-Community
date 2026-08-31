@@ -2004,6 +2004,87 @@ namespace VAICOM
                     return "";
                 }
 
+                public static string GetOfflineHelpDocPath()
+                {
+                    try
+                    {
+                        EnsureHelpDocInVaAppsDocumentation();
+                        string path = ResolveHelpDocPath();
+                        if (!string.IsNullOrWhiteSpace(path) && File.Exists(path))
+                        {
+                            return path;
+                        }
+                    }
+                    catch
+                    {
+                    }
+
+                    return "";
+                }
+
+                public static string GetOfflineHelpDocBrowserPath()
+                {
+                    try
+                    {
+                        EnsureHelpDocInVaAppsDocumentation();
+
+                        string vaAppsPath = GetVaAppsHelpDocPath();
+                        if (!string.IsNullOrWhiteSpace(vaAppsPath) && File.Exists(vaAppsPath))
+                        {
+                            return CreateOfflineBrowserHelpDoc(vaAppsPath);
+                        }
+
+                        string resolved = ResolveHelpDocPath();
+                        if (!string.IsNullOrWhiteSpace(resolved) && File.Exists(resolved))
+                        {
+                            return CreateOfflineBrowserHelpDoc(resolved);
+                        }
+                    }
+                    catch
+                    {
+                    }
+
+                    return "";
+                }
+
+                private static string CreateOfflineBrowserHelpDoc(string sourcePath)
+                {
+                    try
+                    {
+                        if (string.IsNullOrWhiteSpace(sourcePath) || !File.Exists(sourcePath))
+                        {
+                            return "";
+                        }
+
+                        string sourceDir = Path.GetDirectoryName(sourcePath) ?? "";
+                        if (string.IsNullOrWhiteSpace(sourceDir))
+                        {
+                            return sourcePath;
+                        }
+
+                        string imageDir = Path.Combine(sourceDir, "Images");
+                        if (Directory.Exists(imageDir))
+                        {
+                            EnsureBundledHelpImagesInVaAppsDocumentation(imageDir);
+                        }
+
+                        string html = File.ReadAllText(sourcePath);
+                        if (string.IsNullOrWhiteSpace(html))
+                        {
+                            return sourcePath;
+                        }
+
+                        string offlineHtml = html.Replace("/okb/helpimg?name=", "Images/");
+                        string offlinePath = Path.Combine(sourceDir, "OKBHelpDoc.offline.html");
+                        File.WriteAllText(offlinePath, offlineHtml, new UTF8Encoding(false));
+                        return offlinePath;
+                    }
+                    catch
+                    {
+                        return sourcePath;
+                    }
+                }
+
                 private static string GetVaAppsHelpDocPath()
                 {
                     try

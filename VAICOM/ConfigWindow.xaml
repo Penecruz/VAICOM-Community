@@ -462,6 +462,8 @@
                         <Button x:Name="OpenKneeboardEfbRefreshFail" Content="Refresh Fail" HorizontalAlignment="Left" Margin="140,204,0,0" Grid.Row="1" VerticalAlignment="Top" Width="88" Height="20" FontSize="9" Click="OpenKneeboardEfbRefreshFailClick" ToolTip="TEMP: run mock refresh failure once." Grid.ColumnSpan="2"/>
                         <Button x:Name="OpenKneeboardEfbRefreshExpired" Content="Refresh Exp" HorizontalAlignment="Left" Margin="53,226,0,0" Grid.Row="1" VerticalAlignment="Top" Width="82" Height="20" FontSize="9" Click="OpenKneeboardEfbRefreshExpiredClick" ToolTip="TEMP: run mock refresh that marks token expired." Grid.ColumnSpan="2"/>
                         <Button x:Name="OpenKneeboardEfbSchedulerToggle" Content="Refresh Loop ON" HorizontalAlignment="Left" Margin="140,226,0,0" Grid.Row="1" VerticalAlignment="Top" Width="88" Height="20" FontSize="9" Click="OpenKneeboardEfbSchedulerToggleClick" ToolTip="TEMP: toggle periodic mock refresh loop (15s)." Grid.ColumnSpan="2"/>
+                        <Image  x:Name="OpenKeeboardManualButton" HorizontalAlignment="Left" Height="20" Margin="33,95,0,0" VerticalAlignment="Top" Width="22" Source="/VAICOMPRO;component/Resources/Images/SRS_Up.png" MouseDown="OpenKneeboardHelpDoc" Cursor="Hand" Panel.ZIndex="2" ToolTip="Open OKB Out HTML manual" Grid.Column="4" Grid.Row="1" RenderTransformOrigin="0.463,-2.053"/>
+                        <TextBlock x:Name="OpenKneeboardManualText" Foreground="#D0D0D0" FontSize="10" HorizontalAlignment="Left" Margin="58,98,0,0" VerticalAlignment="Top" TextAlignment="Center" Grid.Column="4" Grid.Row="1"><Run Text="Press for "/><Run Language="en-au" Text="OKB Out Manual"/></TextBlock>
                     </Grid>
                 </TabItem>
 

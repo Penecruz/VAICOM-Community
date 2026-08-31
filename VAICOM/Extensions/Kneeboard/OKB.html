@@ -852,6 +852,15 @@
       pointer-events: none;
     }
 
+    .efbPinGlyph {
+      display: block;
+      font-size: 34px;
+      line-height: 1;
+      color: currentColor;
+      font-family: "Segoe UI Symbol", "Segoe UI Emoji", "Noto Emoji", sans-serif;
+      pointer-events: none;
+    }
+
     .efbRailBtnHidden {
       display: none;
     }
@@ -5310,6 +5319,18 @@
         + '</svg>';
     }
 
+    function getEfbAutoNearestAirportIconSvg() {
+      return '<svg class="efbRailIconSvg" viewBox="0 0 64 64" aria-hidden="true">'
+        + '<path d="M14 24h24v5h-3l2 9h-7l-2-7h-8l-2 7h-7l2-9h-3z" fill="currentColor"/>'
+        + '<rect x="22" y="38" width="8" height="14" fill="currentColor"/>'
+        + '<rect x="15" y="52" width="22" height="4" fill="currentColor"/>'
+        + '<circle cx="48" cy="20" r="10" fill="none" stroke="currentColor" stroke-width="2.8"/>'
+        + '<line x1="38" y1="20" x2="58" y2="20" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>'
+        + '<line x1="48" y1="10" x2="48" y2="30" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>'
+        + '<circle cx="48" cy="20" r="2.6" fill="currentColor"/>'
+        + '</svg>';
+    }
+
     function getEfbSaLayerNavlogIconSvg() {
       return '<svg class="efbRailIconSvg" viewBox="0 0 64 64" aria-hidden="true">'
         + '<circle cx="20" cy="32" r="7" fill="none" stroke="currentColor" stroke-width="3"/>'
@@ -5371,6 +5392,17 @@
         + '<line x1="16" y1="42" x2="48" y2="42" stroke="currentColor" stroke-width="3"/>'
         + '<circle cx="32" cy="42" r="3.2" fill="currentColor"/>'
         + '</svg>';
+    }
+
+    function getEfbPinnedDrawerIconSvg() {
+      return '<svg class="efbRailIconSvg" viewBox="0 0 64 64" aria-hidden="true">'
+        + '<path d="M32 11c8 0 14 6 14 14h-6l9 9 9-9h-6c0-11-9-20-20-20-8 0-15 5-18 12l5 2c2.2-5 7.2-8 13-8z" fill="currentColor"/>'
+        + '<path d="M13 39h6c0 11 9 20 20 20 8 0 15-5 18-12l-5-2c-2.2 5-7.2 8-13 8-8 0-14-6-14-14h6l-9-9-9 9z" fill="currentColor"/>'
+        + '</svg>';
+    }
+
+    function getEfbPinToggleIconSvg() {
+      return '<span class="efbPinGlyph" aria-hidden="true">&#128204;&#65038;</span>';
     }
 
     function formatDtcFocusedTable(root, selected) {
@@ -6136,9 +6168,10 @@
         + '<button id="efbSaAnchorBtn" type="button" class="efbRailBtn' + (isSaMapMode && efbSaFollowOwnshipEnabled ? '' : ' efbRailBtnHidden') + '" title="Anchor: ' + (normalizeEfbSaAnchorMode(efbSaAnchorMode) === 'lower-third' ? 'Lower third' : 'Center') + '">' + (normalizeEfbSaAnchorMode(efbSaAnchorMode) === 'lower-third' ? getEfbSaAnchorLowerThirdIconSvg() : getEfbSaAnchorCenterIconSvg()) + '</button>'
         + '<button id="efbSaLayersBtn" type="button" class="efbRailBtn' + (isSaMapMode ? '' : ' efbRailBtnHidden') + (saLayerDrawerOpen ? ' active' : '') + '" title="SA map layer controls">' + getEfbSaLayersIconSvg() + '</button>'
         + '<button id="efbSearchToggleBtn" type="button" class="efbRailBtn' + (isSaMapMode ? ' efbRailBtnHidden' : '') + '" title="Search charts">⌕</button>'
-        + '<button id="efbAutoAirportBtn" type="button" class="efbRailBtn' + (isSaMapMode ? ' efbRailBtnHidden' : '') + '" title="Auto-select closest airport">A</button>'
+        + '<button id="efbAutoAirportBtn" type="button" class="efbRailBtn' + (isSaMapMode ? ' efbRailBtnHidden' : '') + '" title="Auto-select closest airport">' + getEfbAutoNearestAirportIconSvg() + '</button>'
         + '<button id="efbAirportToggleBtn" type="button" class="efbRailBtn' + (isSaMapMode ? ' efbRailBtnHidden' : '') + '" title="Select airport and chart"><svg class="efbRailIconSvg" viewBox="0 0 64 64" aria-hidden="true"><path d="M14 20h36v6h-4l2 9h-8l-2-7h-12l-2 7h-8l2-9h-4z" fill="currentColor"/><rect x="27" y="35" width="10" height="19" fill="currentColor"/><rect x="18" y="54" width="28" height="5" fill="currentColor"/><circle cx="32" cy="10" r="2.5" fill="currentColor"/><path d="M25 11a7 7 0 0 1 14 0" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/><path d="M21 11a11 11 0 0 1 22 0" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg></button>'
-        + '<button id="efbPinnedBtn" type="button" class="efbRailBtn' + (isSaMapMode ? ' efbRailBtnHidden' : '') + '" title="Pinned charts">📌</button>'
+        + '<button id="efbPinnedBtn" type="button" class="efbRailBtn' + (isSaMapMode ? ' efbRailBtnHidden' : '') + '" title="Pinned charts drawer">' + getEfbPinnedDrawerIconSvg() + '</button>'
+        + '<button id="efbQuickPinBtn" type="button" class="efbRailBtn' + (isSaMapMode ? ' efbRailBtnHidden' : '') + (isChartPinned(airportKey, selected) ? ' active' : '') + '" title="' + escapeHtml(isChartPinned(airportKey, selected) ? 'Unpin current chart' : 'Pin current chart') + '">' + getEfbPinToggleIconSvg() + '</button>'
         + '</div>'
         + '<div class="efbRightRail">'
         + '<button id="efbZoomOutBtn" type="button" class="efbRailBtn" title="Zoom out">−</button>'
@@ -6198,6 +6231,24 @@
       const airportKey = getEfbAirportKey(data);
       const viewport = getEfbViewport(airportKey);
       applyEfbViewportDefaults(viewport);
+
+      function getCurrentEfbChartId() {
+        const charts = efbChartsByAirport[airportKey] || [];
+        return String(efbSelectedChartByAirport[airportKey] || (charts[0] && charts[0].id) || '');
+      }
+
+      function applyEfbQuickPinButtonUi() {
+        const quickPinBtn = document.getElementById('efbQuickPinBtn');
+        if (!quickPinBtn) return;
+        const selectedId = getCurrentEfbChartId();
+        const hasSelected = !!selectedId;
+        const pinned = hasSelected && isChartPinned(airportKey, selectedId);
+        quickPinBtn.classList.toggle('active', !!pinned);
+        quickPinBtn.disabled = !hasSelected;
+        quickPinBtn.title = !hasSelected
+          ? 'No chart selected to pin'
+          : (pinned ? 'Unpin current chart' : 'Pin current chart');
+      }
 
       function applyEfbDrawerUi() {
         const drawer = document.getElementById('efbLeftActionDrawer');
@@ -6302,6 +6353,21 @@
           applyEfbSaLayerDrawerButtonUi();
         };
       }
+
+      const quickPinBtn = document.getElementById('efbQuickPinBtn');
+      if (quickPinBtn) {
+        quickPinBtn.onclick = function (ev) {
+          ev.preventDefault();
+          ev.stopPropagation();
+          const selectedId = getCurrentEfbChartId();
+          if (!selectedId) return;
+          togglePinnedChart(airportKey, selectedId);
+          applyEfbQuickPinButtonUi();
+          applyEfbDrawerUi();
+        };
+      }
+
+      applyEfbQuickPinButtonUi();
 
       const saLayerDrawer = document.getElementById('efbSaLayerDrawer');
       if (saLayerDrawer) {
@@ -6595,6 +6661,7 @@
             try { pinId = decodeURIComponent(pinId); } catch (_) { }
             togglePinnedChart(pinAirport, pinId);
             applyEfbDrawerUi();
+            applyEfbQuickPinButtonUi();
             return;
           }
 
@@ -6617,6 +6684,7 @@
           try { id = decodeURIComponent(id); } catch (_) { }
           efbManuallySelectedAirport = sourceAirport;
           efbSelectedChartByAirport[sourceAirport] = id;
+          applyEfbQuickPinButtonUi();
           const targetViewport = getEfbViewport(sourceAirport);
           targetViewport.scale = 1;
           targetViewport.tx = 0;
