@@ -253,10 +253,10 @@ namespace VAICOM
 
                 if (keypress)
                 {
-                        if (State.currentTXnode != null && State.currentTXnode.Equals(TXNodes.TX5))
-                        {
-                            State.IntercomHotMicLatched = State.IsCrewHotMicActiveOnIntercomTX();
-                        }
+                    if (State.currentTXnode != null && State.currentTXnode.Equals(TXNodes.TX5))
+                    {
+                        State.IntercomHotMicLatched = State.IsCrewHotMicActiveOnIntercomTX();
+                    }
 
                     if (isVOIP)
                     {

@@ -149,15 +149,14 @@ namespace VAICOM
                         }
 
                         // write message to log
-                        // 
-                        // for single ptt
-                        if (PTT.IsPTTModeSingle())
-                        {
-                            Log.Write(State.currentTXnode.name + " | " + PTT.RadioDevices.SEL.name + ": " + recipientlabel + senderlabel + cuelabel + commandlabel + labelwpn + labeldir + wsocmdrecipientlabel, Colors.Message);
-                        }
-                        else // for multi ptt:
+                        // For multi PTT, or for single PTT with radio selection (this is needed so that the intercom is displayed vs. selected radio when using TX5)
+                        if (PTT.IsPTTModeMulti() || PTT.IsPTTUseSingleRadioSelection())
                         {
                             Log.Write(State.currentTXnode.name + " | " + State.currentTXnode.radios[0].name + ": " + recipientlabel + senderlabel + cuelabel + commandlabel + labelwpn + labeldir + wsocmdrecipientlabel, Colors.Message);
+                        }
+                        else // For single PTT
+                        {
+                            Log.Write(State.currentTXnode.name + " | " + PTT.RadioDevices.SEL.name + ": " + recipientlabel + senderlabel + cuelabel + commandlabel + labelwpn + labeldir + wsocmdrecipientlabel, Colors.Message);
                         }
                     }
                     catch

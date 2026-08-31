@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.Diagnostics.Eventing.Reader;
 using System.Linq;
 using VAICOM.Products;
 using VAICOM.Servers;
@@ -56,7 +55,6 @@ namespace VAICOM
 
                         foreach (Server.RadioDevice radiounit in State.currentstate.radios)
                         {
-
                             bool harriercomm1 = (harrier && radiounit.deviceid.Equals(2));
                             bool harriercomm2 = (harrier && radiounit.deviceid.Equals(3));
                             bool harrierfm = (harrier & radiounit.displayName.ToLower().Contains("fm"));
@@ -204,7 +202,6 @@ namespace VAICOM
                         //TX6
                         TXNodes.TX6.radios = TXConfigs.SNGL_RADIO_AUX;
                         TXNodes.TX6.enabled = true;
-
                     }
                 }
                 catch
@@ -283,7 +280,6 @@ namespace VAICOM
                     .Where(radio => radio.isselected)
                     .First();
 
-
                 RadioDevices.SEL.deviceid = selectedRadio.deviceid;
                 RadioDevices.SEL.isavailable = selectedRadio.isavailable;
                 RadioDevices.SEL.intercom = selectedRadio.intercom;
@@ -303,37 +299,66 @@ namespace VAICOM
 
                 List<RadioDevice> radios = new List<RadioDevice>() { RadioDevices.SEL };
                 State.radiocount = State.currentstate.radios.Count - 1;
-                
+
+                // Filter the list of all radios to get the intercom and set TX5 if one exists.
+                // This is to handle modules which have multiple radios that can be single selected,
+                // and also an intercom, e.g. the AH-64D
+                Server.RadioDevice intercom = State.currentstate.radios.FirstOrDefault(radio => radio.intercom);
+                if (intercom != null)
+                {
+                    TXNodes.TX5.enabled = true;
+                    TXNodes.TX5.number = intercom.deviceid;
+                    TXNodes.TX5.radios = TXConfigs.SNGL_RADIO_INT;
+
+                    RadioDevices.INT.isavailable = intercom.isavailable;
+                    RadioDevices.INT.deviceid = intercom.deviceid;
+                    RadioDevices.INT.name = intercom.displayName;
+                    RadioDevices.INT.intercom = intercom.intercom;
+                    RadioDevices.INT.AM = intercom.AM;
+                    RadioDevices.INT.FM = intercom.FM;
+                    RadioDevices.INT.on = intercom.on;
+                    RadioDevices.INT.frequency = intercom.frequency.ToString();
+                    RadioDevices.INT.modulation = intercom.modulation;
+                }
+
+                TXNode singleTXNode;
                 switch (State.activeconfig.SingleHotkey)
                 {
                     case "TX1":
                         TXNodes.TX1 = new TXNode() { name = "TX1", enabled = true, radios = radios };
-                        State.currentTXnode = TXNodes.TX1;
+                        singleTXNode = TXNodes.TX1;
                         break;
                     case "TX2":
                         TXNodes.TX2 = new TXNode() { name = "TX2", enabled = true, radios = radios };
-                        State.currentTXnode = TXNodes.TX2;
+                        singleTXNode = TXNodes.TX2;
                         break;
                     case "TX3":
                         TXNodes.TX3 = new TXNode() { name = "TX3", enabled = true, radios = radios };
-                        State.currentTXnode = TXNodes.TX3;
+                        singleTXNode = TXNodes.TX3;
                         break;
                     case "TX4":
                         TXNodes.TX4 = new TXNode() { name = "TX4", enabled = true, radios = radios };
-                        State.currentTXnode = TXNodes.TX4;
+                        singleTXNode = TXNodes.TX4;
                         break;
                     case "TX5":
                         TXNodes.TX5 = new TXNode() { name = "TX5", enabled = true, radios = radios };
-                        State.currentTXnode = TXNodes.TX5;
+                        singleTXNode = TXNodes.TX5;
                         break;
                     case "TX6":
                         TXNodes.TX6 = new TXNode() { name = "TX6", enabled = true, radios = radios };
-                        State.currentTXnode = TXNodes.TX6;
+                        singleTXNode = TXNodes.TX6;
                         break;
                     default:
                         TXNodes.TX1 = new TXNode() { name = "TX1", enabled = true, radios = TXConfigs.ALL_RADIOS_SEL };
-                        State.currentTXnode = TXNodes.TX1;
+                        singleTXNode = TXNodes.TX1;
                         break;
+                }
+
+                // If there is no intercom or the current TX node is not TX5 then assign the selected radio TX node based on
+                // the single selection configuration, otherwise keep the current TX node as TX5 (intercom).
+                if (intercom == null || !State.currentTXnode.Equals(TXNodes.TX5))
+                {
+                    State.currentTXnode = singleTXNode;
                 }
             }
         }
