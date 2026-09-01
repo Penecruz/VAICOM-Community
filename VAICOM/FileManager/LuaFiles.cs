@@ -147,6 +147,32 @@ namespace VAICOM
                   kneeboard = false,
                   } },
 
+                // ---- ATC.lua: --------------------------------------
+
+                {"2.8 ATC.lua",new Server.LuaFile
+                { fileid = "5C0D8736-D8F5-4595-A59E-7A9FB7B4EA16",
+                  filename = "ATC.lua",
+                  installfolder = "Scripts\\UI\\RadioCommandDialogPanel\\Config\\Common",
+                  installfolder_legacy = "Scripts\\UI\\RadioCommandDialogPanel\\Config\\Common",
+                  append = true,
+                  root = true,
+                  hardreset = true,
+                  orig = Properties.Resources.Orig_Core_ATC,
+                  orig_legacy = Properties.Resources.Orig_Core_ATC,
+                  source = Properties.Resources.Append_Core_ATC,
+                  source_legacy = Properties.Resources.Append_Core_ATC,
+                  version ="2.8",
+                  canremove = true,
+                  reset = false,
+                  //(ACTIVE)
+                  install = true,
+                  export = true,
+                  autoremove = false,
+                  quiet  = false,
+                  AIRIO = false,
+                  kneeboard = false,
+                  } },
+
                 // ---- TabSheetBar.lua  ----------------------------------
 
                 {"2.8 TabSheetBar.lua",new Server.LuaFile

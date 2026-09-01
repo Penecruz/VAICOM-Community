@@ -17,6 +17,118 @@ local colorByRecepientState = {
 		[RecepientState.CANNOT_BE_TUNED] 	= utils.COLOR.LIGHT_GRAY     
 	}
 
+local carrierManualEvents = {
+	[base.Message.wMsgLeaderSeeYouAtTen] = true,
+	[base.Message.wMsgLeaderTowerOverhead] = true,
+	[base.Message.wMsgLeaderEstablished] = true,
+	[base.Message.wMsgLeaderCommencing] = true,
+	[base.Message.wMsgLeaderHornetBall] = true,
+	[base.Message.wMsgLeaderRequestLanding] = true,
+	[base.Message.wMsgLeaderRequestTaxiToParking] = true,
+}
+
+local gatedAutoToManualEvent = {
+	[base.Message.wMsgLeaderTowerOverhead] = base.Message.wMsgLeaderTowerOverhead,
+	[base.Message.wMsgLeaderEstablished] = base.Message.wMsgLeaderEstablished,
+	[base.Message.wMsgLeaderCommencing] = base.Message.wMsgLeaderCommencing,
+	[base.Message.wMsgLeaderHornetBall] = base.Message.wMsgLeaderHornetBall,
+	[base.Message.wMsgATCTowerCopyOverhead] = base.Message.wMsgLeaderTowerOverhead,
+	[base.Message.wMsgATCYouAreClearedForLanding] = base.Message.wMsgLeaderRequestLanding,
+	[base.Message.wMsgATCCheckLandingGear] = base.Message.wMsgLeaderRequestLanding,
+	[base.Message.wMsgATCTaxiToParkingArea] = base.Message.wMsgLeaderRequestTaxiToParking,
+}
+
+local manualToGatedAutoEvents = {
+	[base.Message.wMsgLeaderTowerOverhead] = { base.Message.wMsgATCTowerCopyOverhead, base.Message.wMsgLeaderTowerOverhead },
+	[base.Message.wMsgLeaderHornetBall] = { base.Message.wMsgLeaderHornetBall },
+	[base.Message.wMsgLeaderRequestLanding] = { base.Message.wMsgATCYouAreClearedForLanding, base.Message.wMsgATCCheckLandingGear },
+	[base.Message.wMsgLeaderRequestTaxiToParking] = { base.Message.wMsgATCTaxiToParkingArea },
+	[base.Message.wMsgLeaderEstablished] = { base.Message.wMsgLeaderEstablished },
+	[base.Message.wMsgLeaderCommencing] = { base.Message.wMsgLeaderCommencing },
+}
+
+local function vaicom_now()
+	return base.Export and base.Export.LoGetModelTime and base.Export.LoGetModelTime() or 0
+end
+
+local function vaicom_mark_manual_carrier_event(eventId)
+	if not carrierManualEvents[eventId] then
+		return
+	end
+	base.vaicom = base.vaicom or {}
+	base.vaicom.state = base.vaicom.state or {}
+	base.vaicom.state.lastCarrierManualEvent = eventId
+	base.vaicom.state.lastCarrierManualAt = vaicom_now()
+end
+
+local function vaicom_init_auto_gate_state()
+	base.vaicom = base.vaicom or {}
+	base.vaicom.state = base.vaicom.state or {}
+	base.vaicom.state.autoGatePermits = base.vaicom.state.autoGatePermits or {}
+	base.vaicom.state.blockedAutoMessages = base.vaicom.state.blockedAutoMessages or {}
+	return base.vaicom.state
+end
+
+local function vaicom_has_auto_gate_permit(eventId)
+	local state = vaicom_init_auto_gate_state()
+	local permits = state.autoGatePermits
+	local count = permits[eventId] or 0
+	return count > 0
+end
+
+local function vaicom_consume_auto_gate_permit(eventId)
+	local state = vaicom_init_auto_gate_state()
+	local permits = state.autoGatePermits
+	local count = permits[eventId] or 0
+	if count > 0 then
+		permits[eventId] = count - 1
+	end
+end
+
+local function vaicom_is_recent_manual_carrier_event(requiredEventId)
+	if requiredEventId == nil then
+		return false
+	end
+	if not (base.vaicom and base.vaicom.state) then
+		return false
+	end
+	local lastEvent = base.vaicom.state.lastCarrierManualEvent
+	local lastAt = base.vaicom.state.lastCarrierManualAt or -999
+	if lastEvent ~= requiredEventId then
+		return false
+	end
+	return (vaicom_now() - lastAt) <= 12
+end
+
+local function vaicom_should_block_auto_carrier_sequence_event(eventId)
+	if not (base.vaicom and base.vaicom.settings and base.vaicom.settings.carriersuppressauto) then
+		return false
+	end
+	local requiredEventId = gatedAutoToManualEvent[eventId]
+	if requiredEventId == nil then
+		return false
+	end
+	if vaicom_has_auto_gate_permit(eventId) then
+		return false
+	end
+	return true
+end
+
+local function vaicom_grant_auto_gate_permits_for_manual_event(eventId)
+	if not (base.vaicom and base.vaicom.settings and base.vaicom.settings.carriersuppressauto) then
+		return
+	end
+	local events = manualToGatedAutoEvents[eventId]
+	if events == nil then
+		return
+	end
+	local state = vaicom_init_auto_gate_state()
+	for i = 1, #events do
+		local autoEvent = events[i]
+		state.autoGatePermits[autoEvent] = (state.autoGatePermits[autoEvent] or 0) + 1
+	end
+end
+
 function initialize(pUnitIn, easyComm, intercomId, communicators)
 	count=count+1	
 	base.assert(COMMUNICATOR_VOID ~= nil)
@@ -660,12 +772,13 @@ function ProcessRemoteCommand()
 		data.curCommunicatorId = clientmessage.tgtdevid or data.curCommunicatorId
 		selectAndTuneCommunicator(unitcomm)
 		local messagesendcommand	= clientmessage.command
+		local resolvedEvent			= base.Message[clientmessage.dcsid] or messagesendcommand
 		local messagesendparams     = SetParameters(unitcomm)
 		if messagesendcommand == base.Message.wMsgLeaderSpecialCommand then
 			purgeMessage =	{
 							type = base.Message.type.TYPE_CONSTRUCTABLE,
 							playMode = base.Message.playMode.PLAY_MODE_LIMITED_DURATION,						
-							event = base.Message[clientmessage.dcsid] or messagesendcommand,
+							event = resolvedEvent,
 							params = clientmessage.parameters or {},
 							perform = function(self,parameters)
 								data.pComm:sendMessage({	type		= self.type,
@@ -680,7 +793,7 @@ function ProcessRemoteCommand()
 			purgeMessage =	{	
 							type = base.Message.type.TYPE_CONSTRUCTABLE,
 							playMode = base.Message.playMode.PLAY_MODE_LIMITED_DURATION,	
-							event = base.Message[clientmessage.dcsid] or messagesendcommand,
+							event = resolvedEvent,
 							parameters = messagesendparams,
 							perform = function(self, parameters)
 								local messageParameters = {}
@@ -697,6 +810,8 @@ function ProcessRemoteCommand()
 							}	
 		end
 		socket.try(base.vaicom.sender:send(base.vaicom.flags.raw))		
+		vaicom_mark_manual_carrier_event(resolvedEvent)
+		vaicom_grant_auto_gate_permits_for_manual_event(resolvedEvent)
 		base.setmetatable(purgeMessage, sendMessage)
 		purgeMessage:perform()
 	end			
@@ -903,6 +1018,9 @@ function onMsgStart(pMessage, pRecepient, text)
 	end
 	local textColor = getMessageColor(pMsgSender, pMsgReceiver, event)
 	if pMsgReceiver == data.pComm or pMsgSender == data.pComm then
+		if vaicom_should_block_auto_carrier_sequence_event(event) then
+			return
+		end
 		for msgHandlerIndex, msgHandler in base.pairs(data.msgHandlers) do
 			local internalEvent, receiverAsRecepient = msgHandler:onMsg(pMessage, pRecepient)
 			if internalEvent ~= nil then
@@ -910,6 +1028,9 @@ function onMsgStart(pMessage, pRecepient, text)
 			end
 		end
 		self:onEvent(event, pMsgSender and pMsgSender:tonumber(), pMsgReceiver and pMsgReceiver:tonumber())
+		if gatedAutoToManualEvent[event] ~= nil then
+			vaicom_consume_auto_gate_permit(event)
+		end
 	end
 	if pMsgReceiver == data.pComm or pMsgSender == data.pComm then
 		commandDialogsPanel.onMsgStart(self, pMsgSender:tonumber(), pMsgReceiver and pMsgReceiver:tonumber(), text, textColor)

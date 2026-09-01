@@ -363,4 +363,8 @@
     <None Remove="FileManager\LuaFiles.cs~RF30cd3c9d.TMP" />
     <None Remove="Resources\Files\NoLoadContext" />
   </ItemGroup>
+  <ItemGroup>
+    <Folder Include="WIP Temp\Scripts\Aircrafts\_Common\Cockpit\VAICOMPRO\device\" />
+    <Folder Include="WIP Temp\Scripts\Aircrafts\_Common\Cockpit\VAICOMPRO\indicator\Textures\" />
+  </ItemGroup>
 </Project>

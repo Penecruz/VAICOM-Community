@@ -16,6 +16,23 @@ namespace VAICOM
 
                 private static void ApplyDynamicLuaFileSettings()
                 {
+                    if (LuaFiles.ContainsKey("2.8 ATC.lua"))
+                    {
+                        var atcFile = LuaFiles["2.8 ATC.lua"];
+                        bool carrierSuppressAutoEnabled = State.activeconfig != null && State.activeconfig.CarrierSuppressAuto;
+
+                        if (carrierSuppressAutoEnabled)
+                        {
+                            atcFile.source = Properties.Resources.Append_Core_ATC;
+                            atcFile.source_legacy = Properties.Resources.Append_Core_ATC;
+                        }
+                        else
+                        {
+                            atcFile.source = string.Empty;
+                            atcFile.source_legacy = string.Empty;
+                        }
+                    }
+
                     if (!LuaFiles.ContainsKey("2.9 WSO Renderer.js"))
                     {
                         return;

@@ -442,6 +442,9 @@
   <data name="Append_Core_RadioCommandDialogsPanel" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\resources\files\append.core.radiocommanddialogspanel.lua;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;Windows-1252</value>
   </data>
+  <data name="Append_Core_ATC" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\resources\files\append.core.atc.lua;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;Windows-1252</value>
+  </data>
   <data name="Append_Core_speech" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\resources\files\append.core.speech.lua;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;Windows-1252</value>
   </data>
@@ -459,6 +462,9 @@
   </data>
   <data name="Orig_Core_Export" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\resources\files\orig.core.export.lua;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;Windows-1252</value>
+  </data>
+  <data name="Orig_Core_ATC" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\resources\files\orig.core.atc.lua;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;Windows-1252</value>
   </data>
   <data name="Orig_Core_RadioCommandDialogsPanel" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\resources\files\orig.core.radiocommanddialogspanel.lua;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;Windows-1252</value>

@@ -245,16 +245,16 @@ namespace VAICOM
 
             }
 
-            private void CarrierCommsOn(object sender, RoutedEventArgs e) { CarrierComms.IsChecked = true; }
-            private void CarrierCommsOff(object sender, RoutedEventArgs e) { CarrierComms.IsChecked = true; }
-            private void SetCurrentValueCarrierComms(object sender, EventArgs e)
+            private void CarrierSuppressAutoOn(object sender, RoutedEventArgs e)
             {
-                CarrierComms.IsEnabled = true;
-                CarrierComms.IsChecked = true;
+                State.activeconfig.CarrierSuppressAuto = true;
+                FileHandler.Lua.LuaFiles_Install(false, true);
             }
-
-            private void CarrierSuppressAutoOn(object sender, RoutedEventArgs e) { State.activeconfig.CarrierSuppressAuto = true; }
-            private void CarrierSuppressAutoOff(object sender, RoutedEventArgs e) { State.activeconfig.CarrierSuppressAuto = false; }
+            private void CarrierSuppressAutoOff(object sender, RoutedEventArgs e)
+            {
+                State.activeconfig.CarrierSuppressAuto = false;
+                FileHandler.Lua.LuaFiles_Install(false, true);
+            }
             private void SetCurrentValueCarrierSuppressAuto(object sender, EventArgs e)
             {
                 CarrierSuppressAuto.IsEnabled = true;

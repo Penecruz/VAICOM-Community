@@ -92,6 +92,17 @@ namespace VAICOM.Properties {
         
         /// <summary>
         ///   Looks up a localized string similar to -- VAICOM PRO server-side script
+        ///-- ATC.lua (append)
+        ///-- https://github.com/Penecruz/VAICOM-Community.
+        /// </summary>
+        public static string Append_Core_ATC {
+            get {
+                return ResourceManager.GetString("Append_Core_ATC", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to -- VAICOM PRO server-side script
         ///-- common.lua (append)
         ///-- www.vaicompro.com
         ///
@@ -1402,6 +1413,15 @@ namespace VAICOM.Properties {
             }
         }
         
+        /// <summary>
+        ///   Looks up a localized string similar to local mainMenuPos, parameters = ...
+        /// </summary>
+        public static string Orig_Core_ATC {
+            get {
+                return ResourceManager.GetString("Orig_Core_ATC", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to --Speech construction module
         ///

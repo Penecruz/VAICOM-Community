@@ -145,9 +145,6 @@ namespace VAICOM
                 ChatterSilentOffline.IsEnabled = true;
                 ChatterTheme.IsEnabled = true;
 
-                CarrierComms.IsEnabled = true;
-                CarrierComms.IsChecked = true;
-
                 //audio page
 
                 Pan_AOCS.IsEnabled = true;

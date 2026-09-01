@@ -576,6 +576,7 @@ namespace VAICOM
                 try
                 {
                     State.activeconfig.RIO_Enabled = false;
+                    State.activeconfig.CarrierSuppressAuto = false;
 
                     if (!State.datawasreset)
                     {
