@@ -364,7 +364,6 @@
     <None Remove="Resources\Files\NoLoadContext" />
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="WIP Temp\Scripts\Aircrafts\_Common\Cockpit\VAICOMPRO\device\" />
-    <Folder Include="WIP Temp\Scripts\Aircrafts\_Common\Cockpit\VAICOMPRO\indicator\Textures\" />
+    <Folder Include="WIP Temp\" />
   </ItemGroup>
 </Project>
