@@ -23,13 +23,19 @@ namespace VAICOM
                         bool haveresult = false;
 
                         // if not have something already do raw search for this category
-
                         string cat = category.ToLower();
                         string searchinput = State.currentfullsentence.ToLower();
 
-                        if (category.Equals("command") && Regex.IsMatch(searchinput, @"^\s*gunner\b", RegexOptions.IgnoreCase))
+                        if (category.Equals("command"))
                         {
-                            searchinput = Regex.Replace(searchinput, @"^\s*gunner[\s,]*", "george ", RegexOptions.IgnoreCase);
+                            if (Regex.IsMatch(searchinput, @"^\s*gunner\b", RegexOptions.IgnoreCase))
+                            {
+                                searchinput = Regex.Replace(searchinput, @"^\s*gunner[\s,]*", "george ", RegexOptions.IgnoreCase);
+                            }
+                            else if (Regex.IsMatch(searchinput, @"^\s*steve\b", RegexOptions.IgnoreCase))
+                            {
+                                searchinput = Regex.Replace(searchinput, @"^\s*steve[\s,]*", "george ", RegexOptions.IgnoreCase);
+                            }
                         }
 
                         //Log.Write("scanning "+ cat +" search input = " + searchinput, colors.Text);
@@ -62,9 +68,11 @@ namespace VAICOM
 
                         foreach (KeyValuePair<string, string> set in localresults)
                         {
-                            // Add bias for WSO and Two recipients in calls, ensuring that "two" is at the start of the sentence.
+                            // Add bias for WSO, George, and Two recipients in calls, ensuring that "two" is at the start of the sentence.
                             if (category.Equals("recipient")
-                                && (set.Value.Equals("WSO") || (set.Key.ToLower().Equals("two") && searchinput.StartsWith(set.Key.ToLower()))))
+                                && (set.Value.Equals("WSO")
+                                   || set.Value.Equals("george")
+                                   || (set.Key.ToLower().Equals("two") && searchinput.StartsWith(set.Key.ToLower()))))
                             {
                                 usedalias = set.Key;
                                 finalresult = set.Value;

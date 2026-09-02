@@ -12,7 +12,7 @@ namespace VAICOM
         public static partial class Aliases
         {
 
-            private static void AppendAliasWithGunnerVariant(ref string target, string alias, ref int counter)
+            private static void AppendAliasWithGeorgeVariant(ref string target, string category, string alias, ref int counter)
             {
                 if (string.IsNullOrWhiteSpace(alias))
                 {
@@ -25,7 +25,20 @@ namespace VAICOM
                 if (alias.StartsWith("George", StringComparison.OrdinalIgnoreCase)
                     && (alias.Length == 6 || char.IsWhiteSpace(alias[6]) || alias[6] == ','))
                 {
-                    target += "Gunner" + alias.Substring(6) + "; ";
+                    switch (category)
+                    {
+                        case "AH64D_George_CPG":
+                            target += "Gunner" + alias.Substring(6) + "; ";
+                            break;
+                        case "AH64D_George_PLT":
+                            target += "Steve" + alias.Substring(6) + "; ";
+                            break;
+                        default:
+                            target += "Gunner" + alias.Substring(6) + "; ";
+                            target += "Steve" + alias.Substring(6) + "; ";
+                            break;
+                    }
+
                     counter = counter + 1;
                 }
             }
@@ -68,7 +81,7 @@ namespace VAICOM
                             {
                                 foreach (KeyValuePair<string, string> alias in Aliases.airecipients)
                                 {
-                                    // All George CPG commands are already prefixed with "George" so is
+                                    // All George AI commands are already prefixed with "George" so is
                                     // unnecesary to add to the recipient strings, which will also create
                                     // redundant combinations of commands.
                                     if (cat.Equals("GeorgeCPG") && alias.Key.Equals("George"))
@@ -156,7 +169,7 @@ namespace VAICOM
                         wsoCommandStrings.Add(cat, "");
                         wsoRecipientCommandStrings.Add(cat, "");
                     }
-                    else if (cat.Equals("AH64D_GeorgeAI"))
+                    else if (cat.StartsWith("AH64D_George"))
                     {
                         georgeCommandStrings.Add(cat, "");
                     }
@@ -196,10 +209,10 @@ namespace VAICOM
 
                                             counter = counter + 1;
                                         }
-                                        else if (cat.Equals("AH64D_GeorgeAI"))
+                                        else if (cat.StartsWith("AH64D_George"))
                                         {
                                             string commandstring = georgeCommandStrings[cat];
-                                            AppendAliasWithGunnerVariant(ref commandstring, alias.Key, ref counter);
+                                            AppendAliasWithGeorgeVariant(ref commandstring, cat, alias.Key, ref counter);
                                             georgeCommandStrings[cat] = commandstring;
                                         }
                                         else
@@ -290,7 +303,7 @@ namespace VAICOM
                             }
 
                             // George AI
-                            if (cat.Equals("aicrew") && commandcat.Contains("AH64D_GeorgeAI"))
+                            if (cat.Equals("GeorgeCPG") && commandcat.Contains("AH64D_George"))
                             {
                                 georgeOutputCommandString = georgeOutputCommandString + georgeCommandStrings[commandcat];
                             }

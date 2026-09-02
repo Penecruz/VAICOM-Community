@@ -33,6 +33,8 @@ namespace VAICOM.Extensions.CPG
             { "George Right Long",                           "georgerightlong"               },
             { "George Center Long",                          "georgecenterlong"              },
             { "George Request Control",                      "georgecontrolrequest"          },
+
+            // George AI - Start and Shutdown
             { "George Start Up",                             "georgestartup"                 },
             { "George start your runup",                     "georgestartup"                 },
             { "George let's get going",                      "georgestartup"                 },
@@ -188,6 +190,73 @@ namespace VAICOM.Extensions.CPG
             { "George Hold Fire",                            "georgeholdfire"                },
             { "George Hold Your Fire",                       "georgeholdfire"                },
             { "George Cease Fire",                           "georgeholdfire"                },
+
+            // George AI - Startup, Shutdown, and Takeoff (GND)
+            { "George Start A P U",                          "georgestartupapu"              },
+            { "George Start Engines Idle",                   "georgestartupenginesidle"      },
+            { "George Start Engines Fly",                    "georgestartupenginesfly"       },
+            { "George Full Start Up",                        "georgestartupfull"             },
+            { "George Full Shutdown",                        "georgeshutdownfull"            },
+            { "George Shutdown Engines",                     "georgeshutdownengines"         },
+            { "George Take Off",                             "georgetakeoff"                 },
+
+            // George AI - Flight and Navigation (FLT)
+            { "George Speed Up",                             "georgespeedup"                 },
+            { "George Slow Down",                            "georgeslowdown"                },
+            { "George Increase Altitude",                    "georgeincreasealtitude"        },
+            { "George Decrease Altitude",                    "georgedecreasealtitude"        },
+            { "George Follow Waypoints",                     "georgefollowwaypoints"         },
+            { "George Come Left",                            "georgecomeleft"                },
+            { "George Come Right",                           "georgecomeright"               },
+            { "George Set Air Speed",                        "georgesetairspeedref"          },
+            { "George Set Ground Speed",                     "georgesetgroundspeedref"       },
+            { "George Set Radar Altitude",                   "georgesetradaraltitude"        },
+            { "George Set Barometric Altitude",              "georgesetbarometricaltitude"   },
+
+            // George AI - Combat Maneuvers (CMBT)
+            { "George Break Left",                           "georgebreakleft"               },
+            { "George Break Right",                          "georgebreakright"              },
+            { "George Orbit Overhead",                       "georgeorbitoverhead"           },
+            { "George Break One Eighty",                     "georgebreakoneeighty"          },
+            { "George Head To Location",                     "georgeheadtolocation"          },
+            { "George Align To TADS",                        "georgealigntotads"             },
+            { "George Align To N T S",                       "georgealigntonts"              },
+            { "George Align To Next To Shoot",               "georgealigntonts"              },
+            { "George Turn To G H S",                        "georgeturntoghs"               },
+            { "George Turn To Gunner Helmet Sight",          "georgeturntoghs"               },
+            { "George Hold Position",                        "georgeholdposition"            },
+            { "George Add Battle Position",                  "georgeaddbattleposition"       },
+            { "George Delete Battle Position",               "georgedeletebattleposition"    },
+            { "George Return To Battle Position",            "georgereturntobattleposition"  },
+            { "George Mask Position",                        "georgemaskposition"            },
+
+            // George AI - Defense (DEFN)
+            { "George Return Fire",                          "georgereturnfire"              },
+            { "George Evade Off",                            "georgeevadeoff"                },
+            { "George Evade Level",                          "georgeevadelevel"              },
+            { "George Evade Vertical",                       "georgeevadevertical"           },
+            { "George Evade Mask",                           "georgeevademask"               },
+            { "George Threat Warnings On",                   "georgethreatwarningson"        },
+            { "George Threat Warnings Off",                  "georgethreatwarningsoff"       },
+            { "George Countermeasures Arm",                  "georgecmwsarm"                 },
+            { "George Countermeasures Safe",                 "georgecmwssafe"                },
+            { "George Countermeasures Auto",                 "georgecmwsauto"                },
+            { "George Countermeasures Bypass",               "georgecmwsbypass"              },
+
+            // George AI - Hover Bob-up (H-B)
+            { "George Move Forwards",                        "georgehoverforward"            },
+            { "George Move Back",                            "georgehoverback"               },
+            { "George Move Left",                            "georgehoverleft"               },
+            { "George Move Right",                           "georgehoverright"              },
+            { "George Come Up 10 Feet",                      "georgehoveruptenfeet"          },
+            { "George Come Down 10 Feet",                    "georgehoverdowntenfeet"        },
+
+            // George AI - Menu Modes
+            { "George Combat Mode",                          "georgemenucombatmode"          },
+            { "George Flight Mode",                          "georgemenuflightmode"          },
+            { "George Ground Mode",                          "georgemenugroundmode"          },
+            { "George Hover Mode",                           "georgemenuhovermode"           },
+            { "George Next Mode",                            "georgemenunextmode"            },
         };
     }
 }

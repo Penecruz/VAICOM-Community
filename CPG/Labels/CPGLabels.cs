@@ -5,13 +5,13 @@ namespace VAICOM.Extensions.CPG
 {
     public static partial class Labels
     {
-        // Labels for WSO recipients
+        // Labels for George AI recipients
         public static Dictionary<string, string> airecipients = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
             { "george", "AH-64D AI CP/G" }
         };
 
-        // Labels for CPG commands (mirrored from George AI labels)
+        // Labels for George AI commands
         public static Dictionary<string, string> aicommands = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
             { "georgeshowhide",                     "George Show/Hide"      },
@@ -81,6 +81,60 @@ namespace VAICOM.Extensions.CPG
             { "georgemacroselectrockets",           "George Select Rockets" },
             { "georgemacroselectnoweapon",          "George Select No Weapon" },
             { "georgenextmsl",                      "George Next Missile Type" },
+
+            { "georgestartupapu",                   "George Start APU" },
+            { "georgestartupenginesidle",           "George Start Engines Idle" },
+            { "georgestartupenginesfly",            "George Start Engines Fly" },
+            { "georgestartupfull",                  "George Full Start Up" },
+            { "georgeshutdownfull",                 "George Full Shutdown" },
+            { "georgeshutdownengines",              "George Shutdown Engines" },
+            { "georgetakeoff",                      "George Take Off" },
+            { "georgespeedup",                      "George Speed Up" },
+            { "georgeslowdown",                     "George Slow Down" },
+            { "georgeincreasealtitude",             "George Increase Altitude" },
+            { "georgedecreasealtitude",             "George Decrease Altitude" },
+            { "georgefollowwaypoints",              "George Follow Waypoints" },
+            { "georgecomeleft",                     "George Come Left" },
+            { "georgecomeright",                    "George Come Right" },
+            { "georgesetairspeedref",               "George Set Air Speed Reference" },
+            { "georgesetgroundspeedref",            "George Set Ground Speed Reference" },
+            { "georgesetradaraltitude",             "George Set Radar Altitude" },
+            { "georgesetbarometricaltitude",        "George Set Barometric Altitude" },
+            { "georgebreakleft",                    "George Break Left" },
+            { "georgebreakright",                   "George Break Right" },
+            { "georgeorbitoverhead",                "George Orbit Overhead" },
+            { "georgebreakoneeighty",               "George Break One Eighty" },
+            { "georgeheadtolocation",               "George Head To Location" },
+            { "georgealigntotads",                  "George Align To TADS" },
+            { "georgealigntonts",                   "George Align To NTS" },
+            { "georgeturntoghs",                    "George Turn To GHS" },
+            { "georgeholdposition",                 "George Hold Position" },
+            { "georgeaddbattleposition",            "George Add Battle Position" },
+            { "georgedeletebattleposition",         "George Delete Battle Position" },
+            { "georgereturntobattleposition",       "George Return To Battle Position" },
+            { "georgemaskposition",                 "George Mask Position" },
+            { "georgereturnfire",                   "George Return Fire" },
+            { "georgeevadeoff",                     "George Evade Off" },
+            { "georgeevadelevel",                   "George Evade Level" },
+            { "georgeevadevertical",                "George Evade Vertical" },
+            { "georgeevademask",                    "George Evade Mask" },
+            { "georgethreatwarningson",             "George Threat Warnings On" },
+            { "georgethreatwarningsoff",            "George Threat Warnings Off" },
+            { "georgecmwsarm",                      "George Countermeasures Arm" },
+            { "georgecmwssafe",                     "George Countermeasures Safe" },
+            { "georgecmwsauto",                     "George Countermeasures Auto" },
+            { "georgecmwsbypass",                   "George Countermeasures Bypass" },
+            { "georgehoverforward",                 "George Move Forwards" },
+            { "georgehoverback",                    "George Move Back" },
+            { "georgehoverleft",                    "George Move Left" },
+            { "georgehoverright",                   "George Move Right" },
+            { "georgehoveruptenfeet",               "George Come Up 10 Feet" },
+            { "georgehoverdowntenfeet",             "George Come Down 10 Feet" },
+            { "georgemenucombatmode",               "George Combat Mode" },
+            { "georgemenuflightmode",               "George Flight Mode" },
+            { "georgemenugroundmode",               "George Ground Mode" },
+            { "georgemenuhovermode",                "George Hover Mode" },
+            { "georgemenunextmode",                 "George Next Mode" },
         };
     }
 }
