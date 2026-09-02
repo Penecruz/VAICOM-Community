@@ -415,11 +415,6 @@ namespace VAICOM
             //{ "wMsgClearKneeboardTab",         new Command { uniqueid = 23005, category = CommandCategories.special, eventnumber = 4000, name = "wMsgClearKneeboardTab",  displayname = Labels.aicommands["wMsgClearKneeboardTab"] } },
             { "repeat",                        new Command { uniqueid = 23006, category = CommandCategories.special, eventnumber = 4000, dcsid = "wMsgReplySayAgain",displayname = Labels.aicommands["repeat"] } }, //
             { "loadout" ,                      new Command { uniqueid = 23007, category = CommandCategories.special, eventnumber = 4000, dcsid = "wMsgLoadout" , displayname=Labels.aicommands["loadout"]} },
-
-            // George CPG commands 23008-23079
-            { "wMsgGeorgeCmndsNull",          new Command { uniqueid = 23008, category = CommandCategories.AH64D_GeorgeAI, eventnumber = 4000, dcsid = "wMsgGeorgeCmndsNull" } },
-            { "wMsgGeorgeCmndsMaximum",       new Command { uniqueid = 23079, category = CommandCategories.AH64D_GeorgeAI, eventnumber = 4000, dcsid = "wMsgGeorgeCmndsMaximum" } },
-
             { "wMsgSpecialCmndsMaximum",       new Command { uniqueid = 23099, category = CommandCategories.special, eventnumber = 4000, dcsid = "wMsgSpecialCmndsMaximum" } },
 
             // AOCS commands 23100
@@ -452,8 +447,10 @@ namespace VAICOM
             { "wMsgKneeboardPreviousTab" ,           new Command { uniqueid = 25008, category = CommandCategories.kneeboard,    eventnumber = 4000,  dcsid = "wMsgKneeboardPreviousTab"   } },
             { "wMsgKneeboardCmndsMaximum" ,          new Command { uniqueid = 25100, category = CommandCategories.kneeboard,    eventnumber = 4000,  dcsid = "wMsgKneeboardCmndsMaximum" } },
 
+            // George CPG/PLT commands 25200-25999
+            { "wMsgGeorgeCmndsNull",          new Command { uniqueid = 25200, category = CommandCategories.AH64D_George, eventnumber = 4000, dcsid = "wMsgGeorgeCmndsNull" } },
+            { "wMsgGeorgeCmndsMaximum",       new Command { uniqueid = 25999, category = CommandCategories.AH64D_George, eventnumber = 4000, dcsid = "wMsgGeorgeCmndsMaximum" } },
             };
-
         }
     }
 }

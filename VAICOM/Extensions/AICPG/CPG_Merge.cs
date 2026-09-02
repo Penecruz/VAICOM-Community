@@ -25,7 +25,16 @@ namespace VAICOM
 
                 public static CommandCategories CommandCatbyId(int id)
                 {
-                    CommandCategories output = CommandCategories.AH64D_GeorgeAI;
+                    CommandCategories output = CommandCategories.AH64D_George;
+
+                    if (id >= 25214 && id <= 25499)
+                    {
+                        return CommandCategories.AH64D_George_CPG;
+                    }
+                    if (id >= 25500 && id <= 25999)
+                    {
+                        return CommandCategories.AH64D_George_PLT;
+                    }
                     
                     return output;
                 }
@@ -57,7 +66,7 @@ namespace VAICOM
                         }
                         catch (Exception a)
                         {
-                            Log.Write("There was a problem while importing the CPG extension pack." + entry.Key + " " + a.Message, Colors.Text);
+                            Log.Write("There was a problem while importing the CP/G extension pack." + entry.Key + " " + a.Message, Colors.Text);
                         }
                     }
 
@@ -87,7 +96,6 @@ namespace VAICOM
                             Log.Write("There was a problem while importing the CPG extension pack." + entry.Key + " " + a.StackTrace, Colors.Text);
                         }
                     }
-
 
                     // add aliases (for recipients)
                     foreach (KeyValuePair<string, string> entry in CPG.Aliases.airecipients)
