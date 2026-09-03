@@ -227,6 +227,10 @@ namespace VAICOM
                         case "wMsgGeorgeShowHide":
                             AddGeorgeButton(3002);
                             break;
+                        // Long show/hide press
+                        case "wMsgGeorgeMenuDefenseMode":
+                            AddGeorgeLongButton(3002);
+                            break;
                         //Up Short Presses
                         case "wMsgGeorgeUp":
                         case "wMsgGeorgePreviuousTarget":

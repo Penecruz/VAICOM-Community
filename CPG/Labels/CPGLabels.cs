@@ -131,6 +131,7 @@ namespace VAICOM.Extensions.CPG
             { "georgehoveruptenfeet",               "George Come Up 10 Feet" },
             { "georgehoverdowntenfeet",             "George Come Down 10 Feet" },
             { "georgemenucombatmode",               "George Combat Mode" },
+            { "georgemenudefensemode",              "George Defense Mode" },
             { "georgemenuflightmode",               "George Flight Mode" },
             { "georgemenugroundmode",               "George Ground Mode" },
             { "georgemenuhovermode",                "George Hover Mode" },
