@@ -75,6 +75,18 @@ namespace VAICOM
                 return false;
             }
 
+            public static bool IsAH64PilotSeatActive()
+            {
+                if (State.currentmodule == null || !State.currentmodule.Id.Equals("AH-64D", StringComparison.OrdinalIgnoreCase))
+                {
+                    return false;
+                }
+
+                return State.currentstate != null
+                    && State.currentstate.riostate != null
+                    && State.currentstate.riostate.ah64seat == 0;
+            }
+
             public static string GetCurrentModuleDisplayText() //change to module name + alias, and if F-14, add RIO or Pilot as appropriate.
             {
                 if (State.currentmodule == null || State.currentmodule.Name.Equals("----"))

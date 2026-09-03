@@ -209,6 +209,7 @@ namespace VAICOM
                 public bool ics;
                 public double f4ePilotIcs;
                 public double f4eSeat;
+                public double ah64seat;
                 public bool sngl;
                 public bool jmr;
                 public bool AM182;

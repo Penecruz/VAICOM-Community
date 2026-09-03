@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using VAICOM.Database;
 using VAICOM.Extensions.Kneeboard;
 using VAICOM.Extensions.RIO;
+using VAICOM.Helpers;
 using VAICOM.PushToTalk;
 using VAICOM.Static;
 using DatabaseCommands = VAICOM.Database.Commands;
@@ -162,6 +163,21 @@ namespace VAICOM
                 {
                     State.currentmessage.type = Messagetypes.DeviceControl;
                     State.currentmessage.extsequence = new List<Extensions.RIO.DeviceAction>();
+
+                    // Check that we are issuing commands from the correct seat for the George command category.
+                    bool isPilotSeat = Common.IsAH64PilotSeatActive();
+                    if (State.currentcommand.category.Equals(CommandCategories.AH64D_George_PLT) && isPilotSeat)
+                    {
+                        State.currentmessage.dspmsg = "VAICOM | GEORGE: You are in the pilot seat!\n";
+                        State.currentmessage.msgdur = 5;
+                        return;
+                    }
+                    else if (State.currentcommand.category.Equals(CommandCategories.AH64D_George_CPG) && !isPilotSeat)
+                    {
+                        State.currentmessage.dspmsg = "VAICOM | GEORGE: You are in the CP/G seat!\n";
+                        State.currentmessage.msgdur = 5;
+                        return;
+                    }
 
                     bool hadValidWeaponState = State.AH64GeorgeWeaponStateValid;
                     bool previousGunAvailable = State.AH64GeorgeGunAvailable;
