@@ -106,6 +106,9 @@ namespace VAICOM
 
                     int warncounter = 0;
 
+                    // Update any existing recipient alias entries in case they are using older values.
+                    MigrateRecipientAliases();
+
                     foreach (KeyValuePair<string, Dictionary<string, string>> entry in Aliases.categories)
                     {
                         foreach (KeyValuePair<string, string> alias in entry.Value)
@@ -182,7 +185,7 @@ namespace VAICOM
                     {
                         Log.Write("Writing updates.", Colors.Text);
                         FileHandler.Database.WriteAllCategoriesToFile(true);
-                    }                 
+                    }
 
                     Log.Write("Keywords database loaded successfully.", Colors.Text);
                 }
@@ -200,10 +203,14 @@ namespace VAICOM
                         { "Boots", "crew" },
                         { "Jester", "crew" },
                         { "Iceman", "crew" },
-                        { "George", "crew" },
                         { "WSO", "crew" },
                         { "RIO", "crew" },
                     };
+
+                    if (Recipients.Table.ContainsKey("george"))
+                    {
+                        requiredAliases.Add("George", "george");
+                    }
 
                     foreach (KeyValuePair<string, string> alias in requiredAliases)
                     {
@@ -213,6 +220,24 @@ namespace VAICOM
                             warncounter++;
                             Log.Write("   -> " + alias.Key, Colors.Text);
                         }
+                    }
+                }
+
+                // This function can be used to update existing recipient aliases in the database to ensure they are
+                // consistent with the current expected values. It checks for specific aliases and updates them if necessary.
+                private static void MigrateRecipientAliases()
+                {
+                    if (!Recipients.Table.ContainsKey("george")
+                        || !Aliases.reference.TryGetValue("airecipients", out Dictionary<string, string> recipients))
+                    {
+                        return;
+                    }
+
+                    if (recipients.TryGetValue("George", out string mappedRecipient)
+                        && mappedRecipient.Equals("crew", StringComparison.OrdinalIgnoreCase))
+                    {
+                        recipients["George"] = "george";
+                        Log.Write("Migrated recipient alias 'George' from 'crew' to 'george'.", Colors.Text);
                     }
                 }
             }
