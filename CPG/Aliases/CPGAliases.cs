@@ -253,7 +253,7 @@ namespace VAICOM.Extensions.CPG
 
             // George AI - Menu Modes
             { "George Combat Mode",                          "georgemenucombatmode"          },
-            { "George Defense Mode",                         "georgemenudefensemode"          },
+            { "George Defense Mode",                         "georgemenudefensemode"         },
             { "George Flight Mode",                          "georgemenuflightmode"          },
             { "George Ground Mode",                          "georgemenugroundmode"          },
             { "George Hover Mode",                           "georgemenuhovermode"           },

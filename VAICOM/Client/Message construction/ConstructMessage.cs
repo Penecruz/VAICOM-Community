@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using VAICOM.Database;
 using VAICOM.Extensions.Kneeboard;
 using VAICOM.Extensions.RIO;
-using VAICOM.Helpers;
 using VAICOM.PushToTalk;
 using VAICOM.Static;
 using DatabaseCommands = VAICOM.Database.Commands;
@@ -165,7 +164,7 @@ namespace VAICOM
                     State.currentmessage.extsequence = new List<Extensions.RIO.DeviceAction>();
 
                     // Check that we are issuing commands from the correct seat for the George command category.
-                    bool isPilotSeat = Common.IsAH64PilotSeatActive();
+                    bool isPilotSeat = Helpers.Common.IsAH64PilotSeatActive();
                     if (State.currentcommand.category.Equals(CommandCategories.AH64D_George_PLT) && isPilotSeat)
                     {
                         State.currentmessage.dspmsg = "VAICOM | GEORGE: You are in the pilot seat!\n";
@@ -239,8 +238,6 @@ namespace VAICOM
                         case "wMsgGeorgeSpeedUp":
                         case "wMsgGeorgeAlignToTADS":
                         case "wMsgGeorgeAlignToNTS":
-                        case "wMsgGeorgeCMWSArm":
-                        case "wMsgGeorgeCMWSSafe":
                         case "wMsgGeorgeHoverUpTenFeet":
                             AddGeorgeButton(3003);
                             break;
@@ -252,8 +249,6 @@ namespace VAICOM
                         case "wMsgGeorgeShutdownEngines":
                         case "wMsgGeorgeSlowDown":
                         case "wMsgGeorgeReturnToBattlePosition":
-                        case "wMsgGeorgeCMWSAuto":
-                        case "wMsgGeorgeCMWSBypass":
                         case "wMsgGeorgeHoverDownTenFeet":
                             AddGeorgeButton(3004);
                             break;
@@ -348,10 +343,6 @@ namespace VAICOM
                         case "wMsgGeorgeAreaSelect":
                         case "wMsgGeorgeComeLeft":
                         case "wMsgGeorgeBreakLeft":
-                        case "wMsgGeorgeEvadeOff":
-                        case "wMsgGeorgeEvadeLevel":
-                        case "wMsgGeorgeEvadeVertical":
-                        case "wMsgGeorgeEvadeMask":
                         case "wMsgGeorgeHoverLeft":
                             AddGeorgeLongButton(3005);
                             break;
@@ -379,7 +370,28 @@ namespace VAICOM
                         case "wMsgGeorgeDeleteBattlePosition":
                             AddGeorgeLongButton(3008);
                             break;
-                        
+
+                        // George PLT Defense Mode items
+                        case "wMsgGeorgeCMWSArm":
+                        case "wMsgGeorgeCMWSSafe":
+                            AddGeorgeLongButton(3002);
+                            AddGeorgeButton(3003);
+                            AddGeorgeButton(3002);
+                            break;
+                        case "wMsgGeorgeCMWSAuto":
+                        case "wMsgGeorgeCMWSBypass":
+                            AddGeorgeLongButton(3002);
+                            AddGeorgeButton(3004);
+                            AddGeorgeButton(3002);
+                            break;
+                        case "wMsgGeorgeEvadeOff":
+                        case "wMsgGeorgeEvadeLevel":
+                        case "wMsgGeorgeEvadeVertical":
+                        case "wMsgGeorgeEvadeMask":
+                            AddGeorgeLongButton(3002);
+                            AddGeorgeButton(3005);
+                            AddGeorgeButton(3002);
+                            break;
                         //Search Tasks
                         //Direct Searches
                         case "wMsgGeorgeMacroPHSsearch":                            
