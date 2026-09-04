@@ -2472,7 +2472,7 @@ base.vaicom.state = {
 					-- F-4E ICS selector: cold mic is negative, hot mic is centered, radio override is positive.
 					-- Treat HOT MIC and radio override as active intercom states. (Off is inactive)
 					f4eICSHot = (pilotIcs ~= nil and pilotIcs > -0.1)
-				else if data.initialized and isAH64 and base.GetDevice(0) and base.GetDevice(0).get_argument_value then
+				elseif data.initialized and isAH64 and base.GetDevice(0) and base.GetDevice(0).get_argument_value then
 					local seat = base.get_param_handle("SEAT"):get()
 					if seat ~= nil then
 						base.vaicom.state.riostate.ah64seat = seat
