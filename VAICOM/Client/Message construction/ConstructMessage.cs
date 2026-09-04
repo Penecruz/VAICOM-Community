@@ -311,13 +311,10 @@ namespace VAICOM
                             break;
                         //Up Long Presses                         
                         case "wMsgGeorgeUpLong":
-                        case "wMsgGeorgeWeaponsFree":
-                        case "wMsgGeorgeHoldFire":
                         case "wMsgGeorgeTadsZoomIn":
                         case "wMsgGeorgeTargetListZoomIn":
                         case "wMsgGeorgeIncreaseAltitude":
                         case "wMsgGeorgeOrbitOverhead":
-                        case "wMsgGeorgeReturnFire":
                         case "wMsgGeorgeHoverForward":
                             AddGeorgeLongButton(3003);
                             break;
@@ -392,6 +389,42 @@ namespace VAICOM
                             AddGeorgeButton(3005);
                             AddGeorgeButton(3002);
                             break;
+
+                        // George ROE
+                        case "wMsgGeorgeReturnFire":
+                            AddGeorgeLongButton(3002);
+                            AddGeorgeLongButton(3003);
+                            AddGeorgeButton(3002);
+                            break;
+                        case "wMsgGeorgeWeaponsFree":
+                            if (Helpers.Common.IsAH64PilotSeatActive())
+                            {
+                                // George as CP/G
+                                AddGeorgeLongButton(3003);
+                            }
+                            else
+                            {
+                                // George as pilot
+                                AddGeorgeLongButton(3002);
+                                AddGeorgeLongButton(3003);
+                                AddGeorgeButton(3002);
+                            }
+                            break;
+                        case "wMsgGeorgeHoldFire":
+                            if (Helpers.Common.IsAH64PilotSeatActive())
+                            {
+                                // George as CP/G
+                                AddGeorgeLongButton(3003);
+                            }
+                            else
+                            {
+                                // George as pilot
+                                AddGeorgeLongButton(3002);
+                                AddGeorgeLongButton(3003);
+                                AddGeorgeButton(3002);
+                            }
+                            break;
+
                         //Search Tasks
                         //Direct Searches
                         case "wMsgGeorgeMacroPHSsearch":                            
