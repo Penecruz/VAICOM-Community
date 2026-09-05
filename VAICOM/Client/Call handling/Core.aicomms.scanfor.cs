@@ -26,7 +26,7 @@ namespace VAICOM
                         string cat = category.ToLower();
                         string searchinput = State.currentfullsentence.ToLower();
 
-                        if (category.Equals("command"))
+                        if (category.Equals("command") || category.Equals("recipient"))
                         {
                             if (Regex.IsMatch(searchinput, @"^\s*gunner\b", RegexOptions.IgnoreCase))
                             {
