@@ -348,8 +348,17 @@ local function selectAndTuneCommunicator(targetCommunicator)
 					break
 				end
 			end
-		end	
+		end
+
 		if data.curCommunicatorId ~= communicatorId then
+			if not communicator.interphone then
+				local commDevice = base.GetDevice(communicatorId)
+				if commDevice.get_is_standalone ~= nil and commDevice:get_is_standalone() == true then
+					commDevice:set_as_current_radio()
+					return communicatorId
+				end
+			end
+			
 			base.GetDevice(data.intercomId):set_communicator(communicatorId)
 		end
 		return communicatorId

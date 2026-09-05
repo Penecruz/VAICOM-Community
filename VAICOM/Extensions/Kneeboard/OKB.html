@@ -1098,6 +1098,7 @@
     }
 
     .efbEmpty {
+      font-family: inherit;
       font-size: var(--contentFontSize);
       line-height: 1.32;
       color: #4d5f71;
@@ -2749,7 +2750,7 @@
       color: #9fb4c9;
     }
 
-    body.night-mode .efbChartImage {
+    body.night-mode .efbChartImageLocal {
       filter: brightness(0.62) contrast(1.08) saturate(0.92);
     }
 
@@ -3307,6 +3308,7 @@
     const efbSaTrackUpEnabledStorageKey = 'vaicom.okb.efbSaTrackUpEnabled';
     const efbSaAnchorModeStorageKey = 'vaicom.okb.efbSaAnchorMode';
     const efbSaUseFastOwnshipStorageKey = 'vaicom.okb.efbSaUseFastOwnship';
+    const efbSaNavigraphLayerStorageKey = 'vaicom.okb.efbSaNavigraphLayer';
     const drawModeTimeoutMs = 30000;
     const speedRecommendationTimeoutMs = 30000;
     const fakeMissionSpeedMin = 0.25;
@@ -3322,8 +3324,11 @@
     let fltPlanFilesOverlayOpen = false;
     let fltPlanSessionOverlayOpen = false;
     let efbAvailableAirports = null;
+    let efbAirportsLoadPromise = null;
+    let efbAirportEntries = {};
     let efbManuallySelectedAirport = '';
     let efbChartsByAirport = {};
+    let efbChartsLoadPromiseByAirport = {};
     let efbSelectedChartByAirport = {};
     let efbViewportByAirport = {};
     let efbDragState = null;
@@ -3348,6 +3353,7 @@
     let efbSaTrackUpEnabled = false;
     let efbSaAnchorMode = 'center';
     let efbSaUseFastOwnshipEnabled = true;
+    let efbSaNavigraphLayer = 'vfr';
     let efbSaOwnshipFast = { hasPosition: false, posX: NaN, posY: NaN, altFeet: NaN, headingDeg: NaN, hasHeading: false, theater: '', updatedUtcMs: 0, lastPollMs: 0 };
     let efbSaFollowSuppressUntilBySelection = {};
     let efbSaLastCameraApplyMsBySelection = {};
@@ -3419,6 +3425,45 @@
     function normalizeEfbSaAnchorMode(mode) {
       const value = String(mode || '').toLowerCase().trim();
       return value === 'lower-third' ? 'lower-third' : 'center';
+    }
+
+    function normalizeEfbSaNavigraphLayer(value) {
+      const v = String(value || '').toLowerCase().trim();
+      if (v === 'ifr-lo') return 'ifr-lo';
+      if (v === 'ifr-hi') return 'ifr-hi';
+      return 'vfr';
+    }
+
+    function readEfbSaNavigraphLayerPreference() {
+      try {
+        if (!window.localStorage) return 'vfr';
+        const raw = window.localStorage.getItem(efbSaNavigraphLayerStorageKey);
+        return normalizeEfbSaNavigraphLayer(raw);
+      } catch (_) {
+        return 'vfr';
+      }
+    }
+
+    function persistEfbSaNavigraphLayerPreference() {
+      try {
+        if (!window.localStorage) return;
+        window.localStorage.setItem(efbSaNavigraphLayerStorageKey, normalizeEfbSaNavigraphLayer(efbSaNavigraphLayer));
+      } catch (_) {
+      }
+    }
+
+    function getNextEfbSaNavigraphLayer(current) {
+      const now = normalizeEfbSaNavigraphLayer(current);
+      if (now === 'vfr') return 'ifr-lo';
+      if (now === 'ifr-lo') return 'ifr-hi';
+      return 'vfr';
+    }
+
+    function getEfbSaNavigraphLayerLabel(layer) {
+      const value = normalizeEfbSaNavigraphLayer(layer);
+      if (value === 'ifr-lo') return 'LOW IFR';
+      if (value === 'ifr-hi') return 'HI IFR';
+      return 'VFR';
     }
 
     function readEfbSaFollowEnabledPreference() {
@@ -4712,8 +4757,8 @@
         const to = byStep[String(seg && seg.to && seg.to.step)] || (seg && seg.to);
         if (!from || !to) return;
         addLineFeature([from, to], {
-          stroke: '#2f5fa7',
-          lineWidth: seg && seg.dashed ? 1.8 : 2.2,
+          stroke: '#d21fa6',
+          lineWidth: seg && seg.dashed ? 2.2 : 2.8,
           dashed: !!(seg && seg.dashed),
         });
       });
@@ -5358,6 +5403,29 @@
         + '</svg>';
     }
 
+    function getEfbSaNavigraphLayerIconSvg(layer) {
+      const value = normalizeEfbSaNavigraphLayer(layer);
+      const top = value === 'vfr' ? 'VFR' : 'IFR';
+      const bottom = value === 'vfr' ? '' : (value === 'ifr-lo' ? 'LOW' : 'HI');
+      return '<svg class="efbRailIconSvg" viewBox="0 0 64 64" aria-hidden="true">'
+        + '<rect x="6" y="6" width="52" height="52" rx="7" fill="none" stroke="currentColor" stroke-width="3.4"/>'
+        + '<text x="32" y="31" text-anchor="middle" font-size="20" font-weight="700" fill="currentColor" font-family="Consolas, monospace">' + top + '</text>'
+        + (bottom ? ('<text x="32" y="49" text-anchor="middle" font-size="14.6" font-weight="700" fill="currentColor" font-family="Consolas, monospace">' + bottom + '</text>') : '')
+        + '</svg>';
+    }
+
+    function refreshEfbSaMapTilesIfActive() {
+      if (selectedTab !== 'EFB') return;
+      if (normalizeEfbViewerMode(efbViewerMode) !== 'sa-map') return;
+      if (typeof disposeOpenFreeMapInstances === 'function') {
+        disposeOpenFreeMapInstances();
+      }
+      efbUiDirty = true;
+      if (latestData) {
+        render(latestData);
+      }
+    }
+
     function getEfbSaFollowIconSvg() {
       return '<svg class="efbRailIconSvg" viewBox="0 0 64 64" aria-hidden="true">'
         + '<circle cx="32" cy="32" r="14" fill="none" stroke="currentColor" stroke-width="3"/>'
@@ -5825,21 +5893,53 @@
 
     async function ensureEfbAirportsLoaded() {
       if (Array.isArray(efbAvailableAirports)) return;
+      if (efbAirportsLoadPromise) {
+        await efbAirportsLoadPromise;
+        return;
+      }
+
+      efbAirportsLoadPromise = (async function () {
+        try {
+          const res = await fetch('/okb/efb/airports', { cache: 'no-store' });
+          if (res.ok) {
+            const payload = await res.json();
+            const airports = Array.isArray(payload && payload.airports) ? payload.airports : [];
+            const entries = Array.isArray(payload && payload.airportEntries) ? payload.airportEntries : [];
+            efbAvailableAirports = airports
+              .map(function (v) { return String(v || '').toUpperCase().trim(); })
+              .filter(function (v) { return !!v; });
+            efbAirportEntries = {};
+            entries.forEach(function (entry) {
+              const icao = String((entry && entry.icao) || '').toUpperCase().trim();
+              if (!icao) return;
+              efbAirportEntries[icao] = {
+                icao: icao,
+                name: String((entry && entry.name) || '').trim(),
+              };
+            });
+          } else {
+            efbAvailableAirports = [];
+            efbAirportEntries = {};
+          }
+        } catch (_) {
+          efbAvailableAirports = [];
+          efbAirportEntries = {};
+        }
+      })();
 
       try {
-        const res = await fetch('/okb/efb/airports', { cache: 'no-store' });
-        if (res.ok) {
-          const payload = await res.json();
-          const airports = Array.isArray(payload && payload.airports) ? payload.airports : [];
-          efbAvailableAirports = airports
-            .map(function (v) { return String(v || '').toUpperCase().trim(); })
-            .filter(function (v) { return !!v; });
-        } else {
-          efbAvailableAirports = [];
-        }
-      } catch (_) {
-        efbAvailableAirports = [];
+        await efbAirportsLoadPromise;
+      } finally {
+        efbAirportsLoadPromise = null;
       }
+    }
+
+    function getEfbAirportDisplayText(icao) {
+      const code = String(icao || '').toUpperCase().trim();
+      if (!code) return '';
+      const entry = efbAirportEntries && efbAirportEntries[code] ? efbAirportEntries[code] : null;
+      const name = String((entry && entry.name) || '').trim();
+      return name ? (code + ', ' + name) : code;
     }
 
     function getEfbViewport(key) {
@@ -5976,23 +6076,35 @@
     async function ensureEfbChartsLoaded(data) {
       const key = getEfbAirportKey(data);
       if (efbChartsByAirport[key]) return key;
+      if (efbChartsLoadPromiseByAirport[key]) {
+        await efbChartsLoadPromiseByAirport[key];
+        return key;
+      }
 
-      try {
-        const res = await fetch('/okb/efb/charts?airport=' + encodeURIComponent(key), { cache: 'no-store' });
-        if (res.ok) {
-          const payload = await res.json();
-          efbChartsByAirport[key] = Array.isArray(payload && payload.charts) ? payload.charts : [];
-          if (prunePinnedChartsForAirport(key)) {
-            persistPinnedChartsPreference();
+      efbChartsLoadPromiseByAirport[key] = (async function () {
+        try {
+          const res = await fetch('/okb/efb/charts?airport=' + encodeURIComponent(key), { cache: 'no-store' });
+          if (res.ok) {
+            const payload = await res.json();
+            efbChartsByAirport[key] = Array.isArray(payload && payload.charts) ? payload.charts : [];
+            if (prunePinnedChartsForAirport(key)) {
+              persistPinnedChartsPreference();
+            }
+            if (!efbSelectedChartByAirport[key] && efbChartsByAirport[key].length) {
+              efbSelectedChartByAirport[key] = String((efbChartsByAirport[key][0] && efbChartsByAirport[key][0].id) || '');
+            }
+          } else {
+            efbChartsByAirport[key] = [];
           }
-          if (!efbSelectedChartByAirport[key] && efbChartsByAirport[key].length) {
-            efbSelectedChartByAirport[key] = String((efbChartsByAirport[key][0] && efbChartsByAirport[key][0].id) || '');
-          }
-        } else {
+        } catch (_) {
           efbChartsByAirport[key] = [];
         }
-      } catch (_) {
-        efbChartsByAirport[key] = [];
+      })();
+
+      try {
+        await efbChartsLoadPromiseByAirport[key];
+      } finally {
+        delete efbChartsLoadPromiseByAirport[key];
       }
 
       return key;
@@ -6023,6 +6135,13 @@
         .toUpperCase()
         .replace(/[^A-Z0-9]/g, '')
         .slice(0, 4);
+    }
+
+    function getEventElementTarget(ev) {
+      const raw = ev && ev.target ? ev.target : null;
+      if (!raw) return null;
+      if (raw.nodeType === 3 && raw.parentElement) return raw.parentElement;
+      return raw;
     }
 
     function getEfbSearchCandidates(token, maxRows) {
@@ -6104,14 +6223,14 @@
       const tokenDisplay = searchToken || '----';
       const searchRows = searchCandidates.map(function (code) {
         const active = code === airportKey ? ' active' : '';
-        return '<button type="button" class="efbSearchCandidateBtn' + active + '" data-efb-search-candidate="' + escapeHtml(code) + '">' + escapeHtml(code) + '</button>';
+        return '<button type="button" class="efbSearchCandidateBtn' + active + '" data-efb-search-candidate="' + escapeHtml(code) + '">' + escapeHtml(getEfbAirportDisplayText(code)) + '</button>';
       }).join('');
 
       const airportOptions = airports.map(function (a) {
         const code = String(a || '').toUpperCase().trim();
         if (!code) return '';
         const sel = code === airportKey ? ' selected' : '';
-        return '<button type="button" class="efbPickerItem' + (sel ? ' active' : '') + '" data-efb-airport="' + escapeHtml(code) + '">' + escapeHtml(code) + '</button>';
+        return '<button type="button" class="efbPickerItem' + (sel ? ' active' : '') + '" data-efb-airport="' + escapeHtml(code) + '">' + escapeHtml(getEfbAirportDisplayText(code)) + '</button>';
       }).join('');
 
       const options = charts.map(function (c) {
@@ -6124,7 +6243,12 @@
       }).join('');
 
       const selectedChart = charts.find(function (c) { return String((c && c.id) || '') === selected; }) || null;
-      const chartUrl = selectedChart ? ('/okb/efb/chart?id=' + encodeURIComponent(String(selectedChart.id || ''))) : '';
+      const selectedChartId = String((selectedChart && selectedChart.id) || '');
+      const isNavigraphChart = selectedChartId.toLowerCase().indexOf('nav:') === 0;
+      const chartMode = (nightModeEnabled && isNavigraphChart) ? '&mode=night' : '';
+      const chartUrl = selectedChart
+        ? ('/okb/efb/chart?id=' + encodeURIComponent(selectedChartId) + chartMode)
+        : '';
       const drawerTitle = efbDrawerMode === 'chart'
         ? ('Charts · ' + escapeHtml(airportKey || 'UNSET'))
         : (efbDrawerMode === 'sa-layers' ? 'SA Map Layers'
@@ -6143,6 +6267,9 @@
           return '<div class="efbPickerRow' + active + '"><button type="button" class="efbPickerItemMain" data-efb-chart="' + escapeHtml(encodeURIComponent(id)) + '">' + escapeHtml(label) + '</button><button type="button" class="efbPinBtn pinned" data-efb-pin-toggle="' + escapeHtml(encodeURIComponent(id)) + '" title="Unpin chart">📌</button></div>';
         }).join('');
       const saLayerDrawerOpen = efbDrawerOpen && efbDrawerMode === 'sa-layers';
+      const navAuth = !!(((data && data.Efb) || {}).AuthPresent);
+      const navLayer = normalizeEfbSaNavigraphLayer(efbSaNavigraphLayer);
+      const navLayerLabel = getEfbSaNavigraphLayerLabel(navLayer);
       const drawerRows = efbDrawerMode === 'chart'
         ? (options || '<span class="efbPickerEmpty">No charts for this airport</span>')
         : (efbDrawerMode === 'pinned'
@@ -6191,6 +6318,9 @@
         + '<div id="efbDrawerList" class="efbDrawerList">' + drawerRows + '</div>'
         + '</div>'
         + '<div id="efbSaLayerDrawer" class="' + (saLayerDrawerOpen ? 'efbSaLayerDrawer' : 'efbSaLayerDrawer closed') + '">'
+        + (navAuth
+          ? ('<button type="button" class="efbRightDrawerBtn active" data-efb-sa-layer="nav-base" title="Navigraph base layer: ' + escapeHtml(navLayerLabel) + '">' + getEfbSaNavigraphLayerIconSvg(navLayer) + '</button>')
+          : '')
         + '<button type="button" class="efbRightDrawerBtn' + (dlinkOnEnabled ? ' active' : '') + '" data-efb-sa-layer="dlink" title="D-Link assets ' + (dlinkOnEnabled ? 'ON' : 'OFF') + '">' + getEfbSaLayerDlinkIconSvg() + '</button>'
         + '<button type="button" class="efbRightDrawerBtn' + (efbSaShowJtacTargets !== false ? ' active' : '') + '" data-efb-sa-layer="jtac" title="JTAC targets ' + (efbSaShowJtacTargets !== false ? 'ON' : 'OFF') + '">' + getEfbSaLayerJtacIconSvg() + '</button>'
         + '<button type="button" class="efbRightDrawerBtn' + (efbSaShowAirports ? ' active' : '') + '" data-efb-sa-layer="airports" title="Airport symbols ' + (efbSaShowAirports ? 'ON' : 'OFF') + '">' + getEfbSaLayerAirportIconSvg() + '</button>'
@@ -6221,7 +6351,7 @@
         + (isSaMapMode
           ? formatEfbSaMapViewportHtml(data)
           : (chartUrl
-            ? ('<img id="efbChartImage" class="efbChartImage" src="' + chartUrl + '" alt="EFB chart">')
+            ? ('<img id="efbChartImage" class="efbChartImage ' + (isNavigraphChart ? 'efbChartImageNavigraph' : 'efbChartImageLocal') + '" src="' + chartUrl + '" alt="EFB chart">')
             : '<div class="efbEmpty">No chart available for selected airport.</div>'))
         + '</div>'
         + '</div>';
@@ -6304,7 +6434,7 @@
             const code = String(a || '').toUpperCase().trim();
             if (!code) return '';
             const active = code === airportKey ? ' active' : '';
-            return '<button type="button" class="efbPickerItem' + active + '" data-efb-airport="' + escapeHtml(code) + '">' + escapeHtml(code) + '</button>';
+            return '<button type="button" class="efbPickerItem' + active + '" data-efb-airport="' + escapeHtml(code) + '">' + escapeHtml(getEfbAirportDisplayText(code)) + '</button>';
           }).join('');
           list.innerHTML = rows || '<span class="efbPickerEmpty">No airport folders</span>';
         }
@@ -6314,10 +6444,17 @@
         const drawer = document.getElementById('efbSaLayerDrawer');
         if (!drawer) return;
         const dlinkBtn = drawer.querySelector('[data-efb-sa-layer="dlink"]');
+        const navBaseBtn = drawer.querySelector('[data-efb-sa-layer="nav-base"]');
         const jtacBtn = drawer.querySelector('[data-efb-sa-layer="jtac"]');
         const airportsBtn = drawer.querySelector('[data-efb-sa-layer="airports"]');
         const navlogBtn = drawer.querySelector('[data-efb-sa-layer="navlog"]');
         const dtcBtn = drawer.querySelector('[data-efb-sa-layer="dtc"]');
+        if (navBaseBtn) {
+          const layer = normalizeEfbSaNavigraphLayer(efbSaNavigraphLayer);
+          navBaseBtn.classList.add('active');
+          navBaseBtn.title = 'Navigraph base layer: ' + getEfbSaNavigraphLayerLabel(layer);
+          navBaseBtn.innerHTML = getEfbSaNavigraphLayerIconSvg(layer);
+        }
         if (dlinkBtn) {
           dlinkBtn.classList.toggle('active', !!dlinkOnEnabled);
           dlinkBtn.title = 'D-Link assets ' + (dlinkOnEnabled ? 'ON' : 'OFF');
@@ -6375,7 +6512,11 @@
           const layerItem = ev && ev.target && ev.target.closest ? ev.target.closest('[data-efb-sa-layer]') : null;
           if (!layerItem) return;
           const layer = String(layerItem.getAttribute('data-efb-sa-layer') || '').toLowerCase();
-          if (layer === 'dlink') {
+          if (layer === 'nav-base') {
+            efbSaNavigraphLayer = getNextEfbSaNavigraphLayer(efbSaNavigraphLayer);
+            persistEfbSaNavigraphLayerPreference();
+            refreshEfbSaMapTilesIfActive();
+          } else if (layer === 'dlink') {
             dlinkOnEnabled = !dlinkOnEnabled;
             persistDlinkOnPreference();
             applyDlinkOnUi();
@@ -6594,7 +6735,7 @@
       const searchOverlay = document.getElementById('efbSearchOverlay');
       if (searchOverlay) {
         searchOverlay.onclick = function (ev) {
-          const target = ev && ev.target;
+          const target = getEventElementTarget(ev);
           if (!target) return;
 
           if (target === searchOverlay) {
@@ -6653,7 +6794,8 @@
       const drawerList = document.getElementById('efbDrawerList');
       if (drawerList) {
         drawerList.onclick = function (ev) {
-          const pinItem = ev && ev.target && ev.target.closest ? ev.target.closest('[data-efb-pin-toggle]') : null;
+          const target = getEventElementTarget(ev);
+          const pinItem = target && target.closest ? target.closest('[data-efb-pin-toggle]') : null;
           if (pinItem) {
             let pinId = String(pinItem.getAttribute('data-efb-pin-toggle') || '').trim();
             const pinAirport = String(pinItem.getAttribute('data-efb-pin-airport') || airportKey || '').toUpperCase().trim() || 'UNSET';
@@ -6665,7 +6807,7 @@
             return;
           }
 
-          const airportItem = ev && ev.target && ev.target.closest ? ev.target.closest('[data-efb-airport]') : null;
+          const airportItem = target && target.closest ? target.closest('[data-efb-airport]') : null;
           if (airportItem) {
             const nextAirport = String(airportItem.getAttribute('data-efb-airport') || '').toUpperCase().trim();
             if (!nextAirport) return;
@@ -6676,7 +6818,7 @@
             return;
           }
 
-          const item = ev && ev.target && ev.target.closest ? ev.target.closest('[data-efb-chart]') : null;
+          const item = target && target.closest ? target.closest('[data-efb-chart]') : null;
           if (!item) return;
           let id = String(item.getAttribute('data-efb-chart') || '').trim();
           const sourceAirport = String(item.getAttribute('data-efb-chart-airport') || airportKey || '').toUpperCase().trim() || airportKey;
@@ -6699,7 +6841,7 @@
         document.addEventListener('click', function (ev) {
           if (selectedTab !== 'EFB') return;
           if (efbSelectionFlowActive) return;
-          const target = ev && ev.target;
+          const target = getEventElementTarget(ev);
           const insideDrawer = target && target.closest && (target.closest('.efbLeftActionDrawer') || target.closest('.efbSaLayerDrawer') || target.closest('.efbLeftRail') || target.closest('.efbRightRail') || target.closest('.efbRightActionDrawer') || target.closest('.efbSearchOverlay'));
           if (!insideDrawer) {
             const wasSearchOpen = efbSearchOverlayOpen;
@@ -6946,7 +7088,10 @@
       const previousTab = selectedTab;
       if (previousTab === 'EFB' && normalized !== 'EFB') {
         efbAvailableAirports = null;
+        efbAirportsLoadPromise = null;
+        efbAirportEntries = {};
         efbChartsByAirport = {};
+        efbChartsLoadPromiseByAirport = {};
         efbSelectedChartByAirport = {};
         efbUiDirty = true;
         efbDrawerOpen = false;
@@ -7096,6 +7241,10 @@
       if (box) box.checked = !!nightModeEnabled;
       const overlayBox = document.getElementById('overlayNightMode');
       if (overlayBox) overlayBox.checked = !!nightModeEnabled;
+
+      if (latestData && selectedTab === 'EFB' && normalizeEfbViewerMode(efbViewerMode) !== 'sa-map') {
+        render(latestData);
+      }
     }
 
     function readContentFontSizePreference() {
@@ -11217,7 +11366,7 @@
             pl.setAttribute('points', linePts.join(' '));
             pl.setAttribute('fill', 'none');
             pl.setAttribute('stroke', String((props && props.stroke) || '#3d566e'));
-            pl.setAttribute('stroke-width', String(Number((props && props.lineWidth) || 2.2)));
+            pl.setAttribute('stroke-width', String(Number((props && props.lineWidth) || 2.2) * 1.2));
             if (props && props.dashed) pl.setAttribute('stroke-dasharray', '8 6');
             pl.setAttribute('stroke-opacity', '0.92');
             pl.style.pointerEvents = 'none';
@@ -11239,7 +11388,7 @@
             poly.setAttribute('fill', String((props && props.fill) || '#4faa4f'));
             poly.setAttribute('fill-opacity', String(isFinite(Number(props && props.fillOpacity)) ? Number(props.fillOpacity) : 0.18));
             poly.setAttribute('stroke', String((props && props.stroke) || '#2f8a2f'));
-            poly.setAttribute('stroke-width', String(Number((props && props.lineWidth) || 1.4)));
+            poly.setAttribute('stroke-width', String(Number((props && props.lineWidth) || 1.4) * 1.2));
             if (props && props.dashed) poly.setAttribute('stroke-dasharray', '8 6');
             poly.style.pointerEvents = 'none';
             overlaySvg.appendChild(poly);
@@ -11579,18 +11728,23 @@
               return c;
             })();
 
+          if (markerNode && (kind === 'waypoint' || kind === 'airfield')) {
+            markerNode.setAttribute('transform', 'translate(' + p.x.toFixed(1) + ' ' + p.y.toFixed(1) + ') scale(1.5) translate(' + (-p.x).toFixed(1) + ' ' + (-p.y).toFixed(1) + ')');
+          }
+
           if (isSelectable && props.assetKey) {
             markerNode.style.pointerEvents = 'auto';
             markerNode.style.cursor = 'pointer';
             markerNode.setAttribute('data-asset-key', String(props.assetKey));
             if (isSelected) {
+              const selectedRingRadius = (kind === 'airfield' || kind === 'waypoint') ? 16.5 : 11;
               const ring = makeNode('circle');
               ring.setAttribute('cx', p.x.toFixed(1));
               ring.setAttribute('cy', p.y.toFixed(1));
-              ring.setAttribute('r', '11');
+              ring.setAttribute('r', selectedRingRadius.toFixed(1));
               ring.setAttribute('fill', 'none');
               ring.setAttribute('stroke', '#c94444');
-              ring.setAttribute('stroke-width', '2.4');
+              ring.setAttribute('stroke-width', (kind === 'airfield' || kind === 'waypoint') ? '3.0' : '2.4');
               ring.style.pointerEvents = 'none';
               overlaySvg.appendChild(ring);
               selectedAssetInfo.x = p.x;
@@ -11604,10 +11758,12 @@
           if (label) {
             const kind = String((props && props.kind) || '').toLowerCase();
             const isAirfieldLabel = kind === 'airfield';
+            const isWaypointLabel = kind === 'waypoint';
+            const useScaledLabel = isAirfieldLabel || isWaypointLabel;
             const text = makeNode('text');
-            text.setAttribute('x', (p.x + (isAirfieldLabel ? 11 : 9)).toFixed(1));
+            text.setAttribute('x', (p.x + (isAirfieldLabel ? 16 : (isWaypointLabel ? 14 : 9))).toFixed(1));
             text.setAttribute('y', (p.y + 4).toFixed(1));
-            text.setAttribute('font-size', isAirfieldLabel ? '12.5' : '11');
+            text.setAttribute('font-size', isAirfieldLabel ? '18.5' : (isWaypointLabel ? '16.5' : '11'));
             text.setAttribute('font-weight', '700');
             const labelFill = isAsset
               ? '#1f3550'
@@ -11616,7 +11772,7 @@
                 : String((props && props.textColor) || '#1f2e3d'));
             text.setAttribute('fill', labelFill);
             text.setAttribute('stroke', '#ffffff');
-            text.setAttribute('stroke-width', '0.6');
+            text.setAttribute('stroke-width', useScaledLabel ? '0.9' : '0.6');
             text.style.pointerEvents = 'none';
             text.textContent = label;
             overlaySvg.appendChild(text);
@@ -12168,10 +12324,48 @@
       const hosts = Array.from(document.querySelectorAll('[data-openfreemap-map-id]'));
       if (!hosts.length) return;
 
-      function getOpenFreeMapStyleUrl() {
-        return nightModeEnabled
-          ? 'https://tiles.openfreemap.org/styles/dark'
-          : 'https://tiles.openfreemap.org/styles/liberty';
+      function shouldUseNavigraphSaTiles() {
+        try {
+          const model = latestData || {};
+          const efb = (model && model.Efb) || {};
+          return !!(efb && efb.AuthPresent);
+        } catch (_) {
+          return false;
+        }
+      }
+
+      function buildOpenFreeMapStyleSpec() {
+        if (!shouldUseNavigraphSaTiles()) {
+          return nightModeEnabled
+            ? 'https://tiles.openfreemap.org/styles/dark'
+            : 'https://tiles.openfreemap.org/styles/liberty';
+        }
+
+        const mode = nightModeEnabled ? 'night' : 'day';
+        const layer = normalizeEfbSaNavigraphLayer(efbSaNavigraphLayer);
+        const tilesUrl = '/okb/efb/navtile?z={z}&x={x}&y={y}&mode=' + mode + '&layer=' + encodeURIComponent(layer);
+        return {
+          version: 8,
+          name: 'navigraph-' + layer + '-' + mode,
+          sources: {
+            navigraphVfr: {
+              type: 'raster',
+              tiles: [tilesUrl],
+              tileSize: 256,
+              minzoom: 0,
+              maxzoom: 18,
+            }
+          },
+          layers: [
+            {
+              id: 'navigraph-vfr-layer',
+              type: 'raster',
+              source: 'navigraphVfr',
+              minzoom: 0,
+              maxzoom: 22,
+            }
+          ]
+        };
       }
 
       ensureOpenFreeMapRuntime(function (ok) {
@@ -12201,7 +12395,7 @@
 
             const map = new maplibregl.Map({
               container: host,
-              style: getOpenFreeMapStyleUrl(),
+              style: buildOpenFreeMapStyleSpec(),
               center: hasStoredView
                 ? [Number(viewState.centerLon), Number(viewState.centerLat)]
                 : [Number(payload.centerLon || 0), Number(payload.centerLat || 0)],
@@ -16230,8 +16424,8 @@
         const to = byStep[String(seg && seg.to && seg.to.step)] || (seg && seg.to);
         if (!from || !to) return;
         addLineFeature([from, to], {
-          stroke: '#2f5fa7',
-          lineWidth: seg && seg.dashed ? 1.8 : 2.2,
+          stroke: '#d21fa6',
+          lineWidth: seg && seg.dashed ? 2.2 : 2.8,
           dashed: !!(seg && seg.dashed)
         });
       });
@@ -19380,6 +19574,7 @@
       nightModeEnabled = !!ev.target.checked;
       persistNightModePreference();
       applyNightModeUi();
+      refreshEfbSaMapTilesIfActive();
     });
 
     document.getElementById('fontSizeSlider').addEventListener('input', function (ev) {
@@ -19408,6 +19603,7 @@
       nightModeEnabled = !!ev.target.checked;
       persistNightModePreference();
       applyNightModeUi();
+      refreshEfbSaMapTilesIfActive();
     });
 
     document.getElementById('overlayDlinkOn').addEventListener('change', function (ev) {
@@ -20297,6 +20493,7 @@
     efbSaTrackUpEnabled = readEfbSaTrackUpEnabledPreference();
     efbSaAnchorMode = readEfbSaAnchorModePreference();
     efbSaUseFastOwnshipEnabled = readEfbSaUseFastOwnshipPreference();
+    efbSaNavigraphLayer = readEfbSaNavigraphLayerPreference();
     nightModeEnabled = readNightModePreference();
     applyNightModeUi();
     dlinkOnEnabled = readDlinkOnPreference();

@@ -41,7 +41,6 @@ namespace VAICOM
             }
 
             private bool kneeboard_init = false;
-            private bool okbEfbRefreshLoopEnabled = false;
 
             private void SetCurrentValueKneeboardOpacity(object sender, EventArgs e)
             {
@@ -399,6 +398,29 @@ namespace VAICOM
                     Log.Write("Starting Navigraph device authentication...", Colors.Text);
                     Extensions.Kneeboard.OpenKneeboardBridge.UpdateStatus("Starting Navigraph authentication...", "warning");
 
+                    // Developer credentials are now expected in encrypted AppData storage.
+                    // No end-user credential prompt is shown here.
+                    string devClientId = "", devClientSecret = "", devClientType = "";
+                    bool hasDevCreds = false;
+                    try
+                    {
+                        hasDevCreds = Extensions.Kneeboard.OpenKneeboardNavigraphCredentials
+                            .TryGetCredentials(out devClientId, out devClientSecret, out devClientType);
+                    }
+                    catch
+                    {
+                        hasDevCreds = false;
+                    }
+
+                    if (!hasDevCreds || string.IsNullOrWhiteSpace(devClientId))
+                    {
+                        string msg = "Missing encrypted Navigraph developer credentials in AppData. Configure device client credentials first.";
+                        System.Windows.MessageBox.Show(this, msg, "Navigraph developer credentials required", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
+                        Log.Write(msg, Static.Colors.Warning);
+                        Extensions.Kneeboard.OpenKneeboardBridge.UpdateStatus("Missing encrypted Navigraph developer credentials.", "warning");
+                        return;
+                    }
+
                     var result = await Extensions.Kneeboard.OpenKneeboardNavigraphOAuthService
                         .ConnectWithDeviceFlowAsync(CancellationToken.None)
                         .ConfigureAwait(true);
@@ -446,122 +468,11 @@ namespace VAICOM
                 Log.Write("OKB EFB auth blob cleared.", Colors.Text);
             }
 
-            private void OpenKneeboardEfbLogAuthClick(object sender, RoutedEventArgs e)
-            {
-                Extensions.Kneeboard.OpenKneeboardNavigraphEfbState.LogDecryptedAuthForDiagnostics();
-            }
-
-            private void OpenKneeboardEfbMockTokenClick(object sender, RoutedEventArgs e)
-            {
-                State.activeconfig.OpenKneeboard_EfbEnabled = true;
-                State.activeconfig.OpenKneeboard_EfbDevBypass = true;
-                Extensions.Kneeboard.OpenKneeboardNavigraphEfbState.SetMockTokenForTesting(false);
-                Settings.ConfigFile.WriteConfigToFile(true);
-                Extensions.Kneeboard.OpenKneeboardBridge.UpdateServerData();
-                bool hasStoredAuth = Extensions.Kneeboard.OpenKneeboardNavigraphEfbState.HasStoredAuth();
-                Log.Write("OKB EFB mock token generated (valid). AuthReadable=" + hasStoredAuth, hasStoredAuth ? Colors.Text : Colors.Warning);
-            }
-
-            private void OpenKneeboardEfbMockExpiredClick(object sender, RoutedEventArgs e)
-            {
-                State.activeconfig.OpenKneeboard_EfbEnabled = true;
-                State.activeconfig.OpenKneeboard_EfbDevBypass = true;
-                Extensions.Kneeboard.OpenKneeboardNavigraphEfbState.SetMockTokenForTesting(true);
-                Settings.ConfigFile.WriteConfigToFile(true);
-                Extensions.Kneeboard.OpenKneeboardBridge.UpdateServerData();
-                bool hasStoredAuth = Extensions.Kneeboard.OpenKneeboardNavigraphEfbState.HasStoredAuth();
-                Log.Write("OKB EFB mock token generated (expired). AuthReadable=" + hasStoredAuth, Colors.Warning);
-            }
-
-            private void OpenKneeboardEfbExpireTokenClick(object sender, RoutedEventArgs e)
-            {
-                bool success = Extensions.Kneeboard.OpenKneeboardNavigraphEfbState.ExpireCurrentTokenForTesting();
-                Settings.ConfigFile.WriteConfigToFile(true);
-                Extensions.Kneeboard.OpenKneeboardBridge.UpdateServerData();
-                if (success)
-                {
-                    Log.Write("OKB EFB token force-expired for testing.", Colors.Warning);
-                }
-                else
-                {
-                    Log.Write("OKB EFB token expire test failed: no parseable token.", Colors.Warning);
-                }
-            }
-
-            private void OpenKneeboardEfbRefreshOkClick(object sender, RoutedEventArgs e)
-            {
-                Extensions.Kneeboard.OpenKneeboardNavigraphOAuthService.SetMockRefreshMode("success");
-                var result = Extensions.Kneeboard.OpenKneeboardNavigraphOAuthService.RunMockRefreshOnce();
-                HandleMockRefreshResult(result, "Refresh OK");
-            }
-
-            private void OpenKneeboardEfbRefreshFailClick(object sender, RoutedEventArgs e)
-            {
-                Extensions.Kneeboard.OpenKneeboardNavigraphOAuthService.SetMockRefreshMode("fail");
-                var result = Extensions.Kneeboard.OpenKneeboardNavigraphOAuthService.RunMockRefreshOnce();
-                HandleMockRefreshResult(result, "Refresh Fail");
-            }
-
-            private void OpenKneeboardEfbRefreshExpiredClick(object sender, RoutedEventArgs e)
-            {
-                Extensions.Kneeboard.OpenKneeboardNavigraphOAuthService.SetMockRefreshMode("expired");
-                var result = Extensions.Kneeboard.OpenKneeboardNavigraphOAuthService.RunMockRefreshOnce();
-                HandleMockRefreshResult(result, "Refresh Expired");
-            }
-
-            private void OpenKneeboardEfbSchedulerToggleClick(object sender, RoutedEventArgs e)
-            {
-                okbEfbRefreshLoopEnabled = !okbEfbRefreshLoopEnabled;
-
-                if (okbEfbRefreshLoopEnabled)
-                {
-                    Extensions.Kneeboard.OpenKneeboardNavigraphOAuthService.SetMockRefreshMode("success");
-                    Extensions.Kneeboard.OpenKneeboardNavigraphOAuthService.StartMockRefreshScheduler(15);
-                    if (OpenKneeboardEfbSchedulerToggle != null)
-                    {
-                        OpenKneeboardEfbSchedulerToggle.Content = "Refresh Loop OFF";
-                    }
-                    Log.Write("OKB EFB mock refresh loop started (15s).", Colors.Text);
-                    return;
-                }
-
-                Extensions.Kneeboard.OpenKneeboardNavigraphOAuthService.StopMockRefreshScheduler();
-                if (OpenKneeboardEfbSchedulerToggle != null)
-                {
-                    OpenKneeboardEfbSchedulerToggle.Content = "Refresh Loop ON";
-                }
-                Log.Write("OKB EFB mock refresh loop stopped.", Colors.Text);
-            }
-
-            private static void HandleMockRefreshResult(Extensions.Kneeboard.OpenKneeboardNavigraphOAuthService.ConnectResult result, string actionLabel)
-            {
-                Settings.ConfigFile.WriteConfigToFile(true);
-                Extensions.Kneeboard.OpenKneeboardBridge.UpdateServerData();
-
-                if (result != null && result.Success)
-                {
-                    Log.Write("OKB EFB " + actionLabel + ": " + result.Message, Colors.Text);
-                    Extensions.Kneeboard.OpenKneeboardBridge.UpdateStatus("EFB " + actionLabel + " complete.", "sent");
-                    return;
-                }
-
-                string message = result == null ? "Unknown mock refresh result." : result.Message;
-                Log.Write("OKB EFB " + actionLabel + ": " + message, Colors.Warning);
-                Extensions.Kneeboard.OpenKneeboardBridge.UpdateStatus("EFB " + actionLabel + " warning.", "warning");
-            }
-
-            private void OpenKneeboardEfbClientIdInit(object sender, EventArgs e) { SetTextBoxValue(sender, State.activeconfig.OpenKneeboard_EfbOAuthClientId); }
             private void OpenKneeboardEfbScopeInit(object sender, EventArgs e) { SetTextBoxValue(sender, State.activeconfig.OpenKneeboard_EfbOAuthScope); }
             private void OpenKneeboardEfbDeviceEndpointInit(object sender, EventArgs e) { SetTextBoxValue(sender, State.activeconfig.OpenKneeboard_EfbOAuthDeviceAuthEndpoint); }
             private void OpenKneeboardEfbTokenEndpointInit(object sender, EventArgs e) { SetTextBoxValue(sender, State.activeconfig.OpenKneeboard_EfbOAuthTokenEndpoint); }
 
-            private void OpenKneeboardEfbClientIdLostFocus(object sender, RoutedEventArgs e)
-            {
-                string next = ReadTextBoxValue(sender);
-                if (State.activeconfig.OpenKneeboard_EfbOAuthClientId == next) return;
-                State.activeconfig.OpenKneeboard_EfbOAuthClientId = next;
-                Settings.ConfigFile.WriteConfigToFile(true);
-            }
+
 
             private void OpenKneeboardEfbScopeLostFocus(object sender, RoutedEventArgs e)
             {
@@ -578,6 +489,7 @@ namespace VAICOM
                 State.activeconfig.OpenKneeboard_EfbOAuthDeviceAuthEndpoint = next;
                 Settings.ConfigFile.WriteConfigToFile(true);
             }
+
 
             private void OpenKneeboardEfbTokenEndpointLostFocus(object sender, RoutedEventArgs e)
             {

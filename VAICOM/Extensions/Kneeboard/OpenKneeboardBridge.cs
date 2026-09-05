@@ -9,6 +9,7 @@ using System.Net;
 using System.Text.RegularExpressions;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Runtime.InteropServices;
 using System.Reflection;
 using System.Windows;
@@ -28,6 +29,7 @@ namespace VAICOM
                 private static readonly object RawServerLogSync = new object();
                 private static readonly object StoreLookupSync = new object();
                 private static readonly object FastOwnshipSync = new object();
+                private static readonly SemaphoreSlim RequestDispatchLimiter = new SemaphoreSlim(12, 12);
                 private static OpenKneeboardSnapshot snapshot = new OpenKneeboardSnapshot();
                 private static string lastAiCrewCommand = "";
                 private static bool captureRawServerMessages;
@@ -1536,7 +1538,41 @@ namespace VAICOM
                         try
                         {
                             HttpListenerContext context = listener.GetContext();
-                            HandleContext(context);
+                            Task.Run(async () =>
+                            {
+                                await RequestDispatchLimiter.WaitAsync().ConfigureAwait(false);
+                                try
+                                {
+                                    HandleContext(context);
+                                }
+                                catch (Exception ex)
+                                {
+                                    try
+                                    {
+                                        string msg = ex == null ? "" : (ex.Message ?? "");
+                                        if (msg.IndexOf("The specified network name is no longer available", StringComparison.OrdinalIgnoreCase) < 0)
+                                        {
+                                            Log.Write("OpenKneeboard dashboard request worker error: " + msg, Colors.Warning);
+                                        }
+                                    }
+                                    catch
+                                    {
+                                    }
+
+                                    try
+                                    {
+                                        context.Response.StatusCode = 500;
+                                        context.Response.Close();
+                                    }
+                                    catch
+                                    {
+                                    }
+                                }
+                                finally
+                                {
+                                    RequestDispatchLimiter.Release();
+                                }
+                            });
                         }
                         catch (HttpListenerException)
                         {
@@ -1662,6 +1698,43 @@ namespace VAICOM
                     if (path == "/okb/efb/charts")
                     {
                         string airport = context.Request.QueryString["airport"] ?? "";
+                        // If navigraph is enabled and auth present, try navigraph charts first
+                        bool useNavigraph = false;
+                        try
+                        {
+                            string authPayload;
+                            useNavigraph = OpenKneeboardNavigraphEfbState.TryGetDecryptedAuthBlob(out authPayload) && !string.IsNullOrWhiteSpace(authPayload);
+                        }
+                        catch { useNavigraph = false; }
+
+                        string normalizedAirport = (airport ?? "").Trim().ToUpperInvariant();
+                        bool forceNavigraphOnlyForAirport = useNavigraph && string.Equals(normalizedAirport, "PGUA", StringComparison.Ordinal);
+
+                        if (useNavigraph)
+                        {
+                            // Try fetching navigraph chart catalog via API helper; fall back to local charts on error
+                            try
+                            {
+                                var navJson = OpenKneeboardNavigraphApiProxy.BuildChartsJsonFallback(airport);
+                                if (!string.IsNullOrWhiteSpace(navJson))
+                                {
+                                    WriteJson(context.Response, navJson);
+                                    return;
+                                }
+                            }
+                            catch
+                            {
+                                // fall through to local
+                            }
+
+                            if (forceNavigraphOnlyForAirport)
+                            {
+                                try { Log.Write("Navigraph charts lookup for PGUA returned no data; local Saved Games fallback is disabled while Navigraph auth is active.", VAICOM.Static.Colors.Warning); } catch { }
+                                WriteJson(context.Response, "{\"charts\":[]}");
+                                return;
+                            }
+                        }
+
                         WriteJson(context.Response, BuildEfbChartsJson(airport));
                         return;
                     }
@@ -1675,16 +1748,99 @@ namespace VAICOM
                     if (path == "/okb/efb/chart")
                     {
                         string chartId = context.Request.QueryString["id"] ?? "";
-                        string contentType;
-                        byte[] chartBytes = ReadEfbChartBytes(chartId, out contentType);
-                        if (chartBytes == null || chartBytes.Length == 0)
+                        // If navigraph auth is present and chartId indicates navigraph provider, proxy via Navigraph API
+                        bool navAuth = false;
+                        try { string auth; navAuth = OpenKneeboardNavigraphEfbState.TryGetDecryptedAuthBlob(out auth) && !string.IsNullOrWhiteSpace(auth); } catch { navAuth = false; }
+                        if (navAuth && chartId.StartsWith("nav:", StringComparison.OrdinalIgnoreCase))
+                        {
+                            try
+                            {
+                                var parts = chartId.Substring(4).Split(':'); // nav:chartId:tilez:tilex:tiley or nav:chartId
+                                if (parts.Length >= 1)
+                                {
+                                    string navChartId = parts[0];
+                                    byte[] tileBytes = null;
+                                    string contentType = "image/png";
+                                    if (parts.Length == 4)
+                                    {
+                                        int z = int.Parse(parts[1]);
+                                        int x = int.Parse(parts[2]);
+                                        int y = int.Parse(parts[3]);
+                                        tileBytes = OpenKneeboardNavigraphApiProxy.GetChartTileBytes(navChartId, z, x, y);
+                                    }
+                                    else
+                                    {
+                                        bool useNight = false;
+                                        string mode = context.Request.QueryString["mode"] ?? "";
+                                        if (string.Equals(mode, "night", StringComparison.OrdinalIgnoreCase))
+                                        {
+                                            useNight = true;
+                                        }
+                                        tileBytes = OpenKneeboardNavigraphApiProxy.GetChartImageBytes(navChartId, useNight);
+                                    }
+
+                                    if (tileBytes != null && tileBytes.Length > 0)
+                                    {
+                                        WriteBinary(context.Response, tileBytes, contentType);
+                                        return;
+                                    }
+                                }
+                            }
+                            catch
+                            {
+                                // fallback to local chart
+                            }
+                        }
+
+                        string contentTypeLocal;
+                        byte[] chartBytesLocal = ReadEfbChartBytes(chartId, out contentTypeLocal);
+                        if (chartBytesLocal == null || chartBytesLocal.Length == 0)
+                        {
+                            context.Response.StatusCode = 404;
+                            context.Response.Close();
+                            return;
+                        }
+                        WriteBinary(context.Response, chartBytesLocal, contentTypeLocal);
+                        return;
+                    }
+
+                    if (path == "/okb/efb/navtile")
+                    {
+                        int z = 0;
+                        int x = 0;
+                        int y = 0;
+                        bool okZ = int.TryParse(context.Request.QueryString["z"] ?? "", out z);
+                        bool okX = int.TryParse(context.Request.QueryString["x"] ?? "", out x);
+                        bool okY = int.TryParse(context.Request.QueryString["y"] ?? "", out y);
+                        string mode = (context.Request.QueryString["mode"] ?? "").Trim();
+                        string layer = (context.Request.QueryString["layer"] ?? "").Trim();
+                        bool useNight = string.Equals(mode, "night", StringComparison.OrdinalIgnoreCase);
+
+                        if (!okZ || !okX || !okY || z < 0 || x < 0 || y < 0)
+                        {
+                            context.Response.StatusCode = 400;
+                            WriteJson(context.Response, "{\"error\":\"invalid_tile_coordinates\"}");
+                            return;
+                        }
+
+                        byte[] bytes = null;
+                        try
+                        {
+                            bytes = OpenKneeboardNavigraphApiProxy.GetEnrouteVfrTileBytes(z, x, y, useNight, layer);
+                        }
+                        catch
+                        {
+                            bytes = null;
+                        }
+
+                        if (bytes == null || bytes.Length == 0)
                         {
                             context.Response.StatusCode = 404;
                             context.Response.Close();
                             return;
                         }
 
-                        WriteBinary(context.Response, chartBytes, contentType);
+                        WriteBinary(context.Response, bytes, "image/png");
                         return;
                     }
 
@@ -2645,7 +2801,34 @@ namespace VAICOM
                 private static string BuildEfbAirportsJson()
                 {
                     List<string> airports = new List<string>();
+                    List<string> localAirports = new List<string>();
+                    Dictionary<string, string> airportNames = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+                    bool useNavigraph = false;
                     string chartsRoot = GetEfbChartsRootPath();
+
+                    try
+                    {
+                        string authPayload;
+                        useNavigraph = OpenKneeboardNavigraphEfbState.TryGetDecryptedAuthBlob(out authPayload) && !string.IsNullOrWhiteSpace(authPayload);
+                    }
+                    catch
+                    {
+                        useNavigraph = false;
+                    }
+
+                    if (useNavigraph)
+                    {
+                        try
+                        {
+                            string theatre = (State.currentstate == null ? "" : State.currentstate.theatre) ?? "";
+                            airports.AddRange(OpenKneeboardNavigraphApiProxy.GetTheatreAirportCandidates(theatre));
+                            airportNames = OpenKneeboardNavigraphApiProxy.GetTheatreAirportDisplayNames(theatre);
+                        }
+                        catch
+                        {
+                            airportNames = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+                        }
+                    }
 
                     try
                     {
@@ -2671,7 +2854,7 @@ namespace VAICOM
 
                                 if (hasChartFiles)
                                 {
-                                    airports.Add(airport);
+                                    localAirports.Add(airport);
                                 }
                             }
                         }
@@ -2680,15 +2863,58 @@ namespace VAICOM
                     {
                     }
 
+                    airports.AddRange(localAirports);
+
                     airports = airports
                         .Distinct(StringComparer.OrdinalIgnoreCase)
                         .OrderBy(a => a, StringComparer.OrdinalIgnoreCase)
+                        .ToList();
+
+                    if (useNavigraph && airports.Count > 0)
+                    {
+                        try
+                        {
+                            Dictionary<string, string> overrideNames = OpenKneeboardNavigraphApiProxy.GetAirportDisplayNamesFromOverrides(airports);
+                            foreach (var kv in overrideNames)
+                            {
+                                if (string.IsNullOrWhiteSpace(kv.Key) || string.IsNullOrWhiteSpace(kv.Value))
+                                {
+                                    continue;
+                                }
+                                if (!airportNames.ContainsKey(kv.Key) || string.IsNullOrWhiteSpace(airportNames[kv.Key]))
+                                {
+                                    airportNames[kv.Key] = kv.Value;
+                                }
+                            }
+
+                            Dictionary<string, string> resolvedNames = OpenKneeboardNavigraphApiProxy.GetAirportNamesByIcao(airports);
+                            foreach (var kv in resolvedNames)
+                            {
+                                if (string.IsNullOrWhiteSpace(kv.Key) || string.IsNullOrWhiteSpace(kv.Value))
+                                {
+                                    continue;
+                                }
+                                airportNames[kv.Key] = kv.Value;
+                            }
+                        }
+                        catch
+                        {
+                        }
+                    }
+
+                    var airportEntries = airports
+                        .Select(a => new
+                        {
+                            icao = a,
+                            name = airportNames.ContainsKey(a) ? (airportNames[a] ?? "") : "",
+                        })
                         .ToList();
 
                     var payload = new
                     {
                         root = chartsRoot,
                         airports = airports,
+                        airportEntries = airportEntries,
                     };
 
                     return JsonConvert.SerializeObject(payload, Formatting.None);

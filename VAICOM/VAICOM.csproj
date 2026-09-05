@@ -366,4 +366,9 @@
   <ItemGroup>
     <Folder Include="WIP Temp\" />
   </ItemGroup>
+  <ItemGroup>
+    <None Update="Extensions\Kneeboard\CredentialsDialog.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </None>
+  </ItemGroup>
 </Project>

@@ -4,6 +4,10 @@
 - User prefers avoiding builds/tests during diagnostics.
 - User is okay with offering builds/tests going forward again.
 
+## Navigraph Credentials
+- Store Navigraph credentials/tokens encrypted in VAICOM data, not in plain config.
+- Retain Navigraph cache for 24 hours, with strict module-connection gating to prevent charts/tiles from displaying when no module is connected.
+
 ## Command Reference
 - Use the provided AH-64D George AI control reference as canonical behavior mapping when adding contextual George commands/macros.
 
@@ -60,9 +64,6 @@
 
 ## COM Frequency Display
 - For runtime COM frequency display, use strict three-decimal MHz formatting for module consistency (e.g., 305.000, 127.050).
-
-## Navigraph Credentials
-- Store Navigraph credentials/tokens encrypted in VAICOM data, not in plain config.
 
 ## Code Clarity
 - Add small step-by-step code notes/comments in complex command-flow methods for clarity.

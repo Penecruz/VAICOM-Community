@@ -96,7 +96,7 @@ namespace VAICOM
                     }
                     if (!ConfigContainsProperty("OpenKneeboard_EfbOAuthScope"))
                     {
-                        State.activeconfig.OpenKneeboard_EfbOAuthScope = "openid charts offline_access";
+                        State.activeconfig.OpenKneeboard_EfbOAuthScope = "openid charts tiles offline_access";
                     }
                     if (!ConfigContainsProperty("OpenKneeboard_EfbOAuthDeviceAuthEndpoint"))
                     {

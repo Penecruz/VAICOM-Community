@@ -244,6 +244,13 @@ orleans.codegen.cs
 # (https://github.com/github/gitignore/pull/2483#issue-259490424)
 #*.snk
 
+## Ignore local navigraph/VAICOM credential and auth blobs
+/VAICOM/Extensions/Kneeboard/*.credentials.*
+/VAICOM/Extensions/Kneeboard/*navigraph*.bin
+/VAICOM/Extensions/Kneeboard/*EfbClientBlob*
+/VAICOM/Extensions/Kneeboard/*EfbAuthBlob*
+/VAICOM/Extensions/Kneeboard/OpenKneeboardNavigraphCredentials.cs
+
 # Since there are multiple workflows, uncomment next line to ignore bower_components
 # (https://github.com/github/gitignore/pull/1529#issuecomment-104372622)
 #bower_components/
