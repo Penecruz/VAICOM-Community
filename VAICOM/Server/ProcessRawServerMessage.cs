@@ -2,7 +2,7 @@
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
-using VAICOM.Extensions.CPG;
+using VAICOM.Extensions.AICPG;
 using VAICOM.Static;
 
 namespace VAICOM

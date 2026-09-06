@@ -3,12 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Windows.Forms;
 using VAICOM.Extensions.AOCS;
-using VAICOM.Extensions.CPG;
+using VAICOM.Extensions.AICPG;
 using VAICOM.Extensions.RIO;
 using VAICOM.PushToTalk;
 using VAICOM.Static;
-
-
 
 namespace VAICOM
 {

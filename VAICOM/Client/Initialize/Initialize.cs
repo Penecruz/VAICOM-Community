@@ -5,7 +5,7 @@ using System.IO;
 using System.Reflection;
 using System.Speech.Synthesis;
 using VAICOM.Database;
-using VAICOM.Extensions.CPG;
+using VAICOM.Extensions.AICPG;
 using VAICOM.Extensions.Kneeboard;
 using VAICOM.Extensions.WorldAudio;
 using VAICOM.FileManager;

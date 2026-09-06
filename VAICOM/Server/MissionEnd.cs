@@ -1,5 +1,5 @@
 ﻿using System.Windows.Forms;
-using VAICOM.Extensions.CPG;
+using VAICOM.Extensions.AICPG;
 using VAICOM.Extensions.Kneeboard;
 using VAICOM.Products;
 using VAICOM.PushToTalk;
