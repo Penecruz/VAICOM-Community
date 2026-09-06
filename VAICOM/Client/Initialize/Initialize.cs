@@ -5,6 +5,7 @@ using System.IO;
 using System.Reflection;
 using System.Speech.Synthesis;
 using VAICOM.Database;
+using VAICOM.Extensions.CPG;
 using VAICOM.Extensions.Kneeboard;
 using VAICOM.Extensions.WorldAudio;
 using VAICOM.FileManager;
@@ -130,8 +131,6 @@ namespace VAICOM
                 State.currentstate.easycomms = true;
                 State.currentmodule = DCSmodules.LookupTable["----"];
                 State.currentrecipientclass = Recipientclasses.Undefined;
-                State.AH64GeorgeWowFromExport = false;
-                State.AH64GeorgeWowFromServerState = false;
                 State.oneradioactive = true;
                 State.currentradiodevicename = "";
                 State.lastupdaterequesttimer = 0;
@@ -155,8 +154,11 @@ namespace VAICOM
                         { Processor.commcat.GROUND_CREW,    new Server.ServerCommsMessage()},
                     };
                 State.Stopwatch = new System.Diagnostics.Stopwatch();
-                Server.homebaselocation = new Server.Vector();
 
+                AH64GeorgeState.WowFromExport = false;
+                AH64GeorgeState.WowFromServerState = false;
+
+                Server.homebaselocation = new Server.Vector();
             }
 
             public static void ResetConfig(dynamic vaProxy)

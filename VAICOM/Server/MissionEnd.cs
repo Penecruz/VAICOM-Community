@@ -1,4 +1,5 @@
 ﻿using System.Windows.Forms;
+using VAICOM.Extensions.CPG;
 using VAICOM.Extensions.Kneeboard;
 using VAICOM.Products;
 using VAICOM.PushToTalk;
@@ -30,11 +31,6 @@ namespace VAICOM
                 State.currentstate = new ServerState();
                 State.currentstate.dcsversion = "";
                 State.currentstate.easycomms = State.previousstate.easycomms;
-                State.AH64GeorgeWeaponStateValid = false;
-                State.AH64GeorgeGunAvailable = false;
-                State.AH64GeorgeRocketsAvailable = false;
-                State.AH64GeorgeMissilesAvailable = false;
-                State.AH64GeorgeSelectedWeapon = State.AH64GeorgeWeaponMode.Unknown;
                 PTT.PTT_ResetConfig();
                 PTT.PTT_TXAssignmentDefault();
                 PTT.PTT_ApplyNewConfig();
@@ -45,11 +41,15 @@ namespace VAICOM
                 //Server.fetchingunits = false;
                 Extensions.RIO.helper.showingjestermenu = false;
 
-
                 EndMissionUpdateGUI();
 
                 State.KneeboardState = new KneeboardState();
 
+                AH64GeorgeState.WeaponStateValid = false;
+                AH64GeorgeState.GunAvailable = false;
+                AH64GeorgeState.RocketsAvailable = false;
+                AH64GeorgeState.MissilesAvailable = false;
+                AH64GeorgeState.SelectedWeapon = AH64WeaponMode.Unknown;
             }
 
             public static void EndMissionUpdateGUI()

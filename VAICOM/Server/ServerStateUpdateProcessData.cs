@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Windows.Forms;
 using VAICOM.Extensions.AOCS;
+using VAICOM.Extensions.CPG;
 using VAICOM.Extensions.RIO;
 using VAICOM.PushToTalk;
 using VAICOM.Static;
@@ -315,7 +316,7 @@ namespace VAICOM
                     return; // Exit early if module validation fails
                 }
 
-                ForceAH64GeorgeNoWeaponWhenOnGround();
+                UpdateAH64GeorgeState();
 
                 // PTT configuration and activate AIRIO if conditions are met
                 PTT.PTT_ApplyNewConfig();
@@ -401,7 +402,7 @@ namespace VAICOM
                 State.Stopwatch.Stop();
             }
 
-            private static void ForceAH64GeorgeNoWeaponWhenOnGround()
+            private static void UpdateAH64GeorgeState()
             {
                 try
                 {
@@ -414,17 +415,17 @@ namespace VAICOM
                     {
                         if (isAH64)
                         {
-                            State.AH64GeorgeWowFromServerState = false;
+                            AH64GeorgeState.WowFromServerState = false;
                         }
                         return;
                     }
 
-                    State.AH64GeorgeWowFromServerState = true;
+                    AH64GeorgeState.WowFromServerState = true;
 
-                    if (State.AH64GeorgeSelectedWeapon != State.AH64GeorgeWeaponMode.NoWeapon)
+                    if (AH64GeorgeState.SelectedWeapon != AH64WeaponMode.NoWeapon)
                     {
-                        var previous = State.AH64GeorgeSelectedWeapon;
-                        State.AH64GeorgeSelectedWeapon = State.AH64GeorgeWeaponMode.NoWeapon;
+                        var previous = AH64GeorgeState.SelectedWeapon;
+                        AH64GeorgeState.SelectedWeapon = AH64WeaponMode.NoWeapon;
                         Log.Write("AH-64D ground sync: forced local George state " + previous + " -> NoWeapon (WOW).", Colors.Warning);
                     }
                 }

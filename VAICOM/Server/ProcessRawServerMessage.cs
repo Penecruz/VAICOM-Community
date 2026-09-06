@@ -2,6 +2,7 @@
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using VAICOM.Extensions.CPG;
 using VAICOM.Static;
 
 namespace VAICOM
@@ -167,15 +168,15 @@ namespace VAICOM
                     bool missilesAvailable = values.TryGetValue("missiles", out string missilesValue) && missilesValue.Equals("1");
                     bool wow = values.TryGetValue("wow", out string wowValue) && wowValue.Equals("1");
 
-                    State.AH64GeorgeGunAvailable = gunAvailable;
-                    State.AH64GeorgeRocketsAvailable = rocketsAvailable;
-                    State.AH64GeorgeMissilesAvailable = missilesAvailable;
-                    State.AH64GeorgeWeaponStateValid = true;
-                    State.AH64GeorgeWowFromExport = wow;
+                    AH64GeorgeState.GunAvailable = gunAvailable;
+                    AH64GeorgeState.RocketsAvailable = rocketsAvailable;
+                    AH64GeorgeState.MissilesAvailable = missilesAvailable;
+                    AH64GeorgeState.WeaponStateValid = true;
+                    AH64GeorgeState.WowFromExport = wow;
 
-                    if (!WeaponStillAvailable(State.AH64GeorgeSelectedWeapon))
+                    if (!WeaponStillAvailable(AH64GeorgeState.SelectedWeapon))
                     {
-                        State.AH64GeorgeSelectedWeapon = State.AH64GeorgeWeaponMode.NoWeapon;
+                        AH64GeorgeState.SelectedWeapon = AH64WeaponMode.NoWeapon;
                     }
                 }
                 catch (Exception e)
@@ -186,18 +187,18 @@ namespace VAICOM
                 return true;
             }
 
-            private static bool WeaponStillAvailable(State.AH64GeorgeWeaponMode mode)
+            private static bool WeaponStillAvailable(AH64WeaponMode mode)
             {
                 switch (mode)
                 {
-                    case State.AH64GeorgeWeaponMode.Gun:
-                        return State.AH64GeorgeGunAvailable;
-                    case State.AH64GeorgeWeaponMode.Missiles:
-                        return State.AH64GeorgeMissilesAvailable;
-                    case State.AH64GeorgeWeaponMode.Rockets:
-                        return State.AH64GeorgeRocketsAvailable;
-                    case State.AH64GeorgeWeaponMode.NoWeapon:
-                    case State.AH64GeorgeWeaponMode.Unknown:
+                    case AH64WeaponMode.Gun:
+                        return AH64GeorgeState.GunAvailable;
+                    case AH64WeaponMode.Missiles:
+                        return AH64GeorgeState.MissilesAvailable;
+                    case AH64WeaponMode.Rockets:
+                        return AH64GeorgeState.RocketsAvailable;
+                    case AH64WeaponMode.NoWeapon:
+                    case AH64WeaponMode.Unknown:
                     default:
                         return true;
                 }

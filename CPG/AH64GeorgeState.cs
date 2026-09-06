@@ -14,9 +14,26 @@ namespace VAICOM.Extensions.CPG
         ChaffAndFlares
     }
 
+    public enum AH64WeaponMode
+    {
+        Unknown,
+        NoWeapon,
+        Gun,
+        Missiles,
+        Rockets
+    }
+
     public class AH64GeorgeState
     {
-        public static AH64CMDispenseMode AH64GeorgeSelectedCMDispenseMode = AH64CMDispenseMode.None;
+        public static AH64CMDispenseMode SelectedCMDispenseMode = AH64CMDispenseMode.None;
+        public static AH64WeaponMode SelectedWeapon = AH64WeaponMode.Unknown;
+        
+        public static bool GunAvailable;
+        public static bool RocketsAvailable;
+        public static bool MissilesAvailable;
+        public static bool WeaponStateValid;
+        public static bool WowFromExport;
+        public static bool WowFromServerState;
 
         private static List<AH64CMDispenseMode> GetGeorgeCMDispenseOrder()
         {
@@ -62,14 +79,14 @@ namespace VAICOM.Extensions.CPG
         {
             List<AH64GeorgeButton> actions = new List<AH64GeorgeButton>();
 
-            var current = AH64GeorgeSelectedCMDispenseMode;
+            var current = SelectedCMDispenseMode;
             int steps = GetGeorgeCMDispenseSteps(current, target);
             for (int i = 0; i < steps; i++)
             {
                 actions.Add(AH64GeorgeButton.Right);
             }
 
-            AH64GeorgeSelectedCMDispenseMode = target;
+            SelectedCMDispenseMode = target;
 
             return actions;
         }
