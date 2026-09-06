@@ -242,6 +242,10 @@ namespace VAICOM.Extensions.CPG
             { "George Countermeasures Safe",                 "georgecmwssafe"                },
             { "George Countermeasures Auto",                 "georgecmwsauto"                },
             { "George Countermeasures Bypass",               "georgecmwsbypass"              },
+            { "George Dispense None",                        "georgecmdispensenone"          },
+            { "George Dispense Chaff",                       "georgecmdispensechaff"         },
+            { "George Dispense Flares",                      "georgecmdispenseflares"        },
+            { "George Dispense Chaff And Flares",            "georgecmdispensechaffandflares" },
 
             // George AI - Hover Bob-up (H-B)
             { "George Move Forwards",                        "georgehoverforward"            },

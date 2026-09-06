@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using VAICOM.Database;
+using VAICOM.Extensions.CPG;
 using VAICOM.Extensions.Kneeboard;
 using VAICOM.Extensions.RIO;
 using VAICOM.PushToTalk;
@@ -224,13 +225,13 @@ namespace VAICOM
                     {
                         //Show/Hide George Overlay
                         case "wMsgGeorgeShowHide":
-                            AddGeorgeButton(3002);
+                            AddGeorgeButton(AH64GeorgeButton.Menu);
                             break;
                         // Long show/hide press
                         case "wMsgGeorgeMenuDefenseMode":
-                            AddGeorgeLongButton(3002);
+                            AddGeorgeLongButton(AH64GeorgeButton.Menu);
                             break;
-                        //Up Short Presses
+                        // Up Short Presses
                         case "wMsgGeorgeUp":
                         case "wMsgGeorgePreviuousTarget":
                         case "wMsgGeorgePreviousItem":
@@ -239,9 +240,9 @@ namespace VAICOM
                         case "wMsgGeorgeAlignToTADS":
                         case "wMsgGeorgeAlignToNTS":
                         case "wMsgGeorgeHoverUpTenFeet":
-                            AddGeorgeButton(3003);
+                            AddGeorgeButton(AH64GeorgeButton.Up);
                             break;
-                        //Down Short Presses
+                        // Down Short Presses
                         case "wMsgGeorgeDown":
                         case "wMsgGeorgeNextTarget":
                         case "wMsgGeorgeNextItem":
@@ -250,9 +251,9 @@ namespace VAICOM
                         case "wMsgGeorgeSlowDown":
                         case "wMsgGeorgeReturnToBattlePosition":
                         case "wMsgGeorgeHoverDownTenFeet":
-                            AddGeorgeButton(3004);
+                            AddGeorgeButton(AH64GeorgeButton.Down);
                             break;
-                        //Left Short Presses
+                        // Left Short Presses
                         case "wMsgGeorgeLeft":
                         case "wMsgGeorgeNextWeapon":
                         case "wMsgGeorgeExitList":
@@ -266,13 +267,14 @@ namespace VAICOM
                                 break;
                             }
 
-                            AddGeorgeButton(3005);
+                            AddGeorgeButton(AH64GeorgeButton.Left);
+                            
                             if (State.currentcommand.dcsid.Equals("wMsgGeorgeNextWeapon", StringComparison.OrdinalIgnoreCase))
                             {
                                 State.AH64GeorgeSelectedWeapon = GetNextGeorgeWeapon(State.AH64GeorgeSelectedWeapon);
                             }
                             break;
-                        //Right Short Presses
+                        // Right Short Presses
                         case "wMsgGeorgeRight":
                         case "wMsgGeorgeTrackTarget":                            
                         case "wMsgGeorgeLaseTarget":
@@ -286,9 +288,9 @@ namespace VAICOM
                         case "wMsgGeorgeStartUpEnginesIdle":
                         case "wMsgGeorgeFollowWaypoints":
                         case "wMsgGeorgeTurnToGHS":
-                            AddGeorgeButton(3006);
+                            AddGeorgeButton(AH64GeorgeButton.Right);
                             break;
-                        //Multifunction Short Presses
+                        // Multifunction Short Presses
                         case "wMsgGeorgeCenter":                        
                         case "wMsgGeorgeClearedFire":
                         case "wMsgGeorgeTadsFov":
@@ -299,26 +301,26 @@ namespace VAICOM
                         case "wMsgGeorgeSetAirSpeedRef":
                         case "wMsgGeorgeSetGroundSpeedRef":
                         case "wMsgGeorgeMaskPosition":
-                            AddGeorgeButton(3008);
+                            AddGeorgeButton(AH64GeorgeButton.Multifunction);
                             break;
-                        //Request Control when in the CPG seat
+                        // Request Control when in the CPG seat
                         case "wMsgGeorgeControlRequest":
-                            AddGeorgeAction(3001, 1.0);
+                            AddGeorgeAction(AH64GeorgeButton.RequestControl, 1.0);
                             break;
-                        //Store Target 
+                        // Store Target 
                         case "wMsgGeorgeStoreTarget":
-                            AddGeorgeAction(3009, 1.0);
+                            AddGeorgeAction(AH64GeorgeButton.StoreTarget, 1.0);
                             break;
-                        //Up Long Presses                         
+                        // Up Long Presses                         
                         case "wMsgGeorgeUpLong":
                         case "wMsgGeorgeTadsZoomIn":
                         case "wMsgGeorgeTargetListZoomIn":
                         case "wMsgGeorgeIncreaseAltitude":
                         case "wMsgGeorgeOrbitOverhead":
                         case "wMsgGeorgeHoverForward":
-                            AddGeorgeLongButton(3003);
+                            AddGeorgeLongButton(AH64GeorgeButton.Up);
                             break;
-                        //Down Long Presses
+                        // Down Long Presses
                         case "wMsgGeorgeDownLong":
                         case "wMsgGeorgeTadsZoomOut":                            
                         case "wMsgGeorgeTargetListZoomOut":
@@ -329,9 +331,9 @@ namespace VAICOM
                         case "wMsgGeorgeThreatWarningsOn":
                         case "wMsgGeorgeThreatWarningsOff":
                         case "wMsgGeorgeHoverBack":
-                            AddGeorgeLongButton(3004);
+                            AddGeorgeLongButton(AH64GeorgeButton.Down);
                             break;
-                        //Left Long Presses
+                        // Left Long Presses
                         case "wMsgGeorgeLeftLong":                                            
                         case "wMsgGeorgeTargetListFilter":
                         case "wMsgGeorgePointListFilterMode":
@@ -341,9 +343,9 @@ namespace VAICOM
                         case "wMsgGeorgeComeLeft":
                         case "wMsgGeorgeBreakLeft":
                         case "wMsgGeorgeHoverLeft":
-                            AddGeorgeLongButton(3005);
+                            AddGeorgeLongButton(AH64GeorgeButton.Left);
                             break;
-                        //Right Long Presses
+                        // Right Long Presses
                         case "wMsgGeorgeRightLong":                            
                         case "wMsgGeorgePointListFilterThreat":
                         case "wMsgGeorgeMslTraj":
@@ -351,9 +353,9 @@ namespace VAICOM
                         case "wMsgGeorgeComeRight":
                         case "wMsgGeorgeBreakRight":
                         case "wMsgGeorgeHoverRight":
-                            AddGeorgeLongButton(3006);
+                            AddGeorgeLongButton(AH64GeorgeButton.Right);
                             break;
-                        //Multifunction Long Presses
+                        // Multifunction Long Presses
                         case "wMsgGeorgeCenterLong":                                                     
                         case "wMsgGeorgeStartUp":
                         case "wMsgGeorgeShutdown":
@@ -365,128 +367,160 @@ namespace VAICOM
                         case "wMsgGeorgeSetBarometricAltitude":
                         case "wMsgGeorgeAddBattlePosition":
                         case "wMsgGeorgeDeleteBattlePosition":
-                            AddGeorgeLongButton(3008);
+                            AddGeorgeLongButton(AH64GeorgeButton.Multifunction);
                             break;
 
                         // George PLT Defense Mode items
                         case "wMsgGeorgeCMWSArm":
                         case "wMsgGeorgeCMWSSafe":
-                            AddGeorgeLongButton(3002);
-                            AddGeorgeButton(3003);
-                            AddGeorgeButton(3002);
+                            AddGeorgeLongButton(AH64GeorgeButton.Menu);
+                            AddGeorgeButton(AH64GeorgeButton.Up);
+                            AddGeorgeButton(AH64GeorgeButton.Menu);
                             break;
                         case "wMsgGeorgeCMWSAuto":
                         case "wMsgGeorgeCMWSBypass":
-                            AddGeorgeLongButton(3002);
-                            AddGeorgeButton(3004);
-                            AddGeorgeButton(3002);
+                            AddGeorgeLongButton(AH64GeorgeButton.Menu);
+                            AddGeorgeButton(AH64GeorgeButton.Down);
+                            AddGeorgeButton(AH64GeorgeButton.Menu);
                             break;
                         case "wMsgGeorgeEvadeOff":
                         case "wMsgGeorgeEvadeLevel":
                         case "wMsgGeorgeEvadeVertical":
                         case "wMsgGeorgeEvadeMask":
-                            AddGeorgeLongButton(3002);
-                            AddGeorgeButton(3005);
-                            AddGeorgeButton(3002);
+                            AddGeorgeLongButton(AH64GeorgeButton.Menu);
+                            AddGeorgeButton(AH64GeorgeButton.Left);
+                            AddGeorgeButton(AH64GeorgeButton.Menu);
+                            break;
+                        case "wMsgGeorgeCMDispenseNone":
+                            AddGeorgeLongButton(AH64GeorgeButton.Menu);
+                            foreach (var button in AH64GeorgeState.SelectGeorgeCMDispenseMode(AH64CMDispenseMode.None))
+                            {
+                                AddGeorgeLongButton(button);
+                            }
+                            AddGeorgeButton(AH64GeorgeButton.Menu);
+                            break;
+                        case "wMsgGeorgeCMDispenseChaff":
+                            AddGeorgeLongButton(AH64GeorgeButton.Menu);
+                            foreach (var button in AH64GeorgeState.SelectGeorgeCMDispenseMode(AH64CMDispenseMode.Chaff))
+                            {
+                                AddGeorgeLongButton(button);
+                            }
+                            AddGeorgeButton(AH64GeorgeButton.Menu);
+                            break;
+                        case "wMsgGeorgeCMDispenseFlares":
+                            AddGeorgeLongButton(AH64GeorgeButton.Menu);
+                            foreach (var button in AH64GeorgeState.SelectGeorgeCMDispenseMode(AH64CMDispenseMode.Flares))
+                            {
+                                AddGeorgeLongButton(button);
+                            }
+                            AddGeorgeButton(AH64GeorgeButton.Menu);
+                            break;
+                        case "wMsgGeorgeCMDispenseChaffAndFlares":
+                            AddGeorgeLongButton(AH64GeorgeButton.Menu);
+                            foreach (var button in AH64GeorgeState.SelectGeorgeCMDispenseMode(AH64CMDispenseMode.ChaffAndFlares))
+                            {
+                                AddGeorgeLongButton(button);
+                            }
+                            AddGeorgeButton(AH64GeorgeButton.Menu);
                             break;
 
                         // George ROE
                         case "wMsgGeorgeReturnFire":
-                            AddGeorgeLongButton(3002);
-                            AddGeorgeLongButton(3003);
-                            AddGeorgeButton(3002);
+                            AddGeorgeLongButton(AH64GeorgeButton.Menu);
+                            AddGeorgeLongButton(AH64GeorgeButton.Up);
+                            AddGeorgeButton(AH64GeorgeButton.Menu);
                             break;
                         case "wMsgGeorgeWeaponsFree":
                             if (Helpers.Common.IsAH64PilotSeatActive())
                             {
                                 // George as CP/G
-                                AddGeorgeLongButton(3003);
+                                AddGeorgeLongButton(AH64GeorgeButton.Up);
                             }
                             else
                             {
                                 // George as pilot
-                                AddGeorgeLongButton(3002);
-                                AddGeorgeLongButton(3003);
-                                AddGeorgeButton(3002);
+                                AddGeorgeLongButton(AH64GeorgeButton.Menu);
+                                AddGeorgeLongButton(AH64GeorgeButton.Up);
+                                AddGeorgeButton(AH64GeorgeButton.Menu);
                             }
                             break;
                         case "wMsgGeorgeHoldFire":
                             if (Helpers.Common.IsAH64PilotSeatActive())
                             {
                                 // George as CP/G
-                                AddGeorgeLongButton(3003);
+                                AddGeorgeLongButton(AH64GeorgeButton.Up);
                             }
                             else
                             {
                                 // George as pilot
-                                AddGeorgeLongButton(3002);
-                                AddGeorgeLongButton(3003);
-                                AddGeorgeButton(3002);
+                                AddGeorgeLongButton(AH64GeorgeButton.Menu);
+                                AddGeorgeLongButton(AH64GeorgeButton.Up);
+                                AddGeorgeButton(AH64GeorgeButton.Menu);
                             }
                             break;
 
                         //Search Tasks
                         //Direct Searches
                         case "wMsgGeorgeMacroPHSsearch":                            
-                            AddGeorgeButton(3003);
+                            AddGeorgeButton(AH64GeorgeButton.Up);
                             break;
                         case "wMsgGeorgeMacroTADSLOS":                            
-                            AddGeorgeLongButton(3004);
+                            AddGeorgeLongButton(AH64GeorgeButton.Down);
                             break;
                         //Area Search Macros PHS, FWD, PFZ and hide overlay
                         case "wMsgGeorgeMacroNextSearch":
-                            AddGeorgeLongButton(3005, 120);
-                            AddGeorgeButton(3004, 80);
-                            AddGeorgeButton(3006, 80);
-                            AddGeorgeButton(3002);
+                            AddGeorgeLongButton(AH64GeorgeButton.Left, 120);
+                            AddGeorgeButton(AH64GeorgeButton.Down, 80);
+                            AddGeorgeButton(AH64GeorgeButton.Right, 80);
+                            AddGeorgeButton(AH64GeorgeButton.Menu);
                             break;
                         case "wMsgGeorgeMacroPreviousSearch":
-                            AddGeorgeLongButton(3005, 200);
-                            AddGeorgeButton(3003, 150);
-                            AddGeorgeButton(3006, 80);
-                            AddGeorgeButton(3002);
+                            AddGeorgeLongButton(AH64GeorgeButton.Left, 200);
+                            AddGeorgeButton(AH64GeorgeButton.Up, 150);
+                            AddGeorgeButton(AH64GeorgeButton.Right, 80);
+                            AddGeorgeButton(AH64GeorgeButton.Menu);
                             break;
                         //Point Search Macros and hide overlay
                         case "wMsgGeorgeMacroNextPoint":
-                            AddGeorgeLongButton(3006, 200);
-                            AddGeorgeButton(3004, 150);
-                            AddGeorgeButton(3006, 80);
-                            AddGeorgeButton(3002);
+                            AddGeorgeLongButton(AH64GeorgeButton.Right, 200);
+                            AddGeorgeButton(AH64GeorgeButton.Down, 150);
+                            AddGeorgeButton(AH64GeorgeButton.Right, 80);
+                            AddGeorgeButton(AH64GeorgeButton.Menu);
                             break;
                         case "wMsgGeorgeMacroPreviousPoint":
-                            AddGeorgeLongButton(3006, 200);
-                            AddGeorgeButton(3003, 150);
-                            AddGeorgeButton(3006, 80);
-                            AddGeorgeButton(3002);
+                            AddGeorgeLongButton(AH64GeorgeButton.Right, 200);
+                            AddGeorgeButton(AH64GeorgeButton.Up, 150);
+                            AddGeorgeButton(AH64GeorgeButton.Right, 80);
+                            AddGeorgeButton(AH64GeorgeButton.Menu);
                             break;
                          //Target List and Track macros
                          case "wMsgGeorgeMacroAddTwoTargetsTrack": //Add and Track Top 2 targets in list
-                            AddGeorgeButton(3008, 100);
-                            AddGeorgeButton(3004, 100);
-                            AddGeorgeButton(3008, 100);
-                            AddGeorgeButton(3006);
+                            AddGeorgeButton(AH64GeorgeButton.Multifunction, 100);
+                            AddGeorgeButton(AH64GeorgeButton.Down, 100);
+                            AddGeorgeButton(AH64GeorgeButton.Multifunction, 100);
+                            AddGeorgeButton(AH64GeorgeButton.Right);
                             break;
                          case "wMsgGeorgeMacroAddThreeTargetsTrack": //Add and Track Top 3 targets in list
-                            AddGeorgeButton(3008, 100);
-                            AddGeorgeButton(3004, 100);
-                            AddGeorgeButton(3008, 100);
-                            AddGeorgeButton(3004, 100);
-                            AddGeorgeButton(3008, 100);
-                            AddGeorgeButton(3006);
+                            AddGeorgeButton(AH64GeorgeButton.Multifunction, 100);
+                            AddGeorgeButton(AH64GeorgeButton.Down, 100);
+                            AddGeorgeButton(AH64GeorgeButton.Multifunction, 100);
+                            AddGeorgeButton(AH64GeorgeButton.Down, 100);
+                            AddGeorgeButton(AH64GeorgeButton.Multifunction, 100);
+                            AddGeorgeButton(AH64GeorgeButton.Right);
                             break;
                          case "wMsgGeorgeMacroAddFourTargetsTrack": //Add and Track Top 4 targets in list
-                            AddGeorgeButton(3008, 100);
-                            AddGeorgeButton(3004, 100);
-                            AddGeorgeButton(3008, 100);
-                            AddGeorgeButton(3004, 100);
-                            AddGeorgeButton(3008, 100);
-                            AddGeorgeButton(3004, 100);
-                            AddGeorgeButton(3008, 100);
-                            AddGeorgeButton(3006);
+                            AddGeorgeButton(AH64GeorgeButton.Multifunction, 100);
+                            AddGeorgeButton(AH64GeorgeButton.Down, 100);
+                            AddGeorgeButton(AH64GeorgeButton.Multifunction, 100);
+                            AddGeorgeButton(AH64GeorgeButton.Down, 100);
+                            AddGeorgeButton(AH64GeorgeButton.Multifunction, 100);
+                            AddGeorgeButton(AH64GeorgeButton.Down, 100);
+                            AddGeorgeButton(AH64GeorgeButton.Multifunction, 100);
+                            AddGeorgeButton(AH64GeorgeButton.Right);
                             break;
                         case "wMsgGeorgeMacroTrackEngage": //Tracks current target and give engage command if ROE is Weapons Hold
-                            AddGeorgeButton(3006, 100);                            
-                            AddGeorgeButton(3008, 100);                            
+                            AddGeorgeButton(AH64GeorgeButton.Right, 100);                            
+                            AddGeorgeButton(AH64GeorgeButton.Multifunction, 100);                            
                             break;
 
                         case "wMsgGeorgeMacroSelectGun":
@@ -616,8 +650,8 @@ namespace VAICOM
                         return;
                     }
 
-                    AddGeorgeAction(3005, 1.0, 2000);
-                    AddGeorgeAction(3005, 0.0, 80);
+                    AddGeorgeAction(AH64GeorgeButton.Left, 1.0, 2000);
+                    AddGeorgeAction(AH64GeorgeButton.Left, 0.0, 80);
                     State.AH64GeorgeSelectedWeapon = State.AH64GeorgeWeaponMode.NoWeapon;
                     if (State.activeconfig.RIO_Messages)
                     {
@@ -691,7 +725,7 @@ namespace VAICOM
                     int steps = GetGeorgeCycleSteps(current, target);
                     for (int i = 0; i < steps; i++)
                     {
-                        AddGeorgeButton(3005, 80);
+                        AddGeorgeButton(AH64GeorgeButton.Left, 80);
                     }
 
                     State.AH64GeorgeSelectedWeapon = target;
@@ -833,6 +867,17 @@ namespace VAICOM
                     AddGeorgeAction(command, 0.0, postDelayMs);
                 }
 
+                // Enum overloads so callers can use AH64DGeorgeButton
+                public static void AddGeorgeLongButton(AH64GeorgeButton button)
+                {
+                    AddGeorgeLongButton((int)button);
+                }
+
+                public static void AddGeorgeLongButton(AH64GeorgeButton button, int postDelayMs)
+                {
+                    AddGeorgeLongButton((int)button, postDelayMs);
+                }
+
                 public static void AddGeorgeButton(int command)
                 {
                     AddGeorgeAction(command, 1.0);
@@ -845,6 +890,17 @@ namespace VAICOM
                     AddGeorgeAction(command, 0.0, postDelayMs);
                 }
 
+                // Enum overloads so callers can use AH64DGeorgeButton
+                public static void AddGeorgeButton(AH64GeorgeButton button)
+                {
+                    AddGeorgeButton((int)button);
+                }
+
+                public static void AddGeorgeButton(AH64GeorgeButton button, int postDelayMs)
+                {
+                    AddGeorgeButton((int)button, postDelayMs);
+                }
+
                 public static void AddGeorgeAction(int command, double value, int delayMs = 0)
                 {
                     State.currentmessage.extsequence.Add(new Extensions.RIO.DeviceAction
@@ -854,6 +910,12 @@ namespace VAICOM
                         value = value,
                         delayMs = delayMs
                     });
+                }
+
+                // Enum overload for AddGeorgeAction
+                public static void AddGeorgeAction(AH64GeorgeButton button, double value, int delayMs = 0)
+                {
+                    AddGeorgeAction((int)button, value, delayMs);
                 }
 
                 public static bool ProcessIfWSO()
