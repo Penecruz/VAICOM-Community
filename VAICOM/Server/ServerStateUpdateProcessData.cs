@@ -445,8 +445,10 @@ namespace VAICOM
                     System.Threading.Tasks.Task.Delay(5000).ContinueWith(_ =>
                     {
                         ValidateDcsModule(true); // Revalidate module connection
-                        State.moduleConnected = true; // Update connection state
-                        EnsureModuleConnectedAndProcessF10Menu(); // Retry F10 menu processing
+                        if (State.moduleConnected)
+                        {
+                            EnsureModuleConnectedAndProcessF10Menu(); // Retry only when connection is actually restored to fix stale session state.
+                        }
                     });
                 }
             }

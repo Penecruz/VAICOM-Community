@@ -288,9 +288,10 @@ namespace VAICOM
                         return false;
                     }
 
-                    return !string.IsNullOrWhiteSpace(server.Aircraft)
-                        || !string.IsNullOrWhiteSpace(server.MissionTitle)
-                        || !string.IsNullOrWhiteSpace(server.Theater);
+                    return server.ModuleConnected
+                        && (!string.IsNullOrWhiteSpace(server.Aircraft)
+                            || !string.IsNullOrWhiteSpace(server.MissionTitle)
+                            || !string.IsNullOrWhiteSpace(server.Theater));
                 }
 
                 public class OpenKneeboardEfbSnapshot

@@ -1105,6 +1105,42 @@
       padding: 14px;
     }
 
+    .efbLoadingOverlay {
+      position: absolute;
+      left: 50%;
+      top: 10px;
+      transform: translateX(-50%);
+      z-index: 40;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 160ms ease;
+    }
+
+    .efbLoadingOverlay.visible {
+      opacity: 1;
+    }
+
+    .efbLoadingOverlayText {
+      padding: 8px 14px;
+      border-radius: 9px;
+      border: 1px solid rgba(124, 134, 146, 0.45);
+      background: rgba(16, 28, 40, 0.18);
+      color: rgba(255, 255, 255, 0.95);
+      font-size: 17px;
+      font-weight: 600;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.65);
+      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.28);
+      backdrop-filter: blur(2px);
+      -webkit-backdrop-filter: blur(2px);
+      white-space: nowrap;
+      max-width: min(70vw, 620px);
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
     .mainContent {
       font-size: var(--contentFontSize);
       line-height: 1.32;
@@ -3329,8 +3365,10 @@
     let efbManuallySelectedAirport = '';
     let efbChartsByAirport = {};
     let efbChartsLoadPromiseByAirport = {};
+    let efbChartsLastFetchMsByAirport = {};
     let efbSelectedChartByAirport = {};
     let efbViewportByAirport = {};
+    let efbLoadingOverlayMessage = '';
     let efbDragState = null;
     let efbUiDirty = true;
     let efbLastResolvedAirport = '';
@@ -3604,8 +3642,11 @@
       efbLastResolvedAirport = icao;
       await ensureEfbChartsLoaded(data);
       if (selectedTab === 'EFB' && latestData) {
-        efbUiDirty = true;
-        render(latestData);
+        const keepSaMapStable = normalizeEfbViewerMode(efbViewerMode) === 'sa-map';
+        if (!keepSaMapStable) {
+          efbUiDirty = true;
+          render(latestData);
+        }
       }
     }
 
@@ -6073,9 +6114,23 @@
       viewport.rot = normalizeRotationDeg(Number(viewport.rot) || 0);
     }
 
+    function setEfbLoadingOverlay(message) {
+      efbLoadingOverlayMessage = String(message || '').trim();
+      const el = document.getElementById('efbLoadingOverlay');
+      const text = document.getElementById('efbLoadingOverlayText');
+      if (!el || !text) return;
+      text.textContent = efbLoadingOverlayMessage;
+      el.classList.toggle('visible', !!efbLoadingOverlayMessage);
+    }
+
     async function ensureEfbChartsLoaded(data) {
       const key = getEfbAirportKey(data);
-      if (efbChartsByAirport[key]) return key;
+      const existingCharts = Array.isArray(efbChartsByAirport[key]) ? efbChartsByAirport[key] : null;
+      const lastFetchMs = Number(efbChartsLastFetchMsByAirport[key] || 0);
+      const nowMs = Date.now();
+      const emptyRetryMs = 3000;
+      if (existingCharts && existingCharts.length > 0) return key;
+      if (existingCharts && existingCharts.length === 0 && (nowMs - lastFetchMs) < emptyRetryMs) return key;
       if (efbChartsLoadPromiseByAirport[key]) {
         await efbChartsLoadPromiseByAirport[key];
         return key;
@@ -6084,6 +6139,7 @@
       efbChartsLoadPromiseByAirport[key] = (async function () {
         try {
           const res = await fetch('/okb/efb/charts?airport=' + encodeURIComponent(key), { cache: 'no-store' });
+          efbChartsLastFetchMsByAirport[key] = Date.now();
           if (res.ok) {
             const payload = await res.json();
             efbChartsByAirport[key] = Array.isArray(payload && payload.charts) ? payload.charts : [];
@@ -6097,6 +6153,7 @@
             efbChartsByAirport[key] = [];
           }
         } catch (_) {
+          efbChartsLastFetchMsByAirport[key] = Date.now();
           efbChartsByAirport[key] = [];
         }
       })();
@@ -6113,16 +6170,19 @@
     function getEfbModuleGateState(data) {
       const efb = (data && data.Efb) || {};
       const server = (data && data.Server) || {};
-      const hasAircraft = String(server.Aircraft || '').trim().length > 0;
+      const aircraftId = String(server.Aircraft || '').trim();
+      const aircraftUpper = aircraftId.toUpperCase();
+      const hasAircraft = aircraftId.length > 0 && aircraftUpper !== '----';
+      const moduleConnected = !!server.ModuleConnected;
       const hasPosition = Math.abs(Number(server.PlayerPosX) || 0) > 0.001
         || Math.abs(Number(server.PlayerPosY) || 0) > 0.001
         || Math.abs(Number(server.PlayerAltFeet) || 0) > 0.5;
-      const liveSession = hasAircraft && hasPosition;
+      const liveSession = moduleConnected && hasAircraft && hasPosition;
       const devBypass = !!efb.DevBypass;
       return {
         liveSession: liveSession,
         devBypass: devBypass,
-        allowed: liveSession || devBypass,
+        allowed: liveSession,
       };
     }
 
@@ -6282,6 +6342,7 @@
 
       return ''
         + '<div class="efbShell">'
+        + '<div id="efbLoadingOverlay" class="efbLoadingOverlay' + (efbLoadingOverlayMessage ? ' visible' : '') + '"><div id="efbLoadingOverlayText" class="efbLoadingOverlayText">' + escapeHtml(efbLoadingOverlayMessage || '') + '</div></div>'
         + '<div class="' + topNavClass + '">'
         + '<button id="efbPrevChartBtn" type="button" class="efbTopNavBtn" title="Previous chart (uses pinned charts when available)"' + (canCycle ? '' : ' disabled') + '>&lt;&lt; PREV</button>'
         + '<button id="efbNextChartBtn" type="button" class="efbTopNavBtn" title="Next chart (uses pinned charts when available)"' + (canCycle ? '' : ' disabled') + '>NEXT &gt;&gt;</button>'
@@ -7087,13 +7148,7 @@
 
       const previousTab = selectedTab;
       if (previousTab === 'EFB' && normalized !== 'EFB') {
-        efbAvailableAirports = null;
-        efbAirportsLoadPromise = null;
-        efbAirportEntries = {};
-        efbChartsByAirport = {};
-        efbChartsLoadPromiseByAirport = {};
-        efbSelectedChartByAirport = {};
-        efbUiDirty = true;
+        efbLoadingOverlayMessage = '';
         efbDrawerOpen = false;
         efbDrawerMode = 'airport';
         efbSelectionFlowActive = false;
@@ -10931,9 +10986,31 @@
       runtimeFlightPlanSnapshotGroupName = '';
     }
 
+    function invalidateEfbAirportCatalogCache() {
+      efbAvailableAirports = null;
+      efbAirportsLoadPromise = null;
+      efbAirportEntries = {};
+      efbChartsByAirport = {};
+      efbChartsLastFetchMsByAirport = {};
+      efbChartsLoadPromiseByAirport = {};
+      efbSelectedChartByAirport = {};
+      efbManuallySelectedAirport = '';
+      efbLastResolvedAirport = '';
+      efbUiDirty = true;
+      setEfbLoadingOverlay('');
+    }
+
     function maybeResetFlightPlanStateForMission(data) {
       const identity = getMissionIdentity(data);
       const missionClock = getMissionClockSeconds(data);
+      const server = (data && data.Server) || {};
+      const hasActiveModule = !!String(server.Aircraft || '').trim();
+
+      if (!hasActiveModule) {
+        lastMissionClockSeconds = NaN;
+        return;
+      }
+
       const identityChanged = !!identity && !!lastMissionIdentity && identity !== lastMissionIdentity;
       const missionClockRewound = isFinite(missionClock)
         && isFinite(lastMissionClockSeconds)
@@ -10942,6 +11019,7 @@
       if (identityChanged || missionClockRewound) {
         resetRuntimeFlightPlanState();
         invalidateRuntimeFlightPlanSnapshot();
+        invalidateEfbAirportCatalogCache();
         resetMissionClockAnchor();
         runtimeFlightPlanUserOverride = false;
         efbSaOwnshipFast.hasPosition = false;
@@ -11067,12 +11145,12 @@
 
     function getOpenFreeMapViewBySelection(selected) {
       const key = getFlightPlanEtaStartKey(selected);
-      if (!key) return { centerLon: NaN, centerLat: NaN, zoom: NaN };
+      if (!key) return { centerLon: NaN, centerLat: NaN, zoom: NaN, bearing: NaN };
       const existing = fltPlanOpenFreeMapViewBySelection[key];
       if (existing && isFinite(Number(existing.centerLon)) && isFinite(Number(existing.centerLat)) && isFinite(Number(existing.zoom))) {
         return existing;
       }
-      const state = { centerLon: NaN, centerLat: NaN, zoom: NaN };
+      const state = { centerLon: NaN, centerLat: NaN, zoom: NaN, bearing: NaN };
       fltPlanOpenFreeMapViewBySelection[key] = state;
       return state;
     }
@@ -11941,9 +12019,6 @@
               lastAssetBugEventMs = nowMs;
 
               const suppressKey = getFlightPlanEtaStartKey(item.selectedKey);
-              if (suppressKey && efbSaFollowOwnshipEnabled) {
-                efbSaFollowSuppressUntilBySelection[suppressKey] = Date.now() + 1200;
-              }
               let resolvedAssetKey = assetKey;
               try {
                 const payload = item.payload || {};
@@ -11975,6 +12050,22 @@
 
               const current = getMapSelectedAssetKeyBySelection(item.selectedKey);
               const nextKey = current === resolvedAssetKey ? '' : resolvedAssetKey;
+
+              let buggedAirfieldIcao = '';
+              try {
+                buggedAirfieldIcao = String(resolveMapSelectedAirfieldIcao(latestData, nextKey) || '').toUpperCase().trim();
+              } catch (_) {
+                buggedAirfieldIcao = '';
+              }
+
+              if (suppressKey && efbSaFollowOwnshipEnabled) {
+                if (buggedAirfieldIcao) {
+                  efbSaFollowSuppressUntilBySelection[suppressKey] = 0;
+                } else {
+                  efbSaFollowSuppressUntilBySelection[suppressKey] = Date.now() + 1200;
+                }
+              }
+
               setMapSelectedAssetKeyBySelection(item.selectedKey, nextKey);
               setEfbDebugState({
                 source: 'sa-map-click-openfreemap',
@@ -11984,7 +12075,17 @@
               if (nextKey) {
                 tryPreloadEfbForBuggedAirfield(latestData, nextKey).catch(function () { });
               }
-              if (latestData) render(latestData);
+              if (latestData) {
+                const selectedAirfieldIcao = String(resolveMapSelectedAirfieldIcao(latestData, nextKey) || '').toUpperCase().trim();
+                const inSaMapMode = selectedTab === 'EFB' && normalizeEfbViewerMode(efbViewerMode) === 'sa-map';
+                if (inSaMapMode && selectedAirfieldIcao) {
+                  if (item && item.selectedKey) {
+                    applyOpenFreeMapOwnshipCamera(item.selectedKey, latestData);
+                  }
+                } else {
+                  render(latestData);
+                }
+              }
               ev.preventDefault();
               if (typeof ev.stopPropagation === 'function') {
                 ev.stopPropagation();
@@ -12122,11 +12223,70 @@
 
       const map = item.map;
       const mode = String(action || '').toLowerCase();
+
+      function resolveOwnshipLonLat() {
+        try {
+          const payload = item.payload || {};
+          const features = Array.isArray(payload.features) ? payload.features : [];
+          const ownshipFeature = features.find(function (f) {
+            const props = (f && f.properties) || {};
+            const geom = (f && f.geometry) || {};
+            const c = Array.isArray(geom.coordinates) ? geom.coordinates : [];
+            return String(props.kind || '').toLowerCase() === 'player'
+              && c.length >= 2
+              && isFinite(Number(c[0]))
+              && isFinite(Number(c[1]));
+          });
+          if (ownshipFeature) {
+            return {
+              lon: Number(ownshipFeature.geometry.coordinates[0]),
+              lat: Number(ownshipFeature.geometry.coordinates[1]),
+            };
+          }
+
+          const model = latestData || {};
+          const ownship = getPlayerMapPoint(model);
+          if (!ownship || !isFinite(Number(ownship.xNum)) || !isFinite(Number(ownship.yNum))) return null;
+          const theater = String(resolveOpenFreeMapFallbackTheatreText(model) || '').trim();
+          const llPrimary = convertDcsXYToLatLon(theater, Number(ownship.xNum), Number(ownship.yNum));
+          const llSwap = convertDcsXYToLatLon(theater, Number(ownship.yNum), Number(ownship.xNum));
+          const ll = (llPrimary && isFinite(Number(llPrimary.lon)) && isFinite(Number(llPrimary.lat)))
+            ? llPrimary
+            : ((llSwap && isFinite(Number(llSwap.lon)) && isFinite(Number(llSwap.lat))) ? llSwap : null);
+          if (!ll) return null;
+          return { lon: Number(ll.lon), lat: Number(ll.lat) };
+        } catch (_) {
+          return null;
+        }
+      }
+
       if (mode === 'in') {
+        if (efbSaFollowOwnshipEnabled) {
+          const ownship = resolveOwnshipLonLat();
+          if (ownship) {
+            map.easeTo({
+              zoom: Number(map.getZoom()) + 1,
+              around: [ownship.lon, ownship.lat],
+              duration: 0,
+            });
+            return true;
+          }
+        }
         map.zoomIn({ duration: 0 });
         return true;
       }
       if (mode === 'out') {
+        if (efbSaFollowOwnshipEnabled) {
+          const ownship = resolveOwnshipLonLat();
+          if (ownship) {
+            map.easeTo({
+              zoom: Number(map.getZoom()) - 1,
+              around: [ownship.lon, ownship.lat],
+              duration: 0,
+            });
+            return true;
+          }
+        }
         map.zoomOut({ duration: 0 });
         return true;
       }
@@ -12393,13 +12553,42 @@
             const viewState = getOpenFreeMapViewBySelection(selectedKey);
             const hasStoredView = isFinite(Number(viewState.centerLon)) && isFinite(Number(viewState.centerLat)) && isFinite(Number(viewState.zoom));
 
+            let initialCenterLon = hasStoredView ? Number(viewState.centerLon) : Number(payload.centerLon || 0);
+            let initialCenterLat = hasStoredView ? Number(viewState.centerLat) : Number(payload.centerLat || 0);
+            let initialBearing = isFinite(Number(viewState.bearing)) ? Number(viewState.bearing) : 0;
+
+            if (selectedTab === 'EFB' && normalizeEfbViewerMode(efbViewerMode) === 'sa-map' && efbSaFollowOwnshipEnabled) {
+              const model = latestData || null;
+              const ownship = getPlayerMapPoint(model);
+              if (ownship && isFinite(Number(ownship.xNum)) && isFinite(Number(ownship.yNum))) {
+                const theater = String(resolveOpenFreeMapFallbackTheatreText(model) || '').trim();
+                const llPrimary = convertDcsXYToLatLon(theater, Number(ownship.xNum), Number(ownship.yNum));
+                const llSwap = convertDcsXYToLatLon(theater, Number(ownship.yNum), Number(ownship.xNum));
+                const ll = (llPrimary && isFinite(Number(llPrimary.lon)) && isFinite(Number(llPrimary.lat)))
+                  ? llPrimary
+                  : ((llSwap && isFinite(Number(llSwap.lon)) && isFinite(Number(llSwap.lat))) ? llSwap : null);
+                if (ll) {
+                  initialCenterLon = Number(ll.lon);
+                  initialCenterLat = Number(ll.lat);
+                }
+
+                if (efbSaTrackUpEnabled) {
+                  const heading = getOwnshipHeadingDeg(model, ownship);
+                  if (isFinite(Number(heading))) {
+                    initialBearing = normalizeHeadingDeg(Number(heading));
+                  }
+                } else {
+                  initialBearing = 0;
+                }
+              }
+            }
+
             const map = new maplibregl.Map({
               container: host,
               style: buildOpenFreeMapStyleSpec(),
-              center: hasStoredView
-                ? [Number(viewState.centerLon), Number(viewState.centerLat)]
-                : [Number(payload.centerLon || 0), Number(payload.centerLat || 0)],
+              center: [initialCenterLon, initialCenterLat],
               zoom: hasStoredView ? Number(viewState.zoom) : 6,
+              bearing: initialBearing,
               attributionControl: true,
             });
 
@@ -12419,7 +12608,7 @@
 
             map.on('load', function () {
               renderOpenFreeMapOverlay(item, payload);
-              if (!hasStoredView && bounds && bounds.length === 4) {
+              if (!hasStoredView && bounds && bounds.length === 4 && !efbSaFollowOwnshipEnabled) {
                 map.fitBounds([[bounds[0], bounds[1]], [bounds[2], bounds[3]]], { padding: 36, duration: 0, maxZoom: 11 });
               }
               if (selectedKey && selectedTab === 'EFB' && normalizeEfbViewerMode(efbViewerMode) === 'sa-map') {
@@ -12447,6 +12636,7 @@
               state.centerLon = Number(center.lng);
               state.centerLat = Number(center.lat);
               state.zoom = Number(map.getZoom());
+              state.bearing = Number(map.getBearing());
             });
 
             function suppressFollowByUserInput(delayMs) {
@@ -18477,6 +18667,11 @@
       const liveGroupName = String(diagnostics.playerGroup || '').trim();
 
       if (hasExplicitPlanSelection) {
+        if (runtimeFlightPlanSnapshot
+          && runtimeFlightPlanSnapshot.length
+          && runtimeFlightPlanSnapshotMissionIdentity === missionIdentity) {
+          return cloneRuntimeWaypoints(runtimeFlightPlanSnapshot);
+        }
         return readMissionRuntimeWaypointsFromDiagnostics(model);
       }
 
@@ -19157,11 +19352,15 @@
       updateFakeMissionControlsUi();
       maybeResetFlightPlanStateForMission(data);
       const server = displayData && displayData.Server ? displayData.Server : {};
+      const aircraftId = String(server.Aircraft || '').trim();
+      const aircraftUpper = aircraftId.toUpperCase();
+      const hasAircraft = aircraftId.length > 0 && aircraftUpper !== '----';
+      const moduleConnected = !!server.ModuleConnected;
       const renderTheater = String(server.Theater || '').trim();
       if (renderTheater) {
         lastKnownTheater = renderTheater;
       }
-      const haveMission = !!(server.Aircraft || server.MissionTitle || server.Theater);
+      const haveMission = moduleConnected && (hasAircraft || !!(server.MissionTitle || server.Theater));
       const debugMode = !!server.DebugMode;
       const defaultStatusText = haveMission ? 'Live session detected.' : 'Waiting for mission data...';
       let statusText = defaultStatusText;
@@ -19280,6 +19479,17 @@
         tabBody.className = 'content mainContent';
         const efbGate = getEfbModuleGateState(displayData);
         if (!efbGate.allowed) {
+          efbLoadingOverlayMessage = '';
+          efbAvailableAirports = null;
+          efbAirportsLoadPromise = null;
+          efbAirportEntries = {};
+          efbChartsByAirport = {};
+          efbChartsLastFetchMsByAirport = {};
+          efbChartsLoadPromiseByAirport = {};
+          efbSelectedChartByAirport = {};
+          efbManuallySelectedAirport = '';
+          efbLastResolvedAirport = '';
+          setEfbLoadingOverlay('');
           tabBody.innerHTML = '<div class="efbEmpty">' + escapeHtml(getEfbNoModuleMessage()) + '</div>';
           efbUiDirty = true;
           efbDrawerOpen = false;
@@ -19288,10 +19498,28 @@
             disposeOpenFreeMapInstances();
           }
         } else if (!Array.isArray(efbAvailableAirports)) {
-          tabBody.innerHTML = '<div class="efbEmpty">Loading EFB airports...</div>';
+          setEfbLoadingOverlay('Loading EFB airports...');
+          if (!document.getElementById('efbAirportToggleBtn')) {
+            tabBody.innerHTML = formatEfbTabContentHtml(displayData);
+            bindEfbInteractions(displayData);
+            efbUiDirty = false;
+          }
           ensureEfbAirportsLoaded().then(function () {
-            efbUiDirty = true;
-            if (latestData && selectedTab === 'EFB') render(latestData);
+            setEfbLoadingOverlay('');
+            if (latestData && selectedTab === 'EFB') {
+              const inSaMapMode = normalizeEfbViewerMode(efbViewerMode) === 'sa-map';
+              if (inSaMapMode) {
+                const saMapContext = resolveActiveSaMapContext(latestData);
+                if (saMapContext && saMapContext.selected && typeof applyOpenFreeMapOwnshipCamera === 'function') {
+                  applyOpenFreeMapOwnshipCamera(saMapContext.selected, latestData);
+                }
+              } else {
+                efbUiDirty = true;
+                render(latestData);
+              }
+            }
+          }).catch(function () {
+            setEfbLoadingOverlay('');
           });
         } else {
           if (efbAutoSelectOnEnter) {
@@ -19304,12 +19532,31 @@
           const airportKey = getEfbAirportKey(displayData);
 
           if (!efbChartsByAirport[airportKey]) {
-            tabBody.innerHTML = '<div class="efbEmpty">Loading EFB charts...</div>';
+            setEfbLoadingOverlay('Loading EFB charts...');
+            if (!document.getElementById('efbAirportToggleBtn')) {
+              tabBody.innerHTML = formatEfbTabContentHtml(displayData);
+              bindEfbInteractions(displayData);
+              efbUiDirty = false;
+            }
             ensureEfbChartsLoaded(displayData).then(function () {
-              efbUiDirty = true;
-              if (latestData && selectedTab === 'EFB') render(latestData);
+              setEfbLoadingOverlay('');
+              if (latestData && selectedTab === 'EFB') {
+                const inSaMapMode = normalizeEfbViewerMode(efbViewerMode) === 'sa-map';
+                if (inSaMapMode) {
+                  const saMapContext = resolveActiveSaMapContext(latestData);
+                  if (saMapContext && saMapContext.selected && typeof applyOpenFreeMapOwnshipCamera === 'function') {
+                    applyOpenFreeMapOwnshipCamera(saMapContext.selected, latestData);
+                  }
+                } else {
+                  efbUiDirty = true;
+                  render(latestData);
+                }
+              }
+            }).catch(function () {
+              setEfbLoadingOverlay('');
             });
           } else {
+            setEfbLoadingOverlay('');
             const isSaMapMode = normalizeEfbViewerMode(efbViewerMode) === 'sa-map';
             const hasRenderedEfb = !!document.getElementById('efbAirportToggleBtn');
             if (!hasRenderedEfb || efbUiDirty) {

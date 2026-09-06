@@ -26,6 +26,7 @@ namespace VAICOM
 
                 State.beaconlocked = false;
                 State.dcsrunning = false;
+                State.moduleConnected = false;
                 State.AIRIOactive = false;
                 State.currentmodule = DCSmodules.LookupTable["----"];
                 State.currentstate = new ServerState();

@@ -1707,9 +1707,6 @@ namespace VAICOM
                         }
                         catch { useNavigraph = false; }
 
-                        string normalizedAirport = (airport ?? "").Trim().ToUpperInvariant();
-                        bool forceNavigraphOnlyForAirport = useNavigraph && string.Equals(normalizedAirport, "PGUA", StringComparison.Ordinal);
-
                         if (useNavigraph)
                         {
                             // Try fetching navigraph chart catalog via API helper; fall back to local charts on error
@@ -1718,20 +1715,28 @@ namespace VAICOM
                                 var navJson = OpenKneeboardNavigraphApiProxy.BuildChartsJsonFallback(airport);
                                 if (!string.IsNullOrWhiteSpace(navJson))
                                 {
-                                    WriteJson(context.Response, navJson);
-                                    return;
+                                    bool hasNavigraphCharts = false;
+                                    try
+                                    {
+                                        var obj = JObject.Parse(navJson);
+                                        var charts = obj["charts"] as JArray;
+                                        hasNavigraphCharts = charts != null && charts.Count > 0;
+                                    }
+                                    catch
+                                    {
+                                        hasNavigraphCharts = false;
+                                    }
+
+                                    if (hasNavigraphCharts)
+                                    {
+                                        WriteJson(context.Response, navJson);
+                                        return;
+                                    }
                                 }
                             }
                             catch
                             {
                                 // fall through to local
-                            }
-
-                            if (forceNavigraphOnlyForAirport)
-                            {
-                                try { Log.Write("Navigraph charts lookup for PGUA returned no data; local Saved Games fallback is disabled while Navigraph auth is active.", VAICOM.Static.Colors.Warning); } catch { }
-                                WriteJson(context.Response, "{\"charts\":[]}");
-                                return;
                             }
                         }
 
@@ -2620,6 +2625,43 @@ namespace VAICOM
 
                 private static string BuildSnapshotJson()
                 {
+                    try
+                    {
+                        bool moduleConnectedNow = false;
+                        try { moduleConnectedNow = State.moduleConnected; } catch { moduleConnectedNow = false; }
+
+                        if (!moduleConnectedNow)
+                        {
+                            lock (Sync)
+                            {
+                                if (snapshot != null)
+                                {
+                                    if (snapshot.Server == null)
+                                    {
+                                        snapshot.Server = new OpenKneeboardServerSnapshot();
+                                    }
+
+                                    snapshot.Server.ModuleConnected = false;
+                                    snapshot.Server.Aircraft = "";
+                                    snapshot.Server.PlayerPosX = 0;
+                                    snapshot.Server.PlayerPosY = 0;
+                                    snapshot.Server.PlayerAltFeet = 0;
+                                    snapshot.Server.Payload = null;
+                                    snapshot.Server.Radios = new List<Servers.Server.RadioDevice>();
+                                    snapshot.Server.AtcMetars = new Dictionary<string, string>();
+                                    snapshot.Server.AtcIcaoTypes = new Dictionary<string, string>();
+                                    snapshot.Server.Diagnostics = null;
+                                    snapshot.Server.FlightMembers = new List<OpenKneeboardFlightMember>();
+                                    snapshot.Server.FriendlyAssets = new List<OpenKneeboardFriendlyAsset>();
+                                    snapshot.Server.MapMarkers = new List<OpenKneeboardMapMarker>();
+                                }
+                            }
+                        }
+                    }
+                    catch
+                    {
+                    }
+
                     OpenKneeboardSnapshot responseModel;
 
                     lock (Sync)
@@ -2651,6 +2693,7 @@ namespace VAICOM
                             {
                                 Theater = responseModel.Server?.Theater ?? "",
                                 DcsLocation = responseModel.Server?.DcsLocation ?? "",
+                                ModuleConnected = responseModel.Server?.ModuleConnected ?? false,
                                 Aircraft = responseModel.Server?.Aircraft ?? "",
                                 PlayerUsername = responseModel.Server?.PlayerUsername ?? "",
                                 PlayerCallsign = responseModel.Server?.PlayerCallsign ?? "",
@@ -2836,7 +2879,12 @@ namespace VAICOM
                         {
                             foreach (string dir in Directory.GetDirectories(chartsRoot, "*", SearchOption.TopDirectoryOnly))
                             {
-                                string airport = (Path.GetFileName(dir) ?? "").Trim().ToUpperInvariant();
+                                string folderName = (Path.GetFileName(dir) ?? "").Trim().ToUpperInvariant();
+                                string airport = ExtractAirportToken(folderName);
+                                if (string.IsNullOrWhiteSpace(airport))
+                                {
+                                    airport = folderName;
+                                }
                                 if (string.IsNullOrWhiteSpace(airport))
                                 {
                                     continue;
@@ -2922,12 +2970,17 @@ namespace VAICOM
 
                 private static string BuildEfbChartsJson(string airport)
                 {
-                    string normalizedAirport = string.IsNullOrWhiteSpace(airport)
+                    string requestedAirport = string.IsNullOrWhiteSpace(airport)
                         ? "UNSET"
                         : airport.Trim().ToUpperInvariant();
+                    string normalizedAirport = ExtractAirportToken(requestedAirport);
+                    if (string.IsNullOrWhiteSpace(normalizedAirport))
+                    {
+                        normalizedAirport = requestedAirport;
+                    }
 
                     string chartsRoot = GetEfbChartsRootPath();
-                    string airportFolder = Path.Combine(chartsRoot, normalizedAirport);
+                    string airportFolder = ResolveEfbAirportFolder(chartsRoot, normalizedAirport, requestedAirport);
                     List<object> charts = new List<object>();
 
                     try
@@ -2970,10 +3023,85 @@ namespace VAICOM
                     return JsonConvert.SerializeObject(payload, Formatting.None);
                 }
 
+                private static string ResolveEfbAirportFolder(string chartsRoot, string normalizedAirport, string requestedAirport)
+                {
+                    try
+                    {
+                        string root = chartsRoot ?? "";
+                        string norm = (normalizedAirport ?? "").Trim().ToUpperInvariant();
+                        string requested = (requestedAirport ?? "").Trim().ToUpperInvariant();
+
+                        if (!string.IsNullOrWhiteSpace(norm))
+                        {
+                            string exactNormalized = Path.Combine(root, norm);
+                            if (Directory.Exists(exactNormalized))
+                            {
+                                return exactNormalized;
+                            }
+                        }
+
+                        if (!string.IsNullOrWhiteSpace(requested))
+                        {
+                            string exactRequested = Path.Combine(root, requested);
+                            if (Directory.Exists(exactRequested))
+                            {
+                                return exactRequested;
+                            }
+                        }
+
+                        if (Directory.Exists(root) && !string.IsNullOrWhiteSpace(norm))
+                        {
+                            foreach (string dir in Directory.GetDirectories(root, "*", SearchOption.TopDirectoryOnly))
+                            {
+                                string folderName = (Path.GetFileName(dir) ?? "").Trim().ToUpperInvariant();
+                                string token = ExtractAirportToken(folderName);
+                                if (!string.IsNullOrWhiteSpace(token) && string.Equals(token, norm, StringComparison.OrdinalIgnoreCase))
+                                {
+                                    return dir;
+                                }
+                            }
+                        }
+                    }
+                    catch
+                    {
+                    }
+
+                    return Path.Combine(chartsRoot ?? "", normalizedAirport ?? "UNSET");
+                }
+
+                private static string ExtractAirportToken(string value)
+                {
+                    try
+                    {
+                        string text = (value ?? "").Trim().ToUpperInvariant();
+                        if (string.IsNullOrWhiteSpace(text))
+                        {
+                            return "";
+                        }
+
+                        Match m = Regex.Match(text, @"\b([A-Z]{4})\b");
+                        if (m.Success)
+                        {
+                            return (m.Groups[1].Value ?? "").Trim().ToUpperInvariant();
+                        }
+
+                        if (text.Length == 4 && text.All(c => c >= 'A' && c <= 'Z'))
+                        {
+                            return text;
+                        }
+                    }
+                    catch
+                    {
+                    }
+
+                    return "";
+                }
+
                 private static string GetEfbChartsRootPath()
                 {
                     try
                     {
+                        string firstExisting = null;
                         foreach (string savedGames in GetSavedGamesRoots())
                         {
                             if (string.IsNullOrWhiteSpace(savedGames) || !Directory.Exists(savedGames))
@@ -2988,7 +3116,15 @@ namespace VAICOM
                                     string chartsPath = Path.Combine(dcsRoot, "Kneeboard", "Vaicom Charts");
                                     if (Directory.Exists(chartsPath))
                                     {
-                                        return chartsPath;
+                                        if (string.IsNullOrWhiteSpace(firstExisting))
+                                        {
+                                            firstExisting = chartsPath;
+                                        }
+
+                                        if (HasAnyEfbChartFiles(chartsPath))
+                                        {
+                                            return chartsPath;
+                                        }
                                     }
                                 }
                             }
@@ -2999,8 +3135,21 @@ namespace VAICOM
                             string fallbackChartsPath = Path.Combine(savedGames, "DCS", "Kneeboard", "Vaicom Charts");
                             if (Directory.Exists(fallbackChartsPath))
                             {
-                                return fallbackChartsPath;
+                                if (string.IsNullOrWhiteSpace(firstExisting))
+                                {
+                                    firstExisting = fallbackChartsPath;
+                                }
+
+                                if (HasAnyEfbChartFiles(fallbackChartsPath))
+                                {
+                                    return fallbackChartsPath;
+                                }
                             }
+                        }
+
+                        if (!string.IsNullOrWhiteSpace(firstExisting))
+                        {
+                            return firstExisting;
                         }
 
                         string firstSavedGames = GetSavedGamesRoots().FirstOrDefault(p => !string.IsNullOrWhiteSpace(p));
@@ -3015,6 +3164,24 @@ namespace VAICOM
 
                     string profile = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
                     return Path.Combine(profile, "Saved Games", "DCS", "Kneeboard", "Vaicom Charts");
+                }
+
+                private static bool HasAnyEfbChartFiles(string chartsRoot)
+                {
+                    try
+                    {
+                        if (string.IsNullOrWhiteSpace(chartsRoot) || !Directory.Exists(chartsRoot))
+                        {
+                            return false;
+                        }
+
+                        return Directory.EnumerateFiles(chartsRoot, "*.*", SearchOption.AllDirectories)
+                            .Any(path => IsSupportedEfbChartExtension(Path.GetExtension(path)));
+                    }
+                    catch
+                    {
+                        return false;
+                    }
                 }
 
                 private static bool IsSupportedEfbChartExtension(string extension)
@@ -3100,7 +3267,7 @@ namespace VAICOM
                     }
 
                     string chartsRoot = GetEfbChartsRootPath();
-                    string airportFolder = Path.Combine(chartsRoot, airport);
+                    string airportFolder = ResolveEfbAirportFolder(chartsRoot, airport, airport);
                     string fullPath;
 
                     try
@@ -4036,6 +4203,21 @@ namespace VAICOM
 
                     try
                     {
+                        bool moduleConnectedFlag = false;
+                        string currentModuleId = "";
+                        string currentStateModuleId = "";
+
+                        try { moduleConnectedFlag = State.moduleConnected; } catch { moduleConnectedFlag = false; }
+                        try { currentModuleId = State.currentmodule == null ? "" : (State.currentmodule.Id ?? ""); } catch { currentModuleId = ""; }
+                        try { currentStateModuleId = State.currentstate == null ? "" : (State.currentstate.id ?? ""); } catch { currentStateModuleId = ""; }
+
+                        bool moduleFromCurrentModule = !string.IsNullOrWhiteSpace(currentModuleId)
+                            && !string.Equals(currentModuleId.Trim(), "----", StringComparison.OrdinalIgnoreCase);
+                        bool moduleFromCurrentState = !string.IsNullOrWhiteSpace(currentStateModuleId)
+                            && !string.Equals(currentStateModuleId.Trim(), "----", StringComparison.OrdinalIgnoreCase);
+
+                        server.ModuleConnected = moduleConnectedFlag && moduleFromCurrentModule && moduleFromCurrentState;
+
                         if (State.currentstate != null)
                         {
                             server.Theater = State.currentstate.theatre;
@@ -4080,6 +4262,22 @@ namespace VAICOM
                             server.FlightMembers = BuildFlightMemberSnapshot();
                             server.FriendlyAssets = BuildFriendlyAssetsSnapshot();
                             server.MapMarkers = BuildMapMarkerSnapshot();
+                        }
+
+                        if (!server.ModuleConnected)
+                        {
+                            server.Aircraft = "";
+                            server.PlayerPosX = 0;
+                            server.PlayerPosY = 0;
+                            server.PlayerAltFeet = 0;
+                            server.Payload = null;
+                            server.Radios = new List<Servers.Server.RadioDevice>();
+                            server.AtcMetars = new Dictionary<string, string>();
+                            server.AtcIcaoTypes = new Dictionary<string, string>();
+                            server.Diagnostics = null;
+                            server.FlightMembers = new List<OpenKneeboardFlightMember>();
+                            server.FriendlyAssets = new List<OpenKneeboardFriendlyAsset>();
+                            server.MapMarkers = new List<OpenKneeboardMapMarker>();
                         }
                     }
                     catch
@@ -4657,6 +4855,7 @@ namespace VAICOM
             {
                 public string Theater { get; set; } = "";
                 public string DcsLocation { get; set; } = "";
+                public bool ModuleConnected { get; set; }
                 public string Aircraft { get; set; } = "";
                 public string PlayerUsername { get; set; } = "";
                 public string PlayerCallsign { get; set; } = "";
@@ -4684,6 +4883,7 @@ namespace VAICOM
                     {
                         Theater = Theater,
                         DcsLocation = DcsLocation,
+                        ModuleConnected = ModuleConnected,
                         Aircraft = Aircraft,
                         PlayerUsername = PlayerUsername,
                         PlayerCallsign = PlayerCallsign,
