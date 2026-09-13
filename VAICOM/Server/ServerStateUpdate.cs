@@ -162,14 +162,6 @@ namespace VAICOM
                     State.currentstate.fsmstate = serverMessage.fsmstate;
                     State.currentstate.selectedradio = serverMessage.selectedradio;
                     State.currentstate.radios = serverMessage.radios;
-
-                    if (!State.currentstate.airborne)
-                    {
-                        if (AH64GeorgeState.SelectedWeapon != AH64WeaponMode.NoWeapon)
-                        {
-                            AH64GeorgeState.SelectedWeapon = AH64WeaponMode.NoWeapon;
-                        }
-                    }
                 }
                 catch (Exception e)
                 {

@@ -92,8 +92,6 @@ namespace VAICOM.Extensions.AICPG
         public static bool RocketsAvailable;
         public static bool MissilesAvailable;
         public static bool WeaponStateValid;
-        public static bool WowFromExport;
-        public static bool WowFromServerState;
 
         private static readonly List<AH64CMDispenseMode> cmDispenseOrder = new List<AH64CMDispenseMode>
         {

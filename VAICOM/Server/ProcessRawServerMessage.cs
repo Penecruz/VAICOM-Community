@@ -205,7 +205,7 @@ namespace VAICOM
                     int navigationLights = values.TryGetValue("navigationLights", out string navigationLightsValue) && int.TryParse(navigationLightsValue, out int navLights) ? navLights : 0;
                     int antiCollisionLights = values.TryGetValue("antiCollisionLights", out string antiCollisionLightsValue) && int.TryParse(antiCollisionLightsValue, out int acLights) ? acLights : 0;
                     int formationLights = values.TryGetValue("formationLights", out string formationLightsValue) && int.TryParse(formationLightsValue, out int formLights) ? formLights : 0;
-
+                    
                     AH64GeorgeState.ApuOnOffState = apuOn ? AH64Apu.On : AH64Apu.Off;
                     AH64GeorgeState.SelectedCMWSArmSafe = cmwsArmed ? AH64CMWSArmSafe.Armed : AH64CMWSArmSafe.Safe;
                     AH64GeorgeState.SelectedCMWSMode = cmwsBypass ? AH64CMWSMode.Bypass : AH64CMWSMode.Auto;
@@ -213,14 +213,20 @@ namespace VAICOM
                     AH64GeorgeState.RocketsAvailable = rocketsAvailable;
                     AH64GeorgeState.MissilesAvailable = missilesAvailable;
                     AH64GeorgeState.WeaponStateValid = true;
-                    AH64GeorgeState.WowFromExport = wow;
+
+                    AH64GeorgeState.SetExteriorLightsMode(navigationLights, antiCollisionLights, formationLights);
 
                     if (!WeaponStillAvailable(AH64GeorgeState.SelectedWeapon))
                     {
                         AH64GeorgeState.SelectedWeapon = AH64WeaponMode.NoWeapon;
                     }
+                    // Deselect weapon if weight-on-wheels.
+                    if (wow)
+                    {
+                        AH64GeorgeState.ForceNoWeaponLocalSync("weight-on-wheels", AH64GeorgeState.SelectedWeapon != AH64WeaponMode.Unknown);
+                    }
 
-                    AH64GeorgeState.SetExteriorLightsMode(navigationLights, antiCollisionLights, formationLights);
+                    State.currentstate.airborne = !wow;
                 }
                 catch (Exception e)
                 {
