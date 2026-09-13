@@ -670,139 +670,140 @@
     </section>
 
     <section id="efb" class="tab">
-      <h2>EFB Tab</h2>
-      <p><strong>Overview:</strong> Electronic Flight Bag workspace for both chart viewing and SA Map moving-map operations using the same rail-control workflow.</p>
-      <p><strong>Contains:</strong> Chart mode, SA Map mode, auto/manual airport workflows, pinned chart favorites, map/viewport controls, layer toggles, ownship follow/track-up controls, and asset/airfield bugging support.</p>
-      <div class="controls">
-          <img class="helpImage" src="/okb/helpimg?name=efbtab/EFB_Overview.png" alt="EFB tab overview" />
-          <div class="helpImageCaption">Figure EFB-1. EFB tab Moving Map.</div>
-          <img class="helpImage" src="/okb/helpimg?name=efbtab/EFB_Overview2.png" alt="EFB tab overview2" />
-          <div class="helpImageCaption">Figure EFB-2. EFB tab Airport Charts.</div>
+        <h2>EFB Tab</h2>
+        <p><strong>Overview:</strong> Electronic Flight Bag workspace for both chart viewing and Moving Map operations using the same rail-control workflow.</p>
+        <p><strong>Contains:</strong> Chart mode, Moving Map mode, auto/manual airport workflows, pinned chart favorites, map/viewport controls, layer toggles, ownship follow/track-up controls, and asset/airfield bugging support.</p>
+        <p><strong>Folder structure for user charts:</strong> Saved Games/DCS/kneeboard/vaicom charts/XXXX. XXXX must be 4 characters and either ICAO airport code or own USER designation. Navigraph users can also use their own charts in addition to thoses automatically added via Navigraph.</p>
+        <div class="controls">
+            <img class="helpImage" src="/okb/helpimg?name=efbtab/EFB_Overview.png" alt="EFB tab overview" />
+            <div class="helpImageCaption">Figure EFB-1. EFB tab Moving Map.</div>
+            <img class="helpImage" src="/okb/helpimg?name=efbtab/EFB_Overview2.png" alt="EFB tab overview2" />
+            <div class="helpImageCaption">Figure EFB-2. EFB tab Airport Charts.</div>
 
-          <h3>EFB Icon Legend (SVG)</h3>
-          <p class="muted">Icons used in OKB Out for EFB control rails and SA layers.</p>
+            <h3>EFB Icon Legend (SVG)</h3>
+            <p class="muted">Icons used in OKB Out for EFB control rails and SA layers.</p>
 
-          <h3>Left Rail</h3>
-          <div class="iconLegendGrid">
-            <div class="iconLegendItem"><svg class="helpIconSvg" viewBox="0 0 64 64" aria-hidden="true"><path d="M8 50V17l14-6 12 5 12-5v33l-12 5-12-5-14 6z" fill="none" stroke="currentColor" stroke-width="4" stroke-linejoin="round"/><line x1="22" y1="11" x2="22" y2="56" stroke="currentColor" stroke-width="3"/><line x1="34" y1="16" x2="34" y2="49" stroke="currentColor" stroke-width="3"/><path d="M46 17c-5.4 0-9.8 4.4-9.8 9.8 0 6.8 9.8 17.1 9.8 17.1S55.8 33.6 55.8 26.8c0-5.4-4.4-9.8-9.8-9.8z" fill="none" stroke="currentColor" stroke-width="4" stroke-linejoin="round"/><circle cx="46" cy="26.8" r="2.8" fill="currentColor"/></svg><span>Moving Map/Charts toggle (Map view icon)</span></div>
-            <div class="iconLegendItem"><svg class="helpIconSvg" viewBox="0 0 64 64" aria-hidden="true"><rect x="11" y="7" width="42" height="50" rx="2" ry="2" fill="none" stroke="currentColor" stroke-width="3.5"/><line x1="11" y1="16" x2="53" y2="16" stroke="currentColor" stroke-width="2.6"/><line x1="14" y1="12" x2="30" y2="12" stroke="currentColor" stroke-width="2"/><line x1="34" y1="12" x2="50" y2="12" stroke="currentColor" stroke-width="2"/><path d="M16 45c4-7 10-9 15-7 4 2 9 2 17-3" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"/></svg><span>Moving Map/Charts toggle (Chart view icon)</span></div>
-            <div class="iconLegendItem"><svg class="helpIconSvg" viewBox="0 0 64 64" aria-hidden="true"><path d="M8 30L56 8 43 56 31 43 22 49 19 39 8 30z" fill="currentColor"/><path d="M14 31L48 14 30 39z" fill="#f1f1ef" opacity="0.92"/></svg><span>Center ownship</span></div>
-            <div class="iconLegendItem"><svg class="helpIconSvg" viewBox="0 0 64 64" aria-hidden="true"><polygon points="32,10 52,48 12,48" fill="none" stroke="currentColor" stroke-width="4" stroke-linejoin="round"/><circle cx="32" cy="37" r="3" fill="currentColor"/></svg><span>User waypoint drawer</span></div>
-            <div class="iconLegendItem"><svg class="helpIconSvg" viewBox="0 0 64 64" aria-hidden="true"><path d="M14 24h24v5h-3l2 9h-7l-2-7h-8l-2 7h-7l2-9h-3z" fill="currentColor"/><rect x="22" y="38" width="8" height="14" fill="currentColor"/><rect x="15" y="52" width="22" height="4" fill="currentColor"/><circle cx="48" cy="20" r="10" fill="none" stroke="currentColor" stroke-width="2.8"/><line x1="38" y1="20" x2="58" y2="20" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/><line x1="48" y1="10" x2="48" y2="30" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/><circle cx="48" cy="20" r="2.6" fill="currentColor"/></svg><span>Auto nearest airport</span></div>
-            <div class="iconLegendItem"><svg class="helpIconSvg" viewBox="0 0 64 64" aria-hidden="true"><path d="M14 24h36v6h-4l2 9h-8l-2-7h-12l-2 7h-8l2-9h-4z" fill="currentColor"/><rect x="27" y="39" width="10" height="15" fill="currentColor"/><rect x="18" y="54" width="28" height="4" fill="currentColor"/></svg><span>Airport charts drawer</span></div>
-            <div class="iconLegendItem"><svg class="helpIconSvg" viewBox="0 0 64 64" aria-hidden="true"><path d="M32 11c8 0 14 6 14 14h-6l9 9 9-9h-6c0-11-9-20-20-20-8 0-15 5-18 12l5 2c2.2-5 7.2-8 13-8z" fill="currentColor"/><path d="M13 39h6c0 11 9 20 20 20 8 0 15-5 18-12l-5-2c-2.2 5-7.2 8-13 8-8 0-14-6-14-14h6l-9-9-9 9z" fill="currentColor"/></svg><span>Pinned charts drawer</span></div>
-            <div class="iconLegendItem"><span class="helpIconGlyph" aria-hidden="true">📌</span><span>Quick pin toggle</span></div>
-          </div>
+            <h3>Left Rail</h3>
+            <div class="iconLegendGrid">
+                <div class="iconLegendItem"><svg class="helpIconSvg" viewBox="0 0 64 64" aria-hidden="true"><path d="M8 50V17l14-6 12 5 12-5v33l-12 5-12-5-14 6z" fill="none" stroke="currentColor" stroke-width="4" stroke-linejoin="round" /><line x1="22" y1="11" x2="22" y2="56" stroke="currentColor" stroke-width="3" /><line x1="34" y1="16" x2="34" y2="49" stroke="currentColor" stroke-width="3" /><path d="M46 17c-5.4 0-9.8 4.4-9.8 9.8 0 6.8 9.8 17.1 9.8 17.1S55.8 33.6 55.8 26.8c0-5.4-4.4-9.8-9.8-9.8z" fill="none" stroke="currentColor" stroke-width="4" stroke-linejoin="round" /><circle cx="46" cy="26.8" r="2.8" fill="currentColor" /></svg><span>Moving Map/Charts toggle (Map view icon)</span></div>
+                <div class="iconLegendItem"><svg class="helpIconSvg" viewBox="0 0 64 64" aria-hidden="true"><rect x="11" y="7" width="42" height="50" rx="2" ry="2" fill="none" stroke="currentColor" stroke-width="3.5" /><line x1="11" y1="16" x2="53" y2="16" stroke="currentColor" stroke-width="2.6" /><line x1="14" y1="12" x2="30" y2="12" stroke="currentColor" stroke-width="2" /><line x1="34" y1="12" x2="50" y2="12" stroke="currentColor" stroke-width="2" /><path d="M16 45c4-7 10-9 15-7 4 2 9 2 17-3" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" /></svg><span>Moving Map/Charts toggle (Chart view icon)</span></div>
+                <div class="iconLegendItem"><svg class="helpIconSvg" viewBox="0 0 64 64" aria-hidden="true"><path d="M8 30L56 8 43 56 31 43 22 49 19 39 8 30z" fill="currentColor" /><path d="M14 31L48 14 30 39z" fill="#f1f1ef" opacity="0.92" /></svg><span>Center ownship</span></div>
+                <div class="iconLegendItem"><svg class="helpIconSvg" viewBox="0 0 64 64" aria-hidden="true"><polygon points="32,10 52,48 12,48" fill="none" stroke="currentColor" stroke-width="4" stroke-linejoin="round" /><circle cx="32" cy="37" r="3" fill="currentColor" /></svg><span>User waypoint drawer</span></div>
+                <div class="iconLegendItem"><svg class="helpIconSvg" viewBox="0 0 64 64" aria-hidden="true"><path d="M14 24h24v5h-3l2 9h-7l-2-7h-8l-2 7h-7l2-9h-3z" fill="currentColor" /><rect x="22" y="38" width="8" height="14" fill="currentColor" /><rect x="15" y="52" width="22" height="4" fill="currentColor" /><circle cx="48" cy="20" r="10" fill="none" stroke="currentColor" stroke-width="2.8" /><line x1="38" y1="20" x2="58" y2="20" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" /><line x1="48" y1="10" x2="48" y2="30" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" /><circle cx="48" cy="20" r="2.6" fill="currentColor" /></svg><span>Auto nearest airport</span></div>
+                <div class="iconLegendItem"><svg class="helpIconSvg" viewBox="0 0 64 64" aria-hidden="true"><path d="M14 24h36v6h-4l2 9h-8l-2-7h-12l-2 7h-8l2-9h-4z" fill="currentColor" /><rect x="27" y="39" width="10" height="15" fill="currentColor" /><rect x="18" y="54" width="28" height="4" fill="currentColor" /></svg><span>Airport charts drawer</span></div>
+                <div class="iconLegendItem"><svg class="helpIconSvg" viewBox="0 0 64 64" aria-hidden="true"><path d="M32 11c8 0 14 6 14 14h-6l9 9 9-9h-6c0-11-9-20-20-20-8 0-15 5-18 12l5 2c2.2-5 7.2-8 13-8z" fill="currentColor" /><path d="M13 39h6c0 11 9 20 20 20 8 0 15-5 18-12l-5-2c-2.2 5-7.2 8-13 8-8 0-14-6-14-14h6l-9-9-9 9z" fill="currentColor" /></svg><span>Pinned charts drawer</span></div>
+                <div class="iconLegendItem"><span class="helpIconGlyph" aria-hidden="true">📌</span><span>Quick pin toggle</span></div>
+            </div>
 
-          <h3>Mode and Left Rail Controls</h3>
-          <ul>
-              <li><strong>Moving Map/Charts toggle</strong>: Switches the EFB viewport between chart mode and Moving Map mode.</li>
-              <li><strong>Auto Nearest Airport</strong>: Resolves/selects airport from current mission context, then opens the chart list for that airport.</li>
-              <li><strong>Airports</strong>: Opens airport list drawer first; selecting an airport opens its chart list.</li>
-              <li><strong>Pinned drawer (loop icon)</strong>: Opens pinned charts drawer (favorites) for quick chart cycling from your saved set.</li>
-              <li><strong>Quick Pin</strong>: Pins/unpins the currently displayed chart without opening a drawer.</li>
-              <li><strong>Search</strong>: Opens the stylus-oriented chart search overlay with radial character input and center token display.</li>
-              <li><strong>Layers</strong>: Opens the SA Map layers drawer when SA Map mode is active.</li>
-          </ul>
+            <h3>Mode and Left Rail Controls</h3>
+            <ul>
+                <li><strong>Moving Map/Charts toggle</strong>: Switches the EFB viewport between chart mode and Moving Map mode.</li>
+                <li><strong>Auto Nearest Airport</strong>: Resolves/selects airport from current mission context, then opens the chart list for that airport.</li>
+                <li><strong>Airports</strong>: Opens airport list drawer first; selecting an airport opens its chart list.</li>
+                <li><strong>Pinned drawer (loop icon)</strong>: Opens pinned charts drawer (favorites) for quick chart cycling from your saved set.</li>
+                <li><strong>Quick Pin</strong>: Pins/unpins the currently displayed chart without opening a drawer.</li>
+                <li><strong>Search</strong>: Opens the stylus-oriented chart search overlay with radial character input and center token display.</li>
+                <li><strong>Layers</strong>: Opens the SA Map layers drawer when SA Map mode is active.</li>
+            </ul>
 
-          <h3>Moving Map Navigation / Framing</h3>
-          <div class="iconLegendGrid">
-            <div class="iconLegendItem"><svg class="helpIconSvg" viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="14" fill="none" stroke="currentColor" stroke-width="3"/><line x1="32" y1="8" x2="32" y2="20" stroke="currentColor" stroke-width="3"/><line x1="32" y1="44" x2="32" y2="56" stroke="currentColor" stroke-width="3"/><line x1="8" y1="32" x2="20" y2="32" stroke="currentColor" stroke-width="3"/><line x1="44" y1="32" x2="56" y2="32" stroke="currentColor" stroke-width="3"/><circle cx="32" cy="32" r="3.8" fill="currentColor"/></svg><span>Follow ownship</span></div>
-            <div class="iconLegendItem"><svg class="helpIconSvg" viewBox="0 0 64 64" aria-hidden="true"><polygon points="32,8 46,46 32,38 18,46" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/><line x1="32" y1="18" x2="32" y2="40" stroke="currentColor" stroke-width="3"/></svg><span>Track-up/North Up Toggle</span></div>
-            <div class="iconLegendItem"><svg class="helpIconSvg" viewBox="0 0 64 64" aria-hidden="true"><rect x="10" y="10" width="44" height="44" rx="5" fill="none" stroke="currentColor" stroke-width="3"/><line x1="32" y1="16" x2="32" y2="48" stroke="currentColor" stroke-width="3"/><line x1="16" y1="32" x2="48" y2="32" stroke="currentColor" stroke-width="3"/><circle cx="32" cy="32" r="3.2" fill="currentColor"/></svg><span>Anchor center</span></div>
-            <div class="iconLegendItem"><svg class="helpIconSvg" viewBox="0 0 64 64" aria-hidden="true"><rect x="10" y="10" width="44" height="44" rx="5" fill="none" stroke="currentColor" stroke-width="3"/><line x1="16" y1="32" x2="48" y2="32" stroke="currentColor" stroke-width="2.3" opacity="0.55"/><line x1="16" y1="42" x2="48" y2="42" stroke="currentColor" stroke-width="3"/><circle cx="32" cy="42" r="3.2" fill="currentColor"/></svg><span>Anchor lower-third</span></div>
-          </div>
+            <h3>Moving Map Navigation / Framing</h3>
+            <div class="iconLegendGrid">
+                <div class="iconLegendItem"><svg class="helpIconSvg" viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="14" fill="none" stroke="currentColor" stroke-width="3" /><line x1="32" y1="8" x2="32" y2="20" stroke="currentColor" stroke-width="3" /><line x1="32" y1="44" x2="32" y2="56" stroke="currentColor" stroke-width="3" /><line x1="8" y1="32" x2="20" y2="32" stroke="currentColor" stroke-width="3" /><line x1="44" y1="32" x2="56" y2="32" stroke="currentColor" stroke-width="3" /><circle cx="32" cy="32" r="3.8" fill="currentColor" /></svg><span>Follow ownship</span></div>
+                <div class="iconLegendItem"><svg class="helpIconSvg" viewBox="0 0 64 64" aria-hidden="true"><polygon points="32,8 46,46 32,38 18,46" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round" /><line x1="32" y1="18" x2="32" y2="40" stroke="currentColor" stroke-width="3" /></svg><span>Track-up/North Up Toggle</span></div>
+                <div class="iconLegendItem"><svg class="helpIconSvg" viewBox="0 0 64 64" aria-hidden="true"><rect x="10" y="10" width="44" height="44" rx="5" fill="none" stroke="currentColor" stroke-width="3" /><line x1="32" y1="16" x2="32" y2="48" stroke="currentColor" stroke-width="3" /><line x1="16" y1="32" x2="48" y2="32" stroke="currentColor" stroke-width="3" /><circle cx="32" cy="32" r="3.2" fill="currentColor" /></svg><span>Anchor center</span></div>
+                <div class="iconLegendItem"><svg class="helpIconSvg" viewBox="0 0 64 64" aria-hidden="true"><rect x="10" y="10" width="44" height="44" rx="5" fill="none" stroke="currentColor" stroke-width="3" /><line x1="16" y1="32" x2="48" y2="32" stroke="currentColor" stroke-width="2.3" opacity="0.55" /><line x1="16" y1="42" x2="48" y2="42" stroke="currentColor" stroke-width="3" /><circle cx="32" cy="42" r="3.2" fill="currentColor" /></svg><span>Anchor lower-third</span></div>
+            </div>
 
-          <h3>Moving Map Layers Drawer</h3>
-          <div class="iconLegendGrid">
-            <div class="iconLegendItem"><svg class="helpIconSvg" viewBox="0 0 64 64" aria-hidden="true"><rect x="10" y="12" width="44" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="3"/><rect x="10" y="27" width="44" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="3"/><rect x="10" y="42" width="44" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="3"/></svg><span>Layers drawer button</span></div>
-            <div class="iconLegendItem"><svg class="helpIconSvg" viewBox="0 0 64 64" aria-hidden="true"><text x="32" y="48" text-anchor="middle" font-size="40" font-weight="700" fill="currentColor" font-family="Consolas, monospace">DL</text></svg><span>D-Link layer</span></div>
-            <div class="iconLegendItem"><svg class="helpIconSvg" viewBox="0 0 64 64" aria-hidden="true"><polygon points="32,11 53,32 32,53 11,32" fill="none" stroke="currentColor" stroke-width="3"/><line x1="32" y1="17" x2="32" y2="47" stroke="currentColor" stroke-width="3"/><line x1="17" y1="32" x2="47" y2="32" stroke="currentColor" stroke-width="3"/></svg><span>JTAC layer</span></div>
-            <div class="iconLegendItem"><svg class="helpIconSvg" viewBox="0 0 64 64" aria-hidden="true"><path d="M14 24h36v6h-4l2 9h-8l-2-7h-12l-2 7h-8l2-9h-4z" fill="currentColor"/><rect x="27" y="39" width="10" height="15" fill="currentColor"/><rect x="18" y="54" width="28" height="4" fill="currentColor"/></svg><span>Airports layer</span></div>
-            <div class="iconLegendItem"><svg class="helpIconSvg" viewBox="0 0 64 64" aria-hidden="true"><circle cx="20" cy="32" r="7" fill="none" stroke="currentColor" stroke-width="3"/><circle cx="44" cy="20" r="7" fill="none" stroke="currentColor" stroke-width="3"/><circle cx="44" cy="44" r="7" fill="none" stroke="currentColor" stroke-width="3"/><line x1="26" y1="30" x2="38" y2="22" stroke="currentColor" stroke-width="3"/><line x1="26" y1="34" x2="38" y2="42" stroke="currentColor" stroke-width="3"/></svg><span>Navlog layer</span></div>
-            <div class="iconLegendItem"><svg class="helpIconSvg" viewBox="0 0 64 64" aria-hidden="true"><polygon points="18,27 32,13 46,27" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linejoin="round"/><rect x="15" y="27" width="34" height="24" rx="2" fill="none" stroke="currentColor" stroke-width="3.4"/><line x1="22" y1="35" x2="42" y2="35" stroke="currentColor" stroke-width="2.4"/><line x1="22" y1="42" x2="36" y2="42" stroke="currentColor" stroke-width="2.4"/></svg><span>Doghouses layer</span></div>
-            <div class="iconLegendItem"><svg class="helpIconSvg" viewBox="0 0 64 64" aria-hidden="true"><polygon points="32,10 52,48 12,48" fill="none" stroke="currentColor" stroke-width="4" stroke-linejoin="round"/><circle cx="32" cy="37" r="2.8" fill="currentColor"/></svg><span>User waypoints layer</span></div>
-            <div class="iconLegendItem"><svg class="helpIconSvg" viewBox="0 0 64 64" aria-hidden="true"><rect x="12" y="12" width="40" height="40" rx="4" fill="none" stroke="currentColor" stroke-width="3"/><line x1="20" y1="44" x2="44" y2="20" stroke="currentColor" stroke-width="3"/><circle cx="22" cy="22" r="4" fill="none" stroke="currentColor" stroke-width="2.5"/><circle cx="42" cy="42" r="4" fill="none" stroke="currentColor" stroke-width="2.5"/></svg><span>DTC overlays layer</span></div>
-            <div class="iconLegendItem"><svg class="helpIconSvg" viewBox="0 0 64 64" aria-hidden="true"><rect x="6" y="6" width="52" height="52" rx="7" fill="none" stroke="currentColor" stroke-width="3.4"/><text x="32" y="31" text-anchor="middle" font-size="20" font-weight="700" fill="currentColor" font-family="Consolas, monospace">VFR</text></svg><span>Navigraph base layer: VFR</span></div>
-            <div class="iconLegendItem"><svg class="helpIconSvg" viewBox="0 0 64 64" aria-hidden="true"><rect x="6" y="6" width="52" height="52" rx="7" fill="none" stroke="currentColor" stroke-width="3.4"/><text x="32" y="31" text-anchor="middle" font-size="20" font-weight="700" fill="currentColor" font-family="Consolas, monospace">IFR</text><text x="32" y="49" text-anchor="middle" font-size="14.6" font-weight="700" fill="currentColor" font-family="Consolas, monospace">LOW</text></svg><span>Navigraph base layer: IFR Low/Hi</span></div>
-          </div>
+            <h3>Moving Map Layers Drawer</h3>
+            <div class="iconLegendGrid">
+                <div class="iconLegendItem"><svg class="helpIconSvg" viewBox="0 0 64 64" aria-hidden="true"><rect x="10" y="12" width="44" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="3" /><rect x="10" y="27" width="44" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="3" /><rect x="10" y="42" width="44" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="3" /></svg><span>Layers drawer button</span></div>
+                <div class="iconLegendItem"><svg class="helpIconSvg" viewBox="0 0 64 64" aria-hidden="true"><text x="32" y="48" text-anchor="middle" font-size="40" font-weight="700" fill="currentColor" font-family="Consolas, monospace">DL</text></svg><span>D-Link layer</span></div>
+                <div class="iconLegendItem"><svg class="helpIconSvg" viewBox="0 0 64 64" aria-hidden="true"><polygon points="32,11 53,32 32,53 11,32" fill="none" stroke="currentColor" stroke-width="3" /><line x1="32" y1="17" x2="32" y2="47" stroke="currentColor" stroke-width="3" /><line x1="17" y1="32" x2="47" y2="32" stroke="currentColor" stroke-width="3" /></svg><span>JTAC layer</span></div>
+                <div class="iconLegendItem"><svg class="helpIconSvg" viewBox="0 0 64 64" aria-hidden="true"><path d="M14 24h36v6h-4l2 9h-8l-2-7h-12l-2 7h-8l2-9h-4z" fill="currentColor" /><rect x="27" y="39" width="10" height="15" fill="currentColor" /><rect x="18" y="54" width="28" height="4" fill="currentColor" /></svg><span>Airports layer</span></div>
+                <div class="iconLegendItem"><svg class="helpIconSvg" viewBox="0 0 64 64" aria-hidden="true"><circle cx="20" cy="32" r="7" fill="none" stroke="currentColor" stroke-width="3" /><circle cx="44" cy="20" r="7" fill="none" stroke="currentColor" stroke-width="3" /><circle cx="44" cy="44" r="7" fill="none" stroke="currentColor" stroke-width="3" /><line x1="26" y1="30" x2="38" y2="22" stroke="currentColor" stroke-width="3" /><line x1="26" y1="34" x2="38" y2="42" stroke="currentColor" stroke-width="3" /></svg><span>Navlog layer</span></div>
+                <div class="iconLegendItem"><svg class="helpIconSvg" viewBox="0 0 64 64" aria-hidden="true"><polygon points="18,27 32,13 46,27" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linejoin="round" /><rect x="15" y="27" width="34" height="24" rx="2" fill="none" stroke="currentColor" stroke-width="3.4" /><line x1="22" y1="35" x2="42" y2="35" stroke="currentColor" stroke-width="2.4" /><line x1="22" y1="42" x2="36" y2="42" stroke="currentColor" stroke-width="2.4" /></svg><span>Doghouses layer</span></div>
+                <div class="iconLegendItem"><svg class="helpIconSvg" viewBox="0 0 64 64" aria-hidden="true"><polygon points="32,10 52,48 12,48" fill="none" stroke="currentColor" stroke-width="4" stroke-linejoin="round" /><circle cx="32" cy="37" r="2.8" fill="currentColor" /></svg><span>User waypoints layer</span></div>
+                <div class="iconLegendItem"><svg class="helpIconSvg" viewBox="0 0 64 64" aria-hidden="true"><rect x="12" y="12" width="40" height="40" rx="4" fill="none" stroke="currentColor" stroke-width="3" /><line x1="20" y1="44" x2="44" y2="20" stroke="currentColor" stroke-width="3" /><circle cx="22" cy="22" r="4" fill="none" stroke="currentColor" stroke-width="2.5" /><circle cx="42" cy="42" r="4" fill="none" stroke="currentColor" stroke-width="2.5" /></svg><span>DTC overlays layer</span></div>
+                <div class="iconLegendItem"><svg class="helpIconSvg" viewBox="0 0 64 64" aria-hidden="true"><rect x="6" y="6" width="52" height="52" rx="7" fill="none" stroke="currentColor" stroke-width="3.4" /><text x="32" y="31" text-anchor="middle" font-size="20" font-weight="700" fill="currentColor" font-family="Consolas, monospace">VFR</text></svg><span>Navigraph base layer: VFR</span></div>
+                <div class="iconLegendItem"><svg class="helpIconSvg" viewBox="0 0 64 64" aria-hidden="true"><rect x="6" y="6" width="52" height="52" rx="7" fill="none" stroke="currentColor" stroke-width="3.4" /><text x="32" y="31" text-anchor="middle" font-size="20" font-weight="700" fill="currentColor" font-family="Consolas, monospace">IFR</text><text x="32" y="49" text-anchor="middle" font-size="14.6" font-weight="700" fill="currentColor" font-family="Consolas, monospace">LOW</text></svg><span>Navigraph base layer: IFR Low/Hi</span></div>
+            </div>
 
-          <h3>Drawer Lists and Pinning</h3>
-          <ul>
-              <li><strong>Chart list rows</strong>: Each chart row has a line pin icon. Toggle to pin/unpin that chart.</li>
-              <li><strong>Pinned drawer behavior</strong>: Shows pinned charts for the currently selected airport.</li>
-              <li><strong>Pinned row format</strong>: Rows display the chart name for quick selection/unpin actions.</li>
-              <li><strong>Unpin paths</strong>: You can unpin from either the airport chart list or from the pinned drawer itself.</li>
-              <li><strong>Selecting pinned charts</strong>: Choosing a pinned row loads that chart for the current airport context.</li>
-          </ul>
+            <h3>Drawer Lists and Pinning</h3>
+            <ul>
+                <li><strong>Chart list rows</strong>: Each chart row has a line pin icon. Toggle to pin/unpin that chart.</li>
+                <li><strong>Pinned drawer behavior</strong>: Shows pinned charts for the currently selected airport.</li>
+                <li><strong>Pinned row format</strong>: Rows display the chart name for quick selection/unpin actions.</li>
+                <li><strong>Unpin paths</strong>: You can unpin from either the airport chart list or from the pinned drawer itself.</li>
+                <li><strong>Selecting pinned charts</strong>: Choosing a pinned row loads that chart for the current airport context.</li>
+            </ul>
 
-          <h3>Chart Search Tool</h3>
-          <ul>
-              <li><strong>Radial search overlay</strong>: Designed for stylus/touch entry with wheel-based character selection.</li>
-              <li><strong>Token display</strong>: The center token shows the current ICAO/search text being built.</li>
-              <li><strong>Back</strong>: Removes the last entered character.</li>
-              <li><strong>Clear</strong>: Resets the token and search candidate list.</li>
-              <li><strong>Candidate selection</strong>: Choosing a result sets the airport/chart directly for quick access.</li>
-          </ul>
+            <h3>Chart Search Tool</h3>
+            <ul>
+                <li><strong>Radial search overlay</strong>: Designed for stylus/touch entry with wheel-based character selection.</li>
+                <li><strong>Token display</strong>: The center token shows the current ICAO/search text being built.</li>
+                <li><strong>Back</strong>: Removes the last entered character.</li>
+                <li><strong>Clear</strong>: Resets the token and search candidate list.</li>
+                <li><strong>Candidate selection</strong>: Choosing a result sets the airport/chart directly for quick access.</li>
+            </ul>
 
-          <h3>Chart View Controls</h3>
-          <ul>
-              <li><strong>Zoom Out (−)</strong>: Decreases chart zoom.</li>
-              <li><strong>Recenter (⟳)</strong>: Resets zoom and pan to default centered view.</li>
-              <li><strong>Zoom In (+)</strong>: Increases chart zoom.</li>
-              <li><strong>Pan/drag</strong>: Click-drag in chart viewport to move the chart image.</li>
-          </ul>
+            <h3>Chart View Controls</h3>
+            <ul>
+                <li><strong>Zoom Out (−)</strong>: Decreases chart zoom.</li>
+                <li><strong>Recenter (⟳)</strong>: Resets zoom and pan to default centered view.</li>
+                <li><strong>Zoom In (+)</strong>: Increases chart zoom.</li>
+                <li><strong>Pan/drag</strong>: Click-drag in chart viewport to move the chart image.</li>
+            </ul>
 
-          <h3>Moving Map Controls and Indicators</h3>
-          <ul>
-              <li><strong>Center Ownship</strong>: Recenters the map on ownship immediately.</li>
-              <li><strong>Follow Ownship</strong>: Keeps map camera centered/anchored on ownship until explicitly turned OFF.</li>
-              <li><strong>Track-Up</strong>: Rotates map to ownship heading until explicitly turned OFF.</li>
-              <li><strong>Anchor</strong>: Toggles follow anchor position between center and lower-third framing.</li>
-              <li><strong>Map zoom controls</strong>: The same right-rail zoom controls apply in SA Map mode.</li>
-               <li><strong>Mode-specific right rail</strong>: Rotation tools are chart-mode controls and are replaced by AD quick zoom in SA Map mode.</li>
-              <li><strong>AD quick zoom</strong>: In SA Map mode, the right-rail AD control replaces chart rotation tools. First press zooms to aerodrome/taxi detail near ownship. Second press restores the pre-AD zoom level while preserving follow behavior.</li>
-              <li><strong>TOT Transit cueing</strong>: When Auto ATA captures a waypoint transit, the waypoint symbol is highlighted/pulsed and the EFB top-center 3-digit recommended SPD balloon flashes.</li>
-          </ul>
+            <h3>Moving Map Controls and Indicators</h3>
+            <ul>
+                <li><strong>Center Ownship</strong>: Recenters the map on ownship immediately.</li>
+                <li><strong>Follow Ownship</strong>: Keeps map camera centered/anchored on ownship until explicitly turned OFF.</li>
+                <li><strong>Track-Up</strong>: Rotates map to ownship heading until explicitly turned OFF.</li>
+                <li><strong>Anchor</strong>: Toggles follow anchor position between center and lower-third framing.</li>
+                <li><strong>Map zoom controls</strong>: The same right-rail zoom controls apply in SA Map mode.</li>
+                <li><strong>Mode-specific right rail</strong>: Rotation tools are chart-mode controls and are replaced by AD quick zoom in SA Map mode.</li>
+                <li><strong>AD quick zoom</strong>: In SA Map mode, the right-rail AD control replaces chart rotation tools. First press zooms to aerodrome/taxi detail near ownship. Second press restores the pre-AD zoom level while preserving follow behavior.</li>
+                <li><strong>TOT Transit cueing</strong>: When Auto ATA captures a waypoint transit, the waypoint symbol is highlighted/pulsed and the EFB top-center 3-digit recommended SPD balloon flashes.</li>
+            </ul>
 
-          <h3>Chart Mode vs Moving Map Right Rail</h3>
-          <ul>
-              <li><strong>Chart mode</strong>: Rotation drawer/tools are available for chart orientation tasks.</li>
-              <li><strong>Moving Map mode</strong>: Rotation drawer/tools are hidden and AD quick zoom is shown in the same control slot.</li>
-          </ul>
+            <h3>Chart Mode vs Moving Map Right Rail</h3>
+            <ul>
+                <li><strong>Chart mode</strong>: Rotation drawer/tools are available for chart orientation tasks.</li>
+                <li><strong>Moving Map mode</strong>: Rotation drawer/tools are hidden and AD quick zoom is shown in the same control slot.</li>
+            </ul>
 
-          <h3>Moving Map Layers Drawer</h3>
-          <ul>
-              <li><strong>Navigraph Chart Style</strong>: Cycle Navigraph chart layer VFR, IFR Low and IFR Hi.</li>
-              <li><strong>D-Link assets</strong>: Show/hide friendly tactical assets while keeping ownship available.</li>
-              <li><strong>JTAC</strong>: Show/hide JTAC targets and related Moving Map support markup.</li>
-              <li><strong>Airports</strong>: Show/hide airfield symbols and labels.</li>
-              <li><strong>Navlog route</strong>: Show/hide active route line and waypoint set.</li>
-              <li><strong>Doghouses</strong>: Show/hide leg doghouse blocks (MH, DIST, ETE, ALT) generated from the active navlog route.</li>
-              <li><strong>User waypoints</strong>: Show/hide custom user waypoint symbols and labels.</li>
-              <li><strong>DTC overlays</strong>: Show/hide DTC map overlays (threats, GEO lines, points, etc.).</li>
-          </ul>
+            <h3>Moving Map Layers Drawer</h3>
+            <ul>
+                <li><strong>Navigraph Chart Style</strong>: Cycle Navigraph chart layer VFR, IFR Low and IFR Hi.</li>
+                <li><strong>D-Link assets</strong>: Show/hide friendly tactical assets while keeping ownship available.</li>
+                <li><strong>JTAC</strong>: Show/hide JTAC targets and related Moving Map support markup.</li>
+                <li><strong>Airports</strong>: Show/hide airfield symbols and labels.</li>
+                <li><strong>Navlog route</strong>: Show/hide active route line and waypoint set.</li>
+                <li><strong>Doghouses</strong>: Show/hide leg doghouse blocks (MH, DIST, ETE, ALT) generated from the active navlog route.</li>
+                <li><strong>User waypoints</strong>: Show/hide custom user waypoint symbols and labels.</li>
+                <li><strong>DTC overlays</strong>: Show/hide DTC map overlays (threats, GEO lines, points, etc.).</li>
+            </ul>
 
-          <h3>Moving Map Interaction Use Cases</h3>
-          <ul>
-              <li><strong>Bug an asset/airfield</strong>: Tap/click symbols to select/deselect and show related detail context.</li>
-              <li><strong>Manual inspect while following</strong>: Drag/zoom/rotate temporarily suppresses follow recentering, then follow resumes automatically.</li>
-              <li><strong>Troubleshoot ownship source</strong>: Use the global GPS icon to compare fast ownship updates vs legacy server-position fallback.</li>
-              <li><strong>Landing rollout assist</strong>: With <strong>EFB Display AD on Landing</strong> enabled, AD quick zoom can auto-activate during rollout when speed and WOW criteria are met.</li>
-          </ul>
+            <h3>Moving Map Interaction Use Cases</h3>
+            <ul>
+                <li><strong>Bug an asset/airfield</strong>: Tap/click symbols to select/deselect and show related detail context.</li>
+                <li><strong>Manual inspect while following</strong>: Drag/zoom/rotate temporarily suppresses follow recentering, then follow resumes automatically.</li>
+                <li><strong>Troubleshoot ownship source</strong>: Use the global GPS icon to compare fast ownship updates vs legacy server-position fallback.</li>
+                <li><strong>Landing rollout assist</strong>: With <strong>EFB Display AD on Landing</strong> enabled, AD quick zoom can auto-activate during rollout when speed and WOW criteria are met.</li>
+            </ul>
 
-          <h3>Draw and Annotation Functions</h3>
-          <ul>
-              <li><strong>NOTES draw mode (✎)</strong>: Annotation draw tools remain on the NOTES tab only.</li>
-              <li><strong>EFB behavior</strong>: EFB/SA Map currently focuses on chart and map interaction, not freehand annotation layers.</li>
-          </ul>
+            <h3>Draw and Annotation Functions</h3>
+            <ul>
+                <li><strong>NOTES draw mode (✎)</strong>: Annotation draw tools remain on the NOTES tab only.</li>
+                <li><strong>EFB behavior</strong>: EFB/SA Map currently focuses on chart and map interaction, not freehand annotation layers.</li>
+            </ul>
 
-          <h3>Night Mode and Chart Sources</h3>
-          <ul>
-              <li><strong>Local folder charts</strong>: Night mode darkens chart brightness/contrast without hue swapping, so blue water and brown/orange terrain remain correct.</li>
-              <li><strong>Navigraph charts</strong>: Dedicated provider-rendered night chart styling is expected when Navigraph chart mode is enabled.</li>
-          </ul>
-      </div>
+            <h3>Night Mode and Chart Sources</h3>
+            <ul>
+                <li><strong>Local folder charts</strong>: Night mode darkens chart brightness/contrast without hue swapping, so blue water and brown/orange terrain remain correct.</li>
+                <li><strong>Navigraph charts</strong>: Dedicated provider-rendered night chart styling is expected when Navigraph chart mode is enabled.</li>
+            </ul>
+        </div>
     </section>
   </div>
 </body>
