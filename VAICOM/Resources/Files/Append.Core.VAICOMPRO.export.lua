@@ -199,103 +199,22 @@ vaicom.insert = {
     end,
 
     DetectOnGroundState = function(self)
-        local function to_airborne_bool(value)
-            local vt = type(value)
-            if vt == "boolean" then
-                return value
-            end
-            if vt == "number" then
-                return value ~= 0
-            end
-            if vt == "string" then
-                local s = string.lower(string.gsub(value, "^%s*(.-)%s*$", "%1"))
-                if s == "true" or s == "1" or s == "yes" or s == "on" then
-                    return true
-                end
-                if s == "false" or s == "0" or s == "no" or s == "off" then
-                    return false
-                end
-            end
-            return nil
-        end
-
-        local function to_ground_bool(value)
-            local vt = type(value)
-            if vt == "boolean" then
-                return value
-            end
-            if vt == "number" then
-                return value > 0
-            end
-            if vt == "string" then
-                local s = string.lower(string.gsub(value, "^%s*(.-)%s*$", "%1"))
-                if s == "true" or s == "on" or s == "yes" then
-                    return true
-                end
-                if s == "false" or s == "off" or s == "no" then
-                    return false
-                end
-                local n = tonumber(s)
-                if n ~= nil then
-                    return n > 0
-                end
-            end
-            return nil
-        end
-
-        local function any_ground_truth(value, depth)
-            depth = depth or 0
-            if depth > 4 then return nil end
-            local direct = to_ground_bool(value)
-            if direct ~= nil then
-                return direct
-            end
-            if type(value) == "table" then
-                for _, nested in pairs(value) do
-                    local probe = any_ground_truth(nested, depth + 1)
-                    if probe ~= nil then
-                        return probe
-                    end
-                end
-            end
-            return nil
-        end
-
+        -- Detect if the aircraft is on the ground based on the landing gear rod positions
+        -- When weight-on-wheel the rod positions are less than 0.
         if type(LoGetMechInfo) == "function" then
-            local ok, mech = pcall(LoGetMechInfo)
-            if ok and type(mech) == "table" then
-                local foundWowKey = false
-                for k, v in pairs(mech) do
-                    if type(k) == "string" then
-                        local keyUpper = string.upper(k)
-                        if string.find(keyUpper, "WOW", 1, true) or string.find(keyUpper, "WEIGHT", 1, true) then
-                            foundWowKey = true
-                            local probe = any_ground_truth(v, 0)
-                            if probe == true then
-                                return true
-                            end
-                        end
-                    end
-                end
-                if foundWowKey then
-                    return false
+            local ok, mechInfo = pcall(LoGetMechInfo)
+            if ok and type(mechInfo) == "table" then
+                local gear = mechInfo["gear"]
+                if type(gear) == "table" then
+                    local left = gear["main"]["left"]["rod"]
+                    local right = gear["main"]["right"]["rod"]
+
+                    return left ~= 0 or right ~= 0
                 end
             end
         end
 
-        if type(LoGetSelfData) == "function" then
-            local ok, selfData = pcall(LoGetSelfData)
-            if ok and type(selfData) == "table" then
-                if selfData.InAir ~= nil then
-                    local airborne = to_airborne_bool(selfData.InAir)
-                    if airborne ~= nil then
-                        return not airborne
-                    end
-                end
-            end
-        end
-
-        return false
+        return false;
     end,
 
     SendAh64StateUpdate = function(self, payload)
@@ -592,15 +511,16 @@ vaicom.insert = {
         local isAh64 = string.find(moduleName or "", "AH-64D", 1, true) ~= nil
 
         if isAh64 then
+            local device = base.GetDevice(0)
             -- Get the current indicator light for the APU 
-            local apu = base.GetDevice(0):get_argument_value(406) -- 0=off, 1=on
+            local apu = device:get_argument_value(406) -- 0=off, 1=on
             -- Get CMWS switch positions
-            local cmwsArmed = base.GetDevice(0):get_argument_value(614)
-			local cmwsBypass = base.GetDevice(0):get_argument_value(616)
+            local cmwsArmed = device:get_argument_value(614)
+			local cmwsBypass = device:get_argument_value(616)
             -- Get exterior lights positions
-            local navigationLights = base.GetDevice(0):get_argument_value(326) -- -1=dim, 0=off, 1=bright
-            local antiCollisionLights = base.GetDevice(0):get_argument_value(332) -- -1=red, 0=off, 1=white
-            local formationLights = base.GetDevice(0):get_argument_value(329) -- 0=off, 1=on
+            local navigationLights = device:get_argument_value(326) -- -1=dim, 0=off, 1=bright
+            local antiCollisionLights = device:get_argument_value(332) -- -1=red, 0=off, 1=white
+            local formationLights = device:get_argument_value(329) -- 0=off, 1=on
             payloadTable.apu = apu
             payloadTable.cmwsArmed = cmwsArmed
             payloadTable.cmwsBypass = cmwsBypass

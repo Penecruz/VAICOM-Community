@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Windows.Forms;
 using VAICOM.Extensions.AOCS;
-using VAICOM.Extensions.AICPG;
 using VAICOM.Extensions.RIO;
 using VAICOM.PushToTalk;
 using VAICOM.Static;
@@ -312,8 +311,6 @@ namespace VAICOM
                     return; // Exit early if module validation fails
                 }
 
-                UpdateAH64GeorgeState();
-
                 // PTT configuration and activate AIRIO if conditions are met
                 PTT.PTT_ApplyNewConfig();
                 State.AIRIOactive = State.dll_installed_rio && 
@@ -396,39 +393,6 @@ namespace VAICOM
                 VAICOM.Interfaces.VA_Plugin.VA_ExposeVariables(State.Proxy);
 
                 State.Stopwatch.Stop();
-            }
-
-            private static void UpdateAH64GeorgeState()
-            {
-                try
-                {
-                    string moduleId = State.currentmodule != null ? (State.currentmodule.Id ?? string.Empty) : string.Empty;
-                    string stateId = State.currentstate != null ? (State.currentstate.id ?? string.Empty) : string.Empty;
-                    bool isAH64 = moduleId.IndexOf("AH-64D", StringComparison.OrdinalIgnoreCase) >= 0
-                                  || stateId.IndexOf("AH-64D", StringComparison.OrdinalIgnoreCase) >= 0;
-
-                    if (!isAH64 || State.currentstate == null || State.currentstate.airborne)
-                    {
-                        if (isAH64)
-                        {
-                            AH64GeorgeState.WowFromServerState = false;
-                        }
-                        return;
-                    }
-
-                    AH64GeorgeState.WowFromServerState = true;
-
-                    if (AH64GeorgeState.SelectedWeapon != AH64WeaponMode.NoWeapon)
-                    {
-                        var previous = AH64GeorgeState.SelectedWeapon;
-                        AH64GeorgeState.SelectedWeapon = AH64WeaponMode.NoWeapon;
-                        Log.Write("AH-64D ground sync: forced local George state " + previous + " -> NoWeapon (WOW).", Colors.Warning);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Log.Write("AH-64D ground sync check failed: " + ex.Message, Colors.Warning);
-                }
             }
 
             private static void EnsureModuleConnectedAndProcessF10Menu()
