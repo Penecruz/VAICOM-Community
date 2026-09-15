@@ -149,7 +149,7 @@ namespace VAICOM
                         return true;
                     }
 
-                    if (State.currentmodule == null || !State.currentmodule.Id.Equals("AH-64D", StringComparison.OrdinalIgnoreCase))
+                    if (!State.IsAH64D)
                     {
                         Log.Write("George AI commands are only available in AH-64D.", Colors.Warning);
                         return false;

@@ -61,8 +61,7 @@ namespace VAICOM
             public bool isWSO()
             {
                 // Ensure the active module is "F-4E-45MC" and the command falls within the WSO range
-                return State.currentmodule.Id.Equals("F-4E-45MC", StringComparison.OrdinalIgnoreCase) &&
-                       (category == CommandCategories.WSO || (uniqueid >= 24000 && uniqueid <= 24999));
+                return State.IsF4E && (category == CommandCategories.WSO || (uniqueid >= 24000 && uniqueid <= 24999));
             }
 
             public bool RequiresFlightNumInsert()

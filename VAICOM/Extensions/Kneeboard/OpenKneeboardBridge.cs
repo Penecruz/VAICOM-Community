@@ -1143,7 +1143,7 @@ namespace VAICOM
                     try
                     {
                         string moduleId = State.currentmodule == null ? "" : (State.currentmodule.Id ?? "");
-                        if (!moduleId.Equals("F-4E-45MC", StringComparison.OrdinalIgnoreCase))
+                        if (!State.IsF4E)
                         {
                             return "Unknown";
                         }
@@ -1806,7 +1806,7 @@ namespace VAICOM
                                 }
                             }
                         }
-                        else if (moduleId.Equals("F-4E-45MC", StringComparison.OrdinalIgnoreCase))
+                        else if (State.IsF4E)
                         {
                             foreach (KeyValuePair<string, string> alias in Database.Aliases.aicommands)
                             {
@@ -1821,7 +1821,7 @@ namespace VAICOM
                                 keywords.Add(key);
                             }
                         }
-                        else if (moduleId.StartsWith("AH-64D", StringComparison.OrdinalIgnoreCase))
+                        else if (State.IsAH64D)
                         {
                             // AH-64D: return common George commands plus seat-specific commands.
                             bool isPilot = Helpers.Common.IsAH64PilotSeatActive();

@@ -340,9 +340,7 @@ namespace VAICOM
                 }
 
                 if (!State.AIRIOactive
-                    && State.currentmodule != null
-                    && (State.currentmodule.Id.Equals("F-4E-45MC", StringComparison.OrdinalIgnoreCase)
-                        || State.currentmodule.Id.Equals("AH-64D", StringComparison.OrdinalIgnoreCase))
+                    && (State.IsF4E || State.IsAH64D)
                     && State.activeconfig.ICShotmic_useswitch)
                 {
                     bool hotmic = State.IsF4EIntercomSelected();

@@ -925,7 +925,7 @@ namespace VAICOM
                         {
                             Log.Write("WSO command detected. Starting WSO command processing...", Colors.Text);
 
-                            if (!State.currentmodule.Id.Equals("F-4E-45MC", StringComparison.OrdinalIgnoreCase))
+                            if (!State.IsF4E)
                             {
                                 Log.Write("WSO commands are only available for the F-4E-45MC module.", Colors.Warning);
                                 State.processlocked = false;

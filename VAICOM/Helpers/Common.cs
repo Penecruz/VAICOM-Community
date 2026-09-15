@@ -36,7 +36,7 @@ namespace VAICOM
 
             public static bool IsF4EWsoSeatActive()
             {
-                if (State.currentmodule == null || !State.currentmodule.Id.Equals("F-4E-45MC", StringComparison.OrdinalIgnoreCase))
+                if (!State.IsF4E)
                 {
                     return false;
                 }
@@ -77,7 +77,7 @@ namespace VAICOM
 
             public static bool IsAH64PilotSeatActive()
             {
-                if (State.currentmodule == null || !State.currentmodule.Id.Equals("AH-64D", StringComparison.OrdinalIgnoreCase))
+                if (!State.IsAH64D)
                 {
                     return false;
                 }
@@ -106,7 +106,7 @@ namespace VAICOM
                     }
                 }
 
-                if (State.currentmodule.Id.Equals("F-4E-45MC", StringComparison.OrdinalIgnoreCase))
+                if (State.IsF4E)
                 {
                     return IsF4EWsoSeatActive() ? "F-4E Phantom II WSO" : "F-4E Phantom II Pilot";
                 }

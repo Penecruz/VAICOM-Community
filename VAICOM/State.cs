@@ -318,9 +318,7 @@ namespace VAICOM
                 return true;
             }
 
-            return currentmodule != null
-                && (currentmodule.Id.Equals("F-4E-45MC", StringComparison.OrdinalIgnoreCase)
-                    || currentmodule.Id.Equals("AH-64D", StringComparison.OrdinalIgnoreCase));
+            return IsF4E || IsAH64D;
         }
 
         public static bool IsF4EIntercomSelected()
@@ -345,16 +343,12 @@ namespace VAICOM
                 return false;
             }
 
-            if (currentmodule != null
-                && currentmodule.Id.Equals("F-4E-45MC", StringComparison.OrdinalIgnoreCase)
-                && activeconfig.ICShotmic_useswitch)
+            if (IsF4E && activeconfig.ICShotmic_useswitch)
             {
                 return IsF4EIntercomSelected();
             }
 
-            if (currentmodule != null
-                && currentmodule.Id.Equals("AH-64D", StringComparison.OrdinalIgnoreCase)
-                && activeconfig.ICShotmic_useswitch)
+            if (IsAH64D && activeconfig.ICShotmic_useswitch)
             {
                 return activeconfig.ICShotmic;
             }
@@ -575,6 +569,14 @@ namespace VAICOM
             get
             {
                 return currentmodule != null && currentmodule.Id.Equals("F-4E-45MC", StringComparison.OrdinalIgnoreCase);
+            }
+        }
+
+        public static bool IsAH64D
+        {
+            get
+            {
+                return currentmodule != null && currentmodule.Id.Equals("AH-64D", StringComparison.OrdinalIgnoreCase);
             }
         }
     }
