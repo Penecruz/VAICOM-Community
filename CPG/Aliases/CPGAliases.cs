@@ -8,8 +8,8 @@ namespace VAICOM.Extensions.CPG
         // Aliases for recipients (get added to recipient aliases)
         public static Dictionary<string, string> airecipients = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
-            // George AI aliases are currently unused as these are hardcoded into the commands themselves,
-            // and the "Gunner" command aliases are generated on-the-fly.
+            // Additional George AI aliases are not specified unused as these are hardcoded into the commands
+            // themselves, ie. the "Gunner" and "Steve" command aliases are generated on-the-fly.
             {
                 "George", "george"
             }

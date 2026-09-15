@@ -214,7 +214,24 @@ vaicom.insert = {
             end
         end
 
-        return false;
+        return false
+    end,
+
+    GetEngineRPMs = function(self)
+        if type(LoGetEngineInfo) == "function" then
+            local ok, engineInfo = pcall(LoGetEngineInfo)
+            if ok and type(engineInfo) == "table" then
+                local rpm = engineInfo["RPM"]
+                if type(rpm) == "table" then
+                    local left = rpm["left"]
+                    local right = rpm["right"]
+
+                    return math.floor(left), math.floor(right)
+                end
+            end
+        end
+
+        return 0, 0
     end,
 
     SendAh64StateUpdate = function(self, payload)
@@ -228,13 +245,17 @@ vaicom.insert = {
         local formationLights = payload.formationLights
         local antiCollisionLights = payload.antiCollisionLights
         local wow = self:DetectOnGroundState()
+        local leftRPM, rightRPM = self:GetEngineRPMs()
+
         local msg = string.format(
-            "%s;gun=%d;rockets=%d;missiles=%d;wow=%d;apu=%d;cmwsArmed=%d;cmwsBypass=%d;navigationLights=%d;formationLights=%d;antiCollisionLights=%d",
+            "%s;gun=%d;rockets=%d;missiles=%d;wow=%d;rpmL=%d;rpmR=%d;apu=%d;cmwsArmed=%d;cmwsBypass=%d;navigationLights=%d;formationLights=%d;antiCollisionLights=%d",
             vaicom.config.ah64stateprefix,
             gun and 1 or 0,
             rockets and 1 or 0,
             missiles and 1 or 0,
             wow and 1 or 0,
+            leftRPM,
+            rightRPM,
             apu,
             cmwsArmed,
             cmwsBypass,

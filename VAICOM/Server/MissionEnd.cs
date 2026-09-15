@@ -22,8 +22,6 @@ namespace VAICOM
 
             public static void EndMission()
             {
-
-
                 State.beaconlocked = false;
                 State.dcsrunning = false;
                 State.moduleConnected = false;
@@ -46,11 +44,7 @@ namespace VAICOM
 
                 State.KneeboardState = new KneeboardState();
 
-                AH64GeorgeState.WeaponStateValid = false;
-                AH64GeorgeState.GunAvailable = false;
-                AH64GeorgeState.RocketsAvailable = false;
-                AH64GeorgeState.MissilesAvailable = false;
-                AH64GeorgeState.SelectedWeapon = AH64WeaponMode.Unknown;
+                AH64GeorgeState.InitializeState();
             }
 
             public static void EndMissionUpdateGUI()

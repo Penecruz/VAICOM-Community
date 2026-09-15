@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Windows.Forms;
+using VAICOM.Extensions.AICPG;
 using VAICOM.Extensions.Kneeboard;
 using VAICOM.Extensions.RIO;
 using VAICOM.PushToTalk;
@@ -78,6 +79,11 @@ namespace VAICOM
                     State.F14WheelChocksState = State.WheelChocksState.On;
                     State.F14WheelChocksStateAssumed = true;
                     Log.Write("F-14 wheel chocks state initialized to ON (assumed).", Colors.Text);
+                }
+
+                if (State.IsAH64D)
+                {
+                    AH64GeorgeState.InitializeState();
                 }
 
                 tables.resetriomenustate();

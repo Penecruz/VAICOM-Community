@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using VAICOM.Static;
 
 namespace VAICOM.Extensions.AICPG
@@ -7,34 +8,78 @@ namespace VAICOM.Extensions.AICPG
     {
         public static void ProcessCommand(string commandId)
         {
+            // Common George commands.
             switch (commandId)
             {
-                //Show/Hide George Overlay
+                // Show/Hide George Overlay
                 case "wMsgGeorgeShowHide":
-                    AddGeorgeButton(AH64GeorgeButton.Menu);
-                    break;
-                // Long show/hide press
-                case "wMsgGeorgeMenuDefenseMode":
-                    AddGeorgeLongButton(AH64GeorgeButton.Menu);
-                    UI.Playsound.Commandcomplete();
-                    break;
-                // Up Short Presses
+                    // Handle when in CP/G seat and DEFN menu open so that it defaults
+                    // the menu mode back to the correct mode when closing the DEFN menu.
+                    if (AH64GeorgeState.IsGeorgePilot()
+                        && AH64GeorgeState.CurrentMenuMode.Equals(AH64MenuMode.Defense))
+                    {
+                        CloseDefenseMenu();
+                    }
+                    else
+                    {
+                        AddGeorgeButton(AH64GeorgeButton.Menu);
+                    }
+                    return;
+
+                // Generic menu short and long presses
                 case "wMsgGeorgeUp":
+                    AddGeorgeButton(AH64GeorgeButton.Up);
+                    return;
+                case "wMsgGeorgeUpLong":
+                    AddGeorgeLongButton(AH64GeorgeButton.Up);
+                    return;
+                case "wMsgGeorgeDown":
+                    AddGeorgeButton(AH64GeorgeButton.Down);
+                    return;
+                case "wMsgGeorgeDownLong":
+                    AddGeorgeLongButton(AH64GeorgeButton.Down);
+                    return;
+                case "wMsgGeorgeLeft":
+                    AddGeorgeButton(AH64GeorgeButton.Left);
+                    return;
+                case "wMsgGeorgeLeftLong":
+                    AddGeorgeLongButton(AH64GeorgeButton.Left);
+                    return;
+                case "wMsgGeorgeRight":
+                    AddGeorgeButton(AH64GeorgeButton.Right);
+                    return;
+                case "wMsgGeorgeRightLong":
+                    AddGeorgeLongButton(AH64GeorgeButton.Right);
+                    return;
+                case "wMsgGeorgeCenter":
+                    AddGeorgeButton(AH64GeorgeButton.Multifunction);
+                    return;
+                case "wMsgGeorgeCenterLong":
+                    AddGeorgeLongButton(AH64GeorgeButton.Multifunction);
+                    return;
+            }
+
+            if (Helpers.Common.IsAH64PilotSeatActive())
+            {
+                HandleCPGCommand(commandId);
+            }
+            else 
+            {
+                HandlePilotCommand(commandId);
+            }
+        }
+
+        private static void HandleCPGCommand(string commandId)
+        {
+            switch (commandId)
+            {
+                // Up Short Presses
                 case "wMsgGeorgePreviuousTarget":
                 case "wMsgGeorgePreviousItem":
-                case "wMsgGeorgeStartUpEnginesFly":
-                case "wMsgGeorgeSpeedUp":
-                case "wMsgGeorgeAlignToTADS":
-                case "wMsgGeorgeAlignToNTS":
-                case "wMsgGeorgeHoverUpTenFeet":
                     AddGeorgeButton(AH64GeorgeButton.Up);
-                    break;
-                case "wMsgGeorgeAPUStart":
-                case "wMsgGeorgeAPUStop":
-                    ToggleApuOnOff(commandId.Equals("wMsgGeorgeAPUStart", StringComparison.OrdinalIgnoreCase) ? AH64Apu.On : AH64Apu.Off);
-                    break;
+                    return;
+
                 // Down Short Presses
-                case "wMsgGeorgeDown":
                 case "wMsgGeorgeNextTarget":
                 case "wMsgGeorgeNextItem":
                 case "wMsgGeorgeAPUOnly":
@@ -44,14 +89,14 @@ namespace VAICOM.Extensions.AICPG
                 case "wMsgGeorgeReturnToBattlePosition":
                 case "wMsgGeorgeHoverDownTenFeet":
                     AddGeorgeButton(AH64GeorgeButton.Down);
-                    break;
+                    return;
+
                 // Left Short Presses
-                case "wMsgGeorgeLeft":
                 case "wMsgGeorgeNextWeapon":
                 case "wMsgGeorgeExitList":
                     if (commandId.Equals("wMsgGeorgeNextWeapon", StringComparison.OrdinalIgnoreCase) && !CanChangeWeaponSelection())
                     {
-                        break;
+                        return;
                     }
 
                     AddGeorgeButton(AH64GeorgeButton.Left);
@@ -60,17 +105,9 @@ namespace VAICOM.Extensions.AICPG
                     {
                         SelectNextWeapon();
                     }
-                    break;
-                case "wMsgGeorgeMenuCombatMode":
-                case "wMsgGeorgeMenuFlightMode":
-                case "wMsgGeorgeMenuGroundMode":
-                case "wMsgGeorgeMenuHoverMode":
-                case "wMsgGeorgeMenuNextMode":
-                    AddGeorgeButton(AH64GeorgeButton.Left);
-                    UI.Playsound.Commandcomplete();
-                    break;
+                    return;
+
                 // Right Short Presses
-                case "wMsgGeorgeRight":
                 case "wMsgGeorgeTrackTarget":
                 case "wMsgGeorgeLaseTarget":
                 case "wMsgGeorgeLaserOn":
@@ -80,220 +117,109 @@ namespace VAICOM.Extensions.AICPG
                 case "wMsgGeorgeLOBL":
                 case "wMsgGeorgeLOAL":
                 case "wMsgGeorgeListItemSelect":
-                case "wMsgGeorgeStartUpEnginesIdle":
-                case "wMsgGeorgeFollowWaypoints":
-                case "wMsgGeorgeTurnToGHS":
                     AddGeorgeButton(AH64GeorgeButton.Right);
-                    break;
+                    return;
+
                 // Multifunction Short Presses
-                case "wMsgGeorgeCenter":
                 case "wMsgGeorgeClearedFire":
                 case "wMsgGeorgeTadsFov":
                 case "wMsgGeorgeSelectTarget":
                 case "wMsgGeorgelastStoredTarget":
                 case "wMsgGeorgePointSearch":
-                case "wMsgGeorgeTakeOff":
-                case "wMsgGeorgeSetAirSpeedRef":
-                case "wMsgGeorgeSetGroundSpeedRef":
-                case "wMsgGeorgeMaskPosition":
                     AddGeorgeButton(AH64GeorgeButton.Multifunction);
-                    break;
-                // Request Control when in the CPG seat
-                case "wMsgGeorgeControlRequest":
-                    AddGeorgeAction(AH64GeorgeButton.RequestControl, 1.0);
-                    break;
-                // Store Target 
-                case "wMsgGeorgeStoreTarget":
-                    AddGeorgeAction(AH64GeorgeButton.StoreTarget, 1.0);
-                    break;
+                    return;
+
                 // Up Long Presses                         
-                case "wMsgGeorgeUpLong":
                 case "wMsgGeorgeTadsZoomIn":
                 case "wMsgGeorgeTargetListZoomIn":
-                case "wMsgGeorgeStartUpFull":
-                case "wMsgGeorgeOrbitOverhead":
+                case "wMsgGeorgeWeaponsFree":
+                case "wMsgGeorgeHoldFire":
                     AddGeorgeLongButton(AH64GeorgeButton.Up);
-                    break;
-                case "wMsgGeorgeHoverForward":
-                case "wMsgGeorgeIncreaseAltitude":
-                    AddGeorgeLongHoldButton(AH64GeorgeButton.Up, 1000);
-                    break;
+                    return;
+
                 // Down Long Presses
-                case "wMsgGeorgeDownLong":
                 case "wMsgGeorgeTadsZoomOut":
                 case "wMsgGeorgeTargetListZoomOut":
                 case "wMsgGeorgeLastFoundTarget":
                 case "wMsgGeorgeShutdownFull":
-                case "wMsgGeorgeBreakOneEighty":
-                case "wMsgGeorgeThreatWarningsOn":
-                case "wMsgGeorgeThreatWarningsOff":
                     AddGeorgeLongButton(AH64GeorgeButton.Down);
-                    break;
-                case "wMsgGeorgeHoverBack":
-                case "wMsgGeorgeDecreaseAltitude":
-                    AddGeorgeLongHoldButton(AH64GeorgeButton.Down, 1000);
-                    break;
+                    return;
+
                 // Left Long Presses
-                case "wMsgGeorgeLeftLong":
                 case "wMsgGeorgeTargetListFilter":
                 case "wMsgGeorgePointListFilterMode":
                 case "wMsgGeorgeNextRkt":
                 case "wMsgGeorgeNextMSL":
                 case "wMsgGeorgeAreaSelect":
-                case "wMsgGeorgeBreakLeft":
                     AddGeorgeLongButton(AH64GeorgeButton.Left);
-                    break;
-                case "wMsgGeorgeComeLeft":
-                case "wMsgGeorgeHoverLeft":
-                    AddGeorgeLongHoldButton(AH64GeorgeButton.Left, 1000);
-                    break;
+                    return;
+
                 // Right Long Presses
-                case "wMsgGeorgeRightLong":
                 case "wMsgGeorgePointListFilterThreat":
                 case "wMsgGeorgeMslTraj":
                 case "wMsgGeorgePointSelect":
-                case "wMsgGeorgeCMWSOn":
-                case "wMsgGeorgeCMWSOff":
-                case "wMsgGeorgeBreakRight":
                     AddGeorgeLongButton(AH64GeorgeButton.Right);
-                    break;
-                case "wMsgGeorgeComeRight":
-                case "wMsgGeorgeHoverRight":
-                    AddGeorgeLongHoldButton(AH64GeorgeButton.Right, 1000);
-                    break;
+                    return;
+
                 // Multifunction Long Presses
-                case "wMsgGeorgeCenterLong":
                 case "wMsgGeorgeStartUp":
                 case "wMsgGeorgeShutdown":
                 case "wMsgGeorgeAdjustAim":
                 case "wMsgGeorgeTadsSensor":
                 case "wMsgGeorgeAreaSearch":
-                case "wMsgGeorgeSetRadarAltitude":
-                case "wMsgGeorgeSetBarometricAltitude":
-                case "wMsgGeorgeAddBattlePosition":
-                case "wMsgGeorgeDeleteBattlePosition":
                     AddGeorgeLongButton(AH64GeorgeButton.Multifunction);
-                    break;
+                    return;
 
-                // George PLT Defense Mode items
-                case "wMsgGeorgeCMWSArm":
-                    SelectCMWSArmSafe(AH64CMWSArmSafe.Armed);
-                    break;
-                case "wMsgGeorgeCMWSSafe":
-                    SelectCMWSArmSafe(AH64CMWSArmSafe.Safe);
-                    break;
-                case "wMsgGeorgeCMWSAuto":
-                    SelectCMWSMode(AH64CMWSMode.Auto);
-                    break;
-                case "wMsgGeorgeCMWSBypass":
-                    SelectCMWSMode(AH64CMWSMode.Bypass);
-                    break;
-                case "wMsgGeorgeEvadeOff":
-                case "wMsgGeorgeEvadeLevel":
-                case "wMsgGeorgeEvadeVertical":
-                case "wMsgGeorgeEvadeMask":
-                    AddGeorgeLongButton(AH64GeorgeButton.Menu);
-                    AddGeorgeButton(AH64GeorgeButton.Left);
-                    AddGeorgeButton(AH64GeorgeButton.Menu);
-                    break;
-                case "wMsgGeorgeCMDispenseNone":
-                    SelectCMDispenseMode(AH64CMDispenseMode.None);
-                    break;
-                case "wMsgGeorgeCMDispenseChaff":
-                    SelectCMDispenseMode(AH64CMDispenseMode.Chaff);
-                    break;
-                case "wMsgGeorgeCMDispenseFlares":
-                    SelectCMDispenseMode(AH64CMDispenseMode.Flares);
-                    break;
-                case "wMsgGeorgeCMDispenseChaffAndFlares":
-                    SelectCMDispenseMode(AH64CMDispenseMode.ChaffAndFlares);
-                    break;
-                case "wMsgGeorgeExtLightsOff":
-                    SelectExteriorLightsMode(AH64ExteriorLightsMode.Off);
-                    break;
-                case "wMsgGeorgeExtLightsDay":
-                    SelectExteriorLightsMode(AH64ExteriorLightsMode.Day);
-                    break;
-                case "wMsgGeorgeExtLightsNightBright":
-                    SelectExteriorLightsMode(AH64ExteriorLightsMode.NightBright);
-                    break;
-                case "wMsgGeorgeExtLightsNightDim":
-                    SelectExteriorLightsMode(AH64ExteriorLightsMode.NightDim);
-                    break;
-                case "wMsgGeorgeExtLightsFormation":
-                    SelectExteriorLightsMode(AH64ExteriorLightsMode.Formation);
-                    break;
-
-                // George ROE
-                case "wMsgGeorgeReturnFire":
-                    SelectRulesOfEngagementMode(AH64ROEMode.ReturnFire);
-                    break;
-                case "wMsgGeorgeWeaponsFree":
-                    if (Helpers.Common.IsAH64PilotSeatActive())
-                    {
-                        // George as CP/G
-                        AddGeorgeLongButton(AH64GeorgeButton.Up);
-                    }
-                    else
-                    {
-                        // George as pilot
-                        SelectRulesOfEngagementMode(AH64ROEMode.WeaponsFree);
-                    }
-                    break;
-                case "wMsgGeorgeHoldFire":
-                    if (Helpers.Common.IsAH64PilotSeatActive())
-                    {
-                        // George as CP/G
-                        AddGeorgeLongButton(AH64GeorgeButton.Up);
-                    }
-                    else
-                    {
-                        // George as pilot
-                        SelectRulesOfEngagementMode(AH64ROEMode.HoldFire);
-                    }
-                    break;
+                // Request Control when in the CPG seat
+                case "wMsgGeorgeControlRequest":
+                    AddGeorgeAction(AH64GeorgeButton.RequestControl, 1.0);
+                    return;
+                // Store Target 
+                case "wMsgGeorgeStoreTarget":
+                    AddGeorgeAction(AH64GeorgeButton.StoreTarget, 1.0);
+                    return;
 
                 //Search Tasks
                 //Direct Searches
                 case "wMsgGeorgeMacroPHSsearch":
                     AddGeorgeButton(AH64GeorgeButton.Up);
-                    break;
+                    return;
                 case "wMsgGeorgeMacroTADSLOS":
                     AddGeorgeLongButton(AH64GeorgeButton.Down);
-                    break;
+                    return;
                 //Area Search Macros PHS, FWD, PFZ and hide overlay
                 case "wMsgGeorgeMacroNextSearch":
                     AddGeorgeLongButton(AH64GeorgeButton.Left, 120);
                     AddGeorgeButton(AH64GeorgeButton.Down, 80);
                     AddGeorgeButton(AH64GeorgeButton.Right, 80);
                     AddGeorgeButton(AH64GeorgeButton.Menu);
-                    break;
+                    return;
                 case "wMsgGeorgeMacroPreviousSearch":
                     AddGeorgeLongButton(AH64GeorgeButton.Left, 200);
                     AddGeorgeButton(AH64GeorgeButton.Up, 150);
                     AddGeorgeButton(AH64GeorgeButton.Right, 80);
                     AddGeorgeButton(AH64GeorgeButton.Menu);
-                    break;
+                    return;
                 //Point Search Macros and hide overlay
                 case "wMsgGeorgeMacroNextPoint":
                     AddGeorgeLongButton(AH64GeorgeButton.Right, 200);
                     AddGeorgeButton(AH64GeorgeButton.Down, 150);
                     AddGeorgeButton(AH64GeorgeButton.Right, 80);
                     AddGeorgeButton(AH64GeorgeButton.Menu);
-                    break;
+                    return;
                 case "wMsgGeorgeMacroPreviousPoint":
                     AddGeorgeLongButton(AH64GeorgeButton.Right, 200);
                     AddGeorgeButton(AH64GeorgeButton.Up, 150);
                     AddGeorgeButton(AH64GeorgeButton.Right, 80);
                     AddGeorgeButton(AH64GeorgeButton.Menu);
-                    break;
+                    return;
                 //Target List and Track macros
                 case "wMsgGeorgeMacroAddTwoTargetsTrack": //Add and Track Top 2 targets in list
                     AddGeorgeButton(AH64GeorgeButton.Multifunction, 100);
                     AddGeorgeButton(AH64GeorgeButton.Down, 100);
                     AddGeorgeButton(AH64GeorgeButton.Multifunction, 100);
                     AddGeorgeButton(AH64GeorgeButton.Right);
-                    break;
+                    return;
                 case "wMsgGeorgeMacroAddThreeTargetsTrack": //Add and Track Top 3 targets in list
                     AddGeorgeButton(AH64GeorgeButton.Multifunction, 100);
                     AddGeorgeButton(AH64GeorgeButton.Down, 100);
@@ -301,7 +227,7 @@ namespace VAICOM.Extensions.AICPG
                     AddGeorgeButton(AH64GeorgeButton.Down, 100);
                     AddGeorgeButton(AH64GeorgeButton.Multifunction, 100);
                     AddGeorgeButton(AH64GeorgeButton.Right);
-                    break;
+                    return;
                 case "wMsgGeorgeMacroAddFourTargetsTrack": //Add and Track Top 4 targets in list
                     AddGeorgeButton(AH64GeorgeButton.Multifunction, 100);
                     AddGeorgeButton(AH64GeorgeButton.Down, 100);
@@ -311,24 +237,353 @@ namespace VAICOM.Extensions.AICPG
                     AddGeorgeButton(AH64GeorgeButton.Down, 100);
                     AddGeorgeButton(AH64GeorgeButton.Multifunction, 100);
                     AddGeorgeButton(AH64GeorgeButton.Right);
-                    break;
+                    return;
                 case "wMsgGeorgeMacroTrackEngage": //Tracks current target and give engage command if ROE is Weapons Hold
                     AddGeorgeButton(AH64GeorgeButton.Right, 100);
                     AddGeorgeButton(AH64GeorgeButton.Multifunction, 100);
-                    break;
+                    return;
                 case "wMsgGeorgeMacroSelectGun":
                     SelectWeapon(AH64WeaponMode.Gun);
-                    break;
+                    return;
                 case "wMsgGeorgeMacroSelectMissiles":
                     SelectWeapon(AH64WeaponMode.Missiles);
-                    break;
+                    return;
                 case "wMsgGeorgeMacroSelectRockets":
                     SelectWeapon(AH64WeaponMode.Rockets);
-                    break;
+                    return;
                 case "wMsgGeorgeMacroSelectNoWeapon":
                     SelectWeapon(AH64WeaponMode.NoWeapon);
-                    break;
+                    return;
             }
+
+            // This shouldn't occur, unless due to a coding bug.
+            Log.Write("Command not valid for George AI CP/G", Colors.Warning);
+        }
+
+        private static void HandlePilotCommand(string commandId)
+        {
+            // TODO: test and verify commands then organise by menu and then by press.
+            // This may introduce duplication as some items appear in multiple menus, e.g. Add/Delete battle position.
+            // Those may need to be in a separate multiple menu mode if condition.
+
+            // TODO: if fall through all checks then should display message stating that "Command is not available in <AH64GeorgeState.CurrentMenuMode> mode"
+
+            switch (commandId)
+            {
+                // Change menu modes
+                case "wMsgGeorgeMenuCombatMode":
+                case "wMsgGeorgeMenuFlightMode":
+                case "wMsgGeorgeMenuGroundMode":
+                case "wMsgGeorgeMenuHoverMode":
+                case "wMsgGeorgeMenuDefenseMode":
+                case "wMsgGeorgeMenuNextMode":
+                    SelectMenuMode(commandId);
+                    return;
+
+                // Up short presses
+                case "wMsgGeorgeStartUpEnginesFly":
+                    if (InGroundMode())
+                    {
+                        AddGeorgeButton(AH64GeorgeButton.Up);
+                    }
+                    return;
+                case "wMsgGeorgeSpeedUp":
+                    if (InFlightMode())
+                    {
+                        AddGeorgeButton(AH64GeorgeButton.Up);
+                    }
+                    return;
+                case "wMsgGeorgeAlignToTADS":
+                case "wMsgGeorgeAlignToNTS":
+                    if (InCombatMode())
+                    {
+                        AddGeorgeButton(AH64GeorgeButton.Up);
+                    }
+                    return;
+                case "wMsgGeorgeHoverUpTenFeet":
+                    if (InHoverMode())
+                    {
+                        AddGeorgeButton(AH64GeorgeButton.Up);
+                    }
+                    return;
+
+                // Down short presses
+                case "wMsgGeorgeAPUStart":
+                case "wMsgGeorgeAPUStop":
+                    if (InGroundMode())
+                    {
+                        ToggleApuOnOff(commandId.Equals("wMsgGeorgeAPUStart", StringComparison.OrdinalIgnoreCase) ? AH64Apu.On : AH64Apu.Off);
+                    }
+                    return;
+                case "wMsgGeorgeAPUOnly":
+                case "wMsgGeorgeShutdownEngines":
+                    if (InGroundMode())
+                    {
+                        AddGeorgeButton(AH64GeorgeButton.Down);
+                    }
+                    return;
+                case "wMsgGeorgeSlowDown":
+                    if (InFlightMode())
+                    {
+                        AddGeorgeButton(AH64GeorgeButton.Down);
+                    }
+                    return;
+                case "wMsgGeorgeHoverDownTenFeet":
+                    if (InHoverMode())
+                    {
+                        AddGeorgeButton(AH64GeorgeButton.Down);
+                    }
+                    return;
+                case "wMsgGeorgeHoldPosition":
+                case "wMsgGeorgeReturnToBattlePosition":
+                    if (InCombatMode())
+                    {
+                        AddGeorgeButton(AH64GeorgeButton.Down);
+                    }
+                    return;
+                
+                // Right short presses
+                case "wMsgGeorgeStartUpEnginesIdle":
+                    if (InGroundMode())
+                    {
+                        AddGeorgeButton(AH64GeorgeButton.Right);
+                    }
+                    return;
+                case "wMsgGeorgeFollowWaypoints":
+                    if (InFlightMode())
+                    {
+                        AddGeorgeButton(AH64GeorgeButton.Right);
+                    }
+                    return;
+                case "wMsgGeorgeTurnToGHS":
+                    if (InHoverMode())
+                    {
+                        AddGeorgeButton(AH64GeorgeButton.Right);
+                    }
+                    return;
+
+                // Multifunction short presses
+                case "wMsgGeorgeTakeOff":
+                    // Only allow takeoff -> Flight when:
+                    // - currently on the ground,
+                    // - hover capability exists,
+                    // - hover can actually be selected (APU off while on ground),
+                    // - and current menu is Ground, Hover or Defense (valid takeoff contexts).
+                    var currentMode = AH64GeorgeState.CurrentMenuMode;
+                    var hoverSelectable = AH64GeorgeState.GetAvailableMenuModes().Contains(AH64MenuMode.Hover);
+                    if (!AH64GeorgeState.IsAirbourne()
+                        && AH64GeorgeState.IsHoverAvailable()
+                        && hoverSelectable
+                        && (currentMode == AH64MenuMode.Ground || currentMode == AH64MenuMode.Hover || currentMode == AH64MenuMode.Defense))
+                    {
+                        AddGeorgeButton(AH64GeorgeButton.Multifunction);
+                        // The menu automatically switches to FLT mode when
+                        // taking off and previously on GND/HOV/DEFN.
+                        AH64GeorgeState.SetMenuMode(AH64MenuMode.Flight);
+                    }
+                    return;
+                case "wMsgGeorgeSetAirSpeedRef":
+                case "wMsgGeorgeSetGroundSpeedRef":
+                    if (InFlightMode())
+                    {
+                        AddGeorgeButton(AH64GeorgeButton.Multifunction);
+                    }
+                    return;
+                case "wMsgGeorgeMaskPosition":
+                    if (AH64GeorgeState.IsAirbourne()
+                        && (InCombatMode() || InHoverMode() || InDefenseMode()))
+                    {
+                        AddGeorgeButton(AH64GeorgeButton.Multifunction);
+                    }
+                    return;
+
+                // Up long presses
+                case "wMsgGeorgeStartUpFull":
+                    if (InGroundMode())
+                    {
+                        AddGeorgeLongButton(AH64GeorgeButton.Up);
+                    }
+                    return;
+                case "wMsgGeorgeOrbitOverhead":
+                    if (InCombatMode())
+                    {
+                        AddGeorgeLongButton(AH64GeorgeButton.Up);
+                    }
+                    return;
+                case "wMsgGeorgeHoverForward":
+                    if (InHoverMode())
+                    {
+                        AddGeorgeLongHoldButton(AH64GeorgeButton.Up, 1000);
+                    }
+                    return;
+                case "wMsgGeorgeIncreaseAltitude":
+                    if (InFlightMode())
+                    {
+                        AddGeorgeLongHoldButton(AH64GeorgeButton.Up, 1000);
+                    }
+                    return;
+                    
+                // Down long presses
+                case "wMsgGeorgeShutdownFull":
+                    if (InGroundMode())
+                    {
+                        AddGeorgeLongButton(AH64GeorgeButton.Down);
+                    }
+                    return;
+                case "wMsgGeorgeBreakOneEighty":
+                    if (InCombatMode())
+                    {
+                        AddGeorgeLongButton(AH64GeorgeButton.Down);
+                    }
+                    return;
+                case "wMsgGeorgeThreatWarningsOn":
+                case "wMsgGeorgeThreatWarningsOff":
+                    AddGeorgeLongButton(AH64GeorgeButton.Down);
+                    return;
+                case "wMsgGeorgeHoverBack":
+                    if (InHoverMode())
+                    {
+                        AddGeorgeLongHoldButton(AH64GeorgeButton.Down, 1000);
+                    }
+                    return;
+                case "wMsgGeorgeDecreaseAltitude":
+                    if (InFlightMode())
+                    {
+                        AddGeorgeLongHoldButton(AH64GeorgeButton.Down, 1000);
+                    }
+                    return;
+
+                // Left long presses
+                case "wMsgGeorgeBreakLeft":
+                    if (InCombatMode())
+                    {
+                        AddGeorgeLongButton(AH64GeorgeButton.Left);
+                    }
+                    return;
+                case "wMsgGeorgeComeLeft":
+                    if (InFlightMode())
+                    {
+                        AddGeorgeLongHoldButton(AH64GeorgeButton.Left, 1000);
+                    }
+                    return;
+                case "wMsgGeorgeHoverLeft":
+                    if (InHoverMode())
+                    {
+                        AddGeorgeLongHoldButton(AH64GeorgeButton.Left, 1000);
+                    }
+                    return;
+
+                // Right long presses
+                case "wMsgGeorgeCMWSOn":
+                case "wMsgGeorgeCMWSOff":
+                    if (InGroundMode())
+                    {
+                        AddGeorgeLongButton(AH64GeorgeButton.Right);
+                    }
+                    return;
+                case "wMsgGeorgeBreakRight":
+                    if (InCombatMode())
+                    {
+                        AddGeorgeLongButton(AH64GeorgeButton.Right);
+                    }
+                    return;
+                case "wMsgGeorgeComeRight":
+                    if (InFlightMode())
+                    {
+                        AddGeorgeLongHoldButton(AH64GeorgeButton.Right, 1000);
+                    }
+                    return;
+                case "wMsgGeorgeHoverRight":
+                    if (InHoverMode())
+                    {
+                        AddGeorgeLongHoldButton(AH64GeorgeButton.Right, 1000);
+                    }
+                    return;
+
+                // Multifunction long presses
+                case "wMsgGeorgeSetRadarAltitude":
+                case "wMsgGeorgeSetBarometricAltitude":
+                    if (InFlightMode())
+                    {
+                        AddGeorgeLongButton(AH64GeorgeButton.Multifunction);
+                    }
+                    return;
+                case "wMsgGeorgeAddBattlePosition":
+                case "wMsgGeorgeDeleteBattlePosition":
+                    if (InCombatMode() || InHoverMode() || InDefenseMode())
+                    {
+                        AddGeorgeLongButton(AH64GeorgeButton.Multifunction);
+                    }
+                    return;
+
+                // George PLT Defense Mode items
+                // No menu mode checks required for these ones as these open
+                // the DEFN menu prior to performing the command.
+                case "wMsgGeorgeCMWSArm":
+                    SelectCMWSArmSafe(AH64CMWSArmSafe.Armed);
+                    return;
+                case "wMsgGeorgeCMWSSafe":
+                    SelectCMWSArmSafe(AH64CMWSArmSafe.Safe);
+                    return;
+                case "wMsgGeorgeCMWSAuto":
+                    SelectCMWSMode(AH64CMWSMode.Auto);
+                    return;
+                case "wMsgGeorgeCMWSBypass":
+                    SelectCMWSMode(AH64CMWSMode.Bypass);
+                    return;
+                case "wMsgGeorgeEvadeOff":              // TODO: Fix these, they need to track their state
+                case "wMsgGeorgeEvadeLevel":
+                case "wMsgGeorgeEvadeVertical":
+                case "wMsgGeorgeEvadeMask":
+                    OpenDefenseMenu();
+                    AddGeorgeLongButton(AH64GeorgeButton.Left);
+                    CloseDefenseMenu();
+                    return;
+                case "wMsgGeorgeCMDispenseNone":
+                    SelectCMDispenseMode(AH64CMDispenseMode.None);
+                    return;
+                case "wMsgGeorgeCMDispenseChaff":
+                    SelectCMDispenseMode(AH64CMDispenseMode.Chaff);
+                    return;
+                case "wMsgGeorgeCMDispenseFlares":
+                    SelectCMDispenseMode(AH64CMDispenseMode.Flares);
+                    return;
+                case "wMsgGeorgeCMDispenseChaffAndFlares":
+                    SelectCMDispenseMode(AH64CMDispenseMode.ChaffAndFlares);
+                    return;
+                case "wMsgGeorgeExtLightsOff":
+                    SelectExteriorLightsMode(AH64ExteriorLightsMode.Off);
+                    return;
+                case "wMsgGeorgeExtLightsDay":
+                    SelectExteriorLightsMode(AH64ExteriorLightsMode.Day);
+                    return;
+                case "wMsgGeorgeExtLightsNightBright":
+                    SelectExteriorLightsMode(AH64ExteriorLightsMode.NightBright);
+                    return;
+                case "wMsgGeorgeExtLightsNightDim":
+                    SelectExteriorLightsMode(AH64ExteriorLightsMode.NightDim);
+                    return;
+                case "wMsgGeorgeExtLightsFormation":
+                    SelectExteriorLightsMode(AH64ExteriorLightsMode.Formation);
+                    return;
+                case "wMsgGeorgeWeaponsHold":
+                    SelectRulesOfEngagementMode(AH64ROEMode.HoldFire);
+                    return;
+                case "wMsgGeorgeReturnFire":
+                    SelectRulesOfEngagementMode(AH64ROEMode.ReturnFire);
+                    return;
+                case "wMsgGeorgeWeaponsFree":
+                    SelectRulesOfEngagementMode(AH64ROEMode.WeaponsFree);
+                    return;
+
+                // Request Control when in the CPG seat
+                case "wMsgGeorgeControlRequest":
+                    AddGeorgeAction(AH64GeorgeButton.RequestControl, 1.0);
+                    return;
+            }
+
+            Log.Write($"Command not available in {AH64GeorgeState.CurrentMenuMode} mode, or current AH-64 state", Colors.Warning);
+            UI.Playsound.Sorry();
         }
 
         // Enum overloads so callers can use AH64DGeorgeButton
@@ -471,6 +726,63 @@ namespace VAICOM.Extensions.AICPG
             return true;
         }
 
+        private static void SelectMenuMode(string commandId)
+        {
+            if (commandId.Equals("wMsgGeorgeMenuNextMode"))
+            {
+                // If we were able to switch to the next mode then action this.
+                if (AH64GeorgeState.SetNextMenuMode())
+                {
+                    AddGeorgeButton(AH64GeorgeButton.Left);
+                    UI.Playsound.Commandcomplete();
+                }
+                
+                return;
+            }
+            
+            if (commandId.Equals("wMsgGeorgeMenuDefenseMode"))
+            {
+                AH64GeorgeState.SetDefenseMenuMode();
+                OpenDefenseMenu();
+                UI.Playsound.Commandcomplete();
+                return;
+            }
+
+            var target = AH64MenuMode.Unknown;
+            switch (commandId)
+            {
+                case "wMsgGeorgeMenuCombatMode":
+                    target = AH64MenuMode.Combat;
+                    break;
+                case "wMsgGeorgeMenuFlightMode":
+                    target = AH64MenuMode.Flight;
+                    break;
+                case "wMsgGeorgeMenuGroundMode":
+                    target = AH64MenuMode.Ground;
+                    break;
+                case "wMsgGeorgeMenuHoverMode":
+                    target = AH64MenuMode.Hover;
+                    break;
+            }
+
+            var availableMenuModes = AH64GeorgeState.GetAvailableMenuModes();
+            if (!availableMenuModes.Contains(target))
+            {
+                Log.Write("George menu mode " + target + " is not available in current menu modes.", Colors.Recognition);
+                UI.Playsound.Sorry();
+                return;
+            }
+
+            // Get the number of steps that were required to reach the menu that was set.
+            int steps = AH64GeorgeState.SetMenuMode(target);
+            for (int i  = 0; i < steps; i ++)
+            {
+                AddGeorgeButton(AH64GeorgeButton.Left);
+            }
+
+            UI.Playsound.Commandcomplete();
+        }
+
         private static void ToggleApuOnOff(AH64Apu target)
         {
             if (!AH64GeorgeState.ApuOnOffState.Equals(target))
@@ -489,7 +801,7 @@ namespace VAICOM.Extensions.AICPG
             // will be synched in the next server state update.
             if (!AH64GeorgeState.SelectedCMWSArmSafe.Equals(target))
             {
-                AddGeorgeLongButton(AH64GeorgeButton.Menu);
+                OpenDefenseMenu();
                 AddGeorgeButton(AH64GeorgeButton.Up);
                 AddGeorgeButton(AH64GeorgeButton.Menu);
 
@@ -505,9 +817,9 @@ namespace VAICOM.Extensions.AICPG
             // will be synched in the next server state update.
             if (!AH64GeorgeState.SelectedCMWSMode.Equals(target))
             {
-                AddGeorgeLongButton(AH64GeorgeButton.Menu);
+                OpenDefenseMenu();
                 AddGeorgeButton(AH64GeorgeButton.Down);
-                AddGeorgeButton(AH64GeorgeButton.Menu);
+                CloseDefenseMenu();
 
                 AH64GeorgeState.SelectedCMWSMode = target;
             }
@@ -520,56 +832,111 @@ namespace VAICOM.Extensions.AICPG
                 && (target.Equals(AH64CMDispenseMode.Flares) || target.Equals(AH64CMDispenseMode.ChaffAndFlares)))
             {
                 Log.Write("Dispense mode " + target + " is not available with CMWS in Auto.", Colors.Recognition);
+                UI.Playsound.Sorry();
                 return;
             }
 
             var current = AH64GeorgeState.SelectedCMDispenseMode;
-            int steps = AH64GeorgeState.GetCMDispenseSteps(current, target);
-
-            AddGeorgeLongButton(AH64GeorgeButton.Menu);
-
-            for (int i = 0; i < steps; i++)
+            if (!current.Equals(target))
             {
-                AddGeorgeLongButton(AH64GeorgeButton.Right, 80);
+                int steps = AH64GeorgeState.GetCMDispenseSteps(current, target);
+
+                OpenDefenseMenu();
+                for (int i = 0; i < steps; i++)
+                {
+                    AddGeorgeLongButton(AH64GeorgeButton.Right, 80);
+                }
+                CloseDefenseMenu();
+
+                AH64GeorgeState.SelectedCMDispenseMode = target;
             }
-
-            AddGeorgeButton(AH64GeorgeButton.Menu);
-
-            AH64GeorgeState.SelectedCMDispenseMode = target;
         }
 
         private static void SelectExteriorLightsMode(AH64ExteriorLightsMode target)
         {
             var current = AH64GeorgeState.SelectedExteriorLightsMode;
-            int steps = AH64GeorgeState.GetExteriorLightsSteps(current, target);
-
-            AddGeorgeLongButton(AH64GeorgeButton.Menu);
-
-            for (int i = 0; i < steps; i++)
+            if (!current.Equals(target))
             {
-                AddGeorgeButton(AH64GeorgeButton.Right, 80);
+                int steps = AH64GeorgeState.GetExteriorLightsSteps(current, target);
+
+                OpenDefenseMenu();
+                for (int i = 0; i < steps; i++)
+                {
+                    AddGeorgeButton(AH64GeorgeButton.Right, 80);
+                }
+                CloseDefenseMenu();
+
+                AH64GeorgeState.SelectedExteriorLightsMode = target;
             }
-
-            AddGeorgeButton(AH64GeorgeButton.Menu);
-
-            AH64GeorgeState.SelectedExteriorLightsMode = target;
         }
 
         private static void SelectRulesOfEngagementMode(AH64ROEMode target)
         {
             var current = AH64GeorgeState.SelectedROEMode;
-            int steps = AH64GeorgeState.GetRulesOfEngagementSteps(current, target);
-
-            AddGeorgeLongButton(AH64GeorgeButton.Menu);
-
-            for (int i = 0; i < steps; i++)
+            if (!current.Equals(target))
             {
-                AddGeorgeLongButton(AH64GeorgeButton.Up, 80);
-            }
+                int steps = AH64GeorgeState.GetRulesOfEngagementSteps(current, target);
 
+                OpenDefenseMenu();
+                for (int i = 0; i < steps; i++)
+                {
+                    AddGeorgeLongButton(AH64GeorgeButton.Up, 80);
+                }
+                CloseDefenseMenu();
+
+                AH64GeorgeState.SelectedROEMode = target;
+            }
+        }
+
+        private static void OpenDefenseMenu()
+        {
+            AddGeorgeLongButton(AH64GeorgeButton.Menu);
+            AH64GeorgeState.SetDefenseMenuMode();
+        }
+
+        private static void CloseDefenseMenu()
+        {
             AddGeorgeButton(AH64GeorgeButton.Menu);
 
-            AH64GeorgeState.SelectedROEMode = target;
+            // When the DEFN menu is closed it defaults back to a mode based on the current aircraft state.
+            if (AH64GeorgeState.IsAirbourne())
+            {
+                AH64GeorgeState.SetMenuMode(AH64MenuMode.Flight);
+            }
+            else if (AH64GeorgeState.IsHoverAvailable())
+            {
+                AH64GeorgeState.SetMenuMode(AH64MenuMode.Hover);
+            }
+            else
+            {
+                AH64GeorgeState.SetMenuMode(AH64MenuMode.Ground);
+            }
+        }
+
+        private static bool InGroundMode()
+        {
+            return AH64GeorgeState.CurrentMenuMode.Equals(AH64MenuMode.Ground);
+        }
+
+        private static bool InHoverMode()
+        {
+            return AH64GeorgeState.CurrentMenuMode.Equals(AH64MenuMode.Hover);
+        }
+
+        private static bool InFlightMode()
+        {
+            return AH64GeorgeState.CurrentMenuMode.Equals(AH64MenuMode.Flight);
+        }
+
+        private static bool InCombatMode()
+        {
+            return AH64GeorgeState.CurrentMenuMode.Equals(AH64MenuMode.Combat);
+        }
+
+        private static bool InDefenseMode()
+        {
+            return AH64GeorgeState.CurrentMenuMode.Equals(AH64MenuMode.Defense);
         }
     }
+
 }

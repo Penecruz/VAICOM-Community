@@ -94,6 +94,10 @@ namespace VAICOM
                         wowState = -1;
                     }
 
+                    if (State.IsAH64D)
+                    {
+                        AH64GeorgeState.GroundSpeed = groundSpeedKnotsOpt ?? 0;
+                    }
                     Extensions.Kneeboard.OpenKneeboardBridge.UpdateFastOwnship(x, y, z, headingOpt, groundSpeedKnotsOpt, wowState);
                 }
                 catch (Exception e)
@@ -202,10 +206,19 @@ namespace VAICOM
                     bool rocketsAvailable = values.TryGetValue("rockets", out string rocketsValue) && rocketsValue.Equals("1");
                     bool missilesAvailable = values.TryGetValue("missiles", out string missilesValue) && missilesValue.Equals("1");
                     bool wow = values.TryGetValue("wow", out string wowValue) && wowValue.Equals("1");
+
                     int navigationLights = values.TryGetValue("navigationLights", out string navigationLightsValue) && int.TryParse(navigationLightsValue, out int navLights) ? navLights : 0;
                     int antiCollisionLights = values.TryGetValue("antiCollisionLights", out string antiCollisionLightsValue) && int.TryParse(antiCollisionLightsValue, out int acLights) ? acLights : 0;
                     int formationLights = values.TryGetValue("formationLights", out string formationLightsValue) && int.TryParse(formationLightsValue, out int formLights) ? formLights : 0;
-                    
+
+                    if (double.TryParse(values.ContainsKey("rpmR") ? values["rpmR"] : "", System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out double engineRpm))
+                    {
+                        if (!double.IsNaN(engineRpm) && !double.IsInfinity(engineRpm) && engineRpm >= 0)
+                        {
+                            AH64GeorgeState.EngineRpm = engineRpm;
+                        }
+                    }
+
                     AH64GeorgeState.ApuOnOffState = apuOn ? AH64Apu.On : AH64Apu.Off;
                     AH64GeorgeState.SelectedCMWSArmSafe = cmwsArmed ? AH64CMWSArmSafe.Armed : AH64CMWSArmSafe.Safe;
                     AH64GeorgeState.SelectedCMWSMode = cmwsBypass ? AH64CMWSMode.Bypass : AH64CMWSMode.Auto;
@@ -220,12 +233,8 @@ namespace VAICOM
                     {
                         AH64GeorgeState.SelectedWeapon = AH64WeaponMode.NoWeapon;
                     }
-                    // Deselect weapon if weight-on-wheels.
-                    if (wow)
-                    {
-                        AH64GeorgeState.ForceNoWeaponLocalSync("weight-on-wheels", AH64GeorgeState.SelectedWeapon != AH64WeaponMode.Unknown);
-                    }
 
+                    AH64GeorgeState.WeightOnWheels = wow;
                     State.currentstate.airborne = !wow;
                 }
                 catch (Exception e)
