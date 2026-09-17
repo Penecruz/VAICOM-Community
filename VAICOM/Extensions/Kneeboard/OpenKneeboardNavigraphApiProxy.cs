@@ -36,6 +36,8 @@ namespace VAICOM
                 private static bool? PreferTileTmsY = null;
                 private static Dictionary<string, HashSet<string>> IcaoAirportsByTheatre;
                 private static Dictionary<string, Dictionary<string, string>> IcaoAirportNamesByTheatre;
+                private static Dictionary<string, Dictionary<string, string>> IcaoByIataByTheatre;
+                private static Dictionary<string, Dictionary<string, string>> IataByIcaoByTheatre;
 
                 static OpenKneeboardNavigraphApiProxy()
                 {
@@ -52,7 +54,8 @@ namespace VAICOM
                 {
                     try
                     {
-                        string normalizedAirport = (airport ?? "").Trim().ToUpperInvariant();
+                        string theatre = (VAICOM.State.currentstate == null ? "" : VAICOM.State.currentstate.theatre) ?? "";
+                        string normalizedAirport = ResolveAirportCodeToIcao(airport, theatre);
                         if (string.IsNullOrWhiteSpace(normalizedAirport)) return null;
 
                         string authPayload;
@@ -90,7 +93,7 @@ namespace VAICOM
                             string[] catalogUrls = new[]
                             {
                                 "https://api.navigraph.com/v2/charts/" + Uri.EscapeDataString(normalizedAirport) + "?version=STD&rules=IFR",
-                                apiBase.TrimEnd('/') + "/charts?airport=" + Uri.EscapeDataString(airport ?? ""),
+                                apiBase.TrimEnd('/') + "/charts?airport=" + Uri.EscapeDataString(normalizedAirport),
                                 "https://charts.api.navigraph.com/2/airports/" + Uri.EscapeDataString(normalizedAirport) + "/signedurls/charts.json",
                             };
 
@@ -327,6 +330,140 @@ namespace VAICOM
 
                                 AirportNameByIcao[icao] = name;
                                 result[icao] = name;
+                            }
+                        }
+                    }
+                    catch
+                    {
+                    }
+
+                    return result;
+                }
+
+                public static string ResolveAirportCodeToIcao(string airportCode, string theatre)
+                {
+                    string token = (airportCode ?? "").Trim().ToUpperInvariant();
+                    if (string.IsNullOrWhiteSpace(token))
+                    {
+                        return "";
+                    }
+
+                    token = Regex.Replace(token, "[^A-Z0-9]", "");
+                    if (token.Length == 4)
+                    {
+                        return token;
+                    }
+
+                    if (token.Length != 3)
+                    {
+                        return token;
+                    }
+
+                    EnsureIcaoOverridesLoaded();
+                    string theatreKey = NormalizeTheatreKey(theatre);
+
+                    lock (IcaoOverridesSync)
+                    {
+                        Dictionary<string, string> scoped = null;
+                        if (!string.IsNullOrWhiteSpace(theatreKey)
+                            && IcaoByIataByTheatre != null
+                            && IcaoByIataByTheatre.TryGetValue(theatreKey, out scoped)
+                            && scoped != null)
+                        {
+                            string resolvedScoped;
+                            if (scoped.TryGetValue(token, out resolvedScoped) && !string.IsNullOrWhiteSpace(resolvedScoped))
+                            {
+                                return resolvedScoped.Trim().ToUpperInvariant();
+                            }
+                        }
+
+                        if (IcaoByIataByTheatre != null)
+                        {
+                            foreach (var section in IcaoByIataByTheatre.Values)
+                            {
+                                if (section == null)
+                                {
+                                    continue;
+                                }
+
+                                string resolved;
+                                if (section.TryGetValue(token, out resolved) && !string.IsNullOrWhiteSpace(resolved))
+                                {
+                                    return resolved.Trim().ToUpperInvariant();
+                                }
+                            }
+                        }
+                    }
+
+                    return token;
+                }
+
+                public static Dictionary<string, string> GetIataByIcao(IEnumerable<string> airportIcaos, string theatre)
+                {
+                    var result = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+                    try
+                    {
+                        if (airportIcaos == null)
+                        {
+                            return result;
+                        }
+
+                        EnsureIcaoOverridesLoaded();
+                        var requested = airportIcaos
+                            .Where(v => !string.IsNullOrWhiteSpace(v))
+                            .Select(v => v.Trim().ToUpperInvariant())
+                            .Where(v => v.Length == 4)
+                            .Distinct(StringComparer.OrdinalIgnoreCase)
+                            .ToList();
+
+                        if (requested.Count == 0)
+                        {
+                            return result;
+                        }
+
+                        string theatreKey = NormalizeTheatreKey(theatre);
+                        lock (IcaoOverridesSync)
+                        {
+                            Dictionary<string, string> scoped = null;
+                            if (!string.IsNullOrWhiteSpace(theatreKey)
+                                && IataByIcaoByTheatre != null
+                                && IataByIcaoByTheatre.TryGetValue(theatreKey, out scoped)
+                                && scoped != null)
+                            {
+                                foreach (var icao in requested)
+                                {
+                                    string iata;
+                                    if (scoped.TryGetValue(icao, out iata) && !string.IsNullOrWhiteSpace(iata))
+                                    {
+                                        result[icao] = iata.Trim().ToUpperInvariant();
+                                    }
+                                }
+                            }
+
+                            if (IataByIcaoByTheatre != null)
+                            {
+                                foreach (var icao in requested)
+                                {
+                                    if (result.ContainsKey(icao))
+                                    {
+                                        continue;
+                                    }
+
+                                    foreach (var section in IataByIcaoByTheatre.Values)
+                                    {
+                                        if (section == null)
+                                        {
+                                            continue;
+                                        }
+
+                                        string iata;
+                                        if (section.TryGetValue(icao, out iata) && !string.IsNullOrWhiteSpace(iata))
+                                        {
+                                            result[icao] = iata.Trim().ToUpperInvariant();
+                                            break;
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
@@ -661,6 +798,8 @@ namespace VAICOM
 
                         var result = new Dictionary<string, HashSet<string>>(StringComparer.OrdinalIgnoreCase);
                         var nameResult = new Dictionary<string, Dictionary<string, string>>(StringComparer.OrdinalIgnoreCase);
+                        var icaoByIata = new Dictionary<string, Dictionary<string, string>>(StringComparer.OrdinalIgnoreCase);
+                        var iataByIcao = new Dictionary<string, Dictionary<string, string>>(StringComparer.OrdinalIgnoreCase);
 
                         try
                         {
@@ -683,6 +822,14 @@ namespace VAICOM
                                     if (!nameResult.ContainsKey(section))
                                     {
                                         nameResult[section] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+                                    }
+                                    if (!icaoByIata.ContainsKey(section))
+                                    {
+                                        icaoByIata[section] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+                                    }
+                                    if (!iataByIcao.ContainsKey(section))
+                                    {
+                                        iataByIcao[section] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
                                     }
                                     continue;
                                 }
@@ -722,6 +869,30 @@ namespace VAICOM
                                         nameResult[section][icao] = name;
                                     }
                                 }
+
+                                Match objectEntry = Regex.Match(line, "\\[[\\s]*\"([^\"]+)\"[\\s]*\\][\\s]*=[\\s]*\\{([^\\}]*)\\}");
+                                if (objectEntry.Success)
+                                {
+                                    string body = objectEntry.Groups[2].Value ?? "";
+                                    Match icaoField = Regex.Match(body, "icao[\\s]*=[\\s]*\"([A-Za-z0-9]{4})\"");
+                                    Match iataField = Regex.Match(body, "iata[\\s]*=[\\s]*\"([A-Za-z]{3})\"");
+                                    if (icaoField.Success && iataField.Success)
+                                    {
+                                        string icao = (icaoField.Groups[1].Value ?? "").Trim().ToUpperInvariant();
+                                        string iata = (iataField.Groups[1].Value ?? "").Trim().ToUpperInvariant();
+                                        if (!string.IsNullOrWhiteSpace(icao) && !string.IsNullOrWhiteSpace(iata))
+                                        {
+                                            if (!icaoByIata[section].ContainsKey(iata))
+                                            {
+                                                icaoByIata[section][iata] = icao;
+                                            }
+                                            if (!iataByIcao[section].ContainsKey(icao))
+                                            {
+                                                iataByIcao[section][icao] = iata;
+                                            }
+                                        }
+                                    }
+                                }
                             }
                         }
                         catch
@@ -730,6 +901,8 @@ namespace VAICOM
 
                         IcaoAirportsByTheatre = result;
                         IcaoAirportNamesByTheatre = nameResult;
+                        IcaoByIataByTheatre = icaoByIata;
+                        IataByIcaoByTheatre = iataByIcao;
                     }
                 }
 

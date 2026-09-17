@@ -2572,7 +2572,7 @@ base.vaicom.state = {
 
 				local function extractIcaoToken(text)
 					local s = base.string.upper(base.tostring(text or ""))
-					return base.string.match(s, "%u%u%u%u")
+					return base.string.match(s, "%u[%u%d][%u%d][%u%d]")
 				end
 
 				local function normalizeIcaoKey(text)
@@ -2635,38 +2635,66 @@ base.vaicom.state = {
 
 					local function readCodeAndType(scope, key)
 						if base.type(scope) ~= "table" or key == "" then
-							return nil, ""
+							return nil
 						end
 						local value = scope[key]
 						if value == nil then
-							return nil, ""
+							return nil
 						end
 
 						if base.type(value) == "table" then
-							local code = base.string.upper(base.tostring(value.icao or ""))
-							if base.string.match(code, "^%u%u%u%u$") then
-								return code, normalizeIcaoType(value.type)
+							local iata = base.string.upper(base.tostring(value.iata or ""))
+							local icao = base.string.upper(base.tostring(value.icao or ""))
+							if not base.string.match(icao, "^%u[%u%d][%u%d][%u%d]$") then
+								icao = ""
 							end
-							return nil, ""
+							if not base.string.match(iata, "^%u%u%u$") then
+								iata = ""
+							end
+							if icao ~= "" or iata ~= "" then
+								return {
+									icao = icao,
+									iata = iata,
+									type = normalizeIcaoType(value.type),
+								}
+							end
+							return nil
 						end
 
 						local code = base.string.upper(base.tostring(value))
-						if base.string.match(code, "^%u%u%u%u$") then
-							return code, ""
+						if base.string.match(code, "^%u[%u%d][%u%d][%u%d]$") then
+							return {
+								icao = code,
+								iata = "",
+								type = "",
+							}
 						end
-						return nil, ""
+						if base.string.match(code, "^%u%u%u$") then
+							return {
+								icao = "",
+								iata = code,
+								type = "",
+							}
+						end
+						return nil
 					end
 
 					local theatreTable = overrides[theatre]
 					local fallbackTable = overrides.default
-					local code, airfieldType = readCodeAndType(theatreTable, keyCallsign)
-					if code == nil then code, airfieldType = readCodeAndType(theatreTable, keyName) end
-					if code == nil then code, airfieldType = readCodeAndType(fallbackTable, keyCallsign) end
-					if code == nil then code, airfieldType = readCodeAndType(fallbackTable, keyName) end
-					if code ~= nil then
+					local resolved = readCodeAndType(theatreTable, keyCallsign)
+					if resolved == nil then resolved = readCodeAndType(theatreTable, keyName) end
+					if resolved == nil then resolved = readCodeAndType(fallbackTable, keyCallsign) end
+					if resolved == nil then resolved = readCodeAndType(fallbackTable, keyName) end
+					if resolved ~= nil then
+						local preferred = resolved.icao
+						if preferred == nil or preferred == "" then
+							preferred = resolved.iata or ""
+						end
 						return {
-							icao = code,
-							type = airfieldType,
+							icao = resolved.icao or "",
+							iata = resolved.iata or "",
+							code = preferred,
+							type = resolved.type or "",
 						}
 					end
 
@@ -2674,6 +2702,8 @@ base.vaicom.state = {
 					if direct ~= nil then
 						return {
 							icao = direct,
+							iata = "",
+							code = direct,
 							type = "",
 						}
 					end
@@ -2719,11 +2749,23 @@ base.vaicom.state = {
 							end
 
 							local meta = resolveIcaoMetaForAtc(callsign, atcName)
-							local icao
-							if meta ~= nil and meta.icao ~= nil then
-								icao = meta.icao
+							local code
+							local icao = ""
+							local iata = ""
+							if meta ~= nil then
+								code = base.string.upper(base.tostring(meta.code or ""))
+								icao = base.string.upper(base.tostring(meta.icao or ""))
+								iata = base.string.upper(base.tostring(meta.iata or ""))
+								if code == "" then
+									if icao ~= "" then
+										code = icao
+									elseif iata ~= "" then
+										code = iata
+									end
+								end
 							else
-								icao = extractIcaoToken(callsign)
+								code = extractIcaoToken(callsign)
+								icao = code or ""
 							end
 
 							local point = nil
@@ -2738,7 +2780,9 @@ base.vaicom.state = {
 								shortCallsign = shortCallsign,
 								atcName = atcName,
 								meta = meta,
+								code = code,
 								icao = icao,
+								iata = iata,
 							})
 						end
 					end
@@ -2761,8 +2805,23 @@ base.vaicom.state = {
 								local typeCode = base.string.upper(base.tostring(meta.type or ""))
 								if typeCode == "MIL" or typeCode == "CIV" or typeCode == "JOINT" then
 									local icao = base.string.upper(base.tostring(meta.icao or ""))
+									local iata = base.string.upper(base.tostring(meta.iata or ""))
+									local code = base.string.upper(base.tostring(meta.code or ""))
+									if code == "" then
+										if icao ~= "" then
+											code = icao
+										elseif iata ~= "" then
+											code = iata
+										end
+									end
+									if code ~= "" then
+										result[code] = typeCode
+									end
 									if icao ~= "" then
 										result[icao] = typeCode
+									end
+									if iata ~= "" then
+										result[iata] = typeCode
 									end
 									if normalizedCallsign ~= "" then
 										result[normalizedCallsign] = typeCode
@@ -2814,13 +2873,15 @@ base.vaicom.state = {
 
 					local function getClosestAtcInfo()
 						if not base.vaicom.state.playerpoint then
-                            return { icao = "DCS", elevationFt = 0 }
+							return { code = "DCS", icao = "DCS", iata = "", elevationFt = 0 }
 						end
 
 						local playerPoint = base.vaicom.state.playerpoint
 						local rotor = isRotorModule()
 
+						local closestCode = nil
 						local closestIcao = nil
+						local closestIata = nil
 						local closestElevationFt = 0
 						local closestDist = nil
 
@@ -2831,16 +2892,27 @@ base.vaicom.state = {
 								local dz = (atcPoint.z or 0) - (playerPoint.z or 0)
 								local distSq = (dx * dx) + (dz * dz)
 
-								local icao = d.icao
+								local code = base.string.upper(base.tostring(d.code or ""))
+								local icao = base.string.upper(base.tostring(d.icao or ""))
+								local iata = base.string.upper(base.tostring(d.iata or ""))
+								if code == "" then
+									if icao ~= "" then
+										code = icao
+									elseif iata ~= "" then
+										code = iata
+									end
+								end
 								local full = base.string.upper(d.atcName) .. " " .. base.string.upper(d.callsign)
 								local heliport = base.string.find(full, "HELI", 1, true) ~= nil
 									or base.string.find(full, "HELIPAD", 1, true) ~= nil
 									or base.string.find(full, "HELIPORT", 1, true) ~= nil
 									or base.string.find(full, "FARP", 1, true) ~= nil
-								if (rotor and icao ~= nil) or ((not rotor) and icao ~= nil and (not heliport)) then
+								if (rotor and code ~= "") or ((not rotor) and code ~= "" and (not heliport)) then
 									if closestDist == nil or distSq < closestDist then
 										closestDist = distSq
+										closestCode = code
 										closestIcao = icao
+										closestIata = iata
 										closestElevationFt = (base.tonumber(atcPoint.y) or 0) * 3.28084
 									end
 								end
@@ -2848,7 +2920,9 @@ base.vaicom.state = {
 						end
 
 						return {
-							icao = closestIcao or "DCS",
+							code = closestCode or closestIcao or closestIata or "DCS",
+							icao = closestIcao or "",
+							iata = closestIata or "",
 							elevationFt = closestElevationFt or 0
 						}
 					end
@@ -3198,7 +3272,8 @@ base.vaicom.state = {
 						end
 					end
 
-					local station = atcInfo and atcInfo.icao or "DCS"
+					local station = base.string.upper(base.tostring(atcInfo and (atcInfo.code or atcInfo.icao) or "DCS"))
+					if station == "" then station = "DCS" end
 					local metarTime = pad2(reportDay) .. pad2(reportHour) .. pad2(reportMin) .. "Z"
 					return "METAR " .. station .. " " .. metarTime .. " " .. windPart .. windVarPart .. " " .. skyPart .. " " .. tempPart .. " Q" .. base.string.format("%04d", qnhHpa) .. rmkPart
 				end
@@ -3214,15 +3289,33 @@ base.vaicom.state = {
 						if atc and d.point then
 							local atcPoint = d.point
 							local callsign = d.callsign
-							local icao = d.icao
+							local code = base.string.upper(base.tostring(d.code or ""))
+							local icao = base.string.upper(base.tostring(d.icao or ""))
+							local iata = base.string.upper(base.tostring(d.iata or ""))
+							if code == "" then
+								if icao ~= "" then
+									code = icao
+								elseif iata ~= "" then
+									code = iata
+								end
+							end
 							local stationInfo = {
-								icao = icao or "DCS",
+								code = code or "DCS",
+								icao = icao or "",
+								iata = iata or "",
 								elevationFt = (base.tonumber(atcPoint.y) or 0) * 3.28084
 							}
 							local metar = buildMetarForAtcInfo(stationInfo)
 
+							if code ~= nil and code ~= "" then
+								result[code] = metar
+							end
 							if icao ~= nil and icao ~= "" then
 								result[icao] = metar
+							end
+
+							if iata ~= nil and iata ~= "" then
+								result[iata] = metar
 							end
 
 							local upperCallsign = base.string.upper(base.tostring(callsign or ""))

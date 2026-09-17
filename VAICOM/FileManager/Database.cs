@@ -124,7 +124,14 @@ namespace VAICOM
                                     {
                                         if (newalias.Value.Equals(keyword))
                                         {
-                                            Aliases.reference[entry.Key].Add(newalias.Key, newalias.Value);
+                                            if (Aliases.reference[entry.Key].ContainsKey(newalias.Key))
+                                            {
+                                                Aliases.reference[entry.Key][newalias.Key] = newalias.Value;
+                                            }
+                                            else
+                                            {
+                                                Aliases.reference[entry.Key].Add(newalias.Key, newalias.Value);
+                                            }
                                             Log.Write("   -> " + newalias.Key, Colors.Text);
                                         }
                                     }

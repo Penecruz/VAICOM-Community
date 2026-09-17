@@ -3590,6 +3590,7 @@
     let efbAvailableAirports = null;
     let efbAirportsLoadPromise = null;
     let efbAirportEntries = {};
+    let efbIcaoByIata = {};
     let efbManuallySelectedAirport = '';
     let efbChartsByAirport = {};
     let efbChartsLoadPromiseByAirport = {};
@@ -4419,8 +4420,10 @@
     function extractIcaoToken(text) {
       const s = String(text || '').toUpperCase();
       if (!s) return '';
-      const m = s.match(/\b([A-Z]{4})\b/);
-      return m ? String(m[1] || '') : '';
+      const m4 = s.match(/\b([A-Z0-9]{4})\b/);
+      if (m4) return String(m4[1] || '');
+      const m3 = s.match(/\b([A-Z]{3})\b/);
+      return m3 ? String(m3[1] || '') : '';
     }
 
     function inferAirfieldType(text) {
@@ -6413,8 +6416,10 @@
 
     function resolveClosestAirfieldIcao(data, allowedAirports) {
       function tokenIcao(value) {
-        const m = String(value || '').toUpperCase().match(/\b([A-Z]{4})\b/);
-        return m ? String(m[1] || '') : '';
+        const m4 = String(value || '').toUpperCase().match(/\b([A-Z0-9]{4})\b/);
+        if (m4) return String(m4[1] || '');
+        const m3 = String(value || '').toUpperCase().match(/\b([A-Z]{3})\b/);
+        return m3 ? String(m3[1] || '') : '';
       }
 
       const airfields = buildMapAirfields(data);
@@ -6440,7 +6445,7 @@
         const ay = Number(a.yNum);
         if (!isFinite(ax) || !isFinite(ay)) return;
 
-        const icao = String(tokenIcao(a.icao) || tokenIcao(a.label) || tokenIcao(a.name) || tokenIcao(a.callsign) || '').toUpperCase().trim();
+        const icao = normalizeEfbAirportCode(String(tokenIcao(a.icao) || tokenIcao(a.label) || tokenIcao(a.name) || tokenIcao(a.callsign) || '').toUpperCase().trim());
         if (!icao) return;
         if (allow.length && !allowSet[icao]) return;
 
@@ -6462,8 +6467,10 @@
       const available = Array.isArray(allowedAirports) ? allowedAirports : [];
 
       function acceptIcao(icaoCandidate) {
-        const icaoMatch = String(icaoCandidate || '').toUpperCase().match(/\b([A-Z]{4})\b/);
-        const icao = icaoMatch ? String(icaoMatch[1] || '') : '';
+        const raw = String(icaoCandidate || '').toUpperCase();
+        const m4 = raw.match(/\b([A-Z0-9]{4})\b/);
+        const m3 = m4 ? null : raw.match(/\b([A-Z]{3})\b/);
+        const icao = normalizeEfbAirportCode(m4 ? String(m4[1] || '') : (m3 ? String(m3[1] || '') : ''));
         if (!icao) return '';
         if (available.length && available.indexOf(icao) < 0) return '';
         return icao;
@@ -6496,8 +6503,10 @@
 
     function resolveMapSelectedAirfieldIcao(data, assetKey) {
       function tokenIcao(value) {
-        const m = String(value || '').toUpperCase().match(/\b([A-Z]{4})\b/);
-        return m ? String(m[1] || '') : '';
+        const m4 = String(value || '').toUpperCase().match(/\b([A-Z0-9]{4})\b/);
+        if (m4) return String(m4[1] || '');
+        const m3 = String(value || '').toUpperCase().match(/\b([A-Z]{3})\b/);
+        return m3 ? String(m3[1] || '') : '';
       }
 
       const key = String(assetKey || '').trim();
@@ -6527,26 +6536,36 @@
               || tokenIcao(p && p.name)
               || tokenIcao(p && p.callsign)
               || '';
-            if (resolved) return resolved;
+            if (resolved) return normalizeEfbAirportCode(resolved);
           }
         }
       }
 
-      return tokenIcao(key);
+      return normalizeEfbAirportCode(tokenIcao(key));
     }
 
     function setEfbDebugState(next) {
       return;
     }
 
+    function normalizeEfbAirportCode(value) {
+      const raw = String(value || '').toUpperCase().replace(/[^A-Z0-9]/g, '').trim();
+      if (!raw) return '';
+      if (raw.length === 4) return raw;
+      if (raw.length === 3 && efbIcaoByIata && efbIcaoByIata[raw]) {
+        return String(efbIcaoByIata[raw] || '').toUpperCase().trim();
+      }
+      return raw;
+    }
+
     function resolveEfbSelectedAirport(data) {
       try {
         const available = Array.isArray(efbAvailableAirports) ? efbAvailableAirports : [];
 
-        const atcIcao = resolveAtcContextIcao(data, available);
+        const atcIcao = normalizeEfbAirportCode(resolveAtcContextIcao(data, available));
         if (atcIcao) return atcIcao;
 
-        const nearestIcao = resolveClosestAirfieldIcao(data, available);
+        const nearestIcao = normalizeEfbAirportCode(resolveClosestAirfieldIcao(data, available));
         if (nearestIcao) return nearestIcao;
 
         const selected = getActiveFlightPlanSelection(data);
@@ -6561,14 +6580,15 @@
           for (let i = 0; i < picks.length; i++) {
             const wp = picks[i] || {};
             const text = String(wp.name || wp.nameRaw || wp.type || wp.typeRaw || '');
-            const icao = text.toUpperCase().match(/\b[A-Z]{4}\b/);
-            if (icao && icao[0]) {
-              return icao[0];
+            const m = text.toUpperCase().match(/\b[A-Z0-9]{3,4}\b/);
+            const code = normalizeEfbAirportCode(m && m[0]);
+            if (code) {
+              return code;
             }
           }
         }
 
-        return resolveClosestAirfieldIcao(data, null);
+        return normalizeEfbAirportCode(resolveClosestAirfieldIcao(data, null));
       } catch (_) {
         return '';
       }
@@ -6586,20 +6606,20 @@
         const key = String(assetKey || '').trim();
         if (!key) return '';
         if (typeof resolveMapSelectedAirfieldIcao === 'function') {
-          const fromGlobal = String(resolveMapSelectedAirfieldIcao(data, key) || '').toUpperCase().trim();
+          const fromGlobal = normalizeEfbAirportCode(resolveMapSelectedAirfieldIcao(data, key));
           if (fromGlobal) return fromGlobal;
         }
         if (typeof resolveBuggedAirfieldIcaoFromAssetKey === 'function') {
-          const fromLegacy = String(resolveBuggedAirfieldIcaoFromAssetKey(data, key) || '').toUpperCase().trim();
+          const fromLegacy = normalizeEfbAirportCode(resolveBuggedAirfieldIcaoFromAssetKey(data, key));
           if (fromLegacy) return fromLegacy;
         }
-        return tokenIcao(key);
+        return normalizeEfbAirportCode(tokenIcao(key));
       }
 
       const selected = getActiveFlightPlanSelection(data);
       const selectedMapAssetKey = selected ? String(getMapSelectedAssetKeyBySelection(selected) || '').trim() : '';
       if (selectedMapAssetKey) {
-        const mapIcao = String(resolveMapIcaoFromKey(selectedMapAssetKey) || '').toUpperCase().trim();
+        const mapIcao = normalizeEfbAirportCode(resolveMapIcaoFromKey(selectedMapAssetKey));
         if (mapIcao && (!available.length || available.indexOf(mapIcao) >= 0)) {
           efbManuallySelectedAirport = mapIcao;
           efbLastResolvedAirport = mapIcao;
@@ -6615,7 +6635,7 @@
         }
       }
 
-      const manual = String(efbManuallySelectedAirport || '').toUpperCase().trim();
+      const manual = normalizeEfbAirportCode(efbManuallySelectedAirport);
       if (manual) {
         setEfbDebugState({
           source: 'manual',
@@ -6628,12 +6648,12 @@
         return manual;
       }
 
-      const sticky = String(efbLastResolvedAirport || '').toUpperCase().trim();
-      const atcIcao = String(resolveAtcContextIcao(data, available) || '').toUpperCase().trim();
-      const nearestIcao = String(resolveClosestAirfieldIcao(data, available) || '').toUpperCase().trim();
+      const sticky = normalizeEfbAirportCode(efbLastResolvedAirport);
+      const atcIcao = normalizeEfbAirportCode(resolveAtcContextIcao(data, available));
+      const nearestIcao = normalizeEfbAirportCode(resolveClosestAirfieldIcao(data, available));
 
       function finalize(source, key) {
-        const resolved = String(key || '').toUpperCase().trim() || 'UNSET';
+        const resolved = normalizeEfbAirportCode(key) || 'UNSET';
         setEfbDebugState({
           source: source,
           manual: '',
@@ -6652,7 +6672,7 @@
       const haveMission = !!(server.Aircraft || server.MissionTitle || server.Theater);
 
       if (haveMission) {
-        const inferred = String(resolveEfbSelectedAirport(data) || '').toUpperCase().trim();
+        const inferred = normalizeEfbAirportCode(resolveEfbSelectedAirport(data));
         if (inferred && (!available.length || available.indexOf(inferred) >= 0)) {
           return finalize('mission-inferred', inferred);
         }
@@ -6671,7 +6691,7 @@
 
     function applyEfbAutoNearestAirport(data) {
       const available = Array.isArray(efbAvailableAirports) ? efbAvailableAirports : [];
-      const inferred = String(resolveEfbSelectedAirport(data) || '').toUpperCase().trim();
+      const inferred = normalizeEfbAirportCode(resolveEfbSelectedAirport(data));
       if (!inferred) return '';
       if (available.length && available.indexOf(inferred) < 0) {
         setEfbDebugState({
@@ -6711,21 +6731,29 @@
               .map(function (v) { return String(v || '').toUpperCase().trim(); })
               .filter(function (v) { return !!v; });
             efbAirportEntries = {};
+            efbIcaoByIata = {};
             entries.forEach(function (entry) {
               const icao = String((entry && entry.icao) || '').toUpperCase().trim();
               if (!icao) return;
+              const iata = String((entry && entry.iata) || '').toUpperCase().trim();
               efbAirportEntries[icao] = {
                 icao: icao,
+                iata: iata,
                 name: String((entry && entry.name) || '').trim(),
               };
+              if (iata && /^[A-Z]{3}$/.test(iata)) {
+                efbIcaoByIata[iata] = icao;
+              }
             });
           } else {
             efbAvailableAirports = [];
             efbAirportEntries = {};
+            efbIcaoByIata = {};
           }
         } catch (_) {
           efbAvailableAirports = [];
           efbAirportEntries = {};
+          efbIcaoByIata = {};
         }
       })();
 
