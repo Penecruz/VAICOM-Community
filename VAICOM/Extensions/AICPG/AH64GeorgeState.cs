@@ -130,7 +130,7 @@ namespace VAICOM.Extensions.AICPG
                 PreviousMenuMode = _CurrentedMenuMode;
                 _CurrentedMenuMode = value;
 
-                if (IsGeorgePilot())
+                if (!IsGeorgeCPG())
                 {
                     Log.Write($"Switched to {value} mode", Colors.Text);
                 }
@@ -801,9 +801,9 @@ namespace VAICOM.Extensions.AICPG
             return !(ApuOnOffState == AH64Apu.On && weightOnWheels);
         }
 
-        public static bool IsGeorgePilot()
+        public static bool IsGeorgeCPG()
         {
-            return !Helpers.Common.IsAH64PilotSeatActive();
+            return Helpers.Common.IsAH64PilotSeatActive();
         }
     }
 }

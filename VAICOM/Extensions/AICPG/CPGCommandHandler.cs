@@ -15,7 +15,7 @@ namespace VAICOM.Extensions.AICPG
                 case "wMsgGeorgeShowHide":
                     // Handle when in CP/G seat and DEFN menu open so that it defaults
                     // the menu mode back to the correct mode when closing the DEFN menu.
-                    if (AH64GeorgeState.IsGeorgePilot()
+                    if (!AH64GeorgeState.IsGeorgeCPG()
                         && AH64GeorgeState.CurrentMenuMode.Equals(AH64MenuMode.Defense))
                     {
                         CloseDefenseMenu();
@@ -59,7 +59,7 @@ namespace VAICOM.Extensions.AICPG
                     return;
             }
 
-            if (Helpers.Common.IsAH64PilotSeatActive())
+            if (AH64GeorgeState.IsGeorgeCPG())
             {
                 HandleCPGCommand(commandId);
             }
@@ -266,8 +266,6 @@ namespace VAICOM.Extensions.AICPG
             // This may introduce duplication as some items appear in multiple menus, e.g. Add/Delete battle position.
             // Those may need to be in a separate multiple menu mode if condition.
 
-            // TODO: if fall through all checks then should display message stating that "Command is not available in <AH64GeorgeState.CurrentMenuMode> mode"
-
             switch (commandId)
             {
                 // Change menu modes
@@ -282,26 +280,26 @@ namespace VAICOM.Extensions.AICPG
 
                 // Up short presses
                 case "wMsgGeorgeStartUpEnginesFly":
-                    if (InGroundMode())
+                    if (EnsureMenuMode(AH64MenuMode.Ground))
                     {
                         AddGeorgeButton(AH64GeorgeButton.Up);
                     }
                     return;
                 case "wMsgGeorgeSpeedUp":
-                    if (InFlightMode())
+                    if (EnsureMenuMode(AH64MenuMode.Flight))
                     {
                         AddGeorgeButton(AH64GeorgeButton.Up);
                     }
                     return;
                 case "wMsgGeorgeAlignToTADS":
                 case "wMsgGeorgeAlignToNTS":
-                    if (InCombatMode())
+                    if (EnsureMenuMode(AH64MenuMode.Combat))
                     {
                         AddGeorgeButton(AH64GeorgeButton.Up);
                     }
                     return;
                 case "wMsgGeorgeHoverUpTenFeet":
-                    if (InHoverMode())
+                    if (EnsureMenuMode(AH64MenuMode.Hover))
                     {
                         AddGeorgeButton(AH64GeorgeButton.Up);
                     }
@@ -310,33 +308,33 @@ namespace VAICOM.Extensions.AICPG
                 // Down short presses
                 case "wMsgGeorgeAPUStart":
                 case "wMsgGeorgeAPUStop":
-                    if (InGroundMode())
+                    if (EnsureMenuMode(AH64MenuMode.Ground))
                     {
                         ToggleApuOnOff(commandId.Equals("wMsgGeorgeAPUStart", StringComparison.OrdinalIgnoreCase) ? AH64Apu.On : AH64Apu.Off);
                     }
                     return;
                 case "wMsgGeorgeAPUOnly":
                 case "wMsgGeorgeShutdownEngines":
-                    if (InGroundMode())
+                    if (EnsureMenuMode(AH64MenuMode.Ground))
                     {
                         AddGeorgeButton(AH64GeorgeButton.Down);
                     }
                     return;
                 case "wMsgGeorgeSlowDown":
-                    if (InFlightMode())
+                    if (EnsureMenuMode(AH64MenuMode.Flight))
                     {
                         AddGeorgeButton(AH64GeorgeButton.Down);
                     }
                     return;
                 case "wMsgGeorgeHoverDownTenFeet":
-                    if (InHoverMode())
+                    if (EnsureMenuMode(AH64MenuMode.Hover))
                     {
                         AddGeorgeButton(AH64GeorgeButton.Down);
                     }
                     return;
                 case "wMsgGeorgeHoldPosition":
                 case "wMsgGeorgeReturnToBattlePosition":
-                    if (InCombatMode())
+                    if (EnsureMenuMode(AH64MenuMode.Combat))
                     {
                         AddGeorgeButton(AH64GeorgeButton.Down);
                     }
@@ -344,19 +342,19 @@ namespace VAICOM.Extensions.AICPG
                 
                 // Right short presses
                 case "wMsgGeorgeStartUpEnginesIdle":
-                    if (InGroundMode())
+                    if (EnsureMenuMode(AH64MenuMode.Ground))
                     {
                         AddGeorgeButton(AH64GeorgeButton.Right);
                     }
                     return;
                 case "wMsgGeorgeFollowWaypoints":
-                    if (InFlightMode())
+                    if (EnsureMenuMode(AH64MenuMode.Flight))
                     {
                         AddGeorgeButton(AH64GeorgeButton.Right);
                     }
                     return;
                 case "wMsgGeorgeTurnToGHS":
-                    if (InHoverMode())
+                    if (EnsureMenuMode(AH64MenuMode.Hover))
                     {
                         AddGeorgeButton(AH64GeorgeButton.Right);
                     }
@@ -384,40 +382,49 @@ namespace VAICOM.Extensions.AICPG
                     return;
                 case "wMsgGeorgeSetAirSpeedRef":
                 case "wMsgGeorgeSetGroundSpeedRef":
-                    if (InFlightMode())
+                    if (EnsureMenuMode(AH64MenuMode.Flight))
                     {
                         AddGeorgeButton(AH64GeorgeButton.Multifunction);
                     }
                     return;
                 case "wMsgGeorgeMaskPosition":
-                    if (AH64GeorgeState.IsAirbourne()
-                        && (InCombatMode() || InHoverMode() || InDefenseMode()))
+                    // MaskPosition is valid in Combat, Hover, or Defense while airborne.
+                    // If not currently in a valid mode, prefer switching to Combat.
+                    if (AH64GeorgeState.IsAirbourne())
                     {
-                        AddGeorgeButton(AH64GeorgeButton.Multifunction);
+                        if (!(InCombatMode() || InHoverMode() || InDefenseMode()))
+                        {
+                            EnsureMenuMode(AH64MenuMode.Combat);
+                        }
+
+                        if (InCombatMode() || InHoverMode() || InDefenseMode())
+                        {
+                            AddGeorgeButton(AH64GeorgeButton.Multifunction);
+                        }
                     }
                     return;
 
                 // Up long presses
                 case "wMsgGeorgeStartUpFull":
-                    if (InGroundMode())
+                    if (EnsureMenuMode(AH64MenuMode.Ground))
                     {
                         AddGeorgeLongButton(AH64GeorgeButton.Up);
                     }
                     return;
                 case "wMsgGeorgeOrbitOverhead":
-                    if (InCombatMode())
+                    if (EnsureMenuMode(AH64MenuMode.Combat))
                     {
                         AddGeorgeLongButton(AH64GeorgeButton.Up);
                     }
                     return;
                 case "wMsgGeorgeHoverForward":
-                    if (InHoverMode())
+                    if (EnsureMenuMode(AH64MenuMode.Hover))
                     {
                         AddGeorgeLongHoldButton(AH64GeorgeButton.Up, 1000);
                     }
                     return;
                 case "wMsgGeorgeIncreaseAltitude":
-                    if (InFlightMode())
+                    if (EnsureMenuMode(AH64MenuMode.Flight))
                     {
                         AddGeorgeLongHoldButton(AH64GeorgeButton.Up, 1000);
                     }
@@ -425,13 +432,13 @@ namespace VAICOM.Extensions.AICPG
                     
                 // Down long presses
                 case "wMsgGeorgeShutdownFull":
-                    if (InGroundMode())
+                    if (EnsureMenuMode(AH64MenuMode.Ground))
                     {
                         AddGeorgeLongButton(AH64GeorgeButton.Down);
                     }
                     return;
                 case "wMsgGeorgeBreakOneEighty":
-                    if (InCombatMode())
+                    if (EnsureMenuMode(AH64MenuMode.Combat))
                     {
                         AddGeorgeLongButton(AH64GeorgeButton.Down);
                     }
@@ -441,13 +448,13 @@ namespace VAICOM.Extensions.AICPG
                     AddGeorgeLongButton(AH64GeorgeButton.Down);
                     return;
                 case "wMsgGeorgeHoverBack":
-                    if (InHoverMode())
+                    if (EnsureMenuMode(AH64MenuMode.Hover))
                     {
                         AddGeorgeLongHoldButton(AH64GeorgeButton.Down, 1000);
                     }
                     return;
                 case "wMsgGeorgeDecreaseAltitude":
-                    if (InFlightMode())
+                    if (EnsureMenuMode(AH64MenuMode.Flight))
                     {
                         AddGeorgeLongHoldButton(AH64GeorgeButton.Down, 1000);
                     }
@@ -455,19 +462,19 @@ namespace VAICOM.Extensions.AICPG
 
                 // Left long presses
                 case "wMsgGeorgeBreakLeft":
-                    if (InCombatMode())
+                    if (EnsureMenuMode(AH64MenuMode.Combat))
                     {
                         AddGeorgeLongButton(AH64GeorgeButton.Left);
                     }
                     return;
                 case "wMsgGeorgeComeLeft":
-                    if (InFlightMode())
+                    if (EnsureMenuMode(AH64MenuMode.Flight))
                     {
                         AddGeorgeLongHoldButton(AH64GeorgeButton.Left, 1000);
                     }
                     return;
                 case "wMsgGeorgeHoverLeft":
-                    if (InHoverMode())
+                    if (EnsureMenuMode(AH64MenuMode.Hover))
                     {
                         AddGeorgeLongHoldButton(AH64GeorgeButton.Left, 1000);
                     }
@@ -476,25 +483,25 @@ namespace VAICOM.Extensions.AICPG
                 // Right long presses
                 case "wMsgGeorgeCMWSOn":
                 case "wMsgGeorgeCMWSOff":
-                    if (InGroundMode())
+                    if (EnsureMenuMode(AH64MenuMode.Ground))
                     {
                         AddGeorgeLongButton(AH64GeorgeButton.Right);
                     }
                     return;
                 case "wMsgGeorgeBreakRight":
-                    if (InCombatMode())
+                    if (EnsureMenuMode(AH64MenuMode.Combat))
                     {
                         AddGeorgeLongButton(AH64GeorgeButton.Right);
                     }
                     return;
                 case "wMsgGeorgeComeRight":
-                    if (InFlightMode())
+                    if (EnsureMenuMode(AH64MenuMode.Flight))
                     {
                         AddGeorgeLongHoldButton(AH64GeorgeButton.Right, 1000);
                     }
                     return;
                 case "wMsgGeorgeHoverRight":
-                    if (InHoverMode())
+                    if (EnsureMenuMode(AH64MenuMode.Hover))
                     {
                         AddGeorgeLongHoldButton(AH64GeorgeButton.Right, 1000);
                     }
@@ -503,13 +510,19 @@ namespace VAICOM.Extensions.AICPG
                 // Multifunction long presses
                 case "wMsgGeorgeSetRadarAltitude":
                 case "wMsgGeorgeSetBarometricAltitude":
-                    if (InFlightMode())
+                    if (EnsureMenuMode(AH64MenuMode.Flight))
                     {
                         AddGeorgeLongButton(AH64GeorgeButton.Multifunction);
                     }
                     return;
                 case "wMsgGeorgeAddBattlePosition":
                 case "wMsgGeorgeDeleteBattlePosition":
+                    // Available in Combat, Hover, or Defense; prefer Combat as the default switch target.
+                    if (!(InCombatMode() || InHoverMode() || InDefenseMode()))
+                    {
+                        EnsureMenuMode(AH64MenuMode.Combat);
+                    }
+
                     if (InCombatMode() || InHoverMode() || InDefenseMode())
                     {
                         AddGeorgeLongButton(AH64GeorgeButton.Multifunction);
@@ -584,6 +597,43 @@ namespace VAICOM.Extensions.AICPG
 
             Log.Write($"Command not available in {AH64GeorgeState.CurrentMenuMode} mode, or current AH-64 state", Colors.Warning);
             UI.Playsound.Sorry();
+        }
+
+        // Ensures the current menu mode matches the target, switching via SelectMenuMode-style logic if needed.
+        // Does not handle switching to/from Defense mode: DEFN-triggering commands manage their own menu flow
+        // via OpenDefenseMenu/CloseDefenseMenu.
+        // Returns true if the current mode equals target after this call (i.e. command can proceed).
+        private static bool EnsureMenuMode(AH64MenuMode target)
+        {
+            if (AH64GeorgeState.CurrentMenuMode.Equals(target))
+            {
+                return true;
+            }
+
+            if (target == AH64MenuMode.Defense)
+            {
+                // Defense mode switching is handled separately via OpenDefenseMenu/CloseDefenseMenu.
+                Log.Write("EnsureMenuMode should not be used to switch to Defense mode.", Colors.Warning);
+                return false;
+            }
+
+            var availableMenuModes = AH64GeorgeState.GetAvailableMenuModes();
+            if (!availableMenuModes.Contains(target))
+            {
+                Log.Write("George menu mode " + target + " is not available in current menu modes.", Colors.Recognition);
+                UI.Playsound.Sorry();
+                return false;
+            }
+
+            int steps = AH64GeorgeState.SetMenuMode(target);
+            for (int i = 0; i < steps; i++)
+            {
+                AddGeorgeButton(AH64GeorgeButton.Left);
+            }
+
+            UI.Playsound.Commandcomplete();
+
+            return AH64GeorgeState.CurrentMenuMode.Equals(target);
         }
 
         // Enum overloads so callers can use AH64DGeorgeButton
