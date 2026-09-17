@@ -365,9 +365,6 @@
     <None Remove="Resources\Files\NoLoadContext" />
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="WIP Temp\" />
-  </ItemGroup>
-  <ItemGroup>
     <None Update="Extensions\Kneeboard\CredentialsDialog.xaml">
       <Generator>MSBuild:Compile</Generator>
     </None>

@@ -3429,6 +3429,9 @@ namespace VAICOM
                         .OrderBy(a => a, StringComparer.OrdinalIgnoreCase)
                         .ToList();
 
+                    string currentTheatre = (State.currentstate == null ? "" : State.currentstate.theatre) ?? "";
+                    Dictionary<string, string> iataByIcao = OpenKneeboardNavigraphApiProxy.GetIataByIcao(airports, currentTheatre);
+
                     if (useNavigraph && airports.Count > 0)
                     {
                         try
@@ -3465,6 +3468,7 @@ namespace VAICOM
                         .Select(a => new
                         {
                             icao = a,
+                            iata = iataByIcao.ContainsKey(a) ? (iataByIcao[a] ?? "") : "",
                             name = airportNames.ContainsKey(a) ? (airportNames[a] ?? "") : "",
                         })
                         .ToList();
@@ -3484,6 +3488,10 @@ namespace VAICOM
                     string requestedAirport = string.IsNullOrWhiteSpace(airport)
                         ? "UNSET"
                         : airport.Trim().ToUpperInvariant();
+
+                    string theatre = (State.currentstate == null ? "" : State.currentstate.theatre) ?? "";
+                    requestedAirport = OpenKneeboardNavigraphApiProxy.ResolveAirportCodeToIcao(requestedAirport, theatre);
+
                     string normalizedAirport = ExtractAirportToken(requestedAirport);
                     if (string.IsNullOrWhiteSpace(normalizedAirport))
                     {

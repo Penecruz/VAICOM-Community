@@ -66,15 +66,6 @@ namespace VAICOM
                         }
 
                         string targetPath = Path.Combine(targetFolder, "ICAOOverrides.lua");
-                        if (File.Exists(targetPath))
-                        {
-                            if (!forcequiet)
-                            {
-                                Log.Write("   Unchanged: ICAOOverrides.lua", Colors.Recognition);
-                            }
-                            return;
-                        }
-
                         string content = Properties.Resources.ResourceManager.GetString("ICAOOverrides_lua");
                         if (string.IsNullOrWhiteSpace(content))
                         {
