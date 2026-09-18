@@ -364,14 +364,11 @@ namespace VAICOM.Extensions.AICPG
                 case "wMsgGeorgeTakeOff":
                     // Only allow takeoff -> Flight when:
                     // - currently on the ground,
-                    // - hover capability exists,
-                    // - hover can actually be selected (APU off while on ground),
+                    // - hover capability exists (no apu check here as can take off with apu on),
                     // - and current menu is Ground, Hover or Defense (valid takeoff contexts).
                     var currentMode = AH64GeorgeState.CurrentMenuMode;
-                    var hoverSelectable = AH64GeorgeState.GetAvailableMenuModes().Contains(AH64MenuMode.Hover);
                     if (!AH64GeorgeState.IsAirbourne()
                         && AH64GeorgeState.IsHoverAvailable()
-                        && hoverSelectable
                         && (currentMode == AH64MenuMode.Ground || currentMode == AH64MenuMode.Hover || currentMode == AH64MenuMode.Defense))
                     {
                         AddGeorgeButton(AH64GeorgeButton.Multifunction);
