@@ -977,6 +977,16 @@ namespace VAICOM
                     string cat = (category ?? string.Empty).Trim();
                     if (string.IsNullOrWhiteSpace(cat)) return "LOG";
 
+                    if (cat.Equals("GND CREW", StringComparison.OrdinalIgnoreCase)
+                        || cat.Equals("GROUND CREW", StringComparison.OrdinalIgnoreCase)
+                        || cat.Equals("REF/CREW", StringComparison.OrdinalIgnoreCase)
+                        || cat.Equals("REF CREW", StringComparison.OrdinalIgnoreCase)
+                        || cat.Equals("GNDCREW", StringComparison.OrdinalIgnoreCase)
+                        || cat.Equals("GROUNDCREW", StringComparison.OrdinalIgnoreCase))
+                    {
+                        return "REF";
+                    }
+
                     if (cat.Equals("Crew", StringComparison.OrdinalIgnoreCase))
                     {
                         return "REF";
@@ -1023,7 +1033,7 @@ namespace VAICOM
                             {
                                 RefreshUnitsForCategory(sendCategory);
                             }
-                            else if (sourceCategory.Equals("Crew", StringComparison.OrdinalIgnoreCase))
+                            else
                             {
                                 try
                                 {
@@ -5168,19 +5178,58 @@ namespace VAICOM
                             double playerEast = State.currentstate.bpos.z;
                             if (!double.IsNaN(playerNorth) && !double.IsInfinity(playerNorth) && !double.IsNaN(playerEast) && !double.IsInfinity(playerEast))
                             {
-                                string playerCallsign = string.IsNullOrWhiteSpace(State.currentstate.playercallsign) ? "PLAYER" : State.currentstate.playercallsign;
-                                string playerName = string.IsNullOrWhiteSpace(State.currentstate.id) ? "PLAYER" : State.currentstate.id;
+                                string playerCallsign = string.IsNullOrWhiteSpace(State.currentstate.playercallsign) ? "" : State.currentstate.playercallsign.Trim();
+                                string playerName = string.IsNullOrWhiteSpace(State.currentstate.id) ? "" : State.currentstate.id.Trim();
+                                string playerUsername = string.IsNullOrWhiteSpace(State.currentstate.playerusername) ? "" : State.currentstate.playerusername.Trim();
+
+                                List<Servers.Server.DcsUnit> playerUnits;
+                                if (State.currentstate.availablerecipients != null
+                                    && State.currentstate.availablerecipients.TryGetValue("Player", out playerUnits)
+                                    && playerUnits != null)
+                                {
+                                    Servers.Server.DcsUnit ownUnit = playerUnits.FirstOrDefault(u => u != null && u.pos != null)
+                                        ?? playerUnits.FirstOrDefault();
+                                    if (ownUnit != null)
+                                    {
+                                        if (string.IsNullOrWhiteSpace(playerCallsign) && !string.IsNullOrWhiteSpace(ownUnit.callsign))
+                                        {
+                                            playerCallsign = ownUnit.callsign.Trim();
+                                        }
+
+                                        if (string.IsNullOrWhiteSpace(playerName))
+                                        {
+                                            playerName = !string.IsNullOrWhiteSpace(ownUnit.fullname)
+                                                ? ownUnit.fullname.Trim()
+                                                : (!string.IsNullOrWhiteSpace(ownUnit.callsign) ? ownUnit.callsign.Trim() : playerName);
+                                        }
+
+                                        if (string.IsNullOrWhiteSpace(playerUsername) && ownUnit.ishuman && !string.IsNullOrWhiteSpace(ownUnit.playerid))
+                                        {
+                                            playerUsername = ownUnit.playerid.Trim();
+                                        }
+                                    }
+                                }
+
+                                string playerDisplay = State.currentstate.multiplayer
+                                    ? (!string.IsNullOrWhiteSpace(playerUsername) ? playerUsername : playerCallsign)
+                                    : (!string.IsNullOrWhiteSpace(playerCallsign) ? playerCallsign : playerUsername);
+
+                                if (string.IsNullOrWhiteSpace(playerDisplay))
+                                {
+                                    playerDisplay = !string.IsNullOrWhiteSpace(playerName) ? playerName : "OWNSHIP";
+                                }
+
                                 string playerKey = string.Format("{0}|{1}|{2}|{3}", playerCallsign, playerName, Math.Round(playerNorth), Math.Round(playerEast));
                                 seen.Add(playerKey);
                                 assets.Add(new OpenKneeboardFriendlyAsset
                                 {
-                                    Callsign = playerCallsign,
+                                    Callsign = playerDisplay,
                                     Name = playerName,
                                     Category = "PLAYER",
                                     TypeName = string.IsNullOrWhiteSpace(State.currentstate.id) ? "" : State.currentstate.id,
                                     Frequency = "",
                                     Tacan = "",
-                                    MpClientCallsign = string.IsNullOrWhiteSpace(State.currentstate.playerusername) ? "" : State.currentstate.playerusername,
+                                    MpClientCallsign = playerUsername,
                                     RawLine = string.Empty,
                                     X = playerNorth,
                                     Y = playerEast,

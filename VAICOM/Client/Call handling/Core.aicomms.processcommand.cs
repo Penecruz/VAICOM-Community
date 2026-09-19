@@ -492,7 +492,18 @@ namespace VAICOM
                                                 break;
                                             }
 
-                                            string cat = Database.Recipients.Table[State.currentkey["recipient"]].RecipientClass().Name;
+                                            string cat = ResolveKneeboardPageTargetCategory(recipientKey, recipientAlias, State.currentfullsentence);
+
+                                            if (string.IsNullOrWhiteSpace(cat))
+                                            {
+                                                break;
+                                            }
+
+                                            if (State.activeconfig.OpenKneeboard_Out)
+                                            {
+                                                OpenKneeboardBridge.UpdateActiveCategory(cat);
+                                            }
+
                                             KneeboardUpdater.SwitchPage(cat);
                                             UI.Playsound.Commandcomplete();
                                         }
@@ -503,7 +514,20 @@ namespace VAICOM
                                     case "wMsgClearKneeboardTab": // not used
                                         try
                                         {
-                                            string cat = Database.Recipients.Table[State.currentkey["recipient"]].RecipientClass().Name;
+                                            string recipientKey = State.have["recipient"] ? State.currentkey["recipient"] : "";
+                                            string recipientAlias = State.have["recipient"] ? State.usedalias["recipient"] : "";
+                                            string cat = ResolveKneeboardPageTargetCategory(recipientKey, recipientAlias, State.currentfullsentence);
+
+                                            if (string.IsNullOrWhiteSpace(cat))
+                                            {
+                                                break;
+                                            }
+
+                                            if (State.activeconfig.OpenKneeboard_Out)
+                                            {
+                                                OpenKneeboardBridge.UpdateActiveCategory(cat);
+                                            }
+
                                             KneeboardUpdater.SwitchPage(cat);
                                             UI.Playsound.Commandcomplete();
                                         }
@@ -683,6 +707,115 @@ namespace VAICOM
                         || spoken.Contains("iceman")
                         || spoken.Contains("rio")
                         || spoken.Contains("wso");
+                }
+
+                private static string ResolveKneeboardPageTargetCategory(string recipientKey, string recipientAlias, string fullSentence)
+                {
+                    string key = string.IsNullOrWhiteSpace(recipientKey) ? "" : recipientKey.Trim().ToLowerInvariant();
+                    string alias = string.IsNullOrWhiteSpace(recipientAlias) ? "" : recipientAlias.Trim().ToLowerInvariant();
+                    string spoken = string.IsNullOrWhiteSpace(fullSentence) ? "" : fullSentence.ToLowerInvariant();
+
+                    if (IsAiCrewPageRequest(recipientKey, recipientAlias, fullSentence))
+                    {
+                        return "AI CREW";
+                    }
+
+                    if (ContainsAny(key, alias, spoken, "chief", "crew", "ground crew", "gnd crew", "ref/crew", "ref crew"))
+                    {
+                        return "Crew";
+                    }
+
+                    if (ContainsAny(key, alias, spoken, "awacs"))
+                    {
+                        return "AWACS";
+                    }
+
+                    if (ContainsAny(key, alias, spoken, "tanker", "texaco", "arco", "shell"))
+                    {
+                        return "Tanker";
+                    }
+
+                    if (ContainsAny(key, alias, spoken, "jtac", "axeman", "pointer", "warrior", "moonbeam", "darknight"))
+                    {
+                        return "JTAC";
+                    }
+
+                    if (ContainsAny(key, alias, spoken, "atc", "tower", "marshal", "lso", "carrier", "departure", "approach"))
+                    {
+                        return "ATC";
+                    }
+
+                    if (ContainsAny(key, alias, spoken, "flight", "allies"))
+                    {
+                        return "Flight";
+                    }
+
+                    if (ContainsAny(key, alias, spoken, "aocs", "aux", "crystal palace", "server", "mission", "mystery"))
+                    {
+                        return "AOCS";
+                    }
+
+                    string cat = "";
+                    if (!string.IsNullOrWhiteSpace(recipientKey)
+                        && Database.Recipients.Table.ContainsKey(recipientKey))
+                    {
+                        cat = Database.Recipients.Table[recipientKey].RecipientClass().Name;
+                    }
+                    else if (State.currentrecipientclass != null)
+                    {
+                        cat = State.currentrecipientclass.Name;
+                    }
+
+                    if (string.IsNullOrWhiteSpace(cat)
+                        && State.previousrecipientclass != null)
+                    {
+                        cat = State.previousrecipientclass.Name;
+                    }
+
+                    if (string.IsNullOrWhiteSpace(cat))
+                    {
+                        return "";
+                    }
+
+                    string normalized = cat.Trim();
+                    if (normalized.Equals("Kneeboard", StringComparison.OrdinalIgnoreCase)
+                        || normalized.Equals("Undefined", StringComparison.OrdinalIgnoreCase)
+                        || normalized.Equals("Cockpit", StringComparison.OrdinalIgnoreCase)
+                        || normalized.Equals("Player", StringComparison.OrdinalIgnoreCase))
+                    {
+                        return "";
+                    }
+
+                    return normalized;
+                }
+
+                private static bool ContainsAny(string key, string alias, string spoken, params string[] terms)
+                {
+                    if (terms == null || terms.Length == 0)
+                    {
+                        return false;
+                    }
+
+                    foreach (string t in terms)
+                    {
+                        string term = string.IsNullOrWhiteSpace(t) ? "" : t.Trim().ToLowerInvariant();
+                        if (term.Length == 0)
+                        {
+                            continue;
+                        }
+
+                        if (key.Equals(term) || alias.Equals(term))
+                        {
+                            return true;
+                        }
+
+                        if (!string.IsNullOrWhiteSpace(spoken) && spoken.Contains(term))
+                        {
+                            return true;
+                        }
+                    }
+
+                    return false;
                 }
 
                 public static void SwapSRSListeningStates()

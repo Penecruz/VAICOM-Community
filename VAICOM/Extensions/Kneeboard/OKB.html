@@ -3474,6 +3474,7 @@
   </div>
 
   <script>
+    // @ts-nocheck
     const TABS = ['LOG', 'DTC', 'ATC', 'AWACS', 'JTAC', 'TANKER', 'AOCS', 'FLIGHT', 'AI CREW', 'GND CREW', 'NOTES'];
     const OKB_TAB_TYPE_ID = 'VAICOM-Community;okb-out';
     const OKB_CUSTOM_ACTION_PREFIX = OKB_TAB_TYPE_ID + ';';
@@ -4274,7 +4275,7 @@
       return segs;
     }
 
-    function getMudMapAssets(data, includeDlinkAssets, includeJtacAssets) {
+    function getMudMapAssets(data, includeDlinkAssets, includeJtacAssets = true) {
       const server = (data && data.Server) || {};
       const includeDlink = (includeDlinkAssets !== false);
       const includeJtac = (includeJtacAssets !== false);
@@ -5594,7 +5595,10 @@
           ? Object.assign({}, asset || {}, { xNum: Number(ownshipPoint.xNum), yNum: Number(ownshipPoint.yNum) })
           : asset;
         const callsign = String((asset && asset.callsign) || '').trim();
-        const label = callsign || String((asset && asset.name) || category || 'ASSET').trim();
+        const mpClientCallsign = String((asset && asset.mpClientCallsign) || '').trim();
+        const label = isPlayer
+          ? (mpClientCallsign || callsign || String((asset && asset.name) || 'OWNSHIP').trim())
+          : (callsign || String((asset && asset.name) || category || 'ASSET').trim());
         addPointFeature(plotAsset, {
           kind: isPlayer ? 'player' : 'asset',
           group: 'asset',
@@ -5604,7 +5608,7 @@
           typeName: String((asset && asset.typeName) || ''),
           frequency: String((asset && asset.frequency) || ''),
           tacan: String((asset && asset.tacan) || ''),
-          mpClientCallsign: String((asset && asset.mpClientCallsign) || ''),
+          mpClientCallsign: mpClientCallsign,
           fill: isPlayer ? '#2f9e56' : '#5a7ea5',
           stroke: isPlayer ? '#1e6a39' : '#385676',
           textColor: isPlayer ? '#1e6a39' : '#1f3550',
@@ -6691,7 +6695,12 @@
 
     function applyEfbAutoNearestAirport(data) {
       const available = Array.isArray(efbAvailableAirports) ? efbAvailableAirports : [];
-      const inferred = normalizeEfbAirportCode(resolveEfbSelectedAirport(data));
+      // Auto-nearest must prefer geometric nearest from the current airport set,
+      // not ATC/manual/sticky inference.
+      let inferred = normalizeEfbAirportCode(resolveClosestAirfieldIcao(data, available));
+      if (!inferred) {
+        inferred = normalizeEfbAirportCode(resolveEfbSelectedAirport(data));
+      }
       if (!inferred) return '';
       if (available.length && available.indexOf(inferred) < 0) {
         setEfbDebugState({
@@ -8303,9 +8312,6 @@
       }
 
       selectedTab = normalized;
-      autoBrowse = false;
-      const autoBrowseEl = document.getElementById('autoBrowse');
-      if (autoBrowseEl) autoBrowseEl.checked = false;
       if (latestData) render(latestData);
       return true;
     }
@@ -9022,6 +9028,12 @@
     function createFakeMissionStateFromData(data) {
       const source = data || latestData || {};
       const server = (source && source.Server) || {};
+      const serverPlayerCallsign = String(server.PlayerCallsign || '').trim();
+      const serverPlayerUsername = String(server.PlayerUsername || '').trim();
+      const isMultiplayerSession = !!server.Multiplayer;
+      const simOwnshipCallsign = isMultiplayerSession
+        ? (serverPlayerUsername || serverPlayerCallsign || 'OWNSHIP')
+        : (serverPlayerCallsign || serverPlayerUsername || 'OWNSHIP');
       const selected = getActiveFlightPlanSelection(source);
       const routeRows = getPlanWaypointsForRecommendations(selected)
         .filter(function (wp) { return isFinite(Number(wp && wp.xNum)) && isFinite(Number(wp && wp.yNum)); });
@@ -9078,11 +9090,11 @@
         playerRouteProgressMeters: 0,
         playerSpeedMps: 185,
         assets: [
-          makeFakeAsset('PLAYER', 'PLAYER', baseX, baseY, 0, 0),
+          makeFakeAsset(simOwnshipCallsign, 'PLAYER', baseX, baseY, 0, 0, { MpClientCallsign: serverPlayerUsername }),
           makeFakeAsset('TEXACO11', 'TANKER', baseX + 30000, baseY + 22000, 235, 210, { TypeName: 'KC-135 MPRS', Frequency: '251.000', Tacan: '31Y', AltFeet: 22000 }),
-          makeFakeAsset('OVERLORD1', 'AWACS', baseX - 45000, baseY + 26000, 095, 205, { TypeName: 'E-3A', Frequency: '305.000', AltFeet: 28000 }),
+          makeFakeAsset('OVERLORD1', 'AWACS', baseX - 45000, baseY + 26000, 95, 205, { TypeName: 'E-3A', Frequency: '305.000', AltFeet: 28000 }),
           makeFakeAsset('AXEMAN11', 'JTAC', baseX + 14000, baseY - 22000, 330, 0),
-          makeFakeAsset('VIPER12', 'FLIGHT', baseX - 18000, baseY - 12000, 025, 230),
+          makeFakeAsset('VIPER12', 'FLIGHT', baseX - 18000, baseY - 12000, 25, 230),
           makeFakeAsset('COLT21', 'FLIGHT', baseX + 8000, baseY + 16000, 290, 220),
         ],
       };
@@ -17998,7 +18010,7 @@
       return segs;
     }
 
-    function getMudMapAssets(data, includeDlinkAssets, includeJtacAssets) {
+    function getMudMapAssets(data, includeDlinkAssets, includeJtacAssets = true) {
       const server = (data && data.Server) || {};
       const includeDlink = (includeDlinkAssets !== false);
       const includeJtac = (includeJtacAssets !== false);
@@ -19214,7 +19226,10 @@
           ? Object.assign({}, asset || {}, { xNum: Number(ownshipPoint.xNum), yNum: Number(ownshipPoint.yNum) })
           : asset;
         const callsign = String((asset && asset.callsign) || '').trim();
-        const label = callsign || String((asset && asset.name) || category || 'ASSET').trim();
+        const mpClientCallsign = String((asset && asset.mpClientCallsign) || '').trim();
+        const label = isPlayer
+          ? (mpClientCallsign || callsign || String((asset && asset.name) || 'OWNSHIP').trim())
+          : (callsign || String((asset && asset.name) || category || 'ASSET').trim());
         const assetKey = makeMapAssetSelectionKey(asset);
         const isJtacHistory = !!(asset && asset.isJtacHistory);
         addPointFeature(plottedAsset, {
@@ -19234,7 +19249,7 @@
           typeName: String((asset && asset.typeName) || '').trim(),
           frequency: String((asset && asset.frequency) || '').trim(),
           tacan: String((asset && asset.tacan) || '').trim(),
-          mpClientCallsign: String((asset && asset.mpClientCallsign) || '').trim(),
+          mpClientCallsign: mpClientCallsign,
           altFeet: Number(asset && asset.altFeet),
         });
       });
@@ -20098,6 +20113,7 @@
       const assetEls = mapAssets.map(function (m) {
         const isMapMarker = String((m.asset && m.asset.category) || '').toUpperCase() === 'MAP_MARKER';
         const callsignLabel = String(m.asset.callsign || '').replace(/([A-Za-z])(\d)/g, '$1 $2').replace(/\s{2,}/g, ' ').trim();
+        const playerMpLabel = String((m.asset && m.asset.mpClientCallsign) || '').trim();
         const markerText = String(m.asset.markerText || '').trim();
         const markerDisplayId = Number(m.asset.markerDisplayId);
         const markerPrefix = isMapMarker
@@ -20108,7 +20124,8 @@
           : '';
           const isJtacHistory = !!(m.asset && m.asset.isJtacHistory);
         const isPlayer = String((m.asset && m.asset.category) || '').toUpperCase() === 'PLAYER';
-        const label = escapeHtml(markerLabel || callsignLabel || m.asset.name || m.asset.category || 'ASSET');
+        const displayCallsign = isPlayer ? (playerMpLabel || callsignLabel) : callsignLabel;
+        const label = escapeHtml(markerLabel || displayCallsign || m.asset.name || m.asset.category || 'ASSET');
         const tx = (m.x + 10).toFixed(1);
         const ty = (m.y + 4).toFixed(1);
         const selectionKey = String(m.selectionKey || '');
@@ -21634,6 +21651,10 @@
         btn.className = 'tab ' + tabCssClass(tab) + (tab === selectedTab ? ' active' : '');
         btn.textContent = tabLabel(tab);
         btn.onclick = function () {
+          if (autoBrowse) {
+            autoBrowse = false;
+            applyAutoBrowseUi();
+          }
           setSelectedTab(tab);
         };
         tabsEl.appendChild(btn);
@@ -22128,7 +22149,11 @@
 
     async function tick() {
       try {
-        const r = await fetch(`state?selectedTab=${selectedTab}`, { cache: 'no-store' });
+        const selectedTabToken = String(selectedTab || '').trim();
+        const stateUrl = autoBrowse
+          ? 'state'
+          : ('state?selectedTab=' + encodeURIComponent(selectedTabToken));
+        const r = await fetch(stateUrl, { cache: 'no-store' });
         const j = await r.json();
         try {
           render(j);

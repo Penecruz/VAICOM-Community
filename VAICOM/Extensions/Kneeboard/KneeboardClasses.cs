@@ -263,21 +263,92 @@ namespace VAICOM
                         return false;
                     }
 
-                    string typeSource = (unit.typename ?? unit.fullname ?? "").ToUpperInvariant();
+                    string typeSource = string.Join(" ", new[]
+                    {
+                        unit.typename ?? string.Empty,
+                        unit.fullname ?? string.Empty,
+                        unit.callsign ?? string.Empty,
+                    }).ToUpperInvariant();
+
                     if (string.IsNullOrWhiteSpace(typeSource))
                     {
                         return false;
                     }
 
+                    string tokenizedTypeSource = " " + Regex.Replace(typeSource, @"[^A-Z0-9]+", " ").Trim() + " ";
+
+                    // Exclude non-threat static infrastructure (airfields/helipads/FARPs).
                     if (typeSource.Contains("FARP")
+                        || typeSource.Contains("HELIPAD")
+                        || typeSource.Contains("HELI PAD")
+                        || typeSource.Contains("HELIPORT")
                         || typeSource.Contains("AIRBASE")
+                        || typeSource.Contains("AIRFIELD")
+                        || typeSource.Contains("AIRDROME")
+                        || typeSource.Contains("RUNWAY")
                         || typeSource.Contains("FOB")
-                        || typeSource.Contains("CAMP"))
+                        || typeSource.Contains("CAMP")
+                        || Regex.IsMatch(typeSource, @"\bHS\d{1,3}\b"))
                     {
                         return false;
                     }
 
-                    return typeSource.Any(char.IsDigit) || typeSource.Contains("-") || typeSource.Contains("_");
+                    // Exclude SAM launchers; include radar emitters only.
+                    bool isLauncher = typeSource.Contains("LAUNCHER")
+                        || Regex.IsMatch(typeSource, @"(^|[^A-Z0-9])TEL([^A-Z0-9]|$)")
+                        || Regex.IsMatch(typeSource, @"(^|[^A-Z0-9])TELAR([^A-Z0-9]|$)")
+                        || Regex.IsMatch(typeSource, @"(^|[^A-Z0-9])LN([^A-Z0-9]|$)");
+
+                    if (isLauncher)
+                    {
+                        return false;
+                    }
+
+                    bool isEwr = typeSource.Contains("EWR") || typeSource.Contains("EARLY WARNING");
+                    bool hasSamToken = tokenizedTypeSource.Contains(" SAM ")
+                        || Regex.IsMatch(typeSource, @"(^|[^A-Z0-9])SA[\-_ ]?\d{1,3}([^A-Z0-9]|$)");
+                    bool hasSrStrToken = tokenizedTypeSource.Contains(" SR ") || tokenizedTypeSource.Contains(" STR ");
+                    bool hasSrStrMarker = Regex.IsMatch(typeSource, @"(^|[^A-Z0-9])(SR|STR)([^A-Z0-9]|$)")
+                        || Regex.IsMatch(typeSource, @"\b[A-Z0-9]+(?:[\s_\-\./]+[A-Z0-9]+)*[\s_\-\./]+(SR|STR)\b")
+                        || Regex.IsMatch(typeSource, @"\b(SR|STR)[\s_\-\./]+[A-Z0-9]+(?:[\s_\-\./]+[A-Z0-9]+)*\b")
+                        || Regex.IsMatch(typeSource, @"(^|[^A-Z0-9])(SR|STR)[A-Z0-9_\-]+([^A-Z0-9]|$)")
+                        || Regex.IsMatch(typeSource, @"(^|[^A-Z0-9])[A-Z0-9_\-]+(SR|STR)([^A-Z0-9]|$)");
+
+                    bool isSamSearchRadar = typeSource.Contains("SEARCH RADAR")
+                        || (hasSamToken && hasSrStrToken)
+                        || hasSrStrMarker
+                        || typeSource.Contains("P-19")
+                        || typeSource.Contains("P 19")
+                        || typeSource.Contains("FLAT FACE")
+                        || typeSource.Contains("FLATFACE");
+                        
+
+                    if (isEwr || isSamSearchRadar)
+                    {
+                        return true;
+                    }
+
+                    // Keep aircraft contacts (fixed-wing + rotary) from opposition.
+                    bool isAircraft = Regex.IsMatch(typeSource,
+                        @"(^|[^A-Z0-9])(F|A|B|C|E|J|MIG|SU|TU|IL|AN|KC|MQ|RQ|P|FW|BF|UH|AH|CH|KA|MI|OH|SH|SA)[\-_ ]?\d{1,3}[A-Z0-9]{0,6}([^A-Z0-9]|$)")
+                        || typeSource.Contains("SPITFIRE")
+                        || typeSource.Contains("MIRAGE")
+                        || typeSource.Contains("RAFALE")
+                        || typeSource.Contains("TORNADO")
+                        || typeSource.Contains("GRIPEN")
+                        || typeSource.Contains("FIGHTER")
+                        || typeSource.Contains("BOMBER")
+                        || typeSource.Contains("ATTACK")
+                        || typeSource.Contains("AIRCRAFT")
+                        || typeSource.Contains("HELI")
+                        || typeSource.Contains("HELICOPTER");
+
+                    if (isAircraft)
+                    {
+                        return true;
+                    }
+
+                    return false;
                 }
 
                 private static string ExtractIcaoFromMetar(string metar)

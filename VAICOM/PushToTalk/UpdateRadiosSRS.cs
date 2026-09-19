@@ -374,6 +374,7 @@ namespace VAICOM
                         {
 
                             bool deviceallocated = false;
+                            string normalizedRadioUnitName = NormalizeRadioName(radiounit.displayName); //Normalize the radio unit name to avoid issues with multiple radio types and naming conventions
 
                             // Interphone -> TX5
                             if (!deviceallocated & !allocatedINT & radiounit.intercom)
@@ -398,7 +399,7 @@ namespace VAICOM
                             }
 
                             // TX1 
-                            if (!deviceallocated && radiounit.displayName.ToLower().Equals(radiolist_Ref.Slot_map[0].ToLower()))
+                            if (!deviceallocated && IsRadioNameMatch(NormalizeRadioName(radiolist_Ref.Slot_map[0]), normalizedRadioUnitName))
                             {
 
                                 TXNodes.TX1.enabled = true;
@@ -424,7 +425,7 @@ namespace VAICOM
 
 
                             // TX2
-                            if (!deviceallocated && radiounit.displayName.ToLower().Equals(radiolist_Ref.Slot_map[1].ToLower()))
+                            if (!deviceallocated && IsRadioNameMatch(NormalizeRadioName(radiolist_Ref.Slot_map[1]), normalizedRadioUnitName))
                             {
 
                                 TXNodes.TX2.enabled = true;
@@ -450,7 +451,7 @@ namespace VAICOM
 
 
                             // TX3
-                            if (!deviceallocated && radiounit.displayName.ToLower().Equals(radiolist_Ref.Slot_map[2].ToLower()))
+                            if (!deviceallocated && IsRadioNameMatch(NormalizeRadioName(radiolist_Ref.Slot_map[2]), normalizedRadioUnitName))
                             {
                                 TXNodes.TX3.enabled = true;
                                 TXNodes.TX3.number = radiounit.deviceid;
