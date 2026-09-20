@@ -69,3 +69,6 @@
 
 ## Code Clarity
 - Add small step-by-step code notes/comments in complex command-flow methods for clarity.
+
+## Runtime Validation
+- Before finalizing Lua or HTML changes in this repo, proactively validate likely runtime failure points (scope/order issues, missing function definitions, nil guards, and call-site safety) because live-session debugging is costly.

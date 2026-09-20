@@ -1186,6 +1186,319 @@ local function getCommunicatorCached(Locator)
 	if cached == false then return nil end
 	return cached
 end
+
+local function resolveUnitFromWorldObject(obj, side, worldObjectKey)
+	if obj == nil or base.type(obj) ~= "table" then return nil end
+
+	local unitApi = (base.Unit and base.Unit.getByName and base.Unit) or ((Unit and Unit.getByName) and Unit) or nil
+	if unitApi == nil then return nil end
+
+	local function tryByName(name)
+		local n = base.tostring(name or "")
+		if n == "" then return nil end
+		local ok, u = base.pcall(function() return unitApi.getByName(n) end)
+		if ok and u ~= nil then return u end
+		return nil
+	end
+
+	local function tryById(id)
+		local idNum = base.tonumber(id)
+		if idNum == nil then return nil end
+		if unitApi.getById ~= nil then
+			local ok, u = base.pcall(function() return unitApi.getById(idNum) end)
+			if ok and u ~= nil then return u end
+		end
+		if unitApi.getByID ~= nil then
+			local ok, u = base.pcall(function() return unitApi.getByID(idNum) end)
+			if ok and u ~= nil then return u end
+		end
+		return nil
+	end
+
+	if obj.unit ~= nil and base.type(obj.unit) == "table" then
+		return obj.unit
+	end
+	if obj.Unit ~= nil and base.type(obj.Unit) == "table" then
+		return obj.Unit
+	end
+
+	local u = tryByName(obj.UnitName) or tryByName(obj.unitName) or tryByName(obj.name) or tryByName(obj.Name)
+	if u ~= nil then return u end
+
+	u = tryById(worldObjectKey)
+	if u ~= nil then return u end
+
+	u = tryById(obj.UnitId) or tryById(obj.unitId) or tryById(obj.ID) or tryById(obj.id) or tryById(obj.Id) or tryById(obj.ObjectId) or tryById(obj.objectId)
+	if u ~= nil then return u end
+
+	local data = obj.Data or obj.data
+	if base.type(data) == "table" then
+		u = tryByName(data.UnitName) or tryByName(data.unitName) or tryByName(data.name) or tryByName(data.Name)
+		if u ~= nil then return u end
+		u = tryById(data.UnitId) or tryById(data.unitId) or tryById(data.ID) or tryById(data.id) or tryById(data.Id) or tryById(data.ObjectId) or tryById(data.objectId)
+		if u ~= nil then return u end
+	end
+
+	local candidateName = base.string.upper(base.tostring(obj.Name or obj.name or obj.UnitName or obj.unitName or (base.type(data) == "table" and (data.Name or data.name or data.UnitName or data.unitName) or "") or ""))
+	local candidatePos = obj.Position or (obj.PositionAsMatrix and obj.PositionAsMatrix.p) or (base.type(data) == "table" and (data.Position or (data.PositionAsMatrix and data.PositionAsMatrix.p)) or nil)
+	if candidatePos ~= nil and base.world ~= nil and base.world.searchObjects ~= nil then
+		local objectApi = (base.Object and base.Object.Category and base.Object) or ((Object and Object.Category) and Object) or nil
+		local worldApi = (base.world and base.world.VolumeType and base.world) or ((world and world.VolumeType) and world) or nil
+		if objectApi ~= nil and worldApi ~= nil and objectApi.Category ~= nil and objectApi.Category.UNIT ~= nil and worldApi.VolumeType ~= nil and worldApi.VolumeType.SPHERE ~= nil then
+			local function isRadarEmitterUnit(found)
+				if found == nil then return false end
+				local okDesc, desc = base.pcall(function() return found:getDesc() end)
+				if not okDesc or base.type(desc) ~= "table" then return false end
+
+				local attr = desc.attributes or {}
+				if attr and (attr.SAM_SR or attr.SAM_TR or attr.SAM_SR_TR or attr.EWR or attr.RADAR_BAND1_FOR_ARM) then
+					return true
+				end
+
+				local t = base.string.upper(base.tostring(desc.typeName or desc.displayName or ""))
+				if t == "" then return false end
+				if base.string.find(t, "LAUNCHER", 1, true)
+					or base.string.find(t, "TEL ", 1, true)
+					or base.string.find(t, " TEL", 1, true)
+					or base.string.find(t, "TELAR", 1, true)
+					or base.string.find(t, "LN", 1, true)
+					or base.string.find(t, "ARTILLERY", 1, true)
+					or base.string.find(t, "AAA", 1, true)
+					or base.string.find(t, "S-60", 1, true)
+					or base.string.find(t, "ZIL-131", 1, true)
+					or base.string.find(t, "APA-80", 1, true)
+				then
+					return false
+				end
+
+				if base.string.find(t, "RADAR", 1, true)
+					or base.string.find(t, "EWR", 1, true)
+					or base.string.find(t, "SEARCH", 1, true)
+					or base.string.find(t, "TRACK", 1, true)
+					or base.string.find(t, " STR", 1, true)
+					or base.string.find(t, "STR ", 1, true)
+					or base.string.find(t, "_STR", 1, true)
+					or base.string.find(t, "STR_", 1, true)
+					or base.string.find(t, " SR", 1, true)
+					or base.string.find(t, "SR ", 1, true)
+					or base.string.find(t, "_SR", 1, true)
+					or base.string.find(t, "SR_", 1, true)
+					or base.string.find(t, " TR", 1, true)
+					or base.string.find(t, "TR ", 1, true)
+					or base.string.find(t, "_TR", 1, true)
+					or base.string.find(t, "TR_", 1, true)
+					or base.string.find(t, "HQ-7", 1, true)
+					or base.string.find(t, "HQ 7", 1, true)
+				then
+					return true
+				end
+
+				if candidateName ~= "" and base.string.find(t, candidateName, 1, true) ~= nil then
+					return true
+				end
+
+				return false
+			end
+
+			local radii = { 400, 1200, 3000, 6000 }
+			for _, radius in base.ipairs(radii) do
+				local nearestRadar = nil
+				local nearestRadarDistSq = nil
+				local center = {
+					x = base.tonumber(candidatePos.x) or 0,
+					y = base.tonumber(candidatePos.y) or 0,
+					z = base.tonumber(candidatePos.z) or 0,
+				}
+				local volume = {
+					id = worldApi.VolumeType.SPHERE,
+					params = {
+						point = center,
+						radius = radius,
+					}
+				}
+
+				base.pcall(function()
+					worldApi.searchObjects(objectApi.Category.UNIT, volume, function(found)
+						if found == nil then
+							return true
+						end
+
+						local okExist, exists = base.pcall(function() return found:isExist() end)
+						if okExist and not exists then
+							return true
+						end
+
+						if side ~= nil then
+							local okCoal, foundCoal = base.pcall(function() return found:getCoalition() end)
+							if okCoal and foundCoal ~= nil and foundCoal ~= side then
+								return true
+							end
+						end
+
+						local okPoint, p = base.pcall(function() return found:getPoint() end)
+						if okPoint and p ~= nil and isRadarEmitterUnit(found) then
+							local dx = (base.tonumber(p.x) or 0) - center.x
+							local dz = (base.tonumber(p.z) or 0) - center.z
+							local d2 = (dx * dx) + (dz * dz)
+							if nearestRadarDistSq == nil or d2 < nearestRadarDistSq then
+								nearestRadarDistSq = d2
+								nearestRadar = found
+							end
+						end
+
+						return true
+					end)
+				end)
+
+				if nearestRadar ~= nil then
+					return nearestRadar
+				end
+			end
+		end
+	end
+
+	if base.coalition == nil or base.coalition.getGroups == nil then
+		return nil
+	end
+
+	local candidateGroup = base.string.upper(base.tostring(obj.GroupName or obj.groupName or (base.type(data) == "table" and (data.GroupName or data.groupName) or "") or ""))
+
+	local sides = {}
+	if side ~= nil then
+		base.table.insert(sides, side)
+	else
+		if base.coalition.side ~= nil then
+			if base.coalition.side.RED ~= nil then base.table.insert(sides, base.coalition.side.RED) end
+			if base.coalition.side.BLUE ~= nil then base.table.insert(sides, base.coalition.side.BLUE) end
+			if base.coalition.side.NEUTRAL ~= nil then base.table.insert(sides, base.coalition.side.NEUTRAL) end
+		end
+	end
+
+	local nearest = nil
+	local nearestDistSq = nil
+
+	for _, s in base.ipairs(sides) do
+		local okGroups, groups = base.pcall(base.coalition.getGroups, s)
+		if okGroups and base.type(groups) == "table" then
+			for _, g in base.ipairs(groups) do
+				if g ~= nil and g.getUnits then
+					local gname = ""
+					local okGName, gnameValue = base.pcall(function() return g:getName() end)
+					if okGName and gnameValue ~= nil then gname = base.string.upper(base.tostring(gnameValue)) end
+
+					local okUnits, units = base.pcall(function() return g:getUnits() end)
+					if okUnits and base.type(units) == "table" then
+						for _, unit in base.ipairs(units) do
+							if unit ~= nil then
+								local okUName, unameValue = base.pcall(function() return unit:getName() end)
+								local uname = okUName and base.string.upper(base.tostring(unameValue or "")) or ""
+
+								local okDesc, desc = base.pcall(function() return unit:getDesc() end)
+								local typeText = ""
+								if okDesc and base.type(desc) == "table" then
+									typeText = base.string.upper(base.tostring(desc.typeName or desc.displayName or ""))
+								end
+
+								local nameMatch = (candidateName ~= "" and (uname == candidateName or typeText == candidateName or base.string.find(typeText, candidateName, 1, true) ~= nil))
+								local groupMatch = (candidateGroup ~= "" and gname ~= "" and gname == candidateGroup)
+
+								if nameMatch and (candidateGroup == "" or groupMatch) then
+									return unit
+								end
+
+								if candidatePos ~= nil and (nameMatch or groupMatch) then
+									local okPoint, upos = base.pcall(function() return unit:getPoint() end)
+									if okPoint and upos ~= nil then
+										local dx = (upos.x or 0) - (candidatePos.x or 0)
+										local dz = (upos.z or 0) - (candidatePos.z or 0)
+										local d2 = (dx * dx) + (dz * dz)
+										if nearestDistSq == nil or d2 < nearestDistSq then
+											nearestDistSq = d2
+											nearest = unit
+										end
+									end
+								end
+							end
+						end
+					end
+				end
+			end
+		end
+	end
+
+	if nearest ~= nil and nearestDistSq ~= nil and nearestDistSq <= (2500 * 2500) then
+		return nearest
+	end
+
+	return nil
+end
+
+local function isResolvedSamRadarUnit(unit)
+	if unit == nil then return false end
+	local okDesc, desc = base.pcall(function() return unit:getDesc() end)
+	if not okDesc or base.type(desc) ~= "table" then return false end
+
+	local attr = desc.attributes or {}
+	if attr and (attr.SAM_SR or attr.SAM_TR or attr.SAM_SR_TR or attr.EWR or attr.RADAR_BAND1_FOR_ARM) then
+		return true
+	end
+
+	local t = base.string.upper(base.tostring(desc.typeName or desc.displayName or ""))
+	if t == "" then return false end
+
+	if base.string.find(t, "LAUNCHER", 1, true)
+		or base.string.find(t, "TEL ", 1, true)
+		or base.string.find(t, " TEL", 1, true)
+		or base.string.find(t, "TELAR", 1, true)
+		or base.string.find(t, "LN", 1, true)
+		or base.string.find(t, "ARTILLERY", 1, true)
+		or base.string.find(t, "AAA", 1, true)
+		or base.string.find(t, "S-60", 1, true)
+		or base.string.find(t, "ZIL-131", 1, true)
+		or base.string.find(t, "APA-80", 1, true)
+	then
+		return false
+	end
+
+	return base.string.find(t, "RADAR", 1, true)
+		or base.string.find(t, "EWR", 1, true)
+		or base.string.find(t, "SEARCH", 1, true)
+		or base.string.find(t, "TRACK", 1, true)
+		or base.string.find(t, " STR", 1, true)
+		or base.string.find(t, "STR ", 1, true)
+		or base.string.find(t, "_STR", 1, true)
+		or base.string.find(t, "STR_", 1, true)
+		or base.string.find(t, " SR", 1, true)
+		or base.string.find(t, "SR ", 1, true)
+		or base.string.find(t, "_SR", 1, true)
+		or base.string.find(t, "SR_", 1, true)
+		or base.string.find(t, " TR", 1, true)
+		or base.string.find(t, "TR ", 1, true)
+		or base.string.find(t, "_TR", 1, true)
+		or base.string.find(t, "TR_", 1, true)
+		or base.string.find(t, "HQ-7", 1, true)
+		or base.string.find(t, "HQ 7", 1, true)
+		or base.string.find(t, "BIG BIRD", 1, true)
+		or base.string.find(t, "SNOW DRIFT", 1, true)
+		or base.string.find(t, "STRAIGHT FLUSH", 1, true)
+		or base.string.find(t, "FLAP LID", 1, true)
+		or base.string.find(t, "TIN SHIELD", 1, true)
+		or base.string.find(t, "DOG EAR", 1, true)
+		or base.string.find(t, "LOW BLOW", 1, true)
+		or base.string.find(t, "CLAM SHELL", 1, true)
+		or base.string.find(t, "PATRIOT", 1, true)
+		or base.string.find(t, "HAWK", 1, true)
+		or base.string.find(t, "KUB", 1, true)
+		or base.string.find(t, "BUK", 1, true)
+		or base.string.find(t, "NASAMS_RADAR_MPQ64F", 1, true)
+		or base.string.find(t, "MPQ64F", 1, true)
+		or base.string.find(t, "64H6E", 1, true)
+		or base.string.find(t, "9S18M1", 1, true)
+		or base.string.find(t, "RLS_19J6", 1, true)
+		or base.string.find(t, "P-19 S-125 SR", 1, true)
+		or base.string.find(t, "P 19 S 125 SR", 1, true)
+end
+
 local function getDescCached(Locator)
 	if Locator == nil then return nil end
 	local cached = propcache.desc[Locator]
@@ -1336,6 +1649,35 @@ base.vaicom.properties = {
 			ID = Locator.id_	
 		end	
 		return ID	
+	end,
+	status = function(Locator, recipientclass)
+		if Locator == nil then
+			return ""
+		end
+		if recipientclass ~= "Opposition" then
+			return ""
+		end
+		local parts = {}
+
+		local id = Locator.id_
+		local map = base.vaicom.state and base.vaicom.state.radaractivebyid or nil
+		if id ~= nil and map ~= nil then
+			local v = map[id]
+			if v == true then
+				base.table.insert(parts, "RadarActive:true")
+			elseif v == false then
+				base.table.insert(parts, "RadarActive:false")
+			end
+		end
+
+		local okInAir, inAirValue = base.pcall(function()
+			return Locator:inAir()
+		end)
+		if okInAir and inAirValue ~= nil then
+			base.table.insert(parts, "Airborne:"..base.tostring(inAirValue and true or false))
+		end
+
+		return base.table.concat(parts, ";")
 	end,
 	modulation = function(Locator)
 		local Modulation = nil
@@ -1985,11 +2327,159 @@ base.vaicom.objects = {
 		end
 
 		if opposite then
+			base.vaicom.state = base.vaicom.state or {}
+			base.vaicom.state.radaractivebyid = {}
 			addUnits(base.vaicom.objects.localJTACs(opposite))
 			addUnits(base.vaicom.objects.localAWACSs(opposite))
 			addUnits(base.vaicom.objects.localTankers(opposite))
-			addUnits(base.vaicom.objects.localATCs(opposite))
 			addUnits(base.vaicom.objects.localAllies(opposite))
+
+			local function addSamRadarUnitsFromWorldObjects(side)
+				local added = 0
+				if base.Export == nil or base.Export.LoGetWorldObjects == nil then
+					return added
+				end
+
+				local okWorld, worldObjects = base.pcall(function()
+					return base.Export.LoGetWorldObjects()
+				end)
+				if not okWorld or base.type(worldObjects) ~= "table" then
+					return added
+				end
+
+				local function isSamRadarText(text)
+					local t = base.string.upper(base.tostring(text or ""))
+					if t == "" then return false end
+					if base.string.find(t, "LAUNCHER", 1, true)
+						or base.string.find(t, "TEL ", 1, true)
+						or base.string.find(t, " TEL", 1, true)
+						or base.string.find(t, "TELAR", 1, true)
+						or base.string.find(t, "LN", 1, true)
+					then
+						return false
+					end
+					return base.string.find(t, "RADAR", 1, true)
+						or base.string.find(t, "EWR", 1, true)
+						or base.string.find(t, "SEARCH", 1, true)
+						or base.string.find(t, "TRACK", 1, true)
+						or base.string.find(t, " STR", 1, true)
+						or base.string.find(t, "STR ", 1, true)
+						or base.string.find(t, "_STR", 1, true)
+						or base.string.find(t, "STR_", 1, true)
+						or base.string.find(t, " SR", 1, true)
+						or base.string.find(t, "SR ", 1, true)
+						or base.string.find(t, "_SR", 1, true)
+						or base.string.find(t, "SR_", 1, true)
+						or base.string.find(t, " TR", 1, true)
+						or base.string.find(t, "TR ", 1, true)
+						or base.string.find(t, "_TR", 1, true)
+						or base.string.find(t, "TR_", 1, true)
+						or base.string.find(t, "HQ-7", 1, true)
+						or base.string.find(t, "HQ 7", 1, true)
+						or base.string.find(t, "BIG BIRD", 1, true)
+						or base.string.find(t, "SNOW DRIFT", 1, true)
+						or base.string.find(t, "STRAIGHT FLUSH", 1, true)
+						or base.string.find(t, "FLAP LID", 1, true)
+						or base.string.find(t, "TIN SHIELD", 1, true)
+						or base.string.find(t, "DOG EAR", 1, true)
+						or base.string.find(t, "LOW BLOW", 1, true)
+						or base.string.find(t, "CLAM SHELL", 1, true)
+						or base.string.find(t, "PATRIOT", 1, true)
+						or base.string.find(t, "HAWK", 1, true)
+						or base.string.find(t, "KUB", 1, true)
+						or base.string.find(t, "BUK", 1, true)
+						or base.string.find(t, "NASAMS_RADAR_MPQ64F", 1, true)
+						or base.string.find(t, "MPQ64F", 1, true)
+						or base.string.find(t, "64H6E", 1, true)
+						or base.string.find(t, "9S18M1", 1, true)
+						or base.string.find(t, "RLS_19J6", 1, true)
+						or base.string.find(t, "P-19 S-125 SR", 1, true)
+						or base.string.find(t, "P 19 S 125 SR", 1, true)
+				end
+
+				local function getWorldObjectTypeText(obj)
+					if obj == nil or base.type(obj) ~= "table" then return "" end
+					if obj.typeName then return base.tostring(obj.typeName) end
+					if obj.TypeName then return base.tostring(obj.TypeName) end
+					if base.type(obj.type) == "string" then return obj.type end
+					if base.type(obj.Type) == "string" then return obj.Type end
+					if base.type(obj.Type) == "table" then
+						return base.tostring(obj.Type.level1 or obj.Type.name or obj.Type.typeName or obj.Type[1] or "")
+					end
+					if base.type(obj.type) == "table" then
+						return base.tostring(obj.type.level1 or obj.type.name or obj.type.typeName or obj.type[1] or "")
+					end
+					return ""
+				end
+
+				local function processObject(obj, objectKey)
+					if base.type(obj) ~= "table" then return end
+					local objType = getWorldObjectTypeText(obj)
+					local objName = obj.Name or obj.name or obj.UnitName or obj.unitName or ""
+					local objGroup = obj.GroupName or obj.groupName or ""
+					local objData = obj.Data or obj.data
+					local objDataName = (base.type(objData) == "table" and (objData.Name or objData.name or objData.UnitName or objData.unitName)) or ""
+					local objDataType = (base.type(objData) == "table" and (objData.TypeName or objData.typeName or objData.Type or objData.type)) or ""
+					local rawFlags = obj.Flags or obj.flags
+					local radarActive = nil
+					if base.type(rawFlags) == "table" then
+						radarActive = rawFlags.RadarActive
+						if radarActive == nil then
+							radarActive = rawFlags.radarActive
+						end
+					elseif base.type(rawFlags) == "string" then
+						local f = base.string.upper(rawFlags)
+						if base.string.find(f, "RADARACTIVE:TRUE", 1, true) then radarActive = true end
+						if base.string.find(f, "RADARACTIVE:FALSE", 1, true) then radarActive = false end
+					end
+					if not (isSamRadarText(objType)
+						or isSamRadarText(objName)
+						or isSamRadarText(objGroup)
+						or isSamRadarText(objDataName)
+						or isSamRadarText(objDataType)) then return end
+
+					local unit = resolveUnitFromWorldObject(obj, side, objectKey)
+					if unit ~= nil then
+						local okCoalition, unitCoalition = base.pcall(function()
+							return unit:getCoalition()
+						end)
+						if okCoalition and unitCoalition ~= nil and unitCoalition ~= side then
+							return
+						end
+						if not isResolvedSamRadarUnit(unit) then
+							return
+						end
+						if radarActive ~= nil then
+							base.vaicom.state.radaractivebyid[unit.id_] = (radarActive == true)
+						end
+						local inactive = (unit.isActive and not unit:isActive()) or false
+						if not inactive then
+							base.vaicom.objects.addUniqueUnit(Collection, unit)
+							added = added + 1
+						end
+					end
+				end
+
+				local function scanWorldObjects(tbl, depth)
+					if base.type(tbl) ~= "table" then return end
+					if depth > 5 then return end
+					for k, item in base.pairs(tbl) do
+						if base.type(item) == "table" then
+							local looksLikeObject = (item.Type or item.type or item.typeName or item.Name or item.name or item.Coalition or item.coalition) ~= nil
+							if looksLikeObject then
+								processObject(item, k)
+							else
+								scanWorldObjects(item, depth + 1)
+							end
+						end
+					end
+				end
+
+				scanWorldObjects(worldObjects, 0)
+
+				return added
+			end
+			addSamRadarUnitsFromWorldObjects(opposite)
 		end
 		return Collection
 	end,
@@ -3555,14 +4045,13 @@ base.vaicom.state = {
 						bullseyeY = 0,
 						bullseyeCoalition = "",
 						bullseyeValid = false,
-						weatherType = "nil",
-						weatherKeys = {},
-						weatherSummary = {},
+					weatherType = "nil",
+					weatherKeys = {},
+					weatherSummary = {},
+					oppositionGroundProbe = {},
 					}
 
-					if base.vaicom.state and not base.vaicom.state.includediagnostics then
-						return probe
-					end
+				local includeDiagnostics = not (base.vaicom.state and not base.vaicom.state.includediagnostics)
 
 					local diagnosticsDebug = base.vaicom.state and base.vaicom.state.debugmode
 
@@ -3576,6 +4065,357 @@ base.vaicom.state = {
 						if base.type(target) ~= "table" then return end
 						if #target >= (maxItems or 40) then return end
 						base.table.insert(target, base.tostring(value))
+					end
+
+					local function collectOppositionGroundProbe()
+						if base.type(probe.oppositionGroundProbe) ~= "table" then
+							probe.oppositionGroundProbe = {}
+						end
+
+						local pUnit = data and data.pUnit or nil
+						if pUnit == nil then
+							addProbeRow(probe.oppositionGroundProbe, "punit=nil", 24)
+							return
+						end
+
+						local coalition = nil
+						local okCoalition, coalitionValue = base.pcall(function()
+							return pUnit:getCoalition()
+						end)
+						if okCoalition then
+							coalition = coalitionValue
+						end
+						if coalition == nil then
+							addProbeRow(probe.oppositionGroundProbe, "coalition=nil", 24)
+							return
+						end
+
+						local opposite = nil
+						if coalition == base.coalition.side.BLUE then opposite = base.coalition.side.RED end
+						if coalition == base.coalition.side.RED then opposite = base.coalition.side.BLUE end
+						if opposite == nil then
+							addProbeRow(probe.oppositionGroundProbe, "opposite=nil", 24)
+							return
+						end
+
+						local groundCategoryBase = base.Group and base.Group.Category and base.Group.Category.GROUND or nil
+						local groundCategoryGlobal = Group and Group.Category and Group.Category.GROUND or nil
+						local groundCategory = groundCategoryGlobal or groundCategoryBase
+						local worldObjectsShape = ""
+						local worldSamCandidates = 0
+						local worldSamUnitsResolved = 0
+						local worldSamFieldRows = 0
+
+						local function countUnits(groups, sampleTarget, maxSamples)
+							local groupsCount = 0
+							local unitsCount = 0
+							if base.type(groups) ~= "table" then
+								return groupsCount, unitsCount
+							end
+							for _, g in base.pairs(groups) do
+								groupsCount = groupsCount + 1
+								local okUnits, units = base.pcall(base.vaicom.objects.getUnits, g)
+								if okUnits and base.type(units) == "table" then
+									for _, u in base.pairs(units) do
+										unitsCount = unitsCount + 1
+										if base.type(sampleTarget) == "table" and #sampleTarget < (maxSamples or 10) then
+											local uType = base.tostring((base.vaicom.properties and base.vaicom.properties.typename and base.vaicom.properties.typename(u)) or "")
+											local uName = base.tostring((base.vaicom.properties and base.vaicom.properties.displayname and base.vaicom.properties.displayname(u)) or "")
+											addProbeRow(sampleTarget, "unit="..uName.."|type="..uType, maxSamples or 10)
+										end
+									end
+								end
+							end
+							return groupsCount, unitsCount
+						end
+
+						local okGround, groundGroups = base.pcall(base.coalition.getGroups, opposite, groundCategory)
+						local directGroupsCount, directUnitsCount = countUnits((okGround and groundGroups) or nil, probe.oppositionGroundProbe, 8)
+						addProbeRow(probe.oppositionGroundProbe, "direct_ground_groups="..base.tostring(directGroupsCount), 24)
+						addProbeRow(probe.oppositionGroundProbe, "direct_ground_units="..base.tostring(directUnitsCount), 24)
+						addProbeRow(probe.oppositionGroundProbe, "groundcat_base="..base.tostring(groundCategoryBase), 24)
+						addProbeRow(probe.oppositionGroundProbe, "groundcat_global="..base.tostring(groundCategoryGlobal), 24)
+
+						local okAll, allGroups = base.pcall(base.vaicom.objects.getGroups, opposite)
+						if okAll and base.type(allGroups) == "table" then
+							local allCount = 0
+							local byCategoryGround = {}
+							local allGroupUnitsScanned = 0
+							local allGroupSamAttrHits = 0
+							local allGroupSamTextHits = 0
+							for _, g in base.pairs(allGroups) do
+								allCount = allCount + 1
+								local okCat, cat = base.pcall(function()
+									return g and g.getCategory and g:getCategory() or nil
+								end)
+								local isGround = okCat and (
+									(groundCategoryBase ~= nil and cat == groundCategoryBase) or
+									(groundCategoryGlobal ~= nil and cat == groundCategoryGlobal)
+								)
+								if isGround then
+									base.table.insert(byCategoryGround, g)
+								end
+
+								local okUnits, units = base.pcall(base.vaicom.objects.getUnits, g)
+								if okUnits and base.type(units) == "table" then
+									for _, u in base.pairs(units) do
+										allGroupUnitsScanned = allGroupUnitsScanned + 1
+										local okDesc, desc = base.pcall(function() return u and u:getDesc() or nil end)
+										if okDesc and base.type(desc) == "table" then
+											local attr = desc.attributes or {}
+											if attr and (attr.SAM_SR or attr.SAM_TR or attr.SAM_SR_TR or attr.EWR or attr.RADAR_BAND1_FOR_ARM) then
+												allGroupSamAttrHits = allGroupSamAttrHits + 1
+											end
+											local t = base.string.upper(base.tostring(desc.typeName or desc.displayName or ""))
+											if t ~= "" and (
+												base.string.find(t, "RADAR", 1, true)
+												or base.string.find(t, "EWR", 1, true)
+												or base.string.find(t, "SEARCH", 1, true)
+												or base.string.find(t, "TRACK", 1, true)
+												or base.string.find(t, " STR", 1, true)
+												or base.string.find(t, "SR ", 1, true)
+											) then
+												allGroupSamTextHits = allGroupSamTextHits + 1
+											end
+										end
+									end
+								end
+							end
+							local fallbackGroupsCount, fallbackUnitsCount = countUnits(byCategoryGround, probe.oppositionGroundProbe, 8)
+							addProbeRow(probe.oppositionGroundProbe, "all_groups="..base.tostring(allCount), 24)
+							addProbeRow(probe.oppositionGroundProbe, "cat_ground_groups="..base.tostring(fallbackGroupsCount), 24)
+							addProbeRow(probe.oppositionGroundProbe, "cat_ground_units="..base.tostring(fallbackUnitsCount), 24)
+							addProbeRow(probe.oppositionGroundProbe, "allgroup_units_scanned="..base.tostring(allGroupUnitsScanned), 24)
+							addProbeRow(probe.oppositionGroundProbe, "allgroup_sam_attr_hits="..base.tostring(allGroupSamAttrHits), 24)
+							addProbeRow(probe.oppositionGroundProbe, "allgroup_sam_text_hits="..base.tostring(allGroupSamTextHits), 24)
+						else
+							addProbeRow(probe.oppositionGroundProbe, "all_groups=unavailable", 24)
+						end
+
+						local function isSamRadarText(text)
+							local t = base.string.upper(base.tostring(text or ""))
+							if t == "" then return false end
+							if base.string.find(t, "LAUNCHER", 1, true)
+								or base.string.find(t, "TEL ", 1, true)
+								or base.string.find(t, " TEL", 1, true)
+								or base.string.find(t, "TELAR", 1, true)
+								or base.string.find(t, "LN", 1, true)
+							then
+								return false
+							end
+							return base.string.find(t, "RADAR", 1, true)
+								or base.string.find(t, "EWR", 1, true)
+								or base.string.find(t, "SEARCH", 1, true)
+								or base.string.find(t, "TRACK", 1, true)
+								or base.string.find(t, " STR", 1, true)
+								or base.string.find(t, "STR ", 1, true)
+								or base.string.find(t, "_STR", 1, true)
+								or base.string.find(t, "STR_", 1, true)
+								or base.string.find(t, " SR", 1, true)
+								or base.string.find(t, "SR ", 1, true)
+								or base.string.find(t, "_SR", 1, true)
+								or base.string.find(t, "SR_", 1, true)
+								or base.string.find(t, " TR", 1, true)
+								or base.string.find(t, "TR ", 1, true)
+								or base.string.find(t, "_TR", 1, true)
+								or base.string.find(t, "TR_", 1, true)
+								or base.string.find(t, "HQ-7", 1, true)
+								or base.string.find(t, "HQ 7", 1, true)
+								or base.string.find(t, "BIG BIRD", 1, true)
+								or base.string.find(t, "SNOW DRIFT", 1, true)
+								or base.string.find(t, "STRAIGHT FLUSH", 1, true)
+								or base.string.find(t, "FLAP LID", 1, true)
+								or base.string.find(t, "TIN SHIELD", 1, true)
+								or base.string.find(t, "DOG EAR", 1, true)
+								or base.string.find(t, "LOW BLOW", 1, true)
+								or base.string.find(t, "CLAM SHELL", 1, true)
+								or base.string.find(t, "PATRIOT", 1, true)
+								or base.string.find(t, "HAWK", 1, true)
+								or base.string.find(t, "KUB", 1, true)
+								or base.string.find(t, "BUK", 1, true)
+								or base.string.find(t, "NASAMS_RADAR_MPQ64F", 1, true)
+								or base.string.find(t, "MPQ64F", 1, true)
+								or base.string.find(t, "64H6E", 1, true)
+								or base.string.find(t, "9S18M1", 1, true)
+								or base.string.find(t, "RLS_19J6", 1, true)
+								or base.string.find(t, "P-19 S-125 SR", 1, true)
+								or base.string.find(t, "P 19 S 125 SR", 1, true)
+						end
+
+						local function getWorldObjectTypeText(obj)
+							if obj == nil or base.type(obj) ~= "table" then return "" end
+							if obj.typeName then return base.tostring(obj.typeName) end
+							if obj.TypeName then return base.tostring(obj.TypeName) end
+							if base.type(obj.type) == "string" then return obj.type end
+							if base.type(obj.Type) == "string" then return obj.Type end
+							if base.type(obj.Type) == "table" then
+								return base.tostring(obj.Type.level1 or obj.Type.name or obj.Type.typeName or obj.Type[1] or "")
+							end
+							if base.type(obj.type) == "table" then
+								return base.tostring(obj.type.level1 or obj.type.name or obj.type.typeName or obj.type[1] or "")
+							end
+							return ""
+						end
+
+						local function formatFlags(flags)
+							if flags == nil then return "" end
+							if base.type(flags) ~= "table" then
+								return base.tostring(flags)
+							end
+							local parts = {}
+							for k, v in base.pairs(flags) do
+								base.table.insert(parts, base.tostring(k)..":"..base.tostring(v))
+							end
+							base.table.sort(parts)
+							return base.table.concat(parts, ",")
+						end
+
+						local function probeResolvedUnitState(u)
+							if u == nil then return "" end
+							local bits = {}
+
+							local okActive, active = base.pcall(function() return u.isActive and u:isActive() end)
+							if okActive and active ~= nil then
+								base.table.insert(bits, "active="..base.tostring(active))
+							end
+
+							local controller = nil
+							local okCtrl, ctrl = base.pcall(function() return u.getController and u:getController() end)
+							if okCtrl then controller = ctrl end
+							base.table.insert(bits, "ctrl="..base.tostring(controller ~= nil))
+
+							if u.getRadar then
+								local okRadar, radar = base.pcall(function() return u:getRadar() end)
+								if okRadar then
+									base.table.insert(bits, "radar="..base.tostring(radar))
+								end
+							end
+
+							if controller ~= nil and controller.getOption then
+								if AI and AI.Option and AI.Option.Ground and AI.Option.Ground.id and AI.Option.Ground.id.ALARM_STATE then
+									local okAlarm, alarm = base.pcall(function() return controller:getOption(AI.Option.Ground.id.ALARM_STATE) end)
+									if okAlarm then
+										base.table.insert(bits, "alarm="..base.tostring(alarm))
+									end
+								end
+							end
+
+							return base.table.concat(bits, "|")
+						end
+
+						local function addWorldCandidateFields(item, objectKey, resolvedUnit)
+							if worldSamFieldRows >= 8 then return end
+							local name = base.tostring(item.Name or item.name or item.UnitName or item.unitName or "")
+							local typeTxt = base.tostring(getWorldObjectTypeText(item))
+							local coalitionTxt = base.tostring(item.Coalition or item.coalition or "")
+							local idTxt = base.tostring(item.ID or item.id or item.Id or item.UnitId or item.unitId or item.ObjectId or item.objectId or "")
+							local keyTxt = base.tostring(objectKey or "")
+							local flagsTxt = formatFlags(item.Flags or item.flags)
+							local groupTxt = base.tostring(item.GroupName or item.groupName or "")
+							local pos = item.Position or (item.PositionAsMatrix and item.PositionAsMatrix.p) or nil
+							local posTxt = ""
+							if base.type(pos) == "table" then
+								posTxt = base.tostring(base.tonumber(pos.x) or 0)..","..base.tostring(base.tonumber(pos.z) or 0)
+							end
+
+							local data = item.Data or item.data
+							local dataName = ""
+							local dataType = ""
+							local dataId = ""
+							if base.type(data) == "table" then
+								dataName = base.tostring(data.Name or data.name or data.UnitName or data.unitName or "")
+								dataType = base.tostring(data.TypeName or data.typeName or data.Type or data.type or "")
+								dataId = base.tostring(data.ID or data.id or data.Id or data.UnitId or data.unitId or data.ObjectId or data.objectId or "")
+							end
+
+							addProbeRow(
+								probe.oppositionGroundProbe,
+								"world_candidate_"..base.tostring(worldSamFieldRows + 1)
+								.."|name="..name
+								.."|type="..typeTxt
+								.."|coal="..coalitionTxt
+								.."|id="..idTxt
+								.."|key="..keyTxt
+								.."|flags="..flagsTxt
+								.."|group="..groupTxt
+								.."|pos="..posTxt
+								.."|dataName="..dataName
+								.."|dataType="..dataType
+								.."|dataId="..dataId,
+								24
+							)
+
+							local keys = {}
+							if base.type(item) == "table" then
+								for k, _ in base.pairs(item) do
+									if #keys >= 10 then break end
+									base.table.insert(keys, base.tostring(k))
+								end
+							end
+							addProbeRow(probe.oppositionGroundProbe, "world_candidate_keys_"..base.tostring(worldSamFieldRows + 1).."="..base.table.concat(keys, ","), 24)
+							local stateTxt = probeResolvedUnitState(resolvedUnit)
+							if stateTxt ~= "" then
+								addProbeRow(probe.oppositionGroundProbe, "world_candidate_state_"..base.tostring(worldSamFieldRows + 1).."="..stateTxt, 24)
+							end
+
+							worldSamFieldRows = worldSamFieldRows + 1
+						end
+
+						local function scanWorld(tbl, depth)
+							if base.type(tbl) ~= "table" or depth > 2 then return end
+							for key, item in base.pairs(tbl) do
+								if base.type(item) == "table" then
+									local itemType = getWorldObjectTypeText(item)
+									local itemName = item.Name or item.name or ""
+									if itemType ~= "" or itemName ~= "" then
+										if isSamRadarText(itemType) or isSamRadarText(itemName) then
+											worldSamCandidates = worldSamCandidates + 1
+											local u = resolveUnitFromWorldObject(item, opposite, key)
+											addWorldCandidateFields(item, key, u)
+											local wf = item.Flags or item.flags
+											local wradar = nil
+											if base.type(wf) == "table" then
+												wradar = wf.RadarActive
+												if wradar == nil then wradar = wf.radarActive end
+											end
+											if wradar ~= nil and u ~= nil and u.id_ ~= nil then
+												base.vaicom.state = base.vaicom.state or {}
+												base.vaicom.state.radaractivebyid = base.vaicom.state.radaractivebyid or {}
+												base.vaicom.state.radaractivebyid[u.id_] = (wradar == true)
+											end
+											if u ~= nil then
+												worldSamUnitsResolved = worldSamUnitsResolved + 1
+											end
+										end
+									else
+										scanWorld(item, depth + 1)
+									end
+								end
+							end
+						end
+
+						if base.Export and base.Export.LoGetWorldObjects then
+							local okWorld, worldObjects = base.pcall(function() return base.Export.LoGetWorldObjects() end)
+							if okWorld and base.type(worldObjects) == "table" then
+								local topCount = 0
+								for _ in base.pairs(worldObjects) do topCount = topCount + 1 end
+								worldObjectsShape = "table:"..base.tostring(topCount)
+								scanWorld(worldObjects, 0)
+							else
+								worldObjectsShape = "unavailable"
+							end
+						else
+							worldObjectsShape = "missing_api"
+						end
+
+						addProbeRow(probe.oppositionGroundProbe, "world_shape="..base.tostring(worldObjectsShape), 24)
+						addProbeRow(probe.oppositionGroundProbe, "world_sam_candidates="..base.tostring(worldSamCandidates), 24)
+						addProbeRow(probe.oppositionGroundProbe, "world_sam_resolved="..base.tostring(worldSamUnitsResolved), 24)
+					end
+
+					if not includeDiagnostics then
+						collectOppositionGroundProbe()
+						return probe
 					end
 
 					local function copyStringList(src)
@@ -3955,6 +4795,7 @@ base.vaicom.state = {
 						probe.tankerTaskEntries = {}
 
 						collectRuntimeRadioProbe()
+						collectOppositionGroundProbe()
 
 						diagCache.runtimeRadioDevices = copyStringList(probe.runtimeRadioDevices)
 						diagCache.runtimeRadioChannels = copyStringList(probe.runtimeRadioChannels)
@@ -4639,6 +5480,7 @@ base.vaicom.state = {
                                     	tacan = tacanValue,
 										freq = base.tostring(base.vaicom.properties.frequency(k)),
 										mod = base.tostring(base.vaicom.properties.modulation(k)),
+										status = base.tostring(base.vaicom.properties.status(k, recipientclass)),
 										ishuman = base.vaicom.properties.human(k),
 										playerid = base.vaicom.properties.playerid(k),
 										}	

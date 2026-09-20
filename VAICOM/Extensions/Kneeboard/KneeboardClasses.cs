@@ -256,23 +256,107 @@ namespace VAICOM
                     return isKnownAwacsCallsign || isAwacsType;
                 }
 
-                private static bool IsOppositionAircraftThreat(Server.DcsUnit unit)
+                private static bool IsActiveThreatUnit(Server.DcsUnit unit)
                 {
                     if (unit == null)
                     {
                         return false;
                     }
 
+                    if (unit.pos == null)
+                    {
+                        return false;
+                    }
+
+                    string status = (unit.status ?? string.Empty).Trim();
+                    if (status.Length == 0)
+                    {
+                        return true;
+                    }
+
+                    string statusUpper = status.ToUpperInvariant();
+                    if (statusUpper.Contains("RADARACTIVE:FALSE"))
+                    {
+                        return false;
+                    }
+
+                    string normalized = statusUpper;
+                    if (normalized.Contains("DEAD")
+                        || normalized.Contains("DESTROYED")
+                        || normalized.Contains("INACTIVE")
+                        || normalized.Contains("DISABLED"))
+                    {
+                        return false;
+                    }
+
+                    return true;
+                }
+
+                private static bool IsOppositionCoalitionThreat(Server.DcsUnit unit)
+                {
+                    if (unit == null)
+                    {
+                        return false;
+                    }
+
+                    string unitCoalition = (unit.coalition ?? string.Empty).Trim().ToUpperInvariant();
+                    string playerCoalition = (State.currentstate?.playercoalition ?? string.Empty).Trim().ToUpperInvariant();
+                    if (string.IsNullOrWhiteSpace(unitCoalition) || string.IsNullOrWhiteSpace(playerCoalition))
+                    {
+                        return true;
+                    }
+
+                    return !unitCoalition.Equals(playerCoalition, StringComparison.OrdinalIgnoreCase)
+                        && !unitCoalition.Equals("ALLIES", StringComparison.OrdinalIgnoreCase)
+                        && !unitCoalition.Equals("FRIENDLY", StringComparison.OrdinalIgnoreCase);
+                }
+
+                private static bool IsAirborneThreatUnit(Server.DcsUnit unit)
+                {
+                    if (unit == null)
+                    {
+                        return false;
+                    }
+
+                    string section = GetOppositionThreatSection(unit);
+                    if (!section.Equals("AIR", StringComparison.OrdinalIgnoreCase))
+                    {
+                        return true;
+                    }
+
+                    string status = (unit.status ?? string.Empty).ToUpperInvariant();
+                    if (!status.Contains("AIRBORNE:TRUE") && !status.Contains("AIRBORNE:FALSE"))
+                    {
+                        // If no airborne signal is present for AIR threats,
+                        // treat as not airborne to avoid showing taxiing/ground aircraft.
+                        return false;
+                    }
+                    if (status.Contains("AIRBORNE:FALSE"))
+                    {
+                        return false;
+                    }
+
+                    return true;
+                }
+
+                private static string GetOppositionThreatSection(Server.DcsUnit unit)
+                {
+                    if (unit == null)
+                    {
+                        return string.Empty;
+                    }
+
                     string typeSource = string.Join(" ", new[]
                     {
                         unit.typename ?? string.Empty,
                         unit.fullname ?? string.Empty,
+                        unit.descr ?? string.Empty,
                         unit.callsign ?? string.Empty,
                     }).ToUpperInvariant();
 
                     if (string.IsNullOrWhiteSpace(typeSource))
                     {
-                        return false;
+                        return string.Empty;
                     }
 
                     string tokenizedTypeSource = " " + Regex.Replace(typeSource, @"[^A-Z0-9]+", " ").Trim() + " ";
@@ -290,7 +374,7 @@ namespace VAICOM
                         || typeSource.Contains("CAMP")
                         || Regex.IsMatch(typeSource, @"\bHS\d{1,3}\b"))
                     {
-                        return false;
+                        return string.Empty;
                     }
 
                     // Exclude SAM launchers; include radar emitters only.
@@ -301,13 +385,40 @@ namespace VAICOM
 
                     if (isLauncher)
                     {
-                        return false;
+                        return string.Empty;
                     }
 
                     bool isEwr = typeSource.Contains("EWR") || typeSource.Contains("EARLY WARNING");
                     bool hasSamToken = tokenizedTypeSource.Contains(" SAM ")
+                        || typeSource.Contains("SAM ")
+                        || typeSource.Contains(" SAM")
                         || Regex.IsMatch(typeSource, @"(^|[^A-Z0-9])SA[\-_ ]?\d{1,3}([^A-Z0-9]|$)");
                     bool hasSrStrToken = tokenizedTypeSource.Contains(" SR ") || tokenizedTypeSource.Contains(" STR ");
+                    bool hasRadarToken = tokenizedTypeSource.Contains(" RADAR ");
+                    bool isSamRadarSimpleTest = hasSamToken && (hasRadarToken || hasSrStrToken);
+                    bool isKnownSamRadarType = typeSource.Contains("KUB 1S91") // SA-6 straight flush
+                        || typeSource.Contains("40B6M TR") // S-300PS/S-300PMU1/S-300PMU2 Flap Lid
+                        || typeSource.Contains("40B6MD SR") // S-300PS/S-300PMU1/S-300PMU2 Clam Shell
+                        || typeSource.Contains("64H6E SR") // S-300PMU1/S-300PMU2 Big Bird
+                        || typeSource.Contains("9S18M1") // SA-11 Snow Drift
+                        || typeSource.Contains("DOG EAR RADAR") // Dog Ear SA-8/SA-9/SA-13
+                        || typeSource.Contains("HAWK TR") // Hawk
+                        || typeSource.Contains("HAWK SR") // Hawk
+                        || typeSource.Contains("HAWK CWAR") // Hawk
+                        || typeSource.Contains("PATRIOT STR") // Patriot
+                        || typeSource.Contains("P-19 S-125 SR") // SA-3/SA-2
+                        || typeSource.Contains("P 19 S 125 SR") // SA-3/SA-2
+                        || typeSource.Contains("ROLAND RADAR") // Roland
+                        || typeSource.Contains("SNR S-125 TR") // SA-3/SA-2
+                        || typeSource.Contains("SNR S 125 TR") // SA-3/SA-2
+                        || typeSource.Contains("HQ-7 STR") // HQ-7 STR SP
+                        || typeSource.Contains("HQ 7 STR") // HQ-7 STR SP
+                        || typeSource.Contains("MPQ64F1") // NASAMS SR 
+                        || typeSource.Contains("NASAMS RADAR") // NASAMS 
+                        || typeSource.Contains("P14_SR") // SA-5 Tall King
+                        || typeSource.Contains("SA-5 SR") // SA-5 Tall King
+                        || typeSource.Contains("RLS_19J6") // SA-5 Tin Shield
+                        || typeSource.Contains("TIN SHIELD"); // SA-5 Tin Shield
                     bool hasSrStrMarker = Regex.IsMatch(typeSource, @"(^|[^A-Z0-9])(SR|STR)([^A-Z0-9]|$)")
                         || Regex.IsMatch(typeSource, @"\b[A-Z0-9]+(?:[\s_\-\./]+[A-Z0-9]+)*[\s_\-\./]+(SR|STR)\b")
                         || Regex.IsMatch(typeSource, @"\b(SR|STR)[\s_\-\./]+[A-Z0-9]+(?:[\s_\-\./]+[A-Z0-9]+)*\b")
@@ -315,17 +426,22 @@ namespace VAICOM
                         || Regex.IsMatch(typeSource, @"(^|[^A-Z0-9])[A-Z0-9_\-]+(SR|STR)([^A-Z0-9]|$)");
 
                     bool isSamSearchRadar = typeSource.Contains("SEARCH RADAR")
+                        || isSamRadarSimpleTest
+                        || hasSrStrToken
                         || (hasSamToken && hasSrStrToken)
-                        || hasSrStrMarker
-                        || typeSource.Contains("P-19")
-                        || typeSource.Contains("P 19")
-                        || typeSource.Contains("FLAT FACE")
-                        || typeSource.Contains("FLATFACE");
+                        || isKnownSamRadarType
+                        || hasSrStrMarker;
+                        
                         
 
-                    if (isEwr || isSamSearchRadar)
+                    if (isEwr)
                     {
-                        return true;
+                        return "EWR";
+                    }
+
+                    if (isSamSearchRadar)
+                    {
+                        return "SAM";
                     }
 
                     // Keep aircraft contacts (fixed-wing + rotary) from opposition.
@@ -345,10 +461,15 @@ namespace VAICOM
 
                     if (isAircraft)
                     {
-                        return true;
+                        return "AIR";
                     }
 
-                    return false;
+                    return string.Empty;
+                }
+
+                private static bool IsOppositionAircraftThreat(Server.DcsUnit unit)
+                {
+                    return !string.IsNullOrWhiteSpace(GetOppositionThreatSection(unit));
                 }
 
                 private static string ExtractIcaoFromMetar(string metar)
@@ -412,6 +533,31 @@ namespace VAICOM
 
                     value = Regex.Replace(value, @"([A-Za-z])(\d)", "$1 $2");
                     return Regex.Replace(value, @"\s{2,}", " ");
+                }
+
+                private static string UppercaseOutsideQuotes(string text)
+                {
+                    if (string.IsNullOrWhiteSpace(text))
+                    {
+                        return text;
+                    }
+
+                    var result = new System.Text.StringBuilder(text.Length);
+                    bool inQuotes = false;
+                    for (int i = 0; i < text.Length; i++)
+                    {
+                        char c = text[i];
+                        if (c == '"')
+                        {
+                            inQuotes = !inQuotes;
+                            result.Append(c);
+                            continue;
+                        }
+
+                        result.Append(inQuotes ? c : char.ToUpperInvariant(c));
+                    }
+
+                    return result.ToString();
                 }
 
                 private static string GetOppositionTypeKey(Server.DcsUnit unit)
@@ -503,22 +649,38 @@ namespace VAICOM
                         }
 
                         const double contactMergeDistanceMeters = 5d * 1852d;
-                        List<List<Server.DcsUnit>> groupedThreats = new List<List<Server.DcsUnit>>();
+                        string[] threatSectionOrder = { "AIR", "SAM", "EWR" };
+                        Dictionary<string, List<List<Server.DcsUnit>>> groupedThreatsBySection = new Dictionary<string, List<List<Server.DcsUnit>>>(StringComparer.OrdinalIgnoreCase)
+                        {
+                            ["AIR"] = new List<List<Server.DcsUnit>>(),
+                            ["SAM"] = new List<List<Server.DcsUnit>>(),
+                            ["EWR"] = new List<List<Server.DcsUnit>>(),
+                        };
 
                         foreach (Server.DcsUnit threat in opposition
+                            .Where(IsActiveThreatUnit)
+                            .Where(IsAirborneThreatUnit)
+                            .Where(IsOppositionCoalitionThreat)
                             .Where(IsOppositionAircraftThreat)
                             .Where(u => !State.currentstate.multiplayer || !u.ishuman)
                             .OrderBy(u => u.range))
                         {
+                            string section = GetOppositionThreatSection(threat);
+                            if (string.IsNullOrWhiteSpace(section) || !groupedThreatsBySection.ContainsKey(section))
+                            {
+                                continue;
+                            }
+
+                            List<List<Server.DcsUnit>> sectionGroups = groupedThreatsBySection[section];
                             string typeKey = GetOppositionTypeKey(threat);
-                            List<Server.DcsUnit> targetGroup = groupedThreats.FirstOrDefault(g =>
+                            List<Server.DcsUnit> targetGroup = sectionGroups.FirstOrDefault(g =>
                                 g.Count > 0
                                 && GetOppositionTypeKey(g[0]).Equals(typeKey, StringComparison.OrdinalIgnoreCase)
                                 && GetSurfaceDistanceMeters(g[0], threat) <= contactMergeDistanceMeters);
 
                             if (targetGroup == null)
                             {
-                                groupedThreats.Add(new List<Server.DcsUnit> { threat });
+                                sectionGroups.Add(new List<Server.DcsUnit> { threat });
                             }
                             else
                             {
@@ -526,19 +688,35 @@ namespace VAICOM
                             }
                         }
 
-                        foreach (List<Server.DcsUnit> group in groupedThreats.OrderBy(g => g.Min(u => u.range)))
+                        bool anyThreats = false;
+                        foreach (string section in threatSectionOrder)
                         {
-                            Server.DcsUnit threat = group.OrderBy(u => u.range).First();
-                            string fullName = !string.IsNullOrWhiteSpace(threat.fullname) ? threat.fullname : (threat.typename ?? "unknown");
-                            string line = fullName + " " + threat.getbearingstr() + "/" + threat.getrangestr() + "/" + threat.getaltstr();
-                            if (group.Count > 1)
+                            List<List<Server.DcsUnit>> sectionGroups = groupedThreatsBySection[section];
+                            if (sectionGroups.Count == 0)
                             {
-                                line += " " + group.Count + " Contacts";
+                                continue;
                             }
-                            unitslist.Add(line);
+
+                            anyThreats = true;
+                            unitslist.Add(section + ":");
+
+                            foreach (List<Server.DcsUnit> group in sectionGroups.OrderBy(g => g.Min(u => u.range)))
+                            {
+                                Server.DcsUnit threat = group.OrderBy(u => u.range).First();
+                                string fullName = !string.IsNullOrWhiteSpace(threat.fullname) ? threat.fullname : (threat.typename ?? "unknown");
+                                fullName = UppercaseOutsideQuotes(fullName);
+                                string line = fullName + " " + threat.getbearingstr() + "/" + threat.getrangestr() + "/" + threat.getaltstr();
+                                if (group.Count > 1)
+                                {
+                                    line += " " + group.Count + " Contacts";
+                                }
+                                unitslist.Add(line);
+                            }
+
+                            unitslist.Add("");
                         }
 
-                        if (unitslist.Count == 3)
+                        if (!anyThreats)
                         {
                             unitslist.Add("No Datalink threats are displayed.");
                         }

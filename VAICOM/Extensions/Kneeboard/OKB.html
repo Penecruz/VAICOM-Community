@@ -3483,6 +3483,7 @@
     const OKB_ACTION_TAB_SELECT = OKB_CUSTOM_ACTION_PREFIX + 'tab-select';
     let selectedTab = 'LOG';
     let autoBrowse = false;
+    let lastObservedServerActiveCategory = '';
     let sessionCollapsed = false;
     let latestData = null;
     let showServerMessages = false;
@@ -8312,6 +8313,11 @@
       }
 
       selectedTab = normalized;
+      try {
+        const token = encodeURIComponent(String(selectedTab || '').trim());
+        fetch('state?selectedTab=' + token, { cache: 'no-store' }).catch(function () { });
+      } catch (_) {
+      }
       if (latestData) render(latestData);
       return true;
     }
@@ -21641,8 +21647,18 @@
       tabsEl.innerHTML = '';
       const visibleTabs = getVisibleTabs(data);
       const active = normalizeActiveCategory(data.ActiveCategory, data);
-      if (autoBrowse && visibleTabs.indexOf(active) >= 0) {
-        selectedTab = active;
+      const activeChanged = !!active && active !== lastObservedServerActiveCategory;
+      if (activeChanged) {
+        lastObservedServerActiveCategory = active;
+      }
+
+      if (visibleTabs.indexOf(active) >= 0) {
+        if (autoBrowse) {
+          selectedTab = active;
+        } else if (activeChanged && active !== selectedTab) {
+          // Allow explicit server-side page commands to move tabs even when Auto Browse is off.
+          selectedTab = active;
+        }
       }
       if (visibleTabs.indexOf(selectedTab) < 0) selectedTab = 'LOG';
 
@@ -22149,11 +22165,7 @@
 
     async function tick() {
       try {
-        const selectedTabToken = String(selectedTab || '').trim();
-        const stateUrl = autoBrowse
-          ? 'state'
-          : ('state?selectedTab=' + encodeURIComponent(selectedTabToken));
-        const r = await fetch(stateUrl, { cache: 'no-store' });
+        const r = await fetch('state', { cache: 'no-store' });
         const j = await r.json();
         try {
           render(j);
