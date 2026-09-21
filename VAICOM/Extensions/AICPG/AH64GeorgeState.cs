@@ -31,6 +31,14 @@ namespace VAICOM.Extensions.AICPG
         ChaffAndFlares
     }
 
+    public enum AH64EvadeMode
+    {
+        Off,
+        Level,
+        Vertical,
+        Mask
+    }
+
     public enum AH64WeaponMode
     {
         Unknown,
@@ -42,9 +50,9 @@ namespace VAICOM.Extensions.AICPG
 
     public enum AH64ROEMode
     {
+        HoldFire,
         ReturnFire,
-        WeaponsFree,
-        HoldFire
+        WeaponsFree
     }
 
     public enum AH64ExteriorLightsMode
@@ -116,6 +124,7 @@ namespace VAICOM.Extensions.AICPG
             }
         }
 
+        public static AH64EvadeMode SelectedEvadeMode { get; set; } = AH64EvadeMode.Off;
         public static AH64ExteriorLightsMode SelectedExteriorLightsMode { get; set; } = AH64ExteriorLightsMode.Off;
         public static AH64ROEMode SelectedROEMode { get; set; } = AH64ROEMode.HoldFire;
         public static AH64WeaponMode SelectedWeapon { get; set; } = AH64WeaponMode.Unknown;
@@ -244,6 +253,14 @@ namespace VAICOM.Extensions.AICPG
             AH64CMDispenseMode.ChaffAndFlares
         };
 
+        private static readonly List<AH64EvadeMode> evadeOrder = new List<AH64EvadeMode>
+        {
+            AH64EvadeMode.Off,
+            AH64EvadeMode.Level,
+            AH64EvadeMode.Vertical,
+            AH64EvadeMode.Mask
+        };
+
         private static readonly List<AH64ROEMode> rulesOfEngagementOrder = new List<AH64ROEMode>
         {
             AH64ROEMode.HoldFire,
@@ -266,6 +283,8 @@ namespace VAICOM.Extensions.AICPG
             GunAvailable = false;
             RocketsAvailable = false;
             MissilesAvailable = false;
+            SelectedEvadeMode = AH64EvadeMode.Off;
+            SelectedROEMode = AH64ROEMode.HoldFire;
             SelectedWeapon = AH64WeaponMode.Unknown;
             PreviousMenuMode = AH64MenuMode.Unknown;
             CurrentMenuMode = AH64MenuMode.Unknown;
@@ -698,6 +717,34 @@ namespace VAICOM.Extensions.AICPG
             };
 
             return order;
+        }
+
+        public static int GetEvadeSteps(AH64EvadeMode from, AH64EvadeMode to)
+        {
+            if (from == to)
+            {
+                return 0;
+            }
+
+            int fromIndex = evadeOrder.IndexOf(from);
+            int toIndex = evadeOrder.IndexOf(to);
+
+            if (fromIndex < 0)
+            {
+                fromIndex = 0;
+            }
+
+            if (toIndex < 0)
+            {
+                return 0;
+            }
+
+            if (toIndex >= fromIndex)
+            {
+                return toIndex - fromIndex;
+            }
+
+            return (evadeOrder.Count - fromIndex) + toIndex;
         }
 
         public static int GetExteriorLightsSteps(AH64ExteriorLightsMode from, AH64ExteriorLightsMode to)

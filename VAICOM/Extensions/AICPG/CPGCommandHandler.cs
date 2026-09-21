@@ -541,13 +541,17 @@ namespace VAICOM.Extensions.AICPG
                 case "wMsgGeorgeCMWSBypass":
                     SelectCMWSMode(AH64CMWSMode.Bypass);
                     return;
-                case "wMsgGeorgeEvadeOff":              // TODO: Fix these, they need to track their state
+                case "wMsgGeorgeEvadeOff":
+                    SelectEvadeMode(AH64EvadeMode.Off);
+                    return;
                 case "wMsgGeorgeEvadeLevel":
+                    SelectEvadeMode(AH64EvadeMode.Level);
+                    return;
                 case "wMsgGeorgeEvadeVertical":
+                    SelectEvadeMode(AH64EvadeMode.Vertical);
+                    return;
                 case "wMsgGeorgeEvadeMask":
-                    OpenDefenseMenu();
-                    AddGeorgeLongButton(AH64GeorgeButton.Left);
-                    CloseDefenseMenu();
+                    SelectEvadeMode(AH64EvadeMode.Mask);
                     return;
                 case "wMsgGeorgeCMDispenseNone":
                     SelectCMDispenseMode(AH64CMDispenseMode.None);
@@ -896,6 +900,24 @@ namespace VAICOM.Extensions.AICPG
                 CloseDefenseMenu();
 
                 AH64GeorgeState.SelectedCMDispenseMode = target;
+            }
+        }
+
+        private static void SelectEvadeMode(AH64EvadeMode target)
+        {
+            var current = AH64GeorgeState.SelectedEvadeMode;
+            if (!current.Equals(target))
+            {
+                int steps = AH64GeorgeState.GetEvadeSteps(current, target);
+
+                OpenDefenseMenu();
+                for (int i = 0; i < steps; i++)
+                {
+                    AddGeorgeLongButton(AH64GeorgeButton.Left, 80);
+                }
+                CloseDefenseMenu();
+
+                AH64GeorgeState.SelectedEvadeMode = target;
             }
         }
 
