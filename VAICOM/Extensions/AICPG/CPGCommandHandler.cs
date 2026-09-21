@@ -262,10 +262,6 @@ namespace VAICOM.Extensions.AICPG
 
         private static void HandlePilotCommand(string commandId)
         {
-            // TODO: test and verify commands then organise by menu and then by press.
-            // This may introduce duplication as some items appear in multiple menus, e.g. Add/Delete battle position.
-            // Those may need to be in a separate multiple menu mode if condition.
-
             switch (commandId)
             {
                 // Change menu modes
