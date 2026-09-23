@@ -4090,6 +4090,142 @@ base.vaicom.state = {
 							return
 						end
 
+						local function collectPlayerFuelProbe()
+							local function isFuelProbeKey(key)
+								local keyLower = base.string.lower(base.tostring(key or ""))
+								return base.string.find(keyLower, "fuel", 1, true) ~= nil
+									or base.string.find(keyLower, "tank", 1, true) ~= nil
+									or base.string.find(keyLower, "consumption", 1, true) ~= nil
+									or base.string.find(keyLower, "flow", 1, true) ~= nil
+									or base.string.find(keyLower, "mass", 1, true) ~= nil
+							end
+
+							local fuelInternal = nil
+							local fuelExternal = nil
+							local fuelTotal = nil
+							local fuelLegacy = nil
+							local fuelConsumption = nil
+
+							local engineInfo = tryget(function()
+								return base.Export and base.Export.LoGetEngineInfo and base.Export.LoGetEngineInfo() or nil
+							end)
+							if base.type(engineInfo) == "table" then
+								addProbeRow(probe.oppositionGroundProbe, "fuel_engine_available=true", 40)
+								fuelInternal = tryget(function() return engineInfo.fuel_internal end)
+								fuelExternal = tryget(function() return engineInfo.fuel_external end)
+								fuelTotal = tryget(function() return engineInfo.fuel_total end)
+								fuelLegacy = tryget(function() return engineInfo.fuel end)
+								fuelConsumption = tryget(function() return engineInfo.fuel_consumption end)
+								if fuelInternal ~= nil then
+									addProbeRow(probe.oppositionGroundProbe, "fuel_internal="..base.tostring(fuelInternal), 40)
+								end
+								if fuelExternal ~= nil then
+									addProbeRow(probe.oppositionGroundProbe, "fuel_external="..base.tostring(fuelExternal), 40)
+								end
+								if fuelTotal ~= nil then
+									addProbeRow(probe.oppositionGroundProbe, "fuel_total="..base.tostring(fuelTotal), 40)
+								end
+								if fuelLegacy ~= nil then
+									addProbeRow(probe.oppositionGroundProbe, "fuel_engine_field="..base.tostring(fuelLegacy), 40)
+								end
+								if fuelConsumption ~= nil then
+									addProbeRow(probe.oppositionGroundProbe, "fuel_consumption="..base.tostring(fuelConsumption), 40)
+								end
+								if fuelTotal == nil and (fuelInternal ~= nil or fuelExternal ~= nil) then
+									local computedTotal = (base.tonumber(fuelInternal) or 0) + (base.tonumber(fuelExternal) or 0)
+									addProbeRow(probe.oppositionGroundProbe, "fuel_total_computed="..base.tostring(computedTotal), 40)
+								end
+
+								local sampledEngineKeys = 0
+								for k, v in base.pairs(engineInfo) do
+									if sampledEngineKeys >= 8 then break end
+									if isFuelProbeKey(k) then
+										sampledEngineKeys = sampledEngineKeys + 1
+										addProbeRow(probe.oppositionGroundProbe, "fuel_engine_key_"..base.tostring(k).."="..base.tostring(v), 40)
+									end
+								end
+							else
+								addProbeRow(probe.oppositionGroundProbe, "fuel_engine_available=false", 40)
+							end
+
+							local payloadInfo = tryget(function()
+								return base.Export and base.Export.LoGetPayloadInfo and base.Export.LoGetPayloadInfo() or nil
+							end)
+							local payloadFuelMass = nil
+							if base.type(payloadInfo) == "table" then
+								payloadFuelMass = tryget(function() return payloadInfo.fuel end)
+								if payloadFuelMass ~= nil then
+									addProbeRow(probe.oppositionGroundProbe, "fuel_payload="..base.tostring(payloadFuelMass), 40)
+								end
+								local sampledPayloadKeys = 0
+								for k, v in base.pairs(payloadInfo) do
+									if sampledPayloadKeys >= 8 then break end
+									if isFuelProbeKey(k) then
+										sampledPayloadKeys = sampledPayloadKeys + 1
+										addProbeRow(probe.oppositionGroundProbe, "fuel_payload_key_"..base.tostring(k).."="..base.tostring(v), 40)
+									end
+								end
+							else
+								addProbeRow(probe.oppositionGroundProbe, "fuel_payload_available=false", 40)
+							end
+
+							local unitFuelFrac = tryget(function()
+								return pUnit and pUnit.getFuel and pUnit:getFuel() or nil
+							end)
+							if unitFuelFrac ~= nil then
+								addProbeRow(probe.oppositionGroundProbe, "fuel_unit_fraction="..base.tostring(unitFuelFrac), 40)
+							end
+
+							local unitFuelLowState = tryget(function()
+								return pUnit and pUnit.getFuelLowState and pUnit:getFuelLowState() or nil
+							end)
+							if unitFuelLowState ~= nil then
+								addProbeRow(probe.oppositionGroundProbe, "fuel_unit_lowstate="..base.tostring(unitFuelLowState), 40)
+							end
+
+							local unitDesc = tryget(function()
+								return pUnit and pUnit.getDesc and pUnit:getDesc() or nil
+							end)
+							local unitFuelMassMax = nil
+							if base.type(unitDesc) == "table" then
+								unitFuelMassMax = tryget(function() return unitDesc.fuelMassMax end)
+								if unitFuelMassMax == nil then
+									unitFuelMassMax = tryget(function() return unitDesc.fuelMass end)
+								end
+								if unitFuelMassMax ~= nil then
+									addProbeRow(probe.oppositionGroundProbe, "fuel_unit_mass_max="..base.tostring(unitFuelMassMax), 40)
+								end
+
+								local sampledDescKeys = 0
+								for k, v in base.pairs(unitDesc) do
+									if sampledDescKeys >= 8 then break end
+									if isFuelProbeKey(k) then
+										sampledDescKeys = sampledDescKeys + 1
+										addProbeRow(probe.oppositionGroundProbe, "fuel_unit_desc_key_"..base.tostring(k).."="..base.tostring(v), 40)
+									end
+								end
+							end
+
+							if unitFuelFrac ~= nil and unitFuelMassMax ~= nil then
+								local unitFuelMassEstimated = (base.tonumber(unitFuelFrac) or 0) * (base.tonumber(unitFuelMassMax) or 0)
+								addProbeRow(probe.oppositionGroundProbe, "fuel_unit_mass_est="..base.tostring(unitFuelMassEstimated), 40)
+							end
+
+							if unitFuelMassMax ~= nil and fuelTotal ~= nil and (base.tonumber(fuelTotal) or 0) <= 1.0001 then
+								local engineFuelMassEstimated = (base.tonumber(fuelTotal) or 0) * (base.tonumber(unitFuelMassMax) or 0)
+								addProbeRow(probe.oppositionGroundProbe, "fuel_engine_total_mass_est="..base.tostring(engineFuelMassEstimated), 40)
+							end
+							if unitFuelMassMax ~= nil and fuelLegacy ~= nil and (base.tonumber(fuelLegacy) or 0) <= 1.0001 then
+								local engineLegacyMassEstimated = (base.tonumber(fuelLegacy) or 0) * (base.tonumber(unitFuelMassMax) or 0)
+								addProbeRow(probe.oppositionGroundProbe, "fuel_engine_field_mass_est="..base.tostring(engineLegacyMassEstimated), 40)
+							end
+							if payloadFuelMass ~= nil and unitFuelMassMax ~= nil then
+								local payloadToMaxRatio = (base.tonumber(unitFuelMassMax) or 0) > 0 and ((base.tonumber(payloadFuelMass) or 0) / (base.tonumber(unitFuelMassMax) or 1)) or 0
+								addProbeRow(probe.oppositionGroundProbe, "fuel_payload_ratio_to_max="..base.tostring(payloadToMaxRatio), 40)
+							end
+						end
+						collectPlayerFuelProbe()
+
 						local opposite = nil
 						if coalition == base.coalition.side.BLUE then opposite = base.coalition.side.RED end
 						if coalition == base.coalition.side.RED then opposite = base.coalition.side.BLUE end
@@ -5318,6 +5454,20 @@ base.vaicom.state = {
 
 				local selectedRadio = getSelectedRadio(base.vaicom.state.dcsid)
 				profMark("getSelectedRadio")
+
+				local playerUnitFuelMassMax = nil
+				do
+					local pUnit = base.vaicom.state and base.vaicom.state.playerunit
+					if pUnit and pUnit.getDesc then
+						local okDesc, desc = base.pcall(function() return pUnit:getDesc() end)
+						if okDesc and base.type(desc) == "table" then
+							playerUnitFuelMassMax = base.tonumber(desc.fuelMassMax)
+							if playerUnitFuelMassMax == nil then
+								playerUnitFuelMassMax = base.tonumber(desc.fuelMass)
+							end
+						end
+					end
+				end
             	
 				local missionGroupTacanMap = buildMissionGroupTacanMap()
 				profMark("buildMissionGroupTacanMap")
@@ -5356,6 +5506,7 @@ base.vaicom.state = {
 									missiontitle		= base.DCS.getMissionName(),
 									missionbriefing		= base.DCS.getPlayerBriefing().descText,
 									missiondetails		= base.DCS.getPlayerBriefing().mission_goal,	
+									fuel_unit_mass_max	= playerUnitFuelMassMax,
 								  }
 				chunk[4] 		= {
 									availablerecipients =   {						

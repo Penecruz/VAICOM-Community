@@ -31,6 +31,7 @@ namespace VAICOM
                 private static readonly object RawServerLogSync = new object();
                 private static readonly object StoreLookupSync = new object();
                 private static readonly object FastOwnshipSync = new object();
+                private static readonly object FastAvBusSync = new object();
                 private static readonly SemaphoreSlim RequestDispatchLimiter = new SemaphoreSlim(12, 12);
                 private static OpenKneeboardSnapshot snapshot = new OpenKneeboardSnapshot();
                 private static string lastAiCrewCommand = "";
@@ -44,6 +45,7 @@ namespace VAICOM
                 private static string storeLookupMapJson = "{}";
                 private static string currentSelectedTab = "";
                 private static FastOwnshipState fastOwnship = new FastOwnshipState();
+                private static FastAvBusState fastAvBus = new FastAvBusState();
 
                 private sealed class FastOwnshipState
                 {
@@ -57,6 +59,32 @@ namespace VAICOM
                     public bool HasGroundSpeed;
                     public int Wow;
                     public bool HasWow;
+                    public DateTime UpdatedUtc;
+                }
+
+                private sealed class FastAvBusState
+                {
+                    public string State;
+                    public bool HasFuel;
+                    public bool HasWow;
+                    public int Wow;
+                    public double FuelFraction;
+                    public bool HasFuelFraction;
+                    public double FuelMassMaxKg;
+                    public bool HasFuelMassMaxKg;
+                    public double TotalFuelKg;
+                    public bool HasTotalFuelKg;
+                    public double TotalFuelLbs;
+                    public bool HasTotalFuelLbs;
+                    public double InternalFuelKg;
+                    public bool HasInternalFuelKg;
+                    public double InternalFuelLbs;
+                    public bool HasInternalFuelLbs;
+                    public double ExternalFuelKg;
+                    public bool HasExternalFuelKg;
+                    public double ExternalFuelLbs;
+                    public bool HasExternalFuelLbs;
+                    public string FuelMassMaxSource;
                     public DateTime UpdatedUtc;
                 }
 
@@ -107,6 +135,45 @@ namespace VAICOM
                     }
                 }
 
+                public static void UpdateFastAvBus(string state, bool hasFuel, int wow, double? fuelFraction, double? fuelMassMaxKg, string fuelMassMaxSource, double? totalFuelKg, double? totalFuelLbs, double? internalFuelKg, double? internalFuelLbs, double? externalFuelKg, double? externalFuelLbs)
+                {
+                    lock (FastAvBusSync)
+                    {
+                        fastAvBus.State = (state ?? "").Trim();
+                        fastAvBus.HasFuel = hasFuel;
+
+                        fastAvBus.HasWow = wow == 0 || wow == 1;
+                        fastAvBus.Wow = fastAvBus.HasWow ? wow : -1;
+
+                        fastAvBus.HasFuelFraction = fuelFraction.HasValue && !double.IsNaN(fuelFraction.Value) && !double.IsInfinity(fuelFraction.Value);
+                        fastAvBus.FuelFraction = fastAvBus.HasFuelFraction ? fuelFraction.Value : 0;
+
+                        fastAvBus.HasFuelMassMaxKg = fuelMassMaxKg.HasValue && !double.IsNaN(fuelMassMaxKg.Value) && !double.IsInfinity(fuelMassMaxKg.Value) && fuelMassMaxKg.Value >= 0;
+                        fastAvBus.FuelMassMaxKg = fastAvBus.HasFuelMassMaxKg ? fuelMassMaxKg.Value : 0;
+
+                        fastAvBus.HasTotalFuelKg = totalFuelKg.HasValue && !double.IsNaN(totalFuelKg.Value) && !double.IsInfinity(totalFuelKg.Value) && totalFuelKg.Value >= 0;
+                        fastAvBus.TotalFuelKg = fastAvBus.HasTotalFuelKg ? totalFuelKg.Value : 0;
+
+                        fastAvBus.HasTotalFuelLbs = totalFuelLbs.HasValue && !double.IsNaN(totalFuelLbs.Value) && !double.IsInfinity(totalFuelLbs.Value) && totalFuelLbs.Value >= 0;
+                        fastAvBus.TotalFuelLbs = fastAvBus.HasTotalFuelLbs ? totalFuelLbs.Value : 0;
+
+                        fastAvBus.HasInternalFuelKg = internalFuelKg.HasValue && !double.IsNaN(internalFuelKg.Value) && !double.IsInfinity(internalFuelKg.Value) && internalFuelKg.Value >= 0;
+                        fastAvBus.InternalFuelKg = fastAvBus.HasInternalFuelKg ? internalFuelKg.Value : 0;
+
+                        fastAvBus.HasInternalFuelLbs = internalFuelLbs.HasValue && !double.IsNaN(internalFuelLbs.Value) && !double.IsInfinity(internalFuelLbs.Value) && internalFuelLbs.Value >= 0;
+                        fastAvBus.InternalFuelLbs = fastAvBus.HasInternalFuelLbs ? internalFuelLbs.Value : 0;
+
+                        fastAvBus.HasExternalFuelKg = externalFuelKg.HasValue && !double.IsNaN(externalFuelKg.Value) && !double.IsInfinity(externalFuelKg.Value) && externalFuelKg.Value >= 0;
+                        fastAvBus.ExternalFuelKg = fastAvBus.HasExternalFuelKg ? externalFuelKg.Value : 0;
+
+                        fastAvBus.HasExternalFuelLbs = externalFuelLbs.HasValue && !double.IsNaN(externalFuelLbs.Value) && !double.IsInfinity(externalFuelLbs.Value) && externalFuelLbs.Value >= 0;
+                        fastAvBus.ExternalFuelLbs = fastAvBus.HasExternalFuelLbs ? externalFuelLbs.Value : 0;
+                        fastAvBus.FuelMassMaxSource = (fuelMassMaxSource ?? "").Trim();
+
+                        fastAvBus.UpdatedUtc = DateTime.UtcNow;
+                    }
+                }
+
                 private static bool TryGetFastOwnship(out FastOwnshipState value)
                 {
                     lock (FastOwnshipSync)
@@ -133,6 +200,40 @@ namespace VAICOM
                     }
 
                     return (DateTime.UtcNow - value.UpdatedUtc) <= TimeSpan.FromSeconds(2);
+                }
+
+                private static bool TryGetFastAvBus(out FastAvBusState value)
+                {
+                    lock (FastAvBusSync)
+                    {
+                        value = new FastAvBusState
+                        {
+                            State = fastAvBus.State,
+                            HasFuel = fastAvBus.HasFuel,
+                            HasWow = fastAvBus.HasWow,
+                            Wow = fastAvBus.Wow,
+                            HasFuelFraction = fastAvBus.HasFuelFraction,
+                            FuelFraction = fastAvBus.FuelFraction,
+                            HasFuelMassMaxKg = fastAvBus.HasFuelMassMaxKg,
+                            FuelMassMaxKg = fastAvBus.FuelMassMaxKg,
+                            HasTotalFuelKg = fastAvBus.HasTotalFuelKg,
+                            TotalFuelKg = fastAvBus.TotalFuelKg,
+                            HasTotalFuelLbs = fastAvBus.HasTotalFuelLbs,
+                            TotalFuelLbs = fastAvBus.TotalFuelLbs,
+                            HasInternalFuelKg = fastAvBus.HasInternalFuelKg,
+                            InternalFuelKg = fastAvBus.InternalFuelKg,
+                            HasInternalFuelLbs = fastAvBus.HasInternalFuelLbs,
+                            InternalFuelLbs = fastAvBus.InternalFuelLbs,
+                            HasExternalFuelKg = fastAvBus.HasExternalFuelKg,
+                            ExternalFuelKg = fastAvBus.ExternalFuelKg,
+                            HasExternalFuelLbs = fastAvBus.HasExternalFuelLbs,
+                            ExternalFuelLbs = fastAvBus.ExternalFuelLbs,
+                            FuelMassMaxSource = fastAvBus.FuelMassMaxSource,
+                            UpdatedUtc = fastAvBus.UpdatedUtc,
+                        };
+                    }
+
+                    return value.UpdatedUtc != DateTime.MinValue;
                 }
 
                 private static string IndexHtml;
@@ -953,7 +1054,7 @@ namespace VAICOM
                     RefreshDtcFilesSnapshot();
                 }
 
-                public static void UpdateActiveCategory(string category)
+                public static void UpdateActiveCategory(string category, bool forceTabSwitch = false)
                 {
                     if (string.IsNullOrWhiteSpace(category))
                     {
@@ -966,6 +1067,7 @@ namespace VAICOM
                     lock (Sync)
                     {
                         snapshot.ActiveCategory = sendCategory.ToUpperInvariant();
+                        snapshot.ActiveCategoryUpdateMode = forceTabSwitch ? "explicit" : "auto";
                         snapshot.UpdatedUtc = DateTime.UtcNow;
                     }
 
@@ -984,12 +1086,12 @@ namespace VAICOM
                         || cat.Equals("GNDCREW", StringComparison.OrdinalIgnoreCase)
                         || cat.Equals("GROUNDCREW", StringComparison.OrdinalIgnoreCase))
                     {
-                        return "REF";
+                        return "GND CREW";
                     }
 
                     if (cat.Equals("Crew", StringComparison.OrdinalIgnoreCase))
                     {
-                        return "REF";
+                        return "GND CREW";
                     }
 
                     if (cat.Equals("FLIGHT", StringComparison.OrdinalIgnoreCase) || cat.Equals("Allies", StringComparison.OrdinalIgnoreCase))
@@ -1029,7 +1131,8 @@ namespace VAICOM
                         if (!sendCategory.Equals("NOTES", StringComparison.OrdinalIgnoreCase)
                             && !sendCategory.Equals("LOG", StringComparison.OrdinalIgnoreCase))
                         {
-                            if (!sendCategory.Equals("REF", StringComparison.OrdinalIgnoreCase))
+                            if (!sendCategory.Equals("REF", StringComparison.OrdinalIgnoreCase)
+                                && !sendCategory.Equals("GND CREW", StringComparison.OrdinalIgnoreCase))
                             {
                                 RefreshUnitsForCategory(sendCategory);
                             }
@@ -1038,7 +1141,7 @@ namespace VAICOM
                                 try
                                 {
                                     KneeboardUnitsData crewUnits = new KneeboardUnitsData("Crew", false);
-                                    UpdateUnits("CREW", crewUnits.unitslist);
+                                    UpdateUnits("GND CREW", crewUnits.unitslist);
                                 }
                                 catch
                                 {
@@ -2081,7 +2184,7 @@ namespace VAICOM
                             }
                             else
                             {
-                                UpdateActiveCategory(currentSelectedTab);
+                                UpdateActiveCategory(currentSelectedTab, true);
                             }
                         }
 
@@ -2098,6 +2201,12 @@ namespace VAICOM
                     if (path == "/okb/sa/ownship")
                     {
                         WriteJson(context.Response, BuildOwnshipJson());
+                        return;
+                    }
+
+                    if (path == "/okb/fltpln/avbus")
+                    {
+                        WriteJson(context.Response, BuildAvBusJson());
                         return;
                     }
 
@@ -3359,6 +3468,90 @@ namespace VAICOM
                     catch
                     {
                         return "{\"updatedUtc\":\"\",\"theater\":\"\",\"hasPosition\":false,\"posX\":0,\"posY\":0,\"altFeet\":0,\"missionTimeSeconds\":0}";
+                    }
+                }
+
+                private static string BuildAvBusJson()
+                {
+                    try
+                    {
+                        bool moduleConnectedNow = false;
+                        try
+                        {
+                            bool moduleConnectedFlag = false;
+                            string currentModuleId = "";
+                            string currentStateModuleId = "";
+                            try { moduleConnectedFlag = State.moduleConnected; } catch { moduleConnectedFlag = false; }
+                            try { currentModuleId = State.currentmodule == null ? "" : (State.currentmodule.Id ?? ""); } catch { currentModuleId = ""; }
+                            try { currentStateModuleId = State.currentstate == null ? "" : (State.currentstate.id ?? ""); } catch { currentStateModuleId = ""; }
+
+                            bool moduleFromCurrentModule = !string.IsNullOrWhiteSpace(currentModuleId)
+                                && !string.Equals(currentModuleId.Trim(), "----", StringComparison.OrdinalIgnoreCase);
+                            bool moduleFromCurrentState = !string.IsNullOrWhiteSpace(currentStateModuleId)
+                                && !string.Equals(currentStateModuleId.Trim(), "----", StringComparison.OrdinalIgnoreCase);
+
+                            moduleConnectedNow = moduleConnectedFlag && moduleFromCurrentModule && moduleFromCurrentState;
+                        }
+                        catch
+                        {
+                            moduleConnectedNow = false;
+                        }
+
+                        FastAvBusState value;
+                        bool hasAny = TryGetFastAvBus(out value);
+                        bool fresh = hasAny && (DateTime.UtcNow - value.UpdatedUtc) <= TimeSpan.FromSeconds(2);
+
+                        string state = "OFF";
+                        if (moduleConnectedNow)
+                        {
+                            if (fresh)
+                            {
+                                state = value.HasFuel ? "LIVE" : "DEGRADED";
+                            }
+                            else if (hasAny)
+                            {
+                                state = "DEGRADED";
+                            }
+                            else
+                            {
+                                state = "OFF";
+                            }
+                        }
+
+                        var payload = new
+                        {
+                            updatedUtc = hasAny ? value.UpdatedUtc : DateTime.MinValue,
+                            moduleConnected = moduleConnectedNow,
+                            hasData = hasAny,
+                            isFresh = fresh,
+                            state = state,
+                            hasFuel = hasAny && value.HasFuel,
+                            hasWow = hasAny && value.HasWow,
+                            wow = hasAny ? value.Wow : -1,
+                            hasFuelFraction = hasAny && value.HasFuelFraction,
+                            fuelFraction = hasAny ? value.FuelFraction : 0,
+                            hasFuelMassMaxKg = hasAny && value.HasFuelMassMaxKg,
+                            fuelMassMaxKg = hasAny ? value.FuelMassMaxKg : 0,
+                            hasTotalFuelKg = hasAny && value.HasTotalFuelKg,
+                            totalFuelKg = hasAny ? value.TotalFuelKg : 0,
+                            hasTotalFuelLbs = hasAny && value.HasTotalFuelLbs,
+                            totalFuelLbs = hasAny ? value.TotalFuelLbs : 0,
+                            hasInternalFuelKg = hasAny && value.HasInternalFuelKg,
+                            internalFuelKg = hasAny ? value.InternalFuelKg : 0,
+                            hasInternalFuelLbs = hasAny && value.HasInternalFuelLbs,
+                            internalFuelLbs = hasAny ? value.InternalFuelLbs : 0,
+                            hasExternalFuelKg = hasAny && value.HasExternalFuelKg,
+                            externalFuelKg = hasAny ? value.ExternalFuelKg : 0,
+                            hasExternalFuelLbs = hasAny && value.HasExternalFuelLbs,
+                            externalFuelLbs = hasAny ? value.ExternalFuelLbs : 0,
+                            fuelMassMaxSource = hasAny ? (value.FuelMassMaxSource ?? "") : "",
+                        };
+
+                        return JsonConvert.SerializeObject(payload, Formatting.None);
+                    }
+                    catch
+                    {
+                        return "{\"updatedUtc\":\"\",\"moduleConnected\":false,\"hasData\":false,\"isFresh\":false,\"state\":\"OFF\",\"hasFuel\":false}";
                     }
                 }
 
@@ -5326,6 +5519,7 @@ namespace VAICOM
             public class OpenKneeboardSnapshot
             {
                 public string ActiveCategory { get; set; } = "LOG";
+                public string ActiveCategoryUpdateMode { get; set; } = "auto";
                 public string NotesBuffer { get; set; } = "";
                 public string AiCrewPhase { get; set; } = "Unknown";
                 public DateTime UpdatedUtc { get; set; } = DateTime.UtcNow;
@@ -5350,6 +5544,7 @@ namespace VAICOM
                     OpenKneeboardSnapshot clone = new OpenKneeboardSnapshot
                     {
                         ActiveCategory = ActiveCategory,
+                        ActiveCategoryUpdateMode = ActiveCategoryUpdateMode,
                         NotesBuffer = NotesBuffer,
                         AiCrewPhase = AiCrewPhase,
                         UpdatedUtc = UpdatedUtc,

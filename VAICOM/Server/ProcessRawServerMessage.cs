@@ -14,6 +14,27 @@ namespace VAICOM
         public static partial class Server
         {
 
+            private static string ResolveAvModuleToken(string avModule)
+            {
+                if (!string.IsNullOrWhiteSpace(avModule))
+                {
+                    return avModule.Trim();
+                }
+
+                try
+                {
+                    if (State.currentstate != null && !string.IsNullOrWhiteSpace(State.currentstate.id))
+                    {
+                        return State.currentstate.id.Trim();
+                    }
+                }
+                catch
+                {
+                }
+
+                return "";
+            }
+
             private static bool DetectFastOwnshipState(string receivedString)
             {
                 const string prefix = "missiondata.update.ownship";
@@ -108,6 +129,193 @@ namespace VAICOM
                 return true;
             }
 
+            private static bool DetectFastAvBusState(string receivedString)
+            {
+                const string prefix = "missiondata.update.avbus";
+                receivedString = (receivedString ?? "").Trim();
+                if (string.IsNullOrEmpty(receivedString) || !receivedString.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+                {
+                    return false;
+                }
+
+                try
+                {
+                    string[] parts = receivedString.Split(';');
+                    Dictionary<string, string> values = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+
+                    for (int i = 1; i < parts.Length; i++)
+                    {
+                        string part = parts[i];
+                        int idx = part.IndexOf('=');
+                        if (idx <= 0 || idx >= part.Length - 1)
+                        {
+                            continue;
+                        }
+
+                        string key = part.Substring(0, idx).Trim();
+                        string val = part.Substring(idx + 1).Trim();
+                        if (key.Length > 0)
+                        {
+                            values[key] = val;
+                        }
+                    }
+
+                    string state = values.ContainsKey("state") ? values["state"] : "";
+
+                    int parsedInt;
+                    bool hasFuel = int.TryParse(values.ContainsKey("hasFuel") ? values["hasFuel"] : "", out parsedInt) && parsedInt != 0;
+
+                    int wowState = -1;
+                    if (int.TryParse(values.ContainsKey("wow") ? values["wow"] : "", out parsedInt))
+                    {
+                        wowState = parsedInt != 0 ? 1 : 0;
+                    }
+
+                    double parsed;
+                    double? fuelFraction = null;
+                    if (double.TryParse(values.ContainsKey("fuelFraction") ? values["fuelFraction"] : "", System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out parsed))
+                    {
+                        fuelFraction = parsed;
+                    }
+
+                    double? fuelMassMaxKg = null;
+                    if (double.TryParse(values.ContainsKey("fuelMassMaxKg") ? values["fuelMassMaxKg"] : "", System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out parsed))
+                    {
+                        fuelMassMaxKg = parsed;
+                    }
+
+                    string fuelMassMaxSource = values.ContainsKey("fuelMassMaxSource") ? values["fuelMassMaxSource"] : "";
+                    string hasFuelReason = values.ContainsKey("hasFuelReason") ? values["hasFuelReason"] : "";
+                    string avModule = values.ContainsKey("avModule") ? values["avModule"] : "";
+                    avModule = ResolveAvModuleToken(avModule);
+
+                    if (!string.IsNullOrWhiteSpace(hasFuelReason) && !string.IsNullOrWhiteSpace(avModule))
+                    {
+                        fuelMassMaxSource = (fuelMassMaxSource ?? "").Trim();
+                        hasFuelReason = hasFuelReason.Trim();
+                        avModule = avModule.Trim();
+                        string sourceToken = string.IsNullOrWhiteSpace(fuelMassMaxSource) ? "none" : fuelMassMaxSource;
+                        fuelMassMaxSource = sourceToken + "|" + hasFuelReason + "|" + avModule;
+                    }
+
+                    double? totalFuelKg = null;
+                    if (double.TryParse(values.ContainsKey("totalFuelKg") ? values["totalFuelKg"] : "", System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out parsed))
+                    {
+                        totalFuelKg = parsed;
+                    }
+
+                    double? totalFuelLbs = null;
+                    if (double.TryParse(values.ContainsKey("totalFuelLbs") ? values["totalFuelLbs"] : "", System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out parsed))
+                    {
+                        totalFuelLbs = parsed;
+                    }
+
+                    double? internalFuelKg = null;
+                    if (double.TryParse(values.ContainsKey("internalFuelKg") ? values["internalFuelKg"] : "", System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out parsed))
+                    {
+                        internalFuelKg = parsed;
+                    }
+
+                    double? internalFuelLbs = null;
+                    if (double.TryParse(values.ContainsKey("internalFuelLbs") ? values["internalFuelLbs"] : "", System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out parsed))
+                    {
+                        internalFuelLbs = parsed;
+                    }
+
+                    double? externalFuelKg = null;
+                    if (double.TryParse(values.ContainsKey("externalFuelKg") ? values["externalFuelKg"] : "", System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out parsed))
+                    {
+                        externalFuelKg = parsed;
+                    }
+
+                    double? externalFuelLbs = null;
+                    if (double.TryParse(values.ContainsKey("externalFuelLbs") ? values["externalFuelLbs"] : "", System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out parsed))
+                    {
+                        externalFuelLbs = parsed;
+                    }
+
+                    if ((!fuelMassMaxKg.HasValue || fuelMassMaxKg.Value <= 0) && fuelFraction.HasValue)
+                    {
+                        double? cachedMassMax = null;
+                        try
+                        {
+                            if (State.currentstate != null
+                                && State.currentstate.fuel_unit_mass_max.HasValue
+                                && !double.IsNaN(State.currentstate.fuel_unit_mass_max.Value)
+                                && State.currentstate.fuel_unit_mass_max.Value > 0)
+                            {
+                                cachedMassMax = State.currentstate.fuel_unit_mass_max.Value;
+                            }
+                        }
+                        catch
+                        {
+                            cachedMassMax = null;
+                        }
+
+                        if (cachedMassMax.HasValue)
+                        {
+                            fuelMassMaxKg = cachedMassMax.Value;
+                            fuelMassMaxSource = "serverChunk3Cached";
+
+                            if (!totalFuelKg.HasValue)
+                            {
+                                totalFuelKg = Math.Max(0, fuelFraction.Value * cachedMassMax.Value);
+                            }
+
+                            if (!internalFuelKg.HasValue && totalFuelKg.HasValue)
+                            {
+                                internalFuelKg = Math.Min(totalFuelKg.Value, cachedMassMax.Value);
+                            }
+
+                            if (!externalFuelKg.HasValue && totalFuelKg.HasValue)
+                            {
+                                externalFuelKg = Math.Max(0, totalFuelKg.Value - cachedMassMax.Value);
+                            }
+
+                            const double kgToLbs = 2.20462262185;
+                            if (!totalFuelLbs.HasValue && totalFuelKg.HasValue)
+                            {
+                                totalFuelLbs = totalFuelKg.Value * kgToLbs;
+                            }
+                            if (!internalFuelLbs.HasValue && internalFuelKg.HasValue)
+                            {
+                                internalFuelLbs = internalFuelKg.Value * kgToLbs;
+                            }
+                            if (!externalFuelLbs.HasValue && externalFuelKg.HasValue)
+                            {
+                                externalFuelLbs = externalFuelKg.Value * kgToLbs;
+                            }
+
+                            hasFuel = totalFuelKg.HasValue && internalFuelKg.HasValue && externalFuelKg.HasValue;
+                            if (hasFuel)
+                            {
+                                state = "LIVE";
+                            }
+                        }
+                    }
+
+                    Extensions.Kneeboard.OpenKneeboardBridge.UpdateFastAvBus(
+                        state,
+                        hasFuel,
+                        wowState,
+                        fuelFraction,
+                        fuelMassMaxKg,
+                        fuelMassMaxSource,
+                        totalFuelKg,
+                        totalFuelLbs,
+                        internalFuelKg,
+                        internalFuelLbs,
+                        externalFuelKg,
+                        externalFuelLbs);
+                }
+                catch (Exception e)
+                {
+                    Log.Write("Problem parsing avbus state message: " + e.Message, Colors.Inline);
+                }
+
+                return true;
+            }
+
             public static void ProcessRawServerMessage(string receivedString)
             {
                 try
@@ -126,6 +334,11 @@ namespace VAICOM
                     }
 
                     if (DetectFastOwnshipState(trimmed))
+                    {
+                        return;
+                    }
+
+                    if (DetectFastAvBusState(trimmed))
                     {
                         return;
                     }

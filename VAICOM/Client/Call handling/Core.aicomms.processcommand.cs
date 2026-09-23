@@ -486,7 +486,7 @@ namespace VAICOM
                                             {
                                                 if (State.activeconfig.OpenKneeboard_Out)
                                                 {
-                                                    OpenKneeboardBridge.UpdateActiveCategory("AI CREW");
+                                                    OpenKneeboardBridge.UpdateActiveCategory("AI CREW", true);
                                                 }
                                                 UI.Playsound.Commandcomplete();
                                                 break;
@@ -501,10 +501,10 @@ namespace VAICOM
 
                                             if (State.activeconfig.OpenKneeboard_Out)
                                             {
-                                                OpenKneeboardBridge.UpdateActiveCategory(cat);
+                                                OpenKneeboardBridge.UpdateActiveCategory(cat, true);
                                             }
 
-                                            KneeboardUpdater.SwitchPage(cat);
+                                            KneeboardUpdater.SwitchPage(cat, false);
                                             UI.Playsound.Commandcomplete();
                                         }
                                         catch
@@ -525,10 +525,10 @@ namespace VAICOM
 
                                             if (State.activeconfig.OpenKneeboard_Out)
                                             {
-                                                OpenKneeboardBridge.UpdateActiveCategory(cat);
+                                                OpenKneeboardBridge.UpdateActiveCategory(cat, true);
                                             }
 
-                                            KneeboardUpdater.SwitchPage(cat);
+                                            KneeboardUpdater.SwitchPage(cat, false);
                                             UI.Playsound.Commandcomplete();
                                         }
                                         catch
@@ -1024,17 +1024,33 @@ namespace VAICOM
                                     cat = State.currentrecipientclass.Name;
                                 }
 
+                                if (string.IsNullOrWhiteSpace(cat) && State.previousrecipientclass != null)
+                                {
+                                    cat = State.previousrecipientclass.Name;
+                                }
+
                                 if (!string.IsNullOrWhiteSpace(cat))
                                 {
                                     if (dcsKneeboardAutoBrowse)
                                     {
-                                        cat = isAiCrewRecipient ? "REF" : cat;
-                                        KneeboardUpdater.SwitchPage(cat);
+                                        string dcsCategory = isAiCrewRecipient ? "REF" : cat;
+                                        KneeboardUpdater.SwitchPage(dcsCategory, openKneeboardAutoBrowse);
                                     }
                                     if (openKneeboardAutoBrowse)
                                     {
-                                        cat = isAiCrewRecipient ? "AI CREW" : cat;
-                                        OpenKneeboardBridge.UpdateActiveCategory(cat);
+                                        string openKneeboardCategory = cat;
+                                        if (isAiCrewRecipient)
+                                        {
+                                            openKneeboardCategory = "AI CREW";
+                                        }
+                                        else if (cat.Equals("Crew", StringComparison.OrdinalIgnoreCase)
+                                            || cat.Equals("REF", StringComparison.OrdinalIgnoreCase)
+                                            || cat.Equals("REF/CREW", StringComparison.OrdinalIgnoreCase))
+                                        {
+                                            openKneeboardCategory = "Crew";
+                                        }
+
+                                        OpenKneeboardBridge.UpdateActiveCategory(openKneeboardCategory);
                                     }
                                 }
                             }

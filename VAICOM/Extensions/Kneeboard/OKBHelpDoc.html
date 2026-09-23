@@ -170,6 +170,7 @@
         <h3>Top Quick Bar (FLT PLN context)</h3>
         <ul>
           <li><strong>Files (☰)</strong>: Opens FLT PLN file picker overlay.</li>
+          <li><strong>AID</strong>: Aircraft Interface Device status/control icon for FLT PLN Stores/AID page. Visible only while <code>FLT PLN</code> is active. Click toggles feed enable/disable for the FLT PLN UI. Long-press (2s) toggles a raw AID debug panel. <code>OFF</code> = manually disabled or no module/bus, <code>ON</code> = enabled with valid retained/cached values but not currently live, <code>LIVE</code> = active high-rate feed, <code>DEGRADED</code> = anomalous or invalid feed quality.</li>
           <li><strong>GPS (🌐GPS)</strong>: Visible when EFB's internal GPS is available. Click to toggle EFB GPS source ON/OFF, for more accurate ownship position updates leave GPS on.</li>
           <li><strong>GPS long-press (2s)</strong>: Toggles hidden Internal GPS diagnostics (GS, WOW, ALT, HDG, X/Y, source, age).</li>
           <li><strong>Session (ℹ)</strong>: Opens session information overlay.</li>
@@ -310,6 +311,7 @@
 
           <ul>
               <li><strong>Files (☰)</strong>: Lists detected FLT PLN files and lets you select one.</li>
+              <li><strong>AID</strong>: Positioned between Files and Session. Shows databus state (<code>OFF/ON/LIVE/DEGRADED</code>) for Stores/AID updates.</li>
               <li><strong>GPS (🌐GPS)</strong>: Toggle EFB internal GPS source.</li>
               <li><strong>Session (ℹ)</strong>: Displays current mission/session state in a popup.</li>
               <li><strong>Refresh behavior</strong>: File list refresh is managed through current workflow and runtime updates.</li>
@@ -355,10 +357,15 @@
               <li>Pairs well with ATC/AWACS/JTAC workflow tabs for live operations.</li>
           </ul>
 
-          <h3>STORES</h3>
+          <h3>STORES/AID</h3>
           <ul>
               <li>Stores reference page for munitions, fuel, and other external stores when loaded on the jet.</li>
               <li>Updated dynamically and allows rapid in-flight validation and reference.</li>
+              <li><strong>AID layout</strong>: The lower section is organized under a shared <strong>AIRCRAFT INTERFACE DEVICE</strong> header with centered <strong>DATABUS STATUS</strong>, positioned above both the Stores table and the Fuel block.</li>
+              <li><strong>AID fuel metrics</strong>: Displays Total, Internal, External, AAR Offload and Contacts, plus Fuel Flow (<code>KG/H</code> and <code>LB/H</code>) and Endurance (minutes). Empty-state text is contextual: <code>OFF</code> shows <code>NO AID DATA</code> for fuel readouts, and AAR Offload shows <code>READY</code> in <code>ON/LIVE</code> until refueling data is captured.</li>
+              <li><strong>Stores empty-state</strong>: When no station payload is available, the Stores table shows <code>WAITING FOR AID CONNECTION</code>.</li>
+              <li><strong>Status behavior</strong>: <code>OFF</code> when bus is disabled/unavailable, <code>ON</code> when enabled with retained/cached values but not currently live, <code>LIVE</code> when active high-rate updates are present, <code>DEGRADED</code> for anomalous/invalid feed quality.</li>
+              <li><strong>Stores feed gating</strong>: Stores rendering is gated by AID status: when <code>OFF</code>, the Stores table stays on the mission-baseline snapshot; when <code>ON/LIVE/DEGRADED</code>, Stores can follow regular runtime/server update-cycle changes.</li>
               <li>Ideal for confirming stores station position, hung ordnance, and other critical information.</li>
           </ul>
 

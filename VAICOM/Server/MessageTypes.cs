@@ -290,6 +290,7 @@ namespace VAICOM
                 public string missiontitle;
                 public string missionbriefing;
                 public string missiondetails;
+                public double? fuel_unit_mass_max;
 
                 public double timer;
                 public double tod;
@@ -403,6 +404,7 @@ namespace VAICOM
                 public string missiontitle;
                 public string missionbriefing;
                 public string missiondetails;
+                public double? fuel_unit_mass_max;
 
                 public object mission;
                 public object missioncmds;

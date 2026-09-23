@@ -3,6 +3,7 @@
 ## Project Guidelines
 - User prefers avoiding builds/tests during diagnostics.
 - User is okay with offering builds/tests going forward again.
+- User prefers direct in-file edits rather than chat-only diffs when they explicitly ask to edit files.
 
 ## Navigraph Credentials
 - Store Navigraph credentials/tokens encrypted in VAICOM data, not in plain config.
@@ -66,6 +67,9 @@
 
 ## COM Frequency Display
 - For runtime COM frequency display, use strict three-decimal MHz formatting for module consistency (e.g., 305.000, 127.050).
+
+## ADB Fuel Flow Display
+- For ADB fuel flow display, prefer smoothing that remains readable but adapts quickly to value changes at the feed rate.
 
 ## Code Clarity
 - Add small step-by-step code notes/comments in complex command-flow methods for clarity.

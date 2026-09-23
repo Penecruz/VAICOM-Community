@@ -143,7 +143,7 @@ namespace VAICOM
                 }
 
 
-                public static void SwitchPage(string cat)
+                public static void SwitchPage(string cat, bool updateOpenKneeboardCategory = true, bool forceOpenKneeboardTabSwitch = false)
                 {
 
                     for (int i = 0; i <= 1; i += 1)
@@ -170,7 +170,10 @@ namespace VAICOM
 
                             msg.logdata = new LogData(sendcat.ToUpper(), sendcat.ToUpper());
                             State.KneeboardState.activecat = sendcat;
-                            OpenKneeboardBridge.UpdateActiveCategory(sendcat);
+                            if (updateOpenKneeboardCategory)
+                            {
+                                OpenKneeboardBridge.UpdateActiveCategory(sendcat, forceOpenKneeboardTabSwitch);
+                            }
 
                             if (!sendcat.Equals("NOTES") & !sendcat.Equals("LOG"))
                             {

@@ -532,6 +532,24 @@
       pointer-events: none;
     }
 
+    .fastAvBusDataPanel {
+      min-width: 320px;
+      max-width: 460px;
+      min-height: 86px;
+      padding: 8px 10px;
+      border: 1px solid rgba(48, 68, 88, 0.45);
+      border-radius: 12px;
+      background: rgba(20, 32, 46, 0.44);
+      color: rgba(238, 248, 255, 0.96);
+      font-size: 13px;
+      line-height: 1.25;
+      letter-spacing: 0.2px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.24);
+      text-shadow: 0 1px 1px rgba(0, 0, 0, 0.35);
+      pointer-events: none;
+      white-space: pre;
+    }
+
     .efbTopNav.efbTopNavHidden {
       display: none;
     }
@@ -1498,6 +1516,40 @@
       border-color: #8f8f8f;
       color: #1a2a3a;
       filter: grayscale(1);
+    }
+
+    .fastAvBusBtn {
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      color: #2f88d6;
+      filter: saturate(1.15);
+    }
+
+    .fastAvBusBtn.live {
+      color: #2f88d6;
+      border-color: rgba(76, 158, 232, 0.78);
+      box-shadow: 0 0 0 2px rgba(70, 149, 222, 0.32);
+    }
+
+    .fastAvBusBtn.on {
+      color: #2f88d6;
+      border-color: rgba(76, 158, 232, 0.62);
+      box-shadow: 0 0 0 1px rgba(70, 149, 222, 0.22);
+    }
+
+    .fastAvBusBtn.degraded {
+      color: #2f88d6;
+      border-color: rgba(76, 158, 232, 0.68);
+      box-shadow: 0 0 0 2px rgba(70, 149, 222, 0.24);
+    }
+
+    .fastAvBusBtn.off {
+      opacity: 0.6;
+      color: #4a5870;
+      border-color: rgba(114, 128, 146, 0.7);
+      filter: grayscale(0.45);
+      box-shadow: none;
     }
 
     .fastOwnshipDataPanel {
@@ -2648,6 +2700,104 @@
       padding: 6px;
     }
 
+    .fltPlanFuelWrap {
+      border: 1px solid #8b96a1;
+      background: #ffffff;
+      margin-top: 8px;
+      padding: 8px 10px;
+      font-size: 20px;
+      line-height: 1.4;
+    }
+
+    .fltPlanAvBusHeader {
+      text-align: center;
+      margin-bottom: 8px;
+    }
+
+    .fltPlanAvBusHeaderTitle {
+      font-weight: 700;
+      font-size: 22px;
+      color: #203244;
+      line-height: 1.1;
+    }
+
+    .fltPlanAvBusHeaderStatus {
+      margin-top: 3px;
+      font-size: 20px;
+      color: #1f2e3d;
+    }
+
+    .fltPlanFuelBlock {
+      border-top: 1px solid #d2d9e2;
+      padding-top: 6px;
+    }
+
+    .fltPlanFuelTopLine {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 2px;
+    }
+
+    .fltPlanFuelHeading {
+      font-weight: 700;
+      font-size: 22px;
+      color: #203244;
+      text-align: left;
+    }
+
+    .fltPlanFuelGrid {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .fltPlanFuelLeft {
+      flex: 1 1 auto;
+      min-width: 0;
+    }
+
+    .fltPlanFuelRight {
+      flex: 0 0 auto;
+      min-width: 260px;
+      text-align: right;
+    }
+
+    .fltPlanFuelTitle {
+      font-weight: 700;
+      margin-bottom: 4px;
+      color: #203244;
+      font-size: 22px;
+    }
+
+    .fltPlanFuelLine {
+      margin: 3px 0;
+      color: #1f2e3d;
+      font-size: 20px;
+    }
+
+    .fltPlanFuelState {
+      font-weight: 700;
+    }
+
+    .fltPlanFuelState.live {
+      color: #2b8f38;
+    }
+
+    .fltPlanFuelState.on {
+      color: #2f88d6;
+    }
+
+    .fltPlanFuelState.degraded {
+      color: #9a6f1f;
+    }
+
+    .fltPlanFuelState.off {
+      color: #b74848;
+    }
+
     .fltPlanStoresGrid {
       width: 100%;
       border-collapse: collapse;
@@ -3274,6 +3424,48 @@
       border-color: #5c6d7f;
     }
 
+    body.night-mode .fltPlanFuelWrap {
+      background: #202933;
+      border-color: #5c6d7f;
+    }
+
+    body.night-mode .fltPlanAvBusHeaderTitle,
+    body.night-mode .fltPlanFuelHeading {
+      color: #dbe8f6;
+    }
+
+    body.night-mode .fltPlanAvBusHeaderStatus {
+      color: #d2deea;
+    }
+
+    body.night-mode .fltPlanFuelBlock {
+      border-top-color: #495a6d;
+    }
+
+    body.night-mode .fltPlanFuelTitle {
+      color: #dbe8f6;
+    }
+
+    body.night-mode .fltPlanFuelLine {
+      color: #d2deea;
+    }
+
+    body.night-mode .fltPlanFuelState.live {
+      color: #74d685;
+    }
+
+    body.night-mode .fltPlanFuelState.on {
+      color: #7ebeff;
+    }
+
+    body.night-mode .fltPlanFuelState.degraded {
+      color: #dfba68;
+    }
+
+    body.night-mode .fltPlanFuelState.off {
+      color: #ff8a8a;
+    }
+
     body.night-mode .fltPlanStoresGrid {
       background: #212a34;
     }
@@ -3393,7 +3585,9 @@
 
   <div id="fltPlanQuickBar" class="fltPlanQuickBar hidden">
     <button id="fltPlanFileBtn" class="fltPlanQuickBtn" type="button" title="Flight plan files">☰</button>
+    <button id="fastAvBusToggleBtn" class="fltPlanQuickBtn fastAvBusBtn off" type="button" title="Aircraft interface device">AID</button>
     <button id="fastOwnshipToggleBtn" class="fltPlanQuickBtn fastOwnshipBtn hidden" type="button" title="Fast ownship source">🌐GPS</button>
+    <div id="fastAvBusDataPanel" class="fastAvBusDataPanel hidden" aria-live="polite"></div>
     <div id="fastOwnshipDataPanel" class="fastOwnshipDataPanel hidden" aria-live="polite"></div>
     <button id="fltPlanSessionBtn" class="fltPlanQuickBtn" type="button" title="Session information">ℹ</button>
   </div>
@@ -3527,6 +3721,11 @@
     let runtimeFlightPlanSnapshotMissionIdentity = '';
     let runtimeFlightPlanSnapshotGroupName = '';
     let runtimeFlightPlanSnapshotFingerprint = '';
+    let storesBaselineSnapshot = {
+      missionIdentity: '',
+      hasSnapshot: false,
+      stations: []
+    };
     let runtimeFlightPlanUserOverride = false;
     let lastKnownPlayerCallsign = '';
     let lastKnownTheater = '';
@@ -3635,12 +3834,66 @@
     let autoAtaRecPulseUnable = false;
     let autoAtaWaypointPulseUntilByKey = {};
     let efbSaOwnshipFast = { hasPosition: false, posX: NaN, posY: NaN, altFeet: NaN, headingDeg: NaN, hasHeading: false, hasGroundSpeed: false, groundSpeedKnots: NaN, hasWow: false, wow: -1, theater: '', updatedUtcMs: 0, lastPollMs: 0 };
+    let fastAvBus = {
+      enabled: true,
+      state: 'OFF',
+      moduleConnected: false,
+      hasData: false,
+      isFresh: false,
+      hasFuel: false,
+      hasWow: false,
+      wow: -1,
+      hasFuelFraction: false,
+      fuelFraction: NaN,
+      hasFuelMassMaxKg: false,
+      fuelMassMaxKg: NaN,
+      fuelMassMaxSource: '',
+      anomalyDetected: false,
+      anomalyReason: '',
+      prevTotalFuelKg: NaN,
+      prevExternalFuelKg: NaN,
+      prevSampleUtcMs: 0,
+      flowFuelHistory: [],
+      flowEmaKgPerHour: NaN,
+      fuelFlowKgPerHour: NaN,
+      fuelFlowLbsPerHour: NaN,
+      enginesLikelyOn: false,
+      aarOffloadKg: 0,
+      aarOffloadLbs: 0,
+      aarContacts: 0,
+      aarInProgress: false,
+      aarPendingKg: 0,
+      aarReductionStartUtcMs: 0,
+      aarReductionKg: 0,
+      aarLastEndUtcMs: 0,
+      totalFuelKg: NaN,
+      totalFuelLbs: NaN,
+      internalFuelKg: NaN,
+      internalFuelLbs: NaN,
+      externalFuelKg: NaN,
+      externalFuelLbs: NaN,
+      updatedUtcMs: 0,
+      lastPollMs: 0,
+      lastGood: {
+        totalFuelKg: NaN,
+        totalFuelLbs: NaN,
+        internalFuelKg: NaN,
+        internalFuelLbs: NaN,
+        externalFuelKg: NaN,
+        externalFuelLbs: NaN,
+        updatedUtcMs: 0,
+      }
+    };
     let efbAdLandingAssistState = { seenAirborne: false, triggeredThisWowOn: false };
     let autoTakeoffBySelection = {};
     let efbFastOwnshipDebugPanelVisible = false;
+    let fastAvBusDebugPanelVisible = false;
     let fastOwnshipLongPressTimerId = 0;
     let fastOwnshipLongPressFired = false;
     const fastOwnshipLongPressMs = 2000;
+    let fastAvBusLongPressTimerId = 0;
+    let fastAvBusLongPressFired = false;
+    const fastAvBusLongPressMs = 2000;
     let efbSaUserWaypoints = [];
     let efbSaUserWaypointEditingId = '';
     let efbSaUserWaypointEditDraft = '';
@@ -3657,14 +3910,381 @@
     let efbSaOwnshipMotionBySelection = {};
     let efbSaCameraTickerId = 0;
     let efbSaOwnshipPollTickerId = 0;
+    let fastAvBusPollTickerId = 0;
     const efbSaUserWaypointHoldMs = 1000;
     const efbSaUserWaypointHoldMovePx = 16;
     const efbSaDoghouseMinZoom = 9.5;
     const efbSaDoghouseOffsetNm = 2.0;
     const overlayCloseHideDelayMs = 620;
+    const fastAvBusFlowAvgWindowSec = 5.0;
+    const fastAvBusFlowFastWindowSec = 1.0;
+    const fastAvBusFlowHistoryMaxSec = 10.0;
+    const fastAvBusFlowEmaTauSec = 0.6;
+    const fastAvBusFlowDeadbandKgPerHour = 30;
+    const fastAvBusFlowStepBypassKgPerHour = 700;
+    const fastAvBusFlowStepBlend = 0.75;
+    const fastAvBusAarRiseEndKg = 0.1;
+    const fastAvBusAarMinContactLbs = 25;
+    const fastAvBusAarMinContactKg = fastAvBusAarMinContactLbs / 2.20462262185;
+    const fastAvBusAarResetReductionSec = 2.5;
+    const fastAvBusAarResetReductionKg = 1.0;
+    const fastAvBusAarReconnectHoldSec = 2.5;
 
     function clamp(v, min, max) {
       return Math.max(min, Math.min(max, v));
+    }
+
+    function formatFastAvBusNumber(value, digits) {
+      const n = Number(value);
+      if (!isFinite(n)) return 'n/a';
+      return n.toFixed(digits);
+    }
+
+    function interpolateFuelKgAtTime(samples, targetTs) {
+      if (!Array.isArray(samples) || samples.length < 1) return NaN;
+      const first = samples[0];
+      const last = samples[samples.length - 1];
+      if (!first || !last) return NaN;
+      if (targetTs <= first.ts) return Number(first.fuelKg);
+      if (targetTs >= last.ts) return Number(last.fuelKg);
+
+      for (let i = 1; i < samples.length; i += 1) {
+        const a = samples[i - 1];
+        const b = samples[i];
+        if (!a || !b) continue;
+        if (targetTs < a.ts || targetTs > b.ts) continue;
+        const span = Number(b.ts - a.ts);
+        if (!isFinite(span) || span <= 0) return Number(a.fuelKg);
+        const t = (targetTs - a.ts) / span;
+        return Number(a.fuelKg) + (Number(b.fuelKg) - Number(a.fuelKg)) * t;
+      }
+
+      return Number(last.fuelKg);
+    }
+
+    function computeFlowFromWindowKgPerHour(samples, nowTs, windowSec) {
+      const list = Array.isArray(samples) ? samples : [];
+      if (list.length < 2) return NaN;
+      const last = list[list.length - 1];
+      if (!last || !isFinite(Number(last.fuelKg))) return NaN;
+
+      const earliestTs = Number(list[0].ts);
+      const targetStartTs = nowTs - (windowSec * 1000);
+      const startTs = Math.max(targetStartTs, earliestTs);
+      const spanSec = (nowTs - startTs) / 1000;
+      if (!isFinite(spanSec) || spanSec < 0.2) return NaN;
+
+      const startFuelKg = Number(interpolateFuelKgAtTime(list, startTs));
+      if (!isFinite(startFuelKg)) return NaN;
+
+      const endFuelKg = Number(last.fuelKg);
+      const burnKg = Math.max(0, startFuelKg - endFuelKg);
+      return burnKg * 3600 / spanSec;
+    }
+
+    function updateFastAvBusFlowSmoothing(totalFuelKg, nowTs, dtSec) {
+      const totalFuel = Number(totalFuelKg);
+      if (!isFinite(totalFuel) || !isFinite(nowTs) || !isFinite(dtSec) || dtSec <= 0) return;
+
+      if (!Array.isArray(fastAvBus.flowFuelHistory)) {
+        fastAvBus.flowFuelHistory = [];
+      }
+
+      const history = fastAvBus.flowFuelHistory;
+      const clampedFuel = Math.max(0, totalFuel);
+      const lastSample = history.length ? history[history.length - 1] : null;
+      if (lastSample && Number(lastSample.ts) === nowTs) {
+        lastSample.fuelKg = clampedFuel;
+      } else {
+        history.push({ ts: nowTs, fuelKg: clampedFuel });
+      }
+
+      const minTs = nowTs - (fastAvBusFlowHistoryMaxSec * 1000);
+      while (history.length > 2 && Number(history[1].ts) < minTs) {
+        history.shift();
+      }
+
+      const avgFlow = computeFlowFromWindowKgPerHour(history, nowTs, fastAvBusFlowAvgWindowSec);
+      if (!isFinite(avgFlow)) return;
+
+      const fastFlow = computeFlowFromWindowKgPerHour(history, nowTs, fastAvBusFlowFastWindowSec);
+      let targetFlow = avgFlow;
+      if (isFinite(fastFlow)) {
+        const stepDelta = fastFlow - avgFlow;
+        if (Math.abs(stepDelta) >= fastAvBusFlowStepBypassKgPerHour) {
+          targetFlow = Math.max(0, avgFlow + (stepDelta * fastAvBusFlowStepBlend));
+        }
+      }
+
+      const prevEma = Number(fastAvBus.flowEmaKgPerHour);
+      const alpha = 1 - Math.exp(-Math.min(dtSec, 1.0) / fastAvBusFlowEmaTauSec);
+      const emaFlow = isFinite(prevEma)
+        ? (prevEma + alpha * (targetFlow - prevEma))
+        : targetFlow;
+      fastAvBus.flowEmaKgPerHour = Math.max(0, emaFlow);
+
+      let displayFlow = Number(fastAvBus.fuelFlowKgPerHour);
+      if (!isFinite(displayFlow)) {
+        displayFlow = fastAvBus.flowEmaKgPerHour;
+      } else {
+        const delta = fastAvBus.flowEmaKgPerHour - displayFlow;
+        if (Math.abs(delta) > fastAvBusFlowStepBypassKgPerHour) {
+          displayFlow = fastAvBus.flowEmaKgPerHour;
+        } else if (Math.abs(delta) > fastAvBusFlowDeadbandKgPerHour) {
+          displayFlow = displayFlow + (delta * 0.6);
+        }
+      }
+
+      displayFlow = Math.max(0, displayFlow);
+      fastAvBus.fuelFlowKgPerHour = displayFlow;
+      fastAvBus.fuelFlowLbsPerHour = displayFlow * 2.20462262185;
+    }
+
+    function getFastAvBusDisplayState() {
+      if (!(fastAvBus && fastAvBus.enabled)) return 'OFF';
+
+      const moduleConnected = !!(fastAvBus && fastAvBus.moduleConnected);
+      if (!moduleConnected) return 'OFF';
+
+      if (fastAvBus && fastAvBus.anomalyDetected) return 'DEGRADED';
+
+      const state = String((fastAvBus && fastAvBus.state) || 'OFF').toUpperCase();
+      const hasRecentGood = !!(fastAvBus && fastAvBus.lastGood && Number(fastAvBus.lastGood.updatedUtcMs || 0) > 0);
+      const enginesOn = !!(fastAvBus && fastAvBus.enginesLikelyOn);
+      const aarActive = !!(fastAvBus && fastAvBus.aarInProgress);
+
+      if (state === 'LIVE' && fastAvBus && fastAvBus.isFresh && fastAvBus.hasFuel && (enginesOn || aarActive)) return 'LIVE';
+      if (state === 'DEGRADED') return hasRecentGood ? 'ON' : 'DEGRADED';
+      if (state === 'OFF') return hasRecentGood ? 'ON' : 'OFF';
+      if (fastAvBus && fastAvBus.isFresh && fastAvBus.hasFuel) return 'ON';
+      if (hasRecentGood) return 'ON';
+      return 'ON';
+    }
+
+    function updateFastAvBusToggleUi() {
+      const btn = document.getElementById('fastAvBusToggleBtn');
+      const panel = document.getElementById('fastAvBusDataPanel');
+      if (!btn) return;
+
+      if (selectedTab !== 'DTC') {
+        btn.className = 'fltPlanQuickBtn fastAvBusBtn hidden';
+        if (panel) {
+          panel.className = 'fastAvBusDataPanel hidden';
+          panel.textContent = '';
+        }
+        return;
+      }
+
+      const state = getFastAvBusDisplayState();
+      const classState = (!fastAvBus.enabled || state === 'OFF')
+        ? 'off'
+        : (state === 'LIVE' ? 'live' : (state === 'ON' ? 'on' : 'degraded'));
+      btn.className = 'fltPlanQuickBtn fastAvBusBtn ' + classState;
+      btn.textContent = 'AID';
+
+      const totalKg = state === 'LIVE'
+        ? formatFastAvBusNumber(fastAvBus.totalFuelKg, 1)
+        : formatFastAvBusNumber(fastAvBus.lastGood.totalFuelKg, 1);
+      const totalLbs = state === 'LIVE'
+        ? formatFastAvBusNumber(fastAvBus.totalFuelLbs, 0)
+        : formatFastAvBusNumber(fastAvBus.lastGood.totalFuelLbs, 0);
+      const internalKg = state === 'LIVE'
+        ? formatFastAvBusNumber(fastAvBus.internalFuelKg, 1)
+        : formatFastAvBusNumber(fastAvBus.lastGood.internalFuelKg, 1);
+      const externalKg = state === 'LIVE'
+        ? formatFastAvBusNumber(fastAvBus.externalFuelKg, 1)
+        : formatFastAvBusNumber(fastAvBus.lastGood.externalFuelKg, 1);
+      const wowText = (fastAvBus && fastAvBus.hasWow)
+        ? (Number(fastAvBus.wow) === 1 ? 'WOW ON' : (Number(fastAvBus.wow) === 0 ? 'WOW OFF' : 'WOW n/a'))
+        : 'WOW n/a';
+
+      const staleTag = state === 'LIVE' ? '' : ' (frozen)';
+      btn.title = [
+        'AID ' + (fastAvBus.enabled ? state : 'OFF (manual)'),
+        'TOTAL ' + totalKg + 'kg / ' + totalLbs + 'lb' + staleTag,
+        'INT ' + internalKg + 'kg · EXT ' + externalKg + 'kg',
+        wowText,
+        (fastAvBus && fastAvBus.anomalyDetected) ? ('ANOMALY ' + String(fastAvBus.anomalyReason || 'fuel trend')) : 'ANOMALY none',
+      ].join(' · ');
+
+      if (panel) {
+        const showPanel = fastAvBusDebugPanelVisible && selectedTab === 'DTC';
+        panel.className = showPanel ? 'fastAvBusDataPanel' : 'fastAvBusDataPanel hidden';
+        if (showPanel) {
+          const ageMs = Date.now() - Number(fastAvBus.updatedUtcMs || 0);
+          const ageText = isFinite(ageMs) && ageMs >= 0 ? (ageMs / 1000).toFixed(2) + 's' : 'n/a';
+          panel.textContent = [
+            'AID RAW DEBUG',
+            'enabled=' + String(!!fastAvBus.enabled)
+            + ' state=' + String(state)
+            + ' moduleConnected=' + String(!!fastAvBus.moduleConnected)
+            + ' fresh=' + String(!!fastAvBus.isFresh)
+            + ' hasData=' + String(!!fastAvBus.hasData),
+            'hasFuel=' + String(!!fastAvBus.hasFuel)
+            + ' wow=' + String(Number(fastAvBus.wow))
+            + ' hasWow=' + String(!!fastAvBus.hasWow),
+            'fuelFraction=' + formatFastAvBusNumber(fastAvBus.fuelFraction, 6)
+            + ' hasFuelFraction=' + String(!!fastAvBus.hasFuelFraction),
+            'fuelMassMaxKg=' + formatFastAvBusNumber(fastAvBus.fuelMassMaxKg, 3)
+            + ' hasFuelMassMaxKg=' + String(!!fastAvBus.hasFuelMassMaxKg),
+            'diag=' + (
+              !fastAvBus.moduleConnected ? 'moduleDisconnected'
+                : (!fastAvBus.hasData ? 'noData'
+                  : (!fastAvBus.isFresh ? 'staleData'
+                    : (!fastAvBus.hasFuel ? 'missingFuelDerivation' : 'live')))
+            ),
+            'totalKg=' + formatFastAvBusNumber(fastAvBus.totalFuelKg, 3)
+            + ' internalKg=' + formatFastAvBusNumber(fastAvBus.internalFuelKg, 3)
+            + ' externalKg=' + formatFastAvBusNumber(fastAvBus.externalFuelKg, 3),
+            'age=' + ageText,
+          ].join('\n');
+        } else {
+          panel.textContent = '';
+        }
+      }
+    }
+
+    function pollFastAvBus() {
+      if (fastAvBusPollTickerId) return;
+      fastAvBusPollTickerId = window.setInterval(function () {
+        if (selectedTab !== 'DTC' && selectedTab !== 'EFB') return;
+
+        const nowMs = Date.now();
+        if ((nowMs - Number(fastAvBus.lastPollMs || 0)) < 120) return;
+        fastAvBus.lastPollMs = nowMs;
+
+        if (!fastAvBus.enabled) {
+          updateFastAvBusToggleUi();
+          return;
+        }
+
+        fetch('/okb/fltpln/avbus', { cache: 'no-store' })
+          .then(function (res) {
+            if (!res || !res.ok) return null;
+            return res.json();
+          })
+          .then(function (payload) {
+            if (!payload || typeof payload !== 'object') return;
+
+            fastAvBus.state = String(payload.state || 'OFF').toUpperCase();
+            fastAvBus.moduleConnected = payload.moduleConnected === true;
+            fastAvBus.hasData = payload.hasData === true;
+            fastAvBus.isFresh = payload.isFresh === true;
+            fastAvBus.hasFuel = payload.hasFuel === true;
+            fastAvBus.hasWow = payload.hasWow === true;
+            fastAvBus.wow = Number(payload.wow);
+            fastAvBus.hasFuelFraction = payload.hasFuelFraction === true;
+            fastAvBus.fuelFraction = Number(payload.fuelFraction);
+            fastAvBus.hasFuelMassMaxKg = payload.hasFuelMassMaxKg === true;
+            fastAvBus.fuelMassMaxKg = Number(payload.fuelMassMaxKg);
+            fastAvBus.fuelMassMaxSource = String(payload.fuelMassMaxSource || '');
+
+            fastAvBus.totalFuelKg = Number(payload.totalFuelKg);
+            fastAvBus.totalFuelLbs = Number(payload.totalFuelLbs);
+            fastAvBus.internalFuelKg = Number(payload.internalFuelKg);
+            fastAvBus.internalFuelLbs = Number(payload.internalFuelLbs);
+            fastAvBus.externalFuelKg = Number(payload.externalFuelKg);
+            fastAvBus.externalFuelLbs = Number(payload.externalFuelLbs);
+            fastAvBus.updatedUtcMs = Date.now();
+
+            fastAvBus.anomalyDetected = false;
+            fastAvBus.anomalyReason = '';
+            if (fastAvBus.hasFuel && isFinite(fastAvBus.totalFuelKg) && isFinite(fastAvBus.externalFuelKg)) {
+              const prevT = Number(fastAvBus.prevTotalFuelKg);
+              const prevE = Number(fastAvBus.prevExternalFuelKg);
+              const prevTs = Number(fastAvBus.prevSampleUtcMs || 0);
+              const nowTs = Number(fastAvBus.updatedUtcMs || Date.now());
+              const dtSec = prevTs > 0 ? ((nowTs - prevTs) / 1000) : 0;
+              if (isFinite(prevT) && isFinite(prevE) && dtSec > 0.05 && dtSec < 5) {
+                const totalDropKg = prevT - fastAvBus.totalFuelKg;
+                const totalRiseKg = fastAvBus.totalFuelKg - prevT;
+                const externalDropKg = prevE - fastAvBus.externalFuelKg;
+                const burnRateKgPerSec = totalDropKg / dtSec;
+                updateFastAvBusFlowSmoothing(fastAvBus.totalFuelKg, nowTs, dtSec);
+                const isAirborneForAar = !!fastAvBus.hasWow && Number(fastAvBus.wow) === 0;
+
+                const finalizeAarContact = function () {
+                  fastAvBus.aarInProgress = false;
+                  fastAvBus.aarPendingKg = 0;
+                  fastAvBus.aarReductionStartUtcMs = 0;
+                  fastAvBus.aarReductionKg = 0;
+                  fastAvBus.aarLastEndUtcMs = nowTs;
+                };
+
+                if (isAirborneForAar && totalRiseKg > fastAvBusAarRiseEndKg) {
+                  if (!fastAvBus.aarInProgress) {
+                    const holdMs = fastAvBusAarReconnectHoldSec * 1000;
+                    const sinceLastEndMs = nowTs - Number(fastAvBus.aarLastEndUtcMs || 0);
+                    if (sinceLastEndMs >= holdMs) {
+                      fastAvBus.aarPendingKg = Math.max(0, Number(fastAvBus.aarPendingKg || 0) + totalRiseKg);
+                      if (fastAvBus.aarPendingKg >= fastAvBusAarMinContactKg) {
+                        fastAvBus.aarInProgress = true;
+                        fastAvBus.aarContacts = Math.max(0, Math.round(Number(fastAvBus.aarContacts) || 0)) + 1;
+                        fastAvBus.aarOffloadKg = Math.max(0, Number(fastAvBus.aarOffloadKg || 0) + fastAvBus.aarPendingKg);
+                        fastAvBus.aarPendingKg = 0;
+                        fastAvBus.aarReductionStartUtcMs = 0;
+                        fastAvBus.aarReductionKg = 0;
+                      }
+                    }
+                  } else {
+                    fastAvBus.aarOffloadKg = Math.max(0, Number(fastAvBus.aarOffloadKg || 0) + totalRiseKg);
+                    fastAvBus.aarReductionStartUtcMs = 0;
+                    fastAvBus.aarReductionKg = 0;
+                  }
+                  fastAvBus.aarOffloadLbs = fastAvBus.aarOffloadKg * 2.20462262185;
+                } else if (fastAvBus.aarInProgress) {
+                  if (!isAirborneForAar) {
+                    finalizeAarContact();
+                  } else {
+                    const dropKg = Math.max(0, totalDropKg);
+                    if (dropKg > 0.01) {
+                      if (Number(fastAvBus.aarReductionStartUtcMs || 0) <= 0) {
+                        fastAvBus.aarReductionStartUtcMs = nowTs;
+                        fastAvBus.aarReductionKg = 0;
+                      }
+                      fastAvBus.aarReductionKg = Math.max(0, Number(fastAvBus.aarReductionKg || 0) + dropKg);
+                      const reductionSec = (nowTs - Number(fastAvBus.aarReductionStartUtcMs || 0)) / 1000;
+                      if (reductionSec >= fastAvBusAarResetReductionSec
+                        && Number(fastAvBus.aarReductionKg || 0) >= fastAvBusAarResetReductionKg) {
+                        finalizeAarContact();
+                      }
+                    }
+                  }
+                } else {
+                  fastAvBus.aarPendingKg = 0;
+                }
+                fastAvBus.enginesLikelyOn = Number(fastAvBus.fuelFlowKgPerHour) >= 20 || (isAirborneForAar && fastAvBus.aarInProgress);
+                const likelyJettison = totalDropKg > 80 && externalDropKg > 0 && externalDropKg >= (totalDropKg * 0.8);
+                if (totalDropKg > 10 && burnRateKgPerSec > 45 && !likelyJettison) {
+                  fastAvBus.anomalyDetected = true;
+                  fastAvBus.anomalyReason = 'unexplained fuel loss';
+                }
+              } else if (!isFinite(Number(fastAvBus.fuelFlowKgPerHour))) {
+                fastAvBus.fuelFlowKgPerHour = 0;
+                fastAvBus.fuelFlowLbsPerHour = 0;
+                fastAvBus.enginesLikelyOn = false;
+              }
+              fastAvBus.prevTotalFuelKg = fastAvBus.totalFuelKg;
+              fastAvBus.prevExternalFuelKg = fastAvBus.externalFuelKg;
+              fastAvBus.prevSampleUtcMs = nowTs;
+            }
+
+            if (fastAvBus.state === 'LIVE' && fastAvBus.hasFuel) {
+              if (isFinite(fastAvBus.totalFuelKg)) fastAvBus.lastGood.totalFuelKg = fastAvBus.totalFuelKg;
+              if (isFinite(fastAvBus.totalFuelLbs)) fastAvBus.lastGood.totalFuelLbs = fastAvBus.totalFuelLbs;
+              if (isFinite(fastAvBus.internalFuelKg)) fastAvBus.lastGood.internalFuelKg = fastAvBus.internalFuelKg;
+              if (isFinite(fastAvBus.internalFuelLbs)) fastAvBus.lastGood.internalFuelLbs = fastAvBus.internalFuelLbs;
+              if (isFinite(fastAvBus.externalFuelKg)) fastAvBus.lastGood.externalFuelKg = fastAvBus.externalFuelKg;
+              if (isFinite(fastAvBus.externalFuelLbs)) fastAvBus.lastGood.externalFuelLbs = fastAvBus.externalFuelLbs;
+              fastAvBus.lastGood.updatedUtcMs = Date.now();
+            }
+
+            updateFastAvBusToggleUi();
+          })
+          .catch(function () {
+            updateFastAvBusToggleUi();
+          });
+      }, 100);
     }
 
     function maybeApplyEfbAdLandingAssist() {
@@ -3854,7 +4474,8 @@
       const ageMs = Date.now() - Number(efbSaOwnshipFast && efbSaOwnshipFast.updatedUtcMs || 0);
       const ageText = isFinite(ageMs) && ageMs >= 0 ? ('AGE ' + String((ageMs / 1000).toFixed(1)) + 's') : 'AGE n/a';
       const srcText = efbSaUseFastOwnshipEnabled ? 'SRC FAST' : 'SRC SERVER';
-      btn.className = hasFast
+      const showFastOwnshipButton = hasFast && selectedTab === 'EFB';
+      btn.className = showFastOwnshipButton
         ? ('fltPlanQuickBtn fastOwnshipBtn' + (efbSaUseFastOwnshipEnabled ? '' : ' off'))
         : 'fltPlanQuickBtn fastOwnshipBtn hidden';
       btn.title = hasFast
@@ -8277,6 +8898,11 @@
     function normalizeActiveCategory(cat, data) {
       var c = String(cat || '').toUpperCase();
       return normalizeCategory(c);
+    }
+
+    function isExplicitServerCategoryChange(data) {
+      const mode = String(data && data.ActiveCategoryUpdateMode || '').toLowerCase().trim();
+      return mode === 'explicit';
     }
 
     function getVisibleTabs(data) {
@@ -17705,22 +18331,98 @@
       return raw;
     }
 
+    function cloneStoreStations(stations) {
+      const src = Array.isArray(stations) ? stations : [];
+      return src.map(function (station) {
+        const s = station || {};
+        return {
+          CLSID: String(s.CLSID || ''),
+          count: Number(s.count || 0)
+        };
+      });
+    }
+
+    function updateStoresBaselineSnapshot(data, liveStations) {
+      const missionIdentity = String(getMissionIdentity(data || latestData || {}) || '');
+      if (storesBaselineSnapshot.missionIdentity !== missionIdentity) {
+        storesBaselineSnapshot.missionIdentity = missionIdentity;
+        storesBaselineSnapshot.hasSnapshot = false;
+        storesBaselineSnapshot.stations = [];
+      }
+
+      const incoming = Array.isArray(liveStations) ? liveStations : [];
+      if (!storesBaselineSnapshot.hasSnapshot && incoming.length > 0) {
+        storesBaselineSnapshot.stations = cloneStoreStations(incoming);
+        storesBaselineSnapshot.hasSnapshot = true;
+      }
+    }
+
     function formatStoresPageHtml(pageSwitcherHtml, data) {
       const server = (data && data.Server) || {};
       const payload = (server && server.Payload) || {};
-      const stations = Array.isArray(payload.Stations) ? payload.Stations : [];
+      const liveStations = Array.isArray(payload.Stations) ? payload.Stations : [];
+      const avState = getFastAvBusDisplayState();
+      const avIsLive = avState === 'LIVE';
+      const avUseCurrent = avState === 'LIVE' || avState === 'ON';
+      const avSource = avUseCurrent ? fastAvBus : (fastAvBus && fastAvBus.lastGood ? fastAvBus.lastGood : {});
+      const aidAllowsLiveStores = avState !== 'OFF';
+      updateStoresBaselineSnapshot(data, liveStations);
+      const stations = aidAllowsLiveStores
+        ? liveStations
+        : (storesBaselineSnapshot.hasSnapshot ? storesBaselineSnapshot.stations : liveStations);
+
+      function fmtFuel(kgValue, lbsValue) {
+        const kg = formatFastAvBusNumber(kgValue, 1);
+        const lbs = formatFastAvBusNumber(lbsValue, 0);
+        if (kg === 'n/a' && lbs === 'n/a') return 'n/a';
+        return kg + ' kg / ' + lbs + ' lb';
+      }
+
+      function applyOffNoAidData(textValue) {
+        const text = String(textValue || '');
+        if (avState === 'OFF' && text.toLowerCase() === 'n/a') return 'NO DATA';
+        return text;
+      }
+
+      const totalFuelText = applyOffNoAidData(fmtFuel(avSource.totalFuelKg, avSource.totalFuelLbs));
+      const internalFuelText = applyOffNoAidData(fmtFuel(avSource.internalFuelKg, avSource.internalFuelLbs));
+      const externalFuelText = applyOffNoAidData(fmtFuel(avSource.externalFuelKg, avSource.externalFuelLbs));
+      const aarOffloadKg = Number(fastAvBus && fastAvBus.aarOffloadKg);
+      const aarOffloadLbs = Number(fastAvBus && fastAvBus.aarOffloadLbs);
+      const aarContacts = Math.max(0, Math.round(Number(fastAvBus && fastAvBus.aarContacts) || 0));
+      const aarOffloadText = (isFinite(aarOffloadKg) && aarOffloadKg > 0)
+        ? (aarOffloadKg.toFixed(1) + ' kg / ' + (isFinite(aarOffloadLbs) ? aarOffloadLbs.toFixed(0) : (aarOffloadKg * 2.20462262185).toFixed(0)) + ' lb · CONTACTS: ' + String(aarContacts))
+        : ((avState === 'OFF') ? 'NO DATA' : ((avState === 'ON' || avState === 'LIVE') ? 'READY' : 'n/a'));
+      const freezeNote = (avState === 'OFF' || avUseCurrent) ? '' : ' (frozen last good)';
+
+      const flowKgPerHour = Number(fastAvBus && fastAvBus.fuelFlowKgPerHour);
+      const flowLbsPerHour = Number(fastAvBus && fastAvBus.fuelFlowLbsPerHour);
+      const flowKgText = applyOffNoAidData(isFinite(flowKgPerHour) ? (flowKgPerHour.toFixed(0) + ' KG/H') : 'n/a');
+      const flowLbsText = applyOffNoAidData(isFinite(flowLbsPerHour) ? (flowLbsPerHour.toFixed(0) + ' LB/H') : 'n/a');
+      let enduranceText = applyOffNoAidData('n/a');
+      if (isFinite(flowKgPerHour) && flowKgPerHour > 0 && isFinite(Number(avSource.totalFuelKg))) {
+        const minutes = (Number(avSource.totalFuelKg) / flowKgPerHour) * 60;
+        if (isFinite(minutes) && minutes >= 0) {
+          enduranceText = minutes.toFixed(0) + ' min';
+        }
+      }
 
       let html = '<div class="fltPlanBoard">';
       if (pageSwitcherHtml) {
         html += '<div style="margin:4px 0 6px 0;">' + pageSwitcherHtml + '</div>';
       }
 
+      html += '<div class="fltPlanAvBusHeader">';
+      html += '<div class="fltPlanAvBusHeaderTitle">AIRCRAFT INTERFACE DEVICE</div>';
+      html += '<div class="fltPlanAvBusHeaderStatus">DATABUS STATUS: <span class="fltPlanFuelState ' + escapeHtml(avState.toLowerCase()) + '">' + escapeHtml(avState) + '</span>' + escapeHtml(freezeNote) + '</div>';
+      html += '</div>';
+
       html += '<div class="fltPlanStoresWrap">';
       html += '<table class="fltPlanStoresGrid">';
       html += '<thead><tr><th class="fltPlanStoresStation">STN</th><th>STORE</th></tr></thead><tbody>';
 
       if (!stations.length) {
-        html += '<tr><td class="fltPlanStoresStation">-</td><td class="fltPlanStoresEmpty">No payload station data.</td></tr>';
+        html += '<tr><td class="fltPlanStoresStation">-</td><td class="fltPlanStoresEmpty">WAITING FOR AID CONNECTION</td></tr>';
       } else {
         for (let i = 0; i < stations.length; i++) {
           const station = stations[i] || {};
@@ -17732,7 +18434,28 @@
         }
       }
 
-      html += '</tbody></table></div></div>';
+      html += '</tbody></table></div>';
+
+      html += '<div class="fltPlanFuelWrap">';
+      html += '<div class="fltPlanFuelBlock">';
+      html += '<div class="fltPlanFuelTopLine">';
+      html += '<div class="fltPlanFuelHeading">FUEL</div>';
+      html += '<div class="fltPlanFuelLine">FUEL FLOW: ' + escapeHtml(flowKgText) + '</div>';
+      html += '</div>';
+      html += '<div class="fltPlanFuelGrid">';
+      html += '<div class="fltPlanFuelLeft">';
+      html += '<div class="fltPlanFuelLine">TOTAL: ' + escapeHtml(totalFuelText) + '</div>';
+      html += '<div class="fltPlanFuelLine">INTERNAL: ' + escapeHtml(internalFuelText) + '</div>';
+      html += '<div class="fltPlanFuelLine">EXTERNAL: ' + escapeHtml(externalFuelText) + '</div>';
+      html += '<div class="fltPlanFuelLine">AAR OFFLOAD: ' + escapeHtml(aarOffloadText) + '</div>';
+      html += '</div>';
+      html += '<div class="fltPlanFuelRight">';
+      html += '<div class="fltPlanFuelLine">' + escapeHtml(flowLbsText) + '</div>';
+      html += '<div class="fltPlanFuelLine">ENDURANCE: ' + escapeHtml(enduranceText) + '</div>';
+      html += '</div>';
+      html += '</div>';
+      html += '</div>';
+      html += '</div></div>';
       return html;
     }
 
@@ -20786,7 +21509,7 @@
         return '<tr><td style="width:56px;">' + (name === primaryRouteName ? '<strong>' + escapeHtml(name) + '</strong>' : escapeHtml(name)) + '</td><td>' + escapeHtml(String(count)) + '</td></tr>';
       });
       const routeSummaryHtml = '<div class="fltPlanPage2Section"><div class="fltPlanPage2Title">ROUTES</div><div class="fltPlanPage2Body"><table class="fltPlanPage2Table"><thead><tr><th style="width:56px;">ROUTE</th><th>WAYPOINTS</th></tr></thead><tbody>' + routeRows.join('') + '</tbody></table></div></div>';
-      const pageSwitcherHtml = '<span class="fltPlanPageSwitcher"><button type="button" class="fltPlanPageBtn' + (page === 1 ? ' active' : '') + '" data-dtc-page="1">NAVLOG</button><button type="button" class="fltPlanPageBtn' + (page === 2 ? ' active' : '') + '" data-dtc-page="2">COM/ROUTE</button><button type="button" class="fltPlanPageBtn' + (page === 3 ? ' active' : '') + '" data-dtc-page="3">STORES</button></span>';
+      const pageSwitcherHtml = '<span class="fltPlanPageSwitcher"><button type="button" class="fltPlanPageBtn' + (page === 1 ? ' active' : '') + '" data-dtc-page="1">NAVLOG</button><button type="button" class="fltPlanPageBtn' + (page === 2 ? ' active' : '') + '" data-dtc-page="2">COM/ROUTE</button><button type="button" class="fltPlanPageBtn' + (page === 3 ? ' active' : '') + '" data-dtc-page="3">STORES/AID</button></span>';
 
       if (page === 3) {
         return formatStoresPageHtml(pageSwitcherHtml, data);
@@ -21035,7 +21758,7 @@
       const routeName = groupName ? ('PLAYER ROUTE (' + groupName + ')') : 'PLAYER ROUTE';
       const selected = '__RUNTIME_PLAYER__';
       const page = getDtcPageBySelection(selected);
-      const pageSwitcherHtml = '<span class="fltPlanPageSwitcher"><button type="button" class="fltPlanPageBtn' + (page === 1 ? ' active' : '') + '" data-dtc-page="1">NAVLOG</button><button type="button" class="fltPlanPageBtn' + (page === 2 ? ' active' : '') + '" data-dtc-page="2">COM/ROUTE</button><button type="button" class="fltPlanPageBtn' + (page === 3 ? ' active' : '') + '" data-dtc-page="3">STORES</button></span>';
+      const pageSwitcherHtml = '<span class="fltPlanPageSwitcher"><button type="button" class="fltPlanPageBtn' + (page === 1 ? ' active' : '') + '" data-dtc-page="1">NAVLOG</button><button type="button" class="fltPlanPageBtn' + (page === 2 ? ' active' : '') + '" data-dtc-page="2">COM/ROUTE</button><button type="button" class="fltPlanPageBtn' + (page === 3 ? ' active' : '') + '" data-dtc-page="3">STORES/AID</button></span>';
       if (page === 2) {
         return formatRuntimePage2Html(data, pageSwitcherHtml, selected);
       }
@@ -21067,7 +21790,7 @@
       const routeButtons = availableRoutes.map(function (r) {
         return '<button type="button" class="fltPlanPageBtn' + (routeKey === r ? ' active' : '') + '" data-dtc-route="' + r + '">' + r + '</button>';
       }).join('');
-      const pageSwitcherHtml = '<span class="fltPlanPageSwitcher"><button type="button" class="fltPlanPageBtn' + (page === 1 ? ' active' : '') + '" data-dtc-page="1">NAVLOG</button><button type="button" class="fltPlanPageBtn' + (page === 2 ? ' active' : '') + '" data-dtc-page="2">COM/ROUTE</button><button type="button" class="fltPlanPageBtn' + (page === 3 ? ' active' : '') + '" data-dtc-page="3">STORES</button></span><span class="fltPlanPageSwitcher">' + routeButtons + '</span>';
+      const pageSwitcherHtml = '<span class="fltPlanPageSwitcher"><button type="button" class="fltPlanPageBtn' + (page === 1 ? ' active' : '') + '" data-dtc-page="1">NAVLOG</button><button type="button" class="fltPlanPageBtn' + (page === 2 ? ' active' : '') + '" data-dtc-page="2">COM/ROUTE</button><button type="button" class="fltPlanPageBtn' + (page === 3 ? ' active' : '') + '" data-dtc-page="3">STORES/AID</button></span><span class="fltPlanPageSwitcher">' + routeButtons + '</span>';
       if (page === 3) {
         return formatStoresPageHtml(pageSwitcherHtml, data);
       }
@@ -21655,7 +22378,7 @@
       if (visibleTabs.indexOf(active) >= 0) {
         if (autoBrowse) {
           selectedTab = active;
-        } else if (activeChanged && active !== selectedTab) {
+        } else if (activeChanged && active !== selectedTab && isExplicitServerCategoryChange(data)) {
           // Allow explicit server-side page commands to move tabs even when Auto Browse is off.
           selectedTab = active;
         }
@@ -21745,6 +22468,7 @@
       if (sessionQuickBtn) {
         sessionQuickBtn.className = 'fltPlanQuickBtn';
       }
+      updateFastAvBusToggleUi();
       updateFastOwnshipToggleUi();
       if (selectedTab !== 'DTC') {
         setFltPlanFilesOverlayOpen(false);
@@ -23070,6 +23794,44 @@
     document.getElementById('fastOwnshipToggleBtn').addEventListener('pointercancel', clearFastOwnshipLongPressTimer);
     document.getElementById('fastOwnshipToggleBtn').addEventListener('pointerleave', clearFastOwnshipLongPressTimer);
 
+    document.getElementById('fastAvBusToggleBtn').addEventListener('click', function (ev) {
+      ev.preventDefault();
+      ev.stopPropagation();
+      if (selectedTab !== 'DTC') return;
+      if (fastAvBusLongPressFired) {
+        fastAvBusLongPressFired = false;
+        return;
+      }
+      fastAvBus.enabled = !fastAvBus.enabled;
+      updateFastAvBusToggleUi();
+      if (latestData) render(latestData);
+    });
+
+    document.getElementById('fastAvBusToggleBtn').addEventListener('pointerdown', function () {
+      if (fastAvBusLongPressTimerId) {
+        window.clearTimeout(fastAvBusLongPressTimerId);
+        fastAvBusLongPressTimerId = 0;
+      }
+      fastAvBusLongPressFired = false;
+      fastAvBusLongPressTimerId = window.setTimeout(function () {
+        fastAvBusLongPressTimerId = 0;
+        fastAvBusLongPressFired = true;
+        fastAvBusDebugPanelVisible = !fastAvBusDebugPanelVisible;
+        updateFastAvBusToggleUi();
+        if (latestData) render(latestData);
+      }, fastAvBusLongPressMs);
+    });
+
+    function clearFastAvBusLongPressTimer() {
+      if (!fastAvBusLongPressTimerId) return;
+      window.clearTimeout(fastAvBusLongPressTimerId);
+      fastAvBusLongPressTimerId = 0;
+    }
+
+    document.getElementById('fastAvBusToggleBtn').addEventListener('pointerup', clearFastAvBusLongPressTimer);
+    document.getElementById('fastAvBusToggleBtn').addEventListener('pointercancel', clearFastAvBusLongPressTimer);
+    document.getElementById('fastAvBusToggleBtn').addEventListener('pointerleave', clearFastAvBusLongPressTimer);
+
     document.getElementById('fltPlanFilesCloseBtn').addEventListener('click', function (ev) {
       ev.preventDefault();
       ev.stopPropagation();
@@ -23229,8 +23991,10 @@
     });
     configureOpenKneeboard();
     updateFastOwnshipToggleUi();
+    updateFastAvBusToggleUi();
     tickEfbSaOwnshipCamera();
     pollEfbSaOwnshipFast();
+    pollFastAvBus();
     updateFakeMissionControlsUi();
     tick();
     clockTick();

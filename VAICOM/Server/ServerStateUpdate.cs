@@ -178,6 +178,10 @@ namespace VAICOM
                     State.currentstate.missiontitle = serverMessage.missiontitle;
                     State.currentstate.missionbriefing = serverMessage.missionbriefing;
                     State.currentstate.missiondetails = serverMessage.missiondetails;
+                    if (serverMessage.fuel_unit_mass_max.HasValue && !double.IsNaN(serverMessage.fuel_unit_mass_max.Value) && serverMessage.fuel_unit_mass_max.Value > 0)
+                    {
+                        State.currentstate.fuel_unit_mass_max = serverMessage.fuel_unit_mass_max.Value;
+                    }
                 }
                 catch (Exception e)
                 {
