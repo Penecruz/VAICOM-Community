@@ -7,11 +7,11 @@
       "isbeta": false,
       "isdev": false,
       "productid": 1,
-      "releasedate": 20260923,
-      "version": 3177,
-      "versionstring": "3.1.7.7",
+      "releasedate": 20260925,
+      "version": 3178,
+      "versionstring": "3.1.7.8",
       "downloadurl": "https://raw.githubusercontent.com/Penecruz/VAICOM-Community/Development/VAICOM_Installer/Resources/VAICOMPRO.zip",
-      "releasenotes": "BETA 3.1.7.7\n- Additional updates since last Beta notes:\n  - OKB Out Page commands and Auto Browse fixes, No longer needs Auto Browse to issue Page commands Auto browse full rework.\n  - OKB Out refined AWACS tab now includes SAM radars that are radiating and active, Also groups AIR, SAM and EWR with sorting by range.(Still requires AWACS to be on task)\n  - OKB Out new AID (Aircraft Interface Device) connection. Controls STORES and also the new FUEL data Block with live feed fuel metrics\n - New AH-64D George pilot commands and backend workflow"
+      "releasenotes": "BETA 3.1.7.8\n- Additional updates since last Beta notes:\n  - OKB Out Page commands and Auto Browse fixes, No longer needs Auto Browse to issue Page commands Auto browse full rework.\n  - OKB Out refined AWACS tab now includes SAM radars that are radiating and active, Also groups AIR, SAM and EWR with sorting by range.(Still requires AWACS to be on task)\n  - OKB Out new AID (Aircraft Interface Device) connection. Controls STORES and also the new FUEL data Block with live feed fuel metrics\n - New AH-64D George pilot commands and backend workflow.\n - New TX-Link implementation, combined module case reworked from scratch.\n - Added Jester Wheel visibiity external context commands that control Wheel visibity on/off can be added to voice, button or key presses in Voice attack to manually turn wheel visibilty on and off "
         }
   ]
 }
