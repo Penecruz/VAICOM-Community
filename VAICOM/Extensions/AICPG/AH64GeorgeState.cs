@@ -240,6 +240,8 @@ namespace VAICOM.Extensions.AICPG
             }
         }
 
+        public static bool HasBattlePosition { get; set; } = false;
+
         public static bool GunAvailable;
         public static bool RocketsAvailable;
         public static bool MissilesAvailable;
@@ -288,6 +290,7 @@ namespace VAICOM.Extensions.AICPG
             SelectedWeapon = AH64WeaponMode.Unknown;
             PreviousMenuMode = AH64MenuMode.Unknown;
             CurrentMenuMode = AH64MenuMode.Unknown;
+            HasBattlePosition = false;
         }
 
         public static void UpdateWeaponState()

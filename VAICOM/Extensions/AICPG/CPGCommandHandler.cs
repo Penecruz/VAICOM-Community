@@ -82,12 +82,6 @@ namespace VAICOM.Extensions.AICPG
                 // Down Short Presses
                 case "wMsgGeorgeNextTarget":
                 case "wMsgGeorgeNextItem":
-                case "wMsgGeorgeAPUOnly":
-                case "wMsgGeorgeShutdownEngines":
-                case "wMsgGeorgeSlowDown":
-                case "wMsgGeorgeHoldPosition":
-                case "wMsgGeorgeReturnToBattlePosition":
-                case "wMsgGeorgeHoverDownTenFeet":
                     AddGeorgeButton(AH64GeorgeButton.Down);
                     return;
 
@@ -141,7 +135,6 @@ namespace VAICOM.Extensions.AICPG
                 case "wMsgGeorgeTadsZoomOut":
                 case "wMsgGeorgeTargetListZoomOut":
                 case "wMsgGeorgeLastFoundTarget":
-                case "wMsgGeorgeShutdownFull":
                     AddGeorgeLongButton(AH64GeorgeButton.Down);
                     return;
 
@@ -329,7 +322,18 @@ namespace VAICOM.Extensions.AICPG
                     }
                     return;
                 case "wMsgGeorgeHoldPosition":
+                    if (EnsureMenuMode(AH64MenuMode.Combat))
+                    {
+                        AddGeorgeButton(AH64GeorgeButton.Down);
+                    }
+                    return;
                 case "wMsgGeorgeReturnToBattlePosition":
+                    if (!AH64GeorgeState.HasBattlePosition)
+                    {
+                        Log.Write($"No battle position is currently set", Colors.Warning);
+                        UI.Playsound.Sorry();
+                        return;
+                    }
                     if (EnsureMenuMode(AH64MenuMode.Combat))
                     {
                         AddGeorgeButton(AH64GeorgeButton.Down);
@@ -511,15 +515,28 @@ namespace VAICOM.Extensions.AICPG
                 case "wMsgGeorgeAddBattlePosition":
                 case "wMsgGeorgeDeleteBattlePosition":
                     // Available in Combat, Hover, or Defense; prefer Combat as the default switch target.
-                    if (!(InCombatMode() || InHoverMode() || InDefenseMode()))
+                    if (!EnsureMenuMode(AH64MenuMode.Combat))
                     {
-                        EnsureMenuMode(AH64MenuMode.Combat);
+                        return;
                     }
 
-                    if (InCombatMode() || InHoverMode() || InDefenseMode())
+                    Log.Write($"HasBattlePosition: {AH64GeorgeState.HasBattlePosition}", Colors.Text);
+                    if (commandId.Equals("wMsgGeorgeDeleteBattlePosition") && !AH64GeorgeState.HasBattlePosition)
                     {
+                        // Ignore deletion if battle position not set, this prevents
+                        // triggering the adding of a new battle position
+                        Log.Write($"No battle position is currently set", Colors.Warning);
+                        UI.Playsound.Sorry();
+                        return;
+                    }
+                    // If we are adding a battle position and one already exists then remove it first
+                    if (commandId.Equals("wMsgGeorgeAddBattlePosition") && AH64GeorgeState.HasBattlePosition)
+                    {
+                        AH64GeorgeState.HasBattlePosition = false;
                         AddGeorgeLongButton(AH64GeorgeButton.Multifunction);
                     }
+                    AddGeorgeLongButton(AH64GeorgeButton.Multifunction);
+                    AH64GeorgeState.HasBattlePosition = !AH64GeorgeState.HasBattlePosition;
                     return;
 
                 // George PLT Defense Mode items
