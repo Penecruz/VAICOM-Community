@@ -67,6 +67,17 @@ namespace VAICOM
                             return;
                         }
 
+                        // Read the channel before building the message, so an unreadable
+                        // command exits without leaving a half-built message behind.
+                        string tacanchan = Extensions.CommandNumbers.Digits();
+
+                        if (tacanchan.Length != 3)
+                        {
+                            Log.Write("TACAN tune: expected 3 digits, got '" + tacanchan + "'", Colors.Warning);
+                            UI.Playsound.Recipientna();
+                            return;
+                        }
+
                         // else continue
                         State.currentmessage = new CommsMessage();
                         setdefaultmessageparams();
@@ -90,10 +101,8 @@ namespace VAICOM
 
                         // major {CMDSEGMENT:2}
 
-                        int majval1;
-                        Int32.TryParse(State.Proxy.Utility.ParseTokens("{CMDSEGMENT:2}"), out majval1);
-                        int majval2;
-                        Int32.TryParse(State.Proxy.Utility.ParseTokens("{CMDSEGMENT:3}"), out majval2);
+                        int majval1 = Extensions.CommandNumbers.At(tacanchan, 0);
+                        int majval2 = Extensions.CommandNumbers.At(tacanchan, 1);
 
                         int majval = (10 * majval1) + majval2;
 
@@ -140,9 +149,8 @@ namespace VAICOM
                                 break;
                         }
 
-                        // minor {CMDSEGMENT:3}
-                        int minval;
-                        Int32.TryParse(State.Proxy.Utility.ParseTokens("{CMDSEGMENT:4}"), out minval);
+                        // minor: third digit of the channel
+                        int minval = Extensions.CommandNumbers.At(tacanchan, 2);
 
                         switch (minval)
                         {
