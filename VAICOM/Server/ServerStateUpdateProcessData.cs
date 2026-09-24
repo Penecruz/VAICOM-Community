@@ -382,7 +382,14 @@ namespace VAICOM
                 }
                 else
                 {
-                    PTT.PTT_Manage_Listen_States_OnPressRelease(false, false);
+                    bool txLinkActive = State.activeconfig.MP_UseTXLink
+                        && !(State.activeconfig.MP_TXLink_MPOnly && !State.currentstate.multiplayer);
+                    bool holdTxLinkState = txLinkActive && (State.TXLinkMenuHoldActive || State.TXLinkExplicitSuspendRequested);
+
+                    if (!holdTxLinkState)
+                    {
+                        PTT.PTT_Manage_Listen_States_OnPressRelease(false, false);
+                    }
                 }
 
                 // Process F10 menu after module validation

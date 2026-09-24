@@ -62,6 +62,7 @@ namespace VAICOM
                 State.allowairioswitching = false;
                 State.beaconlocked = State.oneradioactive;
                 State.ResetSelectedUnits();
+                State.ResetTXLinkRuntimeState();
                 State.menuauximported = false;
                 Extensions.RIO.helper.showingjestermenu = false;
 

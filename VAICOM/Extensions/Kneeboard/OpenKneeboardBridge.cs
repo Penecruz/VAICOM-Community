@@ -4895,7 +4895,6 @@ namespace VAICOM
                         s = Regex.Replace(s, @"\[\s*""((?:\\.|[^""\\])*)""\s*\]\s*=", "\"$1\":");
                         s = Regex.Replace(s, @"\b([A-Za-z_][A-Za-z0-9_]*)\s*=", "\"$1\":");
 
-                        s = s.Replace("'", "\"");
                         s = Regex.Replace(s, @",\s*([}\]])", "$1");
                         s = s.Trim();
 
@@ -4904,7 +4903,33 @@ namespace VAICOM
                             return false;
                         }
 
-                        JToken parsed = JToken.Parse(s);
+                        if (TryParseRouteToolJsonCandidate(s, out json))
+                        {
+                            return true;
+                        }
+
+                        string singleQuotedNormalized = NormalizeLuaSingleQuotedStrings(s);
+                        if (!string.Equals(singleQuotedNormalized, s, StringComparison.Ordinal)
+                            && TryParseRouteToolJsonCandidate(singleQuotedNormalized, out json))
+                        {
+                            return true;
+                        }
+
+                        return false;
+                    }
+                    catch
+                    {
+                        return false;
+                    }
+                }
+
+                private static bool TryParseRouteToolJsonCandidate(string candidate, out string json)
+                {
+                    json = "";
+
+                    try
+                    {
+                        JToken parsed = JToken.Parse(candidate);
                         JObject wrapped = new JObject
                         {
                             ["data"] = parsed
@@ -4917,6 +4942,106 @@ namespace VAICOM
                     {
                         return false;
                     }
+                }
+
+                private static string NormalizeLuaSingleQuotedStrings(string text)
+                {
+                    if (string.IsNullOrEmpty(text)) return text;
+
+                    StringBuilder sb = new StringBuilder(text.Length + 16);
+                    bool inDouble = false;
+                    bool inSingle = false;
+                    bool escaped = false;
+
+                    for (int i = 0; i < text.Length; i++)
+                    {
+                        char ch = text[i];
+
+                        if (inSingle)
+                        {
+                            if (escaped)
+                            {
+                                if (ch == '"' || ch == '\\')
+                                {
+                                    sb.Append('\\');
+                                }
+                                sb.Append(ch);
+                                escaped = false;
+                                continue;
+                            }
+
+                            if (ch == '\\')
+                            {
+                                escaped = true;
+                                continue;
+                            }
+
+                            if (ch == '\'')
+                            {
+                                sb.Append('"');
+                                inSingle = false;
+                                continue;
+                            }
+
+                            if (ch == '"')
+                            {
+                                sb.Append("\\\"");
+                            }
+                            else
+                            {
+                                sb.Append(ch);
+                            }
+
+                            continue;
+                        }
+
+                        if (inDouble)
+                        {
+                            sb.Append(ch);
+
+                            if (escaped)
+                            {
+                                escaped = false;
+                                continue;
+                            }
+
+                            if (ch == '\\')
+                            {
+                                escaped = true;
+                            }
+                            else if (ch == '"')
+                            {
+                                inDouble = false;
+                            }
+
+                            continue;
+                        }
+
+                        if (ch == '\'')
+                        {
+                            sb.Append('"');
+                            inSingle = true;
+                            escaped = false;
+                            continue;
+                        }
+
+                        if (ch == '"')
+                        {
+                            sb.Append(ch);
+                            inDouble = true;
+                            escaped = false;
+                            continue;
+                        }
+
+                        sb.Append(ch);
+                    }
+
+                    if (inSingle || escaped)
+                    {
+                        return text;
+                    }
+
+                    return sb.ToString();
                 }
 
                 private static OpenKneeboardServerSnapshot BuildServerSnapshot()

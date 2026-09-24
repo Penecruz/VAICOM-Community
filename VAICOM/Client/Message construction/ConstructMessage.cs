@@ -487,6 +487,9 @@ namespace VAICOM
                         if (State.currentcommand.isOptions())
                         {
                             Log.Write("Identified as options command", Colors.Inline);
+                            State.TXLinkMenuHoldActive = true;
+                            State.TXLinkExplicitMenuCloseRequested = false;
+
                             if (State.currentkey["recipient"].Equals("RIO") || State.currentkey["recipient"].Equals("Iceman"))
                             {
                                 State.showingoptions = false;
@@ -560,6 +563,13 @@ namespace VAICOM
                                     {
                                         State.showingoptions = false;
                                         Extensions.RIO.helper.showingjestermenu = false;
+                                        State.TXLinkMenuHoldActive = false;
+                                        State.TXLinkExplicitMenuCloseRequested = true;
+                                    }
+                                    else
+                                    {
+                                        State.TXLinkMenuHoldActive = true;
+                                        State.TXLinkExplicitMenuCloseRequested = false;
                                     }
                                 }
                                 catch (Exception e)
@@ -571,7 +581,10 @@ namespace VAICOM
                             {
                                 State.currentmessage.type = Messagetypes.iCommandSequence;
                                 Message.SetMenuCmdSequence();
-                                State.showingoptions = true;
+                                bool explicitDcsMenuClose = State.currentkey["command"].Equals("menu12", StringComparison.OrdinalIgnoreCase);
+                                State.showingoptions = !explicitDcsMenuClose;
+                                State.TXLinkMenuHoldActive = !explicitDcsMenuClose;
+                                State.TXLinkExplicitMenuCloseRequested = explicitDcsMenuClose;
                             }
                         }
 

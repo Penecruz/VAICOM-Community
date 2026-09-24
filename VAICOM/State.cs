@@ -364,6 +364,16 @@ namespace VAICOM
         }
 
         public static bool IntercomHotMicLatched;
+        public static bool TXLinkMenuHoldActive;
+        public static bool TXLinkExplicitMenuCloseRequested;
+        public static bool TXLinkExplicitSuspendRequested;
+
+        public static void ResetTXLinkRuntimeState()
+        {
+            TXLinkMenuHoldActive = false;
+            TXLinkExplicitMenuCloseRequested = false;
+            TXLinkExplicitSuspendRequested = false;
+        }
 
         public static Server.ServerState previousstate;
         public static Server.ServerState currentstate;

@@ -931,6 +931,24 @@ namespace VAICOM
 
                         State.currentrecipientclass = getrecipientclass();
 
+                        bool txLinkActive = State.activeconfig.MP_UseTXLink
+                            && !(State.activeconfig.MP_TXLink_MPOnly && !State.currentstate.multiplayer);
+                        bool isIntercomTXNode = State.currentTXnode != null && State.currentTXnode.Equals(PTT.TXNodes.TX5);
+                        bool isCrewDomainRecipientClass = State.currentrecipientclass.Equals(Recipientclasses.Crew)
+                            || IsAiCrewRecipientClass(State.currentrecipientclass);
+
+                        if (txLinkActive
+                            && !isIntercomTXNode
+                            && isCrewDomainRecipientClass
+                            && !State.currentcommand.isOptions()
+                            && !State.currentcommand.isMenu())
+                        {
+                            Log.Write("TX-LINK: AI crew/intercom recipients require TX5 intercom context.", Colors.Warning);
+                            State.MessageReset();
+                            State.processlocked = false;
+                            return false;
+                        }
+
                         bool intercomOnlyHotMic = !State.transmitting
                             && (State.IsCrewHotMicActiveOnIntercomTX() || State.IntercomHotMicLatched);
                         bool isIntercomRecipientClass = State.currentrecipientclass.Equals(Recipientclasses.Crew)

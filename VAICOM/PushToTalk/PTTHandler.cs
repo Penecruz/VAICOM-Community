@@ -48,6 +48,16 @@ namespace VAICOM
                     TXLinkApply = State.activeconfig.MP_UseTXLink && !(State.activeconfig.MP_TXLink_MPOnly && !State.currentstate.multiplayer);
                     Log.Write("TXLinkApply = " + TXLinkApply, Colors.Inline);
 
+                    if (!TXLinkApply)
+                    {
+                        State.ResetTXLinkRuntimeState();
+                    }
+                    else if (keypress)
+                    {
+                        State.TXLinkExplicitSuspendRequested = false;
+                        State.TXLinkExplicitMenuCloseRequested = false;
+                    }
+
                     bool applylong = !TXLinkApply || longpress;
                     Log.Write("apply long press = " + applylong, Colors.Inline);
 
@@ -253,6 +263,8 @@ namespace VAICOM
 
                 if (keypress)
                 {
+                    State.TXLinkExplicitSuspendRequested = false;
+
                     if (State.currentTXnode != null && State.currentTXnode.Equals(TXNodes.TX5))
                     {
                         State.IntercomHotMicLatched = State.IsCrewHotMicActiveOnIntercomTX();
@@ -494,6 +506,8 @@ namespace VAICOM
             {
                 try
                 {
+                    State.TXLinkExplicitSuspendRequested = true;
+
                     if (State.currentTXnode != null && State.currentTXnode.radios[0].on)
                     {
                         UI.Playsound.Pttnoise(false);

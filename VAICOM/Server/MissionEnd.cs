@@ -30,6 +30,7 @@ namespace VAICOM
                 State.currentstate = new ServerState();
                 State.currentstate.dcsversion = "";
                 State.currentstate.easycomms = State.previousstate.easycomms;
+                State.ResetTXLinkRuntimeState();
                 PTT.PTT_ResetConfig();
                 PTT.PTT_TXAssignmentDefault();
                 PTT.PTT_ApplyNewConfig();
