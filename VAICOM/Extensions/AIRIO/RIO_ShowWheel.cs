@@ -32,6 +32,40 @@ namespace VAICOM
                     return State.activeconfig != null && State.activeconfig.RIO_MiniWheel_Enabled;
                 }
 
+                public static void SetMiniWheelVisibility(bool visible)
+                {
+                    if (!IsMiniWheelVisibilityPatchActive())
+                    {
+                        return;
+                    }
+
+                    if (!State.IsAirioTomcatModule())
+                    {
+                        return;
+                    }
+
+                    try
+                    {
+                        State.currentmessage = new DcsClient.Message.CommsMessage();
+                        State.currentmessage.type = Messagetypes.DeviceControl;
+                        State.currentmessage.extsequence = new List<Extensions.RIO.DeviceAction>
+                        {
+                            BuildJesterWheelVisibilityAction(visible)
+                        };
+
+                        State.currentmessage.debug = State.activeconfig.Debugmode;
+                        State.currentmessage.client = State.client;
+                        State.currentmessage.mode = State.clientmode;
+                        State.currentmessage.AIRIO = true;
+
+                        DcsClient.SendClientMessage();
+                    }
+                    catch (Exception e)
+                    {
+                        Log.Write("Error setting mini wheel visibility: " + e.StackTrace, Colors.Inline);
+                    }
+                }
+
                 public static void ShowWheel(bool show)
                 {
 

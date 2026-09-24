@@ -184,6 +184,30 @@ namespace VAICOM
                         }
                         break;
 
+                    case "airio.wheel.visible.on":
+                        if (State.dll_installed_rio)
+                        {
+                            Extensions.RIO.helper.SetMiniWheelVisibility(true);
+                        }
+                        else
+                        {
+                            UI.Playsound.Sorry();
+                            vaProxy.WriteToLog("This command requires AIRIO extension.", Colors.Warning);
+                        }
+                        break;
+
+                    case "airio.wheel.visible.off":
+                        if (State.dll_installed_rio)
+                        {
+                            Extensions.RIO.helper.SetMiniWheelVisibility(false);
+                        }
+                        else
+                        {
+                            UI.Playsound.Sorry();
+                            vaProxy.WriteToLog("This command requires AIRIO extension.", Colors.Warning);
+                        }
+                        break;
+
                     case "airio.dev.radio.tune":
                         if (State.dll_installed_rio)
                         {
