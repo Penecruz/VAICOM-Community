@@ -1179,7 +1179,14 @@ local function getCommunicatorCached(Locator)
 	if Locator == nil then return nil end
 	local cached = propcache.comm[Locator]
 	if cached == nil then
-		cached = Locator:getCommunicator()
+		if Locator.getCommunicator then
+			local okComm, valueComm = base.pcall(function() return Locator:getCommunicator() end)
+			if okComm then
+				cached = valueComm
+			else
+				cached = nil
+			end
+		end
 		if cached == nil then cached = false end -- memoize the "no communicator" result
 		propcache.comm[Locator] = cached
 	end
@@ -1503,7 +1510,14 @@ local function getDescCached(Locator)
 	if Locator == nil then return nil end
 	local cached = propcache.desc[Locator]
 	if cached == nil then
-		cached = Locator:getDesc()
+		if Locator.getDesc then
+			local okDesc, valueDesc = base.pcall(function() return Locator:getDesc() end)
+			if okDesc then
+				cached = valueDesc
+			else
+				cached = nil
+			end
+		end
 		if cached == nil then cached = false end
 		propcache.desc[Locator] = cached
 	end
@@ -1515,7 +1529,12 @@ local function getPlayerNameCached(Locator)
 	local cached = propcache.pname[Locator]
 	if cached == nil then
 		if Locator.getPlayerName then
-			cached = Locator:getPlayerName()
+			local okPName, valuePName = base.pcall(function() return Locator:getPlayerName() end)
+			if okPName then
+				cached = valuePName
+			else
+				cached = nil
+			end
 		end
 		if cached == nil then cached = false end
 		propcache.pname[Locator] = cached
@@ -1528,12 +1547,23 @@ local function getRangeCached(Locator)
 	local cached = propcache.range[Locator]
 	if cached == nil then
 		local selfPoint = base.vaicom.state.playerpoint
-		if not selfPoint then
-			selfPoint = Locator:getPoint()
+		if not selfPoint and Locator.getPoint then
+			local okSelfPoint, valueSelfPoint = base.pcall(function() return Locator:getPoint() end)
+			if okSelfPoint then
+				selfPoint = valueSelfPoint
+			end
 		end
-		local ipoint = Locator:getPoint()
-		local distsq = (ipoint.x - selfPoint.x) * (ipoint.x - selfPoint.x) + (ipoint.z - selfPoint.z) * (ipoint.z - selfPoint.z)
-		cached = base.math.floor(base.math.sqrt(distsq))
+		local ipoint = nil
+		if Locator.getPoint then
+			local okIPoint, valueIPoint = base.pcall(function() return Locator:getPoint() end)
+			if okIPoint then
+				ipoint = valueIPoint
+			end
+		end
+		if selfPoint and ipoint and selfPoint.x and selfPoint.z and ipoint.x and ipoint.z then
+			local distsq = (ipoint.x - selfPoint.x) * (ipoint.x - selfPoint.x) + (ipoint.z - selfPoint.z) * (ipoint.z - selfPoint.z)
+			cached = base.math.floor(base.math.sqrt(distsq))
+		end
 		if cached == nil then cached = false end
 		propcache.range[Locator] = cached
 	end
