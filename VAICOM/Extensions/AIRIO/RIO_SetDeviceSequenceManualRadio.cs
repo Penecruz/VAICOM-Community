@@ -53,9 +53,69 @@ namespace VAICOM
 
                         string header = State.Proxy.Utility.ParseTokens("{CMDSEGMENT:0}");
 
+                        // Segments 1, 2, 3 and 5 are the frequency digits either side of the
+                        // decimal. Speech engines collapse spoken digit runs, so read them from
+                        // the whole command rather than one per segment.
+                        //
+                        // Segment 6 (the 00/25/50/75 part) is matched as a string further down,
+                        // because it accepts spelled-out and non-English forms that carry no
+                        // digits at all. Two cases:
+                        //
+                        //  - the phrase has that section, so the digits it contributed are the
+                        //    tail of this run: strip them and let the switch below do its work;
+                        //  - the phrase does not, which is what a profile looks like once the
+                        //    megahertz digits are collapsed into a single section: take the
+                        //    fraction from the tail of the run instead.
+                        //
+                        // The second case is what makes a phrase like
+                        //   Radio Frequency [30..399] [Point; Decimal] [0..9] [0; 2 5; 5 0; 7 5]
+                        // work, which cannot be expressed while the fraction is tied to a fixed
+                        // segment index.
+                        string radiodigits = Extensions.CommandNumbers.Digits();
+
+                        string fractionsegment = State.Proxy.Utility.ParseTokens("{CMDSEGMENT:6}");
+                        bool hasfractionsegment = !string.IsNullOrWhiteSpace(fractionsegment)
+                            && !fractionsegment.Equals("Not set", StringComparison.OrdinalIgnoreCase);
+
+                        int fractionfromrun = -1;
+
+                        if (hasfractionsegment)
+                        {
+                            string fractiondigits = Extensions.CommandNumbers.DigitsIn(fractionsegment);
+
+                            if (fractiondigits.Length > 0 && radiodigits.EndsWith(fractiondigits))
+                            {
+                                radiodigits = radiodigits.Substring(0, radiodigits.Length - fractiondigits.Length);
+                            }
+
+                            if (radiodigits.Length < 3 || radiodigits.Length > 4)
+                            {
+                                ReportRioInputError("Could not read the radio frequency.\nSay it as 251 decimal 7 5 0.",
+                                                    "AN/ARC-182 tune: expected 3 or 4 frequency digits, got '" + radiodigits + "'");
+                                return;
+                            }
+
+                            // a frequency given to whole megahertz tunes to .0
+                            radiodigits = (radiodigits + "0").Substring(0, 4);
+                        }
+                        else
+                        {
+                            if (radiodigits.Length < 3 || radiodigits.Length > 6)
+                            {
+                                ReportRioInputError("Could not read the radio frequency.\nSay it as 251 decimal 7 5 0.",
+                                                    "AN/ARC-182 tune: expected 3 to 6 frequency digits, got '" + radiodigits + "'");
+                                return;
+                            }
+
+                            // 251 -> 251.000, 2517 -> 251.700, 251750 -> 251.750
+                            string padded = (radiodigits + "000000").Substring(0, 6);
+
+                            Int32.TryParse(padded.Substring(4, 2), out fractionfromrun);
+                            radiodigits = padded.Substring(0, 4);
+                        }
+
                         // MAJ 1
-                        int majval1;
-                        Int32.TryParse(State.Proxy.Utility.ParseTokens("{CMDSEGMENT:1}"), out majval1);
+                        int majval1 = Extensions.CommandNumbers.At(radiodigits, 0);
 
                         switch (majval1)
                         {
@@ -74,8 +134,7 @@ namespace VAICOM
                         }
 
                         // MAJ 2
-                        int majval2;
-                        Int32.TryParse(State.Proxy.Utility.ParseTokens("{CMDSEGMENT:2}"), out majval2);
+                        int majval2 = Extensions.CommandNumbers.At(radiodigits, 1);
 
                         switch (majval2)
                         {
@@ -112,8 +171,7 @@ namespace VAICOM
                         }
 
                         // MAJ 3
-                        int majval3;
-                        Int32.TryParse(State.Proxy.Utility.ParseTokens("{CMDSEGMENT:3}"), out majval3);
+                        int majval3 = Extensions.CommandNumbers.At(radiodigits, 2);
 
                         switch (majval3)
                         {
@@ -150,8 +208,7 @@ namespace VAICOM
                         }
 
                         // MIN 1
-                        int minval1;
-                        Int32.TryParse(State.Proxy.Utility.ParseTokens("{CMDSEGMENT:5}"), out minval1);
+                        int minval1 = Extensions.CommandNumbers.At(radiodigits, 3);
 
                         switch (minval1)
                         {
@@ -279,6 +336,22 @@ namespace VAICOM
                             default:
                                 minval2 = 0;
                                 break;
+                        }
+
+                        // where the phrase carried no fraction section, the run supplied it
+                        if (!hasfractionsegment)
+                        {
+                            minval2 = fractionfromrun;
+                        }
+
+                        // 00, 25, 50 and 75 are the only values the device accepts. Anything
+                        // else matches no case below and would queue no keypress for the last
+                        // two digits, tuning a different frequency than the one reported.
+                        if (minval2 != 0 && minval2 != 25 && minval2 != 50 && minval2 != 75)
+                        {
+                            ReportRioInputError("Frequency must end in 00, 25, 50 or 75.",
+                                                "AN/ARC-182 tune: fractional value " + minval2 + " is not a 25 kHz step");
+                            return;
                         }
 
                         switch (minval2)

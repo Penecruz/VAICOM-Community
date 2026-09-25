@@ -41,28 +41,30 @@ namespace VAICOM
 
                         Log.Write("Tunemod = " + SendMessage.tunemod, Colors.Inline);
 
-                        // freq first 3 digits
-                        string majval1 = State.Proxy.Utility.ParseTokens("{CMDSEGMENT:2}");
+                        // Frequency digits, however the speech engine segmented them:
+                        // three MHz digits followed by up to three fractional digits.
+                        string freqdigits = Extensions.CommandNumbers.Digits();
+
+                        if (freqdigits.Length < 3)
+                        {
+                            Log.Write("Radio frequency: expected at least 3 digits, got '" + freqdigits + "'", Colors.Inline);
+                            return;
+                        }
+
+                        SendRadioControlMessage(SendMessage);
+                        SendRadioControlMessage(SendMessage);
                         SendRadioControlMessage(SendMessage);
 
-                        string majval2 = State.Proxy.Utility.ParseTokens("{CMDSEGMENT:3}");
-                        SendRadioControlMessage(SendMessage);
+                        // pad a partially spoken frequency out to MHz.kHz
+                        string freqmhz = (freqdigits + "000000").Substring(0, 6);
 
-                        string majval3 = State.Proxy.Utility.ParseTokens("{CMDSEGMENT:4}");
-                        SendRadioControlMessage(SendMessage);
-
-                        // decimal = {CMDSEGMENT:5}
-
-                        string minval1 = State.Proxy.Utility.ParseTokens("{CMDSEGMENT:6}");
-                        string minval2 = State.Proxy.Utility.ParseTokens("{CMDSEGMENT:7}").Replace(" ", "");
-
-                        string combinedfreq = (majval1 + majval2 + majval3 + minval1 + minval2 + "000000000").Substring(0, 9);
+                        string combinedfreq = (freqmhz + "000").Substring(0, 9);
 
                         SendMessage.tunefrq.Add(combinedfreq);
 
                         SendRadioControlMessage(SendMessage);
 
-                        Log.Write("Select Frequency " + band.ToUpper() + "" + majval1 + majval2 + majval3 + "." + minval1 + minval2 + " MHz", Colors.Message);
+                        Log.Write("Select Frequency " + band.ToUpper() + "" + freqmhz.Substring(0, 3) + "." + freqmhz.Substring(3, 3) + " MHz", Colors.Message);
 
                         UI.Playsound.Commandcomplete();
 
