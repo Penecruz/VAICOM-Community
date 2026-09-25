@@ -52,37 +52,15 @@ namespace VAICOM
                         State.currentmessage.type = Messagetypes.DeviceControl;
                         State.currentmessage.extsequence = new List<Extensions.RIO.DeviceAction>();
 
-                        string dltune = Extensions.CommandNumbers.Digits();
-
-                        // The three wheels are the tens, units and tenths of a frequency whose
-                        // leading 3 is fixed in hardware, so accept the frequency spoken in
-                        // full ("three zero five five" -> 3055) as well as the bare wheels.
-                        if (dltune.Length == 4)
-                        {
-                            if (dltune[0] != '3')
-                            {
-                                ReportRioInputError(dltune.Insert(3, ".") + "0 is not a valid datalink frequency.\nRange is 300.00 to 399.90.",
-                                                    "Datalink tune: " + dltune + " is outside 3000-3999");
-                                return;
-                            }
-
-                            dltune = dltune.Substring(1);
-                        }
-
-                        if (dltune.Length != 3)
-                        {
-                            ReportRioInputError("Could not read the datalink frequency.\nSay three digits, or the full frequency as 3xxx.",
-                                                "Datalink tune: expected 3 digits, got '" + dltune + "'");
-                            return;
-                        }
-
                         bool isTomcatBU = IsF14BUActive();
                         Log.Write("AIRIO DL tune detect | state.id=" + (State.currentstate != null ? State.currentstate.id : "<null>") + " | isF14BU=" + isTomcatBU, Colors.Text);
 
                         string header = State.Proxy.Utility.ParseTokens("{CMDSEGMENT:0}");
                         //Log.Write("Segment 0 = " + header, Colors.Warning);
 
-                        int majval1 = Extensions.CommandNumbers.At(dltune, 0);
+                        int majval1;
+                        Int32.TryParse(State.Proxy.Utility.ParseTokens("{CMDSEGMENT:1}"), out majval1);
+                        //Log.Write("majval1 = " + majval1, Colors.Warning);
                         if (isTomcatBU)
                         {
                             double value = GetDatalinkTuneDigitValue(majval1);
@@ -131,7 +109,9 @@ namespace VAICOM
                             }
                         }
 
-                        int majval2 = Extensions.CommandNumbers.At(dltune, 1);
+                        int majval2;
+                        Int32.TryParse(State.Proxy.Utility.ParseTokens("{CMDSEGMENT:2}"), out majval2);
+                        //Log.Write("majval2 = " + majval2, Colors.Warning);
                         if (isTomcatBU)
                         {
                             double value = GetDatalinkTuneDigitValue(majval2);
@@ -180,7 +160,9 @@ namespace VAICOM
                             }
                         }
 
-                        int minval = Extensions.CommandNumbers.At(dltune, 2);
+                        int minval;
+                        Int32.TryParse(State.Proxy.Utility.ParseTokens("{CMDSEGMENT:4}"), out minval);
+                        //Log.Write("Segment 3 = " + minval, Colors.Warning);
                         if (isTomcatBU)
                         {
                             double value = GetDatalinkTuneDigitValue(minval);
