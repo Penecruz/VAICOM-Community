@@ -15,7 +15,7 @@ immersive environment free from the constraints of keyboard or mouse-controlled 
 
 A group of community members have patched his work to make it compatible with DCS 2.8.XXXXX and later. This is a standalone installer that will replace your previous version of VAICOM. It will not work with DCS 2.7.XXXXX or erlier.
 
-We now have VAICOM Community Edition running well with DCS 3.0.X.X and are looking where we can take it going forward with lots of new modules coming to DCS World.
+We now have VAICOM Community Edition running well with DCS 2.8.X.X and are looking where we can take it going forward with lots of new modules coming to DCS World.
 We continue to develop VAICOMPRO to keep it functioning with changes to DCS. That said, there will be issues from time to time. So please use the issues register here on GitHub to report them.
 
 Remember this is a community group, a group that donates their time to keep this awesome software alive. Be respectful and patient, we all have real jobs too. Join our Discord Server (link Below) and become part of our community.
@@ -30,7 +30,7 @@ The VAICOM Community Team
 
 ## Known Issues
 
-VAICOM Community 3.0.X.X is not designed to be backwards compatible with DCS 2.7.X If you wish to continue using VAICOMPRO for DCS 2.7, please use Hollywood_315's final release and not VAICOMPRO Community.
+VAICOM Community 2.8.X.X is not designed to be backwards compatible with DCS 2.7.X If you wish to continue using VAICOMPRO for DCS 2.7, please use Hollywood_315's final release and not VAICOMPRO Community.
 
 VAICOM Community Edition will not pass the Integrity Check on Multiplayer Servers that require Pure Client Scripts unless the AIRIO and Kneeboard extensions are deactivated via the VAICOMPRO UI.
 This is because VAICOMPRO adds lines to some of DCS World's core LUA files to enable it to function. Multiplayer Server administrators must enable Pure Client Scripts as an option as it is off by default. Very few Servers require Pure Client Scripts. This is something that only ED can change.
@@ -74,38 +74,31 @@ Flashing Comms Menu after DCS World update is a known issue and can be resolved 
 ## Patch Notes
 
 
-This update is focused on two key areas, the F-14 Tomcat and Vaicom performance. It restores previous functionality for the F-14A/B and adds a couple of changes to keywords and fixes up some non-functioning commands and removes some that were never wired in previously. It adds functionality for the F-14B(U) and as a first pass and this we will make changes in future releases based on user feedback. It also adds new coding to block the flashing of the Jester Wheel when some commands were issued.
-On the performance side a massive code cleanup of the communications between Vaicom and DCS with increased use of caching and removing data not used from the network traffic. With the rise of OpenKneeboard Out Vaicom was grabbing more data from DCS, this was causing frame rate latency issues for some users, particularly on very busy missions or servers with lots of units and client slots. 
+**VAICOM plugin 3.0.1.8**
 
-New
-- Added Tomcat shutdown command and sequence handling, including F-14B(U)-specific routing, cue playback, and alias registration.
-- Added module-aware AIRIO context-key flows, including EGI direct waypoint support.
-- Added Flight Plan tab-aware diagnostics collection (now tied to FLT PLN tab view).
-- Added expanded map-marker diagnostics support with increased marker cap (20 → 64).
-- Added expanded AI CREW keyword categories in kneeboard output, including Startup, Shutdown, Walkman, and Miscellaneous etc.
+This update fixes a bug Introduced in the last version for Ground and tower commands. Adds some new Tanker recipients and some more AI_ATC functionality. It also see the branding change from Vaicom Pro to just Vaicom, this is long overdue as there is no paid content in the community version.
 
-Improved
-- Refreshed F-14/AIRIO Jester script mappings and command coverage across radar, weapons, LANTIRN, datalink, TACAN, NAV/utility, CMDS/defensive, and GGW/JDAM behaviors.
-- Modernized AIRIO command architecture: improved command wiring, labels/hints, routing/validation, and proxy timing reliability.
-- Improved AIRIO option-hint selection and EGI direct-waypoint sequencing reliability.
-- Improved AIRIO GGW preplanned command handling with broader spoken-number parsing, clearer pass/fail logging, explicit sequence dispatch, and queued feedback cues.
-- Improved OpenKneeboard AI CREW rendering/grouping and tightened AI CREW vs GND CREW separation behavior.
-- Improved profile deployment/update flow, including auto keyword finish and stronger embedded resource handling integrity.
-- Improved F-14 wheel chocks/miniwheel runtime handling to reduce desync and visibility issues.
-- Added caching in update/data paths to reduce runtime overhead.
-- Removed redundant opposition aircraft/helicopter build pass to reduce duplicate update work.
-- Simplified F-14 Jester integration by removing obsolete JesterInit patch resources and handling legacy miniwheel suppression directly in appended JesterAI page.
+-	Fix conflict errors in the Aliases with "Request Taxi".
+-	Add new S3 Tanker callsigns Bloodhound, Mauler and Navy One.
+-	Add new return to approach AI_ATC command.
+-	Slight changes in Moose Airboss commands and additional "Airboss Training Pattern" command.
+-	New Vaicom branding and artwork.
 
-Fixed
-- Fixed a null-pointer issue that could prevent some units from being collected for kneeboard output.
+
+YOU WILL NEED A KEYWORD RESET AND RESTART VOICE ATTACK, DO FINISH IN THE EDITOR AND PASTE THE NEW KEYWORD SET TO THE PROFILE AS DESCRIBED IN THE MANUAL.
 
 Known Issues
-- C-130J Select Tunes radio command will tune radio but not change AMU or CNI-MU display.
-- George AI the AH-64D M299_EMPTY racks if loaded with other missiles break direct weapon selection (still working a fix for this).
+
+-	Rearming Request with Ground Crew will not open Rearming UI, only rearms last selection (Use Options Command to access menu for now).
+
+There have been changes since DCS Version 2.9.6.X that adds new rearm routine to support
+Dynamic Spawn Client Slots, Some Users have reported issues when jumping between Dynamic slots and Vaicom Pro not recognizing the module.
+
+**Note the MSI version below is for Voice Attack 1.16 and Voice Attack 2.0 or greater only. If you have both installed, you must manually select the path to the version you would like to install Vaicom.**
 
 ## Community Team
 
-Pene, Special K, Sleighzy, D3adCy11nd3r, Folgers, Hornblower793, Liam8, MAXsenna, MisterOutofTime, Raskit, Hue Jass and stag1975
+Pene, Special K, D3adCy11nd3r, Folgers, Hornblower793, Liam8, MAXsenna, MisterOutofTime, Raskit and stag1975
 
 ## Patreon Donations
 
@@ -114,4 +107,4 @@ If you want to donate a beer, visit the Official Vaicom Patreon.
 
 
 #### Beta Team
-104th_Aeons, GSG-3|Turbine|202, DrChainsaw, Jaeger, Nicola, Padinn, SPAZ-505, tomeye, Virus, Bonz RexExGSR, LawnBoy, Scotia, MrAxen, Haack, Contour, DragonBlade117, apogeo, ApocV, Goose, UnseenKill and Trigger.
+104th_Aeons, GSG-3|Turbine|202, DrChainsaw, Jaeger, Nicola, Padinn, SPAZ-505, tomeye, Virus, Bonz RexExGSR, LawnBoy and Scotia
