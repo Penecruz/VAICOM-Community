@@ -254,6 +254,9 @@ namespace VAICOM
                             case "0":
                                 minval2 = 0;
                                 break;
+                            case "00":
+                                minval2 = 0;
+                                break;
                             case "zero":
                                 minval2 = 0;
                                 break;
@@ -266,6 +269,9 @@ namespace VAICOM
 
                             //25
                             case "2 5":
+                                minval2 = 25;
+                                break;
+                            case "25":
                                 minval2 = 25;
                                 break;
                             case "two five":
@@ -294,6 +300,9 @@ namespace VAICOM
                             case "5 0":
                                 minval2 = 50;
                                 break;
+                            case "50":
+                                minval2 = 50;
+                                break;
                             case "five zero":
                                 minval2 = 50;
                                 break;
@@ -312,6 +321,9 @@ namespace VAICOM
 
                             // 75
                             case "7 5":
+                                minval2 = 75;
+                                break;
+                            case "75":
                                 minval2 = 75;
                                 break;
                             case "seven five":
@@ -374,7 +386,7 @@ namespace VAICOM
                         // always close menu wheel: add at the very end
                         State.currentmessage.extsequence.Add(VAICOM.Extensions.RIO.DeviceActionsLibrary.RIO.Atom_J_MENU_CLOSE);
 
-                        string message = majval1.ToString() + majval2.ToString() + majval3.ToString() + "." + minval1.ToString() + minval2.ToString() + " MHz";
+                        string message = majval1.ToString() + majval2.ToString() + majval3.ToString() + "." + minval1.ToString() + minval2.ToString("00") + " MHz";
 
                         if (State.activeconfig.RIO_Messages && !State.activeconfig.RIO_Hints_Only)
                         {
