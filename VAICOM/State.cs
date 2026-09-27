@@ -363,6 +363,13 @@ namespace VAICOM
                 && currentTXnode.Equals(PushToTalk.PTT.TXNodes.TX5);
         }
 
+        public static bool IsTXLinkActive()
+        {
+            return activeconfig != null
+                && activeconfig.MP_UseTXLink
+                && !(activeconfig.MP_TXLink_MPOnly && !currentstate.multiplayer);
+        }
+
         public static bool IntercomHotMicLatched;
         public static bool TXLinkMenuHoldActive;
         public static bool TXLinkExplicitMenuCloseRequested;

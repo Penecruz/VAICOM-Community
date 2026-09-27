@@ -35,6 +35,7 @@
 
 ## TX5 Intercom Implementation
 - For TX5 intercom hot mic, allow Options and menu navigation commands (e.g., Take 1..12) without requiring PTT press.
+- For TX-Link behavior: with hot mic OFF, TX1-4 and TX5 short press should start listening and suspend on short press, long press, and command completion; with hot mic ON, TX1-4 should behave the same as hot mic OFF, while TX5 should remain listening with commands gated to AI crew/ground crew.
 
 ## F-14BU DTC Handling
 - For F-14BU DTC handling, NAV[0] (Primary) must always map to Route 1 (R1), and runtime NAVLOG route is always R1; F-14BU DTC can contain up to 12 routes.

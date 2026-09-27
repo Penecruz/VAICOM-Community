@@ -67,9 +67,14 @@ namespace VAICOM
 
                 public static bool noTX()
                 {
+                    bool isKneeboardPageCommand = State.currentcommand != null
+                        && (State.currentcommand.isKneeboard()
+                            || State.currentcommand.uniqueid.Equals(23004)
+                            || State.currentcommand.uniqueid.Equals(23005));
+
                     try
                     {
-                        if (State.currentcommand != null && (State.currentcommand.isOptions() || State.currentcommand.isMenu()))
+                        if (State.currentcommand != null && (State.currentcommand.isOptions() || State.currentcommand.isMenu() || isKneeboardPageCommand))
                         {
                             return false;
                         }
@@ -80,8 +85,15 @@ namespace VAICOM
 
                     if (State.elapsedsincelastpttrelease > 2)
                     {
+                        bool intercomHotMicExemption = State.IsCrewHotMicActive()
+                            && (State.currentrecipientclass.Equals(Recipientclasses.Crew)
+                                || IsAiCrewRecipientClass(State.currentrecipientclass)
+                                || isKneeboardPageCommand
+                                || State.currentcommand.isOptions()
+                                || State.currentcommand.isMenu());
+
                         // void hotkey
-                        if (!State.transmitting && !State.currentrecipientclass.Equals(Recipientclasses.Crew) && !State.IsCrewHotMicActive())
+                        if (!State.transmitting && !intercomHotMicExemption)
                         {
                             Log.Write("PTT: use an active TX node", Colors.Warning);
                             return true;
@@ -931,14 +943,16 @@ namespace VAICOM
 
                         State.currentrecipientclass = getrecipientclass();
 
-                        bool txLinkActive = State.activeconfig.MP_UseTXLink
-                            && !(State.activeconfig.MP_TXLink_MPOnly && !State.currentstate.multiplayer);
+                        bool txLinkActive = State.IsTXLinkActive();
                         bool isIntercomTXNode = State.currentTXnode != null && State.currentTXnode.Equals(PTT.TXNodes.TX5);
                         bool isCrewDomainRecipientClass = State.currentrecipientclass.Equals(Recipientclasses.Crew)
                             || IsAiCrewRecipientClass(State.currentrecipientclass);
+                        bool intercomTxHotMicContext = State.IsCrewHotMicActiveOnIntercomTX();
+                        bool txLinkCrewEligibilityHotMic = txLinkActive && State.IsCrewHotMicActive();
 
                         if (txLinkActive
                             && !isIntercomTXNode
+                            && !(intercomTxHotMicContext || txLinkCrewEligibilityHotMic)
                             && isCrewDomainRecipientClass
                             && !State.currentcommand.isOptions()
                             && !State.currentcommand.isMenu())
@@ -950,11 +964,14 @@ namespace VAICOM
                         }
 
                         bool intercomOnlyHotMic = !State.transmitting
-                            && (State.IsCrewHotMicActiveOnIntercomTX() || State.IntercomHotMicLatched);
+                            && (intercomTxHotMicContext || State.IntercomHotMicLatched);
                         bool isIntercomRecipientClass = State.currentrecipientclass.Equals(Recipientclasses.Crew)
                             || IsAiCrewRecipientClass(State.currentrecipientclass);
+                        bool isKneeboardPageCommand = State.currentcommand.isKneeboard()
+                            || State.currentcommand.uniqueid.Equals(23004)
+                            || State.currentcommand.uniqueid.Equals(23005);
                         bool isHotMicAllowedCommand = isIntercomRecipientClass
-                            || State.currentcommand.isKneeboard()
+                            || isKneeboardPageCommand
                             || State.currentcommand.isOptions()
                             || State.currentcommand.isMenu();
 
@@ -1113,7 +1130,7 @@ namespace VAICOM
                         }
                         else
                         {
-                            bool immediateHotMicSend = !State.transmitting && State.IsCrewHotMicActiveOnIntercomTX();
+                            bool immediateHotMicSend = !State.transmitting && intercomTxHotMicContext;
                             bool deferSendUntilReleaseInVoiceModes = (State.activeconfig.MP_VoIPUseSwitch || State.activeconfig.MP_VoIPParallel)
                                 && State.activeconfig.MP_DelayTransmit
                                 && State.transmitting
@@ -1134,7 +1151,7 @@ namespace VAICOM
                             }
                         }
 
-                        if (riocommand && menucommand && !State.transmitting && State.IsCrewHotMicActiveOnIntercomTX())
+                        if (riocommand && menucommand && !State.transmitting && intercomTxHotMicContext)
                         {
                             PTT.PTT_Manage_Listen_States_OnPressRelease(false, false);
 

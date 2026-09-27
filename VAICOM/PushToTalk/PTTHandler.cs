@@ -109,10 +109,7 @@ namespace VAICOM
                 bool _isVOIP = TXLinkApply && longpress;
                 if (!_isVOIP)
                 {
-                    if (!(keypress && State.transmitting && TXLinkToggle))
-                    {
-                        TXLinkToggle = !TXLinkToggle;
-                    }
+                    TXLinkToggle = !TXLinkToggle;
                 }
                 else
                 {
