@@ -645,13 +645,21 @@ function setShowMenu(on)
 	end
 end
 function onMenuHide(self, menu)
-	-- Override to skip freeCommandMenu() so the communicator remains acquired.
-	-- For modules like the Mi-8, freeCommandMenu() causes is_communicator_available()
-	-- to return false, which prevents VAICOM from transmitting AI comms.
-	-- Original DCS behaviour (without VAICOM) never hides the panel, so
-	-- freeCommandMenu() was never called during a flight; this restores that state.
+	-- Step 1: determine whether this module needs the Mi-8-style communicator workaround.
+	local dcsId = base.string.upper(base.tostring(base.vaicom and base.vaicom.state and base.vaicom.state.dcsid or ""))
+	local keepCommandMenuAcquired = (dcsId == "MI-8MT")
+
+	-- Step 2: always hide the panel UI.
 	self.window:setVisible(false)
 	self.mainCaption:setVisible(false)
+
+	-- Step 3: release command menu for normal modules so DCS F-key menu state is reset.
+	-- Only keep it acquired for Mi-8 where freeCommandMenu() breaks communicator availability.
+	if not keepCommandMenuAcquired then
+		freeCommandMenu()
+	end
+
+	-- Step 4: release mouse capture state.
 	banMouse(self, false)
 end
 function RemoteInputs() --check remote Inputs for errors

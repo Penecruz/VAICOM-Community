@@ -366,6 +366,10 @@ namespace VAICOM
                                 }
                                 if (string.IsNullOrWhiteSpace(newRefresh))
                                 {
+                                    newRefresh = refreshToken;
+                                }
+                                if (string.IsNullOrWhiteSpace(newRefresh))
+                                {
                                     message = "Refresh response missing refresh token.";
                                     return false;
                                 }

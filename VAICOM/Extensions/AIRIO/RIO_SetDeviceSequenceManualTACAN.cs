@@ -87,16 +87,28 @@ namespace VAICOM
                         string header = State.Proxy.Utility.ParseTokens("{CMDSEGMENT:0}");
 
                         // band {CMDSEGMENT:1}
-                        string band = State.Proxy.Utility.ParseTokens("{CMDSEGMENT:1}");
+                        string bandtoken = State.Proxy.Utility.ParseTokens("{CMDSEGMENT:1}");
+                        string band = (bandtoken ?? string.Empty).Trim().ToLowerInvariant();
+                        string bandletter = string.Empty;
 
                         switch (band)
                         {
                             case "x-ray":
+                            case "x ray":
+                            case "xray":
+                            case "x":
                                 State.currentmessage.extsequence.Add(VAICOM.Extensions.RIO.DeviceActionsLibrary.RIO.Atom_J_RAD_TCN_X);
+                                bandletter = "X";
                                 break;
                             case "yankee":
+                            case "y":
                                 State.currentmessage.extsequence.Add(VAICOM.Extensions.RIO.DeviceActionsLibrary.RIO.Atom_J_RAD_TCN_Y);
+                                bandletter = "Y";
                                 break;
+                            default:
+                                Log.Write("TACAN tune: expected X-Ray or Yankee band, got '" + bandtoken + "'", Colors.Warning);
+                                UI.Playsound.Recipientna();
+                                return;
                         }
 
                         // major {CMDSEGMENT:2}
@@ -187,7 +199,7 @@ namespace VAICOM
                         }
 
 
-                        string message = majval.ToString() + minval.ToString() + band.ToCharArray()[0].ToString().ToUpper();
+                        string message = majval.ToString() + minval.ToString() + bandletter;
 
                         if (State.activeconfig.RIO_Messages && !State.activeconfig.RIO_Hints_Only)
                         {
