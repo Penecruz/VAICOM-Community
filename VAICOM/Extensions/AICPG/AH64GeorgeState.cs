@@ -39,6 +39,12 @@ namespace VAICOM.Extensions.AICPG
         Mask
     }
 
+    public enum AH64ThreatWarningsMode
+    {
+        On,
+        Off
+    }
+
     public enum AH64WeaponMode
     {
         Unknown,
@@ -125,6 +131,7 @@ namespace VAICOM.Extensions.AICPG
         }
 
         public static AH64EvadeMode SelectedEvadeMode { get; set; } = AH64EvadeMode.Off;
+        public static AH64ThreatWarningsMode SelectedThreatWarningsMode { get; set; } = AH64ThreatWarningsMode.On;
         public static AH64ExteriorLightsMode SelectedExteriorLightsMode { get; set; } = AH64ExteriorLightsMode.Off;
         public static AH64ROEMode SelectedROEMode { get; set; } = AH64ROEMode.HoldFire;
         public static AH64WeaponMode SelectedWeapon { get; set; } = AH64WeaponMode.Unknown;
@@ -287,6 +294,7 @@ namespace VAICOM.Extensions.AICPG
             MissilesAvailable = false;
             SelectedEvadeMode = AH64EvadeMode.Off;
             SelectedROEMode = AH64ROEMode.HoldFire;
+            SelectedThreatWarningsMode = AH64ThreatWarningsMode.On;
             SelectedWeapon = AH64WeaponMode.Unknown;
             PreviousMenuMode = AH64MenuMode.Unknown;
             CurrentMenuMode = AH64MenuMode.Unknown;

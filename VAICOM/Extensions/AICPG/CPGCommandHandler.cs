@@ -447,8 +447,10 @@ namespace VAICOM.Extensions.AICPG
                     }
                     return;
                 case "wMsgGeorgeThreatWarningsOn":
+                    SelectThreatWarningsMode(AH64ThreatWarningsMode.On);
+                    return;
                 case "wMsgGeorgeThreatWarningsOff":
-                    AddGeorgeLongButton(AH64GeorgeButton.Down);
+                    SelectThreatWarningsMode(AH64ThreatWarningsMode.Off);
                     return;
                 case "wMsgGeorgeHoverBack":
                     if (EnsureMenuMode(AH64MenuMode.Hover))
@@ -973,6 +975,17 @@ namespace VAICOM.Extensions.AICPG
                 CloseDefenseMenu();
 
                 AH64GeorgeState.SelectedROEMode = target;
+            }
+        }
+
+        private static void SelectThreatWarningsMode(AH64ThreatWarningsMode target)
+        {
+            if (!AH64GeorgeState.SelectedThreatWarningsMode.Equals(target))
+            {
+                OpenDefenseMenu();
+                AddGeorgeLongButton(AH64GeorgeButton.Down);
+                CloseDefenseMenu();
+                AH64GeorgeState.SelectedThreatWarningsMode = target;
             }
         }
 
