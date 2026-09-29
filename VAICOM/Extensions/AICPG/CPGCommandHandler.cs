@@ -599,7 +599,7 @@ namespace VAICOM.Extensions.AICPG
                 case "wMsgGeorgeExtLightsFormation":
                     SelectExteriorLightsMode(AH64ExteriorLightsMode.Formation);
                     return;
-                case "wMsgGeorgeWeaponsHold":
+                case "wMsgGeorgeHoldFire":
                     SelectRulesOfEngagementMode(AH64ROEMode.HoldFire);
                     return;
                 case "wMsgGeorgeReturnFire":
