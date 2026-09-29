@@ -528,7 +528,6 @@ namespace VAICOM.Extensions.AICPG
                         return;
                     }
 
-                    Log.Write($"HasBattlePosition: {AH64GeorgeState.HasBattlePosition}", Colors.Text);
                     if (commandId.Equals("wMsgGeorgeDeleteBattlePosition") && !AH64GeorgeState.HasBattlePosition)
                     {
                         // Ignore deletion if battle position not set, this prevents
