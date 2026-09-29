@@ -830,6 +830,16 @@ namespace VAICOM.Extensions.AICPG
             }
         }
 
+        public static bool IsEnginesOn()
+        {
+            return EngineRpm > 0;
+        }
+
+        public static bool IsEnginesInFly()
+        {
+            return EngineRpm > 70;
+        }
+
         public static bool IsAirbourne()
         {
             return !WeightOnWheels;
@@ -837,7 +847,7 @@ namespace VAICOM.Extensions.AICPG
 
         public static bool IsHoverAvailable()
         {
-            return GroundSpeed < 10 && EngineRpm > 70;
+            return GroundSpeed < 10 && IsEnginesInFly();
         }
 
         private static bool CanSelectHover()

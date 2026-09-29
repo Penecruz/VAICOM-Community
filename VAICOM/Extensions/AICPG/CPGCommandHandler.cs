@@ -299,6 +299,12 @@ namespace VAICOM.Extensions.AICPG
                 case "wMsgGeorgeAPUStop":
                     if (EnsureMenuMode(AH64MenuMode.Ground))
                     {
+                        // Prevent starting up engines to fly when issuing APU stop command.
+                        if (!AH64GeorgeState.IsEnginesInFly() && AH64GeorgeState.ApuOnOffState.Equals(AH64Apu.On))
+                        {
+                            UI.Playsound.Sorry();
+                            return;
+                        }
                         ToggleApuOnOff(commandId.Equals("wMsgGeorgeAPUStart", StringComparison.OrdinalIgnoreCase) ? AH64Apu.On : AH64Apu.Off);
                     }
                     return;
@@ -354,7 +360,7 @@ namespace VAICOM.Extensions.AICPG
                     }
                     return;
                 case "wMsgGeorgeTurnToGHS":
-                    if (EnsureMenuMode(AH64MenuMode.Hover))
+                    if (EnsureMenuMode(AH64MenuMode.Hover) || EnsureMenuMode(AH64MenuMode.Combat))
                     {
                         AddGeorgeButton(AH64GeorgeButton.Right);
                     }

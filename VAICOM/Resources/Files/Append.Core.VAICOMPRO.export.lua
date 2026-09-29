@@ -125,6 +125,8 @@ vaicom.insert = {
         lastPoll = 0,
         lastState = nil,
         lastAh64State = nil,
+        lastAh64StatePoll = 0,
+        intervalAh64StateSeconds = 3,
         lastFuelMassMaxKg = nil,
         logfile = nil,
         keylogfile = nil,
@@ -285,11 +287,15 @@ vaicom.insert = {
             antiCollisionLights
         )
 
-        if msg == self.probe.lastAh64State then
+        local now = socket.gettime()
+        -- Skip sending update if state hasn't changed and interval hasn't elapsed
+        if msg == self.probe.lastAh64State and (now - self.probe.lastAh64StatePoll < self.probe.intervalAh64StateSeconds) then
             return
         end
-
+        
         self.probe.lastAh64State = msg
+        self.probe.lastAh64StatePoll = now
+
         pcall(function() vaicom.sendtoclient:send(msg) end)
     end,
 

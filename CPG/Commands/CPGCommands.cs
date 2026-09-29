@@ -190,7 +190,7 @@ namespace VAICOM.Extensions.CPG
             { "georgemenuflightmode",         new CommandInfo { uniqueid = 25752, category = CommandCategories.AH64D_George_PLT, eventnumber = 4000, name = "wMsgGeorgeMenuFlightMode", displayname = Labels.aicommands["georgemenuflightmode"], enabled = true } },
             { "georgemenugroundmode",         new CommandInfo { uniqueid = 25753, category = CommandCategories.AH64D_George_PLT, eventnumber = 4000, name = "wMsgGeorgeMenuGroundMode", displayname = Labels.aicommands["georgemenugroundmode"], enabled = true } },
             { "georgemenuhovermode",          new CommandInfo { uniqueid = 25754, category = CommandCategories.AH64D_George_PLT, eventnumber = 4000, name = "wMsgGeorgeMenuHoverMode", displayname = Labels.aicommands["georgemenuhovermode"], enabled = true } },
-            { "georgemenunextmode",           new CommandInfo { uniqueid = 25755, category = CommandCategories.AH64D_George_PLT, eventnumber = 4000, name = "wMsgGeorgeMenuHoverMode", displayname = Labels.aicommands["georgemenunextmode"], enabled = true } },
+            { "georgemenunextmode",           new CommandInfo { uniqueid = 25755, category = CommandCategories.AH64D_George_PLT, eventnumber = 4000, name = "wMsgGeorgeMenuNextMode", displayname = Labels.aicommands["georgemenunextmode"], enabled = true } },
         };
     }
 }
