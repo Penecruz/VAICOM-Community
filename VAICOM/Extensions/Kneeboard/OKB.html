@@ -5695,7 +5695,7 @@
       return null;
     }
 
-    function buildOpenFreeMapPayload(waypoints, data, overlays, bullseyePoint) {
+    function buildOpenFreeMapPayload(waypoints, data, overlays, bullseyePoint, historySelection) {
       const rows = Array.isArray(waypoints) ? waypoints.filter(function (wp) {
         return isFinite(Number(wp && wp.xNum)) && isFinite(Number(wp && wp.yNum));
       }) : [];
@@ -5733,7 +5733,9 @@
         : { active: null, history: [] };
       const activeJtacTarget = jtacOverlay && jtacOverlay.active ? jtacOverlay.active : null;
       const historyJtacTargets = jtacOverlay && Array.isArray(jtacOverlay.history) ? jtacOverlay.history : [];
-      const historyTrackSelection = getActiveEfbSaSelectionKey() || getActiveFlightPlanSelection(model);
+      const historyTrackSelection = getFlightPlanEtaStartKey(historySelection || '')
+        || getFlightPlanEtaStartKey(getActiveEfbSaSelectionKey())
+        || getFlightPlanEtaStartKey(getActiveFlightPlanSelection(model));
       const historyTrackRows = (efbSaShowHistoryTrack === true)
         ? getEfbSaHistoryTrackByKey(historyTrackSelection)
         : [];
@@ -5956,14 +5958,6 @@
         });
       });
 
-      if (historyTrackRows.length >= 2) {
-        addLineFeature(historyTrackRows, {
-          kind: 'history-track',
-          stroke: '#000000',
-          lineWidth: 2.0,
-          dashed: true,
-        });
-      }
       historyTrackRows.forEach(function (p) {
         addPointFeature(p, {
           kind: 'history-track-dot',
@@ -6349,7 +6343,7 @@
       };
     }
 
-    function buildMudMapSvg(waypoints, data, overlays, bullseyePoint) {
+    function buildMudMapSvg(waypoints, data, overlays, bullseyePoint, historySelection) {
       const rows = Array.isArray(waypoints) ? waypoints.filter(function (wp) {
         return isFinite(Number(wp && wp.xNum)) && isFinite(Number(wp && wp.yNum));
       }) : [];
@@ -8765,15 +8759,18 @@
 
       const applySaMapZoomAction = function (action) {
         if (!isSaMapMode) return false;
-        const context = resolveActiveSaMapContext(latestData || data);
-        if (!context || !context.selected) return false;
+        const context = resolveActiveSaMapContext(data || latestData || null);
+        const selectedKey = (context && context.selected)
+          ? String(context.selected)
+          : String(getActiveEfbSaSelectionKey() || '');
+        if (!selectedKey) return false;
         const handledByWebMap = (typeof handleOpenFreeMapZoomAction === 'function')
-          ? handleOpenFreeMapZoomAction(context.selected, action)
+          ? handleOpenFreeMapZoomAction(selectedKey, action)
           : false;
         if (!handledByWebMap) {
-          if (action === 'in') zoomMapViewBySelection(context.selected, 1.2);
-          else if (action === 'out') zoomMapViewBySelection(context.selected, 1 / 1.2);
-          else if (action === 'reset') resetMapViewBySelection(context.selected);
+          if (action === 'in') zoomMapViewBySelection(selectedKey, 1.2);
+          else if (action === 'out') zoomMapViewBySelection(selectedKey, 1 / 1.2);
+          else if (action === 'reset') resetMapViewBySelection(selectedKey);
           if (latestData) render(latestData);
         }
         return true;
@@ -15723,8 +15720,10 @@
     function getEfbSaHistoryTrackByKey(selectionKey) {
       const key = String(selectionKey || '').trim();
       if (!key) return [];
-      const rows = efbSaHistoryTrackBySelection[key];
-      return Array.isArray(rows) ? rows : [];
+      if (!Array.isArray(efbSaHistoryTrackBySelection[key])) {
+        efbSaHistoryTrackBySelection[key] = [];
+      }
+      return efbSaHistoryTrackBySelection[key];
     }
 
     function clearAllEfbSaHistoryTracks() {
@@ -15732,14 +15731,10 @@
       efbSaHistoryTrackLastSampleBySelection = {};
     }
 
-    function maybeCaptureEfbSaHistoryTrackSample(selected) {
+    function maybeCaptureEfbSaHistoryTrackSample(selected, data) {
       if (efbSaShowHistoryTrack !== true) return;
-      let ownship = null;
-      if (fakeMissionEnabled) {
-        ownship = getPlayerMapPoint(latestData || {});
-      } else if (efbSaUseFastOwnshipEnabled) {
-        ownship = getFastOwnshipMapPoint(0);
-      }
+      const model = data || latestData || {};
+      const ownship = getPlayerMapPoint(model);
       if (!ownship) return;
       const key = getFlightPlanEtaStartKey(selected);
       if (!key) return;
@@ -15810,14 +15805,14 @@
             if (efbSaFollowOwnshipEnabled && selectedTab === 'EFB' && normalizeEfbViewerMode(efbViewerMode) === 'sa-map') {
               const selectedKey = getActiveEfbSaSelectionKey();
               if (selectedKey) {
-                maybeCaptureEfbSaHistoryTrackSample(selectedKey);
+                maybeCaptureEfbSaHistoryTrackSample(selectedKey, latestData || null);
                 applyFastOwnshipToSaMap(selectedKey, latestData || null);
                 applyOpenFreeMapOwnshipCamera(selectedKey, latestData || null);
               }
             } else if (selectedTab === 'EFB' && normalizeEfbViewerMode(efbViewerMode) === 'sa-map') {
               const selectedKey = getActiveEfbSaSelectionKey();
               if (selectedKey) {
-                maybeCaptureEfbSaHistoryTrackSample(selectedKey);
+                maybeCaptureEfbSaHistoryTrackSample(selectedKey, latestData || null);
                 applyFastOwnshipToSaMap(selectedKey, latestData || null);
               }
             }
@@ -19543,7 +19538,7 @@
       return null;
     }
 
-    function buildOpenFreeMapPayload(waypoints, data, overlays, bullseyePoint) {
+    function buildOpenFreeMapPayload(waypoints, data, overlays, bullseyePoint, historySelection) {
       const rows = Array.isArray(waypoints) ? waypoints.filter(function (wp) {
         return isFinite(Number(wp && wp.xNum)) && isFinite(Number(wp && wp.yNum));
       }) : [];
@@ -19595,7 +19590,9 @@
         : { active: null, history: [] };
       const activeJtacTarget = jtacOverlay && jtacOverlay.active ? jtacOverlay.active : null;
       const historyJtacTargets = jtacOverlay && Array.isArray(jtacOverlay.history) ? jtacOverlay.history : [];
-      const historyTrackSelection = getActiveEfbSaSelectionKey() || getActiveFlightPlanSelection(model);
+      const historyTrackSelection = getFlightPlanEtaStartKey(historySelection || '')
+        || getFlightPlanEtaStartKey(getActiveEfbSaSelectionKey())
+        || getFlightPlanEtaStartKey(getActiveFlightPlanSelection(model));
       const historyTrackRows = (efbSaShowHistoryTrack === true)
         ? getEfbSaHistoryTrackByKey(historyTrackSelection)
         : [];
@@ -19755,14 +19752,6 @@
         });
       });
 
-      if (historyTrackRows.length >= 2) {
-        addLineFeature(historyTrackRows, {
-          kind: 'history-track',
-          stroke: '#000000',
-          lineWidth: 2.0,
-          dashed: true,
-        });
-      }
       historyTrackRows.forEach(function (p) {
         addPointFeature(p, {
           kind: 'history-track-dot',
@@ -20262,7 +20251,7 @@
       };
     }
 
-    function buildMudMapSvg(waypoints, data, overlays, bullseyePoint) {
+    function buildMudMapSvg(waypoints, data, overlays, bullseyePoint, historySelection) {
       const rows = Array.isArray(waypoints) ? waypoints.filter(function (wp) {
         return isFinite(Number(wp && wp.xNum)) && isFinite(Number(wp && wp.yNum));
       }) : [];
@@ -20289,7 +20278,9 @@
       const activeJtacTarget = jtacOverlay && jtacOverlay.active ? jtacOverlay.active : null;
       const historyJtacTargets = jtacOverlay && Array.isArray(jtacOverlay.history) ? jtacOverlay.history : [];
       const jtacPointsForMap = (activeJtacTarget ? [activeJtacTarget] : []).concat(historyJtacTargets);
-      const historyTrackSelection = getActiveEfbSaSelectionKey() || getActiveFlightPlanSelection(data || latestData || {});
+      const historyTrackSelection = getFlightPlanEtaStartKey(historySelection || '')
+        || getFlightPlanEtaStartKey(getActiveEfbSaSelectionKey())
+        || getFlightPlanEtaStartKey(getActiveFlightPlanSelection(data || latestData || {}));
       const historyTrackRowsForMap = (efbSaShowHistoryTrack === true)
         ? getEfbSaHistoryTrackByKey(historyTrackSelection)
         : [];
@@ -20473,15 +20464,6 @@
         return '<line x1="' + seg.from.x.toFixed(1) + '" y1="' + seg.from.y.toFixed(1) + '" x2="' + seg.to.x.toFixed(1) + '" y2="' + seg.to.y.toFixed(1) + '" stroke="' + palette.line + '" stroke-width="2"' + (seg.dashed ? ' stroke-dasharray="8 6"' : '') + ' />';
       });
       const historyLineEls = [];
-      if (historyTrackRowsForMap.length >= 2) {
-        const historyPts = historyTrackRowsForMap
-          .map(function (p) { return mapPt(p); })
-          .filter(function (p) { return p && isFinite(Number(p.x)) && isFinite(Number(p.y)); })
-          .map(function (p) { return p.x.toFixed(1) + ',' + p.y.toFixed(1); });
-        if (historyPts.length >= 2) {
-          historyLineEls.push('<polyline points="' + historyPts.join(' ') + '" fill="none" stroke="#000000" stroke-width="2" stroke-dasharray="5 7" stroke-linecap="round" />');
-        }
-      }
       const historyPointEls = historyTrackRowsForMap
         .map(function (p) {
           const m = mapPt(p);
@@ -21242,7 +21224,7 @@
         openFreeMapLastPayloadStatus = 'builder-missing';
       }
       const openFreeMapPayload = mapBackgroundEnabled && hasPayloadBuilder
-        ? buildOpenFreeMapPayload(mapRows, data, resolvedOverlays, bullseyePoint)
+        ? buildOpenFreeMapPayload(mapRows, data, resolvedOverlays, bullseyePoint, selected)
         : null;
       if (mapBackgroundEnabled && !openFreeMapPayload && openFreeMapLastPayloadStatus === 'init') {
         openFreeMapLastPayloadStatus = 'builder-null';
@@ -21370,7 +21352,7 @@
         corridors: efbSaShowDtcOverlay ? (Array.isArray(resolvedOverlays.corridors) ? resolvedOverlays.corridors : []) : [],
         airfields: efbSaShowAirports ? (Array.isArray(resolvedOverlays.airfields) ? resolvedOverlays.airfields : []) : [],
       };
-      const mapSvg = buildMudMapSvg(mapRows, data, visibleOverlays, bullseyePoint);
+      const mapSvg = buildMudMapSvg(mapRows, data, visibleOverlays, bullseyePoint, selected);
       let readout = formatMapBraReadout(data, selectedAsset, bullseyePoint);
       if (markerCount > 0) {
         readout += '   MKR ' + String(markerCount);
@@ -22985,6 +22967,8 @@
           ? String(saMapContext.selected)
           : (!fakeMissionEnabled && getEfbModuleGateState(displayData).allowed ? fallbackSelection : '');
         if (selectionKey) {
+          maybeCaptureEfbSaHistoryTrackSample(selectionKey, displayData);
+
           const saMapState = buildSaMapRenderState(
             saMapContext && Array.isArray(saMapContext.waypoints) ? saMapContext.waypoints : [],
             displayData,
