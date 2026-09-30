@@ -49,7 +49,8 @@ namespace VAICOM
                     State.currentmessage.extsequence.AddRange(Extensions.RIO.DeviceActionsLibrary.Sequences.Macro.Seq_J_UTIL_NAV_RELOAD_FLT_PLAN_BU);
                     State.currentmessage.extsequence.Add(Extensions.RIO.DeviceActionsLibrary.RIO.Atom_J_MENU_CLOSE);
 
-                    // Step 5: wait, then select requested waypoint (double-tap for reliability).
+                    // Step 5: wait, then select requested waypoint with retry pulses.
+                    // Command 10037 only sets the BU "selected" waypoint for subsequent BU actions.
                     State.currentmessage.extsequence.Add(new Extensions.RIO.DeviceAction()
                     {
                         device = Extensions.RIO.DeviceActionsLibrary.Devices.PROXY,
@@ -64,10 +65,33 @@ namespace VAICOM
                         value = waypointValue,
                         delayMs = 120
                     });
+                    State.currentmessage.extsequence.Add(new Extensions.RIO.DeviceAction()
+                    {
+                        device = Extensions.RIO.DeviceActionsLibrary.Devices.PROXY,
+                        command = 10037,
+                        value = waypointValue,
+                        delayMs = 260
+                    });
 
-                    // Step 6: issue direct-to-selected with a retry pulse.
-                    State.currentmessage.extsequence.Add(Extensions.RIO.DeviceActionsLibrary.RIO.Atom_J_PROXY_BU_DIRECT_TO_SELECTED_DELAYED(300));
-                    State.currentmessage.extsequence.Add(Extensions.RIO.DeviceActionsLibrary.RIO.Atom_J_PROXY_BU_DIRECT_TO_SELECTED_DELAYED(480));
+                    // Step 6: apply BU direct-to-selected to make the requested waypoint active.
+                    State.currentmessage.extsequence.Add(Extensions.RIO.DeviceActionsLibrary.RIO.Atom_J_PROXY_BU_DIRECT_TO_SELECTED_DELAYED(320));
+
+                    // Step 7: re-assert active entry after BU direct so the requested waypoint
+                    // remains active if the module briefly inserts a conditional waypoint.
+                    State.currentmessage.extsequence.Add(new Extensions.RIO.DeviceAction()
+                    {
+                        device = Extensions.RIO.DeviceActionsLibrary.Devices.PROXY,
+                        command = 10018,
+                        value = waypointValue,
+                        delayMs = 1200
+                    });
+                    State.currentmessage.extsequence.Add(new Extensions.RIO.DeviceAction()
+                    {
+                        device = Extensions.RIO.DeviceActionsLibrary.Devices.PROXY,
+                        command = 10018,
+                        value = waypointValue,
+                        delayMs = 1700
+                    });
 
                     if (State.activeconfig != null && State.activeconfig.Debugmode)
                     {
@@ -87,49 +111,96 @@ namespace VAICOM
                 {
                     waypointNumber = 0;
 
-                    // Step 1: scan spoken command token segments and resolve the last valid number.
-                    bool found = false;
+                    // Step 1: parse the spoken segments in order and keep deterministic precedence.
+                    // Prefer the first explicit value after waypoint/steerpoint over any trailing artifacts.
                     List<string> segmentDebug = new List<string>();
+                    List<string> segments = new List<string>();
 
                     for (int i = 1; i <= 5; i++)
                     {
                         string segment = State.Proxy.Utility.ParseTokens("{CMDSEGMENT:" + i.ToString() + "}");
                         string safeSegment = segment ?? string.Empty;
                         segmentDebug.Add("S" + i.ToString() + "='" + safeSegment + "'");
+                        segments.Add(safeSegment.Trim());
+                    }
 
-                        int parsed;
-                        if (Int32.TryParse(safeSegment, out parsed) && parsed > 0)
+                    for (int i = 0; i < segments.Count - 1; i++)
+                    {
+                        string token = segments[i];
+                        if (token.Equals("waypoint", StringComparison.OrdinalIgnoreCase)
+                            || token.Equals("steerpoint", StringComparison.OrdinalIgnoreCase)
+                            || token.Equals("wpt", StringComparison.OrdinalIgnoreCase)
+                            || token.Equals("spt", StringComparison.OrdinalIgnoreCase))
                         {
-                            // Prefer explicit numeric segment values when present.
-                            waypointNumber = parsed;
-                            found = true;
-                            continue;
-                        }
-
-                        string digitsOnly = string.Empty;
-                        for (int c = 0; c < safeSegment.Length; c++)
-                        {
-                            char ch = safeSegment[c];
-                            if (ch >= '0' && ch <= '9')
+                            int contextualValue;
+                            if (TryParsePositiveNumberToken(segments[i + 1], out contextualValue))
                             {
-                                digitsOnly += ch;
+                                waypointNumber = contextualValue;
+                                return true;
                             }
                         }
+                    }
 
-                        if (digitsOnly.Length > 0 && Int32.TryParse(digitsOnly, out parsed) && parsed > 0)
+                    for (int i = 0; i < segments.Count; i++)
+                    {
+                        int parsed;
+                        if (TryParsePositiveNumberToken(segments[i], out parsed))
                         {
-                            // Fallback: parse embedded digits in mixed tokens.
                             waypointNumber = parsed;
-                            found = true;
+                            return true;
                         }
+                    }
+
+                    string commandDigits = VAICOM.Extensions.CommandNumbers.Digits();
+                    int digitsParsed = 0;
+                    bool foundFromDigits = false;
+                    if (commandDigits.Length > 0)
+                    {
+                        int parsedDigits;
+                        if (Int32.TryParse(commandDigits, out parsedDigits) && parsedDigits > 0)
+                        {
+                            digitsParsed = parsedDigits;
+                            foundFromDigits = true;
+                        }
+                    }
+                    if (foundFromDigits)
+                    {
+                        waypointNumber = digitsParsed;
                     }
 
                     if (State.activeconfig != null && State.activeconfig.Debugmode)
                     {
-                        Log.Write("AIRIO EGI direct parse | " + string.Join(", ", segmentDebug) + " | resolved=" + waypointNumber.ToString(), Colors.Inline);
+                        Log.Write("AIRIO EGI direct parse | " + string.Join(", ", segmentDebug) + " | txtnum='" + commandDigits + "' | resolved=" + waypointNumber.ToString(), Colors.Inline);
                     }
 
-                    return found;
+                    return foundFromDigits;
+                }
+
+                private static bool TryParsePositiveNumberToken(string token, out int parsed)
+                {
+                    parsed = 0;
+                    if (string.IsNullOrWhiteSpace(token))
+                    {
+                        return false;
+                    }
+
+                    string safeToken = token.Trim();
+                    if (Int32.TryParse(safeToken, out parsed) && parsed > 0)
+                    {
+                        return true;
+                    }
+
+                    string digitsOnly = string.Empty;
+                    for (int c = 0; c < safeToken.Length; c++)
+                    {
+                        char ch = safeToken[c];
+                        if (ch >= '0' && ch <= '9')
+                        {
+                            digitsOnly += ch;
+                        }
+                    }
+
+                    return digitsOnly.Length > 0 && Int32.TryParse(digitsOnly, out parsed) && parsed > 0;
                 }
 
                 public static void SetRioDeviceSequence_EGI_DirectWaypoint()
