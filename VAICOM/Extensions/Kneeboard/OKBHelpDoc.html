@@ -179,6 +179,7 @@
         <h3>Layout and Interaction</h3>
         <ul>
           <li><strong>Tab/Keywords splitter</strong>: Drag the divider between main tab content and keyword panel to resize. Ratio is saved per tab.</li>
+          <li><strong>EFB tab rail fit</strong>: In <code>EFB</code> view, sidebar tabs auto-adjust spacing/size so all tabs stay fully inside the sidebar.</li>
           <li><strong>Auto Browse behavior</strong>: When enabled, the active tab can follow runtime category focus updates.</li>
           <li><strong>Debug panels</strong>: Raw JSON and server message panels are intended for diagnostics and are hidden when debug mode is not active.</li>
         </ul>
@@ -696,6 +697,7 @@
                 <div class="iconLegendItem"><svg class="helpIconSvg" viewBox="0 0 64 64" aria-hidden="true"><rect x="11" y="7" width="42" height="50" rx="2" ry="2" fill="none" stroke="currentColor" stroke-width="3.5" /><line x1="11" y1="16" x2="53" y2="16" stroke="currentColor" stroke-width="2.6" /><line x1="14" y1="12" x2="30" y2="12" stroke="currentColor" stroke-width="2" /><line x1="34" y1="12" x2="50" y2="12" stroke="currentColor" stroke-width="2" /><path d="M16 45c4-7 10-9 15-7 4 2 9 2 17-3" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" /></svg><span>Moving Map/Charts toggle (Chart view icon)</span></div>
                 <div class="iconLegendItem"><svg class="helpIconSvg" viewBox="0 0 64 64" aria-hidden="true"><path d="M8 30L56 8 43 56 31 43 22 49 19 39 8 30z" fill="currentColor" /><path d="M14 31L48 14 30 39z" fill="#f1f1ef" opacity="0.92" /></svg><span>Center ownship</span></div>
                 <div class="iconLegendItem"><svg class="helpIconSvg" viewBox="0 0 64 64" aria-hidden="true"><polygon points="32,10 52,48 12,48" fill="none" stroke="currentColor" stroke-width="4" stroke-linejoin="round" /><circle cx="32" cy="37" r="3" fill="currentColor" /></svg><span>User waypoint drawer</span></div>
+                <div class="iconLegendItem"><svg class="helpIconSvg" viewBox="0 0 64 64" aria-hidden="true"><path d="M16 13c-5 0-9 4-9 9 0 7 9 16 9 16s9-9 9-16c0-5-4-9-9-9z" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round" /><circle cx="16" cy="22" r="2.4" fill="currentColor" /><path d="M24 36c6 0 9 4 14 4s9-4 13-4" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-dasharray="3 6" /><path d="M48 34c-5 0-9 4-9 9 0 7 9 16 9 16s9-9 9-16c0-5-4-9-9-9z" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round" /><circle cx="48" cy="43" r="2.4" fill="currentColor" /><circle cx="50" cy="16" r="8" fill="none" stroke="currentColor" stroke-width="3" /><line x1="50" y1="16" x2="50" y2="12" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" /><line x1="50" y1="16" x2="54" y2="16" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" /></svg><span>Saved history tracks drawer</span></div>
                 <div class="iconLegendItem"><svg class="helpIconSvg" viewBox="0 0 64 64" aria-hidden="true"><path d="M14 24h24v5h-3l2 9h-7l-2-7h-8l-2 7h-7l2-9h-3z" fill="currentColor" /><rect x="22" y="38" width="8" height="14" fill="currentColor" /><rect x="15" y="52" width="22" height="4" fill="currentColor" /><circle cx="48" cy="20" r="10" fill="none" stroke="currentColor" stroke-width="2.8" /><line x1="38" y1="20" x2="58" y2="20" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" /><line x1="48" y1="10" x2="48" y2="30" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" /><circle cx="48" cy="20" r="2.6" fill="currentColor" /></svg><span>Auto nearest airport</span></div>
                 <div class="iconLegendItem"><svg class="helpIconSvg" viewBox="0 0 64 64" aria-hidden="true"><path d="M14 24h36v6h-4l2 9h-8l-2-7h-12l-2 7h-8l2-9h-4z" fill="currentColor" /><rect x="27" y="39" width="10" height="15" fill="currentColor" /><rect x="18" y="54" width="28" height="4" fill="currentColor" /></svg><span>Airport charts drawer</span></div>
                 <div class="iconLegendItem"><svg class="helpIconSvg" viewBox="0 0 64 64" aria-hidden="true"><path d="M32 11c8 0 14 6 14 14h-6l9 9 9-9h-6c0-11-9-20-20-20-8 0-15 5-18 12l5 2c2.2-5 7.2-8 13-8z" fill="currentColor" /><path d="M13 39h6c0 11 9 20 20 20 8 0 15-5 18-12l-5-2c-2.2 5-7.2 8-13 8-8 0-14-6-14-14h6l-9-9-9 9z" fill="currentColor" /></svg><span>Pinned charts drawer</span></div>
@@ -711,6 +713,7 @@
                 <li><strong>Quick Pin</strong>: Pins/unpins the currently displayed chart without opening a drawer.</li>
                 <li><strong>Search</strong>: Opens the stylus-oriented chart search overlay with radial character input and center token display.</li>
                 <li><strong>Layers</strong>: Opens the SA Map layers drawer when SA Map mode is active.</li>
+                <li><strong>Saved history tracks</strong>: Opens the saved history drawer (same interaction style as User Waypoints) for Save active, Reset active, Show/Hide, Rename, and Delete actions.</li>
             </ul>
 
             <h3>Moving Map Navigation / Framing</h3>
@@ -787,7 +790,8 @@
                 <li><strong>JTAC</strong>: Show/hide JTAC targets and related Moving Map support markup.</li>
                 <li><strong>Airports</strong>: Show/hide airfield symbols and labels.</li>
                 <li><strong>Navlog route</strong>: Show/hide active route line and waypoint set.</li>
-                <li><strong>History track</strong>: Show/hide dotted ownship breadcrumb trail for the current connection session. Trail captures from fast ownship only and resets on next module reconnect.</li>
+                <li><strong>History track</strong>: Show/hide dotted ownship breadcrumb trail for the current connection session. Capture runs continuously while SA Map is active; this toggle controls display only. Trail resets on next module reconnect.</li>
+                <li><strong>Saved history tracks drawer</strong>: Use the dedicated left-rail history icon (history marker with clock) to open saved-track tools. Use <strong>Save active</strong> to snapshot the current active trail, <strong>Reset active</strong> to clear the live trail, then show/hide, rename, or delete saved snapshots. Visible saved tracks are drawn as lighter grayscale dots.</li>
                 <li><strong>Doghouses</strong>: Show/hide leg doghouse blocks (MH, DIST, ETE, ALT) generated from the active navlog route.</li>
                 <li><strong>User waypoints</strong>: Show/hide custom user waypoint symbols and labels.</li>
                 <li><strong>DTC overlays</strong>: Show/hide DTC map overlays (threats, GEO lines, points, etc.).</li>

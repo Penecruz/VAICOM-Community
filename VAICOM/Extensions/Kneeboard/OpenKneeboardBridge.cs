@@ -40,6 +40,7 @@ namespace VAICOM
                 private static readonly string[] EfbChartFileExtensions = new[] { ".svg", ".png", ".jpg", ".jpeg", ".gif", ".bmp", ".webp" };
                 private const string RouteSelectionPrefix = "RTE::";
                 private const string StoreLookupJsonPlaceholder = "__VAICOM_STORE_LOOKUP_JSON__";
+                private const string SavedHistoryTracksFileName = "saved-history-tracks.json";
                 private static string storeLookupResolvedPath = "";
                 private static DateTime storeLookupLastWriteUtc = DateTime.MinValue;
                 private static string storeLookupMapJson = "{}";
@@ -60,6 +61,122 @@ namespace VAICOM
                     public int Wow;
                     public bool HasWow;
                     public DateTime UpdatedUtc;
+                }
+
+                private static string GetVaAppsRootPath()
+                {
+                    try
+                    {
+                        string appsRoot = string.IsNullOrWhiteSpace(State.VA_APPS)
+                            ? (State.Proxy == null ? "" : Convert.ToString(State.Proxy.SessionState["VA_APPS"]))
+                            : State.VA_APPS;
+
+                        if (string.IsNullOrWhiteSpace(appsRoot))
+                        {
+                            string roaming = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+                            if (!string.IsNullOrWhiteSpace(roaming))
+                            {
+                                appsRoot = Path.Combine(roaming, "VoiceAttack", "Apps");
+                            }
+                        }
+
+                        return string.IsNullOrWhiteSpace(appsRoot) ? "" : appsRoot;
+                    }
+                    catch
+                    {
+                        return "";
+                    }
+                }
+
+                private static string GetOkgTracksFolderPath()
+                {
+                    try
+                    {
+                        string appsRoot = GetVaAppsRootPath();
+                        if (string.IsNullOrWhiteSpace(appsRoot))
+                        {
+                            return "";
+                        }
+
+                        string pluginRoot = Path.Combine(appsRoot, Products.Products.Families.Vaicom.VaicomProPlugin.rootfoldername);
+                        return Path.Combine(pluginRoot, "OKB", "Tracks");
+                    }
+                    catch
+                    {
+                        return "";
+                    }
+                }
+
+                private static string GetSavedHistoryTracksFilePath(bool ensureFolder)
+                {
+                    try
+                    {
+                        string tracksFolder = GetOkgTracksFolderPath();
+                        if (string.IsNullOrWhiteSpace(tracksFolder))
+                        {
+                            return "";
+                        }
+
+                        if (ensureFolder)
+                        {
+                            Directory.CreateDirectory(tracksFolder);
+                        }
+
+                        return Path.Combine(tracksFolder, SavedHistoryTracksFileName);
+                    }
+                    catch
+                    {
+                        return "";
+                    }
+                }
+
+                private static string LoadSavedHistoryTracksJson()
+                {
+                    try
+                    {
+                        string filePath = GetSavedHistoryTracksFilePath(false);
+                        if (string.IsNullOrWhiteSpace(filePath) || !File.Exists(filePath))
+                        {
+                            return "{}";
+                        }
+
+                        string raw = File.ReadAllText(filePath, Encoding.UTF8);
+                        if (string.IsNullOrWhiteSpace(raw))
+                        {
+                            return "{}";
+                        }
+
+                        JToken token = JToken.Parse(raw);
+                        return token.Type == JTokenType.Object ? token.ToString(Formatting.None) : "{}";
+                    }
+                    catch
+                    {
+                        return "{}";
+                    }
+                }
+
+                private static bool SaveSavedHistoryTracksJson(string payload)
+                {
+                    try
+                    {
+                        string filePath = GetSavedHistoryTracksFilePath(true);
+                        if (string.IsNullOrWhiteSpace(filePath))
+                        {
+                            return false;
+                        }
+
+                        JToken token = JToken.Parse(string.IsNullOrWhiteSpace(payload) ? "{}" : payload);
+                        string normalized = token.Type == JTokenType.Object
+                            ? token.ToString(Formatting.None)
+                            : "{}";
+
+                        File.WriteAllText(filePath, normalized, new UTF8Encoding(false));
+                        return true;
+                    }
+                    catch
+                    {
+                        return false;
+                    }
                 }
 
                 private sealed class FastAvBusState
@@ -2325,6 +2442,35 @@ namespace VAICOM
                         return;
                     }
 
+                    if (path == "/okb/efb/historytracks")
+                    {
+                        string method = (context.Request.HttpMethod ?? "GET").Trim().ToUpperInvariant();
+                        if (method == "GET")
+                        {
+                            WriteJson(context.Response, LoadSavedHistoryTracksJson());
+                            return;
+                        }
+
+                        if (method == "POST" || method == "PUT")
+                        {
+                            string body = ReadRequestBody(context.Request);
+                            bool ok = SaveSavedHistoryTracksJson(body);
+                            if (!ok)
+                            {
+                                context.Response.StatusCode = 400;
+                                WriteJson(context.Response, "{\"ok\":false}");
+                                return;
+                            }
+
+                            WriteJson(context.Response, "{\"ok\":true}");
+                            return;
+                        }
+
+                        context.Response.StatusCode = 405;
+                        WriteJson(context.Response, "{\"error\":\"method_not_allowed\"}");
+                        return;
+                    }
+
                     if (path == "/okb/efb/chart")
                     {
                         string chartId = context.Request.QueryString["id"] ?? "";
@@ -4053,6 +4199,27 @@ namespace VAICOM
                 private static void WriteJson(HttpListenerResponse response, string payload)
                 {
                     WriteText(response, payload, "application/json; charset=utf-8");
+                }
+
+                private static string ReadRequestBody(HttpListenerRequest request)
+                {
+                    try
+                    {
+                        if (request == null || request.InputStream == null)
+                        {
+                            return "";
+                        }
+
+                        Encoding enc = request.ContentEncoding ?? Encoding.UTF8;
+                        using (var reader = new StreamReader(request.InputStream, enc))
+                        {
+                            return reader.ReadToEnd() ?? "";
+                        }
+                    }
+                    catch
+                    {
+                        return "";
+                    }
                 }
 
                 private static void WriteText(HttpListenerResponse response, string payload, string contentType)
