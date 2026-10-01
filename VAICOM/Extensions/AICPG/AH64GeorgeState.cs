@@ -182,8 +182,9 @@ namespace VAICOM.Extensions.AICPG
             set
             {
                 _EngineRpm = value;
+
                 // Only force Ground when engines drop below threshold while on the ground.
-                if (value < 70 && WeightOnWheels && !CurrentMenuMode.Equals(AH64MenuMode.Ground))
+                if (!IsEnginesInFly() && WeightOnWheels && !CurrentMenuMode.Equals(AH64MenuMode.Ground))
                 {
                     CurrentMenuMode = AH64MenuMode.Ground;
                 }
@@ -297,7 +298,8 @@ namespace VAICOM.Extensions.AICPG
             SelectedThreatWarningsMode = AH64ThreatWarningsMode.On;
             SelectedWeapon = AH64WeaponMode.Unknown;
             PreviousMenuMode = AH64MenuMode.Unknown;
-            CurrentMenuMode = AH64MenuMode.Unknown;
+            // Default to Hover mode on initialization, this will be adjusted based on WeightOnWheels and EngineRpm when those values are set.
+            CurrentMenuMode = AH64MenuMode.Hover;
             HasBattlePosition = false;
         }
 
