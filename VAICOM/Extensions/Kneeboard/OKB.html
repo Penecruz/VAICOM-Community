@@ -16319,7 +16319,9 @@
     function pollEfbSaOwnshipFast() {
       if (efbSaOwnshipPollTickerId) return;
       efbSaOwnshipPollTickerId = window.setInterval(function () {
-        if (selectedTab !== 'EFB') return;
+        const isSaMapTabActive = selectedTab === 'EFB' && normalizeEfbViewerMode(efbViewerMode) === 'sa-map';
+        const wantsBackgroundHistoryCapture = efbSaShowHistoryTrack === true && efbSaUseFastOwnshipEnabled === true;
+        if (!isSaMapTabActive && !wantsBackgroundHistoryCapture) return;
 
         const nowMs = Date.now();
         if ((nowMs - Number(efbSaOwnshipFast.lastPollMs || 0)) < 120) return;
@@ -16350,17 +16352,29 @@
             updateFastOwnshipToggleUi();
             maybeApplyEfbAdLandingAssist();
 
-            if (efbSaFollowOwnshipEnabled && selectedTab === 'EFB' && normalizeEfbViewerMode(efbViewerMode) === 'sa-map') {
-              const selectedKey = getActiveEfbSaSelectionKey();
+            let selectedKey = '';
+            if (isSaMapTabActive) {
+              selectedKey = getActiveEfbSaSelectionKey();
+            }
+            if (!selectedKey && wantsBackgroundHistoryCapture) {
+              const saMapContext = resolveActiveSaMapContext(latestData || null);
+              const fallbackSelection = '__EFB_OWNSHIP__';
+              selectedKey = saMapContext && saMapContext.selected
+                ? String(saMapContext.selected)
+                : (!fakeMissionEnabled && getEfbModuleGateState(latestData || null).allowed ? fallbackSelection : '');
+            }
+
+            if (wantsBackgroundHistoryCapture && selectedKey) {
+              maybeCaptureEfbSaHistoryTrackSample(selectedKey, latestData || null);
+            }
+
+            if (efbSaFollowOwnshipEnabled && isSaMapTabActive) {
               if (selectedKey) {
-                maybeCaptureEfbSaHistoryTrackSample(selectedKey, latestData || null);
                 applyFastOwnshipToSaMap(selectedKey, latestData || null);
                 applyOpenFreeMapOwnshipCamera(selectedKey, latestData || null);
               }
-            } else if (selectedTab === 'EFB' && normalizeEfbViewerMode(efbViewerMode) === 'sa-map') {
-              const selectedKey = getActiveEfbSaSelectionKey();
+            } else if (isSaMapTabActive) {
               if (selectedKey) {
-                maybeCaptureEfbSaHistoryTrackSample(selectedKey, latestData || null);
                 applyFastOwnshipToSaMap(selectedKey, latestData || null);
               }
             }
@@ -18492,6 +18506,20 @@
     }
 
     function getDtcWaypoints(root) {
+      function isMeterBasedDtcAltitudeSource(modelRoot) {
+        const t = String((modelRoot && modelRoot.type) || '').toUpperCase();
+        return t.indexOf('FA-18') >= 0
+          || t.indexOf('HORNET') >= 0
+          || t.indexOf('F-16') >= 0
+          || t.indexOf('VIPER') >= 0;
+      }
+
+      function normalizeDtcAltitudeFeet(rawAlt) {
+        const alt = Number(rawAlt);
+        if (!isFinite(alt)) return NaN;
+        return isMeterBasedDtcAltitudeSource(root) ? (alt * 3.28084) : alt;
+      }
+
       const wypt = findDtcWyptObject(root, 0) || {};
       const navPts = Array.isArray(wypt.NAV_PTS) ? wypt.NAV_PTS : [];
       const navRoute = Array.isArray(wypt.NAV_ROUTE) ? wypt.NAV_ROUTE : [];
@@ -18514,7 +18542,8 @@
           const routePoint = routeById[id.toUpperCase()] || {};
 
           const etaNum = isFinite(Number(routePoint.ETA)) ? Number(routePoint.ETA) : (isFinite(Number(point.ETA)) ? Number(point.ETA) : Number(point.TOS));
-          const altNum = isFinite(Number(routePoint.alt)) ? Number(routePoint.alt) : (isFinite(Number(point.alt)) ? Number(point.alt) : (isFinite(Number(point.routeAltitude)) ? Number(point.routeAltitude) : Number(point.altitude)));
+          const altRaw = isFinite(Number(routePoint.alt)) ? Number(routePoint.alt) : (isFinite(Number(point.alt)) ? Number(point.alt) : (isFinite(Number(point.routeAltitude)) ? Number(point.routeAltitude) : Number(point.altitude)));
+          const altNum = normalizeDtcAltitudeFeet(altRaw);
           const xNum = isFinite(Number(routePoint.x))
             ? Number(routePoint.x)
             : (isFinite(Number(point.x)) ? Number(point.x) : Number(point.posX));
@@ -18530,6 +18559,7 @@
 
           return {
             step: String(stepNum),
+            dtcId: id.toUpperCase(),
             type: abbreviateRouteType(isTarget ? 'TGT' : 'WP'),
             typeRaw: isTarget ? 'TGT' : 'WP',
             name: noteText || String(point.name || point.wp || point.waypoint || point.label || ''),
@@ -19382,6 +19412,68 @@
       const navRoute = Array.isArray(wypt.NAV_ROUTE) ? wypt.NAV_ROUTE : [];
       if (!navPts.length || !list.length) return list;
 
+      const routeNumber = Number(String(route).substring(1));
+      const routeIdx = route === 'R1' ? 0 : (route === 'R2' ? 1 : 2);
+      const routeObj = (navRoute.length > routeIdx && navRoute[routeIdx] && typeof navRoute[routeIdx] === 'object') ? navRoute[routeIdx] : {};
+      const idToStep = {};
+      navPts.forEach(function (p) {
+        const id = String((p && p.id) || '').toUpperCase();
+        const step = isFinite(Number(p && p.wypt_num)) ? Math.round(Number(p.wypt_num)) : (isFinite(Number(p && p.number)) ? Math.round(Number(p.number)) : NaN);
+        if (id && isFinite(step)) idToStep[id] = step;
+      });
+
+      function boolish(v) {
+        return v === true || String(v || '').toLowerCase() === 'true' || Number(v) === 1;
+      }
+
+      function routePointMatches(rp, allowUntyped) {
+        if (!rp || typeof rp !== 'object') return false;
+        const rpRouteNum = Number(rp.route_num || rp.routeNum || rp.route);
+        if (isFinite(rpRouteNum) && rpRouteNum > 0) {
+          return Math.round(rpRouteNum) === routeNumber;
+        }
+        if (boolish(rp[route])) return true;
+
+        const hasAnyRouteTag = Object.keys(rp).some(function (k) {
+          return /^R([1-9]|1[0-2])$/i.test(String(k));
+        });
+        return allowUntyped && !hasAnyRouteTag;
+      }
+
+      const routeEntries = [];
+      Object.keys(routeObj).forEach(function (k) {
+        const rp = routeObj[k] || {};
+        if (!routePointMatches(rp, true)) return;
+        routeEntries.push({ key: k, point: rp });
+      });
+
+      navRoute.forEach(function (obj) {
+        if (!obj || typeof obj !== 'object' || obj === routeObj) return;
+        Object.keys(obj).forEach(function (k) {
+          const rp = obj[k] || {};
+          if (!routePointMatches(rp, false)) return;
+          routeEntries.push({ key: k, point: rp });
+        });
+      });
+
+      const routePointByStep = {};
+      const routePointById = {};
+      const sourceType = String((root && root.type) || '').toUpperCase();
+      const routeAltIsMeters = sourceType.indexOf('FA-18') >= 0
+        || sourceType.indexOf('HORNET') >= 0
+        || sourceType.indexOf('F-16') >= 0
+        || sourceType.indexOf('VIPER') >= 0;
+      routeEntries.forEach(function (entry) {
+        const rp = entry.point || {};
+        const routeId = String((entry && entry.key) || '').toUpperCase();
+        if (routeId) routePointById[routeId] = rp;
+        let step = Number(rp.wypt_num);
+        if (!isFinite(step)) step = Number(rp.number);
+        if (!isFinite(step)) step = Number(idToStep[String((entry && entry.key) || '').toUpperCase()]);
+        if (!isFinite(step)) return;
+        routePointByStep[Math.round(step)] = rp;
+      });
+
       const stepSet = {};
       const routeOrder = {};
       const orderKey = route + '_order';
@@ -19398,18 +19490,11 @@
       });
 
       if (!Object.keys(stepSet).length) {
-        const idx = route === 'R1' ? 0 : (route === 'R2' ? 1 : 2);
-        const routeObj = (navRoute.length > idx && navRoute[idx] && typeof navRoute[idx] === 'object') ? navRoute[idx] : {};
-        const idToStep = {};
-        navPts.forEach(function (p) {
-          const id = String((p && p.id) || '').toUpperCase();
-          const step = isFinite(Number(p && p.wypt_num)) ? Math.round(Number(p.wypt_num)) : (isFinite(Number(p && p.number)) ? Math.round(Number(p.number)) : NaN);
-          if (id && isFinite(step)) idToStep[id] = step;
-        });
-        Object.keys(routeObj).forEach(function (k) {
-          const rp = routeObj[k] || {};
+        routeEntries.forEach(function (entry) {
+          const rp = entry.point || {};
           let step = Number(rp.wypt_num);
-          if (!isFinite(step)) step = Number(idToStep[String(k || '').toUpperCase()]);
+          if (!isFinite(step)) step = Number(rp.number);
+          if (!isFinite(step)) step = Number(idToStep[String((entry && entry.key) || '').toUpperCase()]);
           if (!isFinite(step)) return;
           step = Math.round(step);
           stepSet[step] = true;
@@ -19433,6 +19518,27 @@
           if (isFinite(oa) && !isFinite(ob)) return -1;
           if (!isFinite(oa) && isFinite(ob)) return 1;
           return sa - sb;
+        })
+        .map(function (wp) {
+          const step = Number(wp && wp.step);
+          const wpId = String((wp && wp.dtcId) || '').toUpperCase();
+          const routePoint = routePointById[wpId] || routePointByStep[step];
+          if (!routePoint || typeof routePoint !== 'object') return wp;
+
+          const routeAlt = isFinite(Number(routePoint.alt))
+            ? Number(routePoint.alt)
+            : (isFinite(Number(routePoint.routeAltitude)) ? Number(routePoint.routeAltitude) : NaN);
+          if (!isFinite(routeAlt)) return wp;
+          const routeAltFeet = routeAltIsMeters ? (routeAlt * 3.28084) : routeAlt;
+
+          const next = Object.assign({}, wp);
+          next.altFeet = routeAltFeet;
+          next.alt = String(Math.round(routeAltFeet));
+
+          const routeAltType = String(routePoint.altitudeType || routePoint.alt_type || routePoint.altType || routePoint.alttype || '').trim();
+          if (routeAltType) next.altType = routeAltType;
+
+          return next;
         });
     }
 
