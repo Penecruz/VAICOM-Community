@@ -290,6 +290,11 @@ namespace VAICOM
                 public string missiontitle;
                 public string missionbriefing;
                 public string missiondetails;
+                public object missiondrawings;
+                public string md_transferid;
+                public int? md_partindex;
+                public int? md_partcount;
+                public string md_part;
                 public double? fuel_unit_mass_max;
 
                 public double timer;
@@ -353,6 +358,7 @@ namespace VAICOM
                     menuaux = null;
                     menucargo = null;
                     mission = null;
+                    missiondrawings = null;
                     atcmetars = new Dictionary<string, string>();
                     atcicaotypes = new Dictionary<string, string>();
                     bpos = new Vector(); // added
@@ -404,6 +410,11 @@ namespace VAICOM
                 public string missiontitle;
                 public string missionbriefing;
                 public string missiondetails;
+                public object missiondrawings;
+                public string md_transferid;
+                public int? md_partindex;
+                public int? md_partcount;
+                public string md_part;
                 public double? fuel_unit_mass_max;
 
                 public object mission;

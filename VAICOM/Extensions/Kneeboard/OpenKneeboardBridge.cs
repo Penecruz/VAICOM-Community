@@ -5231,7 +5231,9 @@ namespace VAICOM
                         bool moduleFromCurrentState = !string.IsNullOrWhiteSpace(currentStateModuleId)
                             && !string.Equals(currentStateModuleId.Trim(), "----", StringComparison.OrdinalIgnoreCase);
 
-                        server.ModuleConnected = moduleConnectedFlag && moduleFromCurrentModule && moduleFromCurrentState;
+                        // MP slot/cockpit transitions can temporarily desync currentmodule/currentstate IDs.
+                        // Treat either runtime module identity source as sufficient while the core flag is true.
+                        server.ModuleConnected = moduleConnectedFlag && (moduleFromCurrentModule || moduleFromCurrentState);
 
                         if (State.currentstate != null)
                         {
@@ -5244,6 +5246,7 @@ namespace VAICOM
                             server.Aircraft = State.currentstate.id;
                             server.PlayerUsername = State.currentstate.playerusername;
                             server.PlayerCallsign = State.currentstate.playercallsign;
+                            server.PlayerCoalition = State.currentstate.playercoalition;
                             server.MissionTitle = State.currentstate.missiontitle;
                             server.MissionBriefing = State.currentstate.missionbriefing;
                             server.MissionDetails = State.currentstate.missiondetails;
@@ -5277,6 +5280,7 @@ namespace VAICOM
                             server.FlightMembers = BuildFlightMemberSnapshot();
                             server.FriendlyAssets = BuildFriendlyAssetsSnapshot();
                             server.MapMarkers = BuildMapMarkerSnapshot();
+                            server.MissionDrawings = State.currentstate.missiondrawings;
                         }
 
                         if (!server.ModuleConnected)
@@ -5286,6 +5290,7 @@ namespace VAICOM
                             server.PlayerPosX = 0;
                             server.PlayerPosY = 0;
                             server.PlayerAltFeet = 0;
+                            server.PlayerCoalition = "";
                             server.Payload = null;
                             server.Radios = new List<Servers.Server.RadioDevice>();
                             server.AtcMetars = new Dictionary<string, string>();
@@ -5917,6 +5922,7 @@ namespace VAICOM
                 public bool MetarMetric { get; set; }
                 public string PlayerUsername { get; set; } = "";
                 public string PlayerCallsign { get; set; } = "";
+                public string PlayerCoalition { get; set; } = "";
                 public string MissionTitle { get; set; } = "";
                 public string MissionBriefing { get; set; } = "";
                 public string MissionDetails { get; set; } = "";
@@ -5934,6 +5940,7 @@ namespace VAICOM
                 public List<OpenKneeboardFriendlyAsset> FriendlyAssets { get; set; } = new List<OpenKneeboardFriendlyAsset>();
                 public object Diagnostics { get; set; } = null;
                 public List<OpenKneeboardMapMarker> MapMarkers { get; set; } = new List<OpenKneeboardMapMarker>();
+                public object MissionDrawings { get; set; } = null;
 
                 public OpenKneeboardServerSnapshot Clone()
                 {
@@ -5946,6 +5953,7 @@ namespace VAICOM
                         MetarMetric = MetarMetric,
                         PlayerUsername = PlayerUsername,
                         PlayerCallsign = PlayerCallsign,
+                        PlayerCoalition = PlayerCoalition,
                         MissionTitle = MissionTitle,
                         MissionBriefing = MissionBriefing,
                         MissionDetails = MissionDetails,
@@ -5968,6 +5976,7 @@ namespace VAICOM
                         MapMarkers = MapMarkers == null
                             ? new List<OpenKneeboardMapMarker>()
                             : MapMarkers.ConvertAll(marker => marker == null ? null : marker.Clone()).FindAll(marker => marker != null),
+                        MissionDrawings = MissionDrawings,
                         Diagnostics = Diagnostics,
                     };
                 }

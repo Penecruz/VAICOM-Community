@@ -2704,6 +2704,206 @@ base.vaicom.get = {
 		end,
 	},
 	missiondata = {
+		drawingssnapshot = function()
+			local nowTick = base.tonumber((base.vaicom and base.vaicom.state and base.vaicom.state.timer) or 0) or 0
+			local function trimSafe(v)
+				local s = base.tostring(v or "")
+				s = s:gsub("^%s+", "")
+				s = s:gsub("%s+$", "")
+				return s
+			end
+			local function tryget(fn)
+				local ok, value = base.pcall(fn)
+				if ok then return value end
+				return nil
+			end
+
+			local function tostringSafe(v)
+				if v == nil then return "" end
+				return base.tostring(v)
+			end
+
+			local function sortedNumericKeys(tbl)
+				local keys = {}
+				if base.type(tbl) ~= "table" then return keys end
+				for k,_ in base.pairs(tbl) do
+					if base.type(k) == "number" then
+						base.table.insert(keys, k)
+					end
+				end
+				base.table.sort(keys)
+				return keys
+			end
+
+			local state = base.vaicom and base.vaicom.state or nil
+			if state == nil then
+				return {}, ""
+			end
+
+			local missionObj = tryget(function() return base.env and base.env.mission end)
+			local missionName = trimSafe(tryget(function() return base.DCS.getMissionName() end))
+			local theatre = tryget(function() return missionObj and missionObj.theatre end)
+
+			local lastTitle = trimSafe(state.missiondrawingstitle or "")
+			if missionName ~= "" and lastTitle ~= "" and missionName ~= lastTitle then
+				state.missiondrawingscacheid = ""
+				state.missiondrawingssentid = ""
+				state.missiondrawingssendcount = 0
+				state.missiondrawingslastsendat = -999
+				state.missiondrawingsnextretryat = -999
+				state.missiondrawingsslotkey = ""
+				state.missiondrawingscachecreatedat = nowTick
+				state.missiondrawingsready = false
+				state.missiondrawingslocked = false
+				state.missiondrawingstxreason = "mission-change"
+				state.missiondrawingstxchunk13bytes = 0
+				state.missiondrawingstxchunk13hastable = false
+				state.missiondrawingstxchunk13haskey = false
+				state.missiondrawingstxchunk13sentok = false
+				state.missiondrawingstxchunk13partcount = 0
+				state.missiondrawings = {}
+			end
+
+			if missionName ~= "" then
+				state.missiondrawingstitle = missionName
+			end
+
+			local missionTitleKey = trimSafe(state.missiondrawingstitle or "")
+			local missionIdentity = missionTitleKey .. "|" .. tostringSafe(theatre)
+
+			if state.missiondrawingslocked == true
+				and state.missiondrawingscacheid == missionIdentity
+				and base.type(state.missiondrawings) == "table"
+				and state.missiondrawingsready == true
+			then
+				return state.missiondrawings, missionIdentity
+			end
+
+			if state.missiondrawingscacheid == missionIdentity
+				and base.type(state.missiondrawings) == "table"
+				and state.missiondrawingsready == true
+			then
+				return state.missiondrawings, missionIdentity
+			end
+
+			state.missiondrawingscacheid = missionIdentity
+			state.missiondrawingssentid = ""
+			state.missiondrawingssendcount = 0
+			state.missiondrawingslastsendat = -999
+			state.missiondrawingsnextretryat = -999
+			state.missiondrawingscachecreatedat = nowTick
+			state.missiondrawingsready = false
+			state.missiondrawingslocked = false
+			state.missiondrawingstxreason = "identity-reset"
+			state.missiondrawingstxchunk13bytes = 0
+			state.missiondrawingstxchunk13hastable = false
+			state.missiondrawingstxchunk13haskey = false
+			state.missiondrawingstxchunk13sentok = false
+			state.missiondrawingstxchunk13partcount = 0
+			state.missiondrawings = {
+				missionIdentity = missionIdentity,
+				missionTitle = missionTitleKey,
+				layers = {},
+				hiddenOnF10Map = {},
+			}
+
+			local drawings = tryget(function() return missionObj and missionObj.drawings end)
+			if base.type(drawings) ~= "table" then
+				return state.missiondrawings, missionIdentity
+			end
+
+			local hiddenOnF10Map = tryget(function() return drawings.options and drawings.options.hiddenOnF10Map end)
+			if base.type(hiddenOnF10Map) == "table" then
+				for role, sides in base.pairs(hiddenOnF10Map) do
+					if base.type(sides) == "table" then
+						state.missiondrawings.hiddenOnF10Map[base.tostring(role)] = {
+							Neutral = sides.Neutral and true or false,
+							Blue = sides.Blue and true or false,
+							Red = sides.Red and true or false,
+						}
+					end
+				end
+			end
+
+			local layers = tryget(function() return drawings.layers end)
+			if base.type(layers) ~= "table" then
+				state.missiondrawingsready = true
+				return state.missiondrawings, missionIdentity
+			end
+
+			for _, layerIndex in base.pairs(sortedNumericKeys(layers)) do
+				local layer = layers[layerIndex]
+				if base.type(layer) == "table" then
+					local outLayer = {
+						id = layerIndex,
+						name = tostringSafe(layer.name),
+						visible = layer.visible and true or false,
+						objects = {},
+					}
+
+					local objects = layer.objects
+					if base.type(objects) == "table" then
+						for _, objectIndex in base.pairs(sortedNumericKeys(objects)) do
+							local obj = objects[objectIndex]
+							if base.type(obj) == "table" then
+								local outObj = {
+									id = objectIndex,
+									name = tostringSafe(obj.name),
+									layerName = tostringSafe(obj.layerName),
+									primitiveType = tostringSafe(obj.primitiveType),
+									visible = obj.visible and true or false,
+									mapX = base.tonumber(obj.mapX) or 0,
+									mapY = base.tonumber(obj.mapY) or 0,
+									angle = base.tonumber(obj.angle) or 0,
+									text = tostringSafe(obj.text),
+									font = tostringSafe(obj.font),
+									fontSize = base.tonumber(obj.fontSize) or 0,
+									colorString = tostringSafe(obj.colorString),
+									fillColorString = tostringSafe(obj.fillColorString),
+									thickness = base.tonumber(obj.thickness) or 0,
+									borderThickness = base.tonumber(obj.borderThickness) or 0,
+									style = tostringSafe(obj.style),
+									polygonMode = tostringSafe(obj.polygonMode),
+									lineMode = tostringSafe(obj.lineMode),
+									closed = obj.closed and true or false,
+									radius = base.tonumber(obj.radius) or 0,
+									width = base.tonumber(obj.width) or 0,
+									height = base.tonumber(obj.height) or 0,
+									points = {},
+								}
+
+								local points = obj.points
+								if base.type(points) ~= "table" then
+									points = obj.verticies
+								end
+								if base.type(points) ~= "table" then
+									points = obj.vertices
+								end
+
+								if base.type(points) == "table" then
+									for _, pointIndex in base.pairs(sortedNumericKeys(points)) do
+										local p = points[pointIndex]
+										if base.type(p) == "table" then
+											base.table.insert(outObj.points, {
+												x = base.tonumber(p.x) or 0,
+												y = base.tonumber(p.y) or 0,
+											})
+										end
+									end
+								end
+
+								base.table.insert(outLayer.objects, outObj)
+							end
+						end
+					end
+
+					base.table.insert(state.missiondrawings.layers, outLayer)
+				end
+			end
+
+			state.missiondrawingsready = true
+			return state.missiondrawings, missionIdentity
+		end,
 		listby = {
 				Radio 	= function(sortfunction)
 					local Stack = base.vaicom.list.localRadios()
@@ -2849,7 +3049,7 @@ base.vaicom.get = {
 					end
 					if #details == 0 then
 						for k, panel in base.pairs(Stack) do
-							local fallbackId = tonumber(k) or (#details + 1)
+							local fallbackId = base.tonumber(k) or (#details + 1)
 							appendMarker(panel, fallbackId)
 						end
 					end
@@ -2900,6 +3100,24 @@ base.vaicom.state = {
 		theatre					= "",
 		multiplayer				= false,
 		vrmode					= false,
+		missiondrawings			= {},
+		missiondrawingscacheid	= "",
+		missiondrawingssentid	= "",
+		missiondrawingssendcount = 0,
+		missiondrawingslastsendat = -999,
+		missiondrawingsnextretryat = -999,
+		missiondrawingsretrydone = false,
+		missiondrawingsslotkey = "",
+		missiondrawingscachecreatedat = -999,
+		missiondrawingstitle = "",
+		missiondrawingstxreason = "init",
+		missiondrawingslocked = false,
+		missiondrawingstxchunk13bytes = 0,
+		missiondrawingstxchunk13hastable = false,
+		missiondrawingstxchunk13haskey = false,
+		missiondrawingstxchunk13sentok = false,
+		missiondrawingstxchunk13partcount = 0,
+		missiondrawingsready = false,
 		menuhold				= false,
 		dcsid					= false,
 		dcsmodulecat			= false,
@@ -4093,6 +4311,18 @@ base.vaicom.state = {
 						bullseyeY = 0,
 						bullseyeCoalition = "",
 						bullseyeValid = false,
+						mdSrc = 0,
+						mdFeat = 0,
+						mdTxCount = 0,
+						mdTxLocked = false,
+						mdTxReason = "",
+						mdTxNextRetryIn = -1,
+						mdTxSlot = "",
+						mdTxChunk13Bytes = 0,
+						mdTxChunk13HasTable = false,
+						mdTxChunk13HasKey = false,
+						mdTxChunk13SentOk = false,
+						mdTxChunk13PartCount = 0,
 					weatherType = "nil",
 					weatherKeys = {},
 					weatherSummary = {},
@@ -4970,6 +5200,106 @@ base.vaicom.state = {
 						probe.bullseyeValid = true
 					end
 
+					local function normalizeLayerName(value)
+						local s = base.string.upper(base.tostring(value or ""))
+						if s == "NEUTRALS" then return "NEUTRAL" end
+						if s == "RED" or s == "BLUE" or s == "NEUTRAL" or s == "COMMON" then
+							return s
+						end
+						return ""
+					end
+
+					local function collectMissionDrawingsProbe()
+						probe.mdSrc = 0
+						probe.mdFeat = 0
+
+						local snapshot = base.vaicom and base.vaicom.state and base.vaicom.state.missiondrawings or nil
+						if base.type(snapshot) ~= "table" then return end
+
+					local state = base.vaicom and base.vaicom.state or nil
+					if base.type(state) == "table" then
+						probe.mdTxCount = base.tonumber(state.missiondrawingssendcount) or 0
+						probe.mdTxLocked = state.missiondrawingslocked and true or false
+						probe.mdTxReason = base.tostring(state.missiondrawingstxreason or "")
+						probe.mdTxSlot = base.tostring(state.missiondrawingsslotkey or "")
+						probe.mdTxChunk13Bytes = base.tonumber(state.missiondrawingstxchunk13bytes) or 0
+						probe.mdTxChunk13HasTable = state.missiondrawingstxchunk13hastable and true or false
+						probe.mdTxChunk13HasKey = state.missiondrawingstxchunk13haskey and true or false
+						probe.mdTxChunk13SentOk = state.missiondrawingstxchunk13sentok and true or false
+						probe.mdTxChunk13PartCount = base.tonumber(state.missiondrawingstxchunk13partcount) or 0
+						local nextRetryAt = base.tonumber(state.missiondrawingsnextretryat)
+						local nowTick = base.tonumber(state.timer) or 0
+						if nextRetryAt ~= nil then
+							probe.mdTxNextRetryIn = nextRetryAt - nowTick
+						else
+							probe.mdTxNextRetryIn = -1
+						end
+					end
+
+						local ownSide = resolvePlayerCoalitionSide()
+						local ownLayer = normalizeLayerName(mapCoalitionSideToText(ownSide))
+						local layers = snapshot.layers
+						if base.type(layers) ~= "table" then return end
+
+						for _, layer in base.pairs(layers) do
+							if base.type(layer) == "table" and layer.visible ~= false then
+								local layerName = normalizeLayerName(layer.name or layer.layerName)
+								local allowedLayer = (layerName == "COMMON") or (ownLayer ~= "" and layerName == ownLayer)
+								if allowedLayer then
+									local objects = layer.objects
+									if base.type(objects) == "table" then
+										for _, obj in base.pairs(objects) do
+											if base.type(obj) == "table" and obj.visible ~= false then
+												local primitive = base.string.upper(base.tostring(obj.primitiveType or ""))
+												local mapX = base.tonumber(obj.mapX)
+												local mapY = base.tonumber(obj.mapY)
+												if primitive ~= "" and mapX ~= nil and mapY ~= nil then
+													probe.mdSrc = probe.mdSrc + 1
+
+													local points = obj.points
+													local pointCount = 0
+													if base.type(points) == "table" then
+														for _, p in base.pairs(points) do
+															if base.type(p) == "table" and base.tonumber(p.x) ~= nil and base.tonumber(p.y) ~= nil then
+																pointCount = pointCount + 1
+															end
+														end
+													end
+
+													if primitive == "TEXTBOX" then
+														if base.tostring(obj.text or "") ~= "" then
+															probe.mdFeat = probe.mdFeat + 1
+														end
+													elseif primitive == "LINE" then
+														if pointCount >= 2 then
+															probe.mdFeat = probe.mdFeat + 1
+														end
+													elseif primitive == "POLYGON" then
+														local polygonMode = base.string.lower(base.tostring(obj.polygonMode or ""))
+														if polygonMode == "circle" then
+															if (base.tonumber(obj.radius) or 0) > 0 then
+																probe.mdFeat = probe.mdFeat + 1
+															end
+														elseif polygonMode == "rect" then
+															if (base.tonumber(obj.width) or 0) > 0 and (base.tonumber(obj.height) or 0) > 0 then
+																probe.mdFeat = probe.mdFeat + 1
+															end
+														else
+															if pointCount >= 2 then probe.mdFeat = probe.mdFeat + 1 end
+															if pointCount >= 3 then probe.mdFeat = probe.mdFeat + 1 end
+														end
+													end
+												end
+											end
+										end
+									end
+								end
+							end
+						end
+					end
+
+					collectMissionDrawingsProbe()
+
 					if shouldRefreshStatic then
 						probe.runtimeRadioDevices = {}
 						probe.runtimeRadioChannels = {}
@@ -5519,6 +5849,92 @@ base.vaicom.state = {
             	
 				local missionGroupTacanMap = buildMissionGroupTacanMap()
 				profMark("buildMissionGroupTacanMap")
+
+				local missionDrawings = nil
+				do
+					local drawingSnapshot, drawingIdentity = base.vaicom.get.missiondata.drawingssnapshot()
+					if base.type(drawingSnapshot) == "table"
+						and base.type(base.vaicom.state) == "table"
+						and base.vaicom.state.missiondrawingsready == true
+						and drawingIdentity ~= ""
+					then
+						local function hasMissionDrawingObjects(snapshot)
+							if base.type(snapshot) ~= "table" then return false end
+							local layers = snapshot.layers
+							if base.type(layers) ~= "table" then return false end
+							for _, layer in base.pairs(layers) do
+								if base.type(layer) == "table" and base.type(layer.objects) == "table" then
+									for __, obj in base.pairs(layer.objects) do
+										if base.type(obj) == "table" then
+											return true
+										end
+									end
+								end
+							end
+							return false
+						end
+
+						local nowTick = base.tonumber(base.vaicom.state.timer) or 0
+						local sentId = base.tostring(base.vaicom.state.missiondrawingssentid or "")
+						local sendCount = base.tonumber(base.vaicom.state.missiondrawingssendcount) or 0
+					local nextRetryAt = base.tonumber(base.vaicom.state.missiondrawingsnextretryat) or -999
+					local retryDone = (base.vaicom.state.missiondrawingsretrydone == true)
+						local hasObjects = hasMissionDrawingObjects(drawingSnapshot)
+
+					local locked = (base.vaicom.state.missiondrawingslocked == true)
+
+					local unitId = data.pUnit and (base.tonumber(data.pUnit.id_) or 0) or 0
+					local callSign = data.pUnit and base.tostring(data.pUnit:getCallsign() or "") or ""
+					local slotKey = base.tostring(unitId) .. "|" .. callSign
+					local previousSlotKey = base.tostring(base.vaicom.state.missiondrawingsslotkey or "")
+					local slotChanged = (slotKey ~= "0|" and slotKey ~= "") and (slotKey ~= previousSlotKey)
+					if slotChanged then
+						base.vaicom.state.missiondrawingsslotkey = slotKey
+						base.vaicom.state.missiondrawingslocked = false
+						locked = false
+					end
+
+					local firstForIdentity = (sentId ~= drawingIdentity)
+					local retryReady = hasObjects and (not firstForIdentity) and (not slotChanged) and (not retryDone) and (nextRetryAt > 0) and (nowTick >= nextRetryAt)
+					local shouldSend = hasObjects and (firstForIdentity or slotChanged or retryReady)
+					local txReason = "hold"
+					if shouldSend then
+						if firstForIdentity then
+							txReason = "first"
+						elseif slotChanged then
+							txReason = "slot-change"
+						elseif retryReady then
+							txReason = "retry-once"
+						end
+					else
+						if not hasObjects then
+							txReason = "no-objects"
+						elseif locked then
+							txReason = "locked"
+						end
+					end
+
+						if shouldSend then
+						local nextCount = sendCount + 1
+							missionDrawings = drawingSnapshot
+							base.vaicom.state.missiondrawingssentid = drawingIdentity
+						base.vaicom.state.missiondrawingssendcount = nextCount
+							base.vaicom.state.missiondrawingslastsendat = nowTick
+						if firstForIdentity or slotChanged then
+							base.vaicom.state.missiondrawingsnextretryat = nowTick + 6
+							base.vaicom.state.missiondrawingsretrydone = false
+						elseif retryReady then
+							base.vaicom.state.missiondrawingsnextretryat = -999
+							base.vaicom.state.missiondrawingsretrydone = true
+						else
+							base.vaicom.state.missiondrawingsnextretryat = -999
+						end
+						base.vaicom.state.missiondrawingslocked = true
+					end
+
+					base.vaicom.state.missiondrawingstxreason = txReason
+					end
+				end
 				
                 local chunk = {}
 				chunk[1] 		= {
@@ -5551,7 +5967,7 @@ base.vaicom.state = {
 									radios				= {},
 								  }
 				chunk[3] 		= {		
-									missiontitle		= base.DCS.getMissionName(),
+									missiontitle		= ((base.vaicom.state and base.tostring(base.vaicom.state.missiondrawingstitle or "") ~= "") and base.vaicom.state.missiondrawingstitle) or base.DCS.getMissionName(),
 									missionbriefing		= base.DCS.getPlayerBriefing().descText,
 									missiondetails		= base.DCS.getPlayerBriefing().mission_goal,	
 									fuel_unit_mass_max	= playerUnitFuelMassMax,
@@ -5617,6 +6033,9 @@ base.vaicom.state = {
 									atcmetars = atcmetars,
 									atcicaotypes = atcicaotypes,
 									diagnostics = diagnostics,
+								  }
+				chunk[13] 		= {
+									missiondrawings		= missionDrawings,
 								  }
 				if base.vaicom and base.vaicom.state then
 					base.vaicom.state.atcicaotypes = chunk[12].atcicaotypes
@@ -5709,7 +6128,9 @@ base.vaicom.state = {
 						for _, value in base.pairs(err) do
 							base.env.error("VAICOM error sending chunk "..chunkId..", error: "..base.tostring(value))
 						end
+						return false
 					end
+					return true
 				end
 				local function addChunkHeader(tbl, cid)
 					tbl.cid    = cid
@@ -5721,10 +6142,65 @@ base.vaicom.state = {
 				-- Maximum udp packet size for localhost
 				-- (64K - 20 IP header - 8 UDP header)
 				local maxSize = (64 * 1024) - 20 - 8
-              	for chunkId = 1, 12 do
+				for chunkId = 1, 13 do
 					local chunkPayload = addChunkHeader(chunk[chunkId], chunkId)
 					local payload = JSON:encode(chunkPayload)
-					if chunkId == 9 and (#payload > maxSize) then
+					if chunkId == 13 then
+						-- Split large missiondrawings payload across multiple chunk 13 packets.
+						if base.vaicom and base.vaicom.state then
+							base.vaicom.state.missiondrawingstxchunk13bytes = #payload
+							base.vaicom.state.missiondrawingstxchunk13hastable = (base.type(chunkPayload.missiondrawings) == "table")
+							base.vaicom.state.missiondrawingstxchunk13haskey = (base.string.find(payload, '"missiondrawings"') ~= nil)
+							base.vaicom.state.missiondrawingstxchunk13sentok = false
+							base.vaicom.state.missiondrawingstxchunk13partcount = 0
+						end
+
+						local sentOk = false
+						local missionDrawingsTbl = chunkPayload.missiondrawings
+						if base.type(missionDrawingsTbl) == "table" then
+							local drawingsJson = JSON:encode(missionDrawingsTbl)
+							local safePartSize = 32000
+							local totalBytes = #drawingsJson
+							local partCount = 1
+							if totalBytes > safePartSize then
+								partCount = base.math.ceil(totalBytes / safePartSize)
+							end
+
+							if base.vaicom and base.vaicom.state then
+								base.vaicom.state.missiondrawingstxchunk13bytes = totalBytes
+								base.vaicom.state.missiondrawingstxchunk13partcount = partCount
+							end
+
+							if partCount <= 1 then
+								sentOk = sendChunk(payload, chunkId)
+							else
+								sentOk = true
+								local nowToken = base.tonumber(base.vaicom.state and base.vaicom.state.timer or 0) or 0
+								local transferId = base.tostring(nowToken) .. "|" .. base.tostring(base.vaicom.state and base.vaicom.state.missiondrawingssendcount or 0)
+								for partIndex = 1, partCount do
+									local startAt = ((partIndex - 1) * safePartSize) + 1
+									local endAt = base.math.min(startAt + safePartSize - 1, totalBytes)
+									local fragmentPayload = {
+										md_transferid = transferId,
+										md_partindex = partIndex,
+										md_partcount = partCount,
+										md_part = base.string.sub(drawingsJson, startAt, endAt),
+									}
+									local fragmentChunk = addChunkHeader(fragmentPayload, chunkId)
+									local fragmentJson = JSON:encode(fragmentChunk)
+									if not sendChunk(fragmentJson, chunkId) then
+										sentOk = false
+									end
+								end
+							end
+						else
+							sentOk = sendChunk(payload, chunkId)
+						end
+
+						if base.vaicom and base.vaicom.state then
+							base.vaicom.state.missiondrawingstxchunk13sentok = (sentOk == true)
+						end
+					elseif chunkId == 9 and (#payload > maxSize) then
 						-- Large menus that exceed the maximum payload cause udp errors
 						-- and prevent sending the chunk to VAICOM. Send empty menu item
 						-- if menus are too large.
@@ -5743,7 +6219,7 @@ base.vaicom.state = {
 				
 				-- Send chunk indicating that all chunks have been sent and now ready for processing.
 				local completedPayload = { completed = true }
-				sendChunk(JSON:encode(addChunkHeader(completedPayload, 13)), 13)
+				sendChunk(JSON:encode(addChunkHeader(completedPayload, 14)), 14)
 				profMark("encode+send chunks")
 
 				-- Clear receipients list Locator properties cache

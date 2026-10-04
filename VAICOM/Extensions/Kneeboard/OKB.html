@@ -3788,7 +3788,9 @@
     const efbAdLandingEnabledStorageKey = 'vaicom.okb.efbAdLandingEnabled';
     const efbSaNavigraphLayerStorageKey = 'vaicom.okb.efbSaNavigraphLayer';
     const efbSaDoghousesEnabledStorageKey = 'vaicom.okb.efbSaDoghousesEnabled';
+    const efbSaMissionDrawingsEnabledStorageKey = 'vaicom.okb.efbSaMissionDrawingsEnabled';
     const efbSaHistoryTrackEnabledStorageKey = 'vaicom.okb.efbSaHistoryTrackEnabled';
+    const efbSaSamThreatsEnabledStorageKey = 'vaicom.okb.efbSaSamThreatsEnabled';
     const efbSaUserWaypointsEnabledStorageKey = 'vaicom.okb.efbSaUserWaypointsEnabled';
     const efbSaUserWaypointsStorageKey = 'vaicom.okb.efbSaUserWaypoints';
     const efbSaSavedHistoryTracksStorageKey = 'vaicom.okb.efbSaSavedHistoryTracksBySelection';
@@ -3849,7 +3851,10 @@
     let efbAdLandingEnabled = false;
     let efbSaNavigraphLayer = 'vfr';
     let efbSaShowDoghouses = true;
+    let efbSaShowMissionDrawings = true;
     let efbSaShowHistoryTrack = false;
+    let efbSaShowSamThreatRings = false;
+    let efbSaSamThreatCoalitionMode = 'hostile';
     let efbSaShowUserWaypoints = true;
     let autoAtaRecSpdEnabled = false;
     let autoAtaRecPulseUntilUtc = 0;
@@ -3937,6 +3942,9 @@
     let efbSaOwnshipMotionBySelection = {};
     let efbSaHistoryTrackBySelection = {};
     let efbSaHistoryTrackLastSampleBySelection = {};
+    let samThreatReferenceEntriesCache = null;
+    let samThreatReferenceLoadStarted = false;
+    let efbAwacsSelectedSamThreatKeys = [];
     let efbSaSavedHistoryTracksBySelection = {};
     let efbSaLastModuleConnected = false;
     let efbSaCameraTickerId = 0;
@@ -4659,6 +4667,25 @@
       }
     }
 
+    function readEfbSaMissionDrawingsEnabledPreference() {
+      try {
+        if (!window.localStorage) return true;
+        const raw = window.localStorage.getItem(efbSaMissionDrawingsEnabledStorageKey);
+        if (raw === null || raw === undefined || raw === '') return true;
+        return raw === '1';
+      } catch (_) {
+        return true;
+      }
+    }
+
+    function persistEfbSaMissionDrawingsEnabledPreference() {
+      try {
+        if (!window.localStorage) return;
+        window.localStorage.setItem(efbSaMissionDrawingsEnabledStorageKey, efbSaShowMissionDrawings ? '1' : '0');
+      } catch (_) {
+      }
+    }
+
     function readEfbSaHistoryTrackEnabledPreference() {
       try {
         if (!window.localStorage) return false;
@@ -4674,6 +4701,25 @@
       try {
         if (!window.localStorage) return;
         window.localStorage.setItem(efbSaHistoryTrackEnabledStorageKey, efbSaShowHistoryTrack ? '1' : '0');
+      } catch (_) {
+      }
+    }
+
+    function readEfbSaSamThreatsEnabledPreference() {
+      try {
+        if (!window.localStorage) return false;
+        const raw = window.localStorage.getItem(efbSaSamThreatsEnabledStorageKey);
+        if (raw === null || raw === undefined || raw === '') return false;
+        return raw === '1';
+      } catch (_) {
+        return false;
+      }
+    }
+
+    function persistEfbSaSamThreatsEnabledPreference() {
+      try {
+        if (!window.localStorage) return;
+        window.localStorage.setItem(efbSaSamThreatsEnabledStorageKey, efbSaShowSamThreatRings ? '1' : '0');
       } catch (_) {
       }
     }
@@ -4984,6 +5030,691 @@
       return String(text || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
     }
 
+    function normalizeSamLookupToken(text) {
+      return String(text || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+    }
+
+    function getSamThreatFallbackReferenceEntries() {
+      return [
+        { systemKey: 'SA2_GUIDELINE', displayName: 'SA-2 Guideline', rangeNmMin: null, rangeNmMaxAssumed: 28.0, confidence: 'medium', category: 'SAM', dcsAliases: ['SA-2', 'S-75', 'GUIDELINE', 'FAN SONG', 'SNR-75', 'FS'] },
+        { systemKey: 'SA3_GOA', displayName: 'SA-3 Goa', rangeNmMin: 3.2, rangeNmMaxAssumed: 13.5, confidence: 'high', category: 'SAM', dcsAliases: ['SA-3', 'S-125', 'GOA', 'LOW BLOW', 'SNR-125', 'LB'] },
+        { systemKey: 'SA5_GAMMON', displayName: 'SA-5 Gammon', rangeNmMin: null, rangeNmMaxAssumed: 130.0, confidence: 'low', category: 'LONG_SAM', dcsAliases: ['SA-5', 'S-200', 'GAMMON', 'SQUARE PAIR', '5N26', 'TIN SHIELD', 'SP'] },
+        { systemKey: 'SA6_GAINFUL', displayName: 'SA-6 Gainful', rangeNmMin: 0.5, rangeNmMaxAssumed: 19.2, confidence: 'high', category: 'SAM', dcsAliases: ['SA-6', '2K12', 'KUB', 'GAINFUL', 'STRAIGHT FLUSH', '1S91', 'SF'] },
+        { systemKey: 'SA8_GECKO', displayName: 'SA-8 Gecko', rangeNmMin: 0.8, rangeNmMaxAssumed: 7.5, confidence: 'high', category: 'SHORAD', dcsAliases: ['SA-8', '9K33', 'OSA', 'GECKO', 'LAND ROLL', 'LR'] },
+        { systemKey: 'SA10_GRUMBLE', displayName: 'SA-10 Grumble', rangeNmMin: 3.0, rangeNmMaxAssumed: 40.0, confidence: 'high', category: 'LONG_SAM', dcsAliases: ['SA-10', 'S-300', 'S-300PS', 'GRUMBLE', 'FLAP LID', 'BIG BIRD', 'CLAM SHELL', '30N6E', '64H6E', '76N6', 'FL', 'BB', 'CS'] },
+        { systemKey: 'SA11_GADFLY', displayName: 'SA-11 Gadfly', rangeNmMin: null, rangeNmMaxAssumed: 19.2, confidence: 'medium', category: 'MEDIUM_SAM', dcsAliases: ['SA-11', '9K37', 'BUK', 'GADFLY', 'FIRE DOME', 'SNOW DRIFT', 'FD', 'SD'] },
+        { systemKey: 'SA13_GOPHER', displayName: 'SA-13 Gopher', rangeNmMin: 0.4, rangeNmMaxAssumed: 2.8, confidence: 'high', category: 'SHORAD', dcsAliases: ['SA-13', '9K35', 'STRELA-10', 'GOPHER', 'SNAP SHOT'] },
+        { systemKey: 'SA15_GAUNTLET', displayName: 'SA-15 Gauntlet', rangeNmMin: 0.8, rangeNmMaxAssumed: 6.5, confidence: 'high', category: 'SHORAD', dcsAliases: ['SA-15', '9K331', 'TOR', 'GAUNTLET', 'SCRUM HALF', 'SH'] },
+        { systemKey: 'SA19_GRISON', displayName: 'SA-19 Grison', rangeNmMin: 0.0, rangeNmMaxAssumed: 4.0, confidence: 'high', category: 'SHORAD', dcsAliases: ['SA-19', '2K22', 'TUNGUSKA', 'GRISON'] },
+        { systemKey: 'HAWK_MIM23', displayName: 'MIM-23 Hawk', rangeNmMin: 1.0, rangeNmMaxAssumed: 25.6, confidence: 'high', category: 'MEDIUM_SAM', dcsAliases: ['HAWK', 'MIM-23', 'HPIR', 'PAR', 'CWAR'] },
+        { systemKey: 'PATRIOT_MIM104', displayName: 'MIM-104 Patriot', rangeNmMin: 1.6, rangeNmMaxAssumed: 86.0, confidence: 'high', category: 'LONG_SAM', dcsAliases: ['PATRIOT', 'MIM-104', 'AN/MPQ-53', 'AN/MPQ-65'] },
+        { systemKey: 'NASAMS', displayName: 'NASAMS', rangeNmMin: null, rangeNmMaxAssumed: 8.0, confidence: 'medium', category: 'MEDIUM_SAM', dcsAliases: ['NASAMS', 'MPQ64F1', 'SENTINEL'] },
+      ];
+    }
+
+    function getSamThreatReferenceEntries() {
+      if (Array.isArray(samThreatReferenceEntriesCache) && samThreatReferenceEntriesCache.length) {
+        return samThreatReferenceEntriesCache;
+      }
+
+      samThreatReferenceEntriesCache = getSamThreatFallbackReferenceEntries();
+
+      if (!samThreatReferenceLoadStarted && typeof fetch === 'function') {
+        samThreatReferenceLoadStarted = true;
+        fetch('OKB-SamThreatRanges.json', { cache: 'no-store' })
+          .then(function (r) {
+            if (!r || !r.ok) return null;
+            return r.json();
+          })
+          .then(function (json) {
+            const entries = Array.isArray(json && json.entries) ? json.entries : [];
+            if (entries.length) {
+              samThreatReferenceEntriesCache = entries;
+            }
+          })
+          .catch(function () { });
+      }
+
+      return samThreatReferenceEntriesCache;
+    }
+
+    function resolveSamThreatEntryFromText(text) {
+      const src = String(text || '');
+      const token = normalizeSamLookupToken(src);
+      if (!token) return null;
+
+      const entries = getSamThreatReferenceEntries();
+      let best = null;
+      let bestScore = -1;
+
+      (Array.isArray(entries) ? entries : []).forEach(function (entry) {
+        if (!entry || typeof entry !== 'object') return;
+        const aliases = [];
+        const displayName = String(entry.displayName || '').trim();
+        const systemKey = String(entry.systemKey || '').trim();
+        if (displayName) aliases.push(displayName);
+        if (systemKey) aliases.push(systemKey);
+        (Array.isArray(entry.dcsAliases) ? entry.dcsAliases : []).forEach(function (a) {
+          const t = String(a || '').trim();
+          if (t) aliases.push(t);
+        });
+
+        aliases.forEach(function (alias) {
+          const aliasToken = normalizeSamLookupToken(alias);
+          if (!aliasToken) return;
+          if (aliasToken.length < 3 && token !== aliasToken) return;
+          if (token.indexOf(aliasToken) < 0) return;
+          const score = aliasToken.length;
+          if (score > bestScore) {
+            bestScore = score;
+            best = entry;
+          }
+        });
+      });
+
+      if (best) return best;
+
+      const saMatch = token.match(/SA(\d{1,3})/);
+      if (saMatch && saMatch[1]) {
+        return {
+          systemKey: 'SA' + String(saMatch[1]),
+          displayName: 'SA-' + String(saMatch[1]),
+          rangeNmMin: null,
+          rangeNmMaxAssumed: 20,
+          confidence: 'low',
+          category: 'SAM',
+          dcsAliases: [],
+        };
+      }
+      return null;
+    }
+
+    function getSamThreatFallbackRangeNmByCategory(category) {
+      const c = String(category || '').toUpperCase();
+      if (c === 'MANPADS') return 2.5;
+      if (c === 'SHORAD') return 7.0;
+      if (c === 'MEDIUM_SAM') return 20.0;
+      if (c === 'LONG_SAM') return 40.0;
+      if (c === 'NAVAL') return 25.0;
+      return 20.0;
+    }
+
+    function makeSamThreatAssetKey(systemKey, xNum, yNum, label) {
+      const x = Number(xNum);
+      const y = Number(yNum);
+      return [
+        'SAMTHREAT',
+        String(systemKey || '').toUpperCase().trim(),
+        isFinite(x) ? String(Math.round(x / 50) * 50) : '',
+        isFinite(y) ? String(Math.round(y / 50) * 50) : '',
+        normalizeSamLookupToken(label || '').substring(0, 16)
+      ].join('|');
+    }
+
+    function isSamThreatConfirmedHostileFromText(text) {
+      const src = String(text || '').toUpperCase();
+      if (!src) return false;
+      if (src.indexOf('HOSTILE') >= 0) return true;
+      if (src.indexOf('ENEMY') >= 0) return true;
+      if (src.indexOf('RED') >= 0) return true;
+      return false;
+    }
+
+    function resolveSamThreatShortCode(displayName, systemKey) {
+      const key = String(systemKey || '').toUpperCase();
+      const name = String(displayName || '').toUpperCase();
+      if (key.indexOf('PATRIOT') >= 0 || name.indexOf('PATRIOT') >= 0) return 'PT';
+      const saMatch = (key.match(/SA[_\- ]?(\d{1,3})/) || name.match(/SA[_\- ]?(\d{1,3})/) || name.match(/S[_\- ]?(\d{2,3})/));
+      if (saMatch && saMatch[1]) return String(Number(saMatch[1]));
+      if (key.indexOf('HAWK') >= 0 || name.indexOf('HAWK') >= 0) return 'HK';
+      if (key.indexOf('NASAMS') >= 0 || name.indexOf('NASAMS') >= 0) return 'NS';
+      if (key.indexOf('ROLAND') >= 0 || name.indexOf('ROLAND') >= 0) return 'RL';
+      return 'UNK';
+    }
+
+    function resolveSamThreatRadarCode(text) {
+      const src = String(text || '').toUpperCase();
+      if (!src) return '';
+      const tokenized = ' ' + src.replace(/[^A-Z0-9]+/g, ' ').trim() + ' ';
+      if (tokenized.indexOf(' DE ') >= 0) return 'DE';
+      if (tokenized.indexOf(' FF ') >= 0) return 'FF';
+      if (tokenized.indexOf(' FL ') >= 0) return 'FL';
+      if (tokenized.indexOf(' TS ') >= 0) return 'TS';
+      if (tokenized.indexOf(' SD ') >= 0) return 'SD';
+      if (tokenized.indexOf(' TK ') >= 0) return 'TK';
+      if (tokenized.indexOf(' FS ') >= 0) return 'FS';
+      if (tokenized.indexOf(' LB ') >= 0) return 'LB';
+      if (tokenized.indexOf(' SF ') >= 0) return 'SF';
+      if (tokenized.indexOf(' FD ') >= 0) return 'FD';
+      if (tokenized.indexOf(' BB ') >= 0) return 'BB';
+      if (tokenized.indexOf(' CS ') >= 0) return 'CS';
+      if (tokenized.indexOf(' SP ') >= 0) return 'SP';
+      if (tokenized.indexOf(' LR ') >= 0) return 'LR';
+      if (tokenized.indexOf(' SH ') >= 0) return 'SH';
+      if (src.indexOf('DOG EAR') >= 0 || src.indexOf('DOGEAR') >= 0) return 'DE';
+      if (src.indexOf('SPOON REST') >= 0 || src.indexOf('SPOONREST') >= 0 || src.indexOf('PR-19') >= 0 || src.indexOf('P-19') >= 0 || src.indexOf('P19') >= 0 || src.indexOf('PR19') >= 0) return 'FF';
+      if (src.indexOf('FLAT FACE') >= 0 || src.indexOf('FLATFACE') >= 0) return 'FF';
+      if (src.indexOf('FLAP LID') >= 0 || src.indexOf('FLAPLID') >= 0) return 'FL';
+      if (src.indexOf('TIN SHIELD') >= 0 || src.indexOf('TINSHIELD') >= 0) return 'TS';
+      if (src.indexOf('SNOW DRIFT') >= 0 || src.indexOf('SNOWDRIFT') >= 0) return 'SD';
+      if (src.indexOf('TALL KING') >= 0 || src.indexOf('TALLKING') >= 0) return 'TK';
+      if (src.indexOf('FAN SONG') >= 0 || src.indexOf('FANSONG') >= 0) return 'FS';
+      if (src.indexOf('LOW BLOW') >= 0 || src.indexOf('LOWBLOW') >= 0) return 'LB';
+      if (src.indexOf('STRAIGHT FLUSH') >= 0 || src.indexOf('STRAIGHTFLUSH') >= 0) return 'SF';
+      if (src.indexOf('FIRE DOME') >= 0 || src.indexOf('FIREDOME') >= 0) return 'FD';
+      if (src.indexOf('BIG BIRD') >= 0 || src.indexOf('BIGBIRD') >= 0) return 'BB';
+      if (src.indexOf('CLAM SHELL') >= 0 || src.indexOf('CLAMSHELL') >= 0) return 'CS';
+      if (src.indexOf('SQUARE PAIR') >= 0 || src.indexOf('SQUAREPAIR') >= 0) return 'SP';
+      if (src.indexOf('LAND ROLL') >= 0 || src.indexOf('LANDROLL') >= 0) return 'LR';
+      if (src.indexOf('SCRUM HALF') >= 0 || src.indexOf('SCRUMHALF') >= 0) return 'SH';
+      if (tokenized.indexOf(' STR ') >= 0) return 'STR';
+      if (tokenized.indexOf(' SR ') >= 0) return 'SR';
+      return '';
+    }
+
+    function isSamSupportRadarOnlyResolution(resolved, sourceLine, systemKey) {
+      const key = String((systemKey || (resolved && resolved.systemKey) || '')).toUpperCase();
+      const text = String(sourceLine || '').toUpperCase();
+      if (!key && !text) return false;
+      if (key === 'PR19_SPOON_REST' || key === 'PR14_TIN_SHIELD') return true;
+      const tokenized = ' ' + text.replace(/[^A-Z0-9]+/g, ' ').trim() + ' ';
+      if (tokenized.indexOf(' PR19 ') >= 0 || tokenized.indexOf(' P19 ') >= 0 || text.indexOf('SPOON REST') >= 0 || text.indexOf('SPOONREST') >= 0) return true;
+      if (tokenized.indexOf(' PR14 ') >= 0 || tokenized.indexOf(' P14 ') >= 0 || text.indexOf('TIN SHIELD') >= 0 || text.indexOf('TINSHIELD') >= 0) return true;
+      return false;
+    }
+
+    function isSamThreatTrackRadarResolved(text) {
+      const src = String(text || '').toUpperCase();
+      if (!src) return false;
+      return src.indexOf('LOW BLOW') >= 0
+        || src.indexOf('LOWBLOW') >= 0
+        || src.indexOf('FAN SONG') >= 0
+        || src.indexOf('FANSONG') >= 0
+        || src.indexOf('FLAP LID') >= 0
+        || src.indexOf('FLAPLID') >= 0
+        || src.indexOf('FIRE DOME') >= 0
+        || src.indexOf('FIREDOME') >= 0
+        || src.indexOf('STRAIGHT FLUSH') >= 0
+        || src.indexOf('STRAIGHTFLUSH') >= 0
+        || src.indexOf('SCRUM HALF') >= 0
+        || src.indexOf('SCRUMHALF') >= 0;
+    }
+
+    function resolveSamThreatNavalPlatformCode(displayName, sourceLine, systemKey) {
+      const text = (String(displayName || '') + ' ' + String(sourceLine || '') + ' ' + String(systemKey || '')).toUpperCase();
+      if (!text) return '';
+      if (/\bCVN\b/.test(text)) return 'CVN';
+      if (/\bCV\b/.test(text)) return 'CV';
+      if (/\bCG\b/.test(text) || text.indexOf('CRUISER') >= 0) return 'CG';
+      if (/\bDDG\b/.test(text)) return 'DDG';
+      if (/\bDD\b/.test(text) || text.indexOf('DESTROYER') >= 0) return 'DD';
+      if (/\bFFG\b/.test(text) || text.indexOf('FRIGATE') >= 0) return 'FFG';
+      if (/\bLHA\b/.test(text)) return 'LHA';
+      if (/\bLHD\b/.test(text)) return 'LHD';
+      return '';
+    }
+
+    function isLikelySamThreatRadarText(text) {
+      const src = String(text || '').toUpperCase();
+      if (!src) return false;
+      const tokenized = ' ' + src.replace(/[^A-Z0-9]+/g, ' ').trim() + ' ';
+      const hasSamToken = tokenized.indexOf(' SAM ') >= 0
+        || /(^|[^A-Z0-9])SA[\-_ ]?\d{1,3}([^A-Z0-9]|$)/.test(src)
+        || src.indexOf('S-300') >= 0
+        || src.indexOf('S-200') >= 0
+        || src.indexOf('S-125') >= 0
+        || src.indexOf('S-75') >= 0
+        || src.indexOf('BUK') >= 0
+        || src.indexOf('KUB') >= 0
+        || src.indexOf('TOR') >= 0
+        || src.indexOf('ROLAND') >= 0
+        || src.indexOf('PATRIOT') >= 0
+        || src.indexOf('HAWK') >= 0
+        || src.indexOf('NASAMS') >= 0;
+      if (!hasSamToken) return false;
+      const isLauncher = src.indexOf('LAUNCHER') >= 0
+        || /(^|[^A-Z0-9])TEL([^A-Z0-9]|$)/.test(src)
+        || /(^|[^A-Z0-9])TELAR([^A-Z0-9]|$)/.test(src)
+        || /(^|[^A-Z0-9])LN([^A-Z0-9]|$)/.test(src);
+      if (isLauncher) return false;
+      const hasRadarToken = tokenized.indexOf(' RADAR ') >= 0
+        || tokenized.indexOf(' SR ') >= 0
+        || tokenized.indexOf(' STR ') >= 0
+        || src.indexOf('SEARCH') >= 0
+        || src.indexOf('DOG EAR') >= 0
+        || src.indexOf('DOGEAR') >= 0
+        || src.indexOf('FLAT FACE') >= 0
+        || src.indexOf('FLATFACE') >= 0
+        || src.indexOf('SPOON REST') >= 0
+        || src.indexOf('SPOONREST') >= 0
+        || src.indexOf('P-19') >= 0
+        || src.indexOf('PR-19') >= 0
+        || src.indexOf('P19') >= 0
+        || src.indexOf('PR19') >= 0
+        || src.indexOf('FAN SONG') >= 0
+        || src.indexOf('LOW BLOW') >= 0
+        || src.indexOf('SNOW DRIFT') >= 0
+        || src.indexOf('FLAP LID') >= 0
+        || src.indexOf('BIG BIRD') >= 0
+        || src.indexOf('CLAM SHELL') >= 0
+        || src.indexOf('TIN SHIELD') >= 0;
+      return hasRadarToken;
+    }
+
+    function extractSamThreatNorthEast(obj) {
+      const row = obj && typeof obj === 'object' ? obj : null;
+      if (!row) return null;
+      const pos = row.pos && typeof row.pos === 'object' ? row.pos : null;
+      const posX = Number(pos && pos.x);
+      const posZ = Number(pos && pos.z);
+      if (isFinite(posX) && isFinite(posZ)) {
+        return { xNum: posX, yNum: posZ };
+      }
+      const x = Number(row.x);
+      const y = Number(row.y);
+      const X = Number(row.X);
+      const Y = Number(row.Y);
+      const Z = Number(row.Z);
+      if (isFinite(X) && isFinite(Y)) {
+        return { xNum: X, yNum: Y };
+      }
+      if (isFinite(x) && isFinite(y) && Math.abs(x) > 1000 && Math.abs(y) > 1000) {
+        return { xNum: x, yNum: y };
+      }
+      if (isFinite(x) && isFinite(Z)) {
+        return { xNum: x, yNum: Z };
+      }
+      return null;
+    }
+
+    function parseAwacsSamThreatLineEntries(lines) {
+      const rows = Array.isArray(lines) ? lines : [];
+      const entries = [];
+      let inThreatBlock = false;
+      let section = '';
+      rows.forEach(function (line) {
+        const text = String(line || '').trim();
+        if (!text) return;
+        if (/^DATALINK\s+THREATS\s*:/i.test(text)) {
+          inThreatBlock = true;
+          section = '';
+          return;
+        }
+        if (!inThreatBlock) return;
+        const sectionMatch = text.match(/^([A-Z]+)\s*:\s*$/i);
+        if (sectionMatch && sectionMatch[1]) {
+          section = String(sectionMatch[1]).toUpperCase();
+          return;
+        }
+        if (text.toUpperCase().indexOf('NO DATALINK THREATS ARE DISPLAYED') >= 0) return;
+        const sectionUpper = String(section || '').toUpperCase();
+        const isSamSection = sectionUpper === 'SAM';
+        const isEwrSamLine = sectionUpper === 'EWR' && /^SAM\b/i.test(text);
+        if (!isSamSection && !isEwrSamLine) return;
+
+        const bra = text.match(/\b(\d{3})\s*\/\s*(\d{1,3}(?:\.\d+)?)\s*\//);
+        const braIdx = bra ? text.indexOf(bra[0]) : -1;
+        const sourceLabel = (braIdx > 0 ? text.substring(0, braIdx) : text)
+          .replace(/\s+\d+\s+CONTACTS?$/i, '')
+          .trim();
+        const resolved = resolveSamThreatEntryFromText(sourceLabel || text) || {};
+        const displayName = String(resolved.displayName || sourceLabel || 'SAM').trim();
+        const systemKey = String(resolved.systemKey || 'SAM_UNKNOWN').trim();
+        entries.push({
+          text: text,
+          sourceLabel: sourceLabel,
+          displayName: displayName,
+          systemKey: systemKey,
+          resolved: resolved,
+          bearing: bra ? Number(bra[1]) : NaN,
+          rangeNm: bra ? Number(bra[2]) : NaN,
+        });
+      });
+      return entries;
+    }
+
+    function collectDirectSamThreatCandidates(data) {
+      const model = data || latestData || {};
+      const server = (model && model.Server) || {};
+      const roots = [server.Diagnostics, server.Payload];
+      const seenNodes = [];
+      const candidates = [];
+      const dedupe = {};
+
+      function scan(node, path, depth) {
+        if (!node || typeof node !== 'object') return;
+        if (depth > 7) return;
+        if (seenNodes.indexOf(node) >= 0) return;
+        seenNodes.push(node);
+
+        if (Array.isArray(node)) {
+          for (let i = 0; i < node.length; i++) {
+            scan(node[i], path + '[' + String(i) + ']', depth + 1);
+          }
+          return;
+        }
+
+        const rowText = [
+          node.typename, node.TypeName,
+          node.fullname, node.FullName,
+          node.descr, node.description,
+          node.callsign, node.Callsign,
+          node.name, node.Name,
+        ].map(function (v) { return String(v || '').trim(); }).filter(function (v) { return !!v; }).join(' ');
+
+        const threatPos = extractSamThreatNorthEast(node);
+        if (threatPos && isLikelySamThreatRadarText(rowText)) {
+          const resolved = resolveSamThreatEntryFromText(rowText) || {};
+          const systemKey = String(resolved.systemKey || 'SAM_UNKNOWN').trim();
+          const key = String(Math.round(Number(threatPos.xNum) / 50) * 50) + '|' + String(Math.round(Number(threatPos.yNum) / 50) * 50) + '|' + systemKey;
+          if (!dedupe[key]) {
+            dedupe[key] = true;
+            candidates.push({
+              xNum: Number(threatPos.xNum),
+              yNum: Number(threatPos.yNum),
+              sourceText: rowText,
+              systemKey: systemKey,
+              resolved: resolved,
+            });
+          }
+        }
+
+        Object.keys(node).forEach(function (k) {
+          const child = node[k];
+          if (child && typeof child === 'object') {
+            scan(child, path ? (path + '.' + k) : k, depth + 1);
+          }
+        });
+      }
+
+      roots.forEach(function (root, idx) {
+        scan(root, idx === 0 ? 'diagnostics' : 'payload', 0);
+      });
+
+      return candidates;
+    }
+
+    function applySamRadarAssociationRules(candidates) {
+      const rows = Array.isArray(candidates) ? candidates : [];
+      if (!rows.length) return rows;
+
+      const sa3Entry = resolveSamThreatEntryFromText('LOW BLOW') || resolveSamThreatEntryFromText('SA-3') || null;
+      const sa2Entry = resolveSamThreatEntryFromText('FAN SONG') || resolveSamThreatEntryFromText('SA-2') || null;
+      rows.forEach(function (candidate) {
+        if (!candidate) return;
+        const token = normalizeSamLookupToken((candidate.sourceText || '') + ' ' + (candidate.systemKey || ''));
+        const candidateKey = String(candidate.systemKey || '').toUpperCase();
+        const isPr19 = token.indexOf('PR19') >= 0
+          || token.indexOf('P19') >= 0
+          || token.indexOf('SPOONREST') >= 0
+          || candidateKey === 'PR19_SPOON_REST';
+        if (!isPr19) {
+          return;
+        }
+
+        const hasNearbySa3 = rows.some(function (other) {
+          if (!other || other === candidate) return false;
+          const otherKey = String(other.systemKey || '').toUpperCase();
+          const otherTextToken = normalizeSamLookupToken(other.sourceText || '');
+          const isSa3 = otherKey === 'SA3_GOA' || otherTextToken.indexOf('LOWBLOW') >= 0 || otherTextToken.indexOf('SNR125') >= 0;
+          if (!isSa3) return false;
+          const dn = Number(other.xNum) - Number(candidate.xNum);
+          const de = Number(other.yNum) - Number(candidate.yNum);
+          const dist = Math.sqrt((dn * dn) + (de * de));
+          return isFinite(dist) && dist <= 3500;
+        });
+
+        if (hasNearbySa3 && sa3Entry) {
+          candidate.resolved = Object.assign({}, sa3Entry);
+          candidate.systemKey = String(sa3Entry.systemKey || 'SA3_GOA');
+          candidate.sourceText = String(candidate.sourceText || '') + ' LOW BLOW';
+          candidate.systemResolved = true;
+          return;
+        }
+
+        const hasNearbySa2 = rows.some(function (other) {
+          if (!other || other === candidate) return false;
+          const otherKey = String(other.systemKey || '').toUpperCase();
+          const otherTextToken = normalizeSamLookupToken(other.sourceText || '');
+          const isSa2 = otherKey === 'SA2_GUIDELINE' || otherTextToken.indexOf('FANSONG') >= 0 || otherTextToken.indexOf('SNR75') >= 0;
+          if (!isSa2) return false;
+          const dn = Number(other.xNum) - Number(candidate.xNum);
+          const de = Number(other.yNum) - Number(candidate.yNum);
+          const dist = Math.sqrt((dn * dn) + (de * de));
+          return isFinite(dist) && dist <= 3500;
+        });
+
+        if (hasNearbySa2 && sa2Entry) {
+          candidate.resolved = Object.assign({}, sa2Entry);
+          candidate.systemKey = String(sa2Entry.systemKey || 'SA2_GUIDELINE');
+          candidate.sourceText = String(candidate.sourceText || '') + ' FAN SONG';
+          candidate.systemResolved = true;
+        }
+      });
+
+      return rows;
+    }
+
+    function parseAwacsSamThreatMapPoints(data) {
+      const model = data || latestData || {};
+      const unitRows = getMergedList(model && model.Units, 'AWACS');
+      const detailRows = getMergedList(model && model.UnitDetails, 'AWACS');
+      const lines = (Array.isArray(unitRows) ? unitRows : []).concat(Array.isArray(detailRows) ? detailRows : []);
+
+      const ownship = getPlayerMapPoint(model);
+      const ownNorth = Number(ownship && ownship.xNum);
+      const ownEast = Number(ownship && ownship.yNum);
+      const lineEntries = parseAwacsSamThreatLineEntries(lines);
+      const directCandidates = collectDirectSamThreatCandidates(model);
+      const points = [];
+      const seen = {};
+
+      function pushSamPoint(north, east, entryLike, sourceLineOverride) {
+        const resolved = (entryLike && entryLike.resolved) || {};
+        const displayName = String((entryLike && entryLike.displayName) || resolved.displayName || 'SAM').trim();
+        const systemKey = String((entryLike && entryLike.systemKey) || resolved.systemKey || 'SAM_UNKNOWN').trim();
+        const categoryUpper = String(resolved.category || 'SAM').toUpperCase();
+        const sourceLine = String(sourceLineOverride || (entryLike && entryLike.text) || displayName);
+        const samCode = resolveSamThreatShortCode(displayName, systemKey);
+        const radarCode = resolveSamThreatRadarCode(sourceLine + ' ' + displayName + ' ' + systemKey);
+        const explicitTrackResolved = isSamThreatTrackRadarResolved(sourceLine + ' ' + displayName + ' ' + systemKey);
+        const supportRadarOnly = isSamSupportRadarOnlyResolution(resolved, sourceLine, systemKey);
+        const hasResolvedSystem = !!(
+          (entryLike && entryLike.systemResolved === true)
+          || explicitTrackResolved
+          || (!supportRadarOnly && systemKey && String(systemKey).toUpperCase() !== 'SAM_UNKNOWN')
+        );
+        const preferredCode = (!hasResolvedSystem && radarCode) ? radarCode : samCode;
+        const samIconResolved = !!(preferredCode && preferredCode !== 'UNK');
+        const navalPlatformCode = (categoryUpper === 'NAVAL') ? resolveSamThreatNavalPlatformCode(displayName, sourceLine, systemKey) : '';
+        const samDisplayCode = navalPlatformCode
+          ? (navalPlatformCode + (preferredCode && preferredCode !== 'SAM' ? preferredCode : ''))
+          : preferredCode;
+        const confirmedHostile = isSamThreatConfirmedHostileFromText(sourceLine);
+        const outerNm = Number(resolved.rangeNmMaxAssumed);
+        const outerRangeNm = isFinite(outerNm) && outerNm > 0
+          ? outerNm
+          : getSamThreatFallbackRangeNmByCategory(resolved.category);
+        const innerNm = Number(resolved.rangeNmMin);
+        const innerRangeNm = (isFinite(innerNm) && innerNm > 0 && innerNm < outerRangeNm) ? innerNm : NaN;
+        const confidence = String(resolved.confidence || 'medium').toLowerCase();
+        const assetKey = makeSamThreatAssetKey(systemKey, north, east, displayName);
+        if (seen[assetKey]) return;
+        seen[assetKey] = true;
+
+        const ringsNm = [];
+        if (isFinite(innerRangeNm) && innerRangeNm > 0) ringsNm.push(innerRangeNm);
+        ringsNm.push(outerRangeNm);
+
+        const confidenceBandsNm = confidence === 'low'
+          ? [outerRangeNm * 0.7, outerRangeNm]
+          : (confidence === 'medium' ? [outerRangeNm * 0.85, outerRangeNm] : []);
+
+        points.push({
+          xNum: north,
+          yNum: east,
+          label: displayName,
+          systemKey: systemKey,
+          confidence: confidence,
+          category: categoryUpper,
+          ringRadiiNm: ringsNm,
+          confidenceBandsNm: confidenceBandsNm,
+          radiusMeters: outerRangeNm * 1852.0,
+          ring: true,
+          samCode: samCode,
+          samRadarCode: radarCode,
+          samPreferredCode: preferredCode,
+          samHasResolvedSystem: hasResolvedSystem,
+          samIconResolved: samIconResolved,
+          samDisplayCode: samDisplayCode,
+          samNavalPlatformCode: navalPlatformCode,
+          samConfirmedHostile: confirmedHostile,
+          assetKey: assetKey,
+          sourceLine: sourceLine,
+        });
+      }
+
+      if (directCandidates.length && lineEntries.length) {
+        const used = {};
+        lineEntries.forEach(function (entry) {
+          let bestIdx = -1;
+          let bestScore = Number.POSITIVE_INFINITY;
+          directCandidates.forEach(function (candidate, idx) {
+            if (used[idx]) return;
+            if (String(candidate.systemKey || '').toUpperCase() !== String(entry.systemKey || '').toUpperCase()) return;
+            let score = 0;
+            const candidateResolved = candidate.resolved || {};
+            const candDisplay = String(candidateResolved.displayName || candidate.sourceText || '').toUpperCase();
+            const entryDisplay = String(entry.displayName || '').toUpperCase();
+            if (candDisplay !== entryDisplay) {
+              score += 5;
+            }
+            if (isFinite(Number(entry.rangeNm)) && isFinite(ownNorth) && isFinite(ownEast)) {
+              const dn = Number(candidate.xNum) - ownNorth;
+              const de = Number(candidate.yNum) - ownEast;
+              const distNm = Math.sqrt((dn * dn) + (de * de)) / 1852.0;
+              score += Math.abs(distNm - Number(entry.rangeNm));
+            }
+            if (score < bestScore) {
+              bestScore = score;
+              bestIdx = idx;
+            }
+          });
+          if (bestIdx >= 0) {
+            used[bestIdx] = true;
+            const c = directCandidates[bestIdx];
+            const mergedEntry = {
+              text: entry.text,
+              displayName: entry.displayName,
+              systemKey: entry.systemKey,
+              resolved: Object.assign({}, c.resolved || {}, entry.resolved || {}),
+            };
+            pushSamPoint(Number(c.xNum), Number(c.yNum), mergedEntry, entry.text);
+          }
+        });
+        if (points.length) {
+          return points;
+        }
+      }
+
+      if (directCandidates.length && !lineEntries.length) {
+        directCandidates.forEach(function (candidate) {
+          const mergedEntry = {
+            text: String(candidate && candidate.sourceText || ''),
+            displayName: String((candidate && candidate.resolved && candidate.resolved.displayName) || (candidate && candidate.sourceText) || 'SAM').trim(),
+            systemKey: String((candidate && candidate.systemKey) || normalizeSamLookupToken((candidate && candidate.sourceText) || '') || 'SAM_UNKNOWN').trim(),
+            resolved: Object.assign({}, (candidate && candidate.resolved) || {}),
+          };
+          pushSamPoint(Number(candidate.xNum), Number(candidate.yNum), mergedEntry, mergedEntry.text);
+        });
+        if (points.length) {
+          return points;
+        }
+      }
+
+      if (isFinite(ownNorth) && isFinite(ownEast)) {
+        lineEntries.forEach(function (entry) {
+          if (efbSaSamThreatCoalitionMode !== 'hostile' && efbSaSamThreatCoalitionMode !== 'all') return;
+          const bearing = Number(entry && entry.bearing);
+          const rangeNm = Number(entry && entry.rangeNm);
+          if (!isFinite(bearing) || !isFinite(rangeNm) || rangeNm <= 0) return;
+          const rad = bearing * (Math.PI / 180.0);
+          const distMeters = rangeNm * 1852.0;
+          const north = ownNorth + (Math.cos(rad) * distMeters);
+          const east = ownEast + (Math.sin(rad) * distMeters);
+          if (!isFinite(north) || !isFinite(east)) return;
+          pushSamPoint(north, east, entry, entry.text);
+        });
+      }
+      return points;
+    }
+
+    function getAwacsSamThreatSelectionFromLine(data, line) {
+      const lineToken = normalizeSamLookupToken(String(line || '').replace(/\s+/g, ' ').trim());
+      if (!lineToken) return null;
+      const points = parseAwacsSamThreatMapPoints(data);
+      const match = points.find(function (p) {
+        const src = normalizeSamLookupToken(String((p && p.sourceLine) || '').replace(/\s+/g, ' ').trim());
+        return src && (src === lineToken || src.indexOf(lineToken) >= 0 || lineToken.indexOf(src) >= 0);
+      });
+      return match || null;
+    }
+
+    function decorateAwacsSamSelectionText(text, data) {
+      const content = String(text || '');
+      if (!content) return content;
+      const selectedKeys = Array.isArray(efbAwacsSelectedSamThreatKeys)
+        ? efbAwacsSelectedSamThreatKeys.map(function (k) { return String(k || '').trim(); }).filter(function (k) { return !!k; })
+        : [];
+      if (!selectedKeys.length) return content;
+
+      const points = parseAwacsSamThreatMapPoints(data);
+      const selectedMap = {};
+      selectedKeys.forEach(function (k) { selectedMap[k] = true; });
+      const selected = points.filter(function (p) {
+        const key = String((p && p.assetKey) || '').trim();
+        return !!selectedMap[key];
+      });
+      if (!selected.length) return content;
+
+      const lines = content.split(/\r?\n/);
+      const selectedLineTokens = selected
+        .map(function (p) { return normalizeSamLookupToken(String((p && p.sourceLine) || '').replace(/\s+/g, ' ').trim()); })
+        .filter(function (v) { return !!v; });
+      const selectedLabels = selected
+        .map(function (p) { return String((p && p.label) || '').trim(); })
+        .filter(function (v) { return !!v; });
+      const highlighted = lines.map(function (ln) {
+        const row = String(ln || '').trim();
+        if (!row) return ln;
+        const rowToken = normalizeSamLookupToken(row);
+        const isSelectedRow = selectedLineTokens.some(function (selectedToken) {
+          return !!(selectedToken && rowToken && (rowToken === selectedToken || rowToken.indexOf(selectedToken) >= 0 || selectedToken.indexOf(rowToken) >= 0));
+        });
+        if (isSelectedRow) {
+          return '▶ ' + ln;
+        }
+        return ln;
+      });
+      highlighted.push('');
+      highlighted.push('Selected SAMs: ' + (selectedLabels.length ? selectedLabels.join(', ') : String(selected.length)));
+      return highlighted.join('\n');
+    }
+
+    function filterAwacsSamThreatPointsBySelection(points) {
+      const rows = Array.isArray(points) ? points : [];
+      const selectedKeys = Array.isArray(efbAwacsSelectedSamThreatKeys)
+        ? efbAwacsSelectedSamThreatKeys.map(function (k) { return String(k || '').trim(); }).filter(function (k) { return !!k; })
+        : [];
+      if (!selectedKeys.length) return rows;
+      const selectedMap = {};
+      selectedKeys.forEach(function (k) { selectedMap[k] = true; });
+      return rows.filter(function (p) {
+        const key = String((p && p.assetKey) || '').trim();
+        return !!selectedMap[key];
+      });
+    }
+
     function parseBraFromUnitLine(line) {
       const text = String(line || '').trim();
       if (!text) return null;
@@ -5085,6 +5816,157 @@
       const text = String((asset && asset.name) || '').toUpperCase();
       if (text.indexOf('HELO') >= 0 || text.indexOf('HELICOPTER') >= 0 || text.indexOf('ROTOR') >= 0) return 'rotary';
       return 'fixed';
+    }
+
+    function normalizeCoalitionLayerName(value) {
+      const v = String(value || '').trim().toUpperCase();
+      if (!v) return '';
+      if (v === 'RED') return 'RED';
+      if (v === 'BLUE') return 'BLUE';
+      if (v === 'NEUTRAL' || v === 'NEUTRALS') return 'NEUTRAL';
+      if (v === 'COMMON') return 'COMMON';
+      return '';
+    }
+
+    function getOwnCoalitionLayerName(data) {
+      const server = (data && data.Server) || {};
+      const coalitionRaw = server.PlayerCoalition;
+      const coalitionNum = Number(coalitionRaw);
+      if (isFinite(coalitionNum)) {
+        if (coalitionNum === 1) return 'RED';
+        if (coalitionNum === 2) return 'BLUE';
+        if (coalitionNum === 0) return 'NEUTRAL';
+      }
+
+      const normalizedDirect = normalizeCoalitionLayerName(coalitionRaw);
+      if (normalizedDirect) return normalizedDirect;
+
+      const diagnostics = (server && server.Diagnostics && typeof server.Diagnostics === 'object')
+        ? server.Diagnostics
+        : {};
+      const bullseyeCoalition = diagnostics.bullseyeCoalition;
+      const normalizedBullseye = normalizeCoalitionLayerName(bullseyeCoalition);
+      if (normalizedBullseye) return normalizedBullseye;
+
+      return '';
+    }
+
+    let missionDrawingSnapshotCache = null;
+    let missionDrawingSnapshotCacheMissionKey = '';
+
+    function getMissionDrawingSnapshotMissionKey(server) {
+      const s = (server && typeof server === 'object') ? server : {};
+      const mission = String(s.MissionTitle || '').trim();
+      const theatre = String(s.Theater || '').trim();
+      const mode = (s.Multiplayer === true) ? 'MP' : 'SP';
+      return (mission + '|' + theatre + '|' + mode).toUpperCase();
+    }
+
+    function resolveMissionDrawingSnapshotForSaMap(server) {
+      const missionKey = getMissionDrawingSnapshotMissionKey(server);
+      const liveSnapshot = (server && server.MissionDrawings && typeof server.MissionDrawings === 'object')
+        ? server.MissionDrawings
+        : null;
+
+      if (liveSnapshot) {
+        missionDrawingSnapshotCache = liveSnapshot;
+        missionDrawingSnapshotCacheMissionKey = missionKey;
+        return liveSnapshot;
+      }
+
+      if (missionDrawingSnapshotCache && (!missionKey || missionKey === missionDrawingSnapshotCacheMissionKey)) {
+        return missionDrawingSnapshotCache;
+      }
+
+      // MP startup can publish drawings before MissionTitle stabilizes.
+      // Preserve that cache when key transitions from blank -> concrete key.
+      if (missionDrawingSnapshotCache && missionKey && !missionDrawingSnapshotCacheMissionKey) {
+        missionDrawingSnapshotCacheMissionKey = missionKey;
+        return missionDrawingSnapshotCache;
+      }
+
+      if (missionDrawingSnapshotCache && missionKey && missionDrawingSnapshotCacheMissionKey && missionKey !== missionDrawingSnapshotCacheMissionKey) {
+        missionDrawingSnapshotCache = null;
+        missionDrawingSnapshotCacheMissionKey = missionKey;
+      }
+
+      return null;
+    }
+
+    function getMissionDrawingObjectsForSaMap(data) {
+      if (efbSaShowMissionDrawings === false) return [];
+      const server = (data && data.Server) || {};
+      const isMultiplayer = (server && server.Multiplayer === true);
+      const snapshot = resolveMissionDrawingSnapshotForSaMap(server);
+      if (!snapshot) return [];
+
+      const ownCoalition = getOwnCoalitionLayerName(data);
+      const allowedLayers = { COMMON: true };
+      if (ownCoalition) {
+        allowedLayers[ownCoalition] = true;
+      } else {
+        // MP fallback: if own coalition isn't resolved yet, keep overlays visible.
+        allowedLayers.RED = true;
+        allowedLayers.BLUE = true;
+        allowedLayers.NEUTRAL = true;
+      }
+
+      const layers = Array.isArray(snapshot.layers) ? snapshot.layers : (Array.isArray(snapshot.Layers) ? snapshot.Layers : []);
+      const rows = [];
+
+      layers.forEach(function (layer) {
+        const rawLayerName = String((layer && (layer.name || layer.Name)) || '').trim();
+        const normalizedLayerName = normalizeCoalitionLayerName(rawLayerName);
+        const layerName = normalizedLayerName || 'COMMON';
+        if (!isMultiplayer && !allowedLayers[layerName]) return;
+        const layerVisible = (layer && (layer.visible !== undefined ? layer.visible : layer.Visible));
+        if (layerVisible === false) return;
+
+        const objects = Array.isArray(layer && layer.objects) ? layer.objects : (Array.isArray(layer && layer.Objects) ? layer.Objects : []);
+        objects.forEach(function (obj) {
+          if (!obj || typeof obj !== 'object') return;
+          if ((obj.visible !== undefined ? obj.visible : obj.Visible) === false) return;
+
+          const primitiveType = String((obj.primitiveType !== undefined ? obj.primitiveType : obj.PrimitiveType) || '').trim();
+          const mapX = Number(obj.mapX !== undefined ? obj.mapX : obj.MapX);
+          const mapY = Number(obj.mapY !== undefined ? obj.mapY : obj.MapY);
+          if (!primitiveType || !isFinite(mapX) || !isFinite(mapY)) return;
+
+          const pointsRaw = Array.isArray(obj.points) ? obj.points : (Array.isArray(obj.Points) ? obj.Points : []);
+          const points = pointsRaw
+            .map(function (p) {
+              const px = Number(p && (p.x !== undefined ? p.x : p.X));
+              const py = Number(p && (p.y !== undefined ? p.y : p.Y));
+              if (!isFinite(px) || !isFinite(py)) return null;
+              return { x: px, y: py };
+            })
+            .filter(function (p) { return !!p; });
+
+          rows.push({
+            primitiveType: primitiveType,
+            layerName: layerName,
+            mapX: mapX,
+            mapY: mapY,
+            angle: Number(obj.angle !== undefined ? obj.angle : obj.Angle),
+            width: Number(obj.width !== undefined ? obj.width : obj.Width),
+            height: Number(obj.height !== undefined ? obj.height : obj.Height),
+            radius: Number(obj.radius !== undefined ? obj.radius : obj.Radius),
+            thickness: Number(obj.thickness !== undefined ? obj.thickness : obj.Thickness),
+            borderThickness: Number(obj.borderThickness !== undefined ? obj.borderThickness : obj.BorderThickness),
+            polygonMode: String((obj.polygonMode !== undefined ? obj.polygonMode : obj.PolygonMode) || '').trim().toLowerCase(),
+            lineMode: String((obj.lineMode !== undefined ? obj.lineMode : obj.LineMode) || '').trim().toLowerCase(),
+            closed: !!(obj.closed !== undefined ? obj.closed : obj.Closed),
+            style: String((obj.style !== undefined ? obj.style : obj.Style) || '').trim().toLowerCase(),
+            colorString: String((obj.colorString !== undefined ? obj.colorString : obj.ColorString) || '').trim(),
+            fillColorString: String((obj.fillColorString !== undefined ? obj.fillColorString : obj.FillColorString) || '').trim(),
+            text: String((obj.text !== undefined ? obj.text : obj.Text) || '').trim(),
+            fontSize: Number(obj.fontSize !== undefined ? obj.fontSize : obj.FontSize),
+            points: points,
+          });
+        });
+      });
+
+      return rows;
     }
 
     function getDtcMpdRoot(root) {
@@ -5645,6 +6527,7 @@
       return {
         geolines: geoLines,
         threatPoints: threatPoints.concat(mezThreatPoints).concat(jdamThreatPoints),
+        samThreatPoints: filterAwacsSamThreatPointsBySelection(parseAwacsSamThreatMapPoints(data)),
         destinationPoints: destinationPoints.concat(f14BullseyeDestinations).concat(f14NamedDestinations),
         faorLines: faorLines,
         flotLines: flotLines,
@@ -5729,6 +6612,7 @@
       const allowDtcOverlay = (efbSaShowDtcOverlay !== false);
       const allowAirports = (efbSaShowAirports !== false);
       const allowJtacTargets = (efbSaShowJtacTargets !== false);
+      const allowSamThreats = (efbSaShowSamThreatRings === true);
       const visibleRows = allowNavlog ? rows : [];
       const doghouseRows = normalizeDoghouseMapLegRows(rows);
       const model = data || latestData || {};
@@ -5745,6 +6629,7 @@
         ? {
           geolines: allowDtcOverlay ? (Array.isArray(overlays.geolines) ? overlays.geolines : []) : [],
           threatPoints: allowDtcOverlay ? (Array.isArray(overlays.threatPoints) ? overlays.threatPoints : []) : [],
+          samThreatPoints: allowSamThreats ? (Array.isArray(overlays.samThreatPoints) ? overlays.samThreatPoints : []) : [],
           destinationPoints: allowDtcOverlay ? (Array.isArray(overlays.destinationPoints) ? overlays.destinationPoints : []) : [],
           faorLines: allowDtcOverlay ? (Array.isArray(overlays.faorLines) ? overlays.faorLines : []) : [],
           flotLines: allowDtcOverlay ? (Array.isArray(overlays.flotLines) ? overlays.flotLines : []) : [],
@@ -5752,7 +6637,7 @@
           corridors: allowDtcOverlay ? (Array.isArray(overlays.corridors) ? overlays.corridors : []) : [],
           airfields: allowAirports ? (Array.isArray(overlays.airfields) ? overlays.airfields : []) : [],
         }
-        : { geolines: [], threatPoints: [], destinationPoints: [], faorLines: [], flotLines: [], capPoints: [], corridors: [] };
+        : { geolines: [], threatPoints: [], samThreatPoints: [], destinationPoints: [], faorLines: [], flotLines: [], capPoints: [], corridors: [] };
       const jtacTargets = allowJtacTargets ? parseJtacNineLineTargets(model) : [];
       const jtacOverlay = allowJtacTargets
         ? resolveJtacOverlayTargets(model, jtacTargets)
@@ -5769,6 +6654,8 @@
         ? getEfbSaSavedHistoryTracksBySelection(historyTrackSelection)
           .filter(function (row) { return row && row.visible !== false && Array.isArray(row.points) && row.points.length; })
         : [];
+      const missionDrawingObjects = getMissionDrawingObjectsForSaMap(model);
+      let missionDrawingRenderedFeatures = 0;
 
       const approxCenterLonLat = getTheatreCenterLonLat(theatre);
       let approxAnchorNorth = NaN;
@@ -5790,6 +6677,7 @@
         visibleRows.forEach(pushPoint);
         (Array.isArray(mapOverlays.geolines) ? mapOverlays.geolines : []).forEach(pushPoint);
         (Array.isArray(mapOverlays.threatPoints) ? mapOverlays.threatPoints : []).forEach(pushPoint);
+        (Array.isArray(mapOverlays.samThreatPoints) ? mapOverlays.samThreatPoints : []).forEach(pushPoint);
         (Array.isArray(mapOverlays.destinationPoints) ? mapOverlays.destinationPoints : []).forEach(pushPoint);
         (Array.isArray(mapOverlays.capPoints) ? mapOverlays.capPoints : []).forEach(pushPoint);
         if (activeJtacTarget) pushPoint(activeJtacTarget);
@@ -5886,6 +6774,47 @@
           },
           properties: props || {},
         });
+      }
+
+      function parseMissionDrawingColor(colorString, fallbackRgba, forceVisible) {
+        const s = String(colorString || '').trim();
+        const m = s.match(/^0x([0-9a-fA-F]{8})$/);
+        if (!m) return fallbackRgba;
+        const n = parseInt(m[1], 16);
+        if (!isFinite(n)) return fallbackRgba;
+
+        const aabbggrr = {
+          r: (n & 255),
+          g: ((n >>> 8) & 255),
+          b: ((n >>> 16) & 255),
+          a: (((n >>> 24) & 255) / 255),
+        };
+        const rrggbbaa = {
+          r: ((n >>> 24) & 255),
+          g: ((n >>> 16) & 255),
+          b: ((n >>> 8) & 255),
+          a: ((n & 255) / 255),
+        };
+
+        let pick = rrggbbaa;
+        if (pick.a <= 0.02 && aabbggrr.a > 0.02) {
+          pick = aabbggrr;
+        }
+
+        const alpha = forceVisible
+          ? Math.max(0.32, Math.min(1, Number(pick.a)))
+          : Math.max(0, Math.min(1, Number(pick.a)));
+
+        return 'rgba(' + Number(pick.r) + ',' + Number(pick.g) + ',' + Number(pick.b) + ',' + alpha.toFixed(3) + ')';
+      }
+
+      function missionAbsPoint(obj, point) {
+        const mapX = Number(obj && obj.mapX);
+        const mapY = Number(obj && obj.mapY);
+        const px = Number(point && point.x);
+        const py = Number(point && point.y);
+        if (!isFinite(mapX) || !isFinite(mapY) || !isFinite(px) || !isFinite(py)) return null;
+        return { xNum: mapX + px, yNum: mapY + py };
       }
 
       function addLineFeature(points, props) {
@@ -6231,6 +7160,161 @@
       addGroupedLines(mapOverlays.flotLines, '#c74b4b');
       addCorridorBounds(mapOverlays.corridors);
 
+      (Array.isArray(missionDrawingObjects) ? missionDrawingObjects : []).forEach(function (obj) {
+        if (!obj || typeof obj !== 'object') return;
+
+        const primitiveType = String(obj.primitiveType || '').trim().toUpperCase();
+        const mapX = Number(obj.mapX);
+        const mapY = Number(obj.mapY);
+        if (!isFinite(mapX) || !isFinite(mapY)) return;
+
+        const strokeColor = parseMissionDrawingColor(obj.colorString, 'rgba(31,54,81,0.85)', true);
+        const fillColor = parseMissionDrawingColor(obj.fillColorString, 'rgba(0,0,0,0)', false);
+        const lineWidth = Math.max(0.8, (Number(obj.thickness) || Number(obj.borderThickness) || 1.6) * 0.72);
+        const style = String(obj.style || '').toLowerCase();
+        const dashed = (style.indexOf('dot') >= 0 || style.indexOf('dash') >= 0);
+
+        if (primitiveType === 'TEXTBOX') {
+          const text = String(obj.text || '').trim();
+          if (!text) return;
+          const textLines = String(text || '')
+            .replace(/\r/g, '')
+            .split('\n')
+            .map(function (line) { return String(line || '').trim(); })
+            .filter(function (line) { return !!line; });
+          const labelText = textLines.length
+            ? textLines.join(' | ')
+            : String(text || '').replace(/\s+/g, ' ').trim();
+          if (!labelText) return;
+          addPointFeature({ xNum: mapX, yNum: mapY }, {
+            kind: 'mission-drawing-text',
+            group: 'overlay',
+            label: labelText,
+            fill: strokeColor,
+            stroke: strokeColor,
+            textColor: strokeColor,
+            fontSize: 18.5,
+            radius: 1.2,
+          });
+          missionDrawingRenderedFeatures += 1;
+          return;
+        }
+
+        if (primitiveType === 'LINE') {
+          const linePoints = (Array.isArray(obj.points) ? obj.points : [])
+            .map(function (p) { return missionAbsPoint(obj, p); })
+            .filter(function (p) { return !!p; });
+          if (linePoints.length < 2) return;
+          addLineFeature(linePoints, {
+            kind: 'mission-drawing-line',
+            group: 'overlay',
+            stroke: strokeColor,
+            lineWidth: lineWidth,
+            dashed: dashed,
+          });
+          missionDrawingRenderedFeatures += 1;
+          return;
+        }
+
+        if (primitiveType === 'POLYGON') {
+          const polygonMode = String(obj.polygonMode || '').toLowerCase();
+
+          if (polygonMode === 'circle') {
+            const radiusMeters = Number(obj.radius);
+            if (!isFinite(radiusMeters) || radiusMeters <= 0) return;
+            const ringPoints = [];
+            const steps = 40;
+            for (let i = 0; i <= steps; i++) {
+              const t = (i / steps) * Math.PI * 2;
+              ringPoints.push({
+                xNum: mapX + (Math.cos(t) * radiusMeters),
+                yNum: mapY + (Math.sin(t) * radiusMeters),
+              });
+            }
+            addLineFeature(ringPoints, {
+              kind: 'mission-drawing-line',
+              group: 'overlay',
+              stroke: strokeColor,
+              lineWidth: lineWidth,
+              dashed: dashed,
+            });
+            missionDrawingRenderedFeatures += 1;
+            return;
+          }
+
+          if (polygonMode === 'rect') {
+            const rectW = Number(obj.width);
+            const rectH = Number(obj.height);
+            if (!isFinite(rectW) || !isFinite(rectH) || rectW <= 0 || rectH <= 0) return;
+            const halfW = rectW / 2;
+            const halfH = rectH / 2;
+            const rectPoints = [
+              { xNum: mapX - halfW, yNum: mapY - halfH },
+              { xNum: mapX + halfW, yNum: mapY - halfH },
+              { xNum: mapX + halfW, yNum: mapY + halfH },
+              { xNum: mapX - halfW, yNum: mapY + halfH },
+              { xNum: mapX - halfW, yNum: mapY - halfH },
+            ];
+            addLineFeature(rectPoints, {
+              kind: 'mission-drawing-line',
+              group: 'overlay',
+              stroke: strokeColor,
+              lineWidth: lineWidth,
+              dashed: dashed,
+            });
+            missionDrawingRenderedFeatures += 1;
+            return;
+          }
+
+          const polyPoints = (Array.isArray(obj.points) ? obj.points : [])
+            .map(function (p) { return missionAbsPoint(obj, p); })
+            .filter(function (p) { return !!p; });
+          if (polyPoints.length < 2) return;
+
+          const linePts = polyPoints.slice();
+          if (polyPoints.length >= 3) {
+            const first = polyPoints[0];
+            const last = polyPoints[polyPoints.length - 1];
+            if (Math.abs(Number(first.xNum) - Number(last.xNum)) > 1 || Math.abs(Number(first.yNum) - Number(last.yNum)) > 1) {
+              linePts.push(first);
+            }
+          }
+          addLineFeature(linePts, {
+            kind: 'mission-drawing-line',
+            group: 'overlay',
+            stroke: strokeColor,
+            lineWidth: lineWidth,
+            dashed: dashed,
+          });
+
+          if (polyPoints.length >= 3) {
+            const polygonCoords = linePts
+              .map(function (p) { return toLonLat(p); })
+              .filter(function (c) { return Array.isArray(c) && c.length === 2; });
+            if (polygonCoords.length >= 4) {
+              polygonCoords.forEach(function (c) { pointsForBounds.push(c); });
+              features.push({
+                type: 'Feature',
+                geometry: {
+                  type: 'Polygon',
+                  coordinates: [polygonCoords],
+                },
+                properties: {
+                  kind: 'mission-drawing-fill',
+                  group: 'overlay',
+                  fill: fillColor,
+                  fillOpacity: 0.16,
+                  stroke: strokeColor,
+                  lineWidth: 0.9,
+                },
+              });
+            }
+          }
+
+          missionDrawingRenderedFeatures += 1;
+        }
+      });
+
       (Array.isArray(mapOverlays.destinationPoints) ? mapOverlays.destinationPoints : []).forEach(function (p) {
         addPointFeature(p, {
           kind: 'destination',
@@ -6252,6 +7336,30 @@
           stroke: '#8b2d2d',
           textColor: '#8b2d2d',
           radius: 4.2,
+        });
+      });
+
+      (Array.isArray(mapOverlays.samThreatPoints) ? mapOverlays.samThreatPoints : []).forEach(function (p) {
+        addPointFeature(p, {
+          kind: 'threat',
+          group: 'overlay',
+          threatSubtype: 'sam',
+          label: String((p && p.samDisplayCode) || '').trim() || String((p && p.samCode) || '').trim() || String((p && p.label) || '').trim(),
+          fill: '#bf3a5f',
+          stroke: '#8e2b47',
+          textColor: '#8e2b47',
+          radius: 4.2,
+          ring: !!(p && p.ring),
+          radiusMeters: Number(p && p.radiusMeters),
+          ringRadiiNm: Array.isArray(p && p.ringRadiiNm) ? p.ringRadiiNm : [],
+          confidenceBandsNm: Array.isArray(p && p.confidenceBandsNm) ? p.confidenceBandsNm : [],
+          confidence: String((p && p.confidence) || 'medium').toLowerCase(),
+          samConfirmedHostile: !!(p && p.samConfirmedHostile),
+          samIconResolved: !!(p && p.samIconResolved),
+          samNavalPlatformCode: String((p && p.samNavalPlatformCode) || '').trim(),
+          labelMinZoom: 6.8,
+          assetKey: String((p && p.assetKey) || ''),
+          category: 'SAM',
         });
       });
 
@@ -6421,6 +7529,7 @@
       const flotLines = Array.isArray(mapOverlays.flotLines) ? mapOverlays.flotLines : [];
       const capPoints = Array.isArray(mapOverlays.capPoints) ? mapOverlays.capPoints : [];
       const corridors = Array.isArray(mapOverlays.corridors) ? mapOverlays.corridors : [];
+      const missionDrawingObjects = getMissionDrawingObjectsForSaMap(data || latestData || {});
       const jtacPointsForMap = (activeJtacTarget ? [activeJtacTarget] : []).concat(historyJtacTargets);
 
       if (!rows.length) {
@@ -6682,6 +7791,12 @@
         + '</svg>';
     }
 
+    function getEfbSaLayerMissionDrawingsIconSvg() {
+      return '<svg class="efbRailIconSvg" viewBox="0 0 64 64" aria-hidden="true">'
+        + '<text x="32" y="47" text-anchor="middle" font-size="30" font-weight="700" fill="currentColor" font-family="Consolas, monospace">MIZ</text>'
+        + '</svg>';
+    }
+
     function getEfbSaLayerHistoryTrackIconSvg() {
       return '<svg class="efbRailIconSvg" viewBox="0 0 64 64" aria-hidden="true">'
         + '<path d="M16 13c-5 0-9 4-9 9 0 7 9 16 9 16s9-9 9-16c0-5-4-9-9-9z" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/>'
@@ -6722,6 +7837,16 @@
         + '<polygon points="32,11 53,32 32,53 11,32" fill="none" stroke="currentColor" stroke-width="3"/>'
         + '<line x1="32" y1="17" x2="32" y2="47" stroke="currentColor" stroke-width="3"/>'
         + '<line x1="17" y1="32" x2="47" y2="32" stroke="currentColor" stroke-width="3"/>'
+        + '</svg>';
+    }
+
+    function getEfbSaLayerSamThreatIconSvg() {
+      return '<svg class="efbRailIconSvg" viewBox="0 0 64 64" aria-hidden="true">'
+        + '<path d="M16 36c0-9.4 7.6-17 17-17s17 7.6 17 17" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round"/>'
+        + '<path d="M22 36c0-6 4.9-10.8 11-10.8S44 30 44 36" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/>'
+        + '<line x1="33" y1="20" x2="33" y2="44" stroke="currentColor" stroke-width="2.8"/>'
+        + '<line x1="16" y1="44" x2="50" y2="44" stroke="currentColor" stroke-width="2.8"/>'
+        + '<circle cx="33" cy="36" r="2.6" fill="currentColor"/>'
         + '</svg>';
     }
 
@@ -8281,7 +9406,9 @@
         + '<button type="button" class="efbRightDrawerBtn' + (efbSaShowJtacTargets !== false ? ' active' : '') + '" data-efb-sa-layer="jtac" title="JTAC targets ' + (efbSaShowJtacTargets !== false ? 'ON' : 'OFF') + '">' + getEfbSaLayerJtacIconSvg() + '</button>'
         + '<button type="button" class="efbRightDrawerBtn' + (efbSaShowAirports ? ' active' : '') + '" data-efb-sa-layer="airports" title="Airport symbols ' + (efbSaShowAirports ? 'ON' : 'OFF') + '">' + getEfbSaLayerAirportIconSvg() + '</button>'
         + '<button type="button" class="efbRightDrawerBtn' + (efbSaShowNavlog ? ' active' : '') + '" data-efb-sa-layer="navlog" title="Navlog route and waypoints ' + (efbSaShowNavlog ? 'ON' : 'OFF') + '">' + getEfbSaLayerNavlogIconSvg() + '</button>'
+        + '<button type="button" class="efbRightDrawerBtn' + (efbSaShowMissionDrawings ? ' active' : '') + '" data-efb-sa-layer="miz" title="Mission snapshot (MIZ) ' + (efbSaShowMissionDrawings ? 'ON' : 'OFF') + '">' + getEfbSaLayerMissionDrawingsIconSvg() + '</button>'
         + '<button type="button" class="efbRightDrawerBtn' + (efbSaShowHistoryTrack ? ' active' : '') + '" data-efb-sa-layer="history-track" title="History track ' + (efbSaShowHistoryTrack ? 'ON' : 'OFF') + '">' + getEfbSaLayerHistoryTrackIconSvg() + '</button>'
+        + '<button type="button" class="efbRightDrawerBtn' + (efbSaShowSamThreatRings ? ' active' : '') + '" data-efb-sa-layer="sam-threats" title="SAM threat rings ' + (efbSaShowSamThreatRings ? 'ON' : 'OFF') + '">' + getEfbSaLayerSamThreatIconSvg() + '</button>'
         + '<button type="button" class="efbRightDrawerBtn' + (efbSaShowDoghouses !== false ? ' active' : '') + '" data-efb-sa-layer="doghouses" title="Doghouse leg data ' + (efbSaShowDoghouses !== false ? 'ON' : 'OFF') + '">' + getEfbSaLayerDoghouseIconSvg() + '</button>'
         + '<button type="button" class="efbRightDrawerBtn' + (efbSaShowUserWaypoints !== false ? ' active' : '') + '" data-efb-sa-layer="user-waypoints" title="User waypoints ' + (efbSaShowUserWaypoints !== false ? 'ON' : 'OFF') + '">' + getEfbSaLayerUserWaypointIconSvg() + '</button>'
         + '<button type="button" class="efbRightDrawerBtn' + (efbSaShowDtcOverlay ? ' active' : '') + '" data-efb-sa-layer="dtc" title="DTC SA overlay ' + (efbSaShowDtcOverlay ? 'ON' : 'OFF') + '">' + getEfbSaLayerOverlayIconSvg() + '</button>'
@@ -8495,7 +9622,9 @@
         const jtacBtn = drawer.querySelector('[data-efb-sa-layer="jtac"]');
         const airportsBtn = drawer.querySelector('[data-efb-sa-layer="airports"]');
         const navlogBtn = drawer.querySelector('[data-efb-sa-layer="navlog"]');
+        const mizBtn = drawer.querySelector('[data-efb-sa-layer="miz"]');
         const historyTrackBtn = drawer.querySelector('[data-efb-sa-layer="history-track"]');
+        const samThreatsBtn = drawer.querySelector('[data-efb-sa-layer="sam-threats"]');
         const doghousesBtn = drawer.querySelector('[data-efb-sa-layer="doghouses"]');
         const userWaypointsBtn = drawer.querySelector('[data-efb-sa-layer="user-waypoints"]');
         const dtcBtn = drawer.querySelector('[data-efb-sa-layer="dtc"]');
@@ -8521,9 +9650,17 @@
           navlogBtn.classList.toggle('active', efbSaShowNavlog !== false);
           navlogBtn.title = 'Navlog route ' + (efbSaShowNavlog !== false ? 'ON' : 'OFF');
         }
+        if (mizBtn) {
+          mizBtn.classList.toggle('active', efbSaShowMissionDrawings !== false);
+          mizBtn.title = 'Mission snapshot (MIZ) ' + (efbSaShowMissionDrawings !== false ? 'ON' : 'OFF');
+        }
         if (historyTrackBtn) {
           historyTrackBtn.classList.toggle('active', efbSaShowHistoryTrack === true);
           historyTrackBtn.title = 'History track ' + (efbSaShowHistoryTrack === true ? 'ON' : 'OFF');
+        }
+        if (samThreatsBtn) {
+          samThreatsBtn.classList.toggle('active', efbSaShowSamThreatRings === true);
+          samThreatsBtn.title = 'SAM threat rings ' + (efbSaShowSamThreatRings === true ? 'ON' : 'OFF');
         }
         if (doghousesBtn) {
           doghousesBtn.classList.toggle('active', efbSaShowDoghouses !== false);
@@ -8618,9 +9755,15 @@
             efbSaShowAirports = !efbSaShowAirports;
           } else if (layer === 'navlog') {
             efbSaShowNavlog = !efbSaShowNavlog;
+          } else if (layer === 'miz') {
+            efbSaShowMissionDrawings = !efbSaShowMissionDrawings;
+            persistEfbSaMissionDrawingsEnabledPreference();
           } else if (layer === 'history-track') {
             efbSaShowHistoryTrack = !efbSaShowHistoryTrack;
             persistEfbSaHistoryTrackEnabledPreference();
+          } else if (layer === 'sam-threats') {
+            efbSaShowSamThreatRings = !efbSaShowSamThreatRings;
+            persistEfbSaSamThreatsEnabledPreference();
           } else if (layer === 'doghouses') {
             efbSaShowDoghouses = !efbSaShowDoghouses;
             persistEfbSaDoghousesEnabledPreference();
@@ -14555,6 +15698,10 @@
               }
               if (kind === 'threat') {
                 const gThreat = makeNode('g');
+                const isSamThreat = String((props && props.threatSubtype) || '').toLowerCase() === 'sam';
+                const isSamNaval = isSamThreat && String((props && props.samNavalPlatformCode) || '').trim().length > 0;
+                const samConfirmedHostile = !!(props && props.samConfirmedHostile);
+                const samIconResolved = isSamThreat ? !!(props && props.samIconResolved) : true;
                 const xh = makeNode('line');
                 xh.setAttribute('x1', (p.x - 7).toFixed(1));
                 xh.setAttribute('y1', p.y.toFixed(1));
@@ -14571,21 +15718,93 @@
                 xv.setAttribute('stroke', stroke);
                 xv.setAttribute('stroke-width', '1.6');
                 gThreat.appendChild(xv);
+                if (isSamThreat) {
+                  if (isSamNaval) {
+                    if (samConfirmedHostile) {
+                      const hostileDiamond = makeNode('polygon');
+                      hostileDiamond.setAttribute('points',
+                        p.x.toFixed(1) + ',' + (p.y - 9.2).toFixed(1) + ' '
+                        + (p.x - 9.2).toFixed(1) + ',' + p.y.toFixed(1) + ' '
+                        + p.x.toFixed(1) + ',' + (p.y + 9.2).toFixed(1) + ' '
+                        + (p.x + 9.2).toFixed(1) + ',' + p.y.toFixed(1));
+                      hostileDiamond.setAttribute('fill', 'none');
+                      hostileDiamond.setAttribute('stroke', stroke);
+                      hostileDiamond.setAttribute('stroke-width', '1.8');
+                      gThreat.appendChild(hostileDiamond);
+                    } else {
+                      const unknownV = makeNode('path');
+                      unknownV.setAttribute('d', 'M ' + (p.x - 9.2).toFixed(1) + ' ' + (p.y - 7.8).toFixed(1) + ' L ' + p.x.toFixed(1) + ' ' + (p.y + 8.2).toFixed(1) + ' L ' + (p.x + 9.2).toFixed(1) + ' ' + (p.y - 7.8).toFixed(1));
+                      unknownV.setAttribute('fill', 'none');
+                      unknownV.setAttribute('stroke', stroke);
+                      unknownV.setAttribute('stroke-width', '1.8');
+                      gThreat.appendChild(unknownV);
+                    }
+                  } else {
+                    if (samIconResolved) {
+                      const resolvedBox = makeNode('rect');
+                      resolvedBox.setAttribute('x', (p.x - 8.5).toFixed(1));
+                      resolvedBox.setAttribute('y', (p.y - 8.5).toFixed(1));
+                      resolvedBox.setAttribute('width', '17');
+                      resolvedBox.setAttribute('height', '17');
+                      resolvedBox.setAttribute('fill', 'none');
+                      resolvedBox.setAttribute('stroke', stroke);
+                      resolvedBox.setAttribute('stroke-width', '1.8');
+                      gThreat.appendChild(resolvedBox);
+                    } else {
+                      const unresolvedBottomOpen = makeNode('path');
+                      unresolvedBottomOpen.setAttribute('d', 'M ' + (p.x - 8.8).toFixed(1) + ' ' + (p.y + 7.8).toFixed(1) + ' L ' + (p.x - 8.8).toFixed(1) + ' ' + (p.y - 7.8).toFixed(1) + ' L ' + (p.x + 8.8).toFixed(1) + ' ' + (p.y - 7.8).toFixed(1) + ' L ' + (p.x + 8.8).toFixed(1) + ' ' + (p.y + 7.8).toFixed(1));
+                      unresolvedBottomOpen.setAttribute('fill', 'none');
+                      unresolvedBottomOpen.setAttribute('stroke', stroke);
+                      unresolvedBottomOpen.setAttribute('stroke-width', '1.8');
+                      gThreat.appendChild(unresolvedBottomOpen);
+                    }
+                  }
+                }
                 const radiusMeters = Number(props && props.radiusMeters);
                 const showRing = !!(props && props.ring) && isFinite(radiusMeters) && radiusMeters > 0 && isFinite(metersPerPixel);
                 if (showRing) {
-                  const ringPx = Math.max(4, radiusMeters / metersPerPixel);
-                  const ring = makeNode('circle');
-                  ring.setAttribute('cx', p.x.toFixed(1));
-                  ring.setAttribute('cy', p.y.toFixed(1));
-                  ring.setAttribute('r', ringPx.toFixed(1));
-                  ring.setAttribute('fill', 'none');
-                  ring.setAttribute('stroke', stroke);
-                  ring.setAttribute('stroke-width', '1.4');
-                  ring.setAttribute('stroke-dasharray', '7 5');
-                  gThreat.appendChild(ring);
+                  const rawRingsNm = Array.isArray(props && props.ringRadiiNm) ? props.ringRadiiNm : [];
+                  const ringRadiiMeters = rawRingsNm
+                    .map(function (nm) { return Number(nm) * 1852.0; })
+                    .filter(function (m) { return isFinite(m) && m > 0; })
+                    .sort(function (a, b) { return a - b; });
+                  if (!ringRadiiMeters.length) {
+                    ringRadiiMeters.push(radiusMeters);
+                  }
+
+                  const confidenceBandsNm = Array.isArray(props && props.confidenceBandsNm) ? props.confidenceBandsNm : [];
+                  confidenceBandsNm
+                    .map(function (nm) { return Number(nm) * 1852.0; })
+                    .filter(function (m) { return isFinite(m) && m > 0; })
+                    .sort(function (a, b) { return a - b; })
+                    .forEach(function (bandMeters, idx) {
+                      const bandPx = Math.max(4, bandMeters / metersPerPixel);
+                      const band = makeNode('circle');
+                      band.setAttribute('cx', p.x.toFixed(1));
+                      band.setAttribute('cy', p.y.toFixed(1));
+                      band.setAttribute('r', bandPx.toFixed(1));
+                      band.setAttribute('fill', stroke);
+                      band.setAttribute('fill-opacity', idx === confidenceBandsNm.length - 1 ? '0.05' : '0.03');
+                      band.setAttribute('stroke', 'none');
+                      band.style.pointerEvents = 'none';
+                      gThreat.appendChild(band);
+                    });
+
+                  ringRadiiMeters.forEach(function (ringMeters, idx) {
+                    const ringPx = Math.max(4, ringMeters / metersPerPixel);
+                    const ring = makeNode('circle');
+                    ring.setAttribute('cx', p.x.toFixed(1));
+                    ring.setAttribute('cy', p.y.toFixed(1));
+                    ring.setAttribute('r', ringPx.toFixed(1));
+                    ring.setAttribute('fill', 'none');
+                    ring.setAttribute('stroke', stroke);
+                    ring.setAttribute('stroke-width', idx === ringRadiiMeters.length - 1 ? '1.5' : '1.1');
+                    ring.setAttribute('stroke-dasharray', idx === ringRadiiMeters.length - 1 ? '7 5' : '4 5');
+                    ring.style.pointerEvents = 'none';
+                    gThreat.appendChild(ring);
+                  });
                 }
-                gThreat.style.pointerEvents = 'none';
+                gThreat.style.pointerEvents = (props && props.assetKey) ? 'auto' : 'none';
                 return gThreat;
               }
               if (kind === 'bullseye') {
@@ -14857,14 +16076,21 @@
 
           const label = String(props.label || '').trim();
           if (label) {
+            const labelMinZoom = Number(props && props.labelMinZoom);
+            const hideForDeclutter = isFinite(labelMinZoom) && isFinite(mapZoom) && mapZoom < labelMinZoom && !isSelected;
+            if (hideForDeclutter) {
+              return;
+            }
             const kind = String((props && props.kind) || '').toLowerCase();
+              const isSamThreatLabel = kind === 'threat' && String((props && props.threatSubtype) || '').toLowerCase() === 'sam';
+              const isNavalSamLabel = isSamThreatLabel && String((props && props.samNavalPlatformCode) || '').trim().length > 0;
             const isAirfieldLabel = kind === 'airfield';
             const isWaypointLabel = kind === 'waypoint' || kind === 'user-waypoint';
-            const useScaledLabel = isAirfieldLabel || isWaypointLabel;
+              const useScaledLabel = isAirfieldLabel || isWaypointLabel || isSamThreatLabel;
             const text = makeNode('text');
-            text.setAttribute('x', (p.x + (isAirfieldLabel ? 16 : (isWaypointLabel ? 16 : 9))).toFixed(1));
+              text.setAttribute('x', (p.x + (isAirfieldLabel ? 16 : (isWaypointLabel ? 16 : (isNavalSamLabel ? 18 : (isSamThreatLabel ? 13 : 9))))).toFixed(1));
             text.setAttribute('y', (p.y + 4).toFixed(1));
-            text.setAttribute('font-size', isAirfieldLabel ? '18.5' : (isWaypointLabel ? '18.5' : '11'));
+              text.setAttribute('font-size', isAirfieldLabel ? '18.5' : (isWaypointLabel ? '18.5' : (isSamThreatLabel ? '16.5' : '11')));
             text.setAttribute('font-weight', '700');
             const labelFill = isAsset
               ? '#1f3550'
@@ -20111,6 +21337,7 @@
       return {
         geolines: geoLines,
         threatPoints: threatPoints.concat(mezThreatPoints).concat(jdamThreatPoints).concat(f14AreaThreatPoints),
+        samThreatPoints: filterAwacsSamThreatPointsBySelection(parseAwacsSamThreatMapPoints(data)),
         destinationPoints: destinationPoints.concat(f14BullseyeDestinations).concat(f14GeneralDestinations),
         faorLines: faorLines.concat(f14Lines),
         flotLines: flotLines,
@@ -20200,6 +21427,7 @@
       const allowDtcOverlay = (efbSaShowDtcOverlay !== false);
       const allowAirports = (efbSaShowAirports !== false);
       const allowJtacTargets = (efbSaShowJtacTargets !== false);
+      const allowSamThreats = (efbSaShowSamThreatRings === true);
       const visibleRows = allowNavlog ? rows : [];
       const doghouseRows = normalizeDoghouseMapLegRows(rows);
       const model = data || latestData || {};
@@ -20230,6 +21458,7 @@
         ? {
           geolines: allowDtcOverlay ? (Array.isArray(overlays.geolines) ? overlays.geolines : []) : [],
           threatPoints: allowDtcOverlay ? (Array.isArray(overlays.threatPoints) ? overlays.threatPoints : []) : [],
+          samThreatPoints: allowSamThreats ? (Array.isArray(overlays.samThreatPoints) ? overlays.samThreatPoints : []) : [],
           destinationPoints: allowDtcOverlay ? (Array.isArray(overlays.destinationPoints) ? overlays.destinationPoints : []) : [],
           faorLines: allowDtcOverlay ? (Array.isArray(overlays.faorLines) ? overlays.faorLines : []) : [],
           flotLines: allowDtcOverlay ? (Array.isArray(overlays.flotLines) ? overlays.flotLines : []) : [],
@@ -20237,7 +21466,7 @@
           corridors: allowDtcOverlay ? (Array.isArray(overlays.corridors) ? overlays.corridors : []) : [],
           airfields: allowAirports ? (Array.isArray(overlays.airfields) ? overlays.airfields : []) : [],
         }
-        : { geolines: [], threatPoints: [], destinationPoints: [], faorLines: [], flotLines: [], capPoints: [], corridors: [] };
+        : { geolines: [], threatPoints: [], samThreatPoints: [], destinationPoints: [], faorLines: [], flotLines: [], capPoints: [], corridors: [] };
       const jtacTargets = allowJtacTargets ? parseJtacNineLineTargets(model) : [];
       const jtacOverlay = allowJtacTargets
         ? resolveJtacOverlayTargets(model, jtacTargets)
@@ -20661,6 +21890,30 @@
         });
       });
 
+      (Array.isArray(mapOverlays.samThreatPoints) ? mapOverlays.samThreatPoints : []).forEach(function (p) {
+        addPointFeature(p, {
+          kind: 'threat',
+          threatSubtype: 'sam',
+          label: String((p && p.samDisplayCode) || '').trim() || String((p && p.samCode) || '').trim() || String((p && p.label) || '').trim(),
+          fill: '#bf3a5f',
+          stroke: '#8e2b47',
+          textColor: '#8e2b47',
+          radius: 4.2,
+          ring: !!(p && p.ring),
+          radiusMeters: Number(p && p.radiusMeters),
+          ringRadiiNm: Array.isArray(p && p.ringRadiiNm) ? p.ringRadiiNm : [],
+          confidenceBandsNm: Array.isArray(p && p.confidenceBandsNm) ? p.confidenceBandsNm : [],
+          confidence: String((p && p.confidence) || 'medium').toLowerCase(),
+          samConfirmedHostile: !!(p && p.samConfirmedHostile),
+          samIconResolved: !!(p && p.samIconResolved),
+          samNavalPlatformCode: String((p && p.samNavalPlatformCode) || '').trim(),
+          labelMinZoom: 6.8,
+          assetKey: String((p && p.assetKey) || ''),
+          category: 'SAM',
+          group: 'overlay',
+        });
+      });
+
       (Array.isArray(mapOverlays.capPoints) ? mapOverlays.capPoints : []).forEach(function (p) {
         addPointFeature(p, {
           kind: 'cap',
@@ -20868,6 +22121,186 @@
         });
       });
 
+      const missionDrawingObjects = getMissionDrawingObjectsForSaMap(model);
+      let missionDrawingRenderedFeatures = 0;
+      function parseMissionDrawingColor(colorString, fallbackRgba, forceVisible) {
+        const s = String(colorString || '').trim();
+        const m = s.match(/^0x([0-9a-fA-F]{8})$/);
+        if (!m) return fallbackRgba;
+        const n = parseInt(m[1], 16);
+        if (!isFinite(n)) return fallbackRgba;
+        const aabbggrr = {
+          r: (n & 255),
+          g: ((n >>> 8) & 255),
+          b: ((n >>> 16) & 255),
+          a: (((n >>> 24) & 255) / 255),
+        };
+        const rrggbbaa = {
+          r: ((n >>> 24) & 255),
+          g: ((n >>> 16) & 255),
+          b: ((n >>> 8) & 255),
+          a: ((n & 255) / 255),
+        };
+        let pick = rrggbbaa;
+        if (pick.a <= 0.02 && aabbggrr.a > 0.02) pick = aabbggrr;
+        const alpha = forceVisible
+          ? Math.max(0.32, Math.min(1, Number(pick.a)))
+          : Math.max(0, Math.min(1, Number(pick.a)));
+        return 'rgba(' + Number(pick.r) + ',' + Number(pick.g) + ',' + Number(pick.b) + ',' + alpha.toFixed(3) + ')';
+      }
+      function missionAbsPoint(obj, point) {
+        const mapX = Number(obj && obj.mapX);
+        const mapY = Number(obj && obj.mapY);
+        const px = Number(point && point.x);
+        const py = Number(point && point.y);
+        if (!isFinite(mapX) || !isFinite(mapY) || !isFinite(px) || !isFinite(py)) return null;
+        return { xNum: mapX + px, yNum: mapY + py };
+      }
+      (Array.isArray(missionDrawingObjects) ? missionDrawingObjects : []).forEach(function (obj) {
+        if (!obj || typeof obj !== 'object') return;
+        const primitiveType = String(obj.primitiveType || '').trim().toUpperCase();
+        const mapX = Number(obj.mapX);
+        const mapY = Number(obj.mapY);
+        if (!isFinite(mapX) || !isFinite(mapY)) return;
+
+        const strokeColor = parseMissionDrawingColor(obj.colorString, 'rgba(31,54,81,0.85)', true);
+        const fillColor = parseMissionDrawingColor(obj.fillColorString, 'rgba(0,0,0,0)', false);
+        const lineWidth = Math.max(0.8, (Number(obj.thickness) || Number(obj.borderThickness) || 1.6) * 0.72);
+        const style = String(obj.style || '').toLowerCase();
+        const dashed = (style.indexOf('dot') >= 0 || style.indexOf('dash') >= 0);
+
+        if (primitiveType === 'TEXTBOX') {
+          const text = String(obj.text || '').trim();
+          if (!text) return;
+          const textLines = String(text || '')
+            .replace(/\r/g, '')
+            .split('\n')
+            .map(function (line) { return String(line || '').trim(); })
+            .filter(function (line) { return !!line; });
+          const labelText = textLines.length
+            ? textLines.join(' | ')
+            : String(text || '').replace(/\s+/g, ' ').trim();
+          if (!labelText) return;
+          addPointFeature({ xNum: mapX, yNum: mapY }, {
+            kind: 'mission-drawing-text',
+            group: 'overlay',
+            label: labelText,
+            fill: strokeColor,
+            stroke: strokeColor,
+            textColor: strokeColor,
+            fontSize: 18.5,
+            radius: 1.2,
+          });
+          missionDrawingRenderedFeatures += 1;
+          return;
+        }
+
+        if (primitiveType === 'LINE') {
+          const linePoints = (Array.isArray(obj.points) ? obj.points : [])
+            .map(function (p) { return missionAbsPoint(obj, p); })
+            .filter(function (p) { return !!p; });
+          if (linePoints.length < 2) return;
+          addLineFeature(linePoints, {
+            kind: 'mission-drawing-line',
+            group: 'overlay',
+            stroke: strokeColor,
+            lineWidth: lineWidth,
+            dashed: dashed,
+          });
+          missionDrawingRenderedFeatures += 1;
+          return;
+        }
+
+        if (primitiveType === 'POLYGON') {
+          const polygonMode = String(obj.polygonMode || '').toLowerCase();
+          if (polygonMode === 'circle') {
+            const radiusMeters = Number(obj.radius);
+            if (!isFinite(radiusMeters) || radiusMeters <= 0) return;
+            const ringPoints = [];
+            const steps = 40;
+            for (let i = 0; i <= steps; i++) {
+              const t = (i / steps) * Math.PI * 2;
+              ringPoints.push({ xNum: mapX + (Math.cos(t) * radiusMeters), yNum: mapY + (Math.sin(t) * radiusMeters) });
+            }
+            addLineFeature(ringPoints, {
+              kind: 'mission-drawing-line',
+              group: 'overlay',
+              stroke: strokeColor,
+              lineWidth: lineWidth,
+              dashed: dashed,
+            });
+            missionDrawingRenderedFeatures += 1;
+            return;
+          }
+          if (polygonMode === 'rect') {
+            const rectW = Number(obj.width);
+            const rectH = Number(obj.height);
+            if (!isFinite(rectW) || !isFinite(rectH) || rectW <= 0 || rectH <= 0) return;
+            const halfW = rectW / 2;
+            const halfH = rectH / 2;
+            const rectPoints = [
+              { xNum: mapX - halfW, yNum: mapY - halfH },
+              { xNum: mapX + halfW, yNum: mapY - halfH },
+              { xNum: mapX + halfW, yNum: mapY + halfH },
+              { xNum: mapX - halfW, yNum: mapY + halfH },
+              { xNum: mapX - halfW, yNum: mapY - halfH },
+            ];
+            addLineFeature(rectPoints, {
+              kind: 'mission-drawing-line',
+              group: 'overlay',
+              stroke: strokeColor,
+              lineWidth: lineWidth,
+              dashed: dashed,
+            });
+            missionDrawingRenderedFeatures += 1;
+            return;
+          }
+          const polyPoints = (Array.isArray(obj.points) ? obj.points : [])
+            .map(function (p) { return missionAbsPoint(obj, p); })
+            .filter(function (p) { return !!p; });
+          if (polyPoints.length < 2) return;
+          const linePts = polyPoints.slice();
+          if (polyPoints.length >= 3) {
+            const first = polyPoints[0];
+            const last = polyPoints[polyPoints.length - 1];
+            if (Math.abs(Number(first.xNum) - Number(last.xNum)) > 1 || Math.abs(Number(first.yNum) - Number(last.yNum)) > 1) {
+              linePts.push(first);
+            }
+          }
+          addLineFeature(linePts, {
+            kind: 'mission-drawing-line',
+            group: 'overlay',
+            stroke: strokeColor,
+            lineWidth: lineWidth,
+            dashed: dashed,
+          });
+          if (polyPoints.length >= 3) {
+            const polygonCoords = linePts
+              .map(function (p) { return toLonLat(p); })
+              .filter(function (c) { return Array.isArray(c) && c.length === 2; });
+            if (polygonCoords.length >= 4) {
+              polygonCoords.forEach(function (c) { pointsForBounds.push(c); });
+              features.push({
+                type: 'Feature',
+                geometry: {
+                  type: 'Polygon',
+                  coordinates: [polygonCoords],
+                },
+                properties: {
+                  kind: 'mission-drawing-fill',
+                  group: 'overlay',
+                  fill: fillColor,
+                  fillOpacity: 0.16,
+                  stroke: strokeColor,
+                  lineWidth: 0.9,
+                },
+              });
+            }
+          }
+          missionDrawingRenderedFeatures += 1;
+        }
+      });
+
       if (!pointsForBounds.length) {
         const centerOnly = getTheatreCenterLonLat(theatre);
         if (!centerOnly) {
@@ -20971,6 +22404,7 @@
       const flotLines = Array.isArray(mapOverlays.flotLines) ? mapOverlays.flotLines : [];
       const capPoints = Array.isArray(mapOverlays.capPoints) ? mapOverlays.capPoints : [];
       const corridors = Array.isArray(mapOverlays.corridors) ? mapOverlays.corridors : [];
+      const missionDrawingObjects = getMissionDrawingObjectsForSaMap(data || latestData || {});
 
       const isNight = !!nightModeEnabled;
       const palette = isNight
@@ -21065,7 +22499,7 @@
         }
         : null;
 
-      if (!visibleRows.length && !threatPoints.length && !destinationPoints.length && !geolines.length && !faorLines.length && !flotLines.length && !capPoints.length && !corridors.length && !airfields.length && !jtacPointsForMap.length && !historyTrackRowsForMap.length && !savedHistoryTrackPointsForMap.length) {
+      if (!visibleRows.length && !threatPoints.length && !destinationPoints.length && !geolines.length && !faorLines.length && !flotLines.length && !capPoints.length && !corridors.length && !airfields.length && !jtacPointsForMap.length && !historyTrackRowsForMap.length && !savedHistoryTrackPointsForMap.length && !missionDrawingObjects.length) {
         return '<div class="fltPlanMessage">No mappable waypoint coordinates found.</div>';
       }
 
@@ -21091,6 +22525,21 @@
       pushLineGroupPoints(faorLines);
       pushLineGroupPoints(flotLines);
       pushLineGroupPoints(corridors);
+      missionDrawingObjects.forEach(function (obj) {
+        if (!obj || typeof obj !== 'object') return;
+        const mapX = Number(obj.mapX);
+        const mapY = Number(obj.mapY);
+        if (isFinite(mapX) && isFinite(mapY)) {
+          overlayPoints.push({ xNum: mapX, yNum: mapY });
+        }
+        const points = Array.isArray(obj.points) ? obj.points : [];
+        points.forEach(function (p) {
+          const px = Number(p && p.x);
+          const py = Number(p && p.y);
+          if (!isFinite(px) || !isFinite(py) || !isFinite(mapX) || !isFinite(mapY)) return;
+          overlayPoints.push({ xNum: mapX + px, yNum: mapY + py });
+        });
+      });
 
       const allPoints = visibleRows.concat(overlayPoints);
       const eastValues = allPoints.map(function (wp) { return Number(wp.yNum); }).filter(function (v) { return isFinite(v); });
@@ -21120,6 +22569,123 @@
         const sy = offsetY + ((maxNorth - north) * scale);
         return { x: sx, y: sy };
       }
+
+      function parseDcsColor(colorString, fallbackRgba, forceVisible) {
+        const s = String(colorString || '').trim();
+        const m = s.match(/^0x([0-9a-fA-F]{8})$/);
+        if (!m) return fallbackRgba;
+        const n = parseInt(m[1], 16);
+        if (!isFinite(n)) return fallbackRgba;
+
+        const rgbaAabbggrr = {
+          r: (n & 255),
+          g: ((n >>> 8) & 255),
+          b: ((n >>> 16) & 255),
+          a: (((n >>> 24) & 255) / 255),
+        };
+
+        const rgbaRrggbbaa = {
+          r: ((n >>> 24) & 255),
+          g: ((n >>> 16) & 255),
+          b: ((n >>> 8) & 255),
+          a: ((n & 255) / 255),
+        };
+
+        let pick = rgbaRrggbbaa;
+        if (pick.a <= 0.02 && rgbaAabbggrr.a > 0.02) {
+          pick = rgbaAabbggrr;
+        }
+
+        const alpha = forceVisible
+          ? Math.max(0.32, Math.min(1, Number(pick.a)))
+          : Math.max(0, Math.min(1, Number(pick.a)));
+
+        return 'rgba(' + Number(pick.r) + ',' + Number(pick.g) + ',' + Number(pick.b) + ',' + alpha.toFixed(3) + ')';
+      }
+
+      function toMapAbsPoint(obj, point) {
+        const mapX = Number(obj && obj.mapX);
+        const mapY = Number(obj && obj.mapY);
+        const px = Number(point && point.x);
+        const py = Number(point && point.y);
+        if (!isFinite(mapX) || !isFinite(mapY) || !isFinite(px) || !isFinite(py)) return null;
+        return { xNum: mapX + px, yNum: mapY + py };
+      }
+
+      function toSvgPointString(rows) {
+        return (Array.isArray(rows) ? rows : [])
+          .filter(function (m) { return !!m && isFinite(Number(m.x)) && isFinite(Number(m.y)); })
+          .map(function (m) { return Number(m.x).toFixed(1) + ',' + Number(m.y).toFixed(1); })
+          .join(' ');
+      }
+
+      const missionDrawingEls = missionDrawingObjects.map(function (obj) {
+        if (!obj || typeof obj !== 'object') return '';
+        const primitiveType = String(obj.primitiveType || '').trim().toUpperCase();
+        const mapX = Number(obj.mapX);
+        const mapY = Number(obj.mapY);
+        if (!isFinite(mapX) || !isFinite(mapY)) return '';
+        const anchor = mapPt({ xNum: mapX, yNum: mapY });
+        const strokeColor = parseDcsColor(obj.colorString, isNight ? 'rgba(199,219,255,0.850)' : 'rgba(31,54,81,0.850)', true);
+        const fillColor = parseDcsColor(obj.fillColorString, 'rgba(0,0,0,0)');
+        const lineWidth = Math.max(0.8, (Number(obj.thickness) || Number(obj.borderThickness) || 1.6) * 0.72);
+        const style = String(obj.style || '').toLowerCase();
+        const dash = (style.indexOf('dot') >= 0 || style.indexOf('dash') >= 0) ? ' stroke-dasharray="6 5"' : '';
+        const rotate = isFinite(Number(obj.angle))
+          ? ' transform="rotate(' + Number(obj.angle).toFixed(1) + ' ' + anchor.x.toFixed(1) + ' ' + anchor.y.toFixed(1) + ')"'
+          : '';
+
+        if (primitiveType === 'TEXTBOX') {
+          const text = String(obj.text || '').trim();
+          if (!text) return '';
+          const fontSize = 18.5;
+          const textLines = text.split(/\r?\n/).filter(function (line) { return String(line || '').length > 0; });
+          const rows = (textLines.length ? textLines : [text]).map(function (line, idx) {
+            const dy = idx === 0 ? '0' : '1.2em';
+            return '<tspan x="' + anchor.x.toFixed(1) + '" dy="' + dy + '">' + escapeHtml(String(line)) + '</tspan>';
+          }).join('');
+          return '<text x="' + anchor.x.toFixed(1) + '" y="' + anchor.y.toFixed(1) + '" fill="' + strokeColor + '" font-size="' + fontSize.toFixed(1) + '" font-weight="700"' + rotate + '>' + rows + '</text>';
+        }
+
+        if (primitiveType === 'LINE') {
+          const absPoints = (Array.isArray(obj.points) ? obj.points : [])
+            .map(function (p) { return toMapAbsPoint(obj, p); })
+            .filter(function (p) { return !!p; })
+            .map(function (p) { return mapPt(p); });
+          if (absPoints.length < 2) return '';
+          const pointsAttr = toSvgPointString(absPoints);
+          return '<polyline points="' + pointsAttr + '" fill="none" stroke="' + strokeColor + '" stroke-width="' + lineWidth.toFixed(1) + '"' + dash + (obj.closed ? ' data-closed="1"' : '') + ' />';
+        }
+
+        if (primitiveType === 'POLYGON') {
+          const polygonMode = String(obj.polygonMode || '').toLowerCase();
+          if (polygonMode === 'circle') {
+            const radiusMeters = Number(obj.radius);
+            if (!isFinite(radiusMeters) || radiusMeters <= 0) return '';
+            const radiusPx = Math.max(2, radiusMeters * scale);
+            return '<circle cx="' + anchor.x.toFixed(1) + '" cy="' + anchor.y.toFixed(1) + '" r="' + radiusPx.toFixed(1) + '" fill="' + fillColor + '" stroke="' + strokeColor + '" stroke-width="' + lineWidth.toFixed(1) + '"' + dash + ' />';
+          }
+          if (polygonMode === 'rect') {
+            const widthPx = Math.max(2, (Number(obj.width) || 0) * scale);
+            const heightPx = Math.max(2, (Number(obj.height) || 0) * scale);
+            if (!isFinite(widthPx) || !isFinite(heightPx)) return '';
+            return '<rect x="' + (anchor.x - (widthPx / 2)).toFixed(1) + '" y="' + (anchor.y - (heightPx / 2)).toFixed(1) + '" width="' + widthPx.toFixed(1) + '" height="' + heightPx.toFixed(1) + '" fill="' + fillColor + '" stroke="' + strokeColor + '" stroke-width="' + lineWidth.toFixed(1) + '"' + dash + rotate + ' />';
+          }
+
+          const absPoints = (Array.isArray(obj.points) ? obj.points : [])
+            .map(function (p) { return toMapAbsPoint(obj, p); })
+            .filter(function (p) { return !!p; })
+            .map(function (p) { return mapPt(p); });
+          if (absPoints.length < 2) return '';
+          const pointsAttr = toSvgPointString(absPoints);
+          if (absPoints.length >= 3) {
+            return '<polygon points="' + pointsAttr + '" fill="' + fillColor + '" stroke="' + strokeColor + '" stroke-width="' + lineWidth.toFixed(1) + '"' + dash + ' />';
+          }
+          return '<polyline points="' + pointsAttr + '" fill="none" stroke="' + strokeColor + '" stroke-width="' + lineWidth.toFixed(1) + '"' + dash + ' />';
+        }
+
+        return '';
+      }).filter(function (x) { return !!x; });
 
       const mapped = visibleRows.map(function (wp) {
         const p = mapPt(wp);
@@ -21835,6 +23401,7 @@
       return '<svg viewBox="0 0 ' + width + ' ' + height + '" class="fltPlanPage3Canvas" preserveAspectRatio="xMidYMid meet" data-map-canvas="1">'
         + '<rect x="0" y="0" width="' + width + '" height="' + height + '" fill="' + palette.bg + '" />'
         + '<g data-map-content="1" transform="translate(' + panX.toFixed(1) + ' ' + panY.toFixed(1) + ') scale(' + zoom.toFixed(3) + ')">'
+        + missionDrawingEls.join('')
         + corridorEls.join('')
         + historyLineEls.join('')
         + historyPointEls.join('')
@@ -23229,6 +24796,10 @@
         });
       }
 
+      if (tab === 'AWACS') {
+        text = decorateAwacsSamSelectionText(text, data);
+      }
+
       return text;
     }
 
@@ -24370,6 +25941,20 @@
             const current = getMapSelectedAssetKeyBySelection(selected);
             const nextKey = current === assetKey ? '' : assetKey;
             setMapSelectedAssetKeyBySelection(selected, nextKey);
+            if (String(assetKey || '').indexOf('SAMTHREAT|') === 0) {
+              const selectedList = Array.isArray(efbAwacsSelectedSamThreatKeys) ? efbAwacsSelectedSamThreatKeys.slice() : [];
+              const idx = selectedList.indexOf(String(assetKey || ''));
+              if (idx >= 0) {
+                selectedList.splice(idx, 1);
+              } else {
+                selectedList.push(String(assetKey || ''));
+              }
+              efbAwacsSelectedSamThreatKeys = selectedList;
+              const activeKey = selectedList.length ? selectedList[selectedList.length - 1] : '';
+              setMapSelectedAssetKeyBySelection(selected, activeKey);
+            } else {
+              efbAwacsSelectedSamThreatKeys = [];
+            }
             setEfbDebugState({
               source: 'sa-map-click',
               saAssetKey: String(nextKey || assetKey || ''),
@@ -24493,6 +26078,29 @@
               return;
             }
           }
+        }
+      }
+
+      if (selectedTab === 'AWACS' && latestData) {
+        const clickedLine = getClickedLineFromEvent(ev, this);
+        const selectedSam = getAwacsSamThreatSelectionFromLine(latestData, clickedLine);
+        if (selectedSam && selectedSam.assetKey) {
+          const key = String(selectedSam.assetKey);
+          const selectedList = Array.isArray(efbAwacsSelectedSamThreatKeys) ? efbAwacsSelectedSamThreatKeys.slice() : [];
+          const idx = selectedList.indexOf(key);
+          if (idx >= 0) {
+            selectedList.splice(idx, 1);
+          } else {
+            selectedList.push(key);
+          }
+          efbAwacsSelectedSamThreatKeys = selectedList;
+          const activeSelection = getActiveFlightPlanSelection(latestData);
+          if (activeSelection) {
+            const activeKey = selectedList.length ? selectedList[selectedList.length - 1] : '';
+            setMapSelectedAssetKeyBySelection(activeSelection, activeKey);
+          }
+          render(latestData);
+          return;
         }
       }
 
@@ -24931,7 +26539,9 @@
     applyAutoAtaRecSpdUi();
     efbSaNavigraphLayer = readEfbSaNavigraphLayerPreference();
     efbSaShowDoghouses = readEfbSaDoghousesEnabledPreference();
+    efbSaShowMissionDrawings = readEfbSaMissionDrawingsEnabledPreference();
     efbSaShowHistoryTrack = readEfbSaHistoryTrackEnabledPreference();
+    efbSaShowSamThreatRings = readEfbSaSamThreatsEnabledPreference();
     efbSaShowUserWaypoints = readEfbSaUserWaypointsEnabledPreference();
     efbSaUserWaypoints = readEfbSaUserWaypointsPreference();
     efbSaSavedHistoryTracksBySelection = readEfbSaSavedHistoryTracksPreference();

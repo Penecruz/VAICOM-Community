@@ -1,6 +1,9 @@
 ﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Text;
 using VAICOM.Extensions.AICPG;
 using VAICOM.Static;
 
@@ -11,6 +14,77 @@ namespace VAICOM
 
         public static partial class Server
         {
+            private static int lastDiagnosticsMdSrc = -1;
+            private static int lastDiagnosticsMdFeat = -1;
+            private static string lastMissionDrawingsMissionKey = "";
+            private static string pendingMissionDrawingsMissionKey = "";
+            private static int pendingMissionDrawingsMissionKeyConfirmCount = 0;
+            private static readonly object missionDrawingsCacheLogSync = new object();
+            private static DateTime missionDrawingsCacheSummaryLastUtc = DateTime.MinValue;
+            private static int missionDrawingsMissingCount = 0;
+            private static int missionDrawingsWithPayloadCount = 0;
+            private static int missionDrawingsAcceptedCount = 0;
+            private static int missionDrawingsIgnoredCount = 0;
+            private static string missionDrawingsLastSummaryKey = "";
+            private static string missionDrawingsTransferId = "";
+            private static int missionDrawingsTransferPartCount = 0;
+            private static DateTime missionDrawingsTransferStartedUtc = DateTime.MinValue;
+            private static Dictionary<int, string> missionDrawingsTransferParts = new Dictionary<int, string>();
+
+            private static void AppendMissionDrawingsCacheLog(string line)
+            {
+                try
+                {
+                    if (State.activeconfig == null || !State.activeconfig.Debugmode)
+                    {
+                        return;
+                    }
+
+                    string logsFolder = Path.Combine(State.VA_APPS, Products.Products.Families.Vaicom.VaicomProPlugin.rootfoldername, AppData.SubFolders["logfiles"]);
+                    string filePath = Path.Combine(logsFolder, "VAICOMPRO.MissionDrawingsCache.log");
+
+                    lock (missionDrawingsCacheLogSync)
+                    {
+                        Directory.CreateDirectory(logsFolder);
+                        File.AppendAllText(filePath, DateTime.UtcNow.ToString("o") + " | " + line + Environment.NewLine);
+                    }
+                }
+                catch
+                {
+                }
+            }
+
+            private static void AppendMissionDrawingsCacheSummary(string missionTitle, string theatre, string stableMissionKey, bool force)
+            {
+                try
+                {
+                    DateTime nowUtc = DateTime.UtcNow;
+                    if (!force)
+                    {
+                        if ((nowUtc - missionDrawingsCacheSummaryLastUtc).TotalSeconds < 10)
+                        {
+                            return;
+                        }
+                    }
+
+                    missionDrawingsCacheSummaryLastUtc = nowUtc;
+                    missionDrawingsLastSummaryKey = stableMissionKey ?? "";
+
+                    string line = "summary"
+                        + "|title=" + (missionTitle ?? "")
+                        + "|theatre=" + (theatre ?? "")
+                        + "|stableKey=" + (stableMissionKey ?? "")
+                        + "|payloadMissing=" + missionDrawingsMissingCount
+                        + "|payloadPresent=" + missionDrawingsWithPayloadCount
+                        + "|accepted=" + missionDrawingsAcceptedCount
+                        + "|ignored=" + missionDrawingsIgnoredCount;
+
+                    AppendMissionDrawingsCacheLog(line);
+                }
+                catch
+                {
+                }
+            }
 
             public static void UpdateServerState(ServerMessage serverMessage) // gets all chuncks
             {
@@ -25,6 +99,46 @@ namespace VAICOM
                 }
             }
 
+            private static string ResolveStableMissionDrawingsMissionKey(string missionKey, out bool missionKeyChanged)
+            {
+                missionKeyChanged = false;
+                string normalizedMissionKey = (missionKey ?? "").Trim();
+
+                if (string.IsNullOrWhiteSpace(normalizedMissionKey))
+                {
+                    pendingMissionDrawingsMissionKey = "";
+                    pendingMissionDrawingsMissionKeyConfirmCount = 0;
+                    return lastMissionDrawingsMissionKey;
+                }
+
+                if (string.Equals(normalizedMissionKey, lastMissionDrawingsMissionKey, StringComparison.Ordinal))
+                {
+                    pendingMissionDrawingsMissionKey = "";
+                    pendingMissionDrawingsMissionKeyConfirmCount = 0;
+                    return lastMissionDrawingsMissionKey;
+                }
+
+                if (string.Equals(normalizedMissionKey, pendingMissionDrawingsMissionKey, StringComparison.Ordinal))
+                {
+                    pendingMissionDrawingsMissionKeyConfirmCount++;
+                }
+                else
+                {
+                    pendingMissionDrawingsMissionKey = normalizedMissionKey;
+                    pendingMissionDrawingsMissionKeyConfirmCount = 1;
+                }
+
+                if (pendingMissionDrawingsMissionKeyConfirmCount >= 3)
+                {
+                    lastMissionDrawingsMissionKey = normalizedMissionKey;
+                    pendingMissionDrawingsMissionKey = "";
+                    pendingMissionDrawingsMissionKeyConfirmCount = 0;
+                    missionKeyChanged = true;
+                }
+
+                return lastMissionDrawingsMissionKey;
+            }
+
             public static void DumpStateToLog()
             {
                 Log.Reset();
@@ -32,7 +146,7 @@ namespace VAICOM
                 Log.Write("STATE: " + state, Colors.Critical);
             }
 
-            public static int chunkcount = 12;
+            public static int chunkcount = 13;
 
             private static bool IsValidOwnshipVector(Vector pos)
             {
@@ -44,6 +158,58 @@ namespace VAICOM
                 return !(double.IsNaN(pos.x) || double.IsInfinity(pos.x)
                     || double.IsNaN(pos.y) || double.IsInfinity(pos.y)
                     || double.IsNaN(pos.z) || double.IsInfinity(pos.z));
+            }
+
+            private static string BuildMissionDrawingsMissionKey(string theatre, string missionTitle)
+            {
+                string normalizedTheatre = (theatre ?? "").Trim().ToUpperInvariant();
+                string normalizedTitle = (missionTitle ?? "").Trim().ToUpperInvariant();
+
+                if (string.IsNullOrWhiteSpace(normalizedTheatre)
+                    || string.IsNullOrWhiteSpace(normalizedTitle))
+                {
+                    return "";
+                }
+
+                return normalizedTheatre + "|" + normalizedTitle;
+            }
+
+            private static bool HasMissionDrawingObjects(object missionDrawings)
+            {
+                if (missionDrawings == null)
+                {
+                    return false;
+                }
+
+                try
+                {
+                    JToken token = missionDrawings as JToken ?? JToken.FromObject(missionDrawings);
+                    if (token == null || token.Type != JTokenType.Object)
+                    {
+                        return false;
+                    }
+
+                    JArray layers = token["layers"] as JArray ?? token["Layers"] as JArray;
+                    if (layers == null || layers.Count == 0)
+                    {
+                        return false;
+                    }
+
+                    foreach (JToken layer in layers)
+                    {
+                        JArray objects = layer?["objects"] as JArray ?? layer?["Objects"] as JArray;
+                        if (objects != null && objects.Count > 0)
+                        {
+                            return true;
+                        }
+                    }
+
+                    return false;
+                }
+                catch
+                {
+                    return false;
+                }
             }
 
             public static void ExtractAll(ServerMessage serverMessage)
@@ -95,7 +261,125 @@ namespace VAICOM
                     case 12:
                         ExtractChunk12(serverMessage);
                         break;
+                    case 13:
+                        ExtractChunk13(serverMessage);
+                        break;
                 }
+            }
+
+            private static void ResetMissionDrawingsCounters()
+            {
+                missionDrawingsMissingCount = 0;
+                missionDrawingsWithPayloadCount = 0;
+                missionDrawingsAcceptedCount = 0;
+                missionDrawingsIgnoredCount = 0;
+            }
+
+            private static void ResetMissionDrawingsTransfer()
+            {
+                missionDrawingsTransferId = "";
+                missionDrawingsTransferPartCount = 0;
+                missionDrawingsTransferStartedUtc = DateTime.MinValue;
+                missionDrawingsTransferParts = new Dictionary<int, string>();
+            }
+
+            private static object TryReassembleMissionDrawings(ServerMessage serverMessage)
+            {
+                if (serverMessage == null)
+                {
+                    return null;
+                }
+
+                string transferId = (serverMessage.md_transferid ?? "").Trim();
+                int partIndex = serverMessage.md_partindex ?? 0;
+                int partCount = serverMessage.md_partcount ?? 0;
+                string part = serverMessage.md_part ?? "";
+
+                if (string.IsNullOrWhiteSpace(transferId)
+                    || partIndex <= 0
+                    || partCount <= 0
+                    || string.IsNullOrEmpty(part))
+                {
+                    return null;
+                }
+
+                DateTime nowUtc = DateTime.UtcNow;
+                bool isExpired = missionDrawingsTransferStartedUtc != DateTime.MinValue
+                    && (nowUtc - missionDrawingsTransferStartedUtc).TotalSeconds > 20;
+
+                if (isExpired
+                    || !string.Equals(missionDrawingsTransferId, transferId, StringComparison.Ordinal)
+                    || missionDrawingsTransferPartCount != partCount)
+                {
+                    ResetMissionDrawingsTransfer();
+                    missionDrawingsTransferId = transferId;
+                    missionDrawingsTransferPartCount = partCount;
+                    missionDrawingsTransferStartedUtc = nowUtc;
+                }
+
+                missionDrawingsTransferParts[partIndex] = part;
+
+                if (missionDrawingsTransferParts.Count < missionDrawingsTransferPartCount)
+                {
+                    return null;
+                }
+
+                StringBuilder writer = new StringBuilder();
+                for (int i = 1; i <= missionDrawingsTransferPartCount; i++)
+                {
+                    string piece;
+                    if (!missionDrawingsTransferParts.TryGetValue(i, out piece))
+                    {
+                        return null;
+                    }
+
+                    writer.Append(piece);
+                }
+
+                string combined = writer.ToString();
+                if (string.IsNullOrWhiteSpace(combined))
+                {
+                    return null;
+                }
+
+                try
+                {
+                    JToken token = JToken.Parse(combined);
+                    ResetMissionDrawingsTransfer();
+                    return token;
+                }
+                catch
+                {
+                    ResetMissionDrawingsTransfer();
+                    return null;
+                }
+            }
+
+            private static void IngestMissionDrawingsPayload(ServerMessage serverMessage, string stableMissionKey, string sourceLabel)
+            {
+                if (serverMessage != null && serverMessage.missiondrawings != null)
+                {
+                    bool incomingHasObjects = HasMissionDrawingObjects(serverMessage.missiondrawings);
+                    missionDrawingsWithPayloadCount++;
+
+                    if (incomingHasObjects)
+                    {
+                        State.currentstate.missiondrawings = serverMessage.missiondrawings;
+                        Log.Write($"Mission drawings snapshot received in {sourceLabel}.", Colors.Text);
+                        missionDrawingsAcceptedCount++;
+                    }
+                    else
+                    {
+                        missionDrawingsIgnoredCount++;
+                    }
+                }
+                else
+                {
+                    missionDrawingsMissingCount++;
+                }
+
+                bool summaryKeyChanged = !string.Equals(missionDrawingsLastSummaryKey ?? "", stableMissionKey ?? "", StringComparison.Ordinal);
+                AppendMissionDrawingsCacheSummary(State.currentstate.missiontitle, State.currentstate.theatre, stableMissionKey, summaryKeyChanged);
             }
 
             public static void ExtractChunk1(ServerMessage serverMessage)
@@ -108,6 +392,11 @@ namespace VAICOM
                 // Keep the last known ownship/camera position alive while new chunks stream in.
                 if (State.previousstate != null)
                 {
+                    if (State.previousstate.missiondrawings != null)
+                    {
+                        State.currentstate.missiondrawings = State.previousstate.missiondrawings;
+                    }
+
                     if (IsValidOwnshipVector(State.previousstate.bpos))
                     {
                         State.currentstate.bpos = State.previousstate.bpos;
@@ -178,6 +467,22 @@ namespace VAICOM
                     State.currentstate.missiontitle = serverMessage.missiontitle;
                     State.currentstate.missionbriefing = serverMessage.missionbriefing;
                     State.currentstate.missiondetails = serverMessage.missiondetails;
+
+                    string missionKey = BuildMissionDrawingsMissionKey(
+                        State.currentstate.theatre,
+                        State.currentstate.missiontitle);
+
+                    bool stableMissionKeyChanged;
+                    string stableMissionKey = ResolveStableMissionDrawingsMissionKey(missionKey, out stableMissionKeyChanged);
+
+                    if (stableMissionKeyChanged
+                        && !string.IsNullOrWhiteSpace(stableMissionKey))
+                    {
+                        Log.Write("Mission change detected; keeping cached mission drawings until replacement snapshot arrives.", Colors.Text);
+                        ResetMissionDrawingsCounters();
+                        AppendMissionDrawingsCacheLog("mission-key-changed|key=" + stableMissionKey + "|action=keep-cache");
+                        AppendMissionDrawingsCacheSummary(State.currentstate.missiontitle, State.currentstate.theatre, stableMissionKey, true);
+                    }
                     if (serverMessage.fuel_unit_mass_max.HasValue && !double.IsNaN(serverMessage.fuel_unit_mass_max.Value) && serverMessage.fuel_unit_mass_max.Value > 0)
                     {
                         State.currentstate.fuel_unit_mass_max = serverMessage.fuel_unit_mass_max.Value;
@@ -186,6 +491,52 @@ namespace VAICOM
                 catch (Exception e)
                 {
                     Log.Write("ERROR 3/" + chunkcount + " :" + e.StackTrace, Colors.Inline);
+                }
+                receivedupdatecomplete = false;
+            }
+
+            public static void ExtractChunk13(ServerMessage serverMessage)
+            {
+                processingchunks = true;
+                try
+                {
+                    string missionKey = BuildMissionDrawingsMissionKey(
+                        State.currentstate.theatre,
+                        State.currentstate.missiontitle);
+
+                    bool stableMissionKeyChanged;
+                    string stableMissionKey = ResolveStableMissionDrawingsMissionKey(missionKey, out stableMissionKeyChanged);
+
+                    if (stableMissionKeyChanged
+                        && !string.IsNullOrWhiteSpace(stableMissionKey))
+                    {
+                        Log.Write("Mission change detected; keeping cached mission drawings until replacement snapshot arrives.", Colors.Text);
+                        ResetMissionDrawingsCounters();
+                        ResetMissionDrawingsTransfer();
+                        AppendMissionDrawingsCacheLog("mission-key-changed|key=" + stableMissionKey + "|action=keep-cache");
+                        AppendMissionDrawingsCacheSummary(State.currentstate.missiontitle, State.currentstate.theatre, stableMissionKey, true);
+                    }
+
+                    object payload = null;
+                    if (serverMessage.missiondrawings != null)
+                    {
+                        payload = serverMessage.missiondrawings;
+                    }
+                    else
+                    {
+                        payload = TryReassembleMissionDrawings(serverMessage);
+                    }
+
+                    if (payload != null)
+                    {
+                        serverMessage.missiondrawings = payload;
+                    }
+
+                    IngestMissionDrawingsPayload(serverMessage, stableMissionKey, "chunk 13");
+                }
+                catch (Exception e)
+                {
+                    Log.Write("ERROR 13/" + chunkcount + " :" + e.StackTrace, Colors.Inline);
                 }
                 receivedupdatecomplete = false;
             }
@@ -432,12 +783,66 @@ namespace VAICOM
                     State.currentstate.atcmetars = serverMessage.atcmetars ?? new Dictionary<string, string>();
                     State.currentstate.atcicaotypes = serverMessage.atcicaotypes ?? new Dictionary<string, string>();
                     State.currentstate.diagnostics = serverMessage.diagnostics;
+                    LogMissionDrawingsDiagnostics(State.currentstate.diagnostics);
                 }
                 catch (Exception e)
                 {
                     Log.Write("ERROR 12/" + chunkcount + " :" + e.StackTrace, Colors.Inline);
                 }
                 receivedupdatecomplete = false;
+            }
+
+            private static void LogMissionDrawingsDiagnostics(object diagnostics)
+            {
+                try
+                {
+                    if (diagnostics == null)
+                    {
+                        return;
+                    }
+
+                    JToken token = diagnostics as JToken;
+                    if (token == null)
+                    {
+                        token = JToken.FromObject(diagnostics);
+                    }
+
+                    if (token == null || token.Type != JTokenType.Object)
+                    {
+                        return;
+                    }
+
+                    int mdSrc = token.Value<int?>("mdSrc") ?? -1;
+                    int mdFeat = token.Value<int?>("mdFeat") ?? -1;
+                    int mdTxCount = token.Value<int?>("mdTxCount") ?? -1;
+                    bool? mdTxLocked = token.Value<bool?>("mdTxLocked");
+                    string mdTxReason = token.Value<string>("mdTxReason") ?? "";
+                    int mdTxNextRetryIn = token.Value<int?>("mdTxNextRetryIn") ?? -1;
+                    int mdTxChunk13Bytes = token.Value<int?>("mdTxChunk13Bytes") ?? -1;
+                    bool? mdTxChunk13HasTable = token.Value<bool?>("mdTxChunk13HasTable");
+                    bool? mdTxChunk13HasKey = token.Value<bool?>("mdTxChunk13HasKey");
+                    bool? mdTxChunk13SentOk = token.Value<bool?>("mdTxChunk13SentOk");
+                    if (mdSrc < 0 && mdFeat < 0)
+                    {
+                        return;
+                    }
+
+                    if (mdSrc != lastDiagnosticsMdSrc || mdFeat != lastDiagnosticsMdFeat)
+                    {
+                        lastDiagnosticsMdSrc = mdSrc;
+                        lastDiagnosticsMdFeat = mdFeat;
+                        string txSuffix = "";
+                        if (mdTxCount >= 0 || mdTxLocked.HasValue || !string.IsNullOrWhiteSpace(mdTxReason) || mdTxNextRetryIn >= 0
+                            || mdTxChunk13Bytes >= 0 || mdTxChunk13HasTable.HasValue || mdTxChunk13HasKey.HasValue || mdTxChunk13SentOk.HasValue)
+                        {
+                            txSuffix = $", txCount={Math.Max(0, mdTxCount)}, txLocked={(mdTxLocked.HasValue ? mdTxLocked.Value.ToString().ToLowerInvariant() : "n/a")}, txReason={mdTxReason}, txNextRetryIn={mdTxNextRetryIn}, tx13Bytes={Math.Max(0, mdTxChunk13Bytes)}, tx13HasTable={(mdTxChunk13HasTable.HasValue ? mdTxChunk13HasTable.Value.ToString().ToLowerInvariant() : "n/a")}, tx13HasKey={(mdTxChunk13HasKey.HasValue ? mdTxChunk13HasKey.Value.ToString().ToLowerInvariant() : "n/a")}, tx13SentOk={(mdTxChunk13SentOk.HasValue ? mdTxChunk13SentOk.Value.ToString().ToLowerInvariant() : "n/a")}";
+                        }
+                        Log.Write($"Mission drawings diagnostics | mdSrc={mdSrc}, mdFeat={mdFeat}{txSuffix}", Colors.Text);
+                    }
+                }
+                catch
+                {
+                }
             }
 
             public static void LogFlightUnits(ServerMessage serverMessage)
