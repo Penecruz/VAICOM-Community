@@ -3776,9 +3776,13 @@
     const tabKeywordsSplitStorageKey = 'vaicom.okb.tabKeywordsSplitByTab';
     const drawModeStorageKey = 'vaicom.okb.notesDrawMode';
     const liveRefreshStorageKey = 'vaicom.okb.liveRefreshEnabled';
+    const autoBrowseStorageKey = 'vaicom.okb.autoBrowse';
     const nightModeStorageKey = 'vaicom.okb.nightMode';
     const dlinkOnStorageKey = 'vaicom.okb.dlinkOn';
     const contentFontSizeStorageKey = 'vaicom.okb.contentFontSize';
+    const navlogAltDisplayModeStorageKey = 'vaicom.okb.navlogAltDisplayMode';
+    const navlogSpdDisplayModeStorageKey = 'vaicom.okb.navlogSpdDisplayMode';
+    const navlogDistDisplayModeStorageKey = 'vaicom.okb.navlogDistDisplayMode';
     const efbPinnedChartsStorageKey = 'vaicom.okb.efbPinnedChartsByAirport';
     const efbViewerModeStorageKey = 'vaicom.okb.efbViewerMode';
     const efbSaFollowEnabledStorageKey = 'vaicom.okb.efbSaFollowEnabled';
@@ -3807,6 +3811,9 @@
     let nightModeEnabled = false;
     let dlinkOnEnabled = true;
     let contentFontSizePx = 24;
+    let defaultNavlogAltDisplayMode = 'ft';
+    let defaultNavlogSpdDisplayMode = 'kts';
+    let defaultNavlogDistDisplayMode = 'nm';
     let settingsOverlayOpen = false;
     let drawOverlayOpen = false;
     let helpOverlayOpen = false;
@@ -3913,6 +3920,25 @@
         updatedUtcMs: 0,
       }
     };
+
+    function readAutoBrowsePreference() {
+      try {
+        if (!window.localStorage) return false;
+        const raw = window.localStorage.getItem(autoBrowseStorageKey);
+        if (raw === null || raw === undefined || raw === '') return false;
+        return raw === '1';
+      } catch (_) {
+        return false;
+      }
+    }
+
+    function persistAutoBrowsePreference() {
+      try {
+        if (!window.localStorage) return;
+        window.localStorage.setItem(autoBrowseStorageKey, autoBrowse ? '1' : '0');
+      } catch (_) {
+      }
+    }
     let efbAdLandingAssistState = { seenAirborne: false, triggeredThisWowOn: false };
     let autoTakeoffBySelection = {};
     let efbFastOwnshipDebugPanelVisible = false;
@@ -4497,15 +4523,16 @@
       const btn = document.getElementById('fastOwnshipToggleBtn');
       const panel = document.getElementById('fastOwnshipDataPanel');
       if (!btn) return;
+      const unitModes = getGlobalUnitModes(latestData || null);
       const hasFast = !!(efbSaOwnshipFast && efbSaOwnshipFast.hasPosition);
       const gs = Number(efbSaOwnshipFast && efbSaOwnshipFast.groundSpeedKnots);
-      const gsText = (efbSaOwnshipFast && efbSaOwnshipFast.hasGroundSpeed && isFinite(gs)) ? ('GS ' + String(Math.round(gs)) + 'kt') : 'GS n/a';
+      const gsText = (efbSaOwnshipFast && efbSaOwnshipFast.hasGroundSpeed && isFinite(gs)) ? ('GS ' + formatSpeedByMode(gs, unitModes.spd, true)) : 'GS n/a';
       const wow = Number(efbSaOwnshipFast && efbSaOwnshipFast.wow);
       const wowText = (efbSaOwnshipFast && efbSaOwnshipFast.hasWow)
         ? ('WOW ' + (wow === 1 ? 'ON' : (wow === 0 ? 'OFF' : 'n/a')))
         : 'WOW n/a';
       const alt = Number(efbSaOwnshipFast && efbSaOwnshipFast.altFeet);
-      const altText = isFinite(alt) ? ('ALT ' + String(Math.round(alt)) + 'ft') : 'ALT n/a';
+      const altText = isFinite(alt) ? ('ALT ' + formatAltitudeByMode(alt, unitModes.alt, true)) : 'ALT n/a';
       const hdg = Number(efbSaOwnshipFast && efbSaOwnshipFast.headingDeg);
       const hdgText = (efbSaOwnshipFast && efbSaOwnshipFast.hasHeading && isFinite(hdg)) ? ('HDG ' + String(Math.round(hdg)) + '°') : 'HDG n/a';
       const posX = Number(efbSaOwnshipFast && efbSaOwnshipFast.posX);
@@ -5151,6 +5178,16 @@
       ].join('|');
     }
 
+    function getSamThreatSelectionKey(assetKey) {
+      const parts = String(assetKey || '').split('|');
+      if (parts.length < 2) return String(assetKey || '').trim();
+      const prefix = String(parts[0] || '').toUpperCase();
+      if (prefix !== 'SAMTHREAT') return String(assetKey || '').trim();
+      const system = String(parts[1] || '').toUpperCase().trim();
+      const labelToken = String(parts[4] || '').toUpperCase().trim();
+      return ['SAMTHREAT', system, labelToken].join('|');
+    }
+
     function isSamThreatConfirmedHostileFromText(text) {
       const src = String(text || '').toUpperCase();
       if (!src) return false;
@@ -5670,9 +5707,9 @@
 
       const points = parseAwacsSamThreatMapPoints(data);
       const selectedMap = {};
-      selectedKeys.forEach(function (k) { selectedMap[k] = true; });
+      selectedKeys.forEach(function (k) { selectedMap[getSamThreatSelectionKey(k)] = true; });
       const selected = points.filter(function (p) {
-        const key = String((p && p.assetKey) || '').trim();
+        const key = getSamThreatSelectionKey(String((p && p.assetKey) || '').trim());
         return !!selectedMap[key];
       });
       if (!selected.length) return content;
@@ -5708,11 +5745,16 @@
         : [];
       if (!selectedKeys.length) return rows;
       const selectedMap = {};
-      selectedKeys.forEach(function (k) { selectedMap[k] = true; });
-      return rows.filter(function (p) {
-        const key = String((p && p.assetKey) || '').trim();
+      selectedKeys.forEach(function (k) { selectedMap[getSamThreatSelectionKey(k)] = true; });
+      const filtered = rows.filter(function (p) {
+        const key = getSamThreatSelectionKey(String((p && p.assetKey) || '').trim());
         return !!selectedMap[key];
       });
+      if (rows.length && !filtered.length) {
+        efbAwacsSelectedSamThreatKeys = [];
+        return rows;
+      }
+      return filtered;
     }
 
     function parseBraFromUnitLine(line) {
@@ -10865,6 +10907,70 @@
       }
     }
 
+    function normalizeNavlogAltDisplayMode(value) {
+      return String(value || '').toLowerCase() === 'm' ? 'm' : 'ft';
+    }
+
+    function normalizeNavlogSpdDisplayMode(value) {
+      return String(value || '').toLowerCase() === 'kmh' ? 'kmh' : 'kts';
+    }
+
+    function normalizeNavlogDistDisplayMode(value) {
+      const mode = String(value || '').toLowerCase();
+      return (mode === 'km' || mode === 'm') ? 'km' : 'nm';
+    }
+
+    function readNavlogAltDisplayModePreference() {
+      try {
+        if (!window.localStorage) return 'ft';
+        return normalizeNavlogAltDisplayMode(window.localStorage.getItem(navlogAltDisplayModeStorageKey));
+      } catch (_) {
+        return 'ft';
+      }
+    }
+
+    function persistNavlogAltDisplayModePreference(mode) {
+      try {
+        if (!window.localStorage) return;
+        window.localStorage.setItem(navlogAltDisplayModeStorageKey, normalizeNavlogAltDisplayMode(mode));
+      } catch (_) {
+      }
+    }
+
+    function readNavlogSpdDisplayModePreference() {
+      try {
+        if (!window.localStorage) return 'kts';
+        return normalizeNavlogSpdDisplayMode(window.localStorage.getItem(navlogSpdDisplayModeStorageKey));
+      } catch (_) {
+        return 'kts';
+      }
+    }
+
+    function persistNavlogSpdDisplayModePreference(mode) {
+      try {
+        if (!window.localStorage) return;
+        window.localStorage.setItem(navlogSpdDisplayModeStorageKey, normalizeNavlogSpdDisplayMode(mode));
+      } catch (_) {
+      }
+    }
+
+    function readNavlogDistDisplayModePreference() {
+      try {
+        if (!window.localStorage) return 'nm';
+        return normalizeNavlogDistDisplayMode(window.localStorage.getItem(navlogDistDisplayModeStorageKey));
+      } catch (_) {
+        return 'nm';
+      }
+    }
+
+    function persistNavlogDistDisplayModePreference(mode) {
+      try {
+        if (!window.localStorage) return;
+        window.localStorage.setItem(navlogDistDisplayModeStorageKey, normalizeNavlogDistDisplayMode(mode));
+      } catch (_) {
+      }
+    }
+
     function persistDlinkOnPreference() {
       try {
         if (window.localStorage) {
@@ -14141,7 +14247,7 @@
 
     function getFlightPlanPlanState(selected) {
       const key = getFlightPlanEtaStartKey(selected);
-      if (!key) return { speedAdjustments: {}, speedDisplayModes: {}, altAdjustments: {}, typeOverrides: {}, lockedStep: '', totSeconds: NaN, lockedStart: null, timeMarks: {}, timingLog: [], postFlightOpen: false, ataByStep: {}, speedRecommendations: {}, totPerformanceByStep: {}, lastOwnshipPos: null, autoAtaLastOwnshipPos: null, autoAtaLastCapturedStep: '', deletedSteps: {}, directToSourceStep: '', directToTargetStep: '', rowActionStep: '', rowActionMode: '', rowRevealStep: '', rowRevealMode: '', coordDisplayMode: 'xy', navlogAltDisplayMode: 'ft', navlogSpdDisplayMode: 'kts', navlogDistDisplayMode: 'nm', expandedBottomPanel: '', closingBottomPanel: '', closingBottomPanelUntilUtc: 0 };
+      if (!key) return { speedAdjustments: {}, speedDisplayModes: {}, altAdjustments: {}, typeOverrides: {}, lockedStep: '', totSeconds: NaN, lockedStart: null, timeMarks: {}, timingLog: [], postFlightOpen: false, ataByStep: {}, speedRecommendations: {}, totPerformanceByStep: {}, lastOwnshipPos: null, autoAtaLastOwnshipPos: null, autoAtaLastCapturedStep: '', deletedSteps: {}, directToSourceStep: '', directToTargetStep: '', rowActionStep: '', rowActionMode: '', rowRevealStep: '', rowRevealMode: '', coordDisplayMode: 'xy', navlogAltDisplayMode: defaultNavlogAltDisplayMode, navlogSpdDisplayMode: defaultNavlogSpdDisplayMode, navlogDistDisplayMode: defaultNavlogDistDisplayMode, expandedBottomPanel: '', closingBottomPanel: '', closingBottomPanelUntilUtc: 0 };
       const existing = fltPlanPlanStateBySelection[key];
       if (existing && typeof existing === 'object') {
         if (!existing.speedAdjustments || typeof existing.speedAdjustments !== 'object') existing.speedAdjustments = {};
@@ -14165,15 +14271,15 @@
         if (typeof existing.rowRevealStep !== 'string') existing.rowRevealStep = '';
         if (typeof existing.rowRevealMode !== 'string') existing.rowRevealMode = '';
         if (typeof existing.coordDisplayMode !== 'string') existing.coordDisplayMode = 'xy';
-        if (typeof existing.navlogAltDisplayMode !== 'string') existing.navlogAltDisplayMode = 'ft';
-        if (typeof existing.navlogSpdDisplayMode !== 'string') existing.navlogSpdDisplayMode = 'kts';
-        if (typeof existing.navlogDistDisplayMode !== 'string') existing.navlogDistDisplayMode = 'nm';
+        existing.navlogAltDisplayMode = normalizeNavlogAltDisplayMode(existing.navlogAltDisplayMode || defaultNavlogAltDisplayMode);
+        existing.navlogSpdDisplayMode = normalizeNavlogSpdDisplayMode(existing.navlogSpdDisplayMode || defaultNavlogSpdDisplayMode);
+        existing.navlogDistDisplayMode = normalizeNavlogDistDisplayMode(existing.navlogDistDisplayMode || defaultNavlogDistDisplayMode);
         if (typeof existing.expandedBottomPanel !== 'string') existing.expandedBottomPanel = '';
         if (typeof existing.closingBottomPanel !== 'string') existing.closingBottomPanel = '';
         if (!isFinite(Number(existing.closingBottomPanelUntilUtc))) existing.closingBottomPanelUntilUtc = 0;
         return existing;
       }
-      const created = { speedAdjustments: {}, speedDisplayModes: {}, altAdjustments: {}, typeOverrides: {}, lockedStep: '', totSeconds: NaN, lockedStart: null, timeMarks: {}, timingLog: [], postFlightOpen: false, ataByStep: {}, speedRecommendations: {}, totPerformanceByStep: {}, lastOwnshipPos: null, autoAtaLastOwnshipPos: null, autoAtaLastCapturedStep: '', deletedSteps: {}, directToSourceStep: '', directToTargetStep: '', rowActionStep: '', rowActionMode: '', rowRevealStep: '', rowRevealMode: '', coordDisplayMode: 'xy', navlogAltDisplayMode: 'ft', navlogSpdDisplayMode: 'kts', navlogDistDisplayMode: 'nm', expandedBottomPanel: '', closingBottomPanel: '', closingBottomPanelUntilUtc: 0 };
+      const created = { speedAdjustments: {}, speedDisplayModes: {}, altAdjustments: {}, typeOverrides: {}, lockedStep: '', totSeconds: NaN, lockedStart: null, timeMarks: {}, timingLog: [], postFlightOpen: false, ataByStep: {}, speedRecommendations: {}, totPerformanceByStep: {}, lastOwnshipPos: null, autoAtaLastOwnshipPos: null, autoAtaLastCapturedStep: '', deletedSteps: {}, directToSourceStep: '', directToTargetStep: '', rowActionStep: '', rowActionMode: '', rowRevealStep: '', rowRevealMode: '', coordDisplayMode: 'xy', navlogAltDisplayMode: defaultNavlogAltDisplayMode, navlogSpdDisplayMode: defaultNavlogSpdDisplayMode, navlogDistDisplayMode: defaultNavlogDistDisplayMode, expandedBottomPanel: '', closingBottomPanel: '', closingBottomPanelUntilUtc: 0 };
       fltPlanPlanStateBySelection[key] = created;
       return created;
     }
@@ -16002,9 +16108,9 @@
                 }
 
                 row(bodyY - (roofHeight * 0.42), String((props && props.mhText) || '-'), true);
-                row(bodyY + (rowHeight * 0.5), 'DIST ' + String((props && props.distText) || '-') + ' NM', true);
+                row(bodyY + (rowHeight * 0.5), 'DIST ' + String((props && props.distText) || '-') + ' ' + String((props && props.distUnit) || 'NM'), true);
                 row(bodyY + (rowHeight * 1.5), 'ETE ' + String((props && props.eteText) || '--:--'), true);
-                row(bodyY + (rowHeight * 2.5), 'ALT ' + String((props && props.altText) || '-'), true);
+                row(bodyY + (rowHeight * 2.5), 'ALT ' + String((props && props.altText) || '-') + ' ' + String((props && props.altUnit) || 'ft'), true);
 
                 doghousePlacedAnchors.push({
                   x: anchorX,
@@ -17689,6 +17795,7 @@
       return {
         bearing: formatHeadingDeg(bearing),
         range: String(Math.round(distMeters / 1852.0)),
+        distNm: distMeters / 1852.0,
       };
     }
 
@@ -17707,13 +17814,17 @@
         : null;
       const bullBra = computeBraBetweenPoints(bull, target);
 
+      const unitModes = getGlobalUnitModes(data);
       const altFeet = Math.max(0, Math.round(Number(selectedAsset.altFeet) || 0));
+      const altText = formatAltitudeByMode(altFeet, unitModes.alt, true);
+      const ownRange = ownBra ? formatDistanceByMode(ownBra.distNm, unitModes.dist, true) : '--';
+      const bullRange = bullBra ? formatDistanceByMode(bullBra.distNm, unitModes.dist, true) : '--';
       const left = ownBra
-        ? ('BRA ' + ownBra.bearing + '/' + ownBra.range + '/' + String(altFeet))
-        : ('BRA ---/--/' + String(altFeet));
+        ? ('BRA ' + ownBra.bearing + '/' + ownRange + '/' + String(altText))
+        : ('BRA ---/--/' + String(altText));
       const right = bullBra
-        ? ('B/E ' + bullBra.bearing + '/' + bullBra.range + '/' + String(altFeet))
-        : ('B/E ---/--/' + String(altFeet));
+        ? ('B/E ' + bullBra.bearing + '/' + bullRange + '/' + String(altText))
+        : ('B/E ---/--/' + String(altText));
       return left + '   ' + right;
     }
 
@@ -17748,6 +17859,7 @@
     function buildDoghouseLegData(rows, theater) {
       const list = Array.isArray(rows) ? rows : [];
       if (list.length < 2) return [];
+      const unitModes = getGlobalUnitModes(latestData || null);
       const magVar = Number(getApproxMagVariationDeg(theater));
       const doghouses = [];
       for (let i = 1; i < list.length; i++) {
@@ -17782,6 +17894,8 @@
         const midXNum = (fromX + toX) / 2.0;
         const midYNum = (fromY + toY) / 2.0;
 
+        const distTextRaw = formatDistanceByMode(distanceNm, unitModes.dist, false);
+        const altTextRaw = formatAltitudeByMode(altFeet, unitModes.alt, false);
         doghouses.push({
           fromXNum: fromX,
           fromYNum: fromY,
@@ -17790,9 +17904,11 @@
           midXNum: midXNum,
           midYNum: midYNum,
           mhText: formatHeadingDeg(headingMag),
-          distText: formatDistanceNm(distanceNm),
+          distText: distTextRaw,
+          distUnit: unitModes.dist === 'km' ? 'km' : 'NM',
           eteText: formatDoghouseEteSeconds(eteSeconds),
-          altText: isFinite(altFeet) ? String(Math.round(altFeet)) : '-',
+          altText: altTextRaw,
+          altUnit: unitModes.alt === 'm' ? 'm' : 'ft',
         });
       }
       return doghouses;
@@ -17896,35 +18012,112 @@
 
     function getNavlogAltDisplayMode(selected) {
       const state = getFlightPlanPlanState(selected);
-      const mode = String(state && state.navlogAltDisplayMode || 'ft').toLowerCase();
-      return mode === 'm' ? 'm' : 'ft';
+      return normalizeNavlogAltDisplayMode(state && state.navlogAltDisplayMode);
     }
 
     function cycleNavlogAltDisplayMode(selected) {
       const state = getFlightPlanPlanState(selected);
       state.navlogAltDisplayMode = getNavlogAltDisplayMode(selected) === 'm' ? 'ft' : 'm';
+      defaultNavlogAltDisplayMode = normalizeNavlogAltDisplayMode(state.navlogAltDisplayMode);
+      persistNavlogAltDisplayModePreference(defaultNavlogAltDisplayMode);
     }
 
     function getNavlogSpdDisplayMode(selected) {
       const state = getFlightPlanPlanState(selected);
-      const mode = String(state && state.navlogSpdDisplayMode || 'kts').toLowerCase();
-      return mode === 'kmh' ? 'kmh' : 'kts';
+      return normalizeNavlogSpdDisplayMode(state && state.navlogSpdDisplayMode);
     }
 
     function cycleNavlogSpdDisplayMode(selected) {
       const state = getFlightPlanPlanState(selected);
       state.navlogSpdDisplayMode = getNavlogSpdDisplayMode(selected) === 'kmh' ? 'kts' : 'kmh';
+      defaultNavlogSpdDisplayMode = normalizeNavlogSpdDisplayMode(state.navlogSpdDisplayMode);
+      persistNavlogSpdDisplayModePreference(defaultNavlogSpdDisplayMode);
     }
 
     function getNavlogDistDisplayMode(selected) {
       const state = getFlightPlanPlanState(selected);
-      const mode = String(state && state.navlogDistDisplayMode || 'nm').toLowerCase();
-      return (mode === 'km' || mode === 'm') ? 'km' : 'nm';
+      return normalizeNavlogDistDisplayMode(state && state.navlogDistDisplayMode);
     }
 
     function cycleNavlogDistDisplayMode(selected) {
       const state = getFlightPlanPlanState(selected);
       state.navlogDistDisplayMode = getNavlogDistDisplayMode(selected) === 'km' ? 'nm' : 'km';
+      defaultNavlogDistDisplayMode = normalizeNavlogDistDisplayMode(state.navlogDistDisplayMode);
+      persistNavlogDistDisplayModePreference(defaultNavlogDistDisplayMode);
+    }
+
+    function resolveGlobalUnitSelection(data) {
+      const model = data || latestData || null;
+
+      const dtcSelected = getActiveFlightPlanSelection(model || {});
+      if (dtcSelected) return String(dtcSelected);
+
+      const saContext = resolveActiveSaMapContext(model);
+      if (saContext && saContext.selected) return String(saContext.selected);
+
+      const activeSaSelection = getActiveEfbSaSelectionKey();
+      if (activeSaSelection) return String(activeSaSelection);
+
+      return '__RUNTIME_PLAYER__';
+    }
+
+    function formatAltitudeByMode(altFeet, mode, withSuffix) {
+      const n = Number(altFeet);
+      if (!isFinite(n)) return '-';
+      const metric = String(mode || 'ft').toLowerCase() === 'm';
+      const v = metric ? Math.round(n * 0.3048) : Math.round(n);
+      if (withSuffix !== true) return String(v);
+      return String(v) + (metric ? 'm' : 'ft');
+    }
+
+    function formatSpeedByMode(speedKts, mode, withSuffix) {
+      const n = Number(speedKts);
+      if (!isFinite(n) || n <= 0) return '-';
+      const metric = String(mode || 'kts').toLowerCase() === 'kmh';
+      const v = metric ? Math.round(n * 1.852) : Math.round(n);
+      if (withSuffix !== true) return String(v);
+      return String(v) + (metric ? 'km/h' : 'kt');
+    }
+
+    function formatDistanceByMode(distanceNm, mode, withSuffix) {
+      const n = Number(distanceNm);
+      if (!isFinite(n) || n < 0) return '-';
+      const metric = String(mode || 'nm').toLowerCase() === 'km';
+      const v = metric
+        ? (n * 1.852)
+        : n;
+      const text = metric
+        ? (v < 10 ? v.toFixed(1) : String(Math.round(v)))
+        : (v < 10 ? v.toFixed(1) : String(Math.round(v)));
+      if (withSuffix !== true) return text;
+      return text + (metric ? 'km' : 'nm');
+    }
+
+    function getGlobalUnitModes(data) {
+      const selected = resolveGlobalUnitSelection(data);
+      return {
+        selected: selected,
+        alt: getNavlogAltDisplayMode(selected),
+        spd: getNavlogSpdDisplayMode(selected),
+        dist: getNavlogDistDisplayMode(selected),
+      };
+    }
+
+    function convertAltitudeDisplayDeltaToFeet(displayDelta, mode) {
+      const delta = Number(displayDelta);
+      if (!isFinite(delta) || delta === 0) return 0;
+      return String(mode || 'ft').toLowerCase() === 'm'
+        ? (delta / 0.3048)
+        : delta;
+    }
+
+    function getAltitudeAdjustmentStepByMode(currentAltFeet, mode) {
+      if (String(mode || 'ft').toLowerCase() === 'm') {
+        const altFeet = Number(currentAltFeet);
+        const altMeters = isFinite(altFeet) ? (altFeet * 0.3048) : NaN;
+        return (!isFinite(altMeters) || altMeters < 300) ? 50 : 100;
+      }
+      return getAltitudeAdjustmentStep(currentAltFeet);
     }
 
     function formatNavlogAltitudeDisplayHtml(wp, mode) {
@@ -19451,27 +19644,31 @@
       return alt < 1000 ? 100 : 500;
     }
 
-    function changeWaypointAltitudeByDirection(selected, step, direction, currentAltFeet) {
+    function changeWaypointAltitudeByDirection(selected, step, direction, currentAltFeet, displayMode) {
       const dir = Number(direction);
       if (!isFinite(dir) || dir === 0) return;
-      const stepSize = getAltitudeAdjustmentStep(currentAltFeet);
+      const mode = String(displayMode || 'ft').toLowerCase();
+      const stepSizeDisplay = getAltitudeAdjustmentStepByMode(currentAltFeet, mode);
+      const stepSize = convertAltitudeDisplayDeltaToFeet(stepSizeDisplay, mode);
       const baseAlt = Number(currentAltFeet);
       if (!isFinite(baseAlt)) {
         changeWaypointAltitude(selected, step, (dir >= 0 ? 1 : -1) * stepSize);
         return;
       }
 
-      const lower = Math.floor(baseAlt / stepSize) * stepSize;
-      const upper = Math.ceil(baseAlt / stepSize) * stepSize;
-      const isAligned = Math.abs(baseAlt - Math.round(baseAlt / stepSize) * stepSize) < 0.0001;
+      const baseDisplay = mode === 'm' ? (baseAlt * 0.3048) : baseAlt;
+      const lowerDisplay = Math.floor(baseDisplay / stepSizeDisplay) * stepSizeDisplay;
+      const upperDisplay = Math.ceil(baseDisplay / stepSizeDisplay) * stepSizeDisplay;
+      const isAligned = Math.abs(baseDisplay - Math.round(baseDisplay / stepSizeDisplay) * stepSizeDisplay) < 0.0001;
 
-      let nextAlt = baseAlt;
+      let nextDisplay = baseDisplay;
       if (dir >= 0) {
-        nextAlt = isAligned ? (baseAlt + stepSize) : upper;
+        nextDisplay = isAligned ? (baseDisplay + stepSizeDisplay) : upperDisplay;
       } else {
-        nextAlt = isAligned ? (baseAlt - stepSize) : lower;
+        nextDisplay = isAligned ? (baseDisplay - stepSizeDisplay) : lowerDisplay;
       }
 
+      let nextAlt = mode === 'm' ? (nextDisplay / 0.3048) : nextDisplay;
       nextAlt = Math.max(0, Math.round(nextAlt));
       changeWaypointAltitude(selected, step, nextAlt - baseAlt);
     }
@@ -23923,6 +24120,8 @@
           const altCellHtml = formatNavlogAltitudeDisplayHtml(wp, altDisplayMode);
           const speedCellDisplay = formatNavlogSpeedDisplayText(wp, speedDisplay, speedRec, spdDisplayMode);
           const distCellDisplay = formatNavlogDistanceDisplayText(wp, distDisplayMode);
+          const altPopupDisplay = formatAltitudeByMode(wp && wp.altFeet, altDisplayMode, true);
+          const speedPopupDisplay = formatSpeedByMode(wp && wp.spd, spdDisplayMode, true);
           const speedReadoutTitle = speedRec
             ? 'Recommended speed: click to accept'
             : (spdDisplayMode === 'kmh' ? 'Speed shown in km/h (edit popup still adjusts KCAS)' : speedClickTitle);
@@ -23947,14 +24146,14 @@
           if (wp.isStart) {
             html += '<td class="fltPlanCellNum">' + altCellHtml + '</td>';
           } else {
-            html += '<td class="fltPlanCellNum fltPlanNavEditCell' + navPopupClass(stepKey, 'ALT') + '"><div class="fltPlanNavEditHost' + navPopupClass(stepKey, 'ALT') + '" data-nav-edit-host="1" data-nav-edit-step="' + escapeHtml(stepKey) + '" data-nav-edit-field="ALT"><span class="fltPlanNavEditReadout" data-nav-edit-toggle="1" data-nav-edit-step="' + escapeHtml(stepKey) + '" data-nav-edit-field="ALT">' + altCellHtml + '</span>' + navPopupEditor('', 'data-alt-step="' + escapeHtml(stepKey) + '" data-alt-dir="-1" data-alt-current="' + escapeHtml(String(wp.altFeet)) + '" title="Lower altitude"', 'data-alt-step="' + escapeHtml(stepKey) + '" data-alt-dir="1" data-alt-current="' + escapeHtml(String(wp.altFeet)) + '" title="Raise altitude"', String(wp.altFeet || '-')) + '</div></td>';
+            html += '<td class="fltPlanCellNum fltPlanNavEditCell' + navPopupClass(stepKey, 'ALT') + '"><div class="fltPlanNavEditHost' + navPopupClass(stepKey, 'ALT') + '" data-nav-edit-host="1" data-nav-edit-step="' + escapeHtml(stepKey) + '" data-nav-edit-field="ALT"><span class="fltPlanNavEditReadout" data-nav-edit-toggle="1" data-nav-edit-step="' + escapeHtml(stepKey) + '" data-nav-edit-field="ALT">' + altCellHtml + '</span>' + navPopupEditor('', 'data-alt-step="' + escapeHtml(stepKey) + '" data-alt-dir="-1" data-alt-current="' + escapeHtml(String(wp.altFeet)) + '" data-alt-mode="' + escapeHtml(altDisplayMode) + '" title="Lower altitude"', 'data-alt-step="' + escapeHtml(stepKey) + '" data-alt-dir="1" data-alt-current="' + escapeHtml(String(wp.altFeet)) + '" data-alt-mode="' + escapeHtml(altDisplayMode) + '" title="Raise altitude"', altPopupDisplay) + '</div></td>';
           }
           if (wp.isStart) {
             html += '<td class="fltPlanCellNum">' + escapeHtml(wp.hdg || '-') + '</td>';
             html += '<td class="fltPlanCellNum">' + escapeHtml(formatNavlogSpeedDisplayText(wp, wp.spd, null, spdDisplayMode)) + '</td>';
           } else {
             html += '<td class="fltPlanCellNum">' + escapeHtml(wp.hdg || '-') + '</td>';
-            html += '<td class="fltPlanCellNum fltPlanNavEditCell' + navPopupClass(stepKey, 'SPD') + '"><div class="fltPlanNavEditHost' + navPopupClass(stepKey, 'SPD') + '" data-nav-edit-host="1" data-nav-edit-step="' + escapeHtml(stepKey) + '" data-nav-edit-field="SPD"><span class="fltPlanNavEditReadout fltPlanSpdValue' + (speedRec ? ' fltPlanRecSpeed' : '') + '" data-nav-edit-toggle="1" data-nav-edit-step="' + escapeHtml(stepKey) + '" data-nav-edit-field="SPD"' + speedModeAttrs + (speedRec ? ' data-speed-rec-step="' + escapeHtml(stepKey) + '"' : '') + ' title="' + escapeHtml(speedReadoutTitle) + '">' + escapeHtml(speedCellDisplay) + '</span>' + navPopupEditor('', 'data-spd-step="' + escapeHtml(stepKey) + '" data-spd-dir="-1" data-spd-alt="' + escapeHtml(String(wp.altFeet)) + '" title="' + escapeHtml(speedStepTitle) + '"', 'data-spd-step="' + escapeHtml(stepKey) + '" data-spd-dir="1" data-spd-alt="' + escapeHtml(String(wp.altFeet)) + '" title="' + escapeHtml(speedStepTitle) + '"', speedCellDisplay) + '</div></td>';
+            html += '<td class="fltPlanCellNum fltPlanNavEditCell' + navPopupClass(stepKey, 'SPD') + '"><div class="fltPlanNavEditHost' + navPopupClass(stepKey, 'SPD') + '" data-nav-edit-host="1" data-nav-edit-step="' + escapeHtml(stepKey) + '" data-nav-edit-field="SPD"><span class="fltPlanNavEditReadout fltPlanSpdValue' + (speedRec ? ' fltPlanRecSpeed' : '') + '" data-nav-edit-toggle="1" data-nav-edit-step="' + escapeHtml(stepKey) + '" data-nav-edit-field="SPD"' + speedModeAttrs + (speedRec ? ' data-speed-rec-step="' + escapeHtml(stepKey) + '"' : '') + ' title="' + escapeHtml(speedReadoutTitle) + '">' + escapeHtml(speedCellDisplay) + '</span>' + navPopupEditor('', 'data-spd-step="' + escapeHtml(stepKey) + '" data-spd-dir="-1" data-spd-alt="' + escapeHtml(String(wp.altFeet)) + '" title="' + escapeHtml(speedStepTitle) + '"', 'data-spd-step="' + escapeHtml(stepKey) + '" data-spd-dir="1" data-spd-alt="' + escapeHtml(String(wp.altFeet)) + '" title="' + escapeHtml(speedStepTitle) + '"', speedPopupDisplay) + '</div></td>';
           }
           html += '<td class="fltPlanCellNum">' + escapeHtml(distCellDisplay) + '</td>';
           if (wp.isStart) {
@@ -24898,6 +25097,7 @@
         btn.onclick = function () {
           if (autoBrowse) {
             autoBrowse = false;
+            persistAutoBrowsePreference();
             applyAutoBrowseUi();
           }
           setSelectedTab(tab);
@@ -25445,6 +25645,7 @@
 
     document.getElementById('autoBrowse').addEventListener('change', function (ev) {
       autoBrowse = ev.target.checked;
+      persistAutoBrowsePreference();
       applyAutoBrowseUi();
       if (latestData) render(latestData);
     });
@@ -25498,6 +25699,7 @@
 
     document.getElementById('overlayAutoBrowse').addEventListener('change', function (ev) {
       autoBrowse = !!ev.target.checked;
+      persistAutoBrowsePreference();
       applyAutoBrowseUi();
       if (latestData) render(latestData);
     });
@@ -25733,8 +25935,9 @@
             const step = String(node.getAttribute('data-alt-step') || '');
             const direction = Number(node.getAttribute('data-alt-dir') || 0);
             const currentAlt = Number(node.getAttribute('data-alt-current') || NaN);
+            const altMode = String(node.getAttribute('data-alt-mode') || getNavlogAltDisplayMode(selected || '__RUNTIME_PLAYER__'));
             if (selected && step && isFinite(direction) && direction !== 0) {
-              changeWaypointAltitudeByDirection(selected, step, direction, currentAlt);
+              changeWaypointAltitudeByDirection(selected, step, direction, currentAlt, altMode);
               render(latestData);
             }
             return;
@@ -26086,10 +26289,17 @@
         const selectedSam = getAwacsSamThreatSelectionFromLine(latestData, clickedLine);
         if (selectedSam && selectedSam.assetKey) {
           const key = String(selectedSam.assetKey);
+          const selectionKey = getSamThreatSelectionKey(key);
           const selectedList = Array.isArray(efbAwacsSelectedSamThreatKeys) ? efbAwacsSelectedSamThreatKeys.slice() : [];
-          const idx = selectedList.indexOf(key);
-          if (idx >= 0) {
-            selectedList.splice(idx, 1);
+          const matchIdx = selectedList.findIndex(function (k) {
+            return getSamThreatSelectionKey(k) === selectionKey;
+          });
+          if (matchIdx >= 0) {
+            for (let i = selectedList.length - 1; i >= 0; i--) {
+              if (getSamThreatSelectionKey(selectedList[i]) === selectionKey) {
+                selectedList.splice(i, 1);
+              }
+            }
           } else {
             selectedList.push(key);
           }
@@ -26546,6 +26756,10 @@
     efbSaUserWaypoints = readEfbSaUserWaypointsPreference();
     efbSaSavedHistoryTracksBySelection = readEfbSaSavedHistoryTracksPreference();
     hydrateEfbSaSavedHistoryTracksFromServer();
+    autoBrowse = readAutoBrowsePreference();
+    defaultNavlogAltDisplayMode = readNavlogAltDisplayModePreference();
+    defaultNavlogSpdDisplayMode = readNavlogSpdDisplayModePreference();
+    defaultNavlogDistDisplayMode = readNavlogDistDisplayModePreference();
     nightModeEnabled = readNightModePreference();
     applyNightModeUi();
     dlinkOnEnabled = readDlinkOnPreference();

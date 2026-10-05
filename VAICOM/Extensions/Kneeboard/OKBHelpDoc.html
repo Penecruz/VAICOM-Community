@@ -347,6 +347,9 @@
               <li><strong>ETA/ATA toggle behavior</strong>: Tap a waypoint ETA value to mark ATA for that step. Tap the same ATA value again to clear ATA and return that cell to its original ETA display.</li>
               <li><strong>Auto ATA and REC SPEED sequence gating</strong>: If selected on in the Settings, Auto ATA processes the first pending waypoint only, so another close/co-located waypoint does not both trigger in the same update. It will then lock in recommended speed and a pulsing speed popup will be displayed on the EFB Moving Map.</li>
               <li><strong>Header unit toggles</strong>: Click <code>ALT</code> to switch between <code>ALT</code>/<code>ALT(m)</code>, click <code>SPD</code> to switch between <code>SPD</code>/<code>SPD(km/h)</code>, click <code>DIST</code> to switch between <code>DIST</code>/<code>DIST(km)</code>, and click the position header to cycle <code>X/Y</code> → <code>DMS</code> → <code>DDM</code> → <code>MGRS</code>.</li>
+              <li><strong>Global unit source</strong>: The active FLT PLN NAVLOG unit selection is used as the global source for OKB Out displays tied to route/SA readouts.</li>
+              <li><strong>Popup editor unit flow</strong>: ALT/SPD popup editor values follow the currently selected NAVLOG units and show explicit suffixes (for example <code>m</code>, <code>km/h</code>, <code>ft</code>, <code>kt</code>).</li>
+              <li><strong>Metric edit behavior</strong>: In metric mode, popup ALT adjustments step in metric increments while preserving internal route values and conversions automatically.</li>
               <li>Useful for cockpit cross-check against aircraft systems and required TOT, ATA and ETAs.</li>
               <li><strong>The Navlog has a stability model</strong>: Runtime route display uses a stabilized mission route snapshot while still allowing other live data lanes to update Frequencies, METAR and Assets.</li>
           </ul>
@@ -800,7 +803,8 @@
                 <li><strong>Naval SAM symbology</strong>: Naval SAM anchors use hostile diamond or unknown inverted-V styling. Naval labels include platform+system shorthand where available (e.g. <code>CG10</code>, <code>DDG11</code>, <code>CVPT</code>) and shift right of the symbol when needed for readability.</li>
                 <li><strong>SAM declutter and selection sync</strong>: SAM labels declutter at low zoom. Clicking an AWACS Tab SAM threat line selects the matching map ring; multiple selections allow filtering of the SAM rings on the Moving Map. Deselect to see all ringss on the EFB moving Map.</li>
                 <li><strong>Saved history tracks drawer</strong>: Use the dedicated left-rail history icon (history marker with clock) to open saved-track tools. Use <strong>Save active</strong> to snapshot the current active trail, <strong>Reset active</strong> to clear the live trail, then show/hide, rename, or delete saved snapshots. Visible saved tracks are drawn as lighter grayscale dots.</li>
-                <li><strong>Doghouses</strong>: Show/hide leg doghouse blocks (MH, DIST, ETE, ALT) generated from the active navlog route.</li>
+                <li><strong>Doghouses</strong>: Show/hide leg doghouse blocks (MH, DIST, ETE, ALT) generated from the active navlog route. DIST/ALT use the global NAVLOG unit mode with explicit suffixes.</li>
+                <li><strong>BRA/B-E altitude units</strong>: SA map BRA/B-E readouts use the global NAVLOG altitude mode and display explicit unit suffixes.</li>
                 <li><strong>User waypoints</strong>: Show/hide custom user waypoint symbols and labels.</li>
                 <li><strong>DTC overlays</strong>: Show/hide DTC map overlays (threats, GEO lines, points, etc.).</li>
                 <li><strong>Mission drawings (MIZ)</strong>: Show/hide mission-authored F10 drawing objects as a dedicated Moving Map layer.</li>
