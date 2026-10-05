@@ -646,7 +646,28 @@
   <data name="VAICOM_F-14_Update" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\Files\VAICOM F-14 Update.vap;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
+  <data name="OKB_Out_CSS" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Extensions\Kneeboard\OKB\css\OKB.css;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-8</value>
+  </data>
+  <data name="OKB_Out_JS_01_Core" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Extensions\Kneeboard\OKB\js\okb-01-core.js;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-8</value>
+  </data>
+  <data name="OKB_Out_JS_02_Data_Map" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Extensions\Kneeboard\OKB\js\okb-02-data-map.js;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-8</value>
+  </data>
+  <data name="OKB_Out_JS_03_FlightPlan" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Extensions\Kneeboard\OKB\js\okb-03-flightplan.js;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-8</value>
+  </data>
+  <data name="OKB_Out_JS_04_SaMap" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Extensions\Kneeboard\OKB\js\okb-04-samap.js;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-8</value>
+  </data>
+  <data name="OKB_Out_JS_05_Bootstrap" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Extensions\Kneeboard\OKB\js\okb-05-bootstrap.js;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-8</value>
+  </data>
+  <data name="OKB_SamThreatRanges_JSON" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Extensions\Kneeboard\OKB\assets\OKB-SamThreatRanges.json;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-8</value>
+  </data>
     <data name="OKB_Out_Index_HTML" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Extensions\Kneeboard\OKB.html;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-8</value>
+    <value>..\Extensions\Kneeboard\OKB\OKB.html;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-8</value>
   </data>
 </root>

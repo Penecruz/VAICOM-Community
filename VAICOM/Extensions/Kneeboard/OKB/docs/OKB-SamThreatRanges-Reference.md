@@ -2,7 +2,7 @@
 
 This document is a human-readable companion to:
 
-- `VAICOM/Extensions/Kneeboard/OKB-SamThreatRanges.json`
+- `VAICOM/Extensions/Kneeboard/OKB/assets/OKB-SamThreatRanges.json`
 
 Use this file to validate expected ring radius (`Range Max Assumed`) and label mapping behavior before/after wiring the SA map layer.
 

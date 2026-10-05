@@ -344,13 +344,13 @@
     <None Include="FodyWeavers.xml" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Extensions\Kneeboard\OKBHelpDoc.html">
+    <None Include="Extensions\Kneeboard\OKB\docs\OKBHelpDoc.html">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <TargetPath>Extensions\Kneeboard\OKBHelpDoc.html</TargetPath>
+      <TargetPath>Extensions\Kneeboard\OKB\docs\OKBHelpDoc.html</TargetPath>
     </None>
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Extensions\Kneeboard\OKBHelpDoc.html" />
+    <EmbeddedResource Include="Extensions\Kneeboard\OKB\docs\OKBHelpDoc.html" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Extensions\Kneeboard\HelpImages\**\*.*">
