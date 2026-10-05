@@ -2326,6 +2326,7 @@ namespace VAICOM
                             string js = GetOkbUiTextResource(resourceName);
                             if (!string.IsNullOrWhiteSpace(js))
                             {
+                                js = js.Replace(StoreLookupJsonPlaceholder, GetStoreLookupMapJson());
                                 WriteText(context.Response, js, "application/javascript; charset=utf-8");
                             }
                             else
