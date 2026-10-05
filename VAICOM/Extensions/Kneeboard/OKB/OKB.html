@@ -1,0 +1,187 @@
+﻿<!doctype html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>VAICOM Kneeboard 1.0</title>
+  <link rel="stylesheet" href="css/OKB.css">
+</head>
+
+<body>
+  <div class="sheet">
+    <div class="sheetBody">
+      <div class="headerRow">
+        <div>
+          <h3>VAICOM KNEEBOARD</h3>
+          <div id="liveExportMeta" class="meta liveRefreshToggle"
+            title="Hidden dev tool: click to toggle dashboard auto-refresh (30s)">Live export from VAICOM</div>
+        </div>
+        <img class="logo" src="logo.png" alt="VAICOM Logo">
+      </div>
+
+      <div id="status" class="status"><span id="statusIndicator" class="statusIndicator"></span><span
+          id="statusText">Loading...</span></div>
+
+      <div id="fakeMissionControls" class="simControls hidden">
+        <strong>SIM TEST</strong>
+        <span id="fakeMissionInfo">OFF</span>
+        <span id="fakeMissionClock">--:--:--</span>
+        <button id="fakeMissionSlower" type="button">- Rate</button>
+        <span id="fakeMissionRate" class="simRate">x1.0</span>
+        <button id="fakeMissionFaster" type="button">+ Rate</button>
+        <button id="fakeMissionStop" type="button">Stop</button>
+      </div>
+
+      <div class="kneeLayout">
+        <div class="leftColumn">
+          <div id="dtcControls" class="controls fltPlanControls hidden legacyControls">
+            <button id="dtcRefresh" type="button">Refresh FLT PLN</button>
+            <span id="dtcSelectedFileLabel" class="fltPlanSelected">No FLT PLN selected</span>
+            <span id="missionClockLabel" class="missionClockLabel">Mission Time - (- UTC)</span>
+          </div>
+
+          <div id="dtcSelector" class="panel hidden legacyControls">
+            <h4 id="dtcSelectorHeader" class="clickable">FLT PLN Files ▼</h4>
+            <div id="dtcFileList" class="content dtcFileList"></div>
+          </div>
+
+          <div class="panel session legacyControls">
+            <h4 id="sessionHeader" class="clickable">Session ▼</h4>
+            <div id="session" class="content"></div>
+          </div>
+
+          <div class="panel tabPanel">
+            <h4 id="tabTitle">Tab</h4>
+            <div id="tabBody" class="content mainContent"></div>
+          </div>
+
+          <div id="tabKeywordDivider" class="tabKeywordDivider" title="Drag to resize Tab and Keywords"></div>
+
+          <div id="keywordPanel" class="panel keywordsPanel">
+            <h4 id="keywordTitle">Keywords</h4>
+            <div id="keywordBody" class="content keywordsContent"></div>
+          </div>
+        </div>
+
+        <div class="tabRail">
+          <div id="tabs" class="tabs"></div>
+        </div>
+      </div>
+
+      <div class="controls legacyControls">
+        <label><input id="autoBrowse" type="checkbox"> Auto Browse</label>
+        <label><input id="nightMode" type="checkbox"> Night Mode</label>
+        <label><input id="dlinkOn" type="checkbox" checked> DLink ON</label>
+        <label>Font Size <input id="fontSizeSlider" type="range" min="18" max="34" step="1" value="24"></label>
+        <span id="fontSizeValue">24</span>
+        <button id="drawModeToggle" type="button">Draw OFF</button>
+        <span id="drawTimer" class="drawTimer hidden">30s</span>
+        <label id="showRawWrap"><input id="showRaw" type="checkbox"> Show raw JSON</label>
+        <label id="showServerWrap"><input id="showServer" type="checkbox"> Show server messages</label>
+      </div>
+      <pre id="json" class="hidden"></pre>
+      <pre id="serverMessages" class="hidden"></pre>
+    </div>
+  </div>
+
+  <div id="bottomQuickBar" class="bottomQuickBar">
+    <button id="overlayToggleBtn" class="overlayToggleBtn" type="button" title="Open quick settings">⚙</button>
+    <button id="helpOverlayToggleBtn" class="overlayToggleBtn helpOverlayToggleBtn" type="button"
+      title="Help">?</button>
+    <button id="drawOverlayToggleBtn" class="overlayToggleBtn drawOverlayToggleBtn hiddenFloatingBtn" type="button"
+      title="Draw mode">✎</button>
+  </div>
+
+  <div id="fltPlanQuickBar" class="fltPlanQuickBar hidden">
+    <button id="fltPlanFileBtn" class="fltPlanQuickBtn" type="button" title="Flight plan files">☰</button>
+    <button id="fastAvBusToggleBtn" class="fltPlanQuickBtn fastAvBusBtn off" type="button" title="Aircraft interface device">AID</button>
+    <button id="fastOwnshipToggleBtn" class="fltPlanQuickBtn fastOwnshipBtn hidden" type="button" title="Fast ownship source">🌐GPS</button>
+    <div id="fastAvBusDataPanel" class="fastAvBusDataPanel hidden" aria-live="polite"></div>
+    <div id="fastOwnshipDataPanel" class="fastOwnshipDataPanel hidden" aria-live="polite"></div>
+    <button id="fltPlanSessionBtn" class="fltPlanQuickBtn" type="button" title="Session information">ℹ</button>
+  </div>
+
+  <div id="helpOverlay" class="overlayBackdrop helpOverlayBackdrop hidden">
+    <div class="overlayPanel helpOverlayPanel">
+      <div class="overlayTitleRow">
+        <span id="helpOverlayTitle">OKB Out Help</span>
+        <button id="helpOverlayCloseBtn" class="overlayCloseBtn" type="button">✕</button>
+      </div>
+      <div id="helpOverlayContent" class="helpOverlayContent">
+        <h3>Help content placeholder</h3>
+        <p>Help for this tab will be loaded from an external OKB Out HTML help document.</p>
+        <p>Planned behavior:</p>
+        <ul>
+          <li>Tab-specific help sections</li>
+          <li>Scrollable instructions and control reference</li>
+          <li>Embedded images and rich formatting</li>
+          <li>Hyperlinked navigation</li>
+        </ul>
+        <p>Document wiring can be connected later.</p>
+      </div>
+    </div>
+  </div>
+
+  <div id="fltPlanFilesOverlay" class="overlayBackdrop overlayBackdropTop hidden">
+    <div class="overlayPanel fltPlanOverlayPanel">
+      <div class="overlayTitleRow">
+        <span>FLT PLN Files</span>
+        <button id="fltPlanFilesCloseBtn" class="overlayCloseBtn" type="button">✕</button>
+      </div>
+      <div id="fltPlanOverlaySelectedLabel" class="overlayHint">No FLT PLN selected</div>
+      <div id="fltPlanOverlayMissionClock" class="overlayHint">Mission Time - (- UTC)</div>
+      <div id="fltPlanOverlayFileList" class="fltPlanOverlayList">Loading...</div>
+    </div>
+  </div>
+
+  <div id="fltPlanSessionOverlay" class="overlayBackdrop overlayBackdropTop hidden">
+    <div class="overlayPanel fltPlanOverlayPanel">
+      <div class="overlayTitleRow">
+        <span>Session</span>
+        <button id="fltPlanSessionCloseBtn" class="overlayCloseBtn" type="button">✕</button>
+      </div>
+      <pre id="fltPlanSessionOverlayText" class="fltPlanPlain"></pre>
+    </div>
+  </div>
+  <div id="settingsOverlay" class="overlayBackdrop hidden">
+    <div id="settingsOverlayPanel" class="overlayPanel">
+      <div class="overlayTitleRow">
+        <span>Quick Settings</span>
+        <button id="overlayCloseBtn" class="overlayCloseBtn" type="button">✕</button>
+      </div>
+      <label class="overlayOption"><input id="overlayAutoBrowse" type="checkbox"> Auto Browse</label>
+      <label class="overlayOption"><input id="overlayNightMode" type="checkbox"> Night Mode</label>
+      <label class="overlayOption"><input id="overlayDlinkOn" type="checkbox"> DLink ON</label>
+      <label class="overlayOption"><input id="overlayEfbAdLanding" type="checkbox"> EFB Display AD on Landing</label>
+      <label class="overlayOption"><input id="overlayAutoAtaRecSpd" type="checkbox"> Auto ATA and REC SPD</label>
+      <label class="overlayOption sliderOption"><span>Font Size</span><input id="overlayFontSizeSlider" type="range"
+          min="18" max="34" step="1" value="24"><span id="overlayFontSizeValue" class="sliderValue">24</span></label>
+      <label id="overlayShowRawWrap" class="overlayOption"><input id="overlayShowRaw" type="checkbox"> Show raw
+        JSON</label>
+      <label id="overlayShowServerWrap" class="overlayOption"><input id="overlayShowServer" type="checkbox"> Show server
+        messages</label>
+      <div class="overlayHint">Tap outside this panel to close.</div>
+    </div>
+  </div>
+
+  <div id="drawOverlay" class="overlayBackdrop hidden">
+    <div id="drawOverlayPanel" class="overlayPanel">
+      <div class="overlayTitleRow">
+        <span>Draw Mode</span>
+        <button id="drawOverlayCloseBtn" class="overlayCloseBtn" type="button">✕</button>
+      </div>
+      <label class="overlayOption"><input id="overlayDrawMode" type="checkbox"> Draw ON</label>
+      <div id="overlayDrawTimer" class="overlayHint">30s</div>
+      <div class="overlayHint">Draw mode behavior and timeout unchanged.</div>
+    </div>
+  </div>
+
+  <script src="js/okb-01-core.js"></script>
+  <script src="js/okb-02-data-map.js"></script>
+  <script src="js/okb-03-flightplan.js"></script>
+  <script src="js/okb-04-samap.js"></script>
+  <script src="js/okb-05-bootstrap.js"></script>
+</body>
+
+</html>

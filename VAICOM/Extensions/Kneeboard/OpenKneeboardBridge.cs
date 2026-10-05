@@ -2284,6 +2284,75 @@ namespace VAICOM
                         return;
                     }
 
+                    if (path == "/okb/css/okb.css")
+                    {
+                        string css = GetOkbUiTextResource("OKB_Out_CSS");
+                        if (!string.IsNullOrWhiteSpace(css))
+                        {
+                            WriteText(context.Response, css, "text/css; charset=utf-8");
+                        }
+                        else
+                        {
+                            context.Response.StatusCode = 404;
+                            context.Response.Close();
+                        }
+                        return;
+                    }
+
+                    if (path.StartsWith("/okb/js/", StringComparison.Ordinal))
+                    {
+                        string resourceName = "";
+                        switch (path)
+                        {
+                            case "/okb/js/okb-01-core.js":
+                                resourceName = "OKB_Out_JS_01_Core";
+                                break;
+                            case "/okb/js/okb-02-data-map.js":
+                                resourceName = "OKB_Out_JS_02_Data_Map";
+                                break;
+                            case "/okb/js/okb-03-flightplan.js":
+                                resourceName = "OKB_Out_JS_03_FlightPlan";
+                                break;
+                            case "/okb/js/okb-04-samap.js":
+                                resourceName = "OKB_Out_JS_04_SaMap";
+                                break;
+                            case "/okb/js/okb-05-bootstrap.js":
+                                resourceName = "OKB_Out_JS_05_Bootstrap";
+                                break;
+                        }
+
+                        if (!string.IsNullOrWhiteSpace(resourceName))
+                        {
+                            string js = GetOkbUiTextResource(resourceName);
+                            if (!string.IsNullOrWhiteSpace(js))
+                            {
+                                js = js.Replace(StoreLookupJsonPlaceholder, GetStoreLookupMapJson());
+                                WriteText(context.Response, js, "application/javascript; charset=utf-8");
+                            }
+                            else
+                            {
+                                context.Response.StatusCode = 404;
+                                context.Response.Close();
+                            }
+                            return;
+                        }
+                    }
+
+                    if (path == "/okb/assets/okb-samthreatranges.json" || path == "/okb/okb-samthreatranges.json")
+                    {
+                        string json = GetOkbUiTextResource("OKB_SamThreatRanges_JSON");
+                        if (!string.IsNullOrWhiteSpace(json))
+                        {
+                            WriteText(context.Response, json, "application/json; charset=utf-8");
+                        }
+                        else
+                        {
+                            context.Response.StatusCode = 404;
+                            context.Response.Close();
+                        }
+                        return;
+                    }
+
                     if (path == "/okb/state" || path == "/okb/index.json")
                     {
                         // Update the selected category data and associated units if the tab has been changed to display a different category.
@@ -2639,6 +2708,24 @@ namespace VAICOM
                     }
                 }
 
+                private static string GetOkbUiTextResource(string resourceKey)
+                {
+                    try
+                    {
+                        if (string.IsNullOrWhiteSpace(resourceKey))
+                        {
+                            return "";
+                        }
+
+                        string value = Properties.Resources.ResourceManager.GetString(resourceKey);
+                        return value ?? "";
+                    }
+                    catch
+                    {
+                        return "";
+                    }
+                }
+
                 private static string GetStoreLookupMapJson()
                 {
                     lock (StoreLookupSync)
@@ -2873,8 +2960,10 @@ namespace VAICOM
                         string[] candidates = new[]
                         {
                             vaAppsDocPath,
+                            Path.Combine(baseDir, "Extensions", "Kneeboard", "OKB", "docs", "OKBHelpDoc.html"),
                             Path.Combine(baseDir, "Extensions", "Kneeboard", "OKBHelpDoc.html"),
                             Path.Combine(baseDir, "OKBHelpDoc.html"),
+                            Path.Combine(asmDir ?? "", "Extensions", "Kneeboard", "OKB", "docs", "OKBHelpDoc.html"),
                             Path.Combine(asmDir ?? "", "Extensions", "Kneeboard", "OKBHelpDoc.html"),
                             Path.Combine(asmDir ?? "", "OKBHelpDoc.html")
                         };

@@ -6,7 +6,7 @@ Effective Date: [2026-06-01]
 ## 1. Copyright
 Copyright (c) 2026 PeneCruz. All rights reserved.
 
-This license applies to the **OKB Out** implementation and related source code in this folder (`VAICOM/Extensions/Kneeboard`) and any derivative files identified by the Rights Holder.
+This license applies to the **OKB Out** implementation and related source code in this folder (`VAICOM/Extensions/Kneeboard/OKB`) and any derivative files identified by the Rights Holder.
 
 ## 2. Grant of Rights
 No rights are granted except as explicitly stated in writing by the Rights Holder.
