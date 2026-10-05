@@ -1,6 +1,6 @@
 # OKB Folder Layout
 
-This folder hosts the OpenKneeboard (OKB Out) web UI resources.
+This folder hosts the OpenKneeboard (OKB Out) pluginweb dashboard resources.
 
 - `OKB.html` - main shell that links CSS and JS assets
 - `css/OKB.css` - extracted OKB styles
