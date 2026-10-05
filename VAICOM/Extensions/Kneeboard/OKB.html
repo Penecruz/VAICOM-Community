@@ -3921,23 +3921,59 @@
       }
     };
 
-    function readAutoBrowsePreference() {
+    function readStoredPreferenceValue(key) {
       try {
-        if (!window.localStorage) return false;
-        const raw = window.localStorage.getItem(autoBrowseStorageKey);
-        if (raw === null || raw === undefined || raw === '') return false;
-        return raw === '1';
+        if (!window.localStorage) return null;
+        const raw = window.localStorage.getItem(key);
+        return raw === undefined ? null : raw;
       } catch (_) {
-        return false;
+        return null;
       }
     }
 
-    function persistAutoBrowsePreference() {
+    function writeStoredPreferenceValue(key, value) {
       try {
         if (!window.localStorage) return;
-        window.localStorage.setItem(autoBrowseStorageKey, autoBrowse ? '1' : '0');
+        window.localStorage.setItem(key, String(value));
       } catch (_) {
       }
+    }
+
+    function readOneZeroPreference(key, defaultValue) {
+      const raw = readStoredPreferenceValue(key);
+      if (raw === null || raw === '') return !!defaultValue;
+      return raw === '1';
+    }
+
+    function readZeroDisabledPreference(key, defaultValue) {
+      const raw = readStoredPreferenceValue(key);
+      if (raw === null || raw === '') return !!defaultValue;
+      return raw !== '0';
+    }
+
+    function persistOneZeroPreference(key, enabled) {
+      writeStoredPreferenceValue(key, enabled ? '1' : '0');
+    }
+
+    function readNormalizedPreference(key, defaultValue, normalizeFn) {
+      const raw = readStoredPreferenceValue(key);
+      if (raw === null || raw === '') {
+        return normalizeFn ? normalizeFn(defaultValue) : defaultValue;
+      }
+      return normalizeFn ? normalizeFn(raw) : raw;
+    }
+
+    function persistNormalizedPreference(key, value, normalizeFn) {
+      const normalized = normalizeFn ? normalizeFn(value) : value;
+      writeStoredPreferenceValue(key, normalized);
+    }
+
+    function readAutoBrowsePreference() {
+      return readOneZeroPreference(autoBrowseStorageKey, false);
+    }
+
+    function persistAutoBrowsePreference() {
+      persistOneZeroPreference(autoBrowseStorageKey, autoBrowse);
     }
     let efbAdLandingAssistState = { seenAirborne: false, triggeredThisWowOn: false };
     let autoTakeoffBySelection = {};
@@ -4478,41 +4514,19 @@
     }
 
     function readEfbSaUseFastOwnshipPreference() {
-      try {
-        if (!window.localStorage) return true;
-        const raw = window.localStorage.getItem(efbSaUseFastOwnshipStorageKey);
-        if (raw === null || raw === undefined || raw === '') return true;
-        return raw !== '0';
-      } catch (_) {
-        return true;
-      }
+      return readZeroDisabledPreference(efbSaUseFastOwnshipStorageKey, true);
     }
 
     function persistEfbSaUseFastOwnshipPreference() {
-      try {
-        if (!window.localStorage) return;
-        window.localStorage.setItem(efbSaUseFastOwnshipStorageKey, efbSaUseFastOwnshipEnabled ? '1' : '0');
-      } catch (_) {
-      }
+      persistOneZeroPreference(efbSaUseFastOwnshipStorageKey, efbSaUseFastOwnshipEnabled);
     }
 
     function readEfbAdLandingEnabledPreference() {
-      try {
-        if (!window.localStorage) return false;
-        const raw = window.localStorage.getItem(efbAdLandingEnabledStorageKey);
-        if (raw === null || raw === undefined || raw === '') return false;
-        return raw === '1';
-      } catch (_) {
-        return false;
-      }
+      return readOneZeroPreference(efbAdLandingEnabledStorageKey, false);
     }
 
     function persistEfbAdLandingEnabledPreference() {
-      try {
-        if (!window.localStorage) return;
-        window.localStorage.setItem(efbAdLandingEnabledStorageKey, efbAdLandingEnabled ? '1' : '0');
-      } catch (_) {
-      }
+      persistOneZeroPreference(efbAdLandingEnabledStorageKey, efbAdLandingEnabled);
     }
 
     function applyEfbAdLandingUi() {
@@ -4577,21 +4591,11 @@
     }
 
     function readEfbViewerModePreference() {
-      try {
-        if (!window.localStorage) return 'chart';
-        const raw = window.localStorage.getItem(efbViewerModeStorageKey);
-        return normalizeEfbViewerMode(raw);
-      } catch (_) {
-        return 'chart';
-      }
+      return readNormalizedPreference(efbViewerModeStorageKey, 'chart', normalizeEfbViewerMode);
     }
 
     function persistEfbViewerModePreference() {
-      try {
-        if (!window.localStorage) return;
-        window.localStorage.setItem(efbViewerModeStorageKey, normalizeEfbViewerMode(efbViewerMode));
-      } catch (_) {
-      }
+      persistNormalizedPreference(efbViewerModeStorageKey, efbViewerMode, normalizeEfbViewerMode);
     }
 
     function normalizeEfbSaAnchorMode(mode) {
@@ -4607,21 +4611,11 @@
     }
 
     function readEfbSaNavigraphLayerPreference() {
-      try {
-        if (!window.localStorage) return 'vfr';
-        const raw = window.localStorage.getItem(efbSaNavigraphLayerStorageKey);
-        return normalizeEfbSaNavigraphLayer(raw);
-      } catch (_) {
-        return 'vfr';
-      }
+      return readNormalizedPreference(efbSaNavigraphLayerStorageKey, 'vfr', normalizeEfbSaNavigraphLayer);
     }
 
     function persistEfbSaNavigraphLayerPreference() {
-      try {
-        if (!window.localStorage) return;
-        window.localStorage.setItem(efbSaNavigraphLayerStorageKey, normalizeEfbSaNavigraphLayer(efbSaNavigraphLayer));
-      } catch (_) {
-      }
+      persistNormalizedPreference(efbSaNavigraphLayerStorageKey, efbSaNavigraphLayer, normalizeEfbSaNavigraphLayer);
     }
 
     function getNextEfbSaNavigraphLayer(current) {
@@ -4639,154 +4633,67 @@
     }
 
     function readEfbSaFollowEnabledPreference() {
-      try {
-        if (!window.localStorage) return false;
-        const raw = window.localStorage.getItem(efbSaFollowEnabledStorageKey);
-        if (raw === null || raw === undefined || raw === '') return false;
-        return raw === '1';
-      } catch (_) {
-        return false;
-      }
+      return readOneZeroPreference(efbSaFollowEnabledStorageKey, false);
     }
 
     function persistEfbSaFollowEnabledPreference() {
-      try {
-        if (!window.localStorage) return;
-        window.localStorage.setItem(efbSaFollowEnabledStorageKey, efbSaFollowOwnshipEnabled ? '1' : '0');
-      } catch (_) {
-      }
+      persistOneZeroPreference(efbSaFollowEnabledStorageKey, efbSaFollowOwnshipEnabled);
     }
 
     function readEfbSaTrackUpEnabledPreference() {
-      try {
-        if (!window.localStorage) return false;
-        const raw = window.localStorage.getItem(efbSaTrackUpEnabledStorageKey);
-        if (raw === null || raw === undefined || raw === '') return false;
-        return raw === '1';
-      } catch (_) {
-        return false;
-      }
+      return readOneZeroPreference(efbSaTrackUpEnabledStorageKey, false);
     }
 
     function persistEfbSaTrackUpEnabledPreference() {
-      try {
-        if (!window.localStorage) return;
-        window.localStorage.setItem(efbSaTrackUpEnabledStorageKey, efbSaTrackUpEnabled ? '1' : '0');
-      } catch (_) {
-      }
+      persistOneZeroPreference(efbSaTrackUpEnabledStorageKey, efbSaTrackUpEnabled);
     }
 
     function readEfbSaDoghousesEnabledPreference() {
-      try {
-        if (!window.localStorage) return true;
-        const raw = window.localStorage.getItem(efbSaDoghousesEnabledStorageKey);
-        if (raw === null || raw === undefined || raw === '') return true;
-        return raw !== '0';
-      } catch (_) {
-        return true;
-      }
+      return readZeroDisabledPreference(efbSaDoghousesEnabledStorageKey, true);
     }
 
     function persistEfbSaDoghousesEnabledPreference() {
-      try {
-        if (!window.localStorage) return;
-        window.localStorage.setItem(efbSaDoghousesEnabledStorageKey, efbSaShowDoghouses ? '1' : '0');
-      } catch (_) {
-      }
+      persistOneZeroPreference(efbSaDoghousesEnabledStorageKey, efbSaShowDoghouses);
     }
 
     function readEfbSaMissionDrawingsEnabledPreference() {
-      try {
-        if (!window.localStorage) return true;
-        const raw = window.localStorage.getItem(efbSaMissionDrawingsEnabledStorageKey);
-        if (raw === null || raw === undefined || raw === '') return true;
-        return raw === '1';
-      } catch (_) {
-        return true;
-      }
+      return readOneZeroPreference(efbSaMissionDrawingsEnabledStorageKey, true);
     }
 
     function persistEfbSaMissionDrawingsEnabledPreference() {
-      try {
-        if (!window.localStorage) return;
-        window.localStorage.setItem(efbSaMissionDrawingsEnabledStorageKey, efbSaShowMissionDrawings ? '1' : '0');
-      } catch (_) {
-      }
+      persistOneZeroPreference(efbSaMissionDrawingsEnabledStorageKey, efbSaShowMissionDrawings);
     }
 
     function readEfbSaHistoryTrackEnabledPreference() {
-      try {
-        if (!window.localStorage) return false;
-        const raw = window.localStorage.getItem(efbSaHistoryTrackEnabledStorageKey);
-        if (raw === null || raw === undefined || raw === '') return false;
-        return raw === '1';
-      } catch (_) {
-        return false;
-      }
+      return readOneZeroPreference(efbSaHistoryTrackEnabledStorageKey, false);
     }
 
     function persistEfbSaHistoryTrackEnabledPreference() {
-      try {
-        if (!window.localStorage) return;
-        window.localStorage.setItem(efbSaHistoryTrackEnabledStorageKey, efbSaShowHistoryTrack ? '1' : '0');
-      } catch (_) {
-      }
+      persistOneZeroPreference(efbSaHistoryTrackEnabledStorageKey, efbSaShowHistoryTrack);
     }
 
     function readEfbSaSamThreatsEnabledPreference() {
-      try {
-        if (!window.localStorage) return false;
-        const raw = window.localStorage.getItem(efbSaSamThreatsEnabledStorageKey);
-        if (raw === null || raw === undefined || raw === '') return false;
-        return raw === '1';
-      } catch (_) {
-        return false;
-      }
+      return readOneZeroPreference(efbSaSamThreatsEnabledStorageKey, false);
     }
 
     function persistEfbSaSamThreatsEnabledPreference() {
-      try {
-        if (!window.localStorage) return;
-        window.localStorage.setItem(efbSaSamThreatsEnabledStorageKey, efbSaShowSamThreatRings ? '1' : '0');
-      } catch (_) {
-      }
+      persistOneZeroPreference(efbSaSamThreatsEnabledStorageKey, efbSaShowSamThreatRings);
     }
 
     function readEfbSaAnchorModePreference() {
-      try {
-        if (!window.localStorage) return 'center';
-        const raw = window.localStorage.getItem(efbSaAnchorModeStorageKey);
-        return normalizeEfbSaAnchorMode(raw);
-      } catch (_) {
-        return 'center';
-      }
+      return readNormalizedPreference(efbSaAnchorModeStorageKey, 'center', normalizeEfbSaAnchorMode);
     }
 
     function persistEfbSaAnchorModePreference() {
-      try {
-        if (!window.localStorage) return;
-        window.localStorage.setItem(efbSaAnchorModeStorageKey, normalizeEfbSaAnchorMode(efbSaAnchorMode));
-      } catch (_) {
-      }
+      persistNormalizedPreference(efbSaAnchorModeStorageKey, efbSaAnchorMode, normalizeEfbSaAnchorMode);
     }
 
     function readEfbSaUserWaypointsEnabledPreference() {
-      try {
-        if (!window.localStorage) return true;
-        const raw = window.localStorage.getItem(efbSaUserWaypointsEnabledStorageKey);
-        if (raw === null || raw === undefined || raw === '') return true;
-        return raw !== '0';
-      } catch (_) {
-        return true;
-      }
+      return readZeroDisabledPreference(efbSaUserWaypointsEnabledStorageKey, true);
     }
 
     function persistEfbSaUserWaypointsEnabledPreference() {
-      try {
-        if (!window.localStorage) return;
-        window.localStorage.setItem(efbSaUserWaypointsEnabledStorageKey, efbSaShowUserWaypoints ? '1' : '0');
-      } catch (_) {
-      }
+      persistOneZeroPreference(efbSaUserWaypointsEnabledStorageKey, efbSaShowUserWaypoints);
     }
 
     function updateKeywordBodyHtml(html) {
@@ -6207,26 +6114,16 @@
     }
 
     function readInitialDtcListCollapsed() {
-      try {
-        return window.localStorage && window.localStorage.getItem(dtcListCollapsedStorageKey) === '1';
-      } catch (_) {
-        return false;
-      }
+      return readOneZeroPreference(dtcListCollapsedStorageKey, false);
     }
 
     function persistDtcListCollapsedState() {
-      try {
-        if (window.localStorage) {
-          window.localStorage.setItem(dtcListCollapsedStorageKey, dtcListCollapsed ? '1' : '0');
-        }
-      } catch (_) {
-      }
+      persistOneZeroPreference(dtcListCollapsedStorageKey, dtcListCollapsed);
     }
 
     function readPinnedChartsPreference() {
       try {
-        if (!window.localStorage) return {};
-        const raw = window.localStorage.getItem(efbPinnedChartsStorageKey);
+        const raw = readStoredPreferenceValue(efbPinnedChartsStorageKey);
         if (!raw) return {};
         const parsed = JSON.parse(raw);
         if (!parsed || typeof parsed !== 'object') return {};
@@ -6251,17 +6148,12 @@
     }
 
     function persistPinnedChartsPreference() {
-      try {
-        if (!window.localStorage) return;
-        window.localStorage.setItem(efbPinnedChartsStorageKey, JSON.stringify(efbPinnedChartsByAirport || {}));
-      } catch (_) {
-      }
+      writeStoredPreferenceValue(efbPinnedChartsStorageKey, JSON.stringify(efbPinnedChartsByAirport || {}));
     }
 
     function readEfbSaUserWaypointsPreference() {
       try {
-        if (!window.localStorage) return [];
-        const raw = window.localStorage.getItem(efbSaUserWaypointsStorageKey);
+        const raw = readStoredPreferenceValue(efbSaUserWaypointsStorageKey);
         if (!raw) return [];
         const parsed = JSON.parse(raw);
         if (!Array.isArray(parsed)) return [];
@@ -6307,18 +6199,13 @@
     }
 
     function persistEfbSaUserWaypointsPreference() {
-      try {
-        if (!window.localStorage) return;
-        const rows = Array.isArray(efbSaUserWaypoints) ? efbSaUserWaypoints : [];
-        window.localStorage.setItem(efbSaUserWaypointsStorageKey, JSON.stringify(rows));
-      } catch (_) {
-      }
+      const rows = Array.isArray(efbSaUserWaypoints) ? efbSaUserWaypoints : [];
+      writeStoredPreferenceValue(efbSaUserWaypointsStorageKey, JSON.stringify(rows));
     }
 
     function readEfbSaSavedHistoryTracksPreference() {
       try {
-        if (!window.localStorage) return {};
-        const raw = window.localStorage.getItem(efbSaSavedHistoryTracksStorageKey);
+        const raw = readStoredPreferenceValue(efbSaSavedHistoryTracksStorageKey);
         if (!raw) return {};
         const parsed = JSON.parse(raw);
         if (!parsed || typeof parsed !== 'object') return {};
@@ -6383,9 +6270,7 @@
           ? efbSaSavedHistoryTracksBySelection
           : {};
         const payload = JSON.stringify(source);
-        if (window.localStorage) {
-          window.localStorage.setItem(efbSaSavedHistoryTracksStorageKey, payload);
-        }
+        writeStoredPreferenceValue(efbSaSavedHistoryTracksStorageKey, payload);
         fetch('/okb/efb/historytracks', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -6402,9 +6287,7 @@
         if (!res || !res.ok) return;
         const text = await res.text();
         if (!text) return;
-        if (window.localStorage) {
-          window.localStorage.setItem(efbSaSavedHistoryTracksStorageKey, text);
-        }
+        writeStoredPreferenceValue(efbSaSavedHistoryTracksStorageKey, text);
         efbSaSavedHistoryTracksBySelection = readEfbSaSavedHistoryTracksPreference();
         efbUiDirty = true;
         if (latestData) render(latestData);
@@ -9019,20 +8902,11 @@
     }
 
     function readNightModePreference() {
-      try {
-        return window.localStorage && window.localStorage.getItem(nightModeStorageKey) === '1';
-      } catch (_) {
-        return false;
-      }
+      return readOneZeroPreference(nightModeStorageKey, false);
     }
 
     function persistNightModePreference() {
-      try {
-        if (window.localStorage) {
-          window.localStorage.setItem(nightModeStorageKey, nightModeEnabled ? '1' : '0');
-        }
-      } catch (_) {
-      }
+      persistOneZeroPreference(nightModeStorageKey, nightModeEnabled);
     }
 
     function applyNightModeUi() {
@@ -9049,8 +8923,7 @@
 
     function readContentFontSizePreference() {
       try {
-        if (!window.localStorage) return 24;
-        const raw = window.localStorage.getItem(contentFontSizeStorageKey);
+        const raw = readStoredPreferenceValue(contentFontSizeStorageKey);
         const parsed = parseFloat(raw);
         if (!isFinite(parsed)) return 24;
         return clamp(parsed, 18, 34);
@@ -9060,14 +8933,7 @@
     }
 
     function readDlinkOnPreference() {
-      try {
-        if (!window.localStorage) return true;
-        const raw = window.localStorage.getItem(dlinkOnStorageKey);
-        if (raw === null || raw === undefined || raw === '') return true;
-        return raw === '1';
-      } catch (_) {
-        return true;
-      }
+      return readZeroDisabledPreference(dlinkOnStorageKey, true);
     }
 
     function normalizeNavlogAltDisplayMode(value) {
@@ -9084,63 +8950,31 @@
     }
 
     function readNavlogAltDisplayModePreference() {
-      try {
-        if (!window.localStorage) return 'ft';
-        return normalizeNavlogAltDisplayMode(window.localStorage.getItem(navlogAltDisplayModeStorageKey));
-      } catch (_) {
-        return 'ft';
-      }
+      return readNormalizedPreference(navlogAltDisplayModeStorageKey, 'ft', normalizeNavlogAltDisplayMode);
     }
 
     function persistNavlogAltDisplayModePreference(mode) {
-      try {
-        if (!window.localStorage) return;
-        window.localStorage.setItem(navlogAltDisplayModeStorageKey, normalizeNavlogAltDisplayMode(mode));
-      } catch (_) {
-      }
+      persistNormalizedPreference(navlogAltDisplayModeStorageKey, mode, normalizeNavlogAltDisplayMode);
     }
 
     function readNavlogSpdDisplayModePreference() {
-      try {
-        if (!window.localStorage) return 'kts';
-        return normalizeNavlogSpdDisplayMode(window.localStorage.getItem(navlogSpdDisplayModeStorageKey));
-      } catch (_) {
-        return 'kts';
-      }
+      return readNormalizedPreference(navlogSpdDisplayModeStorageKey, 'kts', normalizeNavlogSpdDisplayMode);
     }
 
     function persistNavlogSpdDisplayModePreference(mode) {
-      try {
-        if (!window.localStorage) return;
-        window.localStorage.setItem(navlogSpdDisplayModeStorageKey, normalizeNavlogSpdDisplayMode(mode));
-      } catch (_) {
-      }
+      persistNormalizedPreference(navlogSpdDisplayModeStorageKey, mode, normalizeNavlogSpdDisplayMode);
     }
 
     function readNavlogDistDisplayModePreference() {
-      try {
-        if (!window.localStorage) return 'nm';
-        return normalizeNavlogDistDisplayMode(window.localStorage.getItem(navlogDistDisplayModeStorageKey));
-      } catch (_) {
-        return 'nm';
-      }
+      return readNormalizedPreference(navlogDistDisplayModeStorageKey, 'nm', normalizeNavlogDistDisplayMode);
     }
 
     function persistNavlogDistDisplayModePreference(mode) {
-      try {
-        if (!window.localStorage) return;
-        window.localStorage.setItem(navlogDistDisplayModeStorageKey, normalizeNavlogDistDisplayMode(mode));
-      } catch (_) {
-      }
+      persistNormalizedPreference(navlogDistDisplayModeStorageKey, mode, normalizeNavlogDistDisplayMode);
     }
 
     function persistDlinkOnPreference() {
-      try {
-        if (window.localStorage) {
-          window.localStorage.setItem(dlinkOnStorageKey, dlinkOnEnabled ? '1' : '0');
-        }
-      } catch (_) {
-      }
+      persistOneZeroPreference(dlinkOnStorageKey, dlinkOnEnabled);
     }
 
     function applyDlinkOnUi() {
@@ -9158,22 +8992,11 @@
     }
 
     function readAutoAtaRecSpdEnabledPreference() {
-      try {
-        if (!window.localStorage) return false;
-        const raw = window.localStorage.getItem(autoAtaRecSpdEnabledStorageKey);
-        if (raw === null || raw === undefined || raw === '') return false;
-        return raw === '1';
-      } catch (_) {
-        return false;
-      }
+      return readOneZeroPreference(autoAtaRecSpdEnabledStorageKey, false);
     }
 
     function persistAutoAtaRecSpdEnabledPreference() {
-      try {
-        if (!window.localStorage) return;
-        window.localStorage.setItem(autoAtaRecSpdEnabledStorageKey, autoAtaRecSpdEnabled ? '1' : '0');
-      } catch (_) {
-      }
+      persistOneZeroPreference(autoAtaRecSpdEnabledStorageKey, autoAtaRecSpdEnabled);
     }
 
     function applyAutoAtaRecSpdUi() {
@@ -9610,12 +9433,7 @@
     }
 
     function persistContentFontSizePreference() {
-      try {
-        if (window.localStorage) {
-          window.localStorage.setItem(contentFontSizeStorageKey, String(contentFontSizePx));
-        }
-      } catch (_) {
-      }
+      writeStoredPreferenceValue(contentFontSizeStorageKey, String(contentFontSizePx));
     }
 
     function applyContentFontSizeUi() {
@@ -10158,45 +9976,23 @@
     }
 
     function readInitialSessionCollapsed() {
-      try {
-        return window.localStorage && window.localStorage.getItem(sessionCollapsedStorageKey) === '1';
-      } catch (_) {
-        return false;
-      }
+      return readOneZeroPreference(sessionCollapsedStorageKey, false);
     }
 
     function persistSessionCollapsedState() {
-      try {
-        if (window.localStorage) {
-          window.localStorage.setItem(sessionCollapsedStorageKey, sessionCollapsed ? '1' : '0');
-        }
-      } catch (_) {
-      }
+      persistOneZeroPreference(sessionCollapsedStorageKey, sessionCollapsed);
     }
 
     function readDrawModePreference() {
-      try {
-        return window.localStorage && window.localStorage.getItem(drawModeStorageKey) === '1';
-      } catch (_) {
-        return false;
-      }
+      return readOneZeroPreference(drawModeStorageKey, false);
     }
 
     function readLiveRefreshPreference() {
-      try {
-        return window.localStorage && window.localStorage.getItem(liveRefreshStorageKey) === '1';
-      } catch (_) {
-        return false;
-      }
+      return readOneZeroPreference(liveRefreshStorageKey, false);
     }
 
     function persistLiveRefreshPreference() {
-      try {
-        if (window.localStorage) {
-          window.localStorage.setItem(liveRefreshStorageKey, liveRefreshEnabled ? '1' : '0');
-        }
-      } catch (_) {
-      }
+      persistOneZeroPreference(liveRefreshStorageKey, liveRefreshEnabled);
     }
 
     function updateLiveRefreshUi() {
@@ -10239,12 +10035,7 @@
     }
 
     function persistDrawModePreference() {
-      try {
-        if (window.localStorage) {
-          window.localStorage.setItem(drawModeStorageKey, drawModeEnabled ? '1' : '0');
-        }
-      } catch (_) {
-      }
+      persistOneZeroPreference(drawModeStorageKey, drawModeEnabled);
     }
 
     function updateDrawModeToggleUi() {
@@ -10396,12 +10187,7 @@
       if (!isFinite(ratio)) return;
       const key = getTabSplitStorageKey(selectedTab);
       tabKeywordsSplitByTab[key] = ratio;
-      try {
-        if (window.localStorage) {
-          window.localStorage.setItem(tabKeywordsSplitStorageKey, JSON.stringify(tabKeywordsSplitByTab));
-        }
-      } catch (_) {
-      }
+      writeStoredPreferenceValue(tabKeywordsSplitStorageKey, JSON.stringify(tabKeywordsSplitByTab));
     }
 
     function applyTabKeywordsSplitRatio(ratio, persist) {
@@ -10423,8 +10209,7 @@
 
     function readTabKeywordsSplitRatioByTab() {
       try {
-        if (!window.localStorage) return {};
-        const raw = window.localStorage.getItem(tabKeywordsSplitStorageKey);
+        const raw = readStoredPreferenceValue(tabKeywordsSplitStorageKey);
         if (!raw) return {};
         const parsed = JSON.parse(raw);
         if (!parsed || typeof parsed !== 'object') return {};
