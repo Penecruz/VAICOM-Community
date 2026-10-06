@@ -329,6 +329,7 @@
     let samThreatReferenceEntriesCache = null;
     let samThreatReferenceLoadStarted = false;
     let samThreatResolvedStateByAnchor = {};
+    let samThreatBraAnchorByKey = {};
     let efbAwacsSelectedSamThreatKeys = [];
     let efbSaSavedHistoryTracksBySelection = {};
     let efbSaLastModuleConnected = false;
@@ -1393,6 +1394,37 @@
       return hasRadarToken;
     }
 
+    function readRadarActiveStateFromStatusText(statusText) {
+      const src = String(statusText || '').trim();
+      if (!src) return null;
+      const upper = src.toUpperCase();
+      const radarActiveMatch = upper.match(/RADARACTIVE\s*[:=]\s*(TRUE|FALSE|1|0|YES|NO|ON|OFF)/);
+      if (radarActiveMatch && radarActiveMatch[1]) {
+        const token = String(radarActiveMatch[1]).toUpperCase();
+        return token === 'TRUE' || token === '1' || token === 'YES' || token === 'ON';
+      }
+      return null;
+    }
+
+    function isSamRadarEmitterActiveFromNode(node) {
+      const row = node && typeof node === 'object' ? node : {};
+      const statusValues = [
+        row.status,
+        row.Status,
+        row.alarm,
+        row.Alarm,
+        row.alarmState,
+        row.AlarmState,
+      ];
+
+      for (let i = 0; i < statusValues.length; i++) {
+        const parsed = readRadarActiveStateFromStatusText(statusValues[i]);
+        if (parsed !== null) return parsed;
+      }
+
+      return null;
+    }
+
     function extractSamThreatNorthEast(obj) {
       const row = obj && typeof obj === 'object' ? obj : null;
       if (!row) return null;
@@ -1441,8 +1473,11 @@
         if (text.toUpperCase().indexOf('NO DATALINK THREATS ARE DISPLAYED') >= 0) return;
         const sectionUpper = String(section || '').toUpperCase();
         const isSamSection = sectionUpper === 'SAM';
-        const isEwrSamLine = sectionUpper === 'EWR' && /^SAM\b/i.test(text);
+        const isEwrSamLine = sectionUpper === 'EWR' && (isLikelySamThreatRadarText(text) || /^SAM\b/i.test(text));
         if (!isSamSection && !isEwrSamLine) return;
+
+        const textRadarActive = readRadarActiveStateFromStatusText(text);
+        if (textRadarActive === false) return;
 
         const bra = text.match(/\b(\d{3})\s*\/\s*(\d{1,3}(?:\.\d+)?)\s*\//);
         const braIdx = bra ? text.indexOf(bra[0]) : -1;
@@ -1496,18 +1531,29 @@
 
         const threatPos = extractSamThreatNorthEast(node);
         if (threatPos && isLikelySamThreatRadarText(rowText)) {
+          const radarActive = isSamRadarEmitterActiveFromNode(node);
           const resolved = resolveSamThreatEntryFromText(rowText) || {};
           const systemKey = String(resolved.systemKey || 'SAM_UNKNOWN').trim();
           const key = String(Math.round(Number(threatPos.xNum) / 50) * 50) + '|' + String(Math.round(Number(threatPos.yNum) / 50) * 50) + '|' + systemKey;
-          if (!dedupe[key]) {
-            dedupe[key] = true;
+          if (dedupe[key] === undefined) {
+            dedupe[key] = candidates.length;
             candidates.push({
               xNum: Number(threatPos.xNum),
               yNum: Number(threatPos.yNum),
               sourceText: rowText,
               systemKey: systemKey,
               resolved: resolved,
+              radarActive: radarActive,
             });
+          } else {
+            const existing = candidates[dedupe[key]];
+            if (existing) {
+              if (radarActive === true) {
+                existing.radarActive = true;
+              } else if (existing.radarActive !== true && radarActive === false) {
+                existing.radarActive = false;
+              }
+            }
           }
         }
 
@@ -1597,10 +1643,44 @@
       const ownNorth = Number(ownship && ownship.xNum);
       const ownEast = Number(ownship && ownship.yNum);
       const lineEntries = parseAwacsSamThreatLineEntries(lines);
-      const directCandidates = collectDirectSamThreatCandidates(model);
+      const directCandidatesAll = collectDirectSamThreatCandidates(model);
+      const directCandidates = directCandidatesAll.filter(function (candidate) {
+        return !!(candidate && candidate.radarActive === true);
+      });
+      const radarStateBySystem = {};
+      directCandidatesAll.forEach(function (candidate) {
+        if (!candidate) return;
+        const key = String(candidate.systemKey || '').toUpperCase().trim();
+        if (!key) return;
+        if (!radarStateBySystem[key]) {
+          radarStateBySystem[key] = { active: false, inactive: false };
+        }
+        if (candidate.radarActive === true) radarStateBySystem[key].active = true;
+        if (candidate.radarActive === false) radarStateBySystem[key].inactive = true;
+      });
+      const filteredLineEntries = lineEntries.filter(function (entry) {
+        const systemKeyUpper = String((entry && entry.systemKey) || '').toUpperCase().trim();
+        if (!systemKeyUpper) return true;
+        const state = radarStateBySystem[systemKeyUpper];
+        if (!state) return true;
+        if (state.active) return true;
+        return !state.inactive;
+      });
       const points = [];
       const seen = {};
       const nextResolvedStateByAnchor = {};
+      const nextBraAnchorByKey = {};
+
+      function buildBraAnchorKey(entry) {
+        const e = entry || {};
+        const systemKey = String(e.systemKey || '').toUpperCase().trim();
+        const labelToken = normalizeSamLookupToken(String(e.sourceLabel || e.displayName || e.text || ''));
+        const bearing = Number(e.bearing);
+        const rangeNm = Number(e.rangeNm);
+        const bearingKey = isFinite(bearing) ? String(Math.round(bearing)) : '';
+        const rangeKey = isFinite(rangeNm) ? String(Math.round(rangeNm * 10) / 10) : '';
+        return ['SAMBRA', systemKey, labelToken, bearingKey, rangeKey].join('|');
+      }
 
       function pushSamPoint(north, east, entryLike, sourceLineOverride) {
         const resolved = (entryLike && entryLike.resolved) || {};
@@ -1697,9 +1777,9 @@
         };
       }
 
-      if (directCandidates.length && lineEntries.length) {
+      if (directCandidates.length && filteredLineEntries.length) {
         const used = {};
-        lineEntries.forEach(function (entry) {
+        filteredLineEntries.forEach(function (entry) {
           let bestIdx = -1;
           let bestScore = Number.POSITIVE_INFINITY;
           directCandidates.forEach(function (candidate, idx) {
@@ -1737,11 +1817,12 @@
         });
         if (points.length) {
           samThreatResolvedStateByAnchor = nextResolvedStateByAnchor;
+          samThreatBraAnchorByKey = nextBraAnchorByKey;
           return points;
         }
       }
 
-      if (directCandidates.length && !lineEntries.length) {
+      if (directCandidates.length && !filteredLineEntries.length) {
         directCandidates.forEach(function (candidate) {
           const mergedEntry = {
             text: String(candidate && candidate.sourceText || ''),
@@ -1753,25 +1834,36 @@
         });
         if (points.length) {
           samThreatResolvedStateByAnchor = nextResolvedStateByAnchor;
+          samThreatBraAnchorByKey = nextBraAnchorByKey;
           return points;
         }
       }
 
       if (isFinite(ownNorth) && isFinite(ownEast)) {
-        lineEntries.forEach(function (entry) {
+        filteredLineEntries.forEach(function (entry) {
           if (efbSaSamThreatCoalitionMode !== 'hostile' && efbSaSamThreatCoalitionMode !== 'all') return;
           const bearing = Number(entry && entry.bearing);
           const rangeNm = Number(entry && entry.rangeNm);
           if (!isFinite(bearing) || !isFinite(rangeNm) || rangeNm <= 0) return;
-          const rad = bearing * (Math.PI / 180.0);
-          const distMeters = rangeNm * 1852.0;
-          const north = ownNorth + (Math.cos(rad) * distMeters);
-          const east = ownEast + (Math.sin(rad) * distMeters);
+          const braAnchorKey = buildBraAnchorKey(entry);
+          const priorAnchor = braAnchorKey ? samThreatBraAnchorByKey[braAnchorKey] : null;
+          let north = Number(priorAnchor && priorAnchor.north);
+          let east = Number(priorAnchor && priorAnchor.east);
+          if (!isFinite(north) || !isFinite(east)) {
+            const rad = bearing * (Math.PI / 180.0);
+            const distMeters = rangeNm * 1852.0;
+            north = ownNorth + (Math.cos(rad) * distMeters);
+            east = ownEast + (Math.sin(rad) * distMeters);
+          }
           if (!isFinite(north) || !isFinite(east)) return;
+          if (braAnchorKey) {
+            nextBraAnchorByKey[braAnchorKey] = { north: north, east: east };
+          }
           pushSamPoint(north, east, entry, entry.text);
         });
       }
       samThreatResolvedStateByAnchor = nextResolvedStateByAnchor;
+      samThreatBraAnchorByKey = nextBraAnchorByKey;
       return points;
     }
 
