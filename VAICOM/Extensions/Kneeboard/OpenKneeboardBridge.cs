@@ -2326,6 +2326,28 @@ namespace VAICOM
                             string js = GetOkbUiTextResource(resourceName);
                             if (!string.IsNullOrWhiteSpace(js))
                             {
+                                if (string.Equals(path, "/okb/js/okb-04-samap.js", StringComparison.Ordinal))
+                                {
+                                    try
+                                    {
+                                        bool hasParseAh64PointPartitions = js.IndexOf("function parseAh64PointPartitions(", StringComparison.Ordinal) >= 0;
+                                        bool hasParseAh64LineGroups = js.IndexOf("function parseAh64LineGroups(", StringComparison.Ordinal) >= 0;
+                                        bool hasParseAh64AreaPolygons = js.IndexOf("function parseAh64AreaPolygons(", StringComparison.Ordinal) >= 0;
+                                        if (!hasParseAh64PointPartitions || !hasParseAh64LineGroups || !hasParseAh64AreaPolygons)
+                                        {
+                                            Log.Write(
+                                                "OKB JS DEBUG: okb-04-samap.js helper definition missing at serve-time. "
+                                                + "parseAh64PointPartitions=" + (hasParseAh64PointPartitions ? "yes" : "no")
+                                                + ", parseAh64LineGroups=" + (hasParseAh64LineGroups ? "yes" : "no")
+                                                + ", parseAh64AreaPolygons=" + (hasParseAh64AreaPolygons ? "yes" : "no")
+                                                + ".",
+                                                Colors.Warning);
+                                        }
+                                    }
+                                    catch
+                                    {
+                                    }
+                                }
                                 js = js.Replace(StoreLookupJsonPlaceholder, GetStoreLookupMapJson());
                                 WriteText(context.Response, js, "application/javascript; charset=utf-8");
                             }
@@ -2372,6 +2394,7 @@ namespace VAICOM
                             {
                                 UpdateActiveCategory(currentSelectedTab, true);
                             }
+
                         }
 
                         WriteJson(context.Response, BuildSnapshotJson());

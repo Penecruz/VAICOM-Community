@@ -385,6 +385,10 @@
         <ul>
           <li><strong>Runtime route source</strong>: Mission runtime route is auto-selected when no explicit DTC file or Route Tool route (RTE) override is active.</li>
           <li><strong>DTC files</strong>: Loaded from Saved Games DTC export paths when available.</li>
+          <li><strong>DTC route normalization</strong>: FLT PLN normalizes route-leg metadata (route order, altitude, speed, ETA and waypoint identity) before NAVLOG rendering so mixed module DTC formats can be handled consistently.</li>
+          <li><strong>Module route naming</strong>: Route selection remains keyed as <code>R1..R12</code> for UI consistency, while module-provided route names (for example Apache ALPHA/BRAVO) are surfaced in COM/ROUTE summaries and button hover hints when available.</li>
+          <li><strong>Altitude/speed precedence</strong>: For route-capable DTCs, selected-route leg values are applied to NAVLOG rows first; waypoint/base values remain as fallback when leg data is missing.</li>
+          <li><strong>AH-64D support</strong>: Apache DTC route-point and point-catalog data are joined during import so FLT PLN can display per-route waypoint sequencing, leg altitude/speed, and route-linked map overlays.</li>
           <li><strong>RouteTool files</strong>: Parsed from RouteTool preset output where supported.</li>
           <li><strong>Embedded edit controls</strong>: Cell-activated pop-up editors are contextual and only appear on supported fields/pages.</li>
           <li><strong>Fallback behavior</strong>: If structured rendering is unavailable due to a corrupted DTC/RTE file, a plain formatted data view is shown.</li>

@@ -969,6 +969,7 @@
       delete fltPlanPlanStateBySelection[key];
       delete fltPlanDtcPageBySelection[key];
       delete fltPlanDtcRouteBySelection[key];
+      delete fltPlanDtcMissionBySelection[key];
       delete fltPlanMapViewBySelection[key];
       delete fltPlanMapBackgroundEnabledBySelection[key];
       delete fltPlanOpenFreeMapViewBySelection[key];
@@ -1098,10 +1099,20 @@
       return /^R([1-9]|1[0-2])$/.test(String(route || '').toUpperCase());
     }
 
+    function isValidDtcMissionKey(missionKey) {
+      return /^M([1-2])$/.test(String(missionKey || '').toUpperCase());
+    }
+
     function getDtcRouteBySelection(selected) {
       const key = getFlightPlanEtaStartKey(selected);
       const route = String(fltPlanDtcRouteBySelection[key] || '').toUpperCase();
       return isValidDtcRouteKey(route) ? route : 'R1';
+    }
+
+    function getDtcMissionBySelection(selected) {
+      const key = getFlightPlanEtaStartKey(selected);
+      const missionKey = String(fltPlanDtcMissionBySelection[key] || '').toUpperCase();
+      return isValidDtcMissionKey(missionKey) ? missionKey : 'M1';
     }
 
     function setDtcRouteBySelection(selected, route) {
@@ -1109,6 +1120,13 @@
       if (!key) return;
       const r = String(route || '').toUpperCase();
       fltPlanDtcRouteBySelection[key] = isValidDtcRouteKey(r) ? r : 'R1';
+    }
+
+    function setDtcMissionBySelection(selected, missionKey) {
+      const key = getFlightPlanEtaStartKey(selected);
+      if (!key) return;
+      const m = String(missionKey || '').toUpperCase();
+      fltPlanDtcMissionBySelection[key] = isValidDtcMissionKey(m) ? m : 'M1';
     }
 
     function updateDtcRouteButtonUi(selected) {
@@ -1121,6 +1139,15 @@
         if (!btn || !btn.classList || !btn.getAttribute) continue;
         const key = String(btn.getAttribute('data-dtc-route') || '').toUpperCase();
         btn.classList.toggle('active', key === activeRoute);
+      }
+
+      const activeMission = getDtcMissionBySelection(selected);
+      const missionButtons = host.querySelectorAll ? host.querySelectorAll('[data-dtc-mission]') : [];
+      for (let i = 0; i < missionButtons.length; i++) {
+        const btn = missionButtons[i];
+        if (!btn || !btn.classList || !btn.getAttribute) continue;
+        const key = String(btn.getAttribute('data-dtc-mission') || '').toUpperCase();
+        btn.classList.toggle('active', key === activeMission);
       }
     }
 
@@ -5447,6 +5474,7 @@
         const altMeters = Number(wp.alt);
         const altFeetRaw = isFinite(altMeters) ? (altMeters * 3.28084) : NaN;
         const altValue = isFinite(altFeetRaw) ? (Math.round(altFeetRaw / 500) * 500) : NaN;
+        const speedValue = Number(wp.speed);
         return {
           step: String(wk),
           type: abbreviateRouteType(typeText),
@@ -5457,6 +5485,7 @@
           altType: String(wp.alt_type || wp.altType || wp.alttype || ''),
           eta: formatEtaSeconds(wp.ETA),
           etaSourceSeconds: Number(wp.ETA),
+          spd: isFinite(speedValue) && speedValue > 0 ? String(Math.round(speedValue)) : '-',
           x: isFinite(Number(wp.x)) ? String(Math.round(Number(wp.x))) : '-',
           y: isFinite(Number(wp.y)) ? String(Math.round(Number(wp.y))) : '-',
           xNum: Number(wp.x),
@@ -5470,6 +5499,11 @@
       if (!rows.length) return rows;
 
       rows.forEach(function (wp) {
+        const current = Number(wp && wp.spd);
+        if (isFinite(current) && current > 0) {
+          wp.spd = String(Math.round(current));
+          return;
+        }
         wp.spd = String(estimateCruiseKcasForAltitude(wp.altFeet));
       });
 
@@ -5874,7 +5908,396 @@
       return result;
     }
 
+    function getDtcCanonicalRouteModel(root) {
+      if (!root || typeof root !== 'object') return null;
+
+      function resolveDtcAircraftTypeText(value, depth) {
+        if (depth > 12 || value === null || value === undefined) return '';
+        if (Array.isArray(value)) {
+          for (let i = 0; i < value.length; i++) {
+            const found = resolveDtcAircraftTypeText(value[i], depth + 1);
+            if (found) return found;
+          }
+          return '';
+        }
+        if (typeof value !== 'object') return '';
+
+        const directType = String((value && value.type) || '').trim();
+        const upperDirect = directType.toUpperCase();
+        if (upperDirect.indexOf('F-16') >= 0 || upperDirect.indexOf('VIPER') >= 0
+          || upperDirect.indexOf('FA-18') >= 0 || upperDirect.indexOf('HORNET') >= 0
+          || upperDirect.indexOf('AH-64') >= 0 || upperDirect.indexOf('APACHE') >= 0
+          || upperDirect.indexOf('F-14') >= 0 || upperDirect.indexOf('TOMCAT') >= 0) {
+          return upperDirect;
+        }
+
+        const keys = Object.keys(value);
+        for (let i = 0; i < keys.length; i++) {
+          const found = resolveDtcAircraftTypeText(value[keys[i]], depth + 1);
+          if (found) return found;
+        }
+        return '';
+      }
+
+      const sourceType = resolveDtcAircraftTypeText(root, 0) || String((root && root.type) || '').toUpperCase();
+
+      function isMeterBasedDtcAltitudeSource() {
+        return sourceType.indexOf('FA-18') >= 0
+          || sourceType.indexOf('HORNET') >= 0
+          || sourceType.indexOf('F-16') >= 0
+          || sourceType.indexOf('VIPER') >= 0
+          || sourceType.indexOf('AH-64') >= 0
+          || sourceType.indexOf('APACHE') >= 0;
+      }
+
+      function isKmhBasedDtcSpeedSource() {
+        return sourceType.indexOf('FA-18') >= 0
+          || sourceType.indexOf('HORNET') >= 0
+          || sourceType.indexOf('F-16') >= 0
+          || sourceType.indexOf('VIPER') >= 0
+          || sourceType.indexOf('AH-64') >= 0
+          || sourceType.indexOf('APACHE') >= 0;
+      }
+
+      function normalizeAltFeet(rawAlt) {
+        const alt = Number(rawAlt);
+        if (!isFinite(alt)) return NaN;
+        return isMeterBasedDtcAltitudeSource() ? (alt * 3.28084) : alt;
+      }
+
+      function normalizeSpeedKnots(rawSpeed) {
+        const spd = Number(rawSpeed);
+        if (!isFinite(spd)) return NaN;
+        const looksLikeKmh = spd > 420 && spd < 1800;
+        return (isKmhBasedDtcSpeedSource() || looksLikeKmh) ? (spd / 1.852) : spd;
+      }
+
+      function boolish(v) {
+        return v === true || String(v || '').toLowerCase() === 'true' || Number(v) === 1;
+      }
+
+      function normalizeStep(value) {
+        const n = Number(value);
+        if (!isFinite(n)) return NaN;
+        const step = Math.round(n);
+        return isDtcPrimaryRouteSteerpoint(step) ? step : NaN;
+      }
+
+      function normalizeAh64Step(value) {
+        const n = Number(value);
+        if (!isFinite(n)) return NaN;
+        const step = Math.round(n);
+        return step >= 1 && step <= 999 ? step : NaN;
+      }
+
+      function buildFromNavPtsModel() {
+        const wypt = findDtcWyptObject(root, 0) || {};
+        const navPts = Array.isArray(wypt.NAV_PTS) ? wypt.NAV_PTS : [];
+        if (!navPts.length) return null;
+
+        const navRoute = Array.isArray(wypt.NAV_ROUTE) ? wypt.NAV_ROUTE : [];
+        const routeKeys = ['R1', 'R2', 'R3'];
+
+        const pointById = {};
+        const pointByStep = {};
+        navPts.forEach(function (p, idx) {
+          const point = (p && typeof p === 'object') ? p : {};
+          const id = String(point.id || ('STPT' + String(idx + 1))).trim().toUpperCase();
+          const step = normalizeStep(point.wypt_num);
+          const fallbackStep = normalizeStep(point.number);
+          const finalStep = isFinite(step) ? step : fallbackStep;
+          if (id) pointById[id] = point;
+          if (isFinite(finalStep)) pointByStep[finalStep] = point;
+        });
+
+        const routes = routeKeys.map(function (routeKey, routeIdx) {
+          const legsByStep = {};
+          const orderByStep = {};
+          const routeObj = (navRoute.length > routeIdx && navRoute[routeIdx] && typeof navRoute[routeIdx] === 'object')
+            ? navRoute[routeIdx]
+            : {};
+
+          Object.keys(routeObj).forEach(function (idKeyRaw) {
+            const idKey = String(idKeyRaw || '').toUpperCase();
+            const rp = routeObj[idKeyRaw] || {};
+            const navPoint = pointById[idKey] || {};
+            const step = normalizeStep(rp.wypt_num);
+            const fallbackStep = normalizeStep(navPoint.wypt_num);
+            const rpNumberStep = normalizeStep(rp.number);
+            const navPointNumberStep = normalizeStep(navPoint.number);
+            const legStep = isFinite(step) ? step : fallbackStep;
+            const finalLegStep = isFinite(legStep)
+              ? legStep
+              : (isFinite(rpNumberStep) ? rpNumberStep : navPointNumberStep);
+            if (!isFinite(finalLegStep)) return;
+
+            const altRaw = isFinite(Number(rp.routeAltitude)) ? Number(rp.routeAltitude)
+              : (isFinite(Number(rp.alt)) ? Number(rp.alt)
+                : (isFinite(Number(navPoint.routeAltitude)) ? Number(navPoint.routeAltitude)
+                  : (isFinite(Number(navPoint.alt)) ? Number(navPoint.alt) : Number(navPoint.altitude))));
+            const speedRaw = isFinite(Number(rp.speed)) ? Number(rp.speed)
+              : (isFinite(Number(navPoint.speed)) ? Number(navPoint.speed) : NaN);
+            const etaRaw = isFinite(Number(rp.ETA)) ? Number(rp.ETA)
+              : (isFinite(Number(navPoint.ETA)) ? Number(navPoint.ETA) : Number(navPoint.TOS));
+            const orderKey = routeKey + '_order';
+            const routeOrder = isFinite(Number(rp[orderKey])) ? Number(rp[orderKey])
+              : (isFinite(Number(navPoint[orderKey])) ? Number(navPoint[orderKey]) : NaN);
+
+            const leg = {
+              routeKey: routeKey,
+              waypointId: idKey,
+              step: finalLegStep,
+              order: isFinite(routeOrder) ? routeOrder : finalLegStep,
+              altRaw: altRaw,
+              altFeet: normalizeAltFeet(altRaw),
+              altType: String(rp.altitudeType || rp.alt_type || rp.altType || rp.alttype || navPoint.altitudeType || navPoint.alt_type || navPoint.altType || navPoint.alttype || ''),
+              speedRaw: speedRaw,
+              speed: normalizeSpeedKnots(speedRaw),
+              speedType: String(navPoint.velocityType || rp.velocityType || ''),
+              etaSeconds: etaRaw,
+            };
+
+            legsByStep[finalLegStep] = leg;
+            if (isFinite(routeOrder)) orderByStep[finalLegStep] = routeOrder;
+          });
+
+          navPts.forEach(function (p, idx) {
+            const point = (p && typeof p === 'object') ? p : {};
+            if (!boolish(point[routeKey])) return;
+            const step = normalizeStep(point.wypt_num);
+            const fallbackStep = normalizeStep(point.number);
+            const finalStep = isFinite(step) ? step : fallbackStep;
+            if (!isFinite(finalStep)) return;
+            if (legsByStep[finalStep]) return;
+
+            const id = String(point.id || ('STPT' + String(idx + 1))).trim().toUpperCase();
+            const orderKey = routeKey + '_order';
+            const routeOrder = isFinite(Number(point[orderKey])) ? Number(point[orderKey]) : step;
+            const altRaw = isFinite(Number(point.routeAltitude)) ? Number(point.routeAltitude)
+              : (isFinite(Number(point.alt)) ? Number(point.alt) : Number(point.altitude));
+            const speedRaw = isFinite(Number(point.speed)) ? Number(point.speed) : NaN;
+            const etaRaw = isFinite(Number(point.ETA)) ? Number(point.ETA) : Number(point.TOS);
+
+            legsByStep[finalStep] = {
+              routeKey: routeKey,
+              waypointId: id,
+              step: finalStep,
+              order: routeOrder,
+              altRaw: altRaw,
+              altFeet: normalizeAltFeet(altRaw),
+              altType: String(point.altitudeType || point.alt_type || point.altType || point.alttype || ''),
+              speedRaw: speedRaw,
+              speed: normalizeSpeedKnots(speedRaw),
+              speedType: String(point.velocityType || ''),
+              etaSeconds: etaRaw,
+            };
+            orderByStep[finalStep] = routeOrder;
+          });
+
+          const legs = Object.keys(legsByStep)
+            .map(function (k) { return legsByStep[k]; })
+            .filter(function (leg) { return !!leg && isFinite(Number(leg.step)); })
+            .sort(function (a, b) {
+              const ao = Number(a && a.order);
+              const bo = Number(b && b.order);
+              if (isFinite(ao) && isFinite(bo) && ao !== bo) return ao - bo;
+              return Number(a && a.step) - Number(b && b.step);
+            });
+
+          return {
+            key: routeKey,
+            name: routeKey,
+            legs: legs,
+          };
+        });
+
+        return {
+          kind: 'NAV',
+          sourceType: sourceType,
+          routes: routes,
+          pointsByStep: pointByStep,
+          pointsById: pointById,
+        };
+      }
+
+      function collectRouteContainers(value, depth, out) {
+        if (depth > 12 || value === null || value === undefined) return;
+        if (Array.isArray(value)) {
+          for (let i = 0; i < value.length; i++) collectRouteContainers(value[i], depth + 1, out);
+          return;
+        }
+        if (typeof value !== 'object') return;
+
+        if (Array.isArray(value.Routes)) {
+          out.push(value);
+        }
+
+        const keys = Object.keys(value);
+        for (let i = 0; i < keys.length; i++) {
+          collectRouteContainers(value[keys[i]], depth + 1, out);
+        }
+      }
+
+      function buildFromAh64Model() {
+        if (sourceType.indexOf('AH-64') < 0 && sourceType.indexOf('APACHE') < 0) return null;
+
+        const containers = [];
+        collectRouteContainers(root, 0, containers);
+        if (!containers.length) return null;
+
+        function scoreContainer(c) {
+          const routes = Array.isArray(c && c.Routes) ? c.Routes : [];
+          let enabledLegs = 0;
+          for (let i = 0; i < routes.length; i++) {
+            const r = routes[i] || {};
+            const pts = Array.isArray(r.POINTS) ? r.POINTS : [];
+            if (r.isEnabled === false) continue;
+            enabledLegs += pts.length;
+          }
+          return enabledLegs;
+        }
+
+        let best = containers[0];
+        let bestScore = scoreContainer(best);
+        for (let i = 1; i < containers.length; i++) {
+          const s = scoreContainer(containers[i]);
+          if (s > bestScore) {
+            best = containers[i];
+            bestScore = s;
+          }
+        }
+
+        const pointsRoot = (best && best.Points && typeof best.Points === 'object') ? best.Points : {};
+        const routesRaw = Array.isArray(best && best.Routes) ? best.Routes : [];
+
+        const pointByNum = {};
+        const pointByText = {};
+        Object.keys(pointsRoot).forEach(function (bucketKey) {
+          const bucket = pointsRoot[bucketKey] || {};
+          const rows = Array.isArray(bucket.POINTS) ? bucket.POINTS : [];
+          rows.forEach(function (p) {
+            const point = (p && typeof p === 'object') ? p : {};
+            const num = Number(point.num);
+            if (isFinite(num)) pointByNum[Math.round(num)] = point;
+            const txt = String(point.text || '').trim().toUpperCase();
+            if (txt) pointByText[txt] = point;
+          });
+        });
+
+        const routes = routesRaw.slice(0, 12).map(function (routeRaw, idx) {
+          const route = (routeRaw && typeof routeRaw === 'object') ? routeRaw : {};
+          const routeKey = 'R' + String(idx + 1);
+          const routeName = String(route.Name || route.name || routeKey).trim() || routeKey;
+          const routePoints = Array.isArray(route.POINTS) ? route.POINTS : [];
+
+          const legs = routePoints
+            .map(function (rp, pointIdx) {
+              const point = (rp && typeof rp === 'object') ? rp : {};
+              const step = normalizeAh64Step(point.num);
+              if (!isFinite(step)) return null;
+              const catalog = pointByNum[step] || pointByText[String(point.text || '').trim().toUpperCase()] || {};
+              const waypointId = String(catalog.id || point.id || point.text || ('W' + String(step))).trim().toUpperCase();
+              const altRaw = isFinite(Number(point.alt)) ? Number(point.alt) : Number(catalog.alt);
+              const speedRaw = isFinite(Number(point.speed)) ? Number(point.speed) : Number(catalog.speed);
+              const etaRaw = isFinite(Number(point.eta)) ? Number(point.eta) : Number(point.ETA);
+
+              return {
+                routeKey: routeKey,
+                waypointId: waypointId,
+                step: step,
+                order: pointIdx + 1,
+                altRaw: altRaw,
+                altFeet: normalizeAltFeet(altRaw),
+                altType: String(point.altitudeType || point.alt_type || point.altType || point.alttype || catalog.altitudeType || catalog.altType || ''),
+                speedRaw: speedRaw,
+                speed: normalizeSpeedKnots(speedRaw),
+                speedType: String(point.velocityType || catalog.velocityType || ''),
+                etaSeconds: etaRaw,
+                distanceMeters: isFinite(Number(point.dist)) ? Number(point.dist) : NaN,
+                fix: !!point.fix,
+              };
+            })
+            .filter(function (leg) { return !!leg; });
+
+          return {
+            key: routeKey,
+            name: routeName,
+            legs: legs,
+            isEnabled: route.isEnabled !== false,
+          };
+        });
+
+        const waypointByStep = {};
+        routes.forEach(function (route) {
+          const legs = Array.isArray(route && route.legs) ? route.legs : [];
+          legs.forEach(function (leg) {
+            const step = Number(leg && leg.step);
+            if (!isFinite(step)) return;
+            if (waypointByStep[step]) return;
+
+            const catalog = pointByNum[step] || {};
+            const nameText = String(catalog.text || catalog.note || leg.waypointId || ('W' + String(step))).trim();
+            const xNum = Number(catalog.x);
+            const yNum = Number(catalog.y);
+            waypointByStep[step] = {
+              step: String(step),
+              dtcId: String(leg.waypointId || '').toUpperCase(),
+              type: 'WP',
+              typeRaw: 'WP',
+              name: nameText,
+              alt: isFinite(Number(leg.altFeet)) ? String(Math.round(Number(leg.altFeet))) : '-',
+              altFeet: Number(leg.altFeet),
+              altType: String(leg.altType || ''),
+              eta: formatEtaSeconds(Number(leg.etaSeconds)),
+              etaSourceSeconds: Number(leg.etaSeconds),
+              spd: isFinite(Number(leg.speed)) ? String(Math.round(Number(leg.speed))) : '-',
+              speedType: String(leg.speedType || ''),
+              x: isFinite(xNum) ? String(Math.round(xNum)) : '-',
+              y: isFinite(yNum) ? String(Math.round(yNum)) : '-',
+              xNum: xNum,
+              yNum: yNum,
+            };
+          });
+        });
+
+        const waypoints = Object.keys(waypointByStep)
+          .map(function (k) { return waypointByStep[k]; })
+          .sort(function (a, b) { return Number(a && a.step) - Number(b && b.step); });
+
+        const hasAnyLegs = routes.some(function (r) {
+          return Array.isArray(r && r.legs) && r.legs.length > 0;
+        });
+        if (!hasAnyLegs) return null;
+
+        return {
+          kind: 'AH64',
+          sourceType: sourceType,
+          routes: routes,
+          waypoints: waypoints,
+        };
+      }
+
+      const prefersAh64Model = sourceType.indexOf('AH-64') >= 0 || sourceType.indexOf('APACHE') >= 0;
+      if (prefersAh64Model) {
+        const ah64FirstModel = buildFromAh64Model();
+        if (ah64FirstModel) return ah64FirstModel;
+      }
+
+      const navModel = buildFromNavPtsModel();
+      if (navModel) return navModel;
+
+      const ah64Model = buildFromAh64Model();
+      if (ah64Model) return ah64Model;
+
+      return null;
+    }
+
     function getDtcWaypoints(root) {
+      function isAh64DtcSource(modelRoot) {
+        const t = String((modelRoot && modelRoot.type) || '').toUpperCase();
+        return t.indexOf('AH-64') >= 0 || t.indexOf('APACHE') >= 0;
+      }
+
       function isMeterBasedDtcAltitudeSource(modelRoot) {
         const t = String((modelRoot && modelRoot.type) || '').toUpperCase();
         return t.indexOf('FA-18') >= 0
@@ -5902,7 +6325,7 @@
         routeById[String(k).toUpperCase()] = point;
       });
 
-      if (hasExplicitNavPts) {
+      if (hasExplicitNavPts && !isAh64DtcSource(root)) {
         if (!navPts.length) return [];
 
         return navPts.slice(0, 200).map(function (p, idx) {
@@ -5944,6 +6367,11 @@
             yNum: yNum
           };
         }).filter(function (wp) { return !!wp; });
+      }
+
+      const canonicalModel = getDtcCanonicalRouteModel(root);
+      if (canonicalModel && canonicalModel.kind === 'AH64' && Array.isArray(canonicalModel.waypoints) && canonicalModel.waypoints.length) {
+        return canonicalModel.waypoints.slice(0, 200);
       }
 
       const f14Slots = getF14RouteSlots(root);

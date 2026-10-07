@@ -557,6 +557,16 @@
             }
             return;
           }
+          if (node.getAttribute && node.getAttribute('data-dtc-mission')) {
+            const selected = getActiveFlightPlanSelection(latestData);
+            const missionKey = String(node.getAttribute('data-dtc-mission') || 'M1');
+            if (selected) {
+              setDtcMissionBySelection(selected, missionKey);
+              setDtcRouteBySelection(selected, 'R1');
+              render(latestData);
+            }
+            return;
+          }
           if (node.getAttribute && node.getAttribute('data-map-zoom')) {
             const selected = getActiveFlightPlanSelection(latestData);
             const action = String(node.getAttribute('data-map-zoom') || '').toLowerCase();

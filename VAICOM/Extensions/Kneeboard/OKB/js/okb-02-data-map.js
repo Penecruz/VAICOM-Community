@@ -1147,7 +1147,12 @@
           const active = code === airportKey ? ' active' : '';
           return '<button type="button" class="efbSearchCandidateBtn' + active + '" data-efb-search-candidate="' + escapeHtml(code) + '">' + escapeHtml(getEfbAirportDisplayText(code)) + '</button>';
         }).join('');
-      const context = resolveActiveSaMapContext(data || latestData);
+      let context = null;
+      try {
+        context = resolveActiveSaMapContext(data || latestData);
+      } catch (_) {
+        context = null;
+      }
       const saMapTheater = String(resolveOpenFreeMapFallbackTheatreText(data || latestData) || '').trim();
       const historySelectionKey = context && context.selected ? getFlightPlanEtaStartKey(context.selected) : '';
       const selectedAssetKey = context && context.selected ? getMapSelectedAssetKeyBySelection(context.selected) : '';

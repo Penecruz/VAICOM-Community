@@ -74,79 +74,79 @@
                                                                      "modulation": 1
                                                                  },
                                                    "Channel_10": {
-                                                                           "freq": 343.725,
+                                                                           "freq": 262,
                                                                      "modulation": 1
                                                                  },
                                                    "Channel_11": {
-                                                                           "freq": 270.1,
+                                                                           "freq": 259,
                                                                      "modulation": 1
                                                                  },
                                                    "Channel_12": {
-                                                                           "freq": 360.25,
+                                                                           "freq": 268,
                                                                      "modulation": 1
                                                                  },
                                                    "Channel_13": {
-                                                                           "freq": 317.45,
+                                                                           "freq": 269,
                                                                      "modulation": 1
                                                                  },
                                                    "Channel_14": {
-                                                                           "freq": 295.4,
+                                                                           "freq": 260,
                                                                      "modulation": 1
                                                                  },
                                                    "Channel_15": {
-                                                                           "freq": 301,
+                                                                           "freq": 263,
                                                                      "modulation": 1
                                                                  },
                                                    "Channel_16": {
-                                                                           "freq": 255.5,
+                                                                           "freq": 261,
                                                                      "modulation": 1
                                                                  },
                                                    "Channel_17": {
-                                                                           "freq": 291.6,
+                                                                           "freq": 267,
                                                                      "modulation": 1
                                                                  },
                                                    "Channel_18": {
-                                                                           "freq": 365,
+                                                                           "freq": 251,
                                                                      "modulation": 1
                                                                  },
                                                    "Channel_19": {
-                                                                           "freq": 375,
+                                                                           "freq": 253,
                                                                      "modulation": 1
                                                                  },
                                                     "Channel_2": {
-                                                                           "freq": 289.4,
+                                                                           "freq": 264,
                                                                      "modulation": 1
                                                                  },
                                                    "Channel_20": {
-                                                                           "freq": 300.05,
+                                                                           "freq": 266,
                                                                      "modulation": 1
                                                                  },
                                                     "Channel_3": {
-                                                                           "freq": 275.8,
+                                                                           "freq": 265,
                                                                      "modulation": 1
                                                                  },
                                                     "Channel_4": {
-                                                                           "freq": 327,
+                                                                           "freq": 256,
                                                                      "modulation": 1
                                                                  },
                                                     "Channel_5": {
-                                                                           "freq": 285.4,
+                                                                           "freq": 254,
                                                                      "modulation": 1
                                                                  },
                                                     "Channel_6": {
-                                                                           "freq": 273.55,
+                                                                           "freq": 250,
                                                                      "modulation": 1
                                                                  },
                                                     "Channel_7": {
-                                                                           "freq": 317.52,
+                                                                           "freq": 270,
                                                                      "modulation": 1
                                                                  },
                                                     "Channel_8": {
-                                                                           "freq": 254.4,
+                                                                           "freq": 257,
                                                                      "modulation": 1
                                                                  },
                                                     "Channel_9": {
-                                                                           "freq": 305.6,
+                                                                           "freq": 255,
                                                                      "modulation": 1
                                                                  }
                                                },
@@ -164,7 +164,7 @@
                                                                      "modulation": 1
                                                                  },
                                                    "Channel_12": {
-                                                                           "freq": 118.3,
+                                                                           "freq": 139,
                                                                      "modulation": 1
                                                                  },
                                                    "Channel_13": {
@@ -180,11 +180,11 @@
                                                                      "modulation": 1
                                                                  },
                                                    "Channel_16": {
-                                                                           "freq": 139.9,
+                                                                           "freq": 132,
                                                                      "modulation": 1
                                                                  },
                                                    "Channel_17": {
-                                                                           "freq": 120.25,
+                                                                           "freq": 138,
                                                                      "modulation": 1
                                                                  },
                                                    "Channel_18": {
@@ -196,7 +196,7 @@
                                                                      "modulation": 1
                                                                  },
                                                     "Channel_2": {
-                                                                           "freq": 120.9,
+                                                                           "freq": 135,
                                                                      "modulation": 1
                                                                  },
                                                    "Channel_20": {
@@ -204,31 +204,31 @@
                                                                      "modulation": 1
                                                                  },
                                                     "Channel_3": {
-                                                                           "freq": 121.8,
+                                                                           "freq": 136,
                                                                      "modulation": 1
                                                                  },
                                                     "Channel_4": {
-                                                                           "freq": 132.55,
+                                                                           "freq": 127,
                                                                      "modulation": 1
                                                                  },
                                                     "Channel_5": {
-                                                                           "freq": 135.1,
+                                                                           "freq": 125,
                                                                      "modulation": 1
                                                                  },
                                                     "Channel_6": {
-                                                                           "freq": 124.95,
+                                                                           "freq": 121,
                                                                      "modulation": 1
                                                                  },
                                                     "Channel_7": {
-                                                                           "freq": 126.65,
+                                                                           "freq": 141,
                                                                      "modulation": 1
                                                                  },
                                                     "Channel_8": {
-                                                                           "freq": 119.35,
+                                                                           "freq": 128,
                                                                      "modulation": 1
                                                                  },
                                                     "Channel_9": {
-                                                                           "freq": 131,
+                                                                           "freq": 126,
                                                                      "modulation": 1
                                                                  }
                                                },
@@ -4310,9 +4310,9 @@
                                                                                                           },
                                                                                                  "Flare": {
                                                                                                               "BurstInterval": 0.02,
-                                                                                                              "BurstQuantity": 2,
+                                                                                                              "BurstQuantity": 1,
                                                                                                               "SalvoInterval": 0.5,
-                                                                                                              "SalvoQuantity": 2
+                                                                                                              "SalvoQuantity": 1
                                                                                                           },
                                                                                                 "Other1": {
                                                                                                               "BurstInterval": 0.02,
@@ -4332,13 +4332,13 @@
                                                                                                               "BurstInterval": 0.02,
                                                                                                               "BurstQuantity": 1,
                                                                                                               "SalvoInterval": 1,
-                                                                                                              "SalvoQuantity": 5
+                                                                                                              "SalvoQuantity": 10
                                                                                                           },
                                                                                                  "Flare": {
                                                                                                               "BurstInterval": 0.02,
                                                                                                               "BurstQuantity": 1,
                                                                                                               "SalvoInterval": 1,
-                                                                                                              "SalvoQuantity": 5
+                                                                                                              "SalvoQuantity": 10
                                                                                                           },
                                                                                                 "Other1": {
                                                                                                               "BurstInterval": 0.02,
@@ -4362,9 +4362,9 @@
                                                                                                           },
                                                                                                  "Flare": {
                                                                                                               "BurstInterval": 0.02,
-                                                                                                              "BurstQuantity": 0,
+                                                                                                              "BurstQuantity": 1,
                                                                                                               "SalvoInterval": 0.5,
-                                                                                                              "SalvoQuantity": 0
+                                                                                                              "SalvoQuantity": 10
                                                                                                           },
                                                                                                 "Other1": {
                                                                                                               "BurstInterval": 0.02,
@@ -4382,15 +4382,15 @@
                                                                                     "MAN3": {
                                                                                                  "Chaff": {
                                                                                                               "BurstInterval": 0.1,
-                                                                                                              "BurstQuantity": 2,
-                                                                                                              "SalvoInterval": 0.8,
+                                                                                                              "BurstQuantity": 1,
+                                                                                                              "SalvoInterval": 1,
                                                                                                               "SalvoQuantity": 5
                                                                                                           },
                                                                                                  "Flare": {
                                                                                                               "BurstInterval": 0.1,
-                                                                                                              "BurstQuantity": 2,
-                                                                                                              "SalvoInterval": 0.9,
-                                                                                                              "SalvoQuantity": 5
+                                                                                                              "BurstQuantity": 4,
+                                                                                                              "SalvoInterval": 1,
+                                                                                                              "SalvoQuantity": 2
                                                                                                           },
                                                                                                 "Other1": {
                                                                                                               "BurstInterval": 0.02,
@@ -4408,15 +4408,15 @@
                                                                                     "MAN4": {
                                                                                                  "Chaff": {
                                                                                                               "BurstInterval": 0.1,
-                                                                                                              "BurstQuantity": 1,
+                                                                                                              "BurstQuantity": 2,
                                                                                                               "SalvoInterval": 0.5,
-                                                                                                              "SalvoQuantity": 2
+                                                                                                              "SalvoQuantity": 5
                                                                                                           },
                                                                                                  "Flare": {
                                                                                                               "BurstInterval": 0.1,
                                                                                                               "BurstQuantity": 2,
                                                                                                               "SalvoInterval": 0.5,
-                                                                                                              "SalvoQuantity": 3
+                                                                                                              "SalvoQuantity": 5
                                                                                                           },
                                                                                                 "Other1": {
                                                                                                               "BurstInterval": 0.02,
@@ -4434,15 +4434,15 @@
                                                                                     "MAN5": {
                                                                                                  "Chaff": {
                                                                                                               "BurstInterval": 0.05,
-                                                                                                              "BurstQuantity": 0,
+                                                                                                              "BurstQuantity": 2,
                                                                                                               "SalvoInterval": 0.75,
-                                                                                                              "SalvoQuantity": 0
+                                                                                                              "SalvoQuantity": 20
                                                                                                           },
                                                                                                  "Flare": {
                                                                                                               "BurstInterval": 0.05,
                                                                                                               "BurstQuantity": 2,
                                                                                                               "SalvoInterval": 0.75,
-                                                                                                              "SalvoQuantity": 5
+                                                                                                              "SalvoQuantity": 20
                                                                                                           },
                                                                                                 "Other1": {
                                                                                                               "BurstInterval": 0.02,
@@ -8639,16 +8639,16 @@
                                                                                }
                                                     },
                                             "DEST": [ {
-                                                           "alt": 1928,
+                                                           "alt": 561,
                                                             "id": "DEST81",
-                                                          "note": "AAR-641A",
+                                                          "note": "OAJL",
                                                         "number": 1,
                                                           "text": "D81",
-                                                             "x": -234673.65951558,
-                                                             "y": 52942.666215955
+                                                             "x": 72473.995470944,
+                                                             "y": 389726.99047326
                                                     } ],
                                        "GEO_LINES": [ {
-                                                           "alt": 1334,
+                                                           "alt": 1344,
                                                             "id": "GEO_LINES31",
                                                             "L1": true,
                                                             "L2": false,
@@ -8656,10 +8656,10 @@
                                                             "L4": false,
                                                           "note": "",
                                                         "number": 1,
-                                                             "x": -304034.01099222,
-                                                             "y": -105003.24099735
+                                                             "x": 64590.772075434,
+                                                             "y": 338168.82125102
                                                     }, {
-                                                           "alt": 1981,
+                                                           "alt": 554,
                                                             "id": "GEO_LINES32",
                                                             "L1": true,
                                                             "L2": false,
@@ -8667,10 +8667,10 @@
                                                             "L4": false,
                                                           "note": "",
                                                         "number": 2,
-                                                             "x": -304437.30878663,
-                                                             "y": -68403.966154921
+                                                             "x": 63446.997453748,
+                                                             "y": 445683.63568956
                                                     }, {
-                                                           "alt": 1395,
+                                                           "alt": 1902,
                                                             "id": "GEO_LINES33",
                                                             "L1": true,
                                                             "L2": false,
@@ -8678,10 +8678,10 @@
                                                             "L4": false,
                                                           "note": "",
                                                         "number": 3,
-                                                             "x": -262595.16261692,
-                                                             "y": -68000.668360514
+                                                             "x": 3589.4589188166,
+                                                             "y": 447208.66851847
                                                     }, {
-                                                           "alt": 1875,
+                                                           "alt": 1652,
                                                             "id": "GEO_LINES34",
                                                             "L1": true,
                                                             "L2": false,
@@ -8689,10 +8689,10 @@
                                                             "L4": false,
                                                           "note": "",
                                                         "number": 4,
-                                                             "x": -262494.33816831,
-                                                             "y": -105608.18768896
+                                                             "x": 3589.4589188166,
+                                                             "y": 337787.56304379
                                                     }, {
-                                                           "alt": 1338,
+                                                           "alt": 1434,
                                                             "id": "GEO_LINES35",
                                                             "L1": true,
                                                             "L2": false,
@@ -8700,15 +8700,15 @@
                                                             "L4": false,
                                                           "note": "",
                                                         "number": 5,
-                                                             "x": -304134.83544082,
-                                                             "y": -104801.59210014
+                                                             "x": 63446.997453748,
+                                                             "y": 338168.82125102
                                                     } ],
                                      "mirror_DEST": false,
                                 "mirror_GEO_LINES": false,
                                   "mirror_NAV_PTS": false,
-                               "mirror_THREAT_PTS": true,
+                               "mirror_THREAT_PTS": false,
                                          "NAV_PTS": [ {
-                                                                  "alt": 715,
+                                                                  "alt": 2747,
                                                          "altitudeType": 1,
                                                              "FIX_Time": false,
                                                                    "id": "STPT1",
@@ -8719,7 +8719,7 @@
                                                               "isOAP_1": false,
                                                               "isOAP_2": false,
                                                          "isTOSEnabled": true,
-                                                                 "note": "FLEX",
+                                                                 "note": "MOOSE",
                                                                "number": 1,
                                                             "OAP_1_Alt": 0,
                                                         "OAP_1_Bearing": 0,
@@ -8738,15 +8738,15 @@
                                                                    "R1": true,
                                                                    "R2": false,
                                                                    "R3": false,
-                                                        "routeAltitude": 914.40000000366,
+                                                        "routeAltitude": 6400.8000000256,
                                                                 "speed": 790,
-                                                                  "TOS": 66512.508464127,
+                                                                  "TOS": 17253.276693382,
                                                                  "type": "STPT",
                                                          "velocityType": 3,
-                                                                    "x": -389981.93013033,
-                                                                    "y": -19598.066322142
+                                                                    "x": 126311.23931108,
+                                                                    "y": 328298.05800268
                                                     }, {
-                                                                  "alt": 2834,
+                                                                  "alt": 733,
                                                          "altitudeType": 1,
                                                              "FIX_Time": false,
                                                                    "id": "STPT2",
@@ -8757,7 +8757,7 @@
                                                               "isOAP_1": false,
                                                               "isOAP_2": false,
                                                          "isTOSEnabled": true,
-                                                                 "note": "FYTTR",
+                                                                 "note": "MANUEL",
                                                                "number": 2,
                                                             "OAP_1_Alt": 0,
                                                         "OAP_1_Bearing": 0,
@@ -8776,15 +8776,15 @@
                                                                    "R1": true,
                                                                    "R2": false,
                                                                    "R3": false,
-                                                        "routeAltitude": 4267.2000000171,
+                                                        "routeAltitude": 6400.8000000256,
                                                                 "speed": 790,
-                                                                  "TOS": 66773.216674923,
+                                                                  "TOS": 17450.145287458,
                                                                  "type": "STPT",
                                                          "velocityType": 3,
-                                                                    "x": -385570.51392411,
-                                                                    "y": -76638.703779283
+                                                                    "x": 97810.107678227,
+                                                                    "y": 360764.5644714
                                                     }, {
-                                                                  "alt": 965,
+                                                                  "alt": 580,
                                                          "altitudeType": 1,
                                                              "FIX_Time": false,
                                                                    "id": "STPT3",
@@ -8795,7 +8795,7 @@
                                                               "isOAP_1": false,
                                                               "isOAP_2": false,
                                                          "isTOSEnabled": true,
-                                                                 "note": "ROYLL",
+                                                                 "note": "SYBILL",
                                                                "number": 3,
                                                             "OAP_1_Alt": 0,
                                                         "OAP_1_Bearing": 0,
@@ -8814,15 +8814,15 @@
                                                                    "R1": true,
                                                                    "R2": false,
                                                                    "R3": false,
-                                                        "routeAltitude": 4572.0000000183,
+                                                        "routeAltitude": 6400.8000000256,
                                                                 "speed": 790,
-                                                                  "TOS": 67026.672243856,
+                                                                  "TOS": 17597.886870532,
                                                                  "type": "STPT",
                                                          "velocityType": 3,
-                                                                    "x": -330324.88910784,
-                                                                    "y": -70201.279432436
+                                                                    "x": 74761.366444705,
+                                                                    "y": 383565.46977768
                                                     }, {
-                                                                  "alt": 1060,
+                                                                  "alt": 1641,
                                                          "altitudeType": 1,
                                                              "FIX_Time": false,
                                                                    "id": "STPT4",
@@ -8833,7 +8833,7 @@
                                                               "isOAP_1": false,
                                                               "isOAP_2": false,
                                                          "isTOSEnabled": true,
-                                                                 "note": "TGT-DMPI-2",
+                                                                 "note": "CAS",
                                                                "number": 4,
                                                             "OAP_1_Alt": 0,
                                                         "OAP_1_Bearing": 0,
@@ -8852,15 +8852,15 @@
                                                                    "R1": true,
                                                                    "R2": false,
                                                                    "R3": false,
-                                                        "routeAltitude": 1060.0944000042,
-                                                                "speed": 790,
-                                                                  "TOS": 67102.469069204,
+                                                        "routeAltitude": 5791.2000000232,
+                                                                "speed": 648.2,
+                                                                  "TOS": 17813.106656695,
                                                                  "type": "STPT",
                                                          "velocityType": 3,
-                                                                    "x": -337905.03969273,
-                                                                    "y": -55395.726391702
+                                                                    "x": 36042.950875368,
+                                                                    "y": 385166.86162156
                                                     }, {
-                                                                  "alt": 1386,
+                                                                  "alt": 1863,
                                                          "altitudeType": 1,
                                                              "FIX_Time": false,
                                                                    "id": "STPT5",
@@ -8871,7 +8871,7 @@
                                                               "isOAP_1": false,
                                                               "isOAP_2": false,
                                                          "isTOSEnabled": true,
-                                                                 "note": "STRYK",
+                                                                 "note": "PORTLAND",
                                                                "number": 5,
                                                             "OAP_1_Alt": 0,
                                                         "OAP_1_Bearing": 0,
@@ -8890,15 +8890,15 @@
                                                                    "R1": true,
                                                                    "R2": false,
                                                                    "R3": false,
-                                                        "routeAltitude": 3352.8000000134,
+                                                        "routeAltitude": 6705.6000000268,
                                                                 "speed": 790,
-                                                                  "TOS": 67285.057983727,
+                                                                  "TOS": 18357.853302425,
                                                                  "type": "STPT",
                                                          "velocityType": 3,
-                                                                    "x": -377609.945056,
-                                                                    "y": -60778.566122334
+                                                                    "x": 77447.735969223,
+                                                                    "y": 273024.79151688
                                                     }, {
-                                                                  "alt": 1299,
+                                                                  "alt": 1643,
                                                          "altitudeType": 1,
                                                              "FIX_Time": false,
                                                                    "id": "STPT6",
@@ -8909,7 +8909,7 @@
                                                               "isOAP_1": false,
                                                               "isOAP_2": false,
                                                          "isTOSEnabled": true,
-                                                                 "note": "GASS PK",
+                                                                 "note": "RIGEN",
                                                                "number": 6,
                                                             "OAP_1_Alt": 0,
                                                         "OAP_1_Bearing": 0,
@@ -8928,15 +8928,15 @@
                                                                    "R1": true,
                                                                    "R2": false,
                                                                    "R3": false,
-                                                        "routeAltitude": 2590.8000000104,
+                                                        "routeAltitude": 4876.8000000195,
                                                                 "speed": 790,
-                                                                  "TOS": 67413.369888592,
+                                                                  "TOS": 18475.249176857,
                                                                  "type": "STPT",
                                                          "velocityType": 3,
-                                                                    "x": -382091.43892878,
-                                                                    "y": -32980.154137683
+                                                                    "x": 101282.80076763,
+                                                                    "y": 263249.11977929
                                                     }, {
-                                                                  "alt": 721,
+                                                                  "alt": 1492,
                                                          "altitudeType": 1,
                                                              "FIX_Time": false,
                                                                    "id": "STPT7",
@@ -8947,7 +8947,7 @@
                                                               "isOAP_1": false,
                                                               "isOAP_2": false,
                                                          "isTOSEnabled": true,
-                                                                 "note": "APEXX",
+                                                                 "note": "OAIX",
                                                                "number": 7,
                                                             "OAP_1_Alt": 0,
                                                         "OAP_1_Bearing": 0,
@@ -8966,15 +8966,15 @@
                                                                    "R1": true,
                                                                    "R2": false,
                                                                    "R3": false,
-                                                        "routeAltitude": 1371.6000000055,
+                                                        "routeAltitude": 2000,
                                                                 "speed": 790,
-                                                                  "TOS": 67534.308246673,
+                                                                  "TOS": 18588.376095759,
                                                                  "type": "STPT",
                                                          "velocityType": 3,
-                                                                    "x": -385156.41036895,
-                                                                    "y": -6618.4815207408
+                                                                    "x": 124458.83151632,
+                                                                    "y": 272146.07945058
                                                     }, {
-                                                                  "alt": 562,
+                                                                  "alt": 2614,
                                                          "altitudeType": 1,
                                                              "FIX_Time": false,
                                                                    "id": "STPT8",
@@ -8985,7 +8985,7 @@
                                                               "isOAP_1": false,
                                                               "isOAP_2": false,
                                                          "isTOSEnabled": true,
-                                                                 "note": "KLSV",
+                                                                 "note": "KRAMER",
                                                                "number": 8,
                                                             "OAP_1_Alt": 0,
                                                         "OAP_1_Bearing": 0,
@@ -9001,18 +9001,18 @@
                                                           "OAP_2_Range": 0,
                                                               "OAP_2_X": 0,
                                                               "OAP_2_Y": 0,
-                                                                   "R1": true,
-                                                                   "R2": false,
+                                                                   "R1": false,
+                                                                   "R2": true,
                                                                    "R3": false,
-                                                        "routeAltitude": 566.92800000227,
-                                                                "speed": 790,
-                                                                  "TOS": 67610.845119846,
+                                                        "routeAltitude": 7315.2000000293,
+                                                                "speed": 722.28,
+                                                                  "TOS": 17626.337182402,
                                                                  "type": "STPT",
                                                          "velocityType": 3,
-                                                                    "x": -398188.07245689,
-                                                                    "y": -17214.125948994
+                                                                    "x": 11527.016506036,
+                                                                    "y": 216741.44773934
                                                     }, {
-                                                                  "alt": 671,
+                                                                  "alt": 2117,
                                                          "altitudeType": 1,
                                                              "FIX_Time": false,
                                                                    "id": "STPT9",
@@ -9023,7 +9023,7 @@
                                                               "isOAP_1": false,
                                                               "isOAP_2": false,
                                                          "isTOSEnabled": true,
-                                                                 "note": "SIMNS",
+                                                                 "note": "AAR-341A",
                                                                "number": 9,
                                                             "OAP_1_Alt": 0,
                                                         "OAP_1_Bearing": 0,
@@ -9042,15 +9042,15 @@
                                                                    "R1": false,
                                                                    "R2": true,
                                                                    "R3": false,
-                                                        "routeAltitude": 1676.4000000067,
-                                                                "speed": 790,
-                                                                  "TOS": 66542.832437745,
+                                                        "routeAltitude": 7924.8000000317,
+                                                                "speed": 648.2,
+                                                                  "TOS": 18369.939230769,
                                                                  "type": "STPT",
                                                          "velocityType": 3,
-                                                                    "x": -395576.93487226,
-                                                                    "y": -31725.506522055
+                                                                    "x": -120589.35817018,
+                                                                    "y": 195022.56345822
                                                     }, {
-                                                                  "alt": 628,
+                                                                  "alt": 2101,
                                                          "altitudeType": 1,
                                                              "FIX_Time": false,
                                                                    "id": "STPT10",
@@ -9061,7 +9061,7 @@
                                                               "isOAP_1": false,
                                                               "isOAP_2": false,
                                                          "isTOSEnabled": true,
-                                                                 "note": "CRAIG",
+                                                                 "note": "LISTER",
                                                                "number": 10,
                                                             "OAP_1_Alt": 0,
                                                         "OAP_1_Bearing": 0,
@@ -9080,15 +9080,15 @@
                                                                    "R1": false,
                                                                    "R2": true,
                                                                    "R3": false,
-                                                        "routeAltitude": 1066.8000000043,
+                                                        "routeAltitude": 6705.6000000268,
                                                                 "speed": 790,
-                                                                  "TOS": 66570.093652275,
+                                                                  "TOS": 18698.304155948,
                                                                  "type": "STPT",
                                                          "velocityType": 3,
-                                                                    "x": -399756.42040999,
-                                                                    "y": -27445.310489438
+                                                                    "x": -50079.68694044,
+                                                                    "y": 209879.25374782
                                                     }, {
-                                                                  "alt": 562,
+                                                                  "alt": 1697,
                                                          "altitudeType": 1,
                                                              "FIX_Time": false,
                                                                    "id": "STPT11",
@@ -9099,7 +9099,7 @@
                                                               "isOAP_1": false,
                                                               "isOAP_2": false,
                                                          "isTOSEnabled": true,
-                                                                 "note": "KLSV",
+                                                                 "note": "RIGEN",
                                                                "number": 11,
                                                             "OAP_1_Alt": 0,
                                                         "OAP_1_Bearing": 0,
@@ -9118,13 +9118,51 @@
                                                                    "R1": false,
                                                                    "R2": true,
                                                                    "R3": false,
-                                                        "routeAltitude": 566.92800000227,
+                                                        "routeAltitude": 4876.8000000195,
                                                                 "speed": 790,
-                                                                  "TOS": 66617.188829565,
+                                                                  "TOS": 19431.177133576,
                                                                  "type": "STPT",
                                                          "velocityType": 3,
-                                                                    "x": -398190.29418412,
-                                                                    "y": -17229.889632358
+                                                                    "x": 101404.32726576,
+                                                                    "y": 263890.76179273
+                                                    }, {
+                                                                  "alt": 1492,
+                                                         "altitudeType": 1,
+                                                             "FIX_Time": false,
+                                                                   "id": "STPT12",
+                                                                "idOA1": "OA112",
+                                                           "idOA1_Line": "OA112Line",
+                                                                "idOA2": "OA212",
+                                                           "idOA2_Line": "OA212Line",
+                                                              "isOAP_1": false,
+                                                              "isOAP_2": false,
+                                                         "isTOSEnabled": true,
+                                                                 "note": "OAIX",
+                                                               "number": 12,
+                                                            "OAP_1_Alt": 0,
+                                                        "OAP_1_Bearing": 0,
+                                                         "OAP_1_DeltaX": 0,
+                                                         "OAP_1_DeltaY": 0,
+                                                          "OAP_1_Range": 0,
+                                                              "OAP_1_X": 0,
+                                                              "OAP_1_Y": 0,
+                                                            "OAP_2_Alt": 0,
+                                                        "OAP_2_Bearing": 0,
+                                                         "OAP_2_DeltaX": 0,
+                                                         "OAP_2_DeltaY": 0,
+                                                          "OAP_2_Range": 0,
+                                                              "OAP_2_X": 0,
+                                                              "OAP_2_Y": 0,
+                                                                   "R1": false,
+                                                                   "R2": true,
+                                                                   "R3": false,
+                                                        "routeAltitude": 2000,
+                                                                "speed": 790,
+                                                                  "TOS": 19546.84273608,
+                                                                 "type": "STPT",
+                                                         "velocityType": 3,
+                                                                    "x": 125309.99812619,
+                                                                    "y": 272421.50922394
                                                     } ],
                                              "ROE": {
                                                             "List": [ {
@@ -9797,8 +9835,20 @@
                                                                         "TypeSovereignty": true
                                                                     }
                                                     },
-                                      "THREAT_PTS": [  ],
-                                         "terrain": "Nevada",
+                                      "THREAT_PTS": [ {
+                                                               "alt": 2500,
+                                                           "def_num": 28,
+                                                              "elev": 2800,
+                                                                "id": "THREAT_PTS56",
+                                                            "number": 1,
+                                                            "radius": 2500,
+                                                              "ring": true,
+                                                              "text": "A",
+                                                        "threatName": "SPAAA ZSU-23-4",
+                                                                 "x": -66067.934097081,
+                                                                 "y": 281760.9734308
+                                                    } ],
+                                         "terrain": "Afghanistan",
                                           "VIPVRP": {
                                                           "TGTTOPUP_Bearing": 0,
                                                            "TGTTOPUP_DeltaX": 0,
@@ -9844,8 +9894,8 @@
                                                                 "VRP_Number": 1
                                                     }
                            },
-                   "name": "57 WG A2A DTC_2",
-                "terrain": "Nevada",
+                   "name": "",
+                "terrain": "Afghanistan",
                    "type": "F-16C_50"
             },
     "name": "",
