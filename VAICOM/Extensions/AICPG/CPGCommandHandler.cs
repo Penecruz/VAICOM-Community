@@ -360,7 +360,9 @@ namespace VAICOM.Extensions.AICPG
                     }
                     return;
                 case "wMsgGeorgeTurnToGHS":
-                    if (EnsureMenuMode(AH64MenuMode.Hover) || EnsureMenuMode(AH64MenuMode.Combat))
+                    // Turn to GHS is available in both hover and combat modes,
+                    // so just default to combat mode as hover may not be available.
+                    if (EnsureMenuMode(AH64MenuMode.Combat))
                     {
                         AddGeorgeButton(AH64GeorgeButton.Right);
                     }
