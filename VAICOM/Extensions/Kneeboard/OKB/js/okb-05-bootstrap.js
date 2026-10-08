@@ -567,6 +567,15 @@
             }
             return;
           }
+          if (node.getAttribute && node.getAttribute('data-ah64-comm-preset')) {
+            const selected = getActiveFlightPlanSelection(latestData);
+            const preset = Number(node.getAttribute('data-ah64-comm-preset') || 1);
+            if (selected && typeof setAh64CommPresetBySelection === 'function') {
+              setAh64CommPresetBySelection(selected, preset);
+              render(latestData);
+            }
+            return;
+          }
           if (node.getAttribute && node.getAttribute('data-map-zoom')) {
             const selected = getActiveFlightPlanSelection(latestData);
             const action = String(node.getAttribute('data-map-zoom') || '').toLowerCase();

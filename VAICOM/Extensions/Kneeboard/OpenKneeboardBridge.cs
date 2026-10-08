@@ -7,6 +7,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.IO;
 using System.Net;
+using System.Net.Sockets;
 using System.Text.RegularExpressions;
 using System.Text;
 using System.Threading;
@@ -177,6 +178,31 @@ namespace VAICOM
                     {
                         return false;
                     }
+                }
+
+                private static string GetLanAccessUrl()
+                {
+                    int port = GetOpenKneeboardOutPort();
+
+                    try
+                    {
+                        string hostName = Dns.GetHostName();
+                        if (!string.IsNullOrWhiteSpace(hostName))
+                        {
+                            IPAddress lanIpv4 = Dns.GetHostAddresses(hostName)
+                                .FirstOrDefault(address => address.AddressFamily == AddressFamily.InterNetwork && !IPAddress.IsLoopback(address));
+
+                            if (lanIpv4 != null)
+                            {
+                                return "http://" + lanIpv4 + ":" + port + "/okb/";
+                            }
+                        }
+                    }
+                    catch
+                    {
+                    }
+
+                    return "http://<lan-ip>:" + port + "/okb/";
                 }
 
                 private sealed class FastAvBusState
@@ -724,6 +750,23 @@ namespace VAICOM
                 private static string GetPrefix()
                 {
                     return "http://127.0.0.1:" + GetOpenKneeboardOutPort() + "/okb/";
+                }
+
+                private static string GetLanPrefix()
+                {
+                    return "http://+:" + GetOpenKneeboardOutPort() + "/okb/";
+                }
+
+                private static bool IsOpenKneeboardOutLanAllowed()
+                {
+                    try
+                    {
+                        return State.activeconfig != null && State.activeconfig.OpenKneeboard_Out_AllowLan;
+                    }
+                    catch
+                    {
+                        return false;
+                    }
                 }
 
                 public static void RegisterKeywordsHtmlPlugin(string keywordsHtmlPath)
@@ -2148,9 +2191,37 @@ namespace VAICOM
                     try
                     {
                         string prefix = GetPrefix();
+                        string lanPrefix = GetLanPrefix();
+                        bool allowLan = IsOpenKneeboardOutLanAllowed();
+                        bool lanBound = false;
+
                         listener = new HttpListener();
                         listener.Prefixes.Add(prefix);
-                        listener.Start();
+
+                        if (allowLan)
+                        {
+                            listener.Prefixes.Add(lanPrefix);
+                        }
+
+                        try
+                        {
+                            listener.Start();
+                            lanBound = allowLan;
+                        }
+                        catch (HttpListenerException ex)
+                        {
+                            if (!allowLan)
+                            {
+                                throw;
+                            }
+
+                            listener.Close();
+                            listener = new HttpListener();
+                            listener.Prefixes.Add(prefix);
+                            listener.Start();
+
+                            Log.Write("OpenKneeboard LAN host binding failed; using localhost only: " + ex.Message, Colors.Warning);
+                        }
 
                         Interlocked.Exchange(ref lastClientRequestUtcTicks, 0);
                         isRunning = true;
@@ -2169,6 +2240,10 @@ namespace VAICOM
                         }
 
                         Log.Write("OpenKneeboard dashboard host started at " + prefix, Colors.Text);
+                        if (lanBound)
+                        {
+                            Log.Write("OpenKneeboard LAN access enabled at " + GetLanAccessUrl(), Colors.Text);
+                        }
                     }
                     catch (Exception ex)
                     {

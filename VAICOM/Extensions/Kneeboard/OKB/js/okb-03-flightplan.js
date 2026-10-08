@@ -970,6 +970,7 @@
       delete fltPlanDtcPageBySelection[key];
       delete fltPlanDtcRouteBySelection[key];
       delete fltPlanDtcMissionBySelection[key];
+      delete fltPlanAh64CommPresetBySelection[key];
       delete fltPlanMapViewBySelection[key];
       delete fltPlanMapBackgroundEnabledBySelection[key];
       delete fltPlanOpenFreeMapViewBySelection[key];
@@ -1127,6 +1128,22 @@
       if (!key) return;
       const m = String(missionKey || '').toUpperCase();
       fltPlanDtcMissionBySelection[key] = isValidDtcMissionKey(m) ? m : 'M1';
+    }
+
+    function getAh64CommPresetBySelection(selected) {
+      const key = getFlightPlanEtaStartKey(selected);
+      const raw = Number(fltPlanAh64CommPresetBySelection[key]);
+      if (!isFinite(raw)) return 1;
+      const n = Math.round(raw);
+      return n >= 1 && n <= 10 ? n : 1;
+    }
+
+    function setAh64CommPresetBySelection(selected, presetNumber) {
+      const key = getFlightPlanEtaStartKey(selected);
+      if (!key) return;
+      const n = Number(presetNumber);
+      const bounded = isFinite(n) ? Math.max(1, Math.min(10, Math.round(n))) : 1;
+      fltPlanAh64CommPresetBySelection[key] = bounded;
     }
 
     function updateDtcRouteButtonUi(selected) {
@@ -2165,11 +2182,13 @@
               const isNavalSamLabel = isSamThreatLabel && String((props && props.samNavalPlatformCode) || '').trim().length > 0;
             const isAirfieldLabel = kind === 'airfield';
             const isWaypointLabel = kind === 'waypoint' || kind === 'user-waypoint';
-              const useScaledLabel = isAirfieldLabel || isWaypointLabel || isSamThreatLabel;
+            const isAreaLabel = kind === 'area-label';
+            const isOverlayLabel = String((props && props.group) || '').toLowerCase() === 'overlay';
+              const useScaledLabel = isAirfieldLabel || isWaypointLabel || isSamThreatLabel || isAreaLabel || isOverlayLabel;
             const text = makeNode('text');
-              text.setAttribute('x', (p.x + (isAirfieldLabel ? 16 : (isWaypointLabel ? 16 : (isNavalSamLabel ? 18 : (isSamThreatLabel ? 13 : 9))))).toFixed(1));
+              text.setAttribute('x', (p.x + (isAirfieldLabel ? 16 : (isWaypointLabel ? 16 : (isAreaLabel ? 16 : (isOverlayLabel ? 16 : (isNavalSamLabel ? 18 : (isSamThreatLabel ? 13 : 9))))))).toFixed(1));
             text.setAttribute('y', (p.y + 4).toFixed(1));
-              text.setAttribute('font-size', isAirfieldLabel ? '18.5' : (isWaypointLabel ? '18.5' : (isSamThreatLabel ? '16.5' : '11')));
+              text.setAttribute('font-size', useScaledLabel ? '18.5' : '11');
             text.setAttribute('font-weight', '700');
             const labelFill = isAsset
               ? '#1f3550'

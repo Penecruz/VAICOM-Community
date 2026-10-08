@@ -74,6 +74,10 @@ namespace VAICOM
                     {
                         State.activeconfig.OpenKneeboard_FocusSwitchEnabled = false;
                     }
+                    if (!ConfigContainsProperty("OpenKneeboard_Out_AllowLan"))
+                    {
+                        State.activeconfig.OpenKneeboard_Out_AllowLan = false;
+                    }
                     if (State.activeconfig.OpenKneeboard_Out_Port <= 0 || State.activeconfig.OpenKneeboard_Out_Port > 65535)
                     {
                         State.activeconfig.OpenKneeboard_Out_Port = 7779;

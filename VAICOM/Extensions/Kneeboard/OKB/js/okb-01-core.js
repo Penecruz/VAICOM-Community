@@ -29,6 +29,7 @@
     let fltPlanDtcPageBySelection = {};
     let fltPlanDtcRouteBySelection = {};
     let fltPlanDtcMissionBySelection = {};
+    let fltPlanAh64CommPresetBySelection = {};
     let fltPlanExpandedTimeAnchorBySelection = {};
     let fltPlanExpandedNavEditBySelection = {};
     let fltPlanMapViewBySelection = {};

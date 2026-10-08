@@ -1,4 +1,6 @@
 ﻿using System;
+using System.ComponentModel;
+using System.Diagnostics;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
@@ -18,6 +20,7 @@ namespace VAICOM
             // ------------  EXTENSIONS PAGE -----------------------------
 
             private static readonly Regex OpenKneeboardOutPortDigitsOnlyRegex = new Regex("^[0-9]+$");
+            private const string OpenKneeboardOutFirewallRuleNamePrefix = "VAICOM OpenKneeboard Out TCP";
 
             // Pene edits Kneeboard Activate/deactivate Box
 
@@ -311,6 +314,7 @@ namespace VAICOM
             {
                 State.activeconfig.OpenKneeboard_Out = true;
                 Extensions.Kneeboard.OpenKneeboardBridge.SetEnabled(true);
+                EnsureOpenKneeboardOutFirewallRuleIfNeeded();
                 ChangeOKHostbug();
             }
 
@@ -352,6 +356,29 @@ namespace VAICOM
                 {
                     checkbox.IsEnabled = true;
                     checkbox.IsChecked = State.activeconfig.OpenKneeboard_FocusSwitchEnabled;
+                }
+            }
+
+            private void OpenKneeboardOutAllowLanOn(object sender, RoutedEventArgs e)
+            {
+                State.activeconfig.OpenKneeboard_Out_AllowLan = true;
+                RestartOpenKneeboardOutHostIfEnabled();
+                EnsureOpenKneeboardOutFirewallRuleIfNeeded();
+            }
+
+            private void OpenKneeboardOutAllowLanOff(object sender, RoutedEventArgs e)
+            {
+                State.activeconfig.OpenKneeboard_Out_AllowLan = false;
+                RestartOpenKneeboardOutHostIfEnabled();
+            }
+
+            private void SetCurrentValueOpenKneeboardOutAllowLan(object sender, EventArgs e)
+            {
+                CheckBox checkbox = sender as CheckBox;
+                if (checkbox != null)
+                {
+                    checkbox.IsEnabled = true;
+                    checkbox.IsChecked = State.activeconfig.OpenKneeboard_Out_AllowLan;
                 }
             }
 
@@ -534,6 +561,130 @@ namespace VAICOM
                 return (textBox.Text ?? "").Trim();
             }
 
+            private static void RestartOpenKneeboardOutHostIfEnabled()
+            {
+                if (!State.activeconfig.OpenKneeboard_Out)
+                {
+                    return;
+                }
+
+                Extensions.Kneeboard.OpenKneeboardBridge.SetEnabled(false);
+                Extensions.Kneeboard.OpenKneeboardBridge.SetEnabled(true);
+            }
+
+            private void EnsureOpenKneeboardOutFirewallRuleIfNeeded()
+            {
+                try
+                {
+                    if (!State.activeconfig.OpenKneeboard_Out_AllowLan)
+                    {
+                        return;
+                    }
+
+                    int port = State.activeconfig.OpenKneeboard_Out_Port;
+                    if (port <= 0 || port > 65535)
+                    {
+                        return;
+                    }
+
+                    if (OpenKneeboardOutFirewallRuleExists(port))
+                    {
+                        return;
+                    }
+
+                    string message = "Allow Windows Firewall access for OpenKneeboard Out on Private networks?\n\n"
+                        + "Port: " + port + " (TCP inbound)\n\n"
+                        + "Select No if you prefer to configure firewall manually.";
+
+                    MessageBoxResult result = MessageBox.Show(message, "OpenKneeboard Out LAN Access", MessageBoxButton.YesNo, MessageBoxImage.Question);
+                    if (result != MessageBoxResult.Yes)
+                    {
+                        Log.Write("OpenKneeboard Out LAN firewall rule skipped by user.", Colors.Warning);
+                        return;
+                    }
+
+                    string ruleName = GetOpenKneeboardOutFirewallRuleName(port);
+                    string arguments = "advfirewall firewall add rule name=\"" + ruleName + "\" dir=in action=allow protocol=TCP localport=" + port + " profile=private";
+
+                    var startInfo = new ProcessStartInfo
+                    {
+                        FileName = "netsh",
+                        Arguments = arguments,
+                        UseShellExecute = true,
+                        Verb = "runas",
+                        WindowStyle = ProcessWindowStyle.Hidden,
+                    };
+
+                    using (Process process = Process.Start(startInfo))
+                    {
+                        if (process != null)
+                        {
+                            process.WaitForExit();
+                            if (process.ExitCode == 0)
+                            {
+                                Log.Write("OpenKneeboard Out firewall rule added for Private network on TCP port " + port + ".", Colors.Text);
+                            }
+                            else
+                            {
+                                Log.Write("OpenKneeboard Out firewall rule creation returned exit code " + process.ExitCode + ".", Colors.Warning);
+                            }
+                        }
+                    }
+                }
+                catch (Win32Exception ex)
+                {
+                    if (ex.NativeErrorCode == 1223)
+                    {
+                        Log.Write("OpenKneeboard Out firewall rule creation canceled by user.", Colors.Warning);
+                    }
+                    else
+                    {
+                        Log.Write("OpenKneeboard Out firewall rule creation failed: " + ex.Message, Colors.Warning);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Log.Write("OpenKneeboard Out firewall setup failed: " + ex.Message, Colors.Warning);
+                }
+            }
+
+            private static bool OpenKneeboardOutFirewallRuleExists(int port)
+            {
+                try
+                {
+                    var startInfo = new ProcessStartInfo
+                    {
+                        FileName = "netsh",
+                        Arguments = "advfirewall firewall show rule name=\"" + GetOpenKneeboardOutFirewallRuleName(port) + "\"",
+                        UseShellExecute = false,
+                        RedirectStandardOutput = true,
+                        RedirectStandardError = true,
+                        CreateNoWindow = true,
+                    };
+
+                    using (Process process = Process.Start(startInfo))
+                    {
+                        if (process == null)
+                        {
+                            return false;
+                        }
+
+                        string output = process.StandardOutput.ReadToEnd();
+                        process.WaitForExit();
+                        return process.ExitCode == 0 && output.IndexOf("No rules match", StringComparison.OrdinalIgnoreCase) < 0;
+                    }
+                }
+                catch
+                {
+                    return false;
+                }
+            }
+
+            private static string GetOpenKneeboardOutFirewallRuleName(int port)
+            {
+                return OpenKneeboardOutFirewallRuleNamePrefix + " " + port;
+            }
+
             private void OpenKneeboardOutPortInit(object sender, EventArgs e)
             {
                 TextBox textBox = sender as TextBox;
@@ -591,12 +742,8 @@ namespace VAICOM
                 {
                     State.activeconfig.OpenKneeboard_Out_Port = parsedPort;
                     Settings.ConfigFile.WriteConfigToFile(true);
-
-                    if (State.activeconfig.OpenKneeboard_Out)
-                    {
-                        Extensions.Kneeboard.OpenKneeboardBridge.SetEnabled(false);
-                        Extensions.Kneeboard.OpenKneeboardBridge.SetEnabled(true);
-                    }
+                    RestartOpenKneeboardOutHostIfEnabled();
+                    EnsureOpenKneeboardOutFirewallRuleIfNeeded();
                 }
 
                 textBox.Text = State.activeconfig.OpenKneeboard_Out_Port.ToString();

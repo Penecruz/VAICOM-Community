@@ -115,7 +115,258 @@
       return '<div class="fltPlanInfoBlock"><div class="fltPlanInfoTitle"' + titleAttrs + '>CMDS</div><div class="fltPlanInfoBody"><table class="fltPlanInfoTable"><tbody>' + rows.join('') + '</tbody></table></div></div>';
     }
 
-    function formatDtcCommPanelHtml(root, emptyWhenMissing) {
+    function isAh64Text(value) {
+      const t = String(value || '').toUpperCase();
+      return t.indexOf('AH-64') >= 0 || t.indexOf('AH64') >= 0 || t.indexOf('APACHE') >= 0;
+    }
+
+    function isRuntimeAh64Module(data) {
+      const server = (data && data.Server) || {};
+      const moduleConnected = !!server.ModuleConnected;
+      const aircraft = String(server.Aircraft || '').trim();
+      if (!moduleConnected || !aircraft || aircraft === '----') return false;
+      return isAh64Text(aircraft);
+    }
+
+    function isAh64DtcRoot(root) {
+      return isAh64Text(root && root.type);
+    }
+
+    function isFa18Text(value) {
+      const t = String(value || '').toUpperCase();
+      return t.indexOf('FA-18') >= 0 || t.indexOf('F/A-18') >= 0 || t.indexOf('HORNET') >= 0;
+    }
+
+    function isRuntimeFa18Module(data) {
+      const server = (data && data.Server) || {};
+      const moduleConnected = !!server.ModuleConnected;
+      const aircraft = String(server.Aircraft || '').trim();
+      if (!moduleConnected || !aircraft || aircraft === '----') return false;
+      return isFa18Text(aircraft);
+    }
+
+    function isFa18DtcRoot(root) {
+      return isFa18Text(root && root.type);
+    }
+
+    function isF16Text(value) {
+      const t = String(value || '').toUpperCase();
+      return t.indexOf('F-16') >= 0 || t.indexOf('F16') >= 0 || t.indexOf('VIPER') >= 0;
+    }
+
+    function isRuntimeF16Module(data) {
+      const server = (data && data.Server) || {};
+      const moduleConnected = !!server.ModuleConnected;
+      const aircraft = String(server.Aircraft || '').trim();
+      if (!moduleConnected || !aircraft || aircraft === '----') return false;
+      return isF16Text(aircraft);
+    }
+
+    function isF16DtcRoot(root) {
+      return isF16Text(root && root.type);
+    }
+
+    function formatCommFrequencyMhz3(value) {
+      const n = Number(value);
+      if (!isFinite(n) || n <= 0) return '-';
+      let mhz = n;
+      if (n >= 10000000) mhz = n / 1000000.0;
+      else if (n >= 100000) mhz = n / 1000.0;
+      return mhz.toFixed(3);
+    }
+
+    function getAh64RuntimeRadioByName(data, radioName) {
+      const server = (data && data.Server) || {};
+      const radios = Array.isArray(server.Radios) ? server.Radios : [];
+      const key = String(radioName || '').toUpperCase();
+      for (let i = 0; i < radios.length; i++) {
+        const r = radios[i] || {};
+        if (!!r.intercom) continue;
+        const name = String(r.displayName || r.name || '').toUpperCase();
+        if (name.indexOf(key) >= 0) return r;
+      }
+      return null;
+    }
+
+    function mapAh64Modulation(v) {
+      const n = Number(v);
+      if (!isFinite(n)) return '-';
+      if (n === 0) return 'AM';
+      if (n === 1) return 'FM';
+      if (n === 2) return 'AME';
+      return String(Math.round(n));
+    }
+
+    function mapAh64Encryption(v) {
+      const n = Number(v);
+      if (!isFinite(n) || n === 0) return 'NONE';
+      return String(Math.round(n));
+    }
+
+    function getAh64DtcCommTabs(root) {
+      let presets = (root && root.Presets && typeof root.Presets === 'object') ? root.Presets : null;
+      if (!presets) {
+        presets = findNestedAh64Presets(root, 0);
+      }
+      presets = (presets && typeof presets === 'object') ? presets : {};
+      const rows = Array.isArray(presets.COMM) ? presets.COMM : [];
+      return rows.slice(0, 10);
+    }
+
+    function findNestedAh64Presets(value, depth) {
+      if (depth > 10 || value === null || value === undefined) return null;
+      if (Array.isArray(value)) {
+        for (let i = 0; i < value.length; i++) {
+          const found = findNestedAh64Presets(value[i], depth + 1);
+          if (found) return found;
+        }
+        return null;
+      }
+      if (typeof value !== 'object') return null;
+
+      const presets = (value && value.Presets && typeof value.Presets === 'object') ? value.Presets : null;
+      if (presets && Array.isArray(presets.COMM)) {
+        return presets;
+      }
+
+      const keys = Object.keys(value);
+      for (let i = 0; i < keys.length; i++) {
+        const found = findNestedAh64Presets(value[keys[i]], depth + 1);
+        if (found) return found;
+      }
+      return null;
+    }
+
+    function normalizeAh64CommPreset(root, data, presetObj, presetIndex) {
+      const idx = isFinite(Number(presetIndex)) ? Math.max(0, Math.min(9, Math.round(Number(presetIndex)))) : 0;
+      const preset = (presetObj && typeof presetObj === 'object') ? presetObj : {};
+      const comms = (preset.COMMS && typeof preset.COMMS === 'object') ? preset.COMMS : {};
+      const initialMode = (preset.InitialMode && typeof preset.InitialMode === 'object') ? preset.InitialMode : {};
+      const doNotUploadTabData = !!preset.DoNotUploadTabData;
+
+      const runtimeVhf = getAh64RuntimeRadioByName(data, 'VHF') || {};
+      const runtimeUhf = getAh64RuntimeRadioByName(data, 'UHF') || {};
+      const runtimeFm1 = getAh64RuntimeRadioByName(data, 'FM1') || {};
+      const runtimeFm2 = getAh64RuntimeRadioByName(data, 'FM2') || {};
+      const runtimeHfRx = getAh64RuntimeRadioByName(data, 'HF RX') || getAh64RuntimeRadioByName(data, 'HF') || {};
+      const runtimeHfTx = getAh64RuntimeRadioByName(data, 'HF TX') || getAh64RuntimeRadioByName(data, 'HF') || {};
+
+      function normalizeRadioEntry(entry, runtimeFallback) {
+        const source = (entry && typeof entry === 'object') ? entry : {};
+        const runtime = (runtimeFallback && typeof runtimeFallback === 'object') ? runtimeFallback : {};
+        const useRuntime = doNotUploadTabData || !entry || typeof entry !== 'object';
+        const rawFrequency = useRuntime
+          ? Number(runtime.frequency)
+          : Number(source.Frequency !== undefined ? source.Frequency : source.frequency);
+        const rawModulation = useRuntime
+          ? Number(runtime.modulation)
+          : Number(source.Modulation !== undefined ? source.Modulation : source.modulation);
+        const rawEncryption = Number(source.Encryption);
+        return {
+          frequency: formatCommFrequencyMhz3(rawFrequency),
+          modulation: mapAh64Modulation(rawModulation),
+          encryption: mapAh64Encryption(rawEncryption),
+        };
+      }
+
+      const vhf = normalizeRadioEntry(comms.VHF, runtimeVhf);
+      const uhf = normalizeRadioEntry(comms.UHF, runtimeUhf);
+      const fm1 = normalizeRadioEntry(comms.FM1, runtimeFm1);
+      const fm2 = normalizeRadioEntry(comms.FM2, runtimeFm2);
+      const hfRx = normalizeRadioEntry(comms.HF_Rx, runtimeHfRx);
+      const hfTx = normalizeRadioEntry(comms.HF_Tx, runtimeHfTx);
+
+      const hfPreRaw = Number(comms.HF_Pre);
+      const hfAleRaw = Number(comms.HF_ALE);
+
+      const primaryFrequencyRaw = Number(initialMode.PrimaryFrequency);
+      return {
+        presetNumber: idx + 1,
+        doNotUploadTabData: doNotUploadTabData,
+        unitId: String(initialMode.UnitID || '').trim() || ('PRESET ' + String(idx + 1)),
+        callSign: String(initialMode.CallSign || '').trim() || ('PRE ' + String(idx + 1)),
+        primaryFrequency: isFinite(primaryFrequencyRaw) ? String(Math.round(primaryFrequencyRaw)) : '-',
+        dlNet: initialMode.DLNet === true,
+        vhf: vhf,
+        uhf: uhf,
+        fm1: fm1,
+        fm2: fm2,
+        hfRx: hfRx,
+        hfTx: hfTx,
+        hfPre: isFinite(hfPreRaw) ? String(Math.round(hfPreRaw)) : '-',
+        hfAle: isFinite(hfAleRaw) ? String(Math.round(hfAleRaw)) : '-',
+      };
+    }
+
+    function buildAh64CommPresetState(root, data) {
+      const tabs = getAh64DtcCommTabs(root);
+      const presets = [];
+      for (let i = 0; i < 10; i++) {
+        presets.push(normalizeAh64CommPreset(root, data, tabs[i], i));
+      }
+      return { presets: presets };
+    }
+
+    function formatAh64CommPanelHtml(root, data, selected) {
+      const state = buildAh64CommPresetState(root, data);
+      const presets = Array.isArray(state && state.presets) ? state.presets : [];
+      const presetNumber = getAh64CommPresetBySelection(selected);
+      const active = presets[presetNumber - 1] || normalizeAh64CommPreset(root, data, null, presetNumber - 1);
+
+      const tabsHtml = Array.from({ length: 10 }, function (_, i) {
+        const n = i + 1;
+        const activeClass = (n === presetNumber) ? ' active' : '';
+        return '<button type="button" class="fltPlanPageBtn' + activeClass + '" data-ah64-comm-preset="' + String(n) + '">' + String(n) + '</button>';
+      }).join('');
+
+      function row(label, radio, showEncryption) {
+        const r = radio || {};
+        const fq = String(r.frequency || '-');
+        const fqText = fq !== '-' ? fq : '-';
+        return '<tr>'
+          + '<td style="width:44px;">' + escapeHtml(label) + '</td>'
+          + '<td style="width:186px; text-align:right; white-space:nowrap; overflow:visible; text-overflow:clip;">' + escapeHtml(fqText) + '</td>'
+          + '<td style="width:34px; text-align:center;">' + escapeHtml(String(r.modulation || '-')) + '</td>'
+          + (showEncryption ? ('<td style="width:44px; text-align:center;">' + escapeHtml(String(r.encryption || '-')) + '</td>') : '<td style="width:44px;"></td>')
+          + '</tr>';
+      }
+
+      const leftRows = [
+        '<tr><td style="width:110px;">Unit ID</td><td>' + escapeHtml(String(active.unitId || '-')) + '</td></tr>',
+        '<tr><td>Call Sign</td><td>' + escapeHtml(String(active.callSign || '-')) + '</td></tr>',
+        '<tr><td>Primary Recv</td><td>' + escapeHtml(String(active.primaryFrequency || '-')) + '</td></tr>',
+        '<tr><td>DL Net</td><td>' + (active.dlNet ? '✓' : '-') + '</td></tr>'
+      ].join('');
+
+      const freqRows = [
+        row('VHF', active.vhf, true),
+        row('UHF', active.uhf, true),
+        row('FM1', active.fm1, true),
+        row('FM2', active.fm2, true),
+        row('HF Rx', active.hfRx, true),
+        row('HF Tx', active.hfTx, true),
+        '<tr><td>HF Pre</td><td style="text-align:right;">' + escapeHtml(String(active.hfPre || '-')) + '</td><td></td><td></td></tr>',
+        '<tr><td>HF ALE</td><td style="text-align:right;">' + escapeHtml(String(active.hfAle || '-')) + '</td><td></td><td></td></tr>'
+      ].join('');
+
+      return '<div class="fltPlanPage2Section">'
+        + '<div class="fltPlanPage2Title">COMMS</div>'
+        + '<div class="fltPlanPage2Body">'
+        + '<div style="margin:0 0 8px 0;" class="fltPlanPageSwitcher">' + tabsHtml + '</div>'
+        + '<div class="fltPlanInfoBlock" style="margin:0;">'
+        + '<div class="fltPlanInfoTitle">PRESET ' + escapeHtml(String(presetNumber)) + '</div>'
+        + '<div class="fltPlanInfoBody">'
+        + '<div class="fltPlanPage2Grid" style="grid-template-columns: 0.9fr 1.1fr;">'
+        + '<div><table class="fltPlanPage2Table"><tbody>' + leftRows + '</tbody></table></div>'
+        + '<div><table class="fltPlanPage2Table"><thead><tr><th colspan="4">Frequencies</th></tr></thead><tbody>' + freqRows + '</tbody></table></div>'
+        + '</div>'
+        + '</div>'
+        + '</div>'
+        + '</div>'
+        + '</div>';
+    }
+
+    function readDtcCommPanelModel(root) {
       const commRoot = findFirstObjectByKeyPattern(root, /^COMM$/i, 0) || {};
 
       function formatCommFrequency(value) {
@@ -202,40 +453,21 @@
         && looksLikeDefaultMirrorRows(rows1)
         && looksLikeDefaultMirrorRows(rows2);
 
-      if (looksLikeDefaultMirrors) {
-        return emptyWhenMissing
-          ? ''
-          : '<div class="fltPlanPage2Section"><div class="fltPlanPage2Title">COMMS</div><div class="fltPlanPage2Body">No comm data.</div></div>';
-      }
-
-      const maxRows = Math.max(rows1.length, rows2.length);
-      if (!maxRows) {
-        return emptyWhenMissing
-          ? ''
-          : '<div class="fltPlanPage2Section"><div class="fltPlanPage2Title">COMMS</div><div class="fltPlanPage2Body">No comm data.</div></div>';
-      }
-
-      const bodyRows = [];
-      for (let i = 0; i < maxRows; i++) {
-        const a = rows1[i];
-        const b = rows2[i];
-        bodyRows.push('<tr><td>' + (a ? (escapeHtml(a.label) + ' ' + escapeHtml(String(a.freq))) : '') + '</td><td>' + (b ? (escapeHtml(b.label) + ' ' + escapeHtml(String(b.freq))) : '') + '</td></tr>');
-      }
-
-      return '<div class="fltPlanPage2Section"><div class="fltPlanPage2Title">COMMS</div><div class="fltPlanPage2Body"><table class="fltPlanPage2Table"><thead><tr><th>COMM 1' + (comm1Guard ? ' (G)' : '') + '</th><th>COMM 2' + (comm2Guard ? ' (G)' : '') + '</th></tr></thead><tbody>' + bodyRows.join('') + '</tbody></table></div></div>';
+      return {
+        rows1: rows1,
+        rows2: rows2,
+        comm1Guard: comm1Guard,
+        comm2Guard: comm2Guard,
+        mirror1: mirror1,
+        mirror2: mirror2,
+        looksLikeDefaultMirrors: looksLikeDefaultMirrors,
+      };
     }
 
-    function formatRuntimeCommPanelHtml(data) {
+    function getRuntimeCommColumns(data) {
       const server = (data && data.Server) || {};
       const radios = Array.isArray(server.Radios) ? server.Radios : [];
       const diagnostics = (server && server.Diagnostics && typeof server.Diagnostics === 'object') ? server.Diagnostics : {};
-      const active = radios.filter(function (r) {
-        return !!(r && typeof r === 'object' && !r.intercom);
-      });
-
-      if (!active.length) {
-        return '<div class="fltPlanPage2Section"><div class="fltPlanPage2Title">COMMS</div><div class="fltPlanPage2Body">No runtime comm data.</div></div>';
-      }
 
       function fmtFreq(value) {
         const n = Number(value);
@@ -251,13 +483,6 @@
         }
         const s = String(value || '').trim();
         return s || '-';
-      }
-
-      function fmtRow(r) {
-        const fq = fmtFreq(r.frequency);
-        const mod = String(r.modulation || '').trim().toUpperCase() || (r.FM && !r.AM ? 'FM' : 'AM');
-        const state = r.on ? 'ON' : 'OFF';
-        return state + ' ' + fq + ' ' + mod;
       }
 
       function parseMissionRadioChannelRow(line) {
@@ -317,19 +542,15 @@
         sortMissionRows(comm1);
         sortMissionRows(comm2);
 
-        const maxRows = Math.max(comm1.length, comm2.length);
-        const bodyRows = [];
-        for (let i = 0; i < maxRows; i++) {
-          const a = comm1[i];
-          const b = comm2[i];
-          const left = a ? (a.label + ' ' + a.freq + (a.name ? (' ' + a.name) : '')) : '';
-          const right = b ? (b.label + ' ' + b.freq + (b.name ? (' ' + b.name) : '')) : '';
-          bodyRows.push('<tr><td>' + escapeHtml(left) + '</td><td>' + escapeHtml(right) + '</td></tr>');
-        }
-
-        return '<div class="fltPlanPage2Section"><div class="fltPlanPage2Title">COMMS</div><div class="fltPlanPage2Body"><table class="fltPlanPage2Table"><thead><tr><th>COMM 1 PRESETS</th><th>COMM 2 PRESETS</th></tr></thead><tbody>' + bodyRows.join('') + '</tbody></table></div></div>';
+        return {
+          col1: comm1.map(function (x) { return { label: x.label, freq: x.freq, tail: x.name ? (' ' + x.name) : '' }; }),
+          col2: comm2.map(function (x) { return { label: x.label, freq: x.freq, tail: x.name ? (' ' + x.name) : '' }; })
+        };
       }
 
+      const active = radios.filter(function (r) {
+        return !!(r && typeof r === 'object' && !r.intercom);
+      });
       const comm1 = [];
       const comm2 = [];
       active.forEach(function (r) {
@@ -345,12 +566,342 @@
         }
       });
 
-      const maxRows = Math.max(comm1.length, comm2.length);
+      return {
+        col1: comm1.map(function (r) {
+          const mod = String(r.modulation || '').trim().toUpperCase() || (r.FM && !r.AM ? 'FM' : 'AM');
+          const state = r.on ? 'ON' : 'OFF';
+          return { label: state, freq: fmtFreq(r.frequency), tail: ' ' + mod };
+        }),
+        col2: comm2.map(function (r) {
+          const mod = String(r.modulation || '').trim().toUpperCase() || (r.FM && !r.AM ? 'FM' : 'AM');
+          const state = r.on ? 'ON' : 'OFF';
+          return { label: state, freq: fmtFreq(r.frequency), tail: ' ' + mod };
+        })
+      };
+    }
+
+    function getCommRowParts(row) {
+      if (!row) return { ch: '', freq: '' };
+      const label = String(row.label || '').trim();
+      const freq = (String(row.freq || '') + String(row.tail || '')).trim();
+      if (/^(ON|OFF)$/i.test(label)) {
+        return { ch: '', freq: (label + ' ' + freq).trim() };
+      }
+      return { ch: label, freq: freq };
+    }
+
+    function formatFa18CommPanelHtml(root, data, emptyWhenMissing, forceRuntimeColumns) {
+      const dtc = readDtcCommPanelModel(root);
+      const runtime = getRuntimeCommColumns(data);
+      const useRuntime1 = !!forceRuntimeColumns || dtc.mirror1;
+      const useRuntime2 = !!forceRuntimeColumns || dtc.mirror2;
+      const rows1 = useRuntime1 ? runtime.col1 : dtc.rows1;
+      const rows2 = useRuntime2 ? runtime.col2 : dtc.rows2;
+
+      if (dtc.looksLikeDefaultMirrors && (!runtime.col1.length && !runtime.col2.length)) {
+        return emptyWhenMissing
+          ? ''
+          : '<div class="fltPlanPage2Section"><div class="fltPlanPage2Title">COMMS</div><div class="fltPlanPage2Body">No comm data.</div></div>';
+      }
+
+      const maxRows = Math.max(rows1.length, rows2.length);
+      if (!maxRows) {
+        return emptyWhenMissing
+          ? ''
+          : '<div class="fltPlanPage2Section"><div class="fltPlanPage2Title">COMMS</div><div class="fltPlanPage2Body">No comm data.</div></div>';
+      }
+
       const bodyRows = [];
       for (let i = 0; i < maxRows; i++) {
-        const a = comm1[i];
-        const b = comm2[i];
-        bodyRows.push('<tr><td>' + (a ? escapeHtml(fmtRow(a)) : '') + '</td><td>' + (b ? escapeHtml(fmtRow(b)) : '') + '</td></tr>');
+        const left = getCommRowParts(rows1[i]);
+        const right = getCommRowParts(rows2[i]);
+        bodyRows.push('<tr><td style="width:54px;">' + escapeHtml(left.ch) + '</td><td>' + escapeHtml(left.freq) + '</td><td style="width:54px;">' + escapeHtml(right.ch) + '</td><td>' + escapeHtml(right.freq) + '</td></tr>');
+      }
+
+      return '<div class="fltPlanPage2Section"><div class="fltPlanPage2Title">COMMS</div><div class="fltPlanPage2Body"><table class="fltPlanPage2Table"><thead><tr><th colspan="2">COMM 1' + (dtc.comm1Guard ? ' (G)' : '') + '</th><th colspan="2">COMM 2' + (dtc.comm2Guard ? ' (G)' : '') + '</th></tr><tr><th style="width:54px;">CH</th><th>FREQ</th><th style="width:54px;">CH</th><th>FREQ</th></tr></thead><tbody>' + bodyRows.join('') + '</tbody></table></div></div>';
+    }
+
+    function formatF16CommPanelHtml(root, data, emptyWhenMissing, forceRuntimeColumns) {
+      const dtc = readDtcCommPanelModel(root);
+      const runtime = getRuntimeCommColumns(data);
+      const useRuntime1 = !!forceRuntimeColumns || dtc.mirror1;
+      const useRuntime2 = !!forceRuntimeColumns || dtc.mirror2;
+      const rows1 = useRuntime1 ? runtime.col1 : dtc.rows1;
+      const rows2 = useRuntime2 ? runtime.col2 : dtc.rows2;
+
+      if (dtc.looksLikeDefaultMirrors && (!runtime.col1.length && !runtime.col2.length)) {
+        return emptyWhenMissing
+          ? ''
+          : '<div class="fltPlanPage2Section"><div class="fltPlanPage2Title">COMMS</div><div class="fltPlanPage2Body">No comm data.</div></div>';
+      }
+
+      const maxRows = Math.max(rows1.length, rows2.length);
+      if (!maxRows) {
+        return emptyWhenMissing
+          ? ''
+          : '<div class="fltPlanPage2Section"><div class="fltPlanPage2Title">COMMS</div><div class="fltPlanPage2Body">No comm data.</div></div>';
+      }
+
+      const bodyRows = [];
+      for (let i = 0; i < maxRows; i++) {
+        const left = getCommRowParts(rows1[i]);
+        const right = getCommRowParts(rows2[i]);
+        bodyRows.push('<tr><td style="width:54px;">' + escapeHtml(left.ch) + '</td><td>' + escapeHtml(left.freq) + '</td><td style="width:54px;">' + escapeHtml(right.ch) + '</td><td>' + escapeHtml(right.freq) + '</td></tr>');
+      }
+
+      return '<div class="fltPlanPage2Section"><div class="fltPlanPage2Title">COMMS</div><div class="fltPlanPage2Body"><table class="fltPlanPage2Table"><thead><tr><th colspan="2">UHF</th><th colspan="2">VHF</th></tr><tr><th style="width:54px;">CH</th><th>FREQ</th><th style="width:54px;">CH</th><th>FREQ</th></tr></thead><tbody>' + bodyRows.join('') + '</tbody></table></div></div>';
+    }
+
+    function formatDtcCommPanelHtml(root, emptyWhenMissing) {
+      const comm = readDtcCommPanelModel(root);
+
+      if (comm.looksLikeDefaultMirrors) {
+        return emptyWhenMissing
+          ? ''
+          : '<div class="fltPlanPage2Section"><div class="fltPlanPage2Title">COMMS</div><div class="fltPlanPage2Body">No comm data.</div></div>';
+      }
+
+      const maxRows = Math.max(comm.rows1.length, comm.rows2.length);
+      if (!maxRows) {
+        return emptyWhenMissing
+          ? ''
+          : '<div class="fltPlanPage2Section"><div class="fltPlanPage2Title">COMMS</div><div class="fltPlanPage2Body">No comm data.</div></div>';
+      }
+
+      const bodyRows = [];
+      for (let i = 0; i < maxRows; i++) {
+        const a = comm.rows1[i];
+        const b = comm.rows2[i];
+        bodyRows.push('<tr><td>' + (a ? (escapeHtml(a.label) + ' ' + escapeHtml(String(a.freq))) : '') + '</td><td>' + (b ? (escapeHtml(b.label) + ' ' + escapeHtml(String(b.freq))) : '') + '</td></tr>');
+      }
+
+      return '<div class="fltPlanPage2Section"><div class="fltPlanPage2Title">COMMS</div><div class="fltPlanPage2Body"><table class="fltPlanPage2Table"><thead><tr><th>COMM 1' + (comm.comm1Guard ? ' (G)' : '') + '</th><th>COMM 2' + (comm.comm2Guard ? ' (G)' : '') + '</th></tr></thead><tbody>' + bodyRows.join('') + '</tbody></table></div></div>';
+    }
+
+    function formatAh64RuntimeCommPanelHtml(data, selected) {
+      const presetNumber = getAh64CommPresetBySelection(selected);
+      const server = (data && data.Server) || {};
+      const diagnostics = (server && server.Diagnostics && typeof server.Diagnostics === 'object') ? server.Diagnostics : {};
+      const playerUnitName = String(diagnostics.playerUnitName || '').trim();
+      const tabsHtml = Array.from({ length: 10 }, function (_, i) {
+        const n = i + 1;
+        const activeClass = (n === presetNumber) ? ' active' : '';
+        return '<button type="button" class="fltPlanPageBtn' + activeClass + '" data-ah64-comm-preset="' + String(n) + '">' + String(n) + '</button>';
+      }).join('');
+
+      function parseRuntimeRadioDeviceRow(line) {
+        const text = String(line || '').trim();
+        if (!text) return null;
+        const map = {};
+        text.split('|').forEach(function (p) {
+          const idx = p.indexOf('=');
+          if (idx <= 0) return;
+          const key = String(p.substring(0, idx)).trim().toLowerCase();
+          const value = String(p.substring(idx + 1)).trim();
+          if (!key) return;
+          map[key] = value;
+        });
+        const name = String(map.name || '').trim();
+        if (!name) return null;
+        return {
+          name: name,
+          frequency: Number(map.freq),
+          modulation: Number(map.mod),
+          on: String(map.on || '').toLowerCase() === 'true',
+        };
+      }
+
+      function parseMissionRadioChannelRow(line) {
+        const text = String(line || '').trim();
+        if (!text) return null;
+        const map = {};
+        text.split('|').forEach(function (p) {
+          const idx = p.indexOf('=');
+          if (idx <= 0) return;
+          const key = String(p.substring(0, idx)).trim().toLowerCase();
+          const value = String(p.substring(idx + 1)).trim();
+          if (!key) return;
+          map[key] = value;
+        });
+
+        const radioNum = Number(map.radio);
+        const channelNum = Number(map.ch);
+        const freqNum = Number(map.freq);
+        if (!isFinite(radioNum) || !isFinite(channelNum) || !isFinite(freqNum)) return null;
+
+        return {
+          unit: String(map.unit || '').trim(),
+          radio: Math.round(radioNum),
+          channel: Math.round(channelNum),
+          frequency: freqNum,
+        };
+      }
+
+      const runtimeDiagDevices = (Array.isArray(diagnostics.runtimeRadioDevices) ? diagnostics.runtimeRadioDevices : [])
+        .map(parseRuntimeRadioDeviceRow)
+        .filter(function (x) { return !!x; });
+
+      function getRuntimeDiagRadioByName(nameKey) {
+        const key = String(nameKey || '').toUpperCase();
+        for (let i = 0; i < runtimeDiagDevices.length; i++) {
+          const r = runtimeDiagDevices[i] || {};
+          const name = String(r.name || '').toUpperCase();
+          if (name.indexOf(key) >= 0) return r;
+        }
+        return null;
+      }
+
+      const presetChannelRowsRaw = Array.isArray(diagnostics.playerMissionRadioChannels) && diagnostics.playerMissionRadioChannels.length
+        ? diagnostics.playerMissionRadioChannels
+        : (Array.isArray(diagnostics.missionRadioChannels) ? diagnostics.missionRadioChannels : []);
+      const presetChannelRowsParsed = presetChannelRowsRaw
+        .map(parseMissionRadioChannelRow)
+        .filter(function (x) { return !!x; });
+      const presetChannelRows = playerUnitName
+        ? presetChannelRowsParsed.filter(function (x) { return !x.unit || x.unit === playerUnitName; })
+        : presetChannelRowsParsed;
+
+      const presetChannelMap = {};
+      presetChannelRows.forEach(function (x) {
+        const key = String(x.radio) + '|' + String(x.channel);
+        if (presetChannelMap[key] !== undefined) return;
+        presetChannelMap[key] = x.frequency;
+      });
+
+      function getPresetChannelFrequencyText(radioNumber, channelNumber) {
+        const key = String(Math.round(Number(radioNumber))) + '|' + String(Math.round(Number(channelNumber)));
+        const value = presetChannelMap[key];
+        const n = Number(value);
+        if (!isFinite(n) || n <= 0) return '';
+        return formatCommFrequencyMhz3(n);
+      }
+
+      function resolveRuntimeRadio(nameKey, fallbackKeys) {
+        let radio = getAh64RuntimeRadioByName(data, nameKey);
+        if (radio && Number(radio.frequency) > 0) return radio;
+
+        radio = getRuntimeDiagRadioByName(nameKey);
+        if (radio && Number(radio.frequency) > 0) return radio;
+
+        const list = Array.isArray(fallbackKeys) ? fallbackKeys : [];
+        for (let i = 0; i < list.length; i++) {
+          const k = String(list[i] || '').trim();
+          if (!k) continue;
+          radio = getAh64RuntimeRadioByName(data, k);
+          if (radio && Number(radio.frequency) > 0) return radio;
+          radio = getRuntimeDiagRadioByName(k);
+          if (radio && Number(radio.frequency) > 0) return radio;
+        }
+        return null;
+      }
+
+      function normalizeRuntimeRadio(radio) {
+        const r = (radio && typeof radio === 'object') ? radio : {};
+        const rawEnc = Number(r.encryption !== undefined ? r.encryption : r.Encryption);
+        const rawMod = r.modulation;
+        const rawModText = String(rawMod || '').trim().toUpperCase();
+        let mappedMod = '-';
+        if (rawModText === 'AM' || rawModText === 'FM' || rawModText === 'AME') {
+          mappedMod = rawModText;
+        } else {
+          mappedMod = mapAh64Modulation(Number(rawMod));
+        }
+        return {
+          frequency: formatCommFrequencyMhz3(Number(r.frequency)),
+          modulation: mappedMod,
+          encryption: mapAh64Encryption(rawEnc)
+        };
+      }
+
+      function row(label, radio) {
+        const r = radio || {};
+        const fq = String(r.frequency || '-');
+        const fqText = fq !== '-' ? fq : '-';
+        return '<tr>'
+          + '<td style="width:44px;">' + escapeHtml(label) + '</td>'
+          + '<td style="width:186px; text-align:right; white-space:nowrap; overflow:visible; text-overflow:clip;">' + escapeHtml(fqText) + '</td>'
+          + '<td style="width:34px; text-align:center;">' + escapeHtml(String(r.modulation || '-')) + '</td>'
+          + '<td style="width:44px; text-align:center;">' + escapeHtml(String(r.encryption || '-')) + '</td>'
+          + '</tr>';
+      }
+
+      const vhf = normalizeRuntimeRadio(resolveRuntimeRadio('VHF'));
+      const uhf = normalizeRuntimeRadio(resolveRuntimeRadio('UHF', ['CB UHF']));
+      const fm1 = normalizeRuntimeRadio(resolveRuntimeRadio('FM1', ['ARC-201D']));
+      const fm2 = normalizeRuntimeRadio(resolveRuntimeRadio('FM2', ['ARC-201D']));
+      const hf = normalizeRuntimeRadio(resolveRuntimeRadio('HF'));
+
+      const vhfPresetFreq = getPresetChannelFrequencyText(1, presetNumber);
+      const uhfPresetFreq = getPresetChannelFrequencyText(2, presetNumber);
+      const fm1PresetFreq = getPresetChannelFrequencyText(3, presetNumber);
+      const fm2PresetFreq = getPresetChannelFrequencyText(4, presetNumber);
+      if (vhfPresetFreq) vhf.frequency = vhfPresetFreq;
+      if (uhfPresetFreq) uhf.frequency = uhfPresetFreq;
+      if (fm1PresetFreq) fm1.frequency = fm1PresetFreq;
+      if (fm2PresetFreq) fm2.frequency = fm2PresetFreq;
+      const hasAnyFreq = [vhf, uhf, fm1, fm2, hf].some(function (r) {
+        const fq = String((r && r.frequency) || '').trim();
+        return fq && fq !== '-';
+      });
+      if (!hasAnyFreq) {
+        return '<div class="fltPlanPage2Section"><div class="fltPlanPage2Title">COMMS</div><div class="fltPlanPage2Body">No runtime comm data.</div></div>';
+      }
+
+      const leftRows = [
+        '<tr><td style="width:110px;">Source</td><td>Runtime</td></tr>',
+        '<tr><td>Preset</td><td>' + escapeHtml(String(presetNumber)) + '</td></tr>',
+      ].join('');
+
+      const freqRows = [
+        row('VHF', vhf),
+        row('UHF', uhf),
+        row('FM1', fm1),
+        row('FM2', fm2),
+        row('HF Rx', hf),
+        row('HF Tx', hf),
+      ].join('');
+
+      return '<div class="fltPlanPage2Section">'
+        + '<div class="fltPlanPage2Title">COMMS</div>'
+        + '<div class="fltPlanPage2Body">'
+        + '<div style="margin:0 0 8px 0;" class="fltPlanPageSwitcher">' + tabsHtml + '</div>'
+        + '<div class="fltPlanInfoBlock" style="margin:0;">'
+        + '<div class="fltPlanInfoTitle">PRESET ' + escapeHtml(String(presetNumber)) + '</div>'
+        + '<div class="fltPlanInfoBody">'
+        + '<div class="fltPlanPage2Grid" style="grid-template-columns: 0.9fr 1.1fr;">'
+        + '<div><table class="fltPlanPage2Table"><tbody>' + leftRows + '</tbody></table></div>'
+        + '<div><table class="fltPlanPage2Table"><thead><tr><th colspan="4">Frequencies</th></tr></thead><tbody>' + freqRows + '</tbody></table></div>'
+        + '</div>'
+        + '</div>'
+        + '</div>'
+        + '</div>'
+        + '</div>';
+    }
+
+    function formatRuntimeCommPanelHtml(data, selected) {
+      if (isRuntimeAh64Module(data)) {
+        return formatAh64RuntimeCommPanelHtml(data, selected);
+      }
+      if (isRuntimeFa18Module(data)) {
+        return formatFa18CommPanelHtml(null, data, false, true);
+      }
+      if (isRuntimeF16Module(data)) {
+        return formatF16CommPanelHtml(null, data, false, true);
+      }
+
+      const runtime = getRuntimeCommColumns(data);
+      const maxRows = Math.max(runtime.col1.length, runtime.col2.length);
+      if (!maxRows) {
+        return '<div class="fltPlanPage2Section"><div class="fltPlanPage2Title">COMMS</div><div class="fltPlanPage2Body">No runtime comm data.</div></div>';
+      }
+
+      const bodyRows = [];
+      for (let i = 0; i < maxRows; i++) {
+        const a = runtime.col1[i];
+        const b = runtime.col2[i];
+        const left = a ? (String(a.label || '') + ' ' + String(a.freq || '') + String(a.tail || '')).trim() : '';
+        const right = b ? (String(b.label || '') + ' ' + String(b.freq || '') + String(b.tail || '')).trim() : '';
+        bodyRows.push('<tr><td>' + escapeHtml(left) + '</td><td>' + escapeHtml(right) + '</td></tr>');
       }
 
       return '<div class="fltPlanPage2Section"><div class="fltPlanPage2Title">COMMS</div><div class="fltPlanPage2Body"><table class="fltPlanPage2Table"><thead><tr><th>COMM 1</th><th>COMM 2</th></tr></thead><tbody>' + bodyRows.join('') + '</tbody></table></div></div>';
@@ -387,7 +938,7 @@
         html += '<div style="margin:4px 0 6px 0;">' + pageSwitcherHtml + '</div>';
       }
       html += '<div class="fltPlanPage2Grid">';
-      html += formatRuntimeCommPanelHtml(data);
+      html += formatRuntimeCommPanelHtml(data, selected);
       html += '<div class="fltPlanPage2Stack">';
       html += formatRuntimeCmdsPanelHtml(data);
       html += formatMapMarkersPanelHtml(selected, data);
@@ -749,6 +1300,9 @@
         if (inheritedType && !String(wrapped.type || '').trim()) {
           wrapped.type = inheritedType;
         }
+        if (!wrapped.Presets && root && typeof root === 'object' && root.Presets && typeof root.Presets === 'object') {
+          wrapped.Presets = root.Presets;
+        }
         wrapped.__ah64MissionKey = String(keyText || 'M1').toUpperCase();
         return wrapped;
       }
@@ -1026,7 +1580,16 @@
       if (pageSwitcherHtml) {
         html += '<div style="margin:4px 0 6px 0;">' + pageSwitcherHtml + '</div>';
       }
-      const dtcCommHtml = formatDtcCommPanelHtml(root, true);
+      const useAh64PresetComm = isAh64DtcRoot(root) || isRuntimeAh64Module(data);
+      const useFa18Comm = !useAh64PresetComm && (isFa18DtcRoot(root) || isRuntimeFa18Module(data));
+      const useF16Comm = !useAh64PresetComm && !useFa18Comm && (isF16DtcRoot(root) || isRuntimeF16Module(data));
+      const dtcCommHtml = useAh64PresetComm
+        ? formatAh64CommPanelHtml(root, data, selected)
+        : (useFa18Comm
+          ? formatFa18CommPanelHtml(root, data, true)
+          : (useF16Comm
+            ? formatF16CommPanelHtml(root, data, true)
+            : formatDtcCommPanelHtml(root, true)));
       html += '<div class="fltPlanPage2Grid">';
       html += dtcCommHtml || formatRuntimeCommPanelHtml(data);
       html += '<div class="fltPlanPage2Stack">';
@@ -3103,6 +3666,7 @@
       const width = 920;
       const height = 760;
       const pad = 54;
+      const dtcOverlayScale = 1.35;
 
       const overlayPoints = [];
       geolines.forEach(function (p) { overlayPoints.push(p); });
@@ -3171,12 +3735,12 @@
             .join(' ');
           if (!pointsAttr) return;
 
-          els.push('<polygon points="' + pointsAttr + '" fill="' + fill + '" stroke="' + stroke + '" stroke-width="1.8" stroke-dasharray="7 5" />');
+          els.push('<polygon points="' + pointsAttr + '" fill="' + fill + '" stroke="' + stroke + '" stroke-width="' + (1.8 * dtcOverlayScale).toFixed(1) + '" stroke-dasharray="7 5" />');
 
           const label = escapeHtml(String((poly && poly.label) || '').trim());
           if (label) {
             const first = mapPt(pts[0]);
-            els.push('<text x="' + (first.x + 7).toFixed(1) + '" y="' + (first.y - 6).toFixed(1) + '" font-size="10" fill="' + stroke + '" font-weight="700">' + label + '</text>');
+            els.push('<text x="' + (first.x + 7).toFixed(1) + '" y="' + (first.y - 6).toFixed(1) + '" font-size="18" fill="' + stroke + '" font-weight="700">' + label + '</text>');
           }
         });
         return els;
@@ -3346,7 +3910,7 @@
         .filter(function (seg) { return !!(seg.from && seg.to); });
 
       const lineEls = segments.map(function (seg) {
-        return '<line x1="' + seg.from.x.toFixed(1) + '" y1="' + seg.from.y.toFixed(1) + '" x2="' + seg.to.x.toFixed(1) + '" y2="' + seg.to.y.toFixed(1) + '" stroke="' + palette.line + '" stroke-width="2"' + (seg.dashed ? ' stroke-dasharray="8 6"' : '') + ' />';
+        return '<line x1="' + seg.from.x.toFixed(1) + '" y1="' + seg.from.y.toFixed(1) + '" x2="' + seg.to.x.toFixed(1) + '" y2="' + seg.to.y.toFixed(1) + '" stroke="' + palette.line + '" stroke-width="' + (2 * dtcOverlayScale).toFixed(1) + '"' + (seg.dashed ? ' stroke-dasharray="8 6"' : '') + ' />';
       });
       const historyLineEls = [];
       const historyPointEls = historyTrackRowsForMap
@@ -3388,11 +3952,11 @@
         for (let i = 1; i < group.length; i++) {
           const a = group[i - 1];
           const b = group[i];
-          geoLineEls.push('<line x1="' + a.x.toFixed(1) + '" y1="' + a.y.toFixed(1) + '" x2="' + b.x.toFixed(1) + '" y2="' + b.y.toFixed(1) + '" stroke="' + palette.geoLine + '" stroke-width="2.2" stroke-dasharray="5 4" />');
+          geoLineEls.push('<line x1="' + a.x.toFixed(1) + '" y1="' + a.y.toFixed(1) + '" x2="' + b.x.toFixed(1) + '" y2="' + b.y.toFixed(1) + '" stroke="' + palette.geoLine + '" stroke-width="' + (2.2 * dtcOverlayScale).toFixed(1) + '" stroke-dasharray="5 4" />');
         }
       });
       const geoPointEls = geoMapped.map(function (m) {
-        return '<circle cx="' + m.x.toFixed(1) + '" cy="' + m.y.toFixed(1) + '" r="3.8" fill="' + palette.geoLine + '" />';
+        return '<circle cx="' + m.x.toFixed(1) + '" cy="' + m.y.toFixed(1) + '" r="' + (3.8 * dtcOverlayScale).toFixed(1) + '" fill="' + palette.geoLine + '" />';
       });
 
       const jtacSupportEls = [];
@@ -3459,7 +4023,8 @@
           for (let i = 1; i < mappedGroup.length; i++) {
             const a = mappedGroup[i - 1];
             const b = mappedGroup[i];
-            els.push('<line x1="' + a.x.toFixed(1) + '" y1="' + a.y.toFixed(1) + '" x2="' + b.x.toFixed(1) + '" y2="' + b.y.toFixed(1) + '" stroke="' + strokeColor + '" stroke-width="' + strokeWidth + '"' + (dashPattern ? (' stroke-dasharray="' + dashPattern + '"') : '') + ' />');
+            const scaledStrokeWidth = (Number(strokeWidth) * dtcOverlayScale).toFixed(1);
+            els.push('<line x1="' + a.x.toFixed(1) + '" y1="' + a.y.toFixed(1) + '" x2="' + b.x.toFixed(1) + '" y2="' + b.y.toFixed(1) + '" stroke="' + strokeColor + '" stroke-width="' + scaledStrokeWidth + '"' + (dashPattern ? (' stroke-dasharray="' + dashPattern + '"') : '') + ' />');
           }
         });
         return els;
@@ -3512,8 +4077,8 @@
             return mappedPts.map(function (p) { return p.x.toFixed(1) + ',' + p.y.toFixed(1); }).join(' ');
           }
 
-          els.push('<polyline points="' + makePolyline(left) + '" fill="none" stroke="' + palette.corridorLine + '" stroke-width="1.9" stroke-dasharray="8 5" />');
-          els.push('<polyline points="' + makePolyline(right) + '" fill="none" stroke="' + palette.corridorLine + '" stroke-width="1.9" stroke-dasharray="8 5" />');
+          els.push('<polyline points="' + makePolyline(left) + '" fill="none" stroke="' + palette.corridorLine + '" stroke-width="' + (1.9 * dtcOverlayScale).toFixed(1) + '" stroke-dasharray="8 5" />');
+          els.push('<polyline points="' + makePolyline(right) + '" fill="none" stroke="' + palette.corridorLine + '" stroke-width="' + (1.9 * dtcOverlayScale).toFixed(1) + '" stroke-dasharray="8 5" />');
         });
         return els;
       }
@@ -3567,11 +4132,11 @@
       const threatEls = threatMapped.map(function (m) {
         const label = escapeHtml(String((m && m.p && m.p.label) || 'THR'));
         const ring = (m && m.p && m.p.ring && m.radiusPx > 0)
-          ? ('<circle cx="' + m.x.toFixed(1) + '" cy="' + m.y.toFixed(1) + '" r="' + m.radiusPx.toFixed(1) + '" fill="none" stroke="' + palette.threatStroke + '" stroke-width="1.4" stroke-dasharray="7 5" />')
+          ? ('<circle cx="' + m.x.toFixed(1) + '" cy="' + m.y.toFixed(1) + '" r="' + m.radiusPx.toFixed(1) + '" fill="none" stroke="' + palette.threatStroke + '" stroke-width="' + (1.4 * dtcOverlayScale).toFixed(1) + '" stroke-dasharray="7 5" />')
           : '';
-        const cross = '<line x1="' + (m.x - 7).toFixed(1) + '" y1="' + m.y.toFixed(1) + '" x2="' + (m.x + 7).toFixed(1) + '" y2="' + m.y.toFixed(1) + '" stroke="' + palette.threatStroke + '" stroke-width="1.6" />'
-          + '<line x1="' + m.x.toFixed(1) + '" y1="' + (m.y - 7).toFixed(1) + '" x2="' + m.x.toFixed(1) + '" y2="' + (m.y + 7).toFixed(1) + '" stroke="' + palette.threatStroke + '" stroke-width="1.6" />';
-        const txt = '<text x="' + (m.x + 9).toFixed(1) + '" y="' + (m.y + 4).toFixed(1) + '" font-size="15" fill="' + palette.threatLabel + '" font-weight="700">' + label + '</text>';
+        const cross = '<line x1="' + (m.x - 9.5).toFixed(1) + '" y1="' + m.y.toFixed(1) + '" x2="' + (m.x + 9.5).toFixed(1) + '" y2="' + m.y.toFixed(1) + '" stroke="' + palette.threatStroke + '" stroke-width="' + (1.6 * dtcOverlayScale).toFixed(1) + '" />'
+          + '<line x1="' + m.x.toFixed(1) + '" y1="' + (m.y - 9.5).toFixed(1) + '" x2="' + m.x.toFixed(1) + '" y2="' + (m.y + 9.5).toFixed(1) + '" stroke="' + palette.threatStroke + '" stroke-width="' + (1.6 * dtcOverlayScale).toFixed(1) + '" />';
+        const txt = '<text x="' + (m.x + 12).toFixed(1) + '" y="' + (m.y + 5).toFixed(1) + '" font-size="22" fill="' + palette.threatLabel + '" font-weight="700">' + label + '</text>';
         return '<g>' + ring + cross + txt + '</g>';
       });
 
@@ -3584,16 +4149,16 @@
         const subtype = String((m && m.p && m.p.subtype) || '').toLowerCase();
         if (subtype === 'lantirn') {
           return '<g>'
-            + '<line x1="' + (m.x - 5).toFixed(1) + '" y1="' + m.y.toFixed(1) + '" x2="' + (m.x + 5).toFixed(1) + '" y2="' + m.y.toFixed(1) + '" stroke="' + palette.destStroke + '" stroke-width="1.5" />'
-            + '<line x1="' + m.x.toFixed(1) + '" y1="' + (m.y - 5).toFixed(1) + '" x2="' + m.x.toFixed(1) + '" y2="' + (m.y + 5).toFixed(1) + '" stroke="' + palette.destStroke + '" stroke-width="1.5" />'
-            + '<text x="' + (m.x + 9).toFixed(1) + '" y="' + (m.y + 4).toFixed(1) + '" font-size="15" fill="' + palette.destLabel + '" font-weight="700">' + label + '</text>'
+            + '<line x1="' + (m.x - 7.5).toFixed(1) + '" y1="' + m.y.toFixed(1) + '" x2="' + (m.x + 7.5).toFixed(1) + '" y2="' + m.y.toFixed(1) + '" stroke="' + palette.destStroke + '" stroke-width="' + (1.5 * dtcOverlayScale).toFixed(1) + '" />'
+            + '<line x1="' + m.x.toFixed(1) + '" y1="' + (m.y - 7.5).toFixed(1) + '" x2="' + m.x.toFixed(1) + '" y2="' + (m.y + 7.5).toFixed(1) + '" stroke="' + palette.destStroke + '" stroke-width="' + (1.5 * dtcOverlayScale).toFixed(1) + '" />'
+            + '<text x="' + (m.x + 12).toFixed(1) + '" y="' + (m.y + 5).toFixed(1) + '" font-size="22" fill="' + palette.destLabel + '" font-weight="700">' + label + '</text>'
             + '</g>';
         }
-        const p1 = m.x.toFixed(1) + ',' + (m.y - 7).toFixed(1);
-        const p2 = (m.x - 7).toFixed(1) + ',' + m.y.toFixed(1);
-        const p3 = m.x.toFixed(1) + ',' + (m.y + 7).toFixed(1);
-        const p4 = (m.x + 7).toFixed(1) + ',' + m.y.toFixed(1);
-        return '<g><polygon points="' + p1 + ' ' + p2 + ' ' + p3 + ' ' + p4 + '" fill="' + palette.destFill + '" stroke="' + palette.destStroke + '" stroke-width="1.5" /><text x="' + (m.x + 9).toFixed(1) + '" y="' + (m.y + 4).toFixed(1) + '" font-size="15" fill="' + palette.destLabel + '" font-weight="700">' + label + '</text></g>';
+        const p1 = m.x.toFixed(1) + ',' + (m.y - 10).toFixed(1);
+        const p2 = (m.x - 10).toFixed(1) + ',' + m.y.toFixed(1);
+        const p3 = m.x.toFixed(1) + ',' + (m.y + 10).toFixed(1);
+        const p4 = (m.x + 10).toFixed(1) + ',' + m.y.toFixed(1);
+        return '<g><polygon points="' + p1 + ' ' + p2 + ' ' + p3 + ' ' + p4 + '" fill="' + palette.destFill + '" stroke="' + palette.destStroke + '" stroke-width="' + (1.5 * dtcOverlayScale).toFixed(1) + '" /><text x="' + (m.x + 12).toFixed(1) + '" y="' + (m.y + 5).toFixed(1) + '" font-size="22" fill="' + palette.destLabel + '" font-weight="700">' + label + '</text></g>';
       });
 
       const airfieldMapped = airfields
@@ -3711,28 +4276,28 @@
         if (m.kind === 'cap') return racetrack('#2f5fa7', 'CAP');
         if (m.kind === 'hld') return racetrack('#2f7f4f', 'HLD');
         if (m.kind === 'ip') {
-          const s = 9;
-          return '<rect x="' + (m.x - s).toFixed(1) + '" y="' + (m.y - s).toFixed(1) + '" width="' + (s * 2) + '" height="' + (s * 2) + '" fill="' + palette.ipFill + '" stroke="' + palette.ipStroke + '" stroke-width="1.5" />';
+          const s = 11;
+          return '<rect x="' + (m.x - s).toFixed(1) + '" y="' + (m.y - s).toFixed(1) + '" width="' + (s * 2) + '" height="' + (s * 2) + '" fill="' + palette.ipFill + '" stroke="' + palette.ipStroke + '" stroke-width="' + (1.5 * dtcOverlayScale).toFixed(1) + '" />';
         }
         if (m.kind === 'tgt') {
-          const p1 = x + ',' + (m.y - 10).toFixed(1);
-          const p2 = (m.x - 10).toFixed(1) + ',' + (m.y + 8).toFixed(1);
-          const p3 = (m.x + 10).toFixed(1) + ',' + (m.y + 8).toFixed(1);
-          return '<polygon points="' + p1 + ' ' + p2 + ' ' + p3 + '" fill="' + palette.tgtFill + '" stroke="' + palette.tgtStroke + '" stroke-width="1.5" />';
+          const p1 = x + ',' + (m.y - 12).toFixed(1);
+          const p2 = (m.x - 12).toFixed(1) + ',' + (m.y + 10).toFixed(1);
+          const p3 = (m.x + 12).toFixed(1) + ',' + (m.y + 10).toFixed(1);
+          return '<polygon points="' + p1 + ' ' + p2 + ' ' + p3 + '" fill="' + palette.tgtFill + '" stroke="' + palette.tgtStroke + '" stroke-width="' + (1.5 * dtcOverlayScale).toFixed(1) + '" />';
         }
         if (m.kind === 'home' || m.kind === 'ldg') {
-          const r = 10;
+          const r = 12;
           const roofTop = x + ',' + (m.y - 12).toFixed(1);
           const roofL = (m.x - r).toFixed(1) + ',' + (m.y - 2).toFixed(1);
           const roofR = (m.x + r).toFixed(1) + ',' + (m.y - 2).toFixed(1);
           const baseX = (m.x - 8).toFixed(1);
           const baseY = (m.y - 2).toFixed(1);
-          return '<polygon points="' + roofTop + ' ' + roofL + ' ' + roofR + '" fill="' + palette.homeRoof + '" stroke="' + palette.homeStroke + '" stroke-width="1.5" /><rect x="' + baseX + '" y="' + baseY + '" width="16" height="12" fill="' + palette.homeBase + '" stroke="' + palette.homeStroke + '" stroke-width="1.5" />';
+          return '<polygon points="' + roofTop + ' ' + roofL + ' ' + roofR + '" fill="' + palette.homeRoof + '" stroke="' + palette.homeStroke + '" stroke-width="' + (1.5 * dtcOverlayScale).toFixed(1) + '" /><rect x="' + baseX + '" y="' + baseY + '" width="16" height="12" fill="' + palette.homeBase + '" stroke="' + palette.homeStroke + '" stroke-width="' + (1.5 * dtcOverlayScale).toFixed(1) + '" />';
         }
         if (m.kind === 'tko') {
-          return '<circle cx="' + x + '" cy="' + y + '" r="8" fill="' + palette.tkoFill + '" stroke="' + palette.tkoStroke + '" stroke-width="1.5" />';
+          return '<circle cx="' + x + '" cy="' + y + '" r="10" fill="' + palette.tkoFill + '" stroke="' + palette.tkoStroke + '" stroke-width="' + (1.5 * dtcOverlayScale).toFixed(1) + '" />';
         }
-        return '<circle cx="' + x + '" cy="' + y + '" r="8" fill="' + palette.wpFill + '" stroke="' + palette.wpStroke + '" stroke-width="1.5" />';
+        return '<circle cx="' + x + '" cy="' + y + '" r="10" fill="' + palette.wpFill + '" stroke="' + palette.wpStroke + '" stroke-width="' + (1.5 * dtcOverlayScale).toFixed(1) + '" />';
       }
 
       const pointEls = mapped.map(function (m) {
@@ -3742,7 +4307,7 @@
         const tx = (m.x + (isFinite(Number(m.labelDx)) ? Number(m.labelDx) : 14)).toFixed(1);
         const ty = (m.y + (isFinite(Number(m.labelDy)) ? Number(m.labelDy) : -14)).toFixed(1);
         return iconFor(m)
-          + '<text x="' + tx + '" y="' + ty + '" font-size="13" fill="' + palette.label + '" font-weight="700">' + label + '</text>';
+          + '<text x="' + tx + '" y="' + ty + '" font-size="22" fill="' + palette.label + '" font-weight="700">' + label + '</text>';
       });
 
       function assetIconFor(a) {
