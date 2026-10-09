@@ -210,6 +210,7 @@
       flex-direction: column;
       gap: 8px;
       min-height: 0;
+      min-width: 0;
     }
 
     .panel {
@@ -423,6 +424,7 @@
     .tabPanel {
       flex: 0 0 36%;
       min-height: 250px;
+      min-width: 0;
       display: flex;
       flex-direction: column;
     }
@@ -430,6 +432,7 @@
     .tabPanel .content {
       flex: 1 1 auto;
       min-height: 0;
+      min-width: 0;
     }
 
     .tabKeywordDivider {
@@ -1295,6 +1298,11 @@
       user-select: none;
     }
 
+    .mainContent.fltPlanContent {
+      overflow-x: auto;
+      overflow-y: auto;
+    }
+
     .keywordsContent {
       font-size: var(--contentFontSize);
       line-height: 1.32;
@@ -2132,6 +2140,50 @@
       white-space: nowrap;
       text-align: center;
       vertical-align: middle;
+    }
+
+    @media (max-width: 980px) and (orientation: portrait) {
+      body.flt-plan-tab .fltPlanWpTable th,
+      body.flt-plan-tab .fltPlanWpTable td {
+        font-size: 13px;
+        padding: 2px 3px;
+      }
+
+      body.flt-plan-tab .fltPlanWpTable th:nth-child(1) {
+        width: 28px !important;
+      }
+
+      body.flt-plan-tab .fltPlanWpTable th:nth-child(2) {
+        width: 46px !important;
+      }
+
+      body.flt-plan-tab .fltPlanWpTable th:nth-child(3) {
+        width: 82px !important;
+      }
+
+      body.flt-plan-tab .fltPlanWpTable th:nth-child(4) {
+        width: 62px !important;
+      }
+
+      body.flt-plan-tab .fltPlanWpTable th:nth-child(5) {
+        width: 34px !important;
+      }
+
+      body.flt-plan-tab .fltPlanWpTable th:nth-child(6) {
+        width: 58px !important;
+      }
+
+      body.flt-plan-tab .fltPlanWpTable th:nth-child(7) {
+        width: 56px !important;
+      }
+
+      body.flt-plan-tab .fltPlanWpTable th:nth-child(8) {
+        width: 82px !important;
+      }
+
+      body.flt-plan-tab .fltPlanWpTable th:nth-child(9) {
+        width: 150px !important;
+      }
     }
 
     .fltPlanWpTable th {
