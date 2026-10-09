@@ -23,8 +23,14 @@ struct SettingsView: View {
 							.multilineTextAlignment(.trailing)
 					}
 				}
+
+				Section("Tips") {
+					Text("Use the LAN URL shown in VAICOM desktop logs, like 192.168.1.20 and port 7779.")
+						.font(.footnote)
+						.foregroundStyle(.secondary)
+				}
 			}
-			.navigationTitle("OKB Viewer")
+			.navigationTitle("Connection Settings")
 			.toolbar {
 				ToolbarItem(placement: .topBarTrailing) {
 					Button("Done") { dismiss() }

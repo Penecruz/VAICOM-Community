@@ -15,7 +15,7 @@ final class ConnectionSettingsStore: ObservableObject {
 
 	init() {
 		let defaults = UserDefaults.standard
-		self.host = defaults.string(forKey: hostKey) ?? "192.168.1.100"
+		self.host = defaults.string(forKey: hostKey) ?? ""
 		self.port = defaults.string(forKey: portKey) ?? "7779"
 	}
 

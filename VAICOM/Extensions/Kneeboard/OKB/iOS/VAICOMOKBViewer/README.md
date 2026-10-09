@@ -24,6 +24,12 @@ This folder contains a minimal SwiftUI app skeleton that wraps the existing VAIC
 4. Merge `Config/Info.plist.template.xml` keys into your app `Info.plist`.
 5. Build and run on iPad.
 
+## Branding and app icon
+- Set app display name to `VAICOM` in target settings (`Display Name`).
+- In `Assets.xcassets` > `AppIcon`, import your provided PNG icon.
+- If using the single-size modern icon set, provide a clean 1024x1024 source PNG.
+- If using the classic multi-slot icon set, fill all required iPad/iOS icon slots from the same source image.
+
 ## TestFlight flow
 1. Join Apple Developer Program.
 2. Create app record in App Store Connect.

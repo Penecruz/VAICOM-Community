@@ -6,8 +6,10 @@ struct VAICOMOKBViewerApp: App {
 
 	var body: some Scene {
 		WindowGroup {
-			ContentView()
-				.environmentObject(settings)
+			NavigationStack {
+				ContentView()
+			}
+			.environmentObject(settings)
 		}
 	}
 }
