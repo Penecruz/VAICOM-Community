@@ -30,22 +30,32 @@ struct ContentView: View {
 			}
 
 			overlayView
-		}
-		.navigationTitle("VAICOM")
-		.toolbar {
-			ToolbarItemGroup(placement: .topBarTrailing) {
-				Button {
-					reloadToken = UUID()
-				} label: {
-					Image(systemName: "arrow.clockwise")
-				}
-				.disabled(settings.dashboardURL == nil)
 
-				Button {
-					showingSettings = true
-				} label: {
-					Label("Connection Settings", systemImage: "gearshape")
+			VStack {
+				HStack {
+					Spacer()
+					HStack(spacing: 10) {
+						Button {
+							reloadToken = UUID()
+						} label: {
+							Image(systemName: "arrow.clockwise")
+						}
+						.disabled(settings.dashboardURL == nil)
+
+						Button {
+							showingSettings = true
+						} label: {
+							Image(systemName: "gearshape")
+						}
+					}
+					.padding(.horizontal, 12)
+					.padding(.vertical, 10)
+					.background(.thinMaterial)
+					.clipShape(Capsule())
 				}
+				.padding(.top, 10)
+				.padding(.trailing, 12)
+				Spacer()
 			}
 		}
 		.sheet(isPresented: $showingSettings) {
