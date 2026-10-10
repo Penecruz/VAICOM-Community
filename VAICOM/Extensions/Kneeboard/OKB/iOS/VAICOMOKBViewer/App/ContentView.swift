@@ -65,20 +65,20 @@ struct ContentView: View {
 			startReconnectLoop()
 			startInitialConnectionAttempt()
 		}
-		.onChange(of: settings.dashboardURL?.absoluteString ?? "") { _ in
+		.onChange(of: settings.dashboardURL?.absoluteString ?? "") {
 			hasConnected = false
 			errorMessage = nil
 			startReconnectLoop()
 			startInitialConnectionAttempt()
 		}
-		.onChange(of: isLoading) { loading in
-			if !loading, settings.dashboardURL != nil, errorMessage == nil {
+		.onChange(of: isLoading) {
+			if !isLoading, settings.dashboardURL != nil, errorMessage == nil {
 				hasConnected = true
 				isInitialConnecting = false
 			}
 		}
-		.onChange(of: errorMessage) { message in
-			if message != nil {
+		.onChange(of: errorMessage) {
+			if errorMessage != nil {
 				hasConnected = false
 			}
 		}
