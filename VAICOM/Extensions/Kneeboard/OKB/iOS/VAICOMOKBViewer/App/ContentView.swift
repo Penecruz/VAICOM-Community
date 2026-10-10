@@ -10,15 +10,14 @@ struct ContentView: View {
 	@State private var isInitialConnecting = false
 	@State private var hasConnected = false
 	@State private var initialConnectionToken = UUID()
-
-	private let retryTimer = Timer.publish(every: 5, on: .main, in: .common).autoconnect()
+	@State private var reconnectLoopToken = UUID()
 
 	var body: some View {
 		let url = settings.dashboardURL
 		let showNoConnectionCard = shouldShowNoConnectionCard(for: url)
 
 		ZStack {
-			if let url {
+			if let url = url {
 				WebView(url: url, reloadToken: reloadToken, isLoading: $isLoading, errorMessage: $errorMessage)
 					.ignoresSafeArea()
 			} else {
@@ -63,11 +62,13 @@ struct ContentView: View {
 				.environmentObject(settings)
 		}
 		.onAppear {
+			startReconnectLoop()
 			startInitialConnectionAttempt()
 		}
 		.onChange(of: settings.dashboardURL?.absoluteString ?? "") { _ in
 			hasConnected = false
 			errorMessage = nil
+			startReconnectLoop()
 			startInitialConnectionAttempt()
 		}
 		.onChange(of: isLoading) { loading in
@@ -80,12 +81,6 @@ struct ContentView: View {
 			if message != nil {
 				hasConnected = false
 			}
-		}
-		.onReceive(retryTimer) { _ in
-			guard settings.dashboardURL != nil else { return }
-			guard !hasConnected else { return }
-			guard !isLoading else { return }
-			reloadToken = UUID()
 		}
 	}
 
@@ -157,6 +152,24 @@ struct ContentView: View {
 			if !hasConnected {
 				isInitialConnecting = false
 			}
+		}
+	}
+
+	private func startReconnectLoop() {
+		let token = UUID()
+		reconnectLoopToken = token
+		scheduleReconnectTick(token)
+	}
+
+	private func scheduleReconnectTick(_ token: UUID) {
+		DispatchQueue.main.asyncAfter(deadline: .now() + 5) {
+			guard reconnectLoopToken == token else { return }
+
+			if settings.dashboardURL != nil && !hasConnected && !isLoading {
+				reloadToken = UUID()
+			}
+
+			scheduleReconnectTick(token)
 		}
 	}
 }
