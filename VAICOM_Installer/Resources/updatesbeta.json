@@ -8,10 +8,10 @@
       "isdev": false,
       "productid": 1,
       "releasedate": 20261011,
-      "version": 3184,
-      "versionstring": "3.1.8.4",
+      "version": 3185,
+      "versionstring": "3.1.8.5",
       "downloadurl": "https://raw.githubusercontent.com/Penecruz/VAICOM-Community/Development/VAICOM_Installer/Resources/VAICOMPRO.zip",
-      "releasenotes": "BETA 3.1.8.4  \n - Adds OKB EFB Tab layers MIZ (DCS Draw Layer) and SAM threats (live from the AWACS Threat tab) \n - OKN Out fix FLT PLN Tab NAVLOG width handling \n - OKB Out UI checkbox addition for Allow LAN Connection (Turns on LAN pipeline and requests to open OKB port for private connection only) \n - OKB Out FLT PLN Tab AH-64D Apache DTC Handling And new module specific Comms Panel UI \n - Redesign DTC import for all modules to feed a common OKB side conical collecter and allow easier render paths/ \n - Refactor OKB Out to make long tern support and coding easier, break out CSS and JS code.    "
+      "releasenotes": "BETA 3.1.8.5  \n - Adds OKB EFB Tab layers MIZ (DCS Draw Layer) and SAM threats (live from the AWACS Threat tab) \n - OKN Out fix FLT PLN Tab NAVLOG width handling \n - OKB Out UI checkbox addition for Allow LAN Connection (Turns on LAN pipeline and requests to open OKB port for private connection only) \n - OKB Out FLT PLN Tab AH-64D Apache DTC Handling And new module specific Comms Panel UI \n - Redesign DTC import for all modules to feed a common OKB side conical collecter and allow easier render paths/ \n - Refactor OKB Out to make long tern support and coding easier, break out CSS and JS code.    "
     }
   ]
 }
