@@ -4057,30 +4057,28 @@
 
       let drag = null;
 
-      divider.addEventListener('mousedown', function (ev) {
+      function startDrag(clientY) {
         const metrics = getTabKeywordsMetrics();
         if (!metrics) return;
 
         const maxTop = Math.max(metrics.minTop, metrics.total - metrics.minBottom);
         drag = {
-          startY: ev.clientY,
+          startY: clientY,
           startTop: metrics.topHeight,
           minTop: metrics.minTop,
           maxTop: maxTop,
           total: metrics.total,
         };
+      }
 
-        ev.preventDefault();
-      });
-
-      document.addEventListener('mousemove', function (ev) {
+      function updateDrag(clientY) {
         if (!drag) return;
-        const targetTop = clamp(drag.startTop + (ev.clientY - drag.startY), drag.minTop, drag.maxTop);
+        const targetTop = clamp(drag.startTop + (clientY - drag.startY), drag.minTop, drag.maxTop);
         const ratio = targetTop / drag.total;
         applyTabKeywordsSplitRatio(ratio, false);
-      });
+      }
 
-      document.addEventListener('mouseup', function () {
+      function endDrag() {
         if (!drag) return;
         const metrics = getTabKeywordsMetrics();
         if (metrics) {
@@ -4088,6 +4086,43 @@
           applyTabKeywordsSplitRatio(ratio, true);
         }
         drag = null;
+      }
+
+      divider.style.touchAction = 'none';
+
+      divider.addEventListener('mousedown', function (ev) {
+        startDrag(ev.clientY);
+        ev.preventDefault();
+      });
+
+      document.addEventListener('mousemove', function (ev) {
+        updateDrag(ev.clientY);
+      });
+
+      document.addEventListener('mouseup', function () {
+        endDrag();
+      });
+
+      divider.addEventListener('touchstart', function (ev) {
+        const t = ev.touches && ev.touches[0];
+        if (!t) return;
+        startDrag(t.clientY);
+        ev.preventDefault();
+      }, { passive: false });
+
+      document.addEventListener('touchmove', function (ev) {
+        const t = ev.touches && ev.touches[0];
+        if (!t) return;
+        updateDrag(t.clientY);
+        if (drag) ev.preventDefault();
+      }, { passive: false });
+
+      document.addEventListener('touchend', function () {
+        endDrag();
+      });
+
+      document.addEventListener('touchcancel', function () {
+        endDrag();
       });
     }
 

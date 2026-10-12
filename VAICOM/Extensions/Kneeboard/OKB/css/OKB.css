@@ -17,6 +17,19 @@ body {
     user-select: none;
 }
 
+@media (hover: none) and (pointer: coarse) {
+    .tabKeywordDivider {
+        height: 18px;
+        flex: 0 0 18px;
+    }
+
+        .tabKeywordDivider::before {
+            width: 56px;
+            height: 3px;
+            box-shadow: 0 -3px 0 #92a1af, 0 3px 0 #92a1af;
+        }
+}
+
 .sheet,
 .sheet * {
     -webkit-user-select: none !important;
@@ -2635,7 +2648,7 @@ body.night-mode .fastOwnshipDataPanel {
 
 .fltPlanPage2Grid {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     gap: 8px;
     margin-top: 8px;
 }
@@ -2650,6 +2663,7 @@ body.night-mode .fastOwnshipDataPanel {
 .fltPlanPage2Section {
     border: 1px solid #8b96a1;
     background: #f7f9fb;
+    min-width: 0;
 }
 
 .fltPlanPage2Title {
@@ -2662,6 +2676,8 @@ body.night-mode .fastOwnshipDataPanel {
 
 .fltPlanPage2Body {
     padding: 4px 6px;
+    min-width: 0;
+    overflow-x: auto;
 }
 
 .fltPlanPage2Table {
@@ -2691,6 +2707,44 @@ body.night-mode .fastOwnshipDataPanel {
     text-overflow: clip;
     word-break: break-word;
     vertical-align: top;
+}
+
+@media (max-width: 1180px) and (orientation: portrait) {
+    body.flt-plan-tab .fltPlanHeaderGrid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    body.flt-plan-tab .fltPlanTimeGrid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    body.flt-plan-tab .fltPlanPostFlightCell {
+        grid-column: 1 / -1;
+        justify-content: flex-start;
+    }
+
+    body.flt-plan-tab .fltPlanBottomGrid {
+        grid-template-columns: 1fr;
+        grid-template-areas: 'freq' 'cmds' 'assets' 'wx';
+    }
+
+    body.flt-plan-tab .fltPlanPage2Grid {
+        grid-template-columns: 1fr;
+    }
+
+    body.flt-plan-tab .fltPlanPage2Table th,
+    body.flt-plan-tab .fltPlanPage2Table td {
+        font-size: 11px;
+        padding: 2px 2px;
+    }
+
+    body.flt-plan-tab .fltPlanPage2MarkerTable th:nth-child(1) {
+        width: 44px !important;
+    }
+
+    body.flt-plan-tab .fltPlanPage2MarkerTable th:nth-child(3) {
+        width: 148px !important;
+    }
 }
 
 .fltPlanPage3Wrap {
