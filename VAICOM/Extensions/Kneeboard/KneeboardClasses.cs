@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text.RegularExpressions;
 using VAICOM.Servers;
@@ -490,9 +491,19 @@ namespace VAICOM
 
                 private static string ResolveAtcDisplayCallsign(Server.DcsUnit unit)
                 {
+                    bool IsUnknownToken(string value)
+                    {
+                        return string.Equals((value ?? string.Empty).Trim(), "unknown", StringComparison.OrdinalIgnoreCase);
+                    }
+
                     if (unit == null || State.currentstate == null || State.currentstate.atcmetars == null)
                     {
-                        return unit != null ? unit.callsign : string.Empty;
+                        if (unit == null)
+                        {
+                            return string.Empty;
+                        }
+
+                        return IsUnknownToken(unit.callsign) ? string.Empty : unit.callsign;
                     }
 
                     string[] keys =
@@ -510,6 +521,11 @@ namespace VAICOM
                             continue;
                         }
 
+                        if (IsUnknownToken(key))
+                        {
+                            continue;
+                        }
+
                         if (State.currentstate.atcmetars.TryGetValue(key, out string metar))
                         {
                             string icao = ExtractIcaoFromMetar(metar);
@@ -520,7 +536,7 @@ namespace VAICOM
                         }
                     }
 
-                    return unit.callsign;
+                    return IsUnknownToken(unit.callsign) ? string.Empty : unit.callsign;
                 }
 
                 private static string FormatDisplayCallsign(string callsign)
@@ -777,11 +793,36 @@ namespace VAICOM
                                     allFrequencies.AddRange(unit.altfreq);
                                 }
 
-                                // Parse frequencies as numerical values and classify them
-                                var uhfFreqs = allFrequencies.Where(freq => double.TryParse(freq, out double f) && f >= 225000000 && f <= 399950000).ToList();
-                                var vhfHiFreqs = allFrequencies.Where(freq => double.TryParse(freq, out double f) && f >= 118000000 && f <= 137000000).ToList();
-                                var vhfLowFreqs = allFrequencies.Where(freq => double.TryParse(freq, out double f) && f >= 30000000 && f <= 75000000).ToList();
-                                var hfFreqs = allFrequencies.Where(freq => double.TryParse(freq, out double f) && f >= 3000000 && f <= 30000000).ToList();
+                                // Parse frequencies with invariant culture first because DCS payload uses dot decimals.
+                                Func<string, double?> parseFreq = freq =>
+                                {
+                                    if (string.IsNullOrWhiteSpace(freq))
+                                    {
+                                        return null;
+                                    }
+
+                                    if (double.TryParse(freq, NumberStyles.Float, CultureInfo.InvariantCulture, out double parsedInvariant))
+                                    {
+                                        return parsedInvariant;
+                                    }
+
+                                    if (double.TryParse(freq, NumberStyles.Float, CultureInfo.CurrentCulture, out double parsedCurrent))
+                                    {
+                                        return parsedCurrent;
+                                    }
+
+                                    return null;
+                                };
+
+                                var parsedFrequencies = allFrequencies
+                                    .Select(freq => new { Raw = freq, Value = parseFreq(freq) })
+                                    .Where(x => x.Value.HasValue)
+                                    .ToList();
+
+                                var uhfFreqs = parsedFrequencies.Where(x => x.Value.Value >= 225000000 && x.Value.Value <= 399950000).Select(x => x.Raw).ToList();
+                                var vhfHiFreqs = parsedFrequencies.Where(x => x.Value.Value >= 118000000 && x.Value.Value <= 137000000).Select(x => x.Raw).ToList();
+                                var vhfLowFreqs = parsedFrequencies.Where(x => x.Value.Value >= 30000000 && x.Value.Value <= 75000000).Select(x => x.Raw).ToList();
+                                var hfFreqs = parsedFrequencies.Where(x => x.Value.Value >= 3000000 && x.Value.Value <= 30000000).Select(x => x.Raw).ToList();
 
                                 // Select the top two frequencies based on priority
                                 if (uhfFreqs.Any())
@@ -884,6 +925,12 @@ namespace VAICOM
                             string callsignDisplay = cat.Equals("ATC", StringComparison.OrdinalIgnoreCase)
                                 ? ResolveAtcDisplayCallsign(unit)
                                 : descr.callsign;
+
+                            if (cat.Equals("ATC", StringComparison.OrdinalIgnoreCase)
+                                && string.IsNullOrWhiteSpace(callsignDisplay))
+                            {
+                                continue;
+                            }
 
                             callsignDisplay = FormatDisplayCallsign(callsignDisplay);
 

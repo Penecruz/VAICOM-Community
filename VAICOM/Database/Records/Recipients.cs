@@ -435,7 +435,7 @@ namespace VAICOM
                 { "Herat",                      new Recipient { uniqueid = 15501, category = RecipientCategories.aiatc, name = "wAIUnitATCAfghanHerat",  displayname = Labels.airecipients["Herat"]  } },
                 { "Jalalabad",                  new Recipient { uniqueid = 15502, category = RecipientCategories.aiatc, name = "wAIUnitATCAfghanJalalabad",  displayname = Labels.airecipients["Jalalabad"]  } },
                 { "Kabul",                      new Recipient { uniqueid = 15503, category = RecipientCategories.aiatc, name = "wAIUnitATCAfghanKabul",  displayname = Labels.airecipients["Kabul"]  } },
-                { "kandahar",                   new Recipient { uniqueid = 15504, category = RecipientCategories.aiatc, name = "wAIUnitATCAfghankandahar",  displayname = Labels.airecipients["kandahar"]  } },
+                { "Kandahar",                   new Recipient { uniqueid = 15504, category = RecipientCategories.aiatc, name = "wAIUnitATCAfghankandahar",  displayname = Labels.airecipients["Kandahar"]  } },
                    // East
                 { "Kandahar Heliport",          new Recipient { uniqueid = 15505, category = RecipientCategories.aiatc, name = "wAIUnitATCAfghanKandaharHeliport",  displayname = Labels.airecipients["Kandahar Heliport"]  } },
                 { "Khost",                      new Recipient { uniqueid = 15506, category = RecipientCategories.aiatc, name = "wAIUnitATCAfghanKhost",  displayname = Labels.airecipients["Khost"]  } },

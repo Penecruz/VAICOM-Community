@@ -25,7 +25,7 @@
 --   - Strict 4-character ICAO-like values (A-Z / 0-9) are preferred.
 --   - If no ICAO is available, strict 3-letter IATA values can be used.
 --   - Invalid/empty values are ignored and fallback logic is used to display a generated ICAO code.
---   - This table may be edited and expanded by users to add missing or correct ICAO codes for their DCS terrains. Although I am good, I may have some wrong codes!
+--   - This table may be edited and expanded by users to add missing or correct ICAO codes for their DCS terrains. Although I am good, I may have some wrong codes! you can submit your edits via our GitHub for inclusion in a future update.
 
 return {
   -- Optional global fallback mappings used for all terrains.
@@ -187,6 +187,8 @@ return {
     ["SIR ABU NUAYR"] = { icao = "OMSN", iata = "", type = "CIV" },
   },
   syria = {
+    ["ALEPPO"] = { icao = "OSAP", iata = "ALP", type = "CIV" },
+    ["ADIYAMAN"] = { icao = "LTCP", iata = "ADF", type = "CIV" },
     ["BEIRUT RAFIC HARIRI"] = { icao = "OLBA", iata = "BEY", type = "CIV" },
     ["RAYAK"] = { icao = "OLRA", iata = "", type = "MIL" },
     ["WUJAH AL HAJAR"] = { icao = "Z19O", iata = "", type = "MIL" },
@@ -209,10 +211,13 @@ return {
     ["ABU AL DUHUR"] = { icao = "OS57", iata = "", type = "MIL" },
     ["TAFTANAZ"] = { icao = "", iata = "", type = "" },
     ["HATAY"] = { icao = "LTDA", iata = "HTY", type = "CIV" },
+    ["DIYARBAKIR"] = { icao = "LTCC", iata = "DIY", type = "CIV" },
+    ["DEIR EZ ZOR"] = { icao = "OSDZ", iata = "DEZ", type = "CIV" },
     ["KUWEIRES"] = { icao = "OS66", iata = "", type = "MIL" },
     ["MINAKH"] = { icao = "", iata = "", type = "" },
     ["JIRAH"] = { icao = "OS62", iata = "", type = "MIL" },
     ["ADANA SAKIRPASA"] = { icao = "LTAF", iata = "ADA", type = "CIV" },
+    ["CHUKUROVA"] = { icao = "LTDB", iata = "COV", type = "CIV" },
     ["INCIRLIK"] = { icao = "LTAG", iata = "", type = "MIL" },
     ["DAMASCUS"] = { icao = "OSDI", iata = "DAM", type = "CIV" },
     ["THA LAH"] = { icao = "", iata = "", type = "" },
@@ -232,6 +237,8 @@ return {
     ["MARKA"] = { icao = "OJAM", iata = "ADJ", type = "CIV" },
     ["HERZLIYA"] = { icao = "LLHZ", iata = "", type = "CIV" },
     ["PRINCE HASSAN"] = { icao = "OJHF", iata = "", type = "MIL" },
+    ["GAZIANTEP"] = { icao = "LTAJ", iata = "GZT", type = "CIV" },
+    ["GAZIPASA"] = { icao = "LTFG", iata = "GZP", type = "CIV" },
   },
   nevada = {
     ["CREECH"] = { icao = "KINS", iata = "INS", type = "MIL" },

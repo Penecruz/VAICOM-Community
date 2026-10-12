@@ -457,7 +457,7 @@ namespace VAICOM
                 { "Herat",                  "Herat"                 },
                 { "Jalalabad",             "Jalalabad"              },
                 { "Kabul",                 "Kabul"                  },
-                { "kandahar",               "kandahar"              },
+                { "Kandahar",               "Kandahar"              },
                 { "Kandahar Heliport",      "Kandahar Heliport"     },
                 { "Kandahar Pads",          "Kandahar Heliport"     },
                      // East

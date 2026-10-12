@@ -1792,6 +1792,11 @@
         return m ? String(m[1] || '') : '';
       }
 
+      function isUnknownAtcIdentity(value) {
+        const t = String(value || '').trim().toUpperCase();
+        return t === 'UNKNOWN';
+      }
+
       function metarIcao(text) {
         const m = String(text || '').toUpperCase().match(/\bMETAR\s+([A-Z]{4})\b/);
         return m ? String(m[1] || '') : '';
@@ -1864,7 +1869,12 @@
         const metar = key ? String(atcMetars[key] || '') : '';
         const icao = tokenIcao(text) || metarIcao(metar) || tokenIcao(key);
         const overrideType = resolveOverrideType(icao, text, key, a && a.IcaoType);
-        const label = String((icao || (a && (a.Callsign || a.Name)) || 'ATC')).toUpperCase();
+        const callsign = String((a && a.Callsign) || '').trim();
+        const name = String((a && a.Name) || '').trim();
+        const unknownIdentity = isUnknownAtcIdentity(callsign) || isUnknownAtcIdentity(name);
+        const label = unknownIdentity && !icao
+          ? ''
+          : String((icao || callsign || name || 'ATC')).toUpperCase();
 
         const dedupeIcao = String(icao || label || 'ATC').toUpperCase();
         const dedupeKey = dedupeIcao + '|' + String(Math.round(north / 10) * 10) + '|' + String(Math.round(east / 10) * 10);
@@ -1875,8 +1885,8 @@
         rows.push({
           xNum: north,
           yNum: east,
-          callsign: String((a && a.Callsign) || '').trim(),
-          name: String((a && a.Name) || '').trim(),
+          callsign: callsign,
+          name: name,
           category: 'ATC',
           typeName: String((a && a.TypeName) || '').trim(),
           frequency: String((a && a.Frequency) || '').trim(),
@@ -1886,6 +1896,7 @@
           altFeet: Number(a && a.AltFeet),
           label: label,
           icao: String(icao || '').toUpperCase(),
+          suppressLabel: unknownIdentity && !icao,
           type: (u.indexOf('SEAPLANE') >= 0 ? 'seaplane' : (u.indexOf('HELI') >= 0 || u.indexOf('FARP') >= 0 ? 'heliport' : (overrideType === 'MIL' || overrideType === 'JOINT' ? 'airport' : 'airport'))),
           isMilitary: (overrideType === 'MIL' || overrideType === 'JOINT')
             ? true
@@ -3112,7 +3123,7 @@
           kind: 'airfield',
           group: 'asset',
           assetKey: makeMapAssetSelectionKey(airfieldAsset),
-          label: String((p && p.icao) || (p && p.label) || 'AF'),
+          label: !!(p && p.suppressLabel) ? '' : String((p && p.icao) || (p && p.label) || 'AF'),
           airfieldType: String((p && p.type) || 'airport').toLowerCase(),
           airfieldMilitary: !!(p && p.isMilitary),
           isVfr: isVfr,

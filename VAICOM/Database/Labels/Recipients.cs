@@ -379,7 +379,7 @@ namespace VAICOM
                 { "Herat",                  "Herat"                 },
                 { "Jalalabad",             "Jalalabad"              },
                 { "Kabul",                 "Kabul"                  },
-                { "kandahar",               "kandahar"              },
+                { "Kandahar",               "Kandahar"              },
                      // East
                 { "Kandahar Heliport",      "Kandahar Heliport"     },
                 { "Khost",                 "Khost"                  },

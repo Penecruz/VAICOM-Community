@@ -3547,6 +3547,11 @@ base.vaicom.state = {
 				end
 
 				local function buildAllAtcIcaoTypes()
+					local function isUnknownAtcPlaceholder(value)
+						local t = base.string.upper(base.tostring(value or ""))
+						return t == "" or t == "UNKNOWN"
+					end
+
 					local result = {}
 					for _, d in base.pairs(buildAtcDescriptors()) do
 						local atc = d.locator
@@ -3579,20 +3584,20 @@ base.vaicom.state = {
 									if iata ~= "" then
 										result[iata] = typeCode
 									end
-									if normalizedCallsign ~= "" then
+									if normalizedCallsign ~= "" and not isUnknownAtcPlaceholder(normalizedCallsign) then
 										result[normalizedCallsign] = typeCode
 									end
-									if normalizedAtcName ~= "" then
+									if normalizedAtcName ~= "" and not isUnknownAtcPlaceholder(normalizedAtcName) then
 										result[normalizedAtcName] = typeCode
 									end
 
 									local upperCallsign = base.string.upper(base.tostring(callsign or ""))
-									if upperCallsign ~= "" then
+									if upperCallsign ~= "" and not isUnknownAtcPlaceholder(upperCallsign) then
 										result[upperCallsign] = typeCode
 									end
 
 									local shortCallsign = base.string.upper(base.tostring(d.shortCallsign or ""))
-									if shortCallsign ~= "" then
+									if shortCallsign ~= "" and not isUnknownAtcPlaceholder(shortCallsign) then
 										result[shortCallsign] = typeCode
 									end
 								end
@@ -4039,6 +4044,11 @@ base.vaicom.state = {
 				end
 
 				local function buildAllAtcMetars()
+					local function isUnknownAtcPlaceholder(value)
+						local t = base.string.upper(base.tostring(value or ""))
+						return t == "" or t == "UNKNOWN"
+					end
+
 					local result = {}
 					for _, d in base.pairs(buildAtcDescriptors()) do
 						local atc = d.locator
@@ -4075,12 +4085,12 @@ base.vaicom.state = {
 							end
 
 							local upperCallsign = base.string.upper(base.tostring(callsign or ""))
-							if upperCallsign ~= "" then
+							if upperCallsign ~= "" and not isUnknownAtcPlaceholder(upperCallsign) then
 								result[upperCallsign] = metar
 							end
 
 							local shortCallsign = base.string.upper(base.tostring(d.shortCallsign or ""))
-							if shortCallsign ~= "" then
+							if shortCallsign ~= "" and not isUnknownAtcPlaceholder(shortCallsign) then
 								result[shortCallsign] = metar
 							end
 						end
