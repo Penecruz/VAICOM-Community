@@ -5930,6 +5930,7 @@ namespace VAICOM
                 private static List<OpenKneeboardFriendlyAsset> BuildFriendlyAssetsSnapshot()
                 {
                     List<OpenKneeboardFriendlyAsset> assets = new List<OpenKneeboardFriendlyAsset>();
+                    const int maxFriendlyAssets = 128;
 
                     try
                     {
@@ -5939,7 +5940,9 @@ namespace VAICOM
                         }
 
                         string playerCoalition = (State.currentstate.playercoalition ?? string.Empty).Trim();
-                        string[] categories = new[] { "Player", "Flight", "Tanker", "AWACS", "JTAC", "ATC", "Allies" };
+                        // Keep ATC early so large mission recipient sets do not crowd out airfields
+                        // before SA-map/WX overlays are assembled.
+                        string[] categories = new[] { "Player", "ATC", "Flight", "Tanker", "AWACS", "JTAC", "Allies" };
                         HashSet<string> seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
                         if (State.currentstate.bpos != null)
@@ -6078,7 +6081,7 @@ namespace VAICOM
                                     AltFeet = unit.pos.y * 3.28084,
                                 });
 
-                                if (assets.Count >= 64)
+                                if (assets.Count >= maxFriendlyAssets)
                                 {
                                     return assets;
                                 }

@@ -682,15 +682,23 @@ namespace VAICOM
                             return new List<string>();
                         }
 
-                        HashSet<string> scoped;
-                        if (!IcaoAirportsByTheatre.TryGetValue(key, out scoped) || scoped == null)
+                        var merged = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                        foreach (var sectionKey in GetLinkedTheatreKeys(key))
                         {
-                            return new List<string>();
+                            HashSet<string> scoped;
+                            if (IcaoAirportsByTheatre.TryGetValue(sectionKey, out scoped) && scoped != null)
+                            {
+                                foreach (var icao in scoped)
+                                {
+                                    if (!string.IsNullOrWhiteSpace(icao))
+                                    {
+                                        merged.Add(icao.Trim().ToUpperInvariant());
+                                    }
+                                }
+                            }
                         }
 
-                        return scoped
-                            .Where(v => !string.IsNullOrWhiteSpace(v))
-                            .Select(v => v.Trim().ToUpperInvariant())
+                        return merged
                             .Where(v => v.Length == 4)
                             .Distinct(StringComparer.OrdinalIgnoreCase)
                             .OrderBy(v => v, StringComparer.OrdinalIgnoreCase)
@@ -715,14 +723,55 @@ namespace VAICOM
                             return new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
                         }
 
-                        Dictionary<string, string> scoped;
-                        if (!IcaoAirportNamesByTheatre.TryGetValue(key, out scoped) || scoped == null)
+                        var merged = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+                        foreach (var sectionKey in GetLinkedTheatreKeys(key))
                         {
-                            return new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+                            Dictionary<string, string> scoped;
+                            if (!IcaoAirportNamesByTheatre.TryGetValue(sectionKey, out scoped) || scoped == null)
+                            {
+                                continue;
+                            }
+
+                            foreach (var kv in scoped)
+                            {
+                                var icao = (kv.Key ?? string.Empty).Trim().ToUpperInvariant();
+                                var name = (kv.Value ?? string.Empty).Trim();
+                                if (icao.Length != 4 || string.IsNullOrWhiteSpace(name))
+                                {
+                                    continue;
+                                }
+
+                                if (!merged.ContainsKey(icao))
+                                {
+                                    merged[icao] = name;
+                                }
+                            }
                         }
 
-                        return new Dictionary<string, string>(scoped, StringComparer.OrdinalIgnoreCase);
+                        return merged;
                     }
+                }
+
+                private static List<string> GetLinkedTheatreKeys(string key)
+                {
+                    var keys = new List<string>();
+                    if (string.IsNullOrWhiteSpace(key))
+                    {
+                        return keys;
+                    }
+
+                    keys.Add(key);
+
+                    if (key.Equals("syria", StringComparison.OrdinalIgnoreCase))
+                    {
+                        keys.Add("sinai");
+                    }
+                    else if (key.Equals("sinai", StringComparison.OrdinalIgnoreCase))
+                    {
+                        keys.Add("syria");
+                    }
+
+                    return keys;
                 }
 
                 public static Dictionary<string, string> GetAirportDisplayNamesFromOverrides(IEnumerable<string> airportIcaos)

@@ -1805,14 +1805,28 @@
       function resolveMetarKey(text) {
         const upper = String(text || '').toUpperCase();
         const compact = upper.replace(/[^A-Z0-9]/g, '');
+        let bestKey = '';
+        let bestScore = -1;
         for (let i = 0; i < metarKeys.length; i++) {
           const k = String(metarKeys[i] || '').toUpperCase();
           if (!k) continue;
-          if (upper.indexOf(k) >= 0) return metarKeys[i];
           const kc = k.replace(/[^A-Z0-9]/g, '');
-          if (compact && kc && (compact.indexOf(kc) >= 0 || kc.indexOf(compact) >= 0)) return metarKeys[i];
+          if (!kc) continue;
+
+          if (upper === k || compact === kc) {
+            return metarKeys[i];
+          }
+
+          const isMatch = upper.indexOf(k) >= 0 || (compact && (compact.indexOf(kc) >= 0 || kc.indexOf(compact) >= 0));
+          if (!isMatch) continue;
+
+          const score = kc.length;
+          if (score > bestScore) {
+            bestScore = score;
+            bestKey = metarKeys[i];
+          }
         }
-        return '';
+        return bestKey;
       }
 
       function parseVisMeters(text) {
@@ -1867,7 +1881,7 @@
 
         const key = resolveMetarKey(text);
         const metar = key ? String(atcMetars[key] || '') : '';
-        const icao = tokenIcao(text) || metarIcao(metar) || tokenIcao(key);
+        const icao = metarIcao(metar) || tokenIcao(key) || tokenIcao(text);
         const overrideType = resolveOverrideType(icao, text, key, a && a.IcaoType);
         const callsign = String((a && a.Callsign) || '').trim();
         const name = String((a && a.Name) || '').trim();

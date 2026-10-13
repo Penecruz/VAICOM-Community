@@ -3378,6 +3378,11 @@ base.vaicom.state = {
 				local function resolveIcaoMetaForAtc(callsign, atcName)
 					local overrides = loadIcaoOverrides()
 					local theatre = base.string.lower(base.tostring(base.vaicom.state and base.vaicom.state.theatre or ""))
+					if theatre == "sinaimap" then
+						theatre = "sinai"
+					elseif theatre == "syriamap" then
+						theatre = "syria"
+					end
 					local keyCallsign = normalizeIcaoKey(callsign)
 					local keyName = normalizeIcaoKey(atcName)
 
@@ -3435,12 +3440,32 @@ base.vaicom.state = {
 						return nil
 					end
 
-					local theatreTable = overrides[theatre]
-					local fallbackTable = overrides.default
-					local resolved = readCodeAndType(theatreTable, keyCallsign)
-					if resolved == nil then resolved = readCodeAndType(theatreTable, keyName) end
-					if resolved == nil then resolved = readCodeAndType(fallbackTable, keyCallsign) end
-					if resolved == nil then resolved = readCodeAndType(fallbackTable, keyName) end
+					local function lookupFromScope(scope)
+						local resolved = readCodeAndType(scope, keyCallsign)
+						if resolved == nil then resolved = readCodeAndType(scope, keyName) end
+						return resolved
+					end
+
+					local scopes = {}
+					if base.type(overrides[theatre]) == "table" then
+						base.table.insert(scopes, overrides[theatre])
+					end
+					if theatre == "syria" and base.type(overrides.sinai) == "table" then
+						base.table.insert(scopes, overrides.sinai)
+					elseif theatre == "sinai" and base.type(overrides.syria) == "table" then
+						base.table.insert(scopes, overrides.syria)
+					end
+					if base.type(overrides.default) == "table" then
+						base.table.insert(scopes, overrides.default)
+					end
+
+					local resolved = nil
+					for _, scope in base.pairs(scopes) do
+						resolved = lookupFromScope(scope)
+						if resolved ~= nil then
+							break
+						end
+					end
 					if resolved ~= nil then
 						local preferred = resolved.icao
 						if preferred == nil or preferred == "" then
@@ -6075,7 +6100,10 @@ base.vaicom.state = {
 				for recipientclass,_ in base.pairs(base.vaicom.state.availablerecipients) do
                 	for n,k in base.pairs(base.vaicom.state.availablerecipients[recipientclass]) do
 						-- We only send the first 50 for some recipient classes
-						if (recipientclass == "ATC" or recipientclass == "Allies") and n >= 50 then
+					if recipientclass == "ATC" and n >= 100 then
+						break
+					end
+					if recipientclass == "Allies" and n >= 50 then
 							break
 						end
 
@@ -6114,7 +6142,7 @@ base.vaicom.state = {
 										}	
 						local tbl 
 						if recipientclass == "ATC" then
-							tbl = ((n < 25) and 5) or ((n < 50) and 6)
+							tbl = ((n < 50) and 5) or ((n < 100) and 6)
 						else
 							if recipientclass == "Allies" then
 								tbl = ((n < 25) and 7) or ((n < 50) and 8)
