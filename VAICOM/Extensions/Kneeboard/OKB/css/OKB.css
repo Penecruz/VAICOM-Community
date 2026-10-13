@@ -523,6 +523,63 @@ body.efb-tab .keywordsPanel {
     display: none !important;
 }
 
+@media (orientation: landscape) {
+    .kneeLayout {
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+    }
+
+    .leftColumn {
+        flex: 1 1 auto;
+        min-height: 0;
+        overflow: hidden;
+    }
+
+    .tabPanel,
+    .keywordsPanel,
+    .session .content {
+        min-height: 0;
+    }
+
+    .tabRail {
+        flex: 0 0 auto;
+        width: 100%;
+        height: auto;
+        padding: 6px 6px calc(6px + env(safe-area-inset-bottom));
+        overflow-x: auto;
+        overflow-y: hidden;
+    }
+
+    .tabs {
+        flex-direction: row;
+        height: auto;
+        min-height: 0;
+        width: max-content;
+        min-width: 100%;
+    }
+
+    .tab {
+        writing-mode: horizontal-tb;
+        text-orientation: mixed;
+        transform: none;
+        flex: 0 0 auto;
+        min-width: 94px;
+        min-height: 44px;
+        padding: 6px 12px;
+    }
+
+    .tab:hover {
+        animation: none;
+        transform: translateY(-1px);
+    }
+
+    .tab.active,
+    body.efb-tab .tab.active {
+        transform: scale(1.04);
+    }
+}
+
 .efbShell {
     position: relative;
     height: 100%;
@@ -1020,6 +1077,102 @@ body.efb-tab .keywordsPanel {
         opacity: 0;
         pointer-events: none;
     }
+
+@media (orientation: landscape) and (hover: none) and (pointer: coarse) {
+    body.efb-tab .efbLeftRail {
+        left: 8px;
+        right: 166px;
+        top: 8px;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        gap: 6px;
+        overflow-x: auto;
+        overflow-y: hidden;
+        padding-bottom: 2px;
+        scrollbar-width: none;
+    }
+
+        body.efb-tab .efbLeftRail::-webkit-scrollbar {
+            display: none;
+        }
+
+    body.efb-tab .efbRightRail {
+        right: 8px;
+        top: 8px;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        gap: 6px;
+    }
+
+    body.efb-tab .efbRailBtn,
+    body.efb-tab .efbRailSpacer {
+        width: 56px;
+        height: 56px;
+        flex: 0 0 auto;
+    }
+
+    body.efb-tab .efbRailIconSvg {
+        width: 30px;
+        height: 30px;
+    }
+
+    body.efb-tab .efbLeftActionDrawer {
+        left: 8px;
+        right: 8px;
+        top: 72px;
+        bottom: auto;
+        width: auto;
+        max-width: none;
+        max-height: calc(100% - 88px);
+        transform: translateY(0);
+    }
+
+        body.efb-tab .efbLeftActionDrawer.closed {
+            transform: translateY(-118%);
+        }
+
+    body.efb-tab .efbSaLayerDrawer {
+        left: 8px;
+        right: 8px;
+        top: 72px;
+        width: auto;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 8px;
+        transform: translateY(0);
+    }
+
+        body.efb-tab .efbSaLayerDrawer.closed {
+            transform: translateY(-118%);
+        }
+
+    body.efb-tab .efbRightActionDrawer {
+        right: 8px;
+        top: 72px;
+        width: auto;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        gap: 8px;
+        transform: translateY(0);
+    }
+
+        body.efb-tab .efbRightActionDrawer.closed {
+            transform: translateY(-118%);
+        }
+
+    body.efb-tab .efbDrawerList {
+        max-height: min(44vh, 340px);
+    }
+
+    .bottomQuickBar {
+        bottom: calc(108px + env(safe-area-inset-bottom));
+    }
+}
 
 .efbDrawerHeader {
     display: flex;
