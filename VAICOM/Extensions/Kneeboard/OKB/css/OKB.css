@@ -211,7 +211,7 @@ h3 {
 
 .kneeLayout {
     display: grid;
-    grid-template-columns: 1fr 86px;
+    grid-template-columns: 1fr 72px;
     gap: 8px;
     align-items: stretch;
     flex: 1 1 auto;
@@ -272,7 +272,7 @@ h3 {
 .tabRail {
     border: 1px solid #9aa0a6;
     background: #ececec;
-    padding: 6px 4px;
+    padding: 6px 3px;
     height: 100%;
     display: flex;
     min-height: 0;
@@ -331,8 +331,8 @@ h3 {
     background: rgba(180, 180, 180, 0.78);
     color: #f5f7fa;
     font-family: inherit;
-    font-size: 20px;
-    padding: 8px 4px;
+    font-size: 19px;
+    padding: 8px 3px;
     cursor: pointer;
     text-align: center;
     font-weight: 600;
@@ -1976,15 +1976,15 @@ body.night-mode .fastOwnshipDataPanel {
 
 .fltPlanTimeGrid {
     display: grid;
-    grid-template-columns: repeat(4, minmax(120px, 1fr));
-    gap: 6px;
+    grid-template-columns: repeat(5, minmax(86px, 1fr));
+    gap: 4px;
     margin-bottom: 8px;
 }
 
 .fltPlanTimeCell {
     border: 1px solid #8b96a1;
     background: #edf2f6;
-    padding: 3px 5px;
+    padding: 2px 4px;
     position: relative;
     overflow: visible;
     transition: background 260ms ease;
@@ -1996,9 +1996,10 @@ body.night-mode .fastOwnshipDataPanel {
 }
 
 .fltPlanTimeCellValue {
-    font-size: 16px;
+    font-size: 15px;
     font-weight: 700;
     color: #111;
+    white-space: nowrap;
 }
 
 .fltPlanTimeCell.clickable {
@@ -2715,7 +2716,7 @@ body.night-mode .fastOwnshipDataPanel {
     }
 
     body.flt-plan-tab .fltPlanTimeGrid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-columns: repeat(5, minmax(86px, 1fr));
     }
 
     body.flt-plan-tab .fltPlanPostFlightCell {

@@ -1317,15 +1317,30 @@ namespace VAICOM
 
                                     if (chunk != null)
                                     {
-                                        SortedDictionary<string, List<string>> fromSource;
-                                        SortedDictionary<string, List<string>> fromSend;
-                                        if (TryGetAliasChunkCategory(chunk, sourceCategory, out fromSource))
+                                        if (IsGroundCrewCategory(sourceCategory) || IsGroundCrewCategory(sendCategory))
                                         {
-                                            aliasStrings = fromSource;
+                                            aliasStrings = MergeAliasChunkCategories(
+                                                chunk,
+                                                sourceCategory,
+                                                sendCategory,
+                                                "REF",
+                                                "CREW",
+                                                "REF/CREW",
+                                                "GROUND CREW",
+                                                "GND CREW");
                                         }
-                                        else if (TryGetAliasChunkCategory(chunk, sendCategory, out fromSend))
+                                        else
                                         {
-                                            aliasStrings = fromSend;
+                                            SortedDictionary<string, List<string>> fromSource;
+                                            SortedDictionary<string, List<string>> fromSend;
+                                            if (TryGetAliasChunkCategory(chunk, sourceCategory, out fromSource))
+                                            {
+                                                aliasStrings = fromSource;
+                                            }
+                                            else if (TryGetAliasChunkCategory(chunk, sendCategory, out fromSend))
+                                            {
+                                                aliasStrings = fromSend;
+                                            }
                                         }
                                     }
 
@@ -1359,6 +1374,84 @@ namespace VAICOM
                     }
 
                     return false;
+                }
+
+                private static bool IsGroundCrewCategory(string category)
+                {
+                    string cat = (category ?? string.Empty).Trim();
+                    if (string.IsNullOrWhiteSpace(cat)) return false;
+
+                    if (cat.Equals("GND CREW", StringComparison.OrdinalIgnoreCase)
+                        || cat.Equals("GROUND CREW", StringComparison.OrdinalIgnoreCase)
+                        || cat.Equals("REF/CREW", StringComparison.OrdinalIgnoreCase)
+                        || cat.Equals("REF CREW", StringComparison.OrdinalIgnoreCase)
+                        || cat.Equals("CREW", StringComparison.OrdinalIgnoreCase)
+                        || cat.Equals("REF", StringComparison.OrdinalIgnoreCase))
+                    {
+                        return true;
+                    }
+
+                    string compact = cat.Replace(" ", string.Empty).Replace("/", string.Empty).Replace("-", string.Empty);
+                    return compact.Equals("GNDCREW", StringComparison.OrdinalIgnoreCase)
+                        || compact.Equals("GROUNDCREW", StringComparison.OrdinalIgnoreCase)
+                        || compact.Equals("REFCREW", StringComparison.OrdinalIgnoreCase);
+                }
+
+                private static SortedDictionary<string, List<string>> MergeAliasChunkCategories(
+                    Dictionary<string, SortedDictionary<string, List<string>>> chunk,
+                    params string[] categories)
+                {
+                    SortedDictionary<string, List<string>> merged = new SortedDictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
+                    if (chunk == null || categories == null || categories.Length == 0)
+                    {
+                        return merged;
+                    }
+
+                    foreach (string category in categories)
+                    {
+                        SortedDictionary<string, List<string>> found;
+                        if (!TryGetAliasChunkCategory(chunk, category, out found) || found == null)
+                        {
+                            continue;
+                        }
+
+                        foreach (KeyValuePair<string, List<string>> entry in found)
+                        {
+                            string phrase = (entry.Key ?? string.Empty).Trim();
+                            if (string.IsNullOrWhiteSpace(phrase))
+                            {
+                                continue;
+                            }
+
+                            if (!merged.TryGetValue(phrase, out List<string> values))
+                            {
+                                values = new List<string>();
+                                merged[phrase] = values;
+                            }
+
+                            List<string> sourceValues = entry.Value;
+                            if (sourceValues == null)
+                            {
+                                continue;
+                            }
+
+                            foreach (string value in sourceValues)
+                            {
+                                string next = (value ?? string.Empty).Trim();
+                                if (string.IsNullOrWhiteSpace(next))
+                                {
+                                    continue;
+                                }
+
+                                if (!values.Any(v => v.Equals(next, StringComparison.OrdinalIgnoreCase)))
+                                {
+                                    values.Add(next);
+                                }
+                            }
+                        }
+                    }
+
+                    return merged;
                 }
 
                 public static void UpdateLog(string category, string content)

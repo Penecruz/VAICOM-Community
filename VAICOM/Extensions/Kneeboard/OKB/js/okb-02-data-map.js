@@ -2928,13 +2928,42 @@
       if (!list.length) return;
 
       const state = getFlightPlanPlanState(selected);
-      const activeRows = getEffectiveRouteRows(list, state)
-        .filter(function (wp) { return !wp.isStart; })
+      const routeRows = getEffectiveRouteRows(list, state)
         .sort(function (a, b) { return Number(a && a.step) - Number(b && b.step); });
+      const activeRows = routeRows
+        .filter(function (wp) { return !wp.isStart; });
       if (!activeRows.length) return;
 
       const own = getOwnshipNorthEast();
       if (!isFinite(own.north) || !isFinite(own.east)) return;
+
+      // Step 1: arm auto-capture only after an actual departure.
+      const hasWow = !!(efbSaOwnshipFast && efbSaOwnshipFast.hasWow);
+      const wow = Number(efbSaOwnshipFast && efbSaOwnshipFast.wow);
+      if (hasWow && wow === 0) {
+        state.autoAtaSeenAirborne = true;
+      }
+
+      if (!state.autoAtaArmed) {
+        // Step 2: while still near START, do not log co-located return/landing waypoints.
+        let outsideStartCaptureZone = false;
+        const startWp = routeRows.find(function (wp) { return !!(wp && wp.isStart); }) || null;
+        if (startWp) {
+          const startPos = resolveWaypointNorthEast(startWp);
+          if (isFinite(startPos.north) && isFinite(startPos.east)) {
+            const dnStart = own.north - startPos.north;
+            const deStart = own.east - startPos.east;
+            const startDistance = Math.sqrt((dnStart * dnStart) + (deStart * deStart));
+            outsideStartCaptureZone = isFinite(startDistance) && startDistance > autoAtaCaptureThresholdMeters;
+          }
+        }
+
+        if (!(state.autoAtaSeenAirborne && outsideStartCaptureZone)) {
+          return;
+        }
+
+        state.autoAtaArmed = true;
+      }
 
       const prevOwn = state.autoAtaLastOwnshipPos
         && isFinite(Number(state.autoAtaLastOwnshipPos.north))
@@ -2944,11 +2973,9 @@
       state.autoAtaLastOwnshipPos = { north: own.north, east: own.east };
 
       const isRuntimeSelection = String(selected || '').trim() === '__RUNTIME_PLAYER__';
-      const lastActiveKey = stepToKey(activeRows[activeRows.length - 1] && activeRows[activeRows.length - 1].step);
       const pendingRows = activeRows.filter(function (wp) {
         const k = stepToKey(wp && wp.step);
         if (!k) return false;
-        if (k === lastActiveKey) return false;
         if (isRuntimeSelection) {
           const displayStep = Number(wp && wp.stepDisplay);
           if (isFinite(displayStep) && displayStep <= 0) return false;
