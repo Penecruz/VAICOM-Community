@@ -1874,21 +1874,26 @@
         const east = Number(a && (a.Y !== undefined ? a.Y : a.y));
         if (!isFinite(north) || !isFinite(east)) return;
 
-        const text = [a && a.Callsign, a && a.Name, a && a.TypeName, a && a.Category]
+        const text = [a && a.Callsign, a && a.Name, a && a.TypeName]
           .map(function (v) { return String(v || '').trim(); })
           .filter(function (v) { return !!v; })
           .join(' ');
 
         const key = resolveMetarKey(text);
         const metar = key ? String(atcMetars[key] || '') : '';
-        const icao = metarIcao(metar) || tokenIcao(key) || tokenIcao(text);
+        const typeName = String((a && a.TypeName) || '').trim();
+        const heliTokenText = (text + ' ' + typeName).toUpperCase();
+        const isHeliportLike = /\b(FARP|HELIPORT|HELIPAD|HELI|PAD)\b/.test(heliTokenText);
+        const icao = isHeliportLike ? '' : (metarIcao(metar) || tokenIcao(key) || tokenIcao(text));
         const overrideType = resolveOverrideType(icao, text, key, a && a.IcaoType);
         const callsign = String((a && a.Callsign) || '').trim();
         const name = String((a && a.Name) || '').trim();
         const unknownIdentity = isUnknownAtcIdentity(callsign) || isUnknownAtcIdentity(name);
-        const label = unknownIdentity && !icao
+        const label = (unknownIdentity && !icao)
           ? ''
-          : String((icao || callsign || name || 'ATC')).toUpperCase();
+          : (isHeliportLike
+            ? String((callsign || name || 'HELI')).toUpperCase()
+            : String((icao || callsign || name || 'ATC')).toUpperCase());
 
         const dedupeIcao = String(icao || label || 'ATC').toUpperCase();
         const dedupeKey = dedupeIcao + '|' + String(Math.round(north / 10) * 10) + '|' + String(Math.round(east / 10) * 10);
@@ -1911,7 +1916,7 @@
           label: label,
           icao: String(icao || '').toUpperCase(),
           suppressLabel: unknownIdentity && !icao,
-          type: (u.indexOf('SEAPLANE') >= 0 ? 'seaplane' : (u.indexOf('HELI') >= 0 || u.indexOf('FARP') >= 0 ? 'heliport' : (overrideType === 'MIL' || overrideType === 'JOINT' ? 'airport' : 'airport'))),
+          type: (u.indexOf('SEAPLANE') >= 0 ? 'seaplane' : (isHeliportLike || u.indexOf('HELI') >= 0 || u.indexOf('FARP') >= 0 ? 'heliport' : (overrideType === 'MIL' || overrideType === 'JOINT' ? 'airport' : 'airport'))),
           isMilitary: (overrideType === 'MIL' || overrideType === 'JOINT')
             ? true
             : (u.indexOf('MIL') >= 0 || u.indexOf('AIRBASE') >= 0 || u.indexOf(' AFB') >= 0 || u.indexOf('NAS') >= 0),
@@ -3126,6 +3131,7 @@
       (Array.isArray(mapOverlays.airfields) ? mapOverlays.airfields : []).forEach(function (p) {
         const isVfr = !!(p && p.isVfr);
         const stroke = isVfr ? '#4aa360' : '#3a8fd0';
+        const airfieldType = String((p && p.type) || 'airport').toLowerCase();
         const airfieldAsset = {
           callsign: String((p && p.callsign) || '').trim(),
           name: String((p && p.name) || (p && p.label) || '').trim(),
@@ -3137,8 +3143,10 @@
           kind: 'airfield',
           group: 'asset',
           assetKey: makeMapAssetSelectionKey(airfieldAsset),
-          label: !!(p && p.suppressLabel) ? '' : String((p && p.icao) || (p && p.label) || 'AF'),
-          airfieldType: String((p && p.type) || 'airport').toLowerCase(),
+          label: !!(p && p.suppressLabel)
+            ? ''
+            : (airfieldType === 'heliport' ? '' : String((p && p.icao) || (p && p.label) || 'AF')),
+          airfieldType: airfieldType,
           airfieldMilitary: !!(p && p.isMilitary),
           isVfr: isVfr,
           category: 'ATC',
