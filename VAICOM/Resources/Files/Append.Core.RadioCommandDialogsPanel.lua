@@ -2361,6 +2361,18 @@ base.vaicom.objects = {
 		return Collection
 	end,
 	localOpposition = function(getside)
+		-- Lightweight profiling
+		local profiling = base.vaicom.state and base.vaicom.state.profiling
+		local profClock = profiling and socket.gettime or nil
+		local profStart = profiling and profClock() or 0
+		local profLast = profStart
+		local function profMark(label, suffix)
+			if not profiling then return end
+			local now = profClock()
+			base.print(base.string.format("VAICOM profiling (localOpposition) | %-40s %8.3f ms%s", label, (now - profLast) * 1000, suffix or ""))
+			profLast = now
+		end
+
 		local Collection = {}
 		local opposite = nil
 		if getside == base.coalition.side.BLUE then opposite = base.coalition.side.RED end
@@ -2378,9 +2390,13 @@ base.vaicom.objects = {
 			base.vaicom.state = base.vaicom.state or {}
 			base.vaicom.state.radaractivebyid = {}
 			addUnits(base.vaicom.objects.localJTACs(opposite))
+			profMark("localJTACs")
 			addUnits(base.vaicom.objects.localAWACSs(opposite))
+			profMark("localAWACSs")
 			addUnits(base.vaicom.objects.localTankers(opposite))
+			profMark("localTankers")
 			addUnits(base.vaicom.objects.localAllies(opposite))
+			profMark("localAllies")
 
 			local function addSamRadarUnitsFromWorldObjects(side)
 				local added = 0
@@ -2391,9 +2407,12 @@ base.vaicom.objects = {
 				local okWorld, worldObjects = base.pcall(function()
 					return base.Export.LoGetWorldObjects()
 				end)
+				profMark("LoGetWorldObjects")
 				if not okWorld or base.type(worldObjects) ~= "table" then
 					return added
 				end
+
+				local profResolveMs, profResolveCount, profMatchCount = 0, 0, 0
 
 				local function isSamRadarText(text)
 					local t = base.string.upper(base.tostring(text or ""))
@@ -2486,7 +2505,13 @@ base.vaicom.objects = {
 						or isSamRadarText(objDataName)
 						or isSamRadarText(objDataType)) then return end
 
+					profMatchCount = profMatchCount + 1
+					local tResolve = profiling and profClock() or 0
 					local unit = resolveUnitFromWorldObject(obj, side, objectKey)
+					if profiling then
+						profResolveMs = profResolveMs + (profClock() - tResolve) * 1000
+						profResolveCount = profResolveCount + 1
+					end
 					if unit ~= nil then
 						local okCoalition, unitCoalition = base.pcall(function()
 							return unit:getCoalition()
@@ -2524,10 +2549,17 @@ base.vaicom.objects = {
 				end
 
 				scanWorldObjects(worldObjects, 0)
+				profMark("scanWorldObjects (total)", base.string.format(" (%d SAM text matches, %d added)", profMatchCount, added))
+				if profiling then
+					base.print(base.string.format("VAICOM profiling (localOpposition) | %-40s %8.3f ms (%d calls)", "  scan: resolveUnitFromWorldObject", profResolveMs, profResolveCount))
+				end
 
 				return added
 			end
 			addSamRadarUnitsFromWorldObjects(opposite)
+		end
+		if profiling then
+			base.print(base.string.format("VAICOM profiling (localOpposition) | %-40s %8.3f ms", "TOTAL", (profClock() - profStart) * 1000))
 		end
 		return Collection
 	end,
@@ -4358,13 +4390,13 @@ base.vaicom.state = {
 						mdTxChunk13HasKey = false,
 						mdTxChunk13SentOk = false,
 						mdTxChunk13PartCount = 0,
-					weatherType = "nil",
-					weatherKeys = {},
-					weatherSummary = {},
-					oppositionGroundProbe = {},
+						weatherType = "nil",
+						weatherKeys = {},
+						weatherSummary = {},
+						oppositionGroundProbe = {},
 					}
 
-				local includeDiagnostics = not (base.vaicom.state and not base.vaicom.state.includediagnostics)
+					local includeDiagnostics = not (base.vaicom.state and not base.vaicom.state.includediagnostics)
 
 					local diagnosticsDebug = base.vaicom.state and base.vaicom.state.debugmode
 
@@ -4381,6 +4413,22 @@ base.vaicom.state = {
 					end
 
 					local function collectOppositionGroundProbe()
+						-- Lightweight profiling
+						local cProfiling = base.vaicom.state.profiling
+						local cClock = cProfiling and socket.gettime or nil
+						local cStart = cProfiling and cClock() or 0
+						local cLast = cStart
+						local function cMark(label)
+							if not cProfiling then return end
+							local now = cClock()
+							base.print(base.string.format("VAICOM profiling (collectOppositionGroundProbe) | %-40s %8.3f ms", label, (now - cLast) * 1000))
+							cLast = now
+						end
+						local function cTotal()
+							if not cProfiling then return end
+							base.print(base.string.format("VAICOM profiling (collectOppositionGroundProbe) | %-40s %8.3f ms", "TOTAL", (cClock() - cStart) * 1000))
+						end
+
 						if base.type(probe.oppositionGroundProbe) ~= "table" then
 							probe.oppositionGroundProbe = {}
 						end
@@ -4388,6 +4436,7 @@ base.vaicom.state = {
 						local pUnit = data and data.pUnit or nil
 						if pUnit == nil then
 							addProbeRow(probe.oppositionGroundProbe, "punit=nil", 24)
+							cTotal()
 							return
 						end
 
@@ -4400,8 +4449,10 @@ base.vaicom.state = {
 						end
 						if coalition == nil then
 							addProbeRow(probe.oppositionGroundProbe, "coalition=nil", 24)
+							cTotal()
 							return
 						end
+						cMark("getCoalition")
 
 						local function collectPlayerFuelProbe()
 							local function isFuelProbeKey(key)
@@ -4538,12 +4589,14 @@ base.vaicom.state = {
 							end
 						end
 						collectPlayerFuelProbe()
+						cMark("fuel probe")
 
 						local opposite = nil
 						if coalition == base.coalition.side.BLUE then opposite = base.coalition.side.RED end
 						if coalition == base.coalition.side.RED then opposite = base.coalition.side.BLUE end
 						if opposite == nil then
 							addProbeRow(probe.oppositionGroundProbe, "opposite=nil", 24)
+							cTotal()
 							return
 						end
 
@@ -4584,8 +4637,10 @@ base.vaicom.state = {
 						addProbeRow(probe.oppositionGroundProbe, "direct_ground_units="..base.tostring(directUnitsCount), 24)
 						addProbeRow(probe.oppositionGroundProbe, "groundcat_base="..base.tostring(groundCategoryBase), 24)
 						addProbeRow(probe.oppositionGroundProbe, "groundcat_global="..base.tostring(groundCategoryGlobal), 24)
+						cMark("direct ground groups + countUnits")
 
 						local okAll, allGroups = base.pcall(base.vaicom.objects.getGroups, opposite)
+						cMark("all groups: get groups")
 						if okAll and base.type(allGroups) == "table" then
 							local allCount = 0
 							local byCategoryGround = {}
@@ -4630,7 +4685,9 @@ base.vaicom.state = {
 									end
 								end
 							end
+							cMark("all groups: scan (getUnits/getDesc)")
 							local fallbackGroupsCount, fallbackUnitsCount = countUnits(byCategoryGround, probe.oppositionGroundProbe, 8)
+							cMark("all groups: countUnits fallback")
 							addProbeRow(probe.oppositionGroundProbe, "all_groups="..base.tostring(allCount), 24)
 							addProbeRow(probe.oppositionGroundProbe, "cat_ground_groups="..base.tostring(fallbackGroupsCount), 24)
 							addProbeRow(probe.oppositionGroundProbe, "cat_ground_units="..base.tostring(fallbackUnitsCount), 24)
@@ -4810,6 +4867,9 @@ base.vaicom.state = {
 							worldSamFieldRows = worldSamFieldRows + 1
 						end
 
+						local profResolveMs, profResolveCount, profFieldsMs = 0, 0, 0
+						cMark("world: helper setup")
+
 						local function scanWorld(tbl, depth)
 							if base.type(tbl) ~= "table" or depth > 2 then return end
 							for key, item in base.pairs(tbl) do
@@ -4819,8 +4879,12 @@ base.vaicom.state = {
 									if itemType ~= "" or itemName ~= "" then
 										if isSamRadarText(itemType) or isSamRadarText(itemName) then
 											worldSamCandidates = worldSamCandidates + 1
+											local tResolve = cProfiling and cClock() or 0
 											local u = resolveUnitFromWorldObject(item, opposite, key)
+											if cProfiling then profResolveMs = profResolveMs + (cClock() - tResolve) * 1000; profResolveCount = profResolveCount + 1 end
+											local tFields = cProfiling and cClock() or 0
 											addWorldCandidateFields(item, key, u)
+											if cProfiling then profFieldsMs = profFieldsMs + (cClock() - tFields) * 1000 end
 											local wf = item.Flags or item.flags
 											local wradar = nil
 											if base.type(wf) == "table" then
@@ -4845,11 +4909,17 @@ base.vaicom.state = {
 
 						if base.Export and base.Export.LoGetWorldObjects then
 							local okWorld, worldObjects = base.pcall(function() return base.Export.LoGetWorldObjects() end)
+							cMark("world: LoGetWorldObjects")
 							if okWorld and base.type(worldObjects) == "table" then
 								local topCount = 0
 								for _ in base.pairs(worldObjects) do topCount = topCount + 1 end
 								worldObjectsShape = "table:"..base.tostring(topCount)
 								scanWorld(worldObjects, 0)
+								cMark("world: scanWorld (total)")
+								if cProfiling then
+									base.print(base.string.format("VAICOM profiling (collectOppositionGroundProbe) | %-40s %8.3f ms (%d calls)", "  scanWorld: resolveUnitFromWorldObject", profResolveMs, profResolveCount))
+									base.print(base.string.format("VAICOM profiling (collectOppositionGroundProbe) | %-40s %8.3f ms", "  scanWorld: addWorldCandidateFields", profFieldsMs))
+								end
 							else
 								worldObjectsShape = "unavailable"
 							end
@@ -4860,6 +4930,8 @@ base.vaicom.state = {
 						addProbeRow(probe.oppositionGroundProbe, "world_shape="..base.tostring(worldObjectsShape), 24)
 						addProbeRow(probe.oppositionGroundProbe, "world_sam_candidates="..base.tostring(worldSamCandidates), 24)
 						addProbeRow(probe.oppositionGroundProbe, "world_sam_resolved="..base.tostring(worldSamUnitsResolved), 24)
+						cMark("world: summary rows")
+						cTotal()
 					end
 
 					if not includeDiagnostics then
