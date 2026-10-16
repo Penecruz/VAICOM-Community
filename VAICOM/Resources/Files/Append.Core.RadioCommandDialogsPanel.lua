@@ -1180,18 +1180,42 @@ base.vaicom.categories = {
 				},		
 }
 
--- Per-update memoization for DCS engine boundary calls.
+-- Per-update caches for expensive DCS engine boundary calls.
 -- getCommunicator/getDesc/getPlayerName/range are queried by many properties for the
 -- same Locator within a single update.all sendupdateall pass. The object identities are
 -- stable across one pass (live values like frequency are still read off the
--- cached communicator each time), so we cache them and clear the cache at the
--- start of every sendupdateall to avoid cross-update staleness.
-local propcache = { comm = {}, desc = {}, pname = {}, range = {} }
-local function resetPropCache()
+-- cached communicator each time), so we cache them per Locator.
+-- LoGetWorldObjects is also cached (with a short TTL) so update.all and
+-- sendupdateall share one result.
+-- All caches are cleared by resetCaches at the start of every update.all and at the
+-- end of every sendupdateall to avoid cross-update staleness.
+local propcache = { comm = {}, desc = {}, pname = {}, range = {}, worldObjects = nil, worldObjectsUpdatedAt = 0 }
+local WORLD_OBJECTS_CACHE_TTL = 1.0 -- seconds; guards against staleness when no reset occurs between calls
+local function resetCaches()
 	propcache.comm = {}
 	propcache.desc = {}
 	propcache.pname = {}
 	propcache.range = {}
+	propcache.worldObjects = nil
+	propcache.worldObjectsUpdatedAt = 0
+end
+-- LoGetWorldObjects is expensive and is read-only for all callers, so share one
+-- result between update.all and sendupdateall within the same update pass.
+-- Returns nil (not false) as the first value when the API is missing.
+local function getWorldObjectsCached()
+	if base.Export == nil or base.Export.LoGetWorldObjects == nil then
+		return nil, nil
+	end
+	local now = socket.gettime()
+	if propcache.worldObjects ~= nil and (now - propcache.worldObjectsUpdatedAt) <= WORLD_OBJECTS_CACHE_TTL then
+		return true, propcache.worldObjects
+	end
+	local okWorld, worldObjects = base.pcall(function() return base.Export.LoGetWorldObjects() end)
+	if okWorld and base.type(worldObjects) == "table" then
+		propcache.worldObjects = worldObjects
+		propcache.worldObjectsUpdatedAt = now
+	end
+	return okWorld, worldObjects
 end
 local function getCommunicatorCached(Locator)
 	if Locator == nil then return nil end
@@ -2400,13 +2424,7 @@ base.vaicom.objects = {
 
 			local function addSamRadarUnitsFromWorldObjects(side)
 				local added = 0
-				if base.Export == nil or base.Export.LoGetWorldObjects == nil then
-					return added
-				end
-
-				local okWorld, worldObjects = base.pcall(function()
-					return base.Export.LoGetWorldObjects()
-				end)
+				local okWorld, worldObjects = getWorldObjectsCached()
 				profMark("LoGetWorldObjects")
 				if not okWorld or base.type(worldObjects) ~= "table" then
 					return added
@@ -3226,7 +3244,7 @@ base.vaicom.state = {
 				-- This will be used by the sendupdateall function as well as this
 				-- is called after the update.all. This cache will be cleared once
 				-- the sendupdateall call completes to free up memory.
-				resetPropCache()
+				resetCaches()
 
 				base.vaicom.state.timer								= data.initialized and base.Export.LoGetModelTime()
 				base.vaicom.state.tod								= data.initialized and base.Export.LoGetMissionStartTime()
@@ -4907,24 +4925,22 @@ base.vaicom.state = {
 							end
 						end
 
-						if base.Export and base.Export.LoGetWorldObjects then
-							local okWorld, worldObjects = base.pcall(function() return base.Export.LoGetWorldObjects() end)
-							cMark("world: LoGetWorldObjects")
-							if okWorld and base.type(worldObjects) == "table" then
-								local topCount = 0
-								for _ in base.pairs(worldObjects) do topCount = topCount + 1 end
-								worldObjectsShape = "table:"..base.tostring(topCount)
-								scanWorld(worldObjects, 0)
-								cMark("world: scanWorld (total)")
-								if cProfiling then
-									base.print(base.string.format("VAICOM profiling (collectOppositionGroundProbe) | %-40s %8.3f ms (%d calls)", "  scanWorld: resolveUnitFromWorldObject", profResolveMs, profResolveCount))
-									base.print(base.string.format("VAICOM profiling (collectOppositionGroundProbe) | %-40s %8.3f ms", "  scanWorld: addWorldCandidateFields", profFieldsMs))
-								end
-							else
-								worldObjectsShape = "unavailable"
+						local okWorld, worldObjects = getWorldObjectsCached()
+						cMark("world: LoGetWorldObjects")
+						if okWorld == nil then
+							worldObjectsShape = "missing_api"
+						elseif okWorld and base.type(worldObjects) == "table" then
+							local topCount = 0
+							for _ in base.pairs(worldObjects) do topCount = topCount + 1 end
+							worldObjectsShape = "table:"..base.tostring(topCount)
+							scanWorld(worldObjects, 0)
+							cMark("world: scanWorld (total)")
+							if cProfiling then
+								base.print(base.string.format("VAICOM profiling (collectOppositionGroundProbe) | %-40s %8.3f ms (%d calls)", "  scanWorld: resolveUnitFromWorldObject", profResolveMs, profResolveCount))
+								base.print(base.string.format("VAICOM profiling (collectOppositionGroundProbe) | %-40s %8.3f ms", "  scanWorld: addWorldCandidateFields", profFieldsMs))
 							end
 						else
-							worldObjectsShape = "missing_api"
+							worldObjectsShape = "unavailable"
 						end
 
 						addProbeRow(probe.oppositionGroundProbe, "world_shape="..base.tostring(worldObjectsShape), 24)
@@ -6333,7 +6349,7 @@ base.vaicom.state = {
 				profMark("encode+send chunks")
 
 				-- Clear receipients list Locator properties cache
-				resetPropCache()
+				resetCaches()
 
 				if profiling then
 					base.print(base.string.format("VAICOM profiling (sendupdateall) | %-40s %8.3f ms", "TOTAL", (profClock() - profStart) * 1000))
