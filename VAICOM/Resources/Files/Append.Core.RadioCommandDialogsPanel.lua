@@ -2430,6 +2430,20 @@ base.vaicom.objects = {
 					return added
 				end
 
+				local samObjects = {}
+				for id, obj in base.pairs(worldObjects) do
+					local objectType = obj.Type
+					if objectType and base.type(objectType) == "table" then
+						-- Filter the world objects to find SAM units. The level1 value of 2 refers to ground units and
+						-- the level2 value of 16 refers to SAM units. We also exclude static objects.
+						-- Object types referenced in Scripts\Database\wsTypes.lua
+						if objectType["level1"] == 2 and objectType["level2"] == 16
+							and (obj.Flags and obj.Flags.Born)
+							and not (obj.Flags and obj.Flags.Static) then
+							samObjects[id] = obj
+						end
+					end
+				end
 				local profResolveMs, profResolveCount, profMatchCount = 0, 0, 0
 
 				local function isSamRadarText(text)
@@ -2497,32 +2511,16 @@ base.vaicom.objects = {
 					return ""
 				end
 
-				local function processObject(obj, objectKey)
+				local function processSamObject(objectKey, obj)
 					if base.type(obj) ~= "table" then return end
-					local objType = getWorldObjectTypeText(obj)
-					local objName = obj.Name or obj.name or obj.UnitName or obj.unitName or ""
-					local objGroup = obj.GroupName or obj.groupName or ""
-					local objData = obj.Data or obj.data
-					local objDataName = (base.type(objData) == "table" and (objData.Name or objData.name or objData.UnitName or objData.unitName)) or ""
-					local objDataType = (base.type(objData) == "table" and (objData.TypeName or objData.typeName or objData.Type or objData.type)) or ""
-					local rawFlags = obj.Flags or obj.flags
-					local radarActive = nil
-					if base.type(rawFlags) == "table" then
-						radarActive = rawFlags.RadarActive
-						if radarActive == nil then
-							radarActive = rawFlags.radarActive
-						end
-					elseif base.type(rawFlags) == "string" then
-						local f = base.string.upper(rawFlags)
-						if base.string.find(f, "RADARACTIVE:TRUE", 1, true) then radarActive = true end
-						if base.string.find(f, "RADARACTIVE:FALSE", 1, true) then radarActive = false end
-					end
-					if not (isSamRadarText(objType)
-						or isSamRadarText(objName)
-						or isSamRadarText(objGroup)
-						or isSamRadarText(objDataName)
-						or isSamRadarText(objDataType)) then return end
-
+					local objName = obj.Name or obj.name or ""
+					local objUnitName = obj.UnitName or obj.unitName or ""
+					local objGroupName = obj.GroupName or obj.groupName or ""
+					
+					if not (isSamRadarText(objName)
+						or isSamRadarText(objGroupName)
+						or isSamRadarText(objUnitName)) then return end
+					
 					profMatchCount = profMatchCount + 1
 					local tResolve = profiling and profClock() or 0
 					local unit = resolveUnitFromWorldObject(obj, side, objectKey)
@@ -2540,9 +2538,23 @@ base.vaicom.objects = {
 						if not isResolvedSamRadarUnit(unit) then
 							return
 						end
+						
+						local radarActive = nil
+						local rawFlags = obj.Flags or obj.flags
+						if base.type(rawFlags) == "table" then
+							radarActive = rawFlags.RadarActive
+							if radarActive == nil then
+								radarActive = rawFlags.radarActive
+							end
+						elseif base.type(rawFlags) == "string" then
+							local f = base.string.upper(rawFlags)
+							if base.string.find(f, "RADARACTIVE:TRUE", 1, true) then radarActive = true end
+							if base.string.find(f, "RADARACTIVE:FALSE", 1, true) then radarActive = false end
+						end
 						if radarActive ~= nil then
 							base.vaicom.state.radaractivebyid[unit.id_] = (radarActive == true)
 						end
+						
 						local inactive = (unit.isActive and not unit:isActive()) or false
 						if not inactive then
 							base.vaicom.objects.addUniqueUnit(Collection, unit)
@@ -2551,23 +2563,11 @@ base.vaicom.objects = {
 					end
 				end
 
-				local function scanWorldObjects(tbl, depth)
-					if base.type(tbl) ~= "table" then return end
-					if depth > 5 then return end
-					for k, item in base.pairs(tbl) do
-						if base.type(item) == "table" then
-							local looksLikeObject = (item.Type or item.type or item.typeName or item.Name or item.name or item.Coalition or item.coalition) ~= nil
-							if looksLikeObject then
-								processObject(item, k)
-							else
-								scanWorldObjects(item, depth + 1)
-							end
-						end
-					end
+				for key, item in base.pairs(samObjects) do
+					processSamObject(key, item)
 				end
 
-				scanWorldObjects(worldObjects, 0)
-				profMark("scanWorldObjects (total)", base.string.format(" (%d SAM text matches, %d added)", profMatchCount, added))
+				profMark("processSamObjects (total)", base.string.format(" (%d SAM text matches, %d added)", profMatchCount, added))
 				if profiling then
 					base.print(base.string.format("VAICOM profiling (localOpposition) | %-40s %8.3f ms (%d calls)", "  scan: resolveUnitFromWorldObject", profResolveMs, profResolveCount))
 				end
