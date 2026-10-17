@@ -3121,6 +3121,7 @@ base.vaicom.state = {
 		debugmode 				= false,
 		profiling				= false, -- Logs performance timings to the DCS log when true.
 		includediagnostics		= false,
+		collectopposition		= true,
 		dcsversion 				= base.vaicom.get.serverdata.dcsversion(),
 		root 					= base.tostring(base.lfs.writedir()),
 		currentdir 				= base.tostring(base.lfs.currentdir()),
@@ -3301,7 +3302,7 @@ base.vaicom.state = {
 				base.vaicom.state.availablerecipients.ATC			= data.initialized and base.vaicom.get.missiondata.listby.ATC(base.vaicom.helper.sortby.distance, 	"radio")
 				base.vaicom.state.availablerecipients.AWACS			= data.initialized and base.vaicom.get.missiondata.listby.AWACS(base.vaicom.helper.sortby.distance, "radio")
 				base.vaicom.state.availablerecipients.Tanker		= data.initialized and base.vaicom.get.missiondata.listby.Tanker(base.vaicom.helper.sortby.distance,"radio") 
-				base.vaicom.state.availablerecipients.Opposition	= data.initialized and base.vaicom.get.missiondata.listby.Opposition(base.vaicom.helper.sortby.distance, "radio")
+				base.vaicom.state.availablerecipients.Opposition	= (data.initialized and (base.vaicom.state.collectopposition ~= false)) and base.vaicom.get.missiondata.listby.Opposition(base.vaicom.helper.sortby.distance, "radio") or {}
 				base.vaicom.state.availablerecipients.Crew			= data.initialized and base.vaicom.get.missiondata.listby.Crew(base.vaicom.helper.sortby.distance, 	"radio") 
 				base.vaicom.state.availablerecipients.Aux			= data.initialized and base.vaicom.get.missiondata.listby.Aux(base.vaicom.helper.sortby.distance, 	"radio")
 				base.vaicom.state.availablerecipients.Moose			= data.initialized and base.vaicom.get.missiondata.listby.Moose(base.vaicom.helper.sortby.distance, "radio") -- Add moose
@@ -4935,7 +4936,11 @@ base.vaicom.state = {
 					end
 
 					if not includeDiagnostics then
-						collectOppositionGroundProbe()
+						if base.vaicom.state.collectopposition ~= false then
+							collectOppositionGroundProbe()
+						else
+							addProbeRow(probe.oppositionGroundProbe, "opposition_collection=disabled", 24)
+						end
 						return probe
 					end
 

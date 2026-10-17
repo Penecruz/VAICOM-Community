@@ -3386,6 +3386,20 @@
       const category = String(asset.category || '').trim().toUpperCase();
       const x = Number(asset.xNum);
       const y = Number(asset.yNum);
+
+      if (category === 'MAP_MARKER') {
+        const markerId = Number(asset.markerId);
+        if (isFinite(markerId) && markerId > 0) {
+          return ['MKRID', String(Math.round(markerId))].join('|');
+        }
+
+        const markerText = String(asset.markerText || asset.name || '').trim().toUpperCase();
+        const markerAuthor = String(asset.markerAuthor || '').trim().toUpperCase();
+        const xKey = isFinite(x) ? Number(x).toFixed(1) : '';
+        const yKey = isFinite(y) ? Number(y).toFixed(1) : '';
+        return ['MKRPOS', markerText, markerAuthor, xKey, yKey].join('|');
+      }
+
       if (callsign || name) {
         return [callsign, name, category].join('|');
       }

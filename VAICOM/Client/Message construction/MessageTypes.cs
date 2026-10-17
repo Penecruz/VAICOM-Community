@@ -120,6 +120,9 @@ namespace VAICOM
                     // is running and has an active connection.
                     public bool includediagnostics;
 
+                    // Controls whether Lua should collect Opposition recipient data.
+                    public bool collectopposition;
+
                     public UpdateRequest()
                     {
                         debug = State.activeconfig.Debugmode;
@@ -135,6 +138,10 @@ namespace VAICOM
                         // and FLT PLN is selected, so FLT PLN runtime NAVLOG can populate
                         // without requiring a tab-specific PTT cycle.
                         includediagnostics = Extensions.Kneeboard.OpenKneeboardBridge.IsFlightPlanTabActive;
+
+                        // Skip Opposition collection when OKB Out is disabled to reduce
+                        // runtime load on large missions with many ground units.
+                        collectopposition = State.activeconfig.OpenKneeboard_Out;
                         
                         //kneeboard = 1; // show kneeboard on PTT press, test
                     }

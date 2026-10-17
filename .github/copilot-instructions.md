@@ -1,7 +1,7 @@
 # Copilot Instructions
 
 ## Project Guidelines
-- User prefers avoiding builds/tests during diagnostics.
+- User prefers avoiding builds/tests during diagnostics and does not want local debugger sessions launched because runtime testing is running on a remote system; prefer non-debugger diagnostics and code-based stabilization fixes.
 - User is okay with offering builds/tests going forward again.
 - User prefers direct in-file edits rather than chat-only diffs when they explicitly ask to edit files.
 
