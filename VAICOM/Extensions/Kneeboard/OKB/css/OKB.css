@@ -1169,8 +1169,12 @@ body.efb-tab .keywordsPanel {
         max-height: min(44vh, 340px);
     }
 
+    body.efb-tab .efbSaMapBraReadout {
+        bottom: 90px;
+    }
+
     .bottomQuickBar {
-        bottom: calc(108px + env(safe-area-inset-bottom));
+        bottom: calc(132px + env(safe-area-inset-bottom));
     }
 }
 
@@ -1577,6 +1581,12 @@ body.efb-tab .keywordsPanel {
     display: flex;
     align-items: center;
     gap: 12px;
+}
+
+@media (orientation: landscape) and (hover: none) and (pointer: coarse) {
+    .bottomQuickBar {
+        bottom: calc(80px + env(safe-area-inset-bottom));
+    }
 }
 
 .overlayToggleBtn {
