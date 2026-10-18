@@ -450,7 +450,12 @@ namespace VAICOM
                     State.currentstate.intercom = serverMessage.intercom;
                     State.currentstate.fsmstate = serverMessage.fsmstate;
                     State.currentstate.selectedradio = serverMessage.selectedradio;
-                    State.currentstate.radios = serverMessage.radios;
+                    // Keep last-known radios when this chunk omits the radios payload.
+                    // Some partial/runtime updates do not include radios and would otherwise blank COMMS.
+                    if (serverMessage.radios != null)
+                    {
+                        State.currentstate.radios = serverMessage.radios;
+                    }
                 }
                 catch (Exception e)
                 {
@@ -738,7 +743,23 @@ namespace VAICOM
                 processingchunks = true;
                 try
                 {
-                    State.currentstate.riostate = serverMessage.riostate;
+                    // Keep last-known riostate when omitted in partial chunks.
+                    // Marker detail updates are not present in every runtime message frame.
+                    if (serverMessage.riostate != null)
+                    {
+                        if (State.currentstate.riostate != null)
+                        {
+                            // If incoming riostate omits marker details, retain prior details/count.
+                            // An explicit empty list is still authoritative and will clear markers.
+                            if (serverMessage.riostate.markerdetails == null)
+                            {
+                                serverMessage.riostate.markerdetails = State.currentstate.riostate.markerdetails;
+                                serverMessage.riostate.markers = State.currentstate.riostate.markers;
+                            }
+                        }
+
+                        State.currentstate.riostate = serverMessage.riostate;
+                    }
 
                     // Only replace ownship position when the incoming chunk contains valid numbers.
                     if (IsValidOwnshipVector(serverMessage.bpos))

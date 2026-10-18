@@ -46,8 +46,32 @@ namespace VAICOM
                 private static DateTime storeLookupLastWriteUtc = DateTime.MinValue;
                 private static string storeLookupMapJson = "{}";
                 private static string currentSelectedTab = "";
+                private static string lastMapMarkerMissionIdentity = "";
+                private static List<OpenKneeboardMapMarker> lastMapMarkerSnapshot = new List<OpenKneeboardMapMarker>();
+                private static string lastRuntimeRadioMissionIdentity = "";
+                private static List<Servers.Server.RadioDevice> lastRuntimeRadioSnapshot = new List<Servers.Server.RadioDevice>();
+                private static int consecutiveMapMarkerEmptyFrames;
+                private static readonly TimeSpan RuntimeDisconnectGracePeriod = TimeSpan.FromSeconds(4);
+                private static long lastRuntimeConnectedUtcTicks;
                 private static FastOwnshipState fastOwnship = new FastOwnshipState();
                 private static FastAvBusState fastAvBus = new FastAvBusState();
+
+                private static void MarkRuntimeConnectedHeartbeat()
+                {
+                    Interlocked.Exchange(ref lastRuntimeConnectedUtcTicks, DateTime.UtcNow.Ticks);
+                }
+
+                private static bool IsWithinRuntimeDisconnectGracePeriod()
+                {
+                    long ticks = Interlocked.Read(ref lastRuntimeConnectedUtcTicks);
+                    if (ticks <= 0)
+                    {
+                        return false;
+                    }
+
+                    DateTime lastConnectedUtc = new DateTime(ticks, DateTimeKind.Utc);
+                    return (DateTime.UtcNow - lastConnectedUtc) <= RuntimeDisconnectGracePeriod;
+                }
 
                 private sealed class FastOwnshipState
                 {
@@ -1209,9 +1233,37 @@ namespace VAICOM
                     lock (Sync)
                     {
                         snapshot = new OpenKneeboardSnapshot();
+                        lastMapMarkerMissionIdentity = "";
+                        lastMapMarkerSnapshot = new List<OpenKneeboardMapMarker>();
+                        lastRuntimeRadioMissionIdentity = "";
+                        lastRuntimeRadioSnapshot = new List<Servers.Server.RadioDevice>();
+                        consecutiveMapMarkerEmptyFrames = 0;
+                        Interlocked.Exchange(ref lastRuntimeConnectedUtcTicks, 0);
                     }
 
                     RefreshDtcFilesSnapshot();
+                }
+
+                private static string BuildRuntimeRadioMissionIdentity()
+                {
+                    try
+                    {
+                        if (State.currentstate == null)
+                        {
+                            return "";
+                        }
+
+                        string title = (State.currentstate.missiontitle ?? string.Empty).Trim();
+                        string root = (State.currentstate.root ?? string.Empty).Trim();
+                        string theatre = (State.currentstate.theatre ?? string.Empty).Trim();
+                        string aircraft = (State.currentstate.id ?? string.Empty).Trim();
+                        string callsign = (State.currentstate.playercallsign ?? string.Empty).Trim();
+                        return string.Join("|", new[] { title, root, theatre, aircraft, callsign });
+                    }
+                    catch
+                    {
+                        return "";
+                    }
                 }
 
                 public static void UpdateActiveCategory(string category, bool forceTabSwitch = false)
@@ -2868,7 +2920,15 @@ namespace VAICOM
 
                 public static bool IsFlightPlanTabSelected()
                 {
-                    return !string.IsNullOrEmpty(currentSelectedTab) && currentSelectedTab.Equals("DTC");
+                    if (string.IsNullOrEmpty(currentSelectedTab))
+                    {
+                        return false;
+                    }
+
+                    // Treat both FLT PLN (DTC) and EFB as flight-plan runtime data tabs.
+                    // EFB SA map also depends on live marker/diagnostics updates.
+                    return currentSelectedTab.Equals("DTC", StringComparison.OrdinalIgnoreCase)
+                        || currentSelectedTab.Equals("EFB", StringComparison.OrdinalIgnoreCase);
                 }
 
                 private static string NormalizeSelectedTabToken(string selectedTab)
@@ -3639,7 +3699,9 @@ namespace VAICOM
                         bool moduleConnectedNow = false;
                         try { moduleConnectedNow = State.moduleConnected; } catch { moduleConnectedNow = false; }
 
-                        if (!moduleConnectedNow)
+                        // Only hard-clear runtime sections when disconnect is stable.
+                        // Brief false pulses can occur during category/tab transitions.
+                        if (!moduleConnectedNow && !IsWithinRuntimeDisconnectGracePeriod())
                         {
                             lock (Sync)
                             {
@@ -3663,6 +3725,7 @@ namespace VAICOM
                                     snapshot.Server.FlightMembers = new List<OpenKneeboardFlightMember>();
                                     snapshot.Server.FriendlyAssets = new List<OpenKneeboardFriendlyAsset>();
                                     snapshot.Server.MapMarkers = new List<OpenKneeboardMapMarker>();
+                                    snapshot.Server.MapMarkersAuthoritativeEmpty = true;
                                 }
                             }
                         }
@@ -5494,6 +5557,7 @@ namespace VAICOM
                 private static OpenKneeboardServerSnapshot BuildServerSnapshot()
                 {
                     OpenKneeboardServerSnapshot server = new OpenKneeboardServerSnapshot();
+                    OpenKneeboardServerSnapshot priorServer = snapshot == null ? null : snapshot.Server;
 
                     try
                     {
@@ -5514,6 +5578,32 @@ namespace VAICOM
                         // MP slot/cockpit transitions can temporarily desync currentmodule/currentstate IDs.
                         // Treat either runtime module identity source as sufficient while the core flag is true.
                         server.ModuleConnected = moduleConnectedFlag && (moduleFromCurrentModule || moduleFromCurrentState);
+
+                        // Keep module-connected state stable across brief identity dropouts
+                        // (e.g., tab/category transitions) so runtime COMMS/marker panels do not flicker blank.
+                        if (!server.ModuleConnected
+                            && moduleConnectedFlag
+                            && priorServer != null
+                            && priorServer.ModuleConnected)
+                        {
+                            server.ModuleConnected = true;
+                        }
+
+                        // Some transitions briefly pulse State.moduleConnected=false while mission/runtime
+                        // data is still valid. Hold connected state for a short grace window to prevent
+                        // COMMS and MAP MARKERS from clearing then refilling on each tab switch.
+                        if (!server.ModuleConnected
+                            && priorServer != null
+                            && priorServer.ModuleConnected
+                            && IsWithinRuntimeDisconnectGracePeriod())
+                        {
+                            server.ModuleConnected = true;
+                        }
+
+                        if (server.ModuleConnected)
+                        {
+                            MarkRuntimeConnectedHeartbeat();
+                        }
 
                         if (State.currentstate != null)
                         {
@@ -5547,9 +5637,46 @@ namespace VAICOM
                             server.Multiplayer = State.currentstate.multiplayer;
                             server.DebugMode = State.activeconfig.Debugmode;
                             server.Payload = State.currentstate.payload;
-                            server.Radios = State.currentstate.radios == null
+                            string runtimeRadioMissionIdentity = BuildRuntimeRadioMissionIdentity();
+                            if (!string.IsNullOrWhiteSpace(runtimeRadioMissionIdentity)
+                                && !string.Equals(lastRuntimeRadioMissionIdentity, runtimeRadioMissionIdentity, StringComparison.Ordinal))
+                            {
+                                lastRuntimeRadioMissionIdentity = runtimeRadioMissionIdentity;
+                                lastRuntimeRadioSnapshot = new List<Servers.Server.RadioDevice>();
+                            }
+
+                            List<Servers.Server.RadioDevice> runtimeRadios = State.currentstate.radios == null
                                 ? new List<Servers.Server.RadioDevice>()
                                 : new List<Servers.Server.RadioDevice>(State.currentstate.radios);
+
+                            if (runtimeRadios.Count > 0)
+                            {
+                                lastRuntimeRadioSnapshot = new List<Servers.Server.RadioDevice>(runtimeRadios);
+                            }
+
+                            // Keep comm rows stable across transient runtime frames where radios can arrive empty.
+                            if (runtimeRadios.Count > 0)
+                            {
+                                server.Radios = runtimeRadios;
+                            }
+                            else if (server.ModuleConnected
+                                && lastRuntimeRadioSnapshot != null
+                                && lastRuntimeRadioSnapshot.Count > 0)
+                            {
+                                server.Radios = new List<Servers.Server.RadioDevice>(lastRuntimeRadioSnapshot);
+                            }
+                            else if (server.ModuleConnected
+                                && priorServer != null
+                                && priorServer.ModuleConnected
+                                && priorServer.Radios != null
+                                && priorServer.Radios.Count > 0)
+                            {
+                                server.Radios = new List<Servers.Server.RadioDevice>(priorServer.Radios);
+                            }
+                            else
+                            {
+                                server.Radios = runtimeRadios;
+                            }
                             server.AtcMetars = State.currentstate.atcmetars == null
                                 ? new Dictionary<string, string>()
                                 : new Dictionary<string, string>(State.currentstate.atcmetars);
@@ -5559,8 +5686,21 @@ namespace VAICOM
                             server.Diagnostics = State.currentstate.diagnostics;
                             server.FlightMembers = BuildFlightMemberSnapshot();
                             server.FriendlyAssets = BuildFriendlyAssetsSnapshot();
-                            server.MapMarkers = BuildMapMarkerSnapshot();
+                            bool markerSnapshotAuthoritativeEmpty;
+                            server.MapMarkers = BuildMapMarkerSnapshot(out markerSnapshotAuthoritativeEmpty);
+                            server.MapMarkersAuthoritativeEmpty = markerSnapshotAuthoritativeEmpty;
                             server.MissionDrawings = State.currentstate.missiondrawings;
+                        }
+
+                        if (server.ModuleConnected
+                            && State.currentstate == null
+                            && priorServer != null)
+                        {
+                            // Preserve last-known runtime sections while currentstate is briefly unavailable.
+                            // This avoids a one-frame empty payload during tab/category transitions.
+                            OpenKneeboardServerSnapshot held = priorServer.Clone();
+                            held.ModuleConnected = true;
+                            server = held;
                         }
 
                         if (!server.ModuleConnected)
@@ -5579,6 +5719,9 @@ namespace VAICOM
                             server.FlightMembers = new List<OpenKneeboardFlightMember>();
                             server.FriendlyAssets = new List<OpenKneeboardFriendlyAsset>();
                             server.MapMarkers = new List<OpenKneeboardMapMarker>();
+                            server.MapMarkersAuthoritativeEmpty = true;
+                            lastRuntimeRadioMissionIdentity = "";
+                            lastRuntimeRadioSnapshot = new List<Servers.Server.RadioDevice>();
                         }
                     }
                     catch
@@ -5875,17 +6018,84 @@ namespace VAICOM
                     return (t == "MIL" || t == "CIV" || t == "JOINT") ? t : string.Empty;
                 }
 
-                private static List<OpenKneeboardMapMarker> BuildMapMarkerSnapshot()
+                private static string BuildMapMarkerMissionIdentity()
                 {
+                    try
+                    {
+                        if (State.currentstate == null)
+                        {
+                            return "";
+                        }
+
+                        string title = (State.currentstate.missiontitle ?? string.Empty).Trim();
+                        string root = (State.currentstate.root ?? string.Empty).Trim();
+                        string theatre = (State.currentstate.theatre ?? string.Empty).Trim();
+                        return string.Join("|", new[] { title, root, theatre });
+                    }
+                    catch
+                    {
+                        return "";
+                    }
+                }
+
+                private static List<OpenKneeboardMapMarker> CloneMapMarkers(List<OpenKneeboardMapMarker> source)
+                {
+                    if (source == null || source.Count == 0)
+                    {
+                        return new List<OpenKneeboardMapMarker>();
+                    }
+
+                    List<OpenKneeboardMapMarker> copy = new List<OpenKneeboardMapMarker>(source.Count);
+                    foreach (OpenKneeboardMapMarker marker in source)
+                    {
+                        if (marker == null)
+                        {
+                            continue;
+                        }
+
+                        copy.Add(new OpenKneeboardMapMarker
+                        {
+                            Id = marker.Id,
+                            Text = marker.Text ?? string.Empty,
+                            Author = marker.Author ?? string.Empty,
+                            Coalition = marker.Coalition,
+                            X = marker.X,
+                            Y = marker.Y,
+                            Z = marker.Z,
+                        });
+                    }
+
+                    return copy;
+                }
+
+                private static List<OpenKneeboardMapMarker> BuildMapMarkerSnapshot(out bool authoritativeEmpty)
+                {
+                    authoritativeEmpty = false;
                     List<OpenKneeboardMapMarker> markers = new List<OpenKneeboardMapMarker>();
+                    string missionIdentity = BuildMapMarkerMissionIdentity();
 
                     try
                     {
-                        if (State.currentstate == null
-                            || State.currentstate.riostate == null
-                            || State.currentstate.riostate.markerdetails == null)
+                        // Ignore transient empty identity frames; only reset marker cache on explicit mission identity changes.
+                        if (!string.IsNullOrWhiteSpace(missionIdentity)
+                            && !string.Equals(lastMapMarkerMissionIdentity, missionIdentity, StringComparison.Ordinal))
                         {
-                            return markers;
+                            lastMapMarkerMissionIdentity = missionIdentity;
+                            lastMapMarkerSnapshot = new List<OpenKneeboardMapMarker>();
+                            consecutiveMapMarkerEmptyFrames = 0;
+                        }
+
+                        if (State.currentstate == null || State.currentstate.riostate == null)
+                        {
+                            return CloneMapMarkers(lastMapMarkerSnapshot);
+                        }
+
+                        int markerCountHint = State.currentstate.riostate.markers;
+                        if (State.currentstate.riostate.markerdetails == null)
+                        {
+                            // Keep the last-known marker set when details are momentarily missing.
+                            // This avoids blank/fill flicker when browsing away and back across tabs.
+                            return CloneMapMarkers(lastMapMarkerSnapshot);
                         }
 
                         foreach (Servers.Server.MapMarkerState marker in State.currentstate.riostate.markerdetails)
@@ -5919,12 +6129,47 @@ namespace VAICOM
                                 break;
                             }
                         }
+
+                        // If runtime still reports active markers but this frame has no marker details,
+                        // hold the prior set to avoid UI blanking/flicker between update ticks.
+                        if (markers.Count == 0 && markerCountHint > 0 && lastMapMarkerSnapshot.Count > 0)
+                        {
+                            consecutiveMapMarkerEmptyFrames = 0;
+                            return CloneMapMarkers(lastMapMarkerSnapshot);
+                        }
+
+                        if (markers.Count == 0)
+                        {
+                            if (lastMapMarkerSnapshot.Count > 0)
+                            {
+                                // Keep marker snapshot stable for the active mission unless we receive
+                                // concrete non-empty marker updates. Runtime can emit empty marker frames
+                                // during tab switches or sparse update periods, which should not clear UI.
+                                authoritativeEmpty = false;
+                                consecutiveMapMarkerEmptyFrames = 0;
+                                return CloneMapMarkers(lastMapMarkerSnapshot);
+                            }
+
+                            if (markerCountHint <= 0)
+                            {
+                                // With no prior snapshot, allow empty state confirmation.
+                                consecutiveMapMarkerEmptyFrames = Math.Max(0, consecutiveMapMarkerEmptyFrames) + 1;
+                                authoritativeEmpty = consecutiveMapMarkerEmptyFrames >= 3;
+                            }
+                        }
+                        else
+                        {
+                            consecutiveMapMarkerEmptyFrames = 0;
+                        }
+
+                        lastMapMarkerSnapshot = CloneMapMarkers(markers);
+                        return markers;
                     }
                     catch
                     {
                     }
 
-                    return markers;
+                    return CloneMapMarkers(lastMapMarkerSnapshot);
                 }
 
                 private static List<OpenKneeboardFriendlyAsset> BuildFriendlyAssetsSnapshot()
@@ -6223,6 +6468,7 @@ namespace VAICOM
                 public List<OpenKneeboardFriendlyAsset> FriendlyAssets { get; set; } = new List<OpenKneeboardFriendlyAsset>();
                 public object Diagnostics { get; set; } = null;
                 public List<OpenKneeboardMapMarker> MapMarkers { get; set; } = new List<OpenKneeboardMapMarker>();
+                public bool MapMarkersAuthoritativeEmpty { get; set; }
                 public object MissionDrawings { get; set; } = null;
 
                 public OpenKneeboardServerSnapshot Clone()
@@ -6259,6 +6505,7 @@ namespace VAICOM
                         MapMarkers = MapMarkers == null
                             ? new List<OpenKneeboardMapMarker>()
                             : MapMarkers.ConvertAll(marker => marker == null ? null : marker.Clone()).FindAll(marker => marker != null),
+                        MapMarkersAuthoritativeEmpty = MapMarkersAuthoritativeEmpty,
                         MissionDrawings = MissionDrawings,
                         Diagnostics = Diagnostics,
                     };

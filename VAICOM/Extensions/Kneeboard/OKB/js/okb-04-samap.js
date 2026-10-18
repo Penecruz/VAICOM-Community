@@ -1231,34 +1231,57 @@
         return 'X / Y';
       })();
 
+      function markerSortKey(text, north, east, author) {
+        const t = String(text || '').trim().toUpperCase();
+        const a = String(author || '').trim().toUpperCase();
+        const x = isFinite(Number(north)) ? Number(north).toFixed(3) : '0';
+        const y = isFinite(Number(east)) ? Number(east).toFixed(3) : '0';
+        return t + '|' + x + '|' + y + '|' + a;
+      }
+
       const markers = rawMarkers
         .map(function (m, idx) {
           const north = Number(m && m.X);
           const east = Number(m && m.Z);
           if (!isFinite(north) || !isFinite(east)) return null;
           const rawId = Number(m && m.Id);
-          const id = (isFinite(rawId) && rawId > 0) ? Math.round(rawId) : (idx + 1);
+          const hasId = isFinite(rawId) && rawId > 0;
+          const id = hasId ? Math.round(rawId) : 0;
           const text = String((m && m.Text) || '').trim();
+          const author = String((m && m.Author) || '').trim();
           const coordText = getNavlogCoordinateDisplayText({ xNum: north, yNum: east }, theatre, coordDisplayMode);
           return {
+            sourceIndex: idx,
+            hasId: hasId,
             id: id,
-            text: text || '-',
-            coordText: coordText
+            text: text || 'UNTITLED',
+            coordText: coordText,
+            sortKey: markerSortKey(text, north, east, author)
           };
         })
         .filter(function (m) { return !!m; })
-        .sort(function (a, b) { return Number(a.id) - Number(b.id); });
+        .sort(function (a, b) {
+          if (a.hasId && b.hasId && Number(a.id) !== Number(b.id)) {
+            return Number(a.id) - Number(b.id);
+          }
+          if (a.hasId !== b.hasId) {
+            return a.hasId ? -1 : 1;
+          }
+          const keyCompare = String(a.sortKey || '').localeCompare(String(b.sortKey || ''));
+          if (keyCompare !== 0) return keyCompare;
+          return Number(a.sourceIndex) - Number(b.sourceIndex);
+        });
 
       if (!markers.length) {
         return '<div class="fltPlanPage2Section"><div class="fltPlanPage2Title">MAP MARKERS</div><div class="fltPlanPage2Body">No runtime map markers.</div></div>';
       }
 
       const rows = markers.map(function (m, i) {
-        const displayId = i + 1;
-        return '<tr><td style="width:54px;">' + escapeHtml(String(displayId)) + '</td><td>' + escapeHtml(m.text) + '</td><td style="width:220px;">' + escapeHtml(m.coordText) + '</td></tr>';
+        const displayId = m.hasId ? String(m.id) : String(i + 1);
+        return '<tr><td style="width:54px;">' + escapeHtml(displayId) + '</td><td>' + escapeHtml(m.text) + '</td><td style="width:220px;">' + escapeHtml(m.coordText) + '</td></tr>';
       });
 
-      return '<div class="fltPlanPage2Section"><div class="fltPlanPage2Title">MAP MARKERS</div><div class="fltPlanPage2Body"><table class="fltPlanPage2Table fltPlanPage2MarkerTable"><thead><tr><th style="width:54px;">ID</th><th>TEXT</th><th class="fltPlanEtaHeader" style="width:220px;" data-navlog-coord-cycle="1" title="Click to cycle X/Y → DMS → DDM → MGRS">POS ' + escapeHtml(coordHeaderText) + '</th></tr></thead><tbody>' + rows.join('') + '</tbody></table></div></div>';
+      return '<div class="fltPlanPage2Section"><div class="fltPlanPage2Title">MAP MARKERS</div><div class="fltPlanPage2Body"><table class="fltPlanPage2Table fltPlanPage2MarkerTable"><thead><tr><th style="width:54px;">ID</th><th>LABEL</th><th class="fltPlanEtaHeader" style="width:220px;" data-navlog-coord-cycle="1" title="Click to cycle X/Y → DMS → DDM → MGRS">POS ' + escapeHtml(coordHeaderText) + '</th></tr></thead><tbody>' + rows.join('') + '</tbody></table></div></div>';
     }
 
     function getAh64MissionPartitions(root) {
@@ -1673,26 +1696,36 @@
 
       const rawMarkers = Array.isArray(server.MapMarkers) ? server.MapMarkers : [];
       const mappedMarkers = rawMarkers
-        .map(function (m) {
+        .map(function (m, idx) {
           const northNum = Number(m && m.X);
           const eastNum = Number(m && m.Z);
           if (!isFinite(northNum) || !isFinite(eastNum)) return null;
           const markerId = Number(m && m.Id);
+          const markerHasId = isFinite(markerId) && markerId > 0;
+          const markerIdRounded = markerHasId ? Math.round(markerId) : 0;
           const markerText = String((m && m.Text) || '').trim();
           const markerAuthor = String((m && m.Author) || '').trim();
+          const markerSortKey = String(markerText || '').trim().toUpperCase()
+            + '|' + northNum.toFixed(3)
+            + '|' + eastNum.toFixed(3)
+            + '|' + String(markerAuthor || '').trim().toUpperCase();
           return {
             callsign: 'MKR',
-            name: markerText,
+            name: markerText || 'UNTITLED',
             category: 'MAP_MARKER',
             typeName: '',
             frequency: '',
             tacan: '',
             mpClientCallsign: '',
             altFeet: 0,
-            markerId: isFinite(markerId) ? Math.round(markerId) : 0,
+            markerId: markerIdRounded,
+            markerHasId: markerHasId,
+            markerSourceIndex: idx,
+            markerSortKey: markerSortKey,
             markerDisplayId: 0,
             markerText: markerText,
             markerAuthor: markerAuthor,
+            markerCoalition: Number(m && m.Coalition),
             xNum: northNum,
             yNum: eastNum
           };
@@ -1701,11 +1734,16 @@
         .sort(function (a, b) {
           const aid = Number(a && a.markerId);
           const bid = Number(b && b.markerId);
-          if (isFinite(aid) && isFinite(bid) && aid !== bid) return aid - bid;
-          return 0;
+          const aHas = !!(a && a.markerHasId);
+          const bHas = !!(b && b.markerHasId);
+          if (aHas && bHas && isFinite(aid) && isFinite(bid) && aid !== bid) return aid - bid;
+          if (aHas !== bHas) return aHas ? -1 : 1;
+          const keyCompare = String((a && a.markerSortKey) || '').localeCompare(String((b && b.markerSortKey) || ''));
+          if (keyCompare !== 0) return keyCompare;
+          return Number((a && a.markerSourceIndex) || 0) - Number((b && b.markerSourceIndex) || 0);
         })
         .map(function (m, i) {
-          m.markerDisplayId = i + 1;
+          m.markerDisplayId = (m && m.markerHasId) ? Number(m.markerId) : (i + 1);
           m.callsign = 'MKR ' + String(m.markerDisplayId);
           return m;
         });
@@ -4411,6 +4449,43 @@
         }
         const lines = [];
         const category = String(asset.category || '').trim().toUpperCase();
+
+        if (category === 'MAP_MARKER') {
+          const labelText = String(asset.markerText || asset.name || '').trim() || 'UNTITLED';
+          const markerDisplayId = Number(asset.markerDisplayId);
+          const markerId = Number(asset.markerId);
+          const markerAuthor = String(asset.markerAuthor || '').trim();
+          const markerCoalition = Number(asset.markerCoalition);
+          const xNum = Number(asset.xNum);
+          const yNum = Number(asset.yNum);
+          const model = (typeof data === 'undefined' ? null : data) || latestData || {};
+          const theatre = String((((model && model.Server) || {}).Theater) || '').trim();
+          const coordMode = getNavlogCoordDisplayMode(selected);
+          const coordText = getNavlogCoordinateDisplayText({ xNum: xNum, yNum: yNum }, theatre, coordMode);
+          const mgrsText = getNavlogCoordinateDisplayText({ xNum: xNum, yNum: yNum }, theatre, 'mgrs');
+
+          function markerCoalitionText(v) {
+            if (!isFinite(v)) return '';
+            if (v === 2) return 'BLUE';
+            if (v === 1) return 'RED';
+            if (v === 0) return 'NEUTRAL';
+            return '';
+          }
+
+          lines.push('LABEL: ' + labelText);
+          if (markerDisplayId > 0) {
+            lines.push('ID: MKR ' + String(markerDisplayId));
+          } else if (markerId > 0) {
+            lines.push('ID: ' + String(markerId));
+          }
+          if (coordText) lines.push('POS: ' + coordText);
+          if (mgrsText && mgrsText !== coordText) lines.push('MGRS: ' + mgrsText);
+          if (markerAuthor) lines.push('AUTHOR: ' + markerAuthor);
+          const coalitionText = markerCoalitionText(markerCoalition);
+          if (coalitionText) lines.push('COALITION: ' + coalitionText);
+          return lines;
+        }
+
         const typeText = String(asset.typeName || '').trim();
         const freqText = formatAssetFrequencyText(asset.frequency);
         const altFreqs = Array.isArray(asset.altFrequencies) ? asset.altFrequencies : [];
@@ -4587,7 +4662,7 @@
           : '';
           const labelColor = isMapMarker ? palette.markerLabel : (isPlayer ? palette.markerLabel : (isJtacHistory ? '#000000' : palette.assetBlueDark));
         let selectedInfoBlock = '';
-        if (m.isSelected && !isMapMarker) {
+        if (m.isSelected) {
           const infoLines = buildSelectedAssetInfoLines(m.asset);
           if (infoLines.length) {
             const fontSize = 10;
@@ -6470,11 +6545,21 @@
 
             if (isSaMapMode) {
               const saMapContext = resolveActiveSaMapContext(displayData);
+              const saMapSelected = (saMapContext && saMapContext.selected)
+                ? String(saMapContext.selected)
+                : String(lastEfbSaMapSelectionKey || '__EFB_OWNSHIP__');
               if (saMapContext && saMapContext.selected) {
-                const saMapState = buildSaMapRenderState(saMapContext.waypoints, displayData, saMapContext.selected, saMapContext.overlays, saMapContext.root, false);
+                lastEfbSaMapSelectionKey = saMapSelected;
+              }
+
+              if (saMapSelected) {
+                const saMapWaypoints = (saMapContext && Array.isArray(saMapContext.waypoints)) ? saMapContext.waypoints : [];
+                const saMapOverlays = (saMapContext && saMapContext.overlays) ? saMapContext.overlays : {};
+                const saMapRoot = (saMapContext && saMapContext.root) ? saMapContext.root : null;
+                const saMapState = buildSaMapRenderState(saMapWaypoints, displayData, saMapSelected, saMapOverlays, saMapRoot, false);
 
                 if (saMapState && saMapState.openFreeMapPayload) {
-                  const synced = syncOpenFreeMapForSelection(saMapContext.selected, saMapState.openFreeMapPayload);
+                  const synced = syncOpenFreeMapForSelection(saMapSelected, saMapState.openFreeMapPayload);
                   if (!synced) {
                     if (typeof initializeOpenFreeMapInstances === 'function') {
                       initializeOpenFreeMapInstances();
@@ -6497,7 +6582,7 @@
                 }
 
                 if (typeof applyOpenFreeMapOwnshipCamera === 'function') {
-                  applyOpenFreeMapOwnshipCamera(saMapContext.selected, displayData);
+                  applyOpenFreeMapOwnshipCamera(saMapSelected, displayData);
                 }
 
                 const readoutEl = document.getElementById('efbSaMapBraReadout');

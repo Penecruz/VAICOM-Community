@@ -67,6 +67,7 @@
     let lastMissionIdentity = '';
     let pendingMissionIdentity = '';
     let pendingMissionIdentityConfirmCount = 0;
+    let lastEfbSaMapSelectionKey = '__EFB_OWNSHIP__';
     const runtimeState = {
       missionClock: {
         lastSeconds: NaN,
