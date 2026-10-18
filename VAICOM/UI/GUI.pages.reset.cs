@@ -49,7 +49,7 @@ namespace VAICOM
                 try
                 {
                     string caption = "Repair Lua files";
-                    string message = "LUA repair:\nOriginal lua files have been restored,\nVAICOM PRO lua code was re-installed.\n";
+                    string message = "LUA repair:\nOriginal lua files were restored from backup when available,\nthen VAICOM PRO lua code was re-installed.\n";
                     MessageBoxResult selectedchoice = System.Windows.MessageBox.Show(message, caption, MessageBoxButton.OK, MessageBoxImage.Information);
                 }
                 catch

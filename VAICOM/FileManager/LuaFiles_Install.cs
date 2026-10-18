@@ -89,6 +89,333 @@ namespace VAICOM
                     }
                 }
 
+                private static bool UsesLiveOriginalBackup(Server.LuaFile thisfile)
+                {
+                    if (thisfile == null || thisfile.binary || thisfile.kneeboard || !thisfile.hardreset)
+                    {
+                        return false;
+                    }
+
+                    if (thisfile.filename.Equals("Export.lua", StringComparison.OrdinalIgnoreCase)
+                        || thisfile.filename.Equals("VAICOMPRO.export.lua", StringComparison.OrdinalIgnoreCase))
+                    {
+                        return false;
+                    }
+
+                    return !string.IsNullOrWhiteSpace(thisfile.orig) || !string.IsNullOrWhiteSpace(thisfile.orig_legacy);
+                }
+
+                private static string GetLuaBackupStoreRoot(string savedGamesRoot, string dcsVersionFolder)
+                {
+                    return Path.Combine(savedGamesRoot, dcsVersionFolder, "Scripts", "VAICOMPRO", "Backups");
+                }
+
+                private static string GetLuaBackupPath(string savedGamesRoot, string dcsVersionFolder, string targetRootPath, string targetPath)
+                {
+                    string normalizedTargetPath = Path.GetFullPath(targetPath);
+                    string relativePath = normalizedTargetPath;
+
+                    if (!string.IsNullOrWhiteSpace(targetRootPath))
+                    {
+                        string normalizedRootPath = Path.GetFullPath(targetRootPath)
+                            .TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+                        string rootPrefix = normalizedRootPath + Path.DirectorySeparatorChar;
+
+                        if (normalizedTargetPath.StartsWith(rootPrefix, StringComparison.OrdinalIgnoreCase))
+                        {
+                            relativePath = normalizedTargetPath.Substring(rootPrefix.Length);
+                        }
+                    }
+
+                    char[] invalidChars = Path.GetInvalidFileNameChars();
+                    char[] fileNameChars = relativePath.ToCharArray();
+                    for (int i = 0; i < fileNameChars.Length; i++)
+                    {
+                        char currentChar = fileNameChars[i];
+                        if (currentChar == Path.DirectorySeparatorChar
+                            || currentChar == Path.AltDirectorySeparatorChar
+                            || Array.IndexOf(invalidChars, currentChar) >= 0)
+                        {
+                            fileNameChars[i] = '_';
+                        }
+                    }
+
+                    string backupFileName = new string(fileNameChars) + ".bak";
+                    return Path.Combine(GetLuaBackupStoreRoot(savedGamesRoot, dcsVersionFolder), backupFileName);
+                }
+
+                private static string GetLuaLogName(Server.LuaFile thisfile)
+                {
+                    if (thisfile == null)
+                    {
+                        return "<unknown>";
+                    }
+
+                    return string.IsNullOrWhiteSpace(thisfile.installfolder)
+                        ? thisfile.filename
+                        : thisfile.installfolder + "\\" + thisfile.filename;
+                }
+
+                private static bool IsJesterModInstall(Server.LuaFile thisfile)
+                {
+                    return !string.IsNullOrWhiteSpace(thisfile.installfolder)
+                        && thisfile.installfolder.StartsWith("jester\\mods", StringComparison.OrdinalIgnoreCase);
+                }
+
+                private static void ResolveLuaTargetPaths(Server.LuaFile thisfile, bool uselegacy, string dcsProgramFilesFolder, string savedGamesRoot, string dcsVersionFolder, out string basepath, out string path, out string backupVersionFolder, out string targetRootPath)
+                {
+                    if (thisfile.root)
+                    {
+                        backupVersionFolder = dcsVersionFolder;
+                        targetRootPath = dcsProgramFilesFolder;
+                        string installFolder = uselegacy ? thisfile.installfolder_legacy : thisfile.installfolder;
+                        basepath = Path.Combine(dcsProgramFilesFolder, installFolder);
+                    }
+                    else
+                    {
+                        backupVersionFolder = IsJesterModInstall(thisfile) ? "DCS_F4E" : dcsVersionFolder;
+                        targetRootPath = Path.Combine(savedGamesRoot, backupVersionFolder);
+                        basepath = Path.Combine(targetRootPath, thisfile.installfolder);
+                    }
+
+                    path = Path.Combine(basepath, thisfile.filename);
+                }
+
+                private static string GetEffectiveOriginalContent(Server.LuaFile thisfile, bool uselegacy)
+                {
+                    return uselegacy && !string.IsNullOrEmpty(thisfile.orig_legacy)
+                        ? thisfile.orig_legacy
+                        : thisfile.orig;
+                }
+
+                private static string GetEffectiveSourceContent(Server.LuaFile thisfile, bool uselegacy)
+                {
+                    return uselegacy && !string.IsNullOrEmpty(thisfile.source_legacy)
+                        ? thisfile.source_legacy
+                        : thisfile.source;
+                }
+
+                private static List<string> GetKnownPatchContents(Server.LuaFile thisfile, bool uselegacy)
+                {
+                    var patchContents = new List<string>();
+
+                    void AddPatchContent(string content)
+                    {
+                        if (!string.IsNullOrWhiteSpace(content) && !patchContents.Contains(content))
+                        {
+                            patchContents.Add(content);
+                        }
+                    }
+
+                    AddPatchContent(GetEffectiveSourceContent(thisfile, uselegacy));
+                    AddPatchContent(thisfile.source);
+                    AddPatchContent(thisfile.source_legacy);
+
+                    if (thisfile.filename.Equals("ATC.lua", StringComparison.OrdinalIgnoreCase))
+                    {
+                        AddPatchContent(Properties.Resources.Append_Core_ATC);
+                    }
+
+                    if (thisfile.filename.Equals("renderer.js", StringComparison.OrdinalIgnoreCase)
+                        && !string.IsNullOrWhiteSpace(thisfile.installfolder)
+                        && thisfile.installfolder.IndexOf("F-4E\\UI\\JesterDialog\\js", StringComparison.OrdinalIgnoreCase) >= 0)
+                    {
+                        AddPatchContent(Properties.Resources.Append_F4E_Jester_Renderer);
+                    }
+
+                    return patchContents;
+                }
+
+                private static bool IsLikelyVaicomPatched(Server.LuaFile thisfile, string currentContent, bool uselegacy)
+                {
+                    if (string.IsNullOrEmpty(currentContent))
+                    {
+                        return false;
+                    }
+
+                    foreach (string patchContent in GetKnownPatchContents(thisfile, uselegacy))
+                    {
+                        if (currentContent.Contains(patchContent))
+                        {
+                            return true;
+                        }
+                    }
+
+                    return thisfile.stringreplace
+                        && !string.IsNullOrWhiteSpace(thisfile.stringsource)
+                        && currentContent.Contains(thisfile.stringsource);
+                }
+
+                private static bool CanStripPatchedContent(Server.LuaFile thisfile)
+                {
+                    return thisfile.append || !thisfile.AIRIO;
+                }
+
+                private static bool TryRemoveKnownPatchContent(Server.LuaFile thisfile, string currentContent, bool uselegacy, out string strippedContent)
+                {
+                    strippedContent = currentContent;
+                    if (!CanStripPatchedContent(thisfile) || string.IsNullOrEmpty(currentContent))
+                    {
+                        return false;
+                    }
+
+                    foreach (string patchContent in GetKnownPatchContents(thisfile, uselegacy))
+                    {
+                        string updated = strippedContent;
+                        while (true)
+                        {
+                            string next = updated
+                                .Replace("\r\n" + patchContent, "\r\n")
+                                .Replace("\n" + patchContent, "\n")
+                                .Replace(patchContent + "\r\n", string.Empty)
+                                .Replace(patchContent + "\n", string.Empty)
+                                .Replace(patchContent, string.Empty);
+
+                            if (string.Equals(next, updated, StringComparison.Ordinal))
+                            {
+                                break;
+                            }
+
+                            updated = next;
+                        }
+
+                        strippedContent = updated;
+                    }
+
+                    return !string.Equals(strippedContent, currentContent, StringComparison.Ordinal);
+                }
+
+                private static string GetPreferredLuaBackupContent(Server.LuaFile thisfile, string currentContent, bool uselegacy, out string backupMode)
+                {
+                    backupMode = "live";
+                    if (!IsLikelyVaicomPatched(thisfile, currentContent, uselegacy))
+                    {
+                        return currentContent;
+                    }
+
+                    if (TryRemoveKnownPatchContent(thisfile, currentContent, uselegacy, out string strippedContent)
+                        && !string.IsNullOrWhiteSpace(strippedContent))
+                    {
+                        backupMode = "derived";
+                        return strippedContent;
+                    }
+
+                    backupMode = "embedded";
+                    return GetEffectiveOriginalContent(thisfile, uselegacy);
+                }
+
+                private static void NormalizeLiveLuaFileBeforeFirstBackup(Server.LuaFile thisfile, string path, string currentContent, string desiredBackupContent, string backupMode, bool forcequiet)
+                {
+                    if (string.Equals(currentContent, desiredBackupContent, StringComparison.Ordinal)
+                        || string.IsNullOrEmpty(desiredBackupContent))
+                    {
+                        return;
+                    }
+
+                    File.WriteAllText(path, desiredBackupContent);
+
+                    if (!forcequiet)
+                    {
+                        if (backupMode.Equals("derived", StringComparison.Ordinal))
+                        {
+                            Log.Write("   Normalized live file from patched content: " + GetLuaLogName(thisfile), Colors.Text);
+                        }
+                        else if (backupMode.Equals("embedded", StringComparison.Ordinal))
+                        {
+                            Log.Write("   Normalized live file from embedded original: " + GetLuaLogName(thisfile), Colors.Warning);
+                        }
+                    }
+                }
+
+                private static string ResolveLuaBackupPath(string path, string savedGamesRoot, string dcsVersionFolder, string targetRootPath)
+                {
+                    return GetLuaBackupPath(savedGamesRoot, dcsVersionFolder, targetRootPath, path);
+                }
+
+                private static bool TryReadLuaBackupContent(string path, string savedGamesRoot, string dcsVersionFolder, string targetRootPath, out string backupContent)
+                {
+                    string backupPath = ResolveLuaBackupPath(path, savedGamesRoot, dcsVersionFolder, targetRootPath);
+                    if (File.Exists(backupPath))
+                    {
+                        backupContent = File.ReadAllText(backupPath);
+                        return true;
+                    }
+
+                    backupContent = null;
+                    return false;
+                }
+
+                private static void LogLuaBackupWrite(Server.LuaFile thisfile, string backupMode, bool hadExistingBackup)
+                {
+                    if (backupMode.Equals("derived", StringComparison.Ordinal))
+                    {
+                        Log.Write((hadExistingBackup ? "   Refreshed clean backup: " : "   Derived clean backup: ") + GetLuaLogName(thisfile), Colors.Text);
+                    }
+                    else if (backupMode.Equals("embedded", StringComparison.Ordinal))
+                    {
+                        Log.Write((hadExistingBackup ? "   Refreshed backup from embedded original: " : "   Seeded backup from embedded original: ") + GetLuaLogName(thisfile), Colors.Warning);
+                    }
+                    else if (hadExistingBackup)
+                    {
+                        Log.Write("   Refreshed backup: " + GetLuaLogName(thisfile), Colors.Text);
+                    }
+                    else
+                    {
+                        Log.Write("   Backed up: " + GetLuaLogName(thisfile), Colors.Text);
+                    }
+                }
+
+                private static void EnsureLuaBackupExists(Server.LuaFile thisfile, string path, bool uselegacy, string savedGamesRoot, string dcsVersionFolder, string targetRootPath, bool forcequiet)
+                {
+                    if (!UsesLiveOriginalBackup(thisfile) || !File.Exists(path))
+                    {
+                        return;
+                    }
+
+                    string backupPath = ResolveLuaBackupPath(path, savedGamesRoot, dcsVersionFolder, targetRootPath);
+                    string currentContent = File.ReadAllText(path);
+                    string desiredBackupContent = GetPreferredLuaBackupContent(thisfile, currentContent, uselegacy, out string backupMode);
+                    bool hadExistingBackup = TryReadLuaBackupContent(path, savedGamesRoot, dcsVersionFolder, targetRootPath, out string backupContent);
+
+                    if (!hadExistingBackup)
+                    {
+                        NormalizeLiveLuaFileBeforeFirstBackup(thisfile, path, currentContent, desiredBackupContent, backupMode, forcequiet);
+                    }
+                    else if (string.Equals(desiredBackupContent, backupContent, StringComparison.Ordinal))
+                    {
+                        return;
+                    }
+
+                    Directory.CreateDirectory(Path.GetDirectoryName(backupPath));
+                    File.WriteAllText(backupPath, desiredBackupContent);
+
+                    if (!forcequiet)
+                    {
+                        LogLuaBackupWrite(thisfile, backupMode, hadExistingBackup);
+                    }
+                }
+
+                private static string GetLuaBaseContent(Server.LuaFile thisfile, string path, bool uselegacy, string savedGamesRoot, string dcsVersionFolder, string targetRootPath, bool forcequiet, string operation)
+                {
+                    bool usesLiveBackup = UsesLiveOriginalBackup(thisfile);
+                    if (usesLiveBackup && TryReadLuaBackupContent(path, savedGamesRoot, dcsVersionFolder, targetRootPath, out string backupContent))
+                    {
+                        if (!forcequiet)
+                        {
+                            Log.Write("   Using live backup for " + GetLuaLogName(thisfile) + " during " + operation + ".", Colors.Text);
+                        }
+
+                        return backupContent;
+                    }
+
+                    string fallbackContent = GetEffectiveOriginalContent(thisfile, uselegacy);
+                    if (usesLiveBackup)
+                    {
+                        Log.Write("No live backup found for " + GetLuaLogName(thisfile) + "; using embedded original during " + operation + ".", Colors.Warning);
+                    }
+                    return fallbackContent;
+                }
+
                 public static void LuaFiles_Install(bool restore, bool forcequiet)
                 {
                     // --- finds all DCS install locations and manipulates lua files
@@ -295,34 +622,10 @@ namespace VAICOM
 
                                         string basepath;
                                         string path;
+                                        string backupVersionFolder;
+                                        string targetRootPath;
 
-                                        // determine root/SG target location
-
-                                        if (thisfile.root) // to DCS program folder
-                                        {
-                                            if (uselegacy)
-                                            {
-                                                basepath = dcsprogramfilesfolder + "\\" + thisfile.installfolder_legacy;
-                                            }
-                                            else
-                                            {
-                                                basepath = dcsprogramfilesfolder + "\\" + thisfile.installfolder;
-                                            }
-                                        }
-                                        else // to Saved Games
-                                        {
-                                            bool isJesterModInstall = !string.IsNullOrWhiteSpace(thisfile.installfolder)
-                                                && thisfile.installfolder.StartsWith("jester\\mods", StringComparison.OrdinalIgnoreCase);
-
-                                            if (isJesterModInstall)
-                                            {
-                                                basepath = UserSavedGamesFolder + "\\DCS_F4E\\" + thisfile.installfolder;
-                                            }
-                                            else
-                                            {
-                                                basepath = UserSavedGamesFolder + "\\" + Server.dcsversion[set.Key] + "\\" + thisfile.installfolder;
-                                            }
-                                        }
+                                        ResolveLuaTargetPaths(thisfile, uselegacy, dcsprogramfilesfolder, UserSavedGamesFolder, Server.dcsversion[set.Key], out basepath, out path, out backupVersionFolder, out targetRootPath);
 
                                         // Validate basepath
                                         if (string.IsNullOrEmpty(basepath) || basepath.Length <= 3)
@@ -356,28 +659,24 @@ namespace VAICOM
                                             bool isJesterModInstall = !string.IsNullOrWhiteSpace(thisfile.installfolder)
                                                 && thisfile.installfolder.StartsWith("jester\\mods", StringComparison.OrdinalIgnoreCase);
 
+                                            if (!restore)
+                                            {
+                                                EnsureLuaBackupExists(thisfile, path, uselegacy, UserSavedGamesFolder, backupVersionFolder, targetRootPath, forcequiet);
+                                            }
+
                                             if ((State.luahardreset || isJesterModInstall) && thisfile.hardreset && !thisfile.stringreplace)
                                             {
                                                 if (File.Exists(path))
                                                 {
                                                     File.Delete(path);
                                                 }
-                                                if (File.Exists(path + ".old"))
-                                                {
-                                                    File.Delete(path + ".old");
-                                                }
                                             }
 
                                             // -----  write the new file -----------------------------------------
 
-                                                string writestring = "";
-
-                                                string effectiveOrig = uselegacy && !string.IsNullOrEmpty(thisfile.orig_legacy)
-                                                    ? thisfile.orig_legacy
-                                                    : thisfile.orig;
-                                                string effectiveSource = uselegacy && !string.IsNullOrEmpty(thisfile.source_legacy)
-                                                    ? thisfile.source_legacy
-                                                    : thisfile.source;
+                                            string writestring = "";
+                                            string baseContent = GetLuaBaseContent(thisfile, path, uselegacy, UserSavedGamesFolder, backupVersionFolder, targetRootPath, forcequiet, restore ? "restore" : "patch");
+                                            string effectiveSource = GetEffectiveSourceContent(thisfile, uselegacy);
 
                                             if (thisfile.AIRIO) // 
                                             {
@@ -414,35 +713,21 @@ namespace VAICOM
                                                 }
                                                 else // normal i.e. not string findreplace: Jester page
                                                 {
-
                                                     if (!airioFeatureEnabledForFile || restore)
                                                     {
-                                                        // AIRIO disabled: reset functions to original
-                                                        writestring = effectiveOrig; // <-- this is used when RIO not enabled
+                                                        writestring = baseContent;
                                                     }
-                                                    else // normal, RIO is enabled
+                                                    else if (thisfile.append)
                                                     {
-
-                                                        if (thisfile.append)
-                                                        {
-                                                            writestring = effectiveOrig;
-
-                                                            if (!restore)
-                                                            {
-                                                                writestring += "\n" + effectiveSource;
-                                                            }
-                                                        }
-                                                        else // replace type
-                                                        {
-                                                            if (thisfile.reset || restore)
-                                                            {
-                                                                writestring = effectiveOrig;
-                                                            }
-                                                            else
-                                                            {
-                                                                writestring = effectiveSource;
-                                                            }
-                                                        }
+                                                        writestring = baseContent + "\n" + effectiveSource;
+                                                    }
+                                                    else if (thisfile.reset)
+                                                    {
+                                                        writestring = baseContent;
+                                                    }
+                                                    else
+                                                    {
+                                                        writestring = effectiveSource;
                                                     }
 
                                                     try
@@ -459,68 +744,26 @@ namespace VAICOM
                                             }
                                             else //not AIRIO i.e. for regular lua files
                                             {
-                                                // append type
-
                                                 if (thisfile.append)
                                                 {
-                                                    if (uselegacy)
+                                                    writestring = baseContent;
+
+                                                    if (!restore)
                                                     {
-                                                        writestring = thisfile.orig_legacy;
-
-                                                        if (!restore)
-                                                        {
-                                                            writestring += "\n" + thisfile.source_legacy;
-                                                        }
-                                                    }
-                                                    else // for openbeta
-                                                    {
-                                                        writestring = thisfile.orig;
-
-                                                        if (!restore)
-                                                        {
-                                                            writestring += "\n" + thisfile.source;
-                                                        }
-
+                                                        writestring += "\n" + effectiveSource;
                                                     }
                                                 }
-                                                else // replace type
+                                                else if (thisfile.reset || restore)
                                                 {
-                                                    if (thisfile.reset || restore)
-                                                    {
-                                                        if (uselegacy)
-                                                        {
-                                                            writestring = thisfile.orig_legacy;
-                                                        }
-                                                        else
-                                                        {
-                                                            writestring = thisfile.orig;
-                                                        }
-                                                    }
-                                                    else // not restore
-                                                    {
-                                                        if (thisfile.filename.Equals("JesterAI_Page.lua", StringComparison.OrdinalIgnoreCase))
-                                                        {
-                                                            if (uselegacy)
-                                                            {
-                                                                writestring = thisfile.source_legacy;
-                                                            }
-                                                            else
-                                                            {
-                                                                writestring = thisfile.source;
-                                                            }
-                                                        }
-                                                        else
-                                                        {
-                                                            if (uselegacy)
-                                                            {
-                                                                writestring = thisfile.orig_legacy + "\n" + thisfile.source_legacy;
-                                                            }
-                                                            else
-                                                            {
-                                                                writestring = thisfile.orig + "\n" + thisfile.source;
-                                                            }
-                                                        }
-                                                    }
+                                                    writestring = baseContent;
+                                                }
+                                                else if (thisfile.filename.Equals("JesterAI_Page.lua", StringComparison.OrdinalIgnoreCase))
+                                                {
+                                                    writestring = effectiveSource;
+                                                }
+                                                else
+                                                {
+                                                    writestring = baseContent + "\n" + effectiveSource;
                                                 }
 
                                                 // write the file (append mode)
@@ -537,7 +780,7 @@ namespace VAICOM
 
                                                 if (!forcequiet)
                                                 {
-                                                    Log.Write("   Reset: " + thisfile.filename, Colors.Recognition);
+                                                    Log.Write("   Reset: " + GetLuaLogName(thisfile), Colors.Recognition);
                                                 }
                                             }
 
@@ -561,7 +804,7 @@ namespace VAICOM
 
                                                 if (!forcequiet)
                                                 {
-                                                    Log.Write("   Reset: " + thisfile.filename, Colors.Recognition);
+                                                    Log.Write("   Reset: " + GetLuaLogName(thisfile), Colors.Recognition);
                                                 }
 
                                                 updatecounter = updatecounter + 1;
@@ -592,7 +835,7 @@ namespace VAICOM
 
                                                     if (!forcequiet)
                                                     {
-                                                        Log.Write("   Reset: " + thisfile.filename, Colors.Recognition);
+                                                        Log.Write("   Reset: " + GetLuaLogName(thisfile), Colors.Recognition);
                                                     }
                                                 }
                                                 else
@@ -617,14 +860,14 @@ namespace VAICOM
 
                                                         if (!forcequiet)
                                                         {
-                                                            Log.Write("   Repaired: " + thisfile.filename, Colors.Recognition);
+                                                            Log.Write("   Repaired: " + GetLuaLogName(thisfile), Colors.Recognition);
                                                         }
                                                     }
                                                     else // ok, desired number of entry occurrences
                                                     {
                                                         if (!forcequiet)
                                                         {
-                                                            Log.Write("   Unchanged: " + thisfile.filename, Colors.Recognition);
+                                                            Log.Write("   Unchanged: " + GetLuaLogName(thisfile), Colors.Recognition);
                                                         }
                                                     }
                                                 }

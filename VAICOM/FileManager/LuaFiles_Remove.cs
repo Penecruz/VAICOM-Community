@@ -79,17 +79,11 @@ namespace VAICOM
                                             Server.LuaFile thisfile = serverfile.Value;
                                             string basepath;
                                             string path;
+                                            string backupVersionFolder;
+                                            string targetRootPath;
+                                            bool uselegacy = !set.Key.Equals("2.9 OpenBeta");
 
-                                            if (thisfile.root)
-                                            {
-                                                basepath = folder + "\\" + thisfile.installfolder;
-                                                path = basepath + "\\" + thisfile.filename;
-                                            }
-                                            else
-                                            {
-                                                basepath = UserSavedGamesFolder + "\\" + Server.dcsversion[set.Key] + "\\" + thisfile.installfolder;
-                                                path = basepath + "\\" + thisfile.filename;
-                                            }
+                                            ResolveLuaTargetPaths(thisfile, uselegacy, folder, UserSavedGamesFolder, Server.dcsversion[set.Key], out basepath, out path, out backupVersionFolder, out targetRootPath);
 
                                             if (!thisfile.filename.ToLower().Equals("export.lua"))
                                             {
@@ -98,10 +92,6 @@ namespace VAICOM
                                                     if (File.Exists(path))
                                                     {
                                                         File.Delete(path);
-                                                    }
-                                                    if (File.Exists(path + ".old"))
-                                                    {
-                                                        File.Delete(path + ".old");
                                                     }
 
                                                     // put back original
@@ -112,9 +102,12 @@ namespace VAICOM
                                                     }
                                                     else
                                                     {
+                                                        string writestring = GetLuaBaseContent(thisfile, path, uselegacy, UserSavedGamesFolder, backupVersionFolder, targetRootPath, false, "restore");
 
-                                                        string writestring = thisfile.orig;
-                                                        using (StreamWriter writer = new StreamWriter(path, false)) { writer.Write(writestring); };
+                                                        if (!string.IsNullOrEmpty(writestring))
+                                                        {
+                                                            using (StreamWriter writer = new StreamWriter(path, false)) { writer.Write(writestring); };
+                                                        }
                                                     }
 
                                                 }
