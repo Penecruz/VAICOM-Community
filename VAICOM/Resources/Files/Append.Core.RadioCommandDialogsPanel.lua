@@ -1245,47 +1245,18 @@ local function resolveUnitFromWorldObject(obj, side, worldObjectKey)
 	local function tryByName(name)
 		local n = base.tostring(name or "")
 		if n == "" then return nil end
-		local ok, u = base.pcall(function() return unitApi.getByName(n) end)
-		if ok and u ~= nil then return u end
+		local ok, unit = base.pcall(function() return unitApi.getByName(n) end)
+		if ok and unit ~= nil then return unit end
 		return nil
 	end
-
-	local function tryById(id)
-		local idNum = base.tonumber(id)
-		if idNum == nil then return nil end
-		if unitApi.getById ~= nil then
-			local ok, u = base.pcall(function() return unitApi.getById(idNum) end)
-			if ok and u ~= nil then return u end
-		end
-		if unitApi.getByID ~= nil then
-			local ok, u = base.pcall(function() return unitApi.getByID(idNum) end)
-			if ok and u ~= nil then return u end
-		end
-		return nil
-	end
-
-	if obj.unit ~= nil and base.type(obj.unit) == "table" then
-		return obj.unit
-	end
-	if obj.Unit ~= nil and base.type(obj.Unit) == "table" then
-		return obj.Unit
-	end
-
-	local u = tryByName(obj.UnitName) or tryByName(obj.unitName) or tryByName(obj.name) or tryByName(obj.Name)
-	if u ~= nil then return u end
-
-	u = tryById(worldObjectKey)
-	if u ~= nil then return u end
-
-	u = tryById(obj.UnitId) or tryById(obj.unitId) or tryById(obj.ID) or tryById(obj.id) or tryById(obj.Id) or tryById(obj.ObjectId) or tryById(obj.objectId)
-	if u ~= nil then return u end
-
+	
+	local unit = tryByName(obj.UnitName)
+	if unit ~= nil then return unit end
+	
 	local data = obj.Data or obj.data
 	if base.type(data) == "table" then
-		u = tryByName(data.UnitName) or tryByName(data.unitName) or tryByName(data.name) or tryByName(data.Name)
-		if u ~= nil then return u end
-		u = tryById(data.UnitId) or tryById(data.unitId) or tryById(data.ID) or tryById(data.id) or tryById(data.Id) or tryById(data.ObjectId) or tryById(data.objectId)
-		if u ~= nil then return u end
+		unit = tryByName(data.UnitName) or tryByName(data.unitName) or tryByName(data.name) or tryByName(data.Name)
+		if unit ~= nil then return unit end
 	end
 
 	local candidateName = base.string.upper(base.tostring(obj.Name or obj.name or obj.UnitName or obj.unitName or (base.type(data) == "table" and (data.Name or data.name or data.UnitName or data.unitName) or "") or ""))
@@ -2431,70 +2402,24 @@ base.vaicom.objects = {
 				end
 
 				local samObjects = {}
+				-- Filter the world objects to find opposition SAM units.
 				for id, obj in base.pairs(worldObjects) do
-					local objectType = obj.Type
-					if objectType and base.type(objectType) == "table" then
-						-- Filter the world objects to find SAM units. The level1 value of 2 refers to ground units and
-						-- the level2 value of 16 refers to SAM units. We also exclude static objects.
-						-- Object types referenced in Scripts\Database\wsTypes.lua
-						if objectType["level1"] == 2 and objectType["level2"] == 16
-							and (obj.Flags and obj.Flags.Born)
-							and not (obj.Flags and obj.Flags.Static) then
-							samObjects[id] = obj
+					if obj.CoalitionID == side then
+						local objectType = obj.Type
+						if objectType and base.type(objectType) == "table" then
+							-- The level1 value of 2 refers to ground units and the level2
+							-- value of 16 refers to SAM units. We also exclude static objects.
+							-- Object types referenced in Scripts\Database\wsTypes.lua
+							if objectType["level1"] == 2 and objectType["level2"] == 16
+								and (obj.Flags and obj.Flags.Born)
+								and not (obj.Flags and obj.Flags.Static) then
+								samObjects[id] = obj
+							end
 						end
 					end
 				end
-				local profResolveMs, profResolveCount, profMatchCount = 0, 0, 0
 
-				local function isSamRadarText(text)
-					local t = base.string.upper(base.tostring(text or ""))
-					if t == "" then return false end
-					if base.string.find(t, "LAUNCHER", 1, true)
-						or base.string.find(t, "TEL ", 1, true)
-						or base.string.find(t, " TEL", 1, true)
-						or base.string.find(t, "TELAR", 1, true)
-						or base.string.find(t, "LN", 1, true)
-					then
-						return false
-					end
-					return base.string.find(t, "RADAR", 1, true)
-						or base.string.find(t, "EWR", 1, true)
-						or base.string.find(t, "SEARCH", 1, true)
-						or base.string.find(t, "TRACK", 1, true)
-						or base.string.find(t, " STR", 1, true)
-						or base.string.find(t, "STR ", 1, true)
-						or base.string.find(t, "_STR", 1, true)
-						or base.string.find(t, "STR_", 1, true)
-						or base.string.find(t, " SR", 1, true)
-						or base.string.find(t, "SR ", 1, true)
-						or base.string.find(t, "_SR", 1, true)
-						or base.string.find(t, "SR_", 1, true)
-						or base.string.find(t, " TR", 1, true)
-						or base.string.find(t, "TR ", 1, true)
-						or base.string.find(t, "_TR", 1, true)
-						or base.string.find(t, "TR_", 1, true)
-						or base.string.find(t, "HQ-7", 1, true)
-						or base.string.find(t, "HQ 7", 1, true)
-						or base.string.find(t, "BIG BIRD", 1, true)
-						or base.string.find(t, "SNOW DRIFT", 1, true)
-						or base.string.find(t, "STRAIGHT FLUSH", 1, true)
-						or base.string.find(t, "FLAP LID", 1, true)
-						or base.string.find(t, "TIN SHIELD", 1, true)
-						or base.string.find(t, "DOG EAR", 1, true)
-						or base.string.find(t, "LOW BLOW", 1, true)
-						or base.string.find(t, "CLAM SHELL", 1, true)
-						or base.string.find(t, "PATRIOT", 1, true)
-						or base.string.find(t, "HAWK", 1, true)
-						or base.string.find(t, "KUB", 1, true)
-						or base.string.find(t, "BUK", 1, true)
-						or base.string.find(t, "NASAMS_RADAR_MPQ64F", 1, true)
-						or base.string.find(t, "MPQ64F", 1, true)
-						or base.string.find(t, "64H6E", 1, true)
-						or base.string.find(t, "9S18M1", 1, true)
-						or base.string.find(t, "RLS_19J6", 1, true)
-						or base.string.find(t, "P-19 S-125 SR", 1, true)
-						or base.string.find(t, "P 19 S 125 SR", 1, true)
-				end
+				local profResolveMs, profResolveCount, profMatchCount = 0, 0, 0
 
 				local function getWorldObjectTypeText(obj)
 					if obj == nil or base.type(obj) ~= "table" then return "" end
@@ -2513,14 +2438,6 @@ base.vaicom.objects = {
 
 				local function processSamObject(objectKey, obj)
 					if base.type(obj) ~= "table" then return end
-					local objName = obj.Name or obj.name or ""
-					local objUnitName = obj.UnitName or obj.unitName or ""
-					local objGroupName = obj.GroupName or obj.groupName or ""
-					
-					if not (isSamRadarText(objName)
-						or isSamRadarText(objGroupName)
-						or isSamRadarText(objUnitName)) then return end
-					
 					profMatchCount = profMatchCount + 1
 					local tResolve = profiling and profClock() or 0
 					local unit = resolveUnitFromWorldObject(obj, side, objectKey)
@@ -2529,12 +2446,6 @@ base.vaicom.objects = {
 						profResolveCount = profResolveCount + 1
 					end
 					if unit ~= nil then
-						local okCoalition, unitCoalition = base.pcall(function()
-							return unit:getCoalition()
-						end)
-						if okCoalition and unitCoalition ~= nil and unitCoalition ~= side then
-							return
-						end
 						if not isResolvedSamRadarUnit(unit) then
 							return
 						end
@@ -2687,7 +2598,7 @@ base.vaicom.list = {
 		if coalition then
 			Listing = base.vaicom.helper.mergetables(Listing, base.vaicom.objects.localAWACSs(coalition))
 		end
-      local isMultiplayerNow = data.initialized and base.DCS.isMultiplayer() or false
+		local isMultiplayerNow = data.initialized and base.DCS.isMultiplayer() or false
 		if (not isMultiplayerNow) and (not selectstr or selectstr == "radio") then
 			Listing = base.vaicom.filter.hasradio(Listing)
 		end
@@ -5124,7 +5035,7 @@ base.vaicom.state = {
 							end
 						end
 
-					local cmdKeywords = { "cmds", "countermeasure", "cms", "program", "chaff", "flare", "ecm", "jammer" }
+						local cmdKeywords = { "cmds", "countermeasure", "cms", "program", "chaff", "flare", "ecm", "jammer" }
 						scanKeywordTree(payload, "payload", 0, 7, probe.runtimeCmdsHits, 80, cmdKeywords, {})
 						if base.type(payload) == "table" then
 							scanKeywordTree(payload.Stations, "payload.Stations", 0, 6, probe.runtimeCmdsHits, 80, cmdKeywords, {})
@@ -5339,25 +5250,25 @@ base.vaicom.state = {
 						local snapshot = base.vaicom and base.vaicom.state and base.vaicom.state.missiondrawings or nil
 						if base.type(snapshot) ~= "table" then return end
 
-					local state = base.vaicom and base.vaicom.state or nil
-					if base.type(state) == "table" then
-						probe.mdTxCount = base.tonumber(state.missiondrawingssendcount) or 0
-						probe.mdTxLocked = state.missiondrawingslocked and true or false
-						probe.mdTxReason = base.tostring(state.missiondrawingstxreason or "")
-						probe.mdTxSlot = base.tostring(state.missiondrawingsslotkey or "")
-						probe.mdTxChunk13Bytes = base.tonumber(state.missiondrawingstxchunk13bytes) or 0
-						probe.mdTxChunk13HasTable = state.missiondrawingstxchunk13hastable and true or false
-						probe.mdTxChunk13HasKey = state.missiondrawingstxchunk13haskey and true or false
-						probe.mdTxChunk13SentOk = state.missiondrawingstxchunk13sentok and true or false
-						probe.mdTxChunk13PartCount = base.tonumber(state.missiondrawingstxchunk13partcount) or 0
-						local nextRetryAt = base.tonumber(state.missiondrawingsnextretryat)
-						local nowTick = base.tonumber(state.timer) or 0
-						if nextRetryAt ~= nil then
-							probe.mdTxNextRetryIn = nextRetryAt - nowTick
-						else
-							probe.mdTxNextRetryIn = -1
+						local state = base.vaicom and base.vaicom.state or nil
+						if base.type(state) == "table" then
+							probe.mdTxCount = base.tonumber(state.missiondrawingssendcount) or 0
+							probe.mdTxLocked = state.missiondrawingslocked and true or false
+							probe.mdTxReason = base.tostring(state.missiondrawingstxreason or "")
+							probe.mdTxSlot = base.tostring(state.missiondrawingsslotkey or "")
+							probe.mdTxChunk13Bytes = base.tonumber(state.missiondrawingstxchunk13bytes) or 0
+							probe.mdTxChunk13HasTable = state.missiondrawingstxchunk13hastable and true or false
+							probe.mdTxChunk13HasKey = state.missiondrawingstxchunk13haskey and true or false
+							probe.mdTxChunk13SentOk = state.missiondrawingstxchunk13sentok and true or false
+							probe.mdTxChunk13PartCount = base.tonumber(state.missiondrawingstxchunk13partcount) or 0
+							local nextRetryAt = base.tonumber(state.missiondrawingsnextretryat)
+							local nowTick = base.tonumber(state.timer) or 0
+							if nextRetryAt ~= nil then
+								probe.mdTxNextRetryIn = nextRetryAt - nowTick
+							else
+								probe.mdTxNextRetryIn = -1
+							end
 						end
-					end
 
 						local ownSide = resolvePlayerCoalitionSide()
 						local ownLayer = normalizeLayerName(mapCoalitionSideToText(ownSide))
