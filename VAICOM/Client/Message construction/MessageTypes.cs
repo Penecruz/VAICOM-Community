@@ -139,10 +139,10 @@ namespace VAICOM
                         // without requiring a tab-specific PTT cycle.
                         includediagnostics = Extensions.Kneeboard.OpenKneeboardBridge.IsFlightPlanTabActive;
 
-                        // Skip Opposition collection when OKB Out is disabled to reduce
+                        // Skip Opposition collection when no clients are connected to OKB Out to reduce
                         // runtime load on large missions with many ground units.
-                        collectopposition = State.activeconfig.OpenKneeboard_Out;
-                        
+                        collectopposition = Extensions.Kneeboard.OpenKneeboardBridge.HasActiveConnection;
+
                         //kneeboard = 1; // show kneeboard on PTT press, test
                     }
 

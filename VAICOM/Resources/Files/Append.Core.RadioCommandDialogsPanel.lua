@@ -735,6 +735,7 @@ function ProcessRemoteCommand()
 	end
 	if clientmessage.type == base.vaicom.messagetype.requestupdate  	then
 		base.vaicom.state.includediagnostics = clientmessage.includediagnostics
+		base.vaicom.state.collectopposition = clientmessage.collectopposition
 		base.vaicom.state.sendupdateall()
 		return
 	end
