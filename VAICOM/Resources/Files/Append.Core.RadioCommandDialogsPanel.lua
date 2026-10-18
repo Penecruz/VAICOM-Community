@@ -1188,21 +1188,21 @@ base.vaicom.categories = {
 -- cached communicator each time), so we cache them per Locator.
 -- LoGetWorldObjects is also cached (with a short TTL) so update.all and
 -- sendupdateall share one result.
--- All caches are cleared by resetCaches at the start of every update.all and at the
+-- All props caches are cleared by resetPropsCaches at the start of every update.all and at the
 -- end of every sendupdateall to avoid cross-update staleness.
-local propcache = { comm = {}, desc = {}, pname = {}, range = {}, worldObjects = nil, worldObjectsUpdatedAt = 0 }
+local propcache = { comm = {}, desc = {}, pname = {}, range = {} }
+local worldObjectsCache = { worldObjects = nil, worldObjectsUpdatedAt = 0 }
 local WORLD_OBJECTS_CACHE_TTL = 1.0 -- seconds; guards against staleness when no reset occurs between calls
-local function resetCaches()
+local function resetPropsCache()
 	propcache.comm = {}
 	propcache.desc = {}
 	propcache.pname = {}
 	propcache.range = {}
-	propcache.worldObjects = nil
-	propcache.worldObjectsUpdatedAt = 0
 end
--- LoGetWorldObjects is expensive and is read-only for all callers, so share one
--- result between update.all and sendupdateall within the same update pass.
--- Returns nil (not false) as the first value when the API is missing.
+local function resetWorldObjectsCache()
+	worldObjectsCache.worldObjects = nil
+	worldObjectsCache.worldObjectsUpdatedAt = 0
+end
 local function getWorldObjectsCached()
 	if base.Export == nil or base.Export.LoGetWorldObjects == nil then
 		return nil, nil
@@ -2422,21 +2422,6 @@ base.vaicom.objects = {
 
 				local profResolveMs, profResolveCount, profMatchCount = 0, 0, 0
 
-				local function getWorldObjectTypeText(obj)
-					if obj == nil or base.type(obj) ~= "table" then return "" end
-					if obj.typeName then return base.tostring(obj.typeName) end
-					if obj.TypeName then return base.tostring(obj.TypeName) end
-					if base.type(obj.type) == "string" then return obj.type end
-					if base.type(obj.Type) == "string" then return obj.Type end
-					if base.type(obj.Type) == "table" then
-						return base.tostring(obj.Type.level1 or obj.Type.name or obj.Type.typeName or obj.Type[1] or "")
-					end
-					if base.type(obj.type) == "table" then
-						return base.tostring(obj.type.level1 or obj.type.name or obj.type.typeName or obj.type[1] or "")
-					end
-					return ""
-				end
-
 				local function processSamObject(objectKey, obj)
 					if base.type(obj) ~= "table" then return end
 					profMatchCount = profMatchCount + 1
@@ -3157,7 +3142,7 @@ base.vaicom.state = {
 				-- This will be used by the sendupdateall function as well as this
 				-- is called after the update.all. This cache will be cleared once
 				-- the sendupdateall call completes to free up memory.
-				resetCaches()
+				resetPropsCache()
 
 				base.vaicom.state.timer								= data.initialized and base.Export.LoGetModelTime()
 				base.vaicom.state.tod								= data.initialized and base.Export.LoGetMissionStartTime()
@@ -5151,6 +5136,9 @@ base.vaicom.state = {
 					local shouldRefreshStatic = (diagCache.staticAt == nil or diagCache.staticAt == -10000) or ((nowTick - diagCache.staticAt) >= 86400)
 					local missionRef = base.tostring(missionObj)
 					if diagCache.missionRef ~= missionRef then
+						-- Force reset the world objects cache as this is a new mission
+						resetWorldObjectsCache()
+
 						diagCache.missionRef = missionRef
 						diagCache.staticAt = -10000
 						diagCache.payloadAt = -10000
@@ -6266,7 +6254,7 @@ base.vaicom.state = {
 				profMark("encode+send chunks")
 
 				-- Clear receipients list Locator properties cache
-				resetCaches()
+				resetPropsCache()
 
 				if profiling then
 					base.print(base.string.format("VAICOM profiling (sendupdateall) | %-40s %8.3f ms", "TOTAL", (profClock() - profStart) * 1000))
