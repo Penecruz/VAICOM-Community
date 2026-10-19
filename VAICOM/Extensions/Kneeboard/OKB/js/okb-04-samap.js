@@ -1219,17 +1219,8 @@
       return '<div class="fltPlanPage2Section"><div class="fltPlanPage2Title">ROUTES</div><div class="fltPlanPage2Body"><table class="fltPlanPage2Table"><thead><tr><th style="width:56px;">ROUTE</th><th>WAYPOINTS</th></tr></thead><tbody>' + body.join('') + '</tbody></table></div></div>';
     }
 
-    function formatMapMarkersPanelHtml(selected, data) {
-      const server = (data && data.Server) || {};
-      const rawMarkers = Array.isArray(server.MapMarkers) ? server.MapMarkers : [];
-      const theatre = String(server.Theater || '').trim();
-      const coordDisplayMode = getNavlogCoordDisplayMode(selected);
-      const coordHeaderText = (function () {
-        if (coordDisplayMode === 'dms') return 'DMS';
-        if (coordDisplayMode === 'ddm') return 'DDM';
-        if (coordDisplayMode === 'mgrs') return 'MGRS';
-        return 'X / Y';
-      })();
+    function buildMapMarkerRows(server, theatre, coordDisplayMode) {
+      const rawMarkers = Array.isArray(server && server.MapMarkers) ? server.MapMarkers : [];
 
       function markerSortKey(text, north, east, author) {
         const t = String(text || '').trim().toUpperCase();
@@ -1239,7 +1230,7 @@
         return t + '|' + x + '|' + y + '|' + a;
       }
 
-      const markers = rawMarkers
+      return rawMarkers
         .map(function (m, idx) {
           const north = Number(m && m.X);
           const east = Number(m && m.Z);
@@ -1247,14 +1238,20 @@
           const rawId = Number(m && m.Id);
           const hasId = isFinite(rawId) && rawId > 0;
           const id = hasId ? Math.round(rawId) : 0;
-          const text = String((m && m.Text) || '').trim();
+          const text = String((m && m.Text) || '').trim() || 'UNTITLED';
           const author = String((m && m.Author) || '').trim();
+          const coalition = Number(m && m.Coalition);
           const coordText = getNavlogCoordinateDisplayText({ xNum: north, yNum: east }, theatre, coordDisplayMode);
           return {
             sourceIndex: idx,
             hasId: hasId,
             id: id,
-            text: text || 'UNTITLED',
+            displayId: 0,
+            text: text,
+            author: author,
+            coalition: coalition,
+            xNum: north,
+            yNum: east,
             coordText: coordText,
             sortKey: markerSortKey(text, north, east, author)
           };
@@ -1270,15 +1267,31 @@
           const keyCompare = String(a.sortKey || '').localeCompare(String(b.sortKey || ''));
           if (keyCompare !== 0) return keyCompare;
           return Number(a.sourceIndex) - Number(b.sourceIndex);
+        })
+        .map(function (m, i) {
+          m.displayId = m.hasId ? Number(m.id) : (i + 1);
+          return m;
         });
+    }
+
+    function formatMapMarkersPanelHtml(selected, data) {
+      const server = (data && data.Server) || {};
+      const theatre = String(server.Theater || '').trim();
+      const coordDisplayMode = getNavlogCoordDisplayMode(selected);
+      const coordHeaderText = (function () {
+        if (coordDisplayMode === 'dms') return 'DMS';
+        if (coordDisplayMode === 'ddm') return 'DDM';
+        if (coordDisplayMode === 'mgrs') return 'MGRS';
+        return 'X / Y';
+      })();
+      const markers = buildMapMarkerRows(server, theatre, coordDisplayMode);
 
       if (!markers.length) {
         return '<div class="fltPlanPage2Section"><div class="fltPlanPage2Title">MAP MARKERS</div><div class="fltPlanPage2Body">No runtime map markers.</div></div>';
       }
 
-      const rows = markers.map(function (m, i) {
-        const displayId = m.hasId ? String(m.id) : String(i + 1);
-        return '<tr><td style="width:54px;">' + escapeHtml(displayId) + '</td><td>' + escapeHtml(m.text) + '</td><td style="width:220px;">' + escapeHtml(m.coordText) + '</td></tr>';
+      const rows = markers.map(function (m) {
+        return '<tr><td style="width:54px;">' + escapeHtml(String(m.displayId || '')) + '</td><td>' + escapeHtml(m.text) + '</td><td style="width:220px;">' + escapeHtml(m.coordText) + '</td></tr>';
       });
 
       return '<div class="fltPlanPage2Section"><div class="fltPlanPage2Title">MAP MARKERS</div><div class="fltPlanPage2Body"><table class="fltPlanPage2Table fltPlanPage2MarkerTable"><thead><tr><th style="width:54px;">ID</th><th>LABEL</th><th class="fltPlanEtaHeader" style="width:220px;" data-navlog-coord-cycle="1" title="Click to cycle X/Y → DMS → DDM → MGRS">POS ' + escapeHtml(coordHeaderText) + '</th></tr></thead><tbody>' + rows.join('') + '</tbody></table></div></div>';
@@ -4451,17 +4464,46 @@
         const category = String(asset.category || '').trim().toUpperCase();
 
         if (category === 'MAP_MARKER') {
-          const labelText = String(asset.markerText || asset.name || '').trim() || 'UNTITLED';
+          const model = (typeof data === 'undefined' ? null : data) || latestData || {};
+          const server = (model && model.Server) || {};
+          const theatre = String((server && server.Theater) || '').trim();
+          const coordMode = getNavlogCoordDisplayMode(selected);
+          const markerRows = buildMapMarkerRows(server, theatre, coordMode);
+
           const markerDisplayId = Number(asset.markerDisplayId);
           const markerId = Number(asset.markerId);
-          const markerAuthor = String(asset.markerAuthor || '').trim();
-          const markerCoalition = Number(asset.markerCoalition);
-          const xNum = Number(asset.xNum);
-          const yNum = Number(asset.yNum);
-          const model = (typeof data === 'undefined' ? null : data) || latestData || {};
-          const theatre = String((((model && model.Server) || {}).Theater) || '').trim();
-          const coordMode = getNavlogCoordDisplayMode(selected);
-          const coordText = getNavlogCoordinateDisplayText({ xNum: xNum, yNum: yNum }, theatre, coordMode);
+          const markerCallsign = String(asset.callsign || '').trim().toUpperCase();
+          const markerName = String(asset.name || asset.markerText || '').trim();
+          const callsignMatch = markerCallsign.match(/^MKR\s+(\d+)$/i);
+          const callsignDisplayId = callsignMatch ? Number(callsignMatch[1]) : NaN;
+
+          let matchedMarker = null;
+          if (isFinite(markerDisplayId) && markerDisplayId > 0) {
+            matchedMarker = markerRows.find(function (row) { return Number(row.displayId) === Math.round(markerDisplayId); }) || null;
+          }
+          if (!matchedMarker && isFinite(callsignDisplayId) && callsignDisplayId > 0) {
+            matchedMarker = markerRows.find(function (row) { return Number(row.displayId) === Math.round(callsignDisplayId); }) || null;
+          }
+          if (!matchedMarker && isFinite(markerId) && markerId > 0) {
+            matchedMarker = markerRows.find(function (row) { return Number(row.id) === Math.round(markerId); }) || null;
+          }
+          if (!matchedMarker && markerName) {
+            const nameUpper = markerName.toUpperCase();
+            matchedMarker = markerRows.find(function (row) {
+              return String(row && row.text || '').trim().toUpperCase() === nameUpper;
+            }) || null;
+          }
+
+          const labelText = matchedMarker ? String(matchedMarker.text || 'UNTITLED') : (markerName || 'UNTITLED');
+          const resolvedDisplayId = matchedMarker ? Number(matchedMarker.displayId) : (isFinite(callsignDisplayId) ? callsignDisplayId : 0);
+          const resolvedId = matchedMarker ? Number(matchedMarker.id) : (isFinite(markerId) ? markerId : 0);
+          const markerAuthor = matchedMarker ? String(matchedMarker.author || '').trim() : String(asset.markerAuthor || '').trim();
+          const markerCoalition = matchedMarker ? Number(matchedMarker.coalition) : Number(asset.markerCoalition);
+          const xNum = matchedMarker ? Number(matchedMarker.xNum) : Number(asset.xNum);
+          const yNum = matchedMarker ? Number(matchedMarker.yNum) : Number(asset.yNum);
+          const coordText = matchedMarker
+            ? String(matchedMarker.coordText || '').trim()
+            : getNavlogCoordinateDisplayText({ xNum: xNum, yNum: yNum }, theatre, coordMode);
           const mgrsText = getNavlogCoordinateDisplayText({ xNum: xNum, yNum: yNum }, theatre, 'mgrs');
 
           function markerCoalitionText(v) {
@@ -4473,10 +4515,10 @@
           }
 
           lines.push('LABEL: ' + labelText);
-          if (markerDisplayId > 0) {
-            lines.push('ID: MKR ' + String(markerDisplayId));
-          } else if (markerId > 0) {
-            lines.push('ID: ' + String(markerId));
+          if (resolvedDisplayId > 0) {
+            lines.push('ID: MKR ' + String(Math.round(resolvedDisplayId)));
+          } else if (resolvedId > 0) {
+            lines.push('ID: ' + String(Math.round(resolvedId)));
           }
           if (coordText) lines.push('POS: ' + coordText);
           if (mgrsText && mgrsText !== coordText) lines.push('MGRS: ' + mgrsText);
@@ -4642,12 +4684,13 @@
         const callsignLabel = String(m.asset.callsign || '').replace(/([A-Za-z])(\d)/g, '$1 $2').replace(/\s{2,}/g, ' ').trim();
         const playerMpLabel = String((m.asset && m.asset.mpClientCallsign) || '').trim();
         const markerText = String(m.asset.markerText || '').trim();
+        const markerTextSingleLine = String(markerText || '').replace(/\r/g, '').split('\n').map(function (line) { return String(line || '').trim(); }).filter(function (line) { return !!line; }).join(' | ');
         const markerDisplayId = Number(m.asset.markerDisplayId);
         const markerPrefix = isMapMarker
           ? (markerDisplayId > 0 ? ('MKR ' + String(markerDisplayId)) : 'MKR')
           : '';
           const markerLabel = isMapMarker
-          ? (markerText ? (markerPrefix + ': ' + markerText) : markerPrefix)
+          ? (markerTextSingleLine ? (markerPrefix + ': ' + markerTextSingleLine) : markerPrefix)
           : '';
           const isJtacHistory = !!(m.asset && m.asset.isJtacHistory);
         const isPlayer = String((m.asset && m.asset.category) || '').toUpperCase() === 'PLAYER';
@@ -4907,7 +4950,8 @@
         selectedAsset = selectionPool.find(function (a) { return makeMapAssetSelectionKey(a) === selectedAssetKey; }) || null;
         if (!selectedAsset) {
           const selectedUserWaypointId = parseEfbSaUserWaypointAssetKey(selectedAssetKey);
-          if (!selectedUserWaypointId) {
+          const selectedIsMapMarker = String(selectedAssetKey || '').indexOf('MKR') === 0;
+          if (!selectedUserWaypointId && !selectedIsMapMarker) {
             setMapSelectedAssetKeyBySelection(selected, '');
           }
         }

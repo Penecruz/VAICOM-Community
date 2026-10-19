@@ -2383,6 +2383,39 @@
           })();
           if (jtacMgrsText) infoLines.push('MGRS: ' + jtacMgrsText);
         }
+        if (category === 'MAP_MARKER') {
+          const markerText = String(p.markerText || p.name || '').replace(/\r/g, '').trim();
+          const markerLines = markerText
+            ? markerText.split('\n').map(function (line) { return String(line || '').trim(); }).filter(function (line) { return !!line; })
+            : [];
+
+          markerLines.forEach(function (line) { infoLines.push(line); });
+
+          const markerCallsign = String(p.callsign || '').trim().toUpperCase();
+          const markerDisplayId = Number(p.markerDisplayId);
+          const markerId = Number(p.markerId);
+          const callsignMatch = markerCallsign.match(/^MKR\s+(\d+)$/i);
+          const callsignId = callsignMatch ? Number(callsignMatch[1]) : NaN;
+          const resolvedDisplayId = (isFinite(markerDisplayId) && markerDisplayId > 0)
+            ? Math.round(markerDisplayId)
+            : ((isFinite(callsignId) && callsignId > 0) ? Math.round(callsignId) : 0);
+
+          const hasIdLine = infoLines.some(function (line) {
+            return /^\s*(MARK\s*ID|ID)\s*:/i.test(String(line || ''));
+          });
+          if (!hasIdLine) {
+            if (resolvedDisplayId > 0) {
+              infoLines.push('MARK ID: MKR ' + String(resolvedDisplayId));
+            } else if (isFinite(markerId) && markerId > 0) {
+              infoLines.push('MARK ID: ' + String(Math.round(markerId)));
+            }
+          }
+
+          if (!infoLines.length) {
+            infoLines.push('UNTITLED');
+          }
+        }
+
         const typeText = String(p.typeName || '').trim();
         const freqText = formatFreq(p.frequency);
         const altFreqs = Array.isArray(p.altFrequencies) ? p.altFrequencies : [];
@@ -2395,7 +2428,7 @@
         const vhf = normalizedFreqs.find(function (f) { return f.mhz >= 30 && f.mhz < 225; });
         const tacanText = String(p.tacan || '').trim();
         const mpText = String(p.mpClientCallsign || '').trim();
-        if (category !== 'JTAC_TARGET') {
+        if (category !== 'JTAC_TARGET' && category !== 'MAP_MARKER') {
           if (typeText) infoLines.push('TYPE: ' + typeText);
           const latLonText = String(p.latLonText || '').trim();
           if (latLonText) infoLines.push('LAT/LON: ' + latLonText);
@@ -2412,18 +2445,38 @@
         if (category === 'ATC') {
           if (uhf && uhf.text) infoLines.push('UHF: ' + uhf.text);
           if (vhf && vhf.text) infoLines.push('VHF: ' + vhf.text);
-        } else if (freqText) infoLines.push('FREQ: ' + freqText);
-        if (tacanText) infoLines.push('TACAN: ' + tacanText);
-        if (mpText) infoLines.push('MP: ' + mpText);
+        } else if (category !== 'MAP_MARKER' && freqText) infoLines.push('FREQ: ' + freqText);
+        if (category !== 'MAP_MARKER' && tacanText) infoLines.push('TACAN: ' + tacanText);
+        if (category !== 'MAP_MARKER' && mpText) infoLines.push('MP: ' + mpText);
 
         if (infoLines.length) {
           const fontSize = 10;
           const lineHeight = 12;
           const padX = 5;
           const padY = 4;
-          const maxChars = infoLines.reduce(function (max, line) { return Math.max(max, String(line || '').length); }, 0);
-          const boxWidth = Math.max(120, Math.min(300, (maxChars * 6.2) + (padX * 2)));
-          const boxHeight = (infoLines.length * lineHeight) + (padY * 2);
+          const wrappedInfoLines = [];
+          const maxLineChars = 64;
+          infoLines.forEach(function (line) {
+            const text = String(line || '').trim();
+            if (!text) return;
+            if (text.length <= maxLineChars) {
+              wrappedInfoLines.push(text);
+              return;
+            }
+            let remaining = text;
+            while (remaining.length > maxLineChars) {
+              let splitAt = remaining.lastIndexOf(' ', maxLineChars);
+              if (splitAt < 1) splitAt = maxLineChars;
+              wrappedInfoLines.push(remaining.substring(0, splitAt).trim());
+              remaining = remaining.substring(splitAt).trim();
+            }
+            if (remaining) wrappedInfoLines.push(remaining);
+          });
+
+          const displayLines = wrappedInfoLines.length ? wrappedInfoLines : infoLines;
+          const maxChars = displayLines.reduce(function (max, line) { return Math.max(max, String(line || '').length); }, 0);
+          const boxWidth = Math.max(120, Math.min(520, (maxChars * 6.2) + (padX * 2)));
+          const boxHeight = (displayLines.length * lineHeight) + (padY * 2);
           let boxX = selectedAssetInfo.x + 12;
           let boxY = selectedAssetInfo.y + 8;
           const hostW = host.clientWidth || 920;
@@ -2443,7 +2496,7 @@
           rect.setAttribute('stroke-width', '1.1');
           overlaySvg.appendChild(rect);
 
-          infoLines.forEach(function (line, idx) {
+          displayLines.forEach(function (line, idx) {
             const tx = makeNode('text');
             tx.setAttribute('x', (boxX + padX).toFixed(1));
             tx.setAttribute('y', (boxY + padY + (lineHeight * (idx + 1)) - 2).toFixed(1));
@@ -3388,16 +3441,40 @@
       const y = Number(asset.yNum);
 
       if (category === 'MAP_MARKER') {
+        const markerDisplayId = Number(asset.markerDisplayId);
+        if (isFinite(markerDisplayId) && markerDisplayId > 0) {
+          return ['MKRDISPLAY', String(Math.round(markerDisplayId))].join('|');
+        }
+
         const markerId = Number(asset.markerId);
         if (isFinite(markerId) && markerId > 0) {
           return ['MKRID', String(Math.round(markerId))].join('|');
         }
 
-        const markerText = String(asset.markerText || asset.name || '').trim().toUpperCase();
+        const markerTextRaw = String(asset.markerText || asset.name || '').trim().toUpperCase();
+        const markerTextStable = markerTextRaw
+          .replace(/\r/g, '')
+          .split('\n')
+          .map(function (line) { return String(line || '').trim(); })
+          .filter(function (line) {
+            if (!line) return false;
+            if (line.indexOf('MARK ID:') === 0) return false;
+            if (line.indexOf('FRIENDLIES POPPING ') === 0) return false;
+            return true;
+          })
+          .join(' | ');
         const markerAuthor = String(asset.markerAuthor || '').trim().toUpperCase();
-        const xKey = isFinite(x) ? Number(x).toFixed(1) : '';
-        const yKey = isFinite(y) ? Number(y).toFixed(1) : '';
-        return ['MKRPOS', markerText, markerAuthor, xKey, yKey].join('|');
+        if (markerTextStable || markerAuthor) {
+          return ['MKRTEXT', markerTextStable, markerAuthor].join('|');
+        }
+
+        const xKey = isFinite(x) ? Number(x).toFixed(0) : '';
+        const yKey = isFinite(y) ? Number(y).toFixed(0) : '';
+        if (xKey || yKey) {
+          return ['MKRPOS', xKey, yKey].join('|');
+        }
+
+        return 'MKR';
       }
 
       if (callsign || name) {
