@@ -1192,7 +1192,7 @@ base.vaicom.categories = {
 -- end of every sendupdateall to avoid cross-update staleness.
 local propcache = { comm = {}, desc = {}, pname = {}, range = {} }
 local worldObjectsCache = { worldObjects = nil, worldObjectsUpdatedAt = 0 }
-local WORLD_OBJECTS_CACHE_TTL = 1.0 -- seconds; guards against staleness when no reset occurs between calls
+local WORLD_OBJECTS_CACHE_TTL = 1.0
 local function resetPropsCache()
 	propcache.comm = {}
 	propcache.desc = {}
@@ -1207,14 +1207,14 @@ local function getWorldObjectsCached()
 	if base.Export == nil or base.Export.LoGetWorldObjects == nil then
 		return nil, nil
 	end
-	local now = socket.gettime()
-	if propcache.worldObjects ~= nil and (now - propcache.worldObjectsUpdatedAt) <= WORLD_OBJECTS_CACHE_TTL then
-		return true, propcache.worldObjects
+	local nowTick = base.tonumber((base.vaicom and base.vaicom.state and base.vaicom.state.timer) or 0) or 0
+	if worldObjectsCache.worldObjects ~= nil and (nowTick - worldObjectsCache.worldObjectsUpdatedAt) <= WORLD_OBJECTS_CACHE_TTL then
+		return true, worldObjectsCache.worldObjects
 	end
 	local okWorld, worldObjects = base.pcall(function() return base.Export.LoGetWorldObjects() end)
 	if okWorld and base.type(worldObjects) == "table" then
-		propcache.worldObjects = worldObjects
-		propcache.worldObjectsUpdatedAt = now
+		worldObjectsCache.worldObjects = worldObjects
+		worldObjectsCache.worldObjectsUpdatedAt = nowTick
 	end
 	return okWorld, worldObjects
 end
