@@ -199,6 +199,7 @@ namespace VAICOM
                 { "requestrearming",    "Request Rearming"      },
                 { "applyair",           "Apply Air"             },
                 { "requestrepair",      "Request Repair"        },
+                { "opendtcmanager",     "Open DTC Manager"      },
                 { "stowboardingladder", "Stow Boarding Ladder"  },
                 { "runinertialstarter", "Run Inertial Starter"  },
                 { "requesthmd",         "Request HMD"           },

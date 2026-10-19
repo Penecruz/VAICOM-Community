@@ -788,6 +788,19 @@ function ProcessRemoteCommand()
 			base.MissionResourcesDialog.onRadioMenuRearm()
 			return
 		end
+		if clientmessage.command == base.Message.wMsgLeaderGroundToggleDTC then
+			local unitType = base.DCS and base.DCS.getPlayerUnitType and base.DCS.getPlayerUnitType()
+			if base.DCS and base.DCS.toggleDTC and unitType and unitType ~= "" then
+				local ok, err = base.pcall(function()
+					base.DCS.toggleDTC(unitType, true, nil, nil)
+				end)
+				if ok then
+					base.print("VAICOM DTC open: toggleDTC call accepted using source tag '<nil>'.")
+					return
+				end
+				base.print("VAICOM DTC open: toggleDTC call failed for source tag '<nil>' with error: " .. base.tostring(err) .. ". Falling back to raw command path.")
+			end
+		end
 		data.curCommunicatorId = clientmessage.tgtdevid or data.curCommunicatorId
 		selectAndTuneCommunicator(unitcomm)
 		local messagesendcommand	= clientmessage.command

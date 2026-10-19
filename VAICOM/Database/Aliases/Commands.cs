@@ -332,6 +332,8 @@ namespace VAICOM
                 { "Start valve Open",       "applyair"              },
                 { "External Air On",        "applyair"              },
                 { "Request Repair",         "requestrepair"         },
+                { "Open DTC Manager",       "opendtcmanager"        },
+                { "Open DTC Editor",        "opendtcmanager"        },
                 { "Stow the Boarding Ladder","stowboardingladder"   },
                 { "Run Inertial Starter",   "runinertialstarter"    },
                 { "Request HMD",            "requesthmd"            },

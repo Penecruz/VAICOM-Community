@@ -268,6 +268,7 @@ namespace VAICOM
             // new for Supercarrier
             { "crewsalute" ,                    new Command { uniqueid = 18024, category = CommandCategories.aicommscrew, dcsid = "wMsgLeaderGroundGestureSalut",    displayname = Labels.aicommands["crewsalute"], hasparameter = true, on = true } }, // type is to be found out
             { "crewrequestcatlaunch" ,          new Command { uniqueid = 18025, category = CommandCategories.aicommscrew, dcsid = "wMsgLeaderGroundRequestLaunch",   displayname = Labels.aicommands["crewrequestcatlaunch"], hasparameter = true, on = true } }, // type is to be found out
+            { "opendtcmanager" ,               new Command { uniqueid = 18026, category = CommandCategories.aicommscrew, dcsid = "wMsgLeaderGroundToggleDTC",      displayname = Labels.aicommands["opendtcmanager"] } },
 
             { "wMsgLeaderToGroundCrewMaximum" , new Command { uniqueid = 18030, category = CommandCategories.aicommscrew, dcsid = "wMsgLeaderToGroundCrewMaximum",   } },
             //service max
