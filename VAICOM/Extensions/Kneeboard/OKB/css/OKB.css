@@ -19,14 +19,14 @@ body {
 
 @media (hover: none) and (pointer: coarse) {
     .tabKeywordDivider {
-        height: 18px;
-        flex: 0 0 18px;
+        height: 24px;
+        flex: 0 0 24px;
     }
 
         .tabKeywordDivider::before {
-            width: 56px;
-            height: 3px;
-            box-shadow: 0 -3px 0 #92a1af, 0 3px 0 #92a1af;
+            width: 64px;
+            height: 4px;
+            box-shadow: 0 -4px 0 #92a1af, 0 4px 0 #92a1af;
         }
 }
 
@@ -1699,6 +1699,126 @@ body.efb-tab .keywordsPanel {
         border-color: #8bc4ff;
         box-shadow: 0 0 0 3px rgba(134, 196, 255, 0.52), 0 0 18px rgba(80, 170, 255, 0.45);
     }
+
+@media (max-width: 1100px), (max-height: 760px) {
+    .bottomQuickBar {
+        left: 10px;
+        bottom: 12px;
+        gap: 8px;
+    }
+
+    .overlayToggleBtn {
+        width: 64px;
+        height: 64px;
+        border-radius: 14px;
+        font-size: 30px;
+    }
+
+    .drawOverlayToggleBtn {
+        font-size: 29px;
+    }
+
+    .helpOverlayToggleBtn {
+        font-size: 32px;
+    }
+
+    .fltPlanQuickBar {
+        right: 96px;
+        top: 88px;
+        gap: 8px;
+    }
+
+    .fltPlanQuickBtn {
+        width: 64px;
+        height: 64px;
+        border-radius: 14px;
+        font-size: 29px;
+    }
+
+    .fastOwnshipBtn {
+        font-size: 19px;
+    }
+
+    .efbRightActionDrawer,
+    .efbSaLayerDrawer {
+        width: 66px;
+        padding: 5px;
+        top: 58px;
+    }
+
+    .efbRightActionDrawer {
+        right: 68px;
+    }
+
+    .efbSaLayerDrawer,
+    .efbLeftActionDrawer {
+        left: 68px;
+    }
+
+    .efbLeftActionDrawer {
+        top: 58px;
+        width: 300px;
+        max-width: calc(100% - 72px);
+    }
+
+    .efbRightDrawerBtn {
+        width: 52px;
+        height: 52px;
+        font-size: 24px;
+        border-radius: 11px;
+    }
+
+    .efbRailBtn,
+    .efbRailSpacer {
+        width: 56px;
+        height: 56px;
+    }
+
+    .efbRailBtn {
+        font-size: 26px;
+        border-radius: 12px;
+    }
+
+    .efbRailIconSvg {
+        width: 31px;
+        height: 31px;
+    }
+
+    .efbPinGlyph {
+        font-size: 29px;
+    }
+
+    .overlayBackdropTop {
+        padding-right: 96px;
+    }
+
+    .overlayPanel {
+        width: 328px;
+        padding: 10px;
+    }
+
+    .overlayPanel.helpOverlayPanel {
+        width: calc(100vw - 148px);
+        max-width: none;
+        height: calc(100vh - 296px);
+    }
+
+    .overlayTitleRow {
+        font-size: 18px;
+        margin-bottom: 8px;
+    }
+
+    .overlayCloseBtn {
+        min-width: 36px;
+        height: 30px;
+        font-size: 16px;
+    }
+
+    .overlayOption {
+        font-size: 18px;
+        padding: 7px 9px;
+    }
+}
 
 .fastOwnshipBtn {
     font-size: 22px;
