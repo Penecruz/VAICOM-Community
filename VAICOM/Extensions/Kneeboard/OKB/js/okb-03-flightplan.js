@@ -3143,7 +3143,7 @@
 
       if (!isFinite(centerLon) || !isFinite(centerLat)) return false;
 
-      const motionState = efbSaOwnshipMotionBySelection[key] || { lon: NaN, lat: NaN, vx: 0, vy: 0, t: 0, srcT: 0 };
+      const motionState = efbSaOwnshipMotionBySelection[key] || { lon: NaN, lat: NaN, vx: 0, vy: 0, t: 0, srcT: 0, smoothLon: NaN, smoothLat: NaN, smoothT: 0 };
       const prevLon = Number(motionState.lon);
       const prevLat = Number(motionState.lat);
       const prevT = Number(motionState.t);
@@ -3163,14 +3163,52 @@
         motionState.srcT = nowMs;
       }
       motionState.t = nowMs;
-      efbSaOwnshipMotionBySelection[key] = motionState;
 
       const staleDataMs = nowMs - Number(motionState.srcT || nowMs);
-      if (isFinite(staleDataMs) && staleDataMs > 60 && staleDataMs < 900) {
+      if (efbSaTrackUpEnabled && isFinite(staleDataMs) && staleDataMs > 60 && staleDataMs < 900) {
         const dtPredSec = staleDataMs / 1000.0;
         centerLon = Number(motionState.lon) + ((Number(motionState.vx) || 0) * dtPredSec);
         centerLat = Number(motionState.lat) + ((Number(motionState.vy) || 0) * dtPredSec);
       }
+
+      // Smooth ownship camera center for BOTH Track-Up and North-Up modes.
+      // North-Up gets slightly stronger smoothing/deadband because jitter is more noticeable.
+      const prevSmoothLon = Number(motionState.smoothLon);
+      const prevSmoothLat = Number(motionState.smoothLat);
+      const prevSmoothT = Number(motionState.smoothT);
+      const hasPrevSmooth = isFinite(prevSmoothLon) && isFinite(prevSmoothLat);
+      const targetLon = Number(centerLon);
+      const targetLat = Number(centerLat);
+      if (hasPrevSmooth) {
+        const dtMs = (isFinite(prevSmoothT) && nowMs > prevSmoothT) ? (nowMs - prevSmoothT) : 66;
+        const dtNorm = clamp(dtMs / 66.0, 0.5, 2.0);
+        const baseAlpha = efbSaTrackUpEnabled ? 0.34 : 0.20;
+        const alpha = clamp(1 - Math.pow(1 - baseAlpha, dtNorm), 0.10, 0.65);
+        const dLon = targetLon - prevSmoothLon;
+        const dLat = targetLat - prevSmoothLat;
+        const distDeg = Math.sqrt((dLon * dLon) + (dLat * dLat));
+        const teleportDeg = 0.01;
+        const northUpDeadbandDeg = 0.00005;
+
+        if (!isFinite(distDeg) || distDeg > teleportDeg) {
+          motionState.smoothLon = targetLon;
+          motionState.smoothLat = targetLat;
+        } else if (!efbSaTrackUpEnabled && distDeg < northUpDeadbandDeg) {
+          motionState.smoothLon = prevSmoothLon;
+          motionState.smoothLat = prevSmoothLat;
+        } else {
+          motionState.smoothLon = prevSmoothLon + (dLon * alpha);
+          motionState.smoothLat = prevSmoothLat + (dLat * alpha);
+        }
+      } else {
+        motionState.smoothLon = targetLon;
+        motionState.smoothLat = targetLat;
+      }
+      motionState.smoothT = nowMs;
+      centerLon = Number(motionState.smoothLon);
+      centerLat = Number(motionState.smoothLat);
+
+      efbSaOwnshipMotionBySelection[key] = motionState;
 
       const anchorMode = normalizeEfbSaAnchorMode(efbSaAnchorMode);
 
@@ -3336,7 +3374,7 @@
               attributionControl: true,
             });
 
-            map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right');
+            map.addControl(new maplibregl.NavigationControl({ showCompass: true, showZoom: false }), 'top-right');
 
             map.on('error', function () {
               openFreeMapLastPayloadStatus = 'map-error';
