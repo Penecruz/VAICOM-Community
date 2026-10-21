@@ -38,21 +38,8 @@
           setTimeout(function () { okb.SetPreferredPixelSize(1050, 1480); }, 1200);
         }
 
-        const q = (window.location && window.location.search) ? window.location.search : '';
-        if (q.indexOf('doodles=1') >= 0 || q.indexOf('ink=1') >= 0) {
-          if (okb && okb.EnableExperimentalFeatures) {
-            await okb.EnableExperimentalFeatures([
-              { name: 'DoodlesOnly', version: 2024071802 },
-              { name: 'SetCursorEventsMode', version: 2024071801 },
-            ]);
-            okbExperimentalEnabled = true;
-          }
-          if (okb && okb.SetCursorEventsMode) {
-            await okb.SetCursorEventsMode('DoodlesOnly');
-            okbCursorMode = 'DoodlesOnly';
-            okbDoodlesOnlyForced = true;
-          }
-        }
+        // Legacy doodles-only mode is intentionally disabled because tab-scoped canvas draw mode is now used.
+        okbDoodlesOnlyForced = false;
         setTimeout(function () { updateCursorModeForTab(); }, 50);
         setTimeout(function () { updateCursorModeForTab(); }, 500);
       } catch (e) {
@@ -196,7 +183,38 @@
     document.getElementById('drawOverlayToggleBtn').addEventListener('click', function (ev) {
       ev.preventDefault();
       ev.stopPropagation();
-      setDrawOverlayOpen(!drawOverlayOpen);
+      if (okbDoodlesOnlyForced) {
+        return;
+      }
+
+      if (drawOverlayOpen) {
+        setDrawOverlayOpen(false);
+      }
+
+      if (drawModeEnabled) {
+        disableDrawMode();
+      } else {
+        drawModeEnabled = true;
+        setDrawEraserMode(false);
+        setDrawInteractionInNotes(true);
+        persistDrawModePreference();
+        updateDrawModeToggleUi();
+        updateCursorModeForTab();
+      }
+    });
+
+    document.getElementById('drawEraseToggleBtn').addEventListener('click', function (ev) {
+      ev.preventDefault();
+      ev.stopPropagation();
+      if (!drawModeEnabled) return;
+      setDrawEraserMode(!drawEraserEnabled);
+    });
+
+    document.getElementById('drawResetBtn').addEventListener('click', function (ev) {
+      ev.preventDefault();
+      ev.stopPropagation();
+      if (!drawModeEnabled) return;
+      clearSelectedTabDrawStrokes();
     });
 
     document.getElementById('helpOverlayToggleBtn').addEventListener('click', function (ev) {
@@ -243,15 +261,15 @@
 
     document.getElementById('overlayDrawMode').addEventListener('change', function (ev) {
       const shouldEnable = !!ev.target.checked;
-      if (okbDoodlesOnlyForced || selectedTab !== 'NOTES') {
+      if (okbDoodlesOnlyForced) {
         applyDrawOverlayUi();
         return;
       }
 
       if (shouldEnable) {
         drawModeEnabled = true;
+        setDrawEraserMode(false);
         setDrawInteractionInNotes(true);
-        scheduleDrawModeAutoOff();
       } else {
         disableDrawMode();
       }
@@ -262,40 +280,34 @@
     });
 
     document.getElementById('drawModeToggle').addEventListener('click', function () {
-      if (okbDoodlesOnlyForced || selectedTab !== 'NOTES') return;
+      if (okbDoodlesOnlyForced) return;
       if (drawModeEnabled) {
         disableDrawMode();
         return;
       }
 
       drawModeEnabled = true;
+      setDrawEraserMode(false);
       setDrawInteractionInNotes(true);
-      scheduleDrawModeAutoOff();
       persistDrawModePreference();
       updateDrawModeToggleUi();
       updateCursorModeForTab();
     });
 
     document.getElementById('tabBody').addEventListener('dblclick', function () {
-      if (okbDoodlesOnlyForced || selectedTab !== 'NOTES') return;
+      if (okbDoodlesOnlyForced) return;
       disableDrawMode();
     });
 
     document.getElementById('tabBody').addEventListener('mouseenter', function () {
-      if (okbDoodlesOnlyForced || selectedTab !== 'NOTES' || !drawModeEnabled) return;
+      if (okbDoodlesOnlyForced || !drawModeEnabled) return;
       setDrawInteractionInNotes(true);
-      notifyDrawActivity();
     });
 
     document.getElementById('tabBody').addEventListener('mouseleave', function () {
       if (okbDoodlesOnlyForced) return;
       setDrawInteractionInNotes(false);
     });
-
-    document.getElementById('tabBody').addEventListener('pointerdown', notifyDrawActivity);
-    document.getElementById('tabBody').addEventListener('pointermove', notifyDrawActivity);
-    document.getElementById('tabBody').addEventListener('touchstart', notifyDrawActivity);
-    document.getElementById('tabBody').addEventListener('touchmove', notifyDrawActivity);
 
     document.querySelector('.controls').addEventListener('mouseenter', function () {
       if (okbDoodlesOnlyForced) return;

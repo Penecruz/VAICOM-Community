@@ -3071,20 +3071,7 @@
       const drawBox = document.getElementById('overlayDrawMode');
       if (drawBox) {
         drawBox.checked = !!drawModeEnabled;
-        drawBox.disabled = !!okbDoodlesOnlyForced || selectedTab !== 'NOTES';
-      }
-
-      const timerEl = document.getElementById('overlayDrawTimer');
-      if (timerEl) {
-        if (drawModeEnabled && drawModeDeadlineUtcMs > 0) {
-          const remainingMs = Math.max(0, drawModeDeadlineUtcMs - Date.now());
-          const remainingSeconds = Math.ceil(remainingMs / 1000);
-          timerEl.textContent = String(remainingSeconds) + 's';
-          timerEl.className = 'overlayHint';
-        } else {
-          timerEl.textContent = '30s';
-          timerEl.className = 'overlayHint hidden';
-        }
+        drawBox.disabled = !!okbDoodlesOnlyForced;
       }
     }
 
@@ -3747,34 +3734,11 @@
     async function updateCursorModeForTab() {
       try {
         const okb = (typeof OpenKneeboard !== 'undefined') ? OpenKneeboard : window.OpenKneeboard;
-        if (!okb) return;
+        if (!okb || !okb.SetCursorEventsMode) return;
 
-        const isNotes = selectedTab === 'NOTES';
-        if (okbDoodlesOnlyForced && !isNotes) {
-          return;
-        }
-        if (okbDoodlesOnlyForced && isNotes) {
-          okbCursorMode = 'DoodlesOnly';
-          return;
-        }
-        const targetMode = (isNotes && drawModeEnabled && drawInteractionInNotes) ? 'DoodlesOnly' : 'MouseEmulation';
+        // Keep cursor events in normal mouse mode so native full-page doodles never take over.
+        const targetMode = 'MouseEmulation';
         if (okbCursorMode === targetMode) return;
-
-        if (!okbExperimentalEnabled && okb.EnableExperimentalFeatures) {
-          await okb.EnableExperimentalFeatures([
-            { name: 'DoodlesOnly', version: 2024071802 },
-            { name: 'SetCursorEventsMode', version: 2024071801 },
-          ]);
-          okbExperimentalEnabled = true;
-        }
-
-        if (!okb.SetCursorEventsMode) return;
-
-        if (targetMode === 'DoodlesOnly') {
-          await okb.SetCursorEventsMode('DoodlesOnly');
-          okbCursorMode = 'DoodlesOnly';
-          return;
-        }
 
         const restoreModes = ['MouseEmulation', 'Mouse', 'Normal', 'Default'];
         for (let i = 0; i < restoreModes.length; i++) {
@@ -3788,6 +3752,244 @@
         }
       } catch (_) {
       }
+    }
+
+    function getDrawTabKey(tab) {
+      return String(tab || 'LOG').trim().toUpperCase() || 'LOG';
+    }
+
+    function getSelectedDrawStrokes(createIfMissing) {
+      const key = getDrawTabKey(selectedTab);
+      if (!tabDrawStrokeByTab[key] && createIfMissing) {
+        tabDrawStrokeByTab[key] = [];
+      }
+      return tabDrawStrokeByTab[key] || [];
+    }
+
+    function clearSelectedTabDrawStrokes() {
+      const key = getDrawTabKey(selectedTab);
+      tabDrawStrokeByTab[key] = [];
+      clearActiveTabDrawStroke();
+      redrawTabDrawCanvas();
+    }
+
+    function setDrawEraserMode(enabled) {
+      drawEraserEnabled = !!enabled;
+      updateDrawModeToggleUi();
+    }
+
+    function clearActiveTabDrawStroke() {
+      tabDrawActiveStroke = null;
+      tabDrawActivePointerId = null;
+    }
+
+    function getTabDrawCanvas() {
+      return document.getElementById('tabDrawCanvas');
+    }
+
+    function resizeTabDrawCanvasIfNeeded(force) {
+      const canvas = getTabDrawCanvas();
+      if (!canvas) return false;
+
+      const viewport = document.getElementById('tabViewport');
+      const target = viewport || canvas;
+      const cssWidth = Math.max(1, Math.round(target.clientWidth || 0));
+      const cssHeight = Math.max(1, Math.round(target.clientHeight || 0));
+      const dpr = Math.max(1, Number(window.devicePixelRatio) || 1);
+      const nextWidth = Math.max(1, Math.round(cssWidth * dpr));
+      const nextHeight = Math.max(1, Math.round(cssHeight * dpr));
+      const needsResize = !!force
+        || cssWidth !== tabDrawCanvasCssWidth
+        || cssHeight !== tabDrawCanvasCssHeight
+        || canvas.width !== nextWidth
+        || canvas.height !== nextHeight;
+
+      if (!needsResize) return false;
+
+      tabDrawCanvasCssWidth = cssWidth;
+      tabDrawCanvasCssHeight = cssHeight;
+      canvas.width = nextWidth;
+      canvas.height = nextHeight;
+      canvas.style.width = cssWidth + 'px';
+      canvas.style.height = cssHeight + 'px';
+      return true;
+    }
+
+    function drawStrokePathToCanvas(stroke) {
+      const canvas = getTabDrawCanvas();
+      if (!canvas || !stroke || !Array.isArray(stroke.points) || stroke.points.length <= 0) return;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+
+      const dpr = Math.max(1, Number(window.devicePixelRatio) || 1);
+      const width = isFinite(Number(stroke.width)) ? Number(stroke.width) : tabDrawStrokeWidthPx;
+      const isEraser = String(stroke.tool || '').toLowerCase() === 'erase';
+      const color = String(stroke.color || tabDrawStrokeColor);
+      const points = stroke.points;
+
+      ctx.save();
+      ctx.scale(dpr, dpr);
+      ctx.globalCompositeOperation = isEraser ? 'destination-out' : 'source-over';
+      ctx.strokeStyle = color;
+      ctx.lineWidth = Math.max(1, width);
+      ctx.lineJoin = 'round';
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(points[0].x, points[0].y);
+      for (let i = 1; i < points.length; i++) {
+        ctx.lineTo(points[i].x, points[i].y);
+      }
+      if (points.length === 1) {
+        ctx.lineTo(points[0].x + 0.01, points[0].y + 0.01);
+      }
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function redrawTabDrawCanvas() {
+      const canvas = getTabDrawCanvas();
+      if (!canvas) return;
+      resizeTabDrawCanvasIfNeeded(false);
+
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      const strokes = getSelectedDrawStrokes(false);
+      for (let i = 0; i < strokes.length; i++) {
+        drawStrokePathToCanvas(strokes[i]);
+      }
+    }
+
+    function eventToCanvasPoint(ev) {
+      const canvas = getTabDrawCanvas();
+      if (!canvas || !ev) return null;
+      const rect = canvas.getBoundingClientRect();
+      const clientX = Number(ev.clientX);
+      const clientY = Number(ev.clientY);
+      if (!isFinite(clientX) || !isFinite(clientY)) return null;
+      return {
+        x: clamp(clientX - rect.left, 0, Math.max(0, rect.width)),
+        y: clamp(clientY - rect.top, 0, Math.max(0, rect.height)),
+      };
+    }
+
+    function beginTabDrawStroke(ev) {
+      if (!drawModeEnabled) return;
+      const canvas = getTabDrawCanvas();
+      if (!canvas) return;
+
+      const point = eventToCanvasPoint(ev);
+      if (!point) return;
+
+      const isEraser = !!drawEraserEnabled;
+      const strokes = getSelectedDrawStrokes(true);
+      const stroke = {
+        tool: isEraser ? 'erase' : 'draw',
+        color: tabDrawStrokeColor,
+        width: isEraser ? tabDrawEraserWidthPx : tabDrawStrokeWidthPx,
+        points: [point],
+      };
+
+      strokes.push(stroke);
+      tabDrawActiveStroke = stroke;
+      tabDrawActivePointerId = (ev && typeof ev.pointerId === 'number') ? ev.pointerId : null;
+      setDrawInteractionInNotes(true);
+      redrawTabDrawCanvas();
+    }
+
+    function appendTabDrawPoint(ev) {
+      if (!drawModeEnabled || !tabDrawActiveStroke) return;
+      if (tabDrawActivePointerId !== null && ev && typeof ev.pointerId === 'number' && ev.pointerId !== tabDrawActivePointerId) {
+        return;
+      }
+
+      const point = eventToCanvasPoint(ev);
+      if (!point) return;
+      tabDrawActiveStroke.points.push(point);
+      redrawTabDrawCanvas();
+    }
+
+    function endTabDrawStroke(ev) {
+      if (tabDrawActivePointerId !== null && ev && typeof ev.pointerId === 'number' && ev.pointerId !== tabDrawActivePointerId) {
+        return;
+      }
+      clearActiveTabDrawStroke();
+    }
+
+    function bindTabDrawCanvasOnce() {
+      if (tabDrawCanvasBound) return;
+      const canvas = getTabDrawCanvas();
+      if (!canvas) return;
+      tabDrawCanvasBound = true;
+
+      canvas.addEventListener('pointerdown', function (ev) {
+        if (!drawModeEnabled) return;
+        ev.preventDefault();
+        beginTabDrawStroke(ev);
+      });
+
+      canvas.addEventListener('pointermove', function (ev) {
+        if (!drawModeEnabled || !tabDrawActiveStroke) return;
+        ev.preventDefault();
+        appendTabDrawPoint(ev);
+      });
+
+      canvas.addEventListener('pointerup', function (ev) {
+        if (!drawModeEnabled) return;
+        ev.preventDefault();
+        endTabDrawStroke(ev);
+      });
+
+      canvas.addEventListener('pointercancel', function (ev) {
+        if (!drawModeEnabled) return;
+        ev.preventDefault();
+        endTabDrawStroke(ev);
+      });
+
+      canvas.addEventListener('pointerleave', function (ev) {
+        if (!drawModeEnabled) return;
+        endTabDrawStroke(ev);
+      });
+
+      canvas.addEventListener('touchstart', function (ev) {
+        if (!drawModeEnabled || !ev.touches || ev.touches.length <= 0) return;
+        ev.preventDefault();
+        beginTabDrawStroke(ev.touches[0]);
+      }, { passive: false });
+
+      canvas.addEventListener('touchmove', function (ev) {
+        if (!drawModeEnabled || !tabDrawActiveStroke || !ev.touches || ev.touches.length <= 0) return;
+        ev.preventDefault();
+        appendTabDrawPoint(ev.touches[0]);
+      }, { passive: false });
+
+      canvas.addEventListener('touchend', function (ev) {
+        if (!drawModeEnabled) return;
+        ev.preventDefault();
+        endTabDrawStroke(null);
+      }, { passive: false });
+
+      window.addEventListener('resize', function () {
+        resizeTabDrawCanvasIfNeeded(true);
+        redrawTabDrawCanvas();
+      });
+    }
+
+    function syncTabDrawCanvasWithMode() {
+      const canvas = getTabDrawCanvas();
+      if (!canvas) return;
+
+      bindTabDrawCanvasOnce();
+      resizeTabDrawCanvasIfNeeded(false);
+      canvas.classList.toggle('active', !!drawModeEnabled);
+
+      if (!drawModeEnabled) {
+        clearActiveTabDrawStroke();
+        setDrawInteractionInNotes(false);
+      }
+
+      redrawTabDrawCanvas();
     }
 
     function setStatus(text, level) {
@@ -3872,23 +4074,47 @@
 
     function updateDrawModeToggleUi() {
       const button = document.getElementById('drawModeToggle');
-      if (!button) return;
-      button.classList.toggle('draw-on', drawModeEnabled);
+      if (button) {
+        button.classList.toggle('draw-on', drawModeEnabled);
 
-      if (okbDoodlesOnlyForced) {
-        button.disabled = true;
-        button.textContent = 'Draw FORCED';
-        button.title = 'Draw mode forced by URL parameter';
-        return;
+        if (okbDoodlesOnlyForced) {
+          button.disabled = true;
+          button.textContent = 'Draw FORCED';
+          button.title = 'Draw mode forced by URL parameter';
+        } else {
+          button.disabled = false;
+          button.textContent = drawModeEnabled ? 'Draw ON' : 'Draw OFF';
+          button.title = 'Toggle tab drawing mode';
+        }
       }
 
-      const notesActive = selectedTab === 'NOTES';
-      button.disabled = !notesActive;
-      button.textContent = drawModeEnabled ? 'Draw ON' : 'Draw OFF';
-      button.title = notesActive
-        ? 'Toggle Notes drawing mode'
-        : 'Switch to NOTES tab to toggle drawing';
+      const quickToggle = document.getElementById('drawOverlayToggleBtn');
+      if (quickToggle) {
+        quickToggle.classList.toggle('draw-on', drawModeEnabled);
+        quickToggle.title = drawModeEnabled ? 'Draw ON (tap to turn off)' : 'Draw OFF (tap to draw)';
+      }
+
+      const eraseToggle = document.getElementById('drawEraseToggleBtn');
+      if (eraseToggle) {
+        eraseToggle.classList.toggle('hiddenFloatingBtn', !drawModeEnabled);
+        eraseToggle.classList.toggle('draw-on', drawModeEnabled && drawEraserEnabled);
+        eraseToggle.title = drawEraserEnabled ? 'Eraser ON (tap for pen)' : 'Eraser OFF (tap to erase)';
+      }
+
+      const resetBtn = document.getElementById('drawResetBtn');
+      if (resetBtn) {
+        resetBtn.classList.toggle('hiddenFloatingBtn', !drawModeEnabled);
+        resetBtn.title = 'Clear this tab drawing';
+      }
+
+      const timerEl = document.getElementById('drawTimer');
+      if (timerEl) {
+        timerEl.className = 'drawTimer hidden';
+        timerEl.textContent = '';
+      }
+
       applyDrawOverlayUi();
+      syncTabDrawCanvasWithMode();
     }
 
     function setDrawInteractionInNotes(active) {
@@ -3896,10 +4122,6 @@
       if (drawInteractionInNotes === next) return;
       drawInteractionInNotes = next;
       updateCursorModeForTab();
-
-      if (drawInteractionInNotes) {
-        scheduleDrawModeAutoOff();
-      }
     }
 
     function clearDrawModeDisableTimer() {
@@ -3908,31 +4130,12 @@
         drawModeDisableTimer = null;
       }
       drawModeDeadlineUtcMs = 0;
-      updateDrawTimerUi();
     }
 
     function updateDrawTimerUi() {
-      const timerEl = document.getElementById('drawTimer');
-      if (!timerEl) return;
-
-      const shouldShow = drawModeEnabled && drawModeDeadlineUtcMs > 0;
-      timerEl.className = shouldShow ? 'drawTimer' : 'drawTimer hidden';
-      if (!shouldShow) {
-        timerEl.textContent = '30s';
-        return;
-      }
-
-      const remainingMs = Math.max(0, drawModeDeadlineUtcMs - Date.now());
-      const remainingSeconds = Math.ceil(remainingMs / 1000);
-      timerEl.textContent = String(remainingSeconds) + 's';
-      applyDrawOverlayUi();
     }
 
     function ensureDrawCountdownTicking() {
-      if (drawModeCountdownTimer) return;
-      drawModeCountdownTimer = setInterval(function () {
-        updateDrawTimerUi();
-      }, 200);
     }
 
     function stopDrawCountdownTicking() {
@@ -3942,31 +4145,19 @@
     }
 
     function scheduleDrawModeAutoOff() {
-      if (!drawModeEnabled || okbDoodlesOnlyForced || selectedTab !== 'NOTES') {
-        clearDrawModeDisableTimer();
-        return;
-      }
-
-      clearDrawModeDisableTimer();
-      drawModeDeadlineUtcMs = Date.now() + drawModeTimeoutMs;
-      ensureDrawCountdownTicking();
-      updateDrawTimerUi();
-      drawModeDisableTimer = setTimeout(function () {
-        disableDrawMode();
-      }, drawModeTimeoutMs);
     }
 
     function notifyDrawActivity() {
-      if (!drawModeEnabled || okbDoodlesOnlyForced || selectedTab !== 'NOTES') return;
-      scheduleDrawModeAutoOff();
     }
 
     function disableDrawMode() {
       if (!drawModeEnabled) return;
       drawModeEnabled = false;
+      drawEraserEnabled = false;
       setDrawInteractionInNotes(false);
       clearDrawModeDisableTimer();
       stopDrawCountdownTicking();
+      clearActiveTabDrawStroke();
       persistDrawModePreference();
       updateDrawModeToggleUi();
       updateCursorModeForTab();

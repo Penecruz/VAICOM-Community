@@ -6429,12 +6429,8 @@
       applyCurrentTabKeywordsSplit();
       const drawOverlayBtn = document.getElementById('drawOverlayToggleBtn');
       if (drawOverlayBtn) {
-        const showDrawBtn = selectedTab === 'NOTES';
         drawOverlayBtn.classList.add('overlayToggleBtn', 'drawOverlayToggleBtn');
-        drawOverlayBtn.classList.toggle('hiddenFloatingBtn', !showDrawBtn);
-      }
-      if (selectedTab !== 'NOTES') {
-        setDrawOverlayOpen(false);
+        drawOverlayBtn.classList.remove('hiddenFloatingBtn');
       }
       document.body.classList.toggle('notes-tab', selectedTab === 'NOTES');
       document.body.classList.toggle('flt-plan-tab', selectedTab === 'DTC');
@@ -6446,9 +6442,11 @@
         }
         loadHelpOverlayContent(selectedTab);
       }
-      if (selectedTab !== 'NOTES' || !drawModeEnabled) {
+      if (!drawModeEnabled) {
         setDrawInteractionInNotes(false);
         clearDrawModeDisableTimer();
+      } else {
+        setDrawInteractionInNotes(true);
       }
       updateDrawModeToggleUi();
       document.getElementById('tabTitle').textContent = 'Tab: ' + tabLabel(selectedTab);
@@ -6645,6 +6643,7 @@
         tabBody.textContent = formatTabContent(displayData, selectedTab);
       }
       applyAutoAtaRecPulseUi();
+      syncTabDrawCanvasWithMode();
       updateCursorModeForTab();
       const tabBodyEl = document.getElementById('tabBody');
       const hasMetar = selectedTab === 'ATC' && /\bMETAR\s+[A-Z]{4}\b/i.test(tabBodyEl.textContent || '');

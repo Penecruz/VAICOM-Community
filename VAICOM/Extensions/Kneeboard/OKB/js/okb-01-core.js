@@ -22,6 +22,17 @@
     let drawModeDisableTimer = null;
     let drawModeDeadlineUtcMs = 0;
     let drawModeCountdownTimer = null;
+    let tabDrawStrokeByTab = {};
+    let tabDrawActiveStroke = null;
+    let tabDrawActivePointerId = null;
+    let tabDrawCanvasBound = false;
+    let tabDrawCanvasCssWidth = 0;
+    let tabDrawCanvasCssHeight = 0;
+    let drawEraserEnabled = false;
+    const tabDrawStrokeColor = 'rgba(18, 72, 134, 0.95)';
+    const tabDrawStrokeWidthPx = 3;
+    const tabDrawEraserWidthPx = 18;
+    const tabDrawBackgroundClear = true;
     let customActionHandlerRegistered = false;
     let dtcListCollapsed = false;
     let fltPlanEtaStartBySelection = {};

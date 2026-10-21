@@ -53,7 +53,10 @@
 
           <div class="panel tabPanel">
             <h4 id="tabTitle">Tab</h4>
-            <div id="tabBody" class="content mainContent"></div>
+            <div id="tabViewport" class="tabViewport">
+              <div id="tabBody" class="content mainContent"></div>
+              <canvas id="tabDrawCanvas" class="tabDrawCanvas" aria-label="Tab drawing layer"></canvas>
+            </div>
           </div>
 
           <div id="tabKeywordDivider" class="tabKeywordDivider" title="Drag to resize Tab and Keywords"></div>
@@ -90,7 +93,17 @@
     <button id="helpOverlayToggleBtn" class="overlayToggleBtn helpOverlayToggleBtn" type="button"
       title="Help">?</button>
     <button id="drawOverlayToggleBtn" class="overlayToggleBtn drawOverlayToggleBtn hiddenFloatingBtn" type="button"
-      title="Draw mode">✎</button>
+      title="Draw OFF (tap to draw)">✎</button>
+    <button id="drawEraseToggleBtn" class="overlayToggleBtn drawEraseToggleBtn hiddenFloatingBtn" type="button"
+      title="Eraser OFF" aria-label="Eraser mode">
+      <svg class="drawEraseIcon" viewBox="0 0 64 64" aria-hidden="true" focusable="false">
+        <path d="M6 54h24l24-24c4-4 4-11 0-15L42 3c-4-4-11-4-15 0L12 18c-4 4-4 11 0 15l14 14" />
+        <path d="M22 44l14-14" />
+        <path d="M4 58h56" />
+      </svg>
+    </button>
+    <button id="drawResetBtn" class="overlayToggleBtn drawResetBtn hiddenFloatingBtn" type="button"
+      title="Clear this tab drawing">↺</button>
   </div>
 
   <div id="fltPlanQuickBar" class="fltPlanQuickBar hidden">
@@ -172,8 +185,7 @@
         <button id="drawOverlayCloseBtn" class="overlayCloseBtn" type="button">✕</button>
       </div>
       <label class="overlayOption"><input id="overlayDrawMode" type="checkbox"> Draw ON</label>
-      <div id="overlayDrawTimer" class="overlayHint">30s</div>
-      <div class="overlayHint">Draw mode behavior and timeout unchanged.</div>
+      <div class="overlayHint">Draw stays on until toggled off.</div>
     </div>
   </div>
 
