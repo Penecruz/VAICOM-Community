@@ -128,6 +128,7 @@ vaicom.insert = {
         lastAh64StatePoll = 0,
         intervalAh64StateSeconds = 3,
         lastFuelMassMaxKg = nil,
+        lastOwnshipState = nil,
         logfile = nil,
         keylogfile = nil,
         statusfile = nil,
@@ -346,22 +347,35 @@ vaicom.insert = {
             end
         end
 
-        if (x == nil or y == nil or z == nil) and type(LoGetWorldObjects) == "function" then
-            local ok, own = pcall(LoGetWorldObjects, "self")
-            if ok and type(own) == "table" then
-                if type(own.Position) == "table" then
-                    x = tonumber(own.Position.x)
-                    y = tonumber(own.Position.y)
-                    z = tonumber(own.Position.z)
-                    if hdg == nil then
-                        hdg = tonumber(own.Heading) --radians? (Pene)
-                    end
-                end
+        local cachedOwnship = self.probe and self.probe.lastOwnshipState or nil
+        if x == nil or y == nil or z == nil then
+            if type(cachedOwnship) == "table" then
+                x = tonumber(cachedOwnship.x)
+                y = tonumber(cachedOwnship.y)
+                z = tonumber(cachedOwnship.z)
             end
+        end
+
+        if hdg == nil and type(cachedOwnship) == "table" then
+            hdg = tonumber(cachedOwnship.hdg)
+        end
+
+        if gs_ms == nil and type(cachedOwnship) == "table" then
+            gs_ms = tonumber(cachedOwnship.gs_ms)
         end
 
         if x == nil or y == nil or z == nil then
             return
+        end
+
+        if self.probe then
+            self.probe.lastOwnshipState = {
+                x = x,
+                y = y,
+                z = z,
+                hdg = hdg,
+                gs_ms = gs_ms,
+            }
         end
 
         local parts = {
@@ -466,23 +480,8 @@ vaicom.insert = {
             end
         end
 
-        if fuelMassMaxKg == nil and type(LoGetWorldObjects) == "function" then
-            local okOwn, own = pcall(LoGetWorldObjects, "self")
-            if okOwn and type(own) == "table" then
-                if fuelMassMaxKg == nil and type(own.Desc) == "table" then
-                    fuelMassMaxKg = tonumber(own.Desc.fuelMassMax)
-                    if fuelMassMaxKg ~= nil then fuelMassMaxSource = "worldDesc" end
-                end
-                if fuelMassMaxKg == nil and type(own.Desc) == "table" and type(own.Desc.attributes) == "table" then
-                    fuelMassMaxKg = tonumber(own.Desc.attributes.fuelMassMax)
-                    if fuelMassMaxKg ~= nil then fuelMassMaxSource = "worldDescAttr" end
-                end
-                if fuelMassMaxKg == nil then
-                    fuelMassMaxKg = tonumber(own.fuelMassMax)
-                    if fuelMassMaxKg ~= nil then fuelMassMaxSource = "worldFuelMassMax" end
-                end
-            end
-        end
+        -- Intentionally avoid LoGetWorldObjects("self") here to prevent high-frequency
+        -- export-side fallback sampling cost; rely on lower-cost sources plus cached last value.
 
         if type(LoGetPayloadInfo) == "function" then
             local okPayload, payloadInfo = pcall(LoGetPayloadInfo)

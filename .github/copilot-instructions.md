@@ -5,6 +5,9 @@
 - User is okay with offering builds/tests going forward again.
 - User prefers direct in-file edits rather than chat-only diffs when they explicitly ask to edit files.
 
+## Performance Optimization
+- For performance in this repo, `LoGetWorldObjects` should refresh on mission load and then only on periodic background updates (target 60s), not on PTT-triggered updates; use cached data for fallbacks and prefer `LoGetSelfData` for ownship position.
+
 ## Navigraph Credentials
 - Store Navigraph credentials/tokens encrypted in VAICOM data, not in plain config.
 - Retain Navigraph cache for 24 hours, with strict module-connection gating to prevent charts/tiles from displaying when no module is connected.

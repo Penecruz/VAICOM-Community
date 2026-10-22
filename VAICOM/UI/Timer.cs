@@ -137,7 +137,7 @@ namespace VAICOM
                     State.lastupdaterequesttimer = 0;
                     if (!State.currentstate.id.Equals("UH-1H")) // don't update for Huey //Why?? Pene
                     {
-                        DcsClient.SendUpdateRequest();
+                        DcsClient.SendUpdateRequest(allowWorldRefresh: true);
                     }
                 }
 

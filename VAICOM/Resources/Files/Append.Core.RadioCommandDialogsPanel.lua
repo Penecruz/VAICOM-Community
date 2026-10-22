@@ -700,7 +700,8 @@ function ProcessRemoteCommand()
 	end
 	
 	local clientmessage = base.vaicom.state.activemessage 
-	
+	base.vaicom.state.allowworldrefresh = (clientmessage and clientmessage.allowworldrefresh == true) or false
+
 	updateMainCaption()
 
 	-- update.all() rebuilds every recipient list (DCS queries + distance + sort)
@@ -1199,13 +1200,13 @@ base.vaicom.categories = {
 -- same Locator within a single update.all sendupdateall pass. The object identities are
 -- stable across one pass (live values like frequency are still read off the
 -- cached communicator each time), so we cache them per Locator.
--- LoGetWorldObjects is also cached (with a short TTL) so update.all and
--- sendupdateall share one result.
+-- LoGetWorldObjects full scan is mission-primed, then refreshed only on the timer-driven
+-- update cadence (60s target) when the client explicitly allows it.
 -- All props caches are cleared by resetPropsCaches at the start of every update.all and at the
 -- end of every sendupdateall to avoid cross-update staleness.
 local propcache = { comm = {}, desc = {}, pname = {}, range = {} }
 local worldObjectsCache = { worldObjects = nil, worldObjectsUpdatedAt = 0 }
-local WORLD_OBJECTS_CACHE_TTL = 1.0
+local WORLD_OBJECTS_BACKGROUND_REFRESH_SEC = 60.0
 local function resetPropsCache()
 	propcache.comm = {}
 	propcache.desc = {}
@@ -1220,14 +1221,42 @@ local function getWorldObjectsCached()
 	if base.Export == nil or base.Export.LoGetWorldObjects == nil then
 		return nil, nil
 	end
-	local nowTick = base.tonumber((base.vaicom and base.vaicom.state and base.vaicom.state.timer) or 0) or 0
-	if worldObjectsCache.worldObjects ~= nil and (nowTick - worldObjectsCache.worldObjectsUpdatedAt) <= WORLD_OBJECTS_CACHE_TTL then
+
+	local state = base.vaicom and base.vaicom.state or nil
+	local nowTick = base.tonumber((state and state.timer) or 0) or 0
+	local allowBackgroundRefresh = (state and state.allowworldrefresh == true) or false
+	local hasCache = (worldObjectsCache.worldObjects ~= nil)
+
+	-- Mission reload/reset detection: DCS mission time rewound.
+	if hasCache and nowTick < (worldObjectsCache.worldObjectsUpdatedAt or 0) then
+		resetWorldObjectsCache()
+		hasCache = false
+	end
+
+	local shouldRefresh = false
+	if not hasCache then
+		-- Prime cache once on mission load/first demand.
+		shouldRefresh = true
+	elseif allowBackgroundRefresh then
+		local elapsed = nowTick - (worldObjectsCache.worldObjectsUpdatedAt or 0)
+		if elapsed >= WORLD_OBJECTS_BACKGROUND_REFRESH_SEC then
+			shouldRefresh = true
+		end
+	end
+
+	if not shouldRefresh then
 		return true, worldObjectsCache.worldObjects
 	end
+
 	local okWorld, worldObjects = base.pcall(function() return base.Export.LoGetWorldObjects() end)
 	if okWorld and base.type(worldObjects) == "table" then
 		worldObjectsCache.worldObjects = worldObjects
 		worldObjectsCache.worldObjectsUpdatedAt = nowTick
+		return true, worldObjects
+	end
+
+	if hasCache then
+		return true, worldObjectsCache.worldObjects
 	end
 	return okWorld, worldObjects
 end

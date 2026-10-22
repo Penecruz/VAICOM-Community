@@ -123,6 +123,9 @@ namespace VAICOM
                     // Controls whether Lua should collect Opposition recipient data.
                     public bool collectopposition;
 
+                    // Allows Lua to refresh expensive world-object cache on this request.
+                    public bool allowworldrefresh;
+
                     public UpdateRequest()
                     {
                         debug = State.activeconfig.Debugmode;
@@ -397,7 +400,7 @@ namespace VAICOM
             }
 
             // request update (used by open ptt etc.)
-            public static string SendUpdateRequest()
+            public static string SendUpdateRequest(bool allowWorldRefresh = false)
             {
                 try
                 {
@@ -416,6 +419,7 @@ namespace VAICOM
                     updaterequest.fc3 = State.currentmodule.IsFC;
                     updaterequest.AIRIO = State.IsAirioTomcatModule();
                     updaterequest.carriersuppressauto = State.activeconfig.CarrierSuppressAuto;
+                    updaterequest.allowworldrefresh = allowWorldRefresh;
 
                     string formatmessage = JsonConvert.SerializeObject(updaterequest);
                     byte[] sendbuffer = Encoding.UTF8.GetBytes(formatmessage);
