@@ -587,14 +587,15 @@ namespace VAICOM
                         return;
                     }
 
-                    if (OpenKneeboardOutFirewallRuleExists(port))
+                    bool ruleExists = OpenKneeboardOutFirewallRuleExists(port);
+                    if (ruleExists && OpenKneeboardOutFirewallRuleHasPrivateAndPublicProfiles(port))
                     {
                         return;
                     }
 
-                    string message = "Allow Windows Firewall access for OpenKneeboard Out on Private networks?\n\n"
+                    string message = "Allow Windows Firewall access for OpenKneeboard Out on Private and Public networks?\n\n"
                         + "Port: " + port + " (TCP inbound)\n\n"
-                        + "Select No if you prefer to configure firewall manually.";
+                        + "Select No if you prefer to configure firewall manually to suit your network settings.";
 
                     MessageBoxResult result = MessageBox.Show(message, "OpenKneeboard Out LAN Access", MessageBoxButton.YesNo, MessageBoxImage.Question);
                     if (result != MessageBoxResult.Yes)
@@ -604,7 +605,9 @@ namespace VAICOM
                     }
 
                     string ruleName = GetOpenKneeboardOutFirewallRuleName(port);
-                    string arguments = "advfirewall firewall add rule name=\"" + ruleName + "\" dir=in action=allow protocol=TCP localport=" + port + " profile=private";
+                    string arguments = ruleExists
+                        ? "advfirewall firewall set rule name=\"" + ruleName + "\" new profile=private,public"
+                        : "advfirewall firewall add rule name=\"" + ruleName + "\" dir=in action=allow protocol=TCP localport=" + port + " profile=private,public";
 
                     var startInfo = new ProcessStartInfo
                     {
@@ -622,11 +625,18 @@ namespace VAICOM
                             process.WaitForExit();
                             if (process.ExitCode == 0)
                             {
-                                Log.Write("OpenKneeboard Out firewall rule added for Private network on TCP port " + port + ".", Colors.Text);
+                                if (ruleExists)
+                                {
+                                    Log.Write("OpenKneeboard Out firewall rule updated for Private and Public networks on TCP port " + port + ".", Colors.Text);
+                                }
+                                else
+                                {
+                                    Log.Write("OpenKneeboard Out firewall rule added for Private and Public networks on TCP port " + port + ".", Colors.Text);
+                                }
                             }
                             else
                             {
-                                Log.Write("OpenKneeboard Out firewall rule creation returned exit code " + process.ExitCode + ".", Colors.Warning);
+                                Log.Write("OpenKneeboard Out firewall rule creation/update returned exit code " + process.ExitCode + ".", Colors.Warning);
                             }
                         }
                     }
@@ -635,11 +645,11 @@ namespace VAICOM
                 {
                     if (ex.NativeErrorCode == 1223)
                     {
-                        Log.Write("OpenKneeboard Out firewall rule creation canceled by user.", Colors.Warning);
+                        Log.Write("OpenKneeboard Out firewall rule creation/update canceled by user.", Colors.Warning);
                     }
                     else
                     {
-                        Log.Write("OpenKneeboard Out firewall rule creation failed: " + ex.Message, Colors.Warning);
+                        Log.Write("OpenKneeboard Out firewall rule creation/update failed: " + ex.Message, Colors.Warning);
                     }
                 }
                 catch (Exception ex)
@@ -652,31 +662,63 @@ namespace VAICOM
             {
                 try
                 {
-                    var startInfo = new ProcessStartInfo
-                    {
-                        FileName = "netsh",
-                        Arguments = "advfirewall firewall show rule name=\"" + GetOpenKneeboardOutFirewallRuleName(port) + "\"",
-                        UseShellExecute = false,
-                        RedirectStandardOutput = true,
-                        RedirectStandardError = true,
-                        CreateNoWindow = true,
-                    };
-
-                    using (Process process = Process.Start(startInfo))
-                    {
-                        if (process == null)
-                        {
-                            return false;
-                        }
-
-                        string output = process.StandardOutput.ReadToEnd();
-                        process.WaitForExit();
-                        return process.ExitCode == 0 && output.IndexOf("No rules match", StringComparison.OrdinalIgnoreCase) < 0;
-                    }
+                    string output = GetOpenKneeboardOutFirewallRuleText(port);
+                    return output.IndexOf("No rules match", StringComparison.OrdinalIgnoreCase) < 0;
                 }
                 catch
                 {
                     return false;
+                }
+            }
+
+            private static bool OpenKneeboardOutFirewallRuleHasPrivateAndPublicProfiles(int port)
+            {
+                try
+                {
+                    string output = GetOpenKneeboardOutFirewallRuleText(port);
+                    if (output.IndexOf("No rules match", StringComparison.OrdinalIgnoreCase) >= 0)
+                    {
+                        return false;
+                    }
+
+                    string lower = output.ToLowerInvariant();
+                    return lower.IndexOf("private") >= 0 && lower.IndexOf("public") >= 0;
+                }
+                catch
+                {
+                    return false;
+                }
+            }
+
+            private static string GetOpenKneeboardOutFirewallRuleText(int port)
+            {
+                var startInfo = new ProcessStartInfo
+                {
+                    FileName = "netsh",
+                    Arguments = "advfirewall firewall show rule name=\"" + GetOpenKneeboardOutFirewallRuleName(port) + "\"",
+                    UseShellExecute = false,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    CreateNoWindow = true,
+                };
+
+                using (Process process = Process.Start(startInfo))
+                {
+                    if (process == null)
+                    {
+                        return "";
+                    }
+
+                    string output = process.StandardOutput.ReadToEnd();
+                    string error = process.StandardError.ReadToEnd();
+                    process.WaitForExit();
+
+                    if (!string.IsNullOrWhiteSpace(error))
+                    {
+                        output = output + "\n" + error;
+                    }
+
+                    return output ?? "";
                 }
             }
 
