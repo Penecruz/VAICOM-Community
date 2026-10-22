@@ -2946,8 +2946,9 @@
 
       if (!state.autoAtaArmed) {
         // Step 2: while still near START, do not log co-located return/landing waypoints.
-        let outsideStartCaptureZone = false;
-        const startWp = routeRows.find(function (wp) { return !!(wp && wp.isStart); }) || null;
+        // getEffectiveRouteRows intentionally filters START row out, so resolve START from raw waypoint list (would love to get rid of start row but cant due DTC!!).
+        let outsideStartCaptureZone = true;
+        const startWp = list.find(function (wp) { return !!(wp && wp.isStart); }) || null;
         if (startWp) {
           const startPos = resolveWaypointNorthEast(startWp);
           if (isFinite(startPos.north) && isFinite(startPos.east)) {

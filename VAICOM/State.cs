@@ -38,7 +38,7 @@ namespace VAICOM
         public static string clientmode = ClientModes.Debug; //set to Normal for release, Debug for development
 
         public static string versionstring = "";
-        public static string pluginversionnumber = "3.1.8"; // used by Theme (Special page)
+        public static string pluginversionnumber = "3.1.9"; // used by Theme (Special page)
         public static string vaminversion = "1.16";
         public static string defProfileName = "VAICOM for DCS World";
         // Add a new property to control Voice Access priority
