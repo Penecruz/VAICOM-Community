@@ -2365,7 +2365,7 @@ namespace VAICOM
                             listener.Prefixes.Add(prefix);
                             listener.Start();
 
-                            Log.Write("OpenKneeboard LAN host binding failed; using localhost only: " + ex.Message, Colors.Warning);
+                            Log.Write("VAICOM Kneeboard LAN host binding failed; using localhost only: " + ex.Message, Colors.Warning);
                         }
 
                         Interlocked.Exchange(ref lastClientRequestUtcTicks, 0);
@@ -2384,16 +2384,16 @@ namespace VAICOM
                         {
                         }
 
-                        Log.Write("OpenKneeboard dashboard host started at " + prefix, Colors.Text);
+                        Log.Write("VAICOM Kneeboard dashboard host started at " + prefix, Colors.Message);
                         if (lanBound)
                         {
-                            Log.Write("OpenKneeboard LAN access enabled at " + GetLanAccessUrl(), Colors.Text);
+                            Log.Write("VAICOM Kneeboard LAN access enabled at " + GetLanAccessUrl(), Colors.Message);
                         }
                     }
                     catch (Exception ex)
                     {
                         isRunning = false;
-                        Log.Write("OpenKneeboard dashboard host failed to start: " + ex.Message, Colors.Warning);
+                        Log.Write("VAICOM Kneeboard dashboard host failed to start: " + ex.Message, Colors.Warning);
                     }
                 }
 
