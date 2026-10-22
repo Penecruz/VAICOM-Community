@@ -135,9 +135,9 @@ namespace VAICOM
                 {
                     Log.Write("Update timer elapsed, beacon pulse.", Colors.Inline);
                     State.lastupdaterequesttimer = 0;
-                    if (!State.currentstate.id.Equals("UH-1H")) // don't update for Huey //Why?? Pene
+                    if (!State.currentstate.id.Equals("UH-1H")) // don't update for Huey //Why does this not work - Pene
                     {
-                        DcsClient.SendUpdateRequest(allowWorldRefresh: true);
+                        DcsClient.SendUpdateRequest(allowWorldRefresh: true); // Add allowWorldRefresh parameter to enable world refresh for all aircraft except UH-1H
                     }
                 }
 

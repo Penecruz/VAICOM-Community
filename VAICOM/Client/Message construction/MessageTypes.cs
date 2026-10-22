@@ -123,7 +123,7 @@ namespace VAICOM
                     // Controls whether Lua should collect Opposition recipient data.
                     public bool collectopposition;
 
-                    // Allows Lua to refresh expensive world-object cache on this request.
+                    // Allows Lua to refresh world-object cache on this request to limit usage of the call for performace.
                     public bool allowworldrefresh;
 
                     public UpdateRequest()
@@ -399,7 +399,7 @@ namespace VAICOM
                 }
             }
 
-            // request update (used by open ptt etc.)
+            // request update (used by open ptt etc now remove world objects refreshh from the call.)
             public static string SendUpdateRequest(bool allowWorldRefresh = false)
             {
                 try

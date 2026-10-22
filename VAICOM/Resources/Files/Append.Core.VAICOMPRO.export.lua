@@ -480,8 +480,8 @@ vaicom.insert = {
             end
         end
 
-        -- Intentionally avoid LoGetWorldObjects("self") here to prevent high-frequency
-        -- export-side fallback sampling cost; rely on lower-cost sources plus cached last value.
+        -- Intentionally avoid LoGetWorldObjects("self") as not useful in that context, misunderstanding on my part.
+        -- export-side fallback not worth it as primary seems reliable; rely on lower-cost option plus cached last value 1/min.
 
         if type(LoGetPayloadInfo) == "function" then
             local okPayload, payloadInfo = pcall(LoGetPayloadInfo)
