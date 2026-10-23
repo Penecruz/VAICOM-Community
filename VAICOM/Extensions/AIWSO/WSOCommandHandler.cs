@@ -418,7 +418,7 @@ namespace VAICOM
 
                 public static bool IsWSO()
                 {
-                    if (!State.currentmodule.Id.Equals("F-4E-45MC", StringComparison.OrdinalIgnoreCase))
+                    if (!State.IsF4E)
                     {
                         Log.Write("WSO commands are only available for the F-4E-45MC module.", Colors.Warning);
                         UI.Playsound.Sorry();

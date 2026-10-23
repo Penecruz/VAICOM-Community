@@ -209,13 +209,13 @@ namespace VAICOM
                 public bool ics;
                 public double f4ePilotIcs;
                 public double f4eSeat;
+                public double ah64seat;
                 public bool sngl;
                 public bool jmr;
                 public bool AM182;
                 public bool ejsn;
                 public int markers;
                 public List<MapMarkerState> markerdetails;
-
             }
 
             public class MapMarkerState
@@ -290,6 +290,12 @@ namespace VAICOM
                 public string missiontitle;
                 public string missionbriefing;
                 public string missiondetails;
+                public object missiondrawings;
+                public string md_transferid;
+                public int? md_partindex;
+                public int? md_partcount;
+                public string md_part;
+                public double? fuel_unit_mass_max;
 
                 public double timer;
                 public double tod;
@@ -352,6 +358,7 @@ namespace VAICOM
                     menuaux = null;
                     menucargo = null;
                     mission = null;
+                    missiondrawings = null;
                     atcmetars = new Dictionary<string, string>();
                     atcicaotypes = new Dictionary<string, string>();
                     bpos = new Vector(); // added
@@ -403,6 +410,12 @@ namespace VAICOM
                 public string missiontitle;
                 public string missionbriefing;
                 public string missiondetails;
+                public object missiondrawings;
+                public string md_transferid;
+                public int? md_partindex;
+                public int? md_partcount;
+                public string md_part;
+                public double? fuel_unit_mass_max;
 
                 public object mission;
                 public object missioncmds;

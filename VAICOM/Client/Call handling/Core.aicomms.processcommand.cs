@@ -39,7 +39,6 @@ namespace VAICOM
 
                     if (Commands.Table[State.currentkey["command"]].isSpecial()) // void cmds eventnumber.Equals(4000))
                     {
-
                         if (State.have["recipient"])
                         {
                             foundclass = classfromrecipient;
@@ -48,7 +47,12 @@ namespace VAICOM
                         else
                         {
                             State.calledisclass = true;
-                            // keep as undefined
+                            // Set the recipient to an AI Crew class, e.g. RIO, if the command is associated
+                            // with one of those classes, otherwise leave as Undefined
+                            if (IsAiCrewRecipientClass(classfromcommand))
+                            {
+                                foundclass = classfromcommand;
+                            }
                         }
                     }
                     else // normal commands
@@ -63,9 +67,14 @@ namespace VAICOM
 
                 public static bool noTX()
                 {
+                    bool isKneeboardPageCommand = State.currentcommand != null
+                        && (State.currentcommand.isKneeboard()
+                            || State.currentcommand.uniqueid.Equals(23004)
+                            || State.currentcommand.uniqueid.Equals(23005));
+
                     try
                     {
-                        if (State.currentcommand != null && (State.currentcommand.isOptions() || State.currentcommand.isMenu()))
+                        if (State.currentcommand != null && (State.currentcommand.isOptions() || State.currentcommand.isMenu() || isKneeboardPageCommand))
                         {
                             return false;
                         }
@@ -76,8 +85,15 @@ namespace VAICOM
 
                     if (State.elapsedsincelastpttrelease > 2)
                     {
+                        bool intercomHotMicExemption = State.IsCrewHotMicActive()
+                            && (State.currentrecipientclass.Equals(Recipientclasses.Crew)
+                                || IsAiCrewRecipientClass(State.currentrecipientclass)
+                                || isKneeboardPageCommand
+                                || State.currentcommand.isOptions()
+                                || State.currentcommand.isMenu());
+
                         // void hotkey
-                        if (!State.transmitting && !State.currentrecipientclass.Equals(Recipientclasses.Crew) && !State.IsCrewHotMicActive())
+                        if (!State.transmitting && !intercomHotMicExemption)
                         {
                             Log.Write("PTT: use an active TX node", Colors.Warning);
                             return true;
@@ -412,7 +428,7 @@ namespace VAICOM
                     }
 
                     SendNewMessage();
-
+                    
                     bool sentRioCloseMacro = State.currentcommand.isRIO()
                         && State.currentmessage != null
                         && State.currentmessage.extsequence != null
@@ -441,7 +457,6 @@ namespace VAICOM
                     State.previousmessageunit = State.currentmessageunit;
                     State.previousrecipientclass = State.currentrecipientclass;
 
-                    Log.Write("Message sent successfully for recipient class " + State.currentrecipientclass.Name + ".", Colors.Inline);
 
                     // for ics hotmic:
                     if (State.AIRIOactive && State.IsCrewHotMicActive())
@@ -483,14 +498,25 @@ namespace VAICOM
                                             {
                                                 if (State.activeconfig.OpenKneeboard_Out)
                                                 {
-                                                    OpenKneeboardBridge.UpdateActiveCategory("AI CREW");
+                                                    OpenKneeboardBridge.UpdateActiveCategory("AI CREW", true);
                                                 }
                                                 UI.Playsound.Commandcomplete();
                                                 break;
                                             }
 
-                                            string cat = Database.Recipients.Table[State.currentkey["recipient"]].RecipientClass().Name;
-                                            KneeboardUpdater.SwitchPage(cat);
+                                            string cat = ResolveKneeboardPageTargetCategory(recipientKey, recipientAlias, State.currentfullsentence);
+
+                                            if (string.IsNullOrWhiteSpace(cat))
+                                            {
+                                                break;
+                                            }
+
+                                            if (State.activeconfig.OpenKneeboard_Out)
+                                            {
+                                                OpenKneeboardBridge.UpdateActiveCategory(cat, true);
+                                            }
+
+                                            KneeboardUpdater.SwitchPage(cat, false);
                                             UI.Playsound.Commandcomplete();
                                         }
                                         catch
@@ -500,8 +526,21 @@ namespace VAICOM
                                     case "wMsgClearKneeboardTab": // not used
                                         try
                                         {
-                                            string cat = Database.Recipients.Table[State.currentkey["recipient"]].RecipientClass().Name;
-                                            KneeboardUpdater.SwitchPage(cat);
+                                            string recipientKey = State.have["recipient"] ? State.currentkey["recipient"] : "";
+                                            string recipientAlias = State.have["recipient"] ? State.usedalias["recipient"] : "";
+                                            string cat = ResolveKneeboardPageTargetCategory(recipientKey, recipientAlias, State.currentfullsentence);
+
+                                            if (string.IsNullOrWhiteSpace(cat))
+                                            {
+                                                break;
+                                            }
+
+                                            if (State.activeconfig.OpenKneeboard_Out)
+                                            {
+                                                OpenKneeboardBridge.UpdateActiveCategory(cat, true);
+                                            }
+
+                                            KneeboardUpdater.SwitchPage(cat, false);
                                             UI.Playsound.Commandcomplete();
                                         }
                                         catch
@@ -682,6 +721,115 @@ namespace VAICOM
                         || spoken.Contains("wso");
                 }
 
+                private static string ResolveKneeboardPageTargetCategory(string recipientKey, string recipientAlias, string fullSentence)
+                {
+                    string key = string.IsNullOrWhiteSpace(recipientKey) ? "" : recipientKey.Trim().ToLowerInvariant();
+                    string alias = string.IsNullOrWhiteSpace(recipientAlias) ? "" : recipientAlias.Trim().ToLowerInvariant();
+                    string spoken = string.IsNullOrWhiteSpace(fullSentence) ? "" : fullSentence.ToLowerInvariant();
+
+                    if (IsAiCrewPageRequest(recipientKey, recipientAlias, fullSentence))
+                    {
+                        return "AI CREW";
+                    }
+
+                    if (ContainsAny(key, alias, spoken, "chief", "crew", "ground crew", "gnd crew", "ref/crew", "ref crew"))
+                    {
+                        return "Crew";
+                    }
+
+                    if (ContainsAny(key, alias, spoken, "awacs"))
+                    {
+                        return "AWACS";
+                    }
+
+                    if (ContainsAny(key, alias, spoken, "tanker", "texaco", "arco", "shell"))
+                    {
+                        return "Tanker";
+                    }
+
+                    if (ContainsAny(key, alias, spoken, "jtac", "axeman", "pointer", "warrior", "moonbeam", "darknight"))
+                    {
+                        return "JTAC";
+                    }
+
+                    if (ContainsAny(key, alias, spoken, "atc", "tower", "marshal", "lso", "carrier", "departure", "approach"))
+                    {
+                        return "ATC";
+                    }
+
+                    if (ContainsAny(key, alias, spoken, "flight", "allies"))
+                    {
+                        return "Flight";
+                    }
+
+                    if (ContainsAny(key, alias, spoken, "aocs", "aux", "crystal palace", "server", "mission", "mystery"))
+                    {
+                        return "AOCS";
+                    }
+
+                    string cat = "";
+                    if (!string.IsNullOrWhiteSpace(recipientKey)
+                        && Database.Recipients.Table.ContainsKey(recipientKey))
+                    {
+                        cat = Database.Recipients.Table[recipientKey].RecipientClass().Name;
+                    }
+                    else if (State.currentrecipientclass != null)
+                    {
+                        cat = State.currentrecipientclass.Name;
+                    }
+
+                    if (string.IsNullOrWhiteSpace(cat)
+                        && State.previousrecipientclass != null)
+                    {
+                        cat = State.previousrecipientclass.Name;
+                    }
+
+                    if (string.IsNullOrWhiteSpace(cat))
+                    {
+                        return "";
+                    }
+
+                    string normalized = cat.Trim();
+                    if (normalized.Equals("Kneeboard", StringComparison.OrdinalIgnoreCase)
+                        || normalized.Equals("Undefined", StringComparison.OrdinalIgnoreCase)
+                        || normalized.Equals("Cockpit", StringComparison.OrdinalIgnoreCase)
+                        || normalized.Equals("Player", StringComparison.OrdinalIgnoreCase))
+                    {
+                        return "";
+                    }
+
+                    return normalized;
+                }
+
+                private static bool ContainsAny(string key, string alias, string spoken, params string[] terms)
+                {
+                    if (terms == null || terms.Length == 0)
+                    {
+                        return false;
+                    }
+
+                    foreach (string t in terms)
+                    {
+                        string term = string.IsNullOrWhiteSpace(t) ? "" : t.Trim().ToLowerInvariant();
+                        if (term.Length == 0)
+                        {
+                            continue;
+                        }
+
+                        if (key.Equals(term) || alias.Equals(term))
+                        {
+                            return true;
+                        }
+
+                        if (!string.IsNullOrWhiteSpace(spoken) && spoken.Contains(term))
+                        {
+                            return true;
+                        }
+                    }
+
+                    return false;
+                }
+
                 public static void SwapSRSListeningStates()
                 {
                     if (State.activeconfig.MP_VoIPUseSwitch)
@@ -795,21 +943,35 @@ namespace VAICOM
 
                         State.currentrecipientclass = getrecipientclass();
 
+                        bool txLinkActive = State.IsTXLinkActive();
+                        bool isIntercomTXNode = State.currentTXnode != null && State.currentTXnode.Equals(PTT.TXNodes.TX5);
+                        bool isCrewDomainRecipientClass = State.currentrecipientclass.Equals(Recipientclasses.Crew)
+                            || IsAiCrewRecipientClass(State.currentrecipientclass);
+                        bool intercomTxHotMicContext = State.IsCrewHotMicActiveOnIntercomTX();
+                        bool txLinkCrewEligibilityHotMic = txLinkActive && State.IsCrewHotMicActive();
+
+                        if (txLinkActive
+                            && !isIntercomTXNode
+                            && !(intercomTxHotMicContext || txLinkCrewEligibilityHotMic)
+                            && isCrewDomainRecipientClass
+                            && !State.currentcommand.isOptions()
+                            && !State.currentcommand.isMenu())
+                        {
+                            Log.Write("TX-LINK: AI crew/intercom recipients require TX5 intercom context.", Colors.Warning);
+                            State.MessageReset();
+                            State.processlocked = false;
+                            return false;
+                        }
+
                         bool intercomOnlyHotMic = !State.transmitting
-                            && (State.IsCrewHotMicActiveOnIntercomTX() || State.IntercomHotMicLatched);
+                            && (intercomTxHotMicContext || State.IntercomHotMicLatched);
                         bool isIntercomRecipientClass = State.currentrecipientclass.Equals(Recipientclasses.Crew)
-                            || State.currentrecipientclass.Equals(Recipientclasses.RIO)
-                            || State.currentrecipientclass.Equals(Recipientclasses.AI_pilot)
-                            || State.currentrecipientclass.Equals(Recipientclasses.WSO);
-                        bool isGeorgeCommand = State.currentcommand != null
-                            && !string.IsNullOrEmpty(State.currentcommand.dcsid)
-                            && State.currentcommand.dcsid.StartsWith("wMsgGeorge", StringComparison.OrdinalIgnoreCase);
-                        bool isAirioCommand = State.currentcommand != null
-                            && State.currentcommand.isRIO();
+                            || IsAiCrewRecipientClass(State.currentrecipientclass);
+                        bool isKneeboardPageCommand = State.currentcommand.isKneeboard()
+                            || State.currentcommand.uniqueid.Equals(23004)
+                            || State.currentcommand.uniqueid.Equals(23005);
                         bool isHotMicAllowedCommand = isIntercomRecipientClass
-                            || isAirioCommand
-                            || isGeorgeCommand
-                            || State.currentcommand.isKneeboard()
+                            || isKneeboardPageCommand
                             || State.currentcommand.isOptions()
                             || State.currentcommand.isMenu();
 
@@ -886,12 +1048,9 @@ namespace VAICOM
                             if (dcsKneeboardAutoBrowse || openKneeboardAutoBrowse)
                             {
                                 string cat = "";
+                                bool isAiCrewRecipient = IsAiCrewRecipientClass(State.currentrecipientclass);
 
-                                if (State.currentcommand != null && State.currentcommand.dcsid.StartsWith("wMsgGeorge", StringComparison.OrdinalIgnoreCase))
-                                {
-                                    cat = "Crew";
-                                }
-                                else if (State.have["recipient"])
+                                if (State.have["recipient"])
                                 {
                                     cat = Database.Recipients.Table[State.currentkey["recipient"]].RecipientClass().Name;
                                 }
@@ -900,15 +1059,33 @@ namespace VAICOM
                                     cat = State.currentrecipientclass.Name;
                                 }
 
+                                if (string.IsNullOrWhiteSpace(cat) && State.previousrecipientclass != null)
+                                {
+                                    cat = State.previousrecipientclass.Name;
+                                }
+
                                 if (!string.IsNullOrWhiteSpace(cat))
                                 {
                                     if (dcsKneeboardAutoBrowse)
                                     {
-                                        KneeboardUpdater.SwitchPage(cat);
+                                        string dcsCategory = isAiCrewRecipient ? "REF" : cat;
+                                        KneeboardUpdater.SwitchPage(dcsCategory, openKneeboardAutoBrowse);
                                     }
-                                    else
+                                    if (openKneeboardAutoBrowse)
                                     {
-                                        OpenKneeboardBridge.UpdateActiveCategory(cat);
+                                        string openKneeboardCategory = cat;
+                                        if (isAiCrewRecipient)
+                                        {
+                                            openKneeboardCategory = "AI CREW";
+                                        }
+                                        else if (cat.Equals("Crew", StringComparison.OrdinalIgnoreCase)
+                                            || cat.Equals("REF", StringComparison.OrdinalIgnoreCase)
+                                            || cat.Equals("REF/CREW", StringComparison.OrdinalIgnoreCase))
+                                        {
+                                            openKneeboardCategory = "Crew";
+                                        }
+
+                                        OpenKneeboardBridge.UpdateActiveCategory(openKneeboardCategory);
                                     }
                                 }
                             }
@@ -932,7 +1109,7 @@ namespace VAICOM
                         {
                             Log.Write("WSO command detected. Starting WSO command processing...", Colors.Text);
 
-                            if (!State.currentmodule.Id.Equals("F-4E-45MC", StringComparison.OrdinalIgnoreCase))
+                            if (!State.IsF4E)
                             {
                                 Log.Write("WSO commands are only available for the F-4E-45MC module.", Colors.Warning);
                                 State.processlocked = false;
@@ -953,7 +1130,7 @@ namespace VAICOM
                         }
                         else
                         {
-                            bool immediateHotMicSend = !State.transmitting && State.IsCrewHotMicActiveOnIntercomTX();
+                            bool immediateHotMicSend = !State.transmitting && intercomTxHotMicContext;
                             bool deferSendUntilReleaseInVoiceModes = (State.activeconfig.MP_VoIPUseSwitch || State.activeconfig.MP_VoIPParallel)
                                 && State.activeconfig.MP_DelayTransmit
                                 && State.transmitting
@@ -974,7 +1151,7 @@ namespace VAICOM
                             }
                         }
 
-                        if (riocommand && menucommand && !State.transmitting && State.IsCrewHotMicActiveOnIntercomTX())
+                        if (riocommand && menucommand && !State.transmitting && intercomTxHotMicContext)
                         {
                             PTT.PTT_Manage_Listen_States_OnPressRelease(false, false);
 
@@ -1020,6 +1197,14 @@ namespace VAICOM
 
                     State.processlocked = false;
                     return true;
+                }
+
+                private static bool IsAiCrewRecipientClass(Recipientclass recipientClass)
+                {
+                    return recipientClass.Equals(Recipientclasses.RIO)
+                        || recipientClass.Equals(Recipientclasses.AI_pilot)
+                        || recipientClass.Equals(Recipientclasses.WSO)
+                        || recipientClass.Equals(Recipientclasses.GeorgeCPG);
                 }
 
                 private static void RefreshKneeboardSnapshotAfterCommand()

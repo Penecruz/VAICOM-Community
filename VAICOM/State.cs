@@ -38,7 +38,7 @@ namespace VAICOM
         public static string clientmode = ClientModes.Normal; //set to Normal for release, Debug for development
 
         public static string versionstring = "";
-        public static string pluginversionnumber = "3.1.6"; // used by Theme (Special page)
+        public static string pluginversionnumber = "3.1.9"; // used by Theme (Special page)
         public static string vaminversion = "1.16";
         public static string defProfileName = "VAICOM for DCS World";
         // Add a new property to control Voice Access priority
@@ -318,9 +318,7 @@ namespace VAICOM
                 return true;
             }
 
-            return currentmodule != null
-                && (currentmodule.Id.Equals("F-4E-45MC", StringComparison.OrdinalIgnoreCase)
-                    || currentmodule.Id.Equals("AH-64D", StringComparison.OrdinalIgnoreCase));
+            return IsF4E || IsAH64D;
         }
 
         public static bool IsF4EIntercomSelected()
@@ -345,16 +343,12 @@ namespace VAICOM
                 return false;
             }
 
-            if (currentmodule != null
-                && currentmodule.Id.Equals("F-4E-45MC", StringComparison.OrdinalIgnoreCase)
-                && activeconfig.ICShotmic_useswitch)
+            if (IsF4E && activeconfig.ICShotmic_useswitch)
             {
                 return IsF4EIntercomSelected();
             }
 
-            if (currentmodule != null
-                && currentmodule.Id.Equals("AH-64D", StringComparison.OrdinalIgnoreCase)
-                && activeconfig.ICShotmic_useswitch)
+            if (IsAH64D && activeconfig.ICShotmic_useswitch)
             {
                 return activeconfig.ICShotmic;
             }
@@ -369,7 +363,24 @@ namespace VAICOM
                 && currentTXnode.Equals(PushToTalk.PTT.TXNodes.TX5);
         }
 
+        public static bool IsTXLinkActive()
+        {
+            return activeconfig != null
+                && activeconfig.MP_UseTXLink
+                && !(activeconfig.MP_TXLink_MPOnly && !currentstate.multiplayer);
+        }
+
         public static bool IntercomHotMicLatched;
+        public static bool TXLinkMenuHoldActive;
+        public static bool TXLinkExplicitMenuCloseRequested;
+        public static bool TXLinkExplicitSuspendRequested;
+
+        public static void ResetTXLinkRuntimeState()
+        {
+            TXLinkMenuHoldActive = false;
+            TXLinkExplicitMenuCloseRequested = false;
+            TXLinkExplicitSuspendRequested = false;
+        }
 
         public static Server.ServerState previousstate;
         public static Server.ServerState currentstate;
@@ -382,22 +393,6 @@ namespace VAICOM
         public static bool moduleDetected;
         public static bool moduleConnected = false; // Tracks if the module is connected
 
-        public enum AH64GeorgeWeaponMode
-        {
-            Unknown,
-            NoWeapon,
-            Gun,
-            Missiles,
-            Rockets
-        }
-
-        public static bool AH64GeorgeGunAvailable;
-        public static bool AH64GeorgeRocketsAvailable;
-        public static bool AH64GeorgeMissilesAvailable;
-        public static bool AH64GeorgeWeaponStateValid;
-        public static bool AH64GeorgeWowFromExport;
-        public static bool AH64GeorgeWowFromServerState;
-        public static AH64GeorgeWeaponMode AH64GeorgeSelectedWeapon = AH64GeorgeWeaponMode.Unknown;
         // -----------------------------------------------------------------------------------------------------------
         // call flow management tables
 
@@ -591,6 +586,14 @@ namespace VAICOM
             get
             {
                 return currentmodule != null && currentmodule.Id.Equals("F-4E-45MC", StringComparison.OrdinalIgnoreCase);
+            }
+        }
+
+        public static bool IsAH64D
+        {
+            get
+            {
+                return currentmodule != null && currentmodule.Id.Equals("AH-64D", StringComparison.OrdinalIgnoreCase);
             }
         }
     }

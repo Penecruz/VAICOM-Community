@@ -120,6 +120,12 @@ namespace VAICOM
                     // is running and has an active connection.
                     public bool includediagnostics;
 
+                    // Controls whether Lua should collect Opposition recipient data.
+                    public bool collectopposition;
+
+                    // Allows Lua to refresh world-object cache on this request to limit usage of the call for performace.
+                    public bool allowworldrefresh;
+
                     public UpdateRequest()
                     {
                         debug = State.activeconfig.Debugmode;
@@ -131,8 +137,15 @@ namespace VAICOM
                         importmenus = State.activeconfig.ImportOtherMenu;
                         dictmode = State.Proxy.Dictation.IsOn();
 
-                        includediagnostics = Extensions.Kneeboard.OpenKneeboardBridge.HasActiveConnection && Extensions.Kneeboard.OpenKneeboardBridge.IsFlightPlanTabSelected();
-                        
+                        // Keep runtime diagnostics available whenever OKB has an active client,
+                        // and FLT PLN is selected, so FLT PLN runtime NAVLOG can populate
+                        // without requiring a tab-specific PTT cycle.
+                        includediagnostics = Extensions.Kneeboard.OpenKneeboardBridge.IsFlightPlanTabActive;
+
+                        // Skip Opposition collection when no clients are connected to OKB Out to reduce
+                        // runtime load on large missions with many ground units.
+                        collectopposition = Extensions.Kneeboard.OpenKneeboardBridge.HasActiveConnection;
+
                         //kneeboard = 1; // show kneeboard on PTT press, test
                     }
 
@@ -386,8 +399,8 @@ namespace VAICOM
                 }
             }
 
-            // request update (used by open ptt etc.)
-            public static string SendUpdateRequest()
+            // request update (used by open ptt etc now remove world objects refreshh from the call.)
+            public static string SendUpdateRequest(bool allowWorldRefresh = false)
             {
                 try
                 {
@@ -406,6 +419,7 @@ namespace VAICOM
                     updaterequest.fc3 = State.currentmodule.IsFC;
                     updaterequest.AIRIO = State.IsAirioTomcatModule();
                     updaterequest.carriersuppressauto = State.activeconfig.CarrierSuppressAuto;
+                    updaterequest.allowworldrefresh = allowWorldRefresh;
 
                     string formatmessage = JsonConvert.SerializeObject(updaterequest);
                     byte[] sendbuffer = Encoding.UTF8.GetBytes(formatmessage);

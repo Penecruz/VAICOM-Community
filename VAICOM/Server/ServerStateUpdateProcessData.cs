@@ -7,8 +7,6 @@ using VAICOM.Extensions.RIO;
 using VAICOM.PushToTalk;
 using VAICOM.Static;
 
-
-
 namespace VAICOM
 {
     namespace Servers
@@ -281,8 +279,6 @@ namespace VAICOM
 
             public static void ProcessServerData()
             {
-                Log.Write("Processing server data...", Colors.Text);
-
                 State.deepdebugmode = State.clientmode.Equals(ClientModes.Debug) || State.currentstate.playerusername.Equals(State.debuguser);
 
                 if (State.currentstate.playerusername.Equals(State.debuguser))
@@ -315,8 +311,6 @@ namespace VAICOM
                     return; // Exit early if module validation fails
                 }
 
-                ForceAH64GeorgeNoWeaponWhenOnGround();
-
                 // PTT configuration and activate AIRIO if conditions are met
                 PTT.PTT_ApplyNewConfig();
                 State.AIRIOactive = State.dll_installed_rio && 
@@ -346,9 +340,7 @@ namespace VAICOM
                 }
 
                 if (!State.AIRIOactive
-                    && State.currentmodule != null
-                    && (State.currentmodule.Id.Equals("F-4E-45MC", StringComparison.OrdinalIgnoreCase)
-                        || State.currentmodule.Id.Equals("AH-64D", StringComparison.OrdinalIgnoreCase))
+                    && (State.IsF4E || State.IsAH64D)
                     && State.activeconfig.ICShotmic_useswitch)
                 {
                     bool hotmic = State.IsF4EIntercomSelected();
@@ -390,7 +382,14 @@ namespace VAICOM
                 }
                 else
                 {
-                    PTT.PTT_Manage_Listen_States_OnPressRelease(false, false);
+                    bool txLinkActive = State.activeconfig.MP_UseTXLink
+                        && !(State.activeconfig.MP_TXLink_MPOnly && !State.currentstate.multiplayer);
+                    bool holdTxLinkState = txLinkActive && (State.TXLinkMenuHoldActive || State.TXLinkExplicitSuspendRequested);
+
+                    if (!holdTxLinkState)
+                    {
+                        PTT.PTT_Manage_Listen_States_OnPressRelease(false, false);
+                    }
                 }
 
                 // Process F10 menu after module validation
@@ -399,39 +398,6 @@ namespace VAICOM
                 VAICOM.Interfaces.VA_Plugin.VA_ExposeVariables(State.Proxy);
 
                 State.Stopwatch.Stop();
-            }
-
-            private static void ForceAH64GeorgeNoWeaponWhenOnGround()
-            {
-                try
-                {
-                    string moduleId = State.currentmodule != null ? (State.currentmodule.Id ?? string.Empty) : string.Empty;
-                    string stateId = State.currentstate != null ? (State.currentstate.id ?? string.Empty) : string.Empty;
-                    bool isAH64 = moduleId.IndexOf("AH-64D", StringComparison.OrdinalIgnoreCase) >= 0
-                                  || stateId.IndexOf("AH-64D", StringComparison.OrdinalIgnoreCase) >= 0;
-
-                    if (!isAH64 || State.currentstate == null || State.currentstate.airborne)
-                    {
-                        if (isAH64)
-                        {
-                            State.AH64GeorgeWowFromServerState = false;
-                        }
-                        return;
-                    }
-
-                    State.AH64GeorgeWowFromServerState = true;
-
-                    if (State.AH64GeorgeSelectedWeapon != State.AH64GeorgeWeaponMode.NoWeapon)
-                    {
-                        var previous = State.AH64GeorgeSelectedWeapon;
-                        State.AH64GeorgeSelectedWeapon = State.AH64GeorgeWeaponMode.NoWeapon;
-                        Log.Write("AH-64D ground sync: forced local George state " + previous + " -> NoWeapon (WOW).", Colors.Warning);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Log.Write("AH-64D ground sync check failed: " + ex.Message, Colors.Warning);
-                }
             }
 
             private static void EnsureModuleConnectedAndProcessF10Menu()
@@ -446,8 +412,10 @@ namespace VAICOM
                     System.Threading.Tasks.Task.Delay(5000).ContinueWith(_ =>
                     {
                         ValidateDcsModule(true); // Revalidate module connection
-                        State.moduleConnected = true; // Update connection state
-                        EnsureModuleConnectedAndProcessF10Menu(); // Retry F10 menu processing
+                        if (State.moduleConnected)
+                        {
+                            EnsureModuleConnectedAndProcessF10Menu(); // Retry only when connection is actually restored to fix stale session state.
+                        }
                     });
                 }
             }

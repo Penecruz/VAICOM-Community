@@ -70,9 +70,49 @@ namespace VAICOM
                     {
                         State.activeconfig.OpenKneeboard_AutoBrowse = State.activeconfig.KneeboardlinkPTT;
                     }
+                    if (!ConfigContainsProperty("OpenKneeboard_FocusSwitchEnabled"))
+                    {
+                        State.activeconfig.OpenKneeboard_FocusSwitchEnabled = false;
+                    }
+                    if (!ConfigContainsProperty("OpenKneeboard_Out_AllowLan"))
+                    {
+                        State.activeconfig.OpenKneeboard_Out_AllowLan = false;
+                    }
                     if (State.activeconfig.OpenKneeboard_Out_Port <= 0 || State.activeconfig.OpenKneeboard_Out_Port > 65535)
                     {
                         State.activeconfig.OpenKneeboard_Out_Port = 7779;
+                    }
+                    if (!ConfigContainsProperty("OpenKneeboard_EfbEnabled"))
+                    {
+                        State.activeconfig.OpenKneeboard_EfbEnabled = false;
+                    }
+                    if (!ConfigContainsProperty("OpenKneeboard_EfbAuthBlob"))
+                    {
+                        State.activeconfig.OpenKneeboard_EfbAuthBlob = "";
+                    }
+                    if (!ConfigContainsProperty("OpenKneeboard_EfbDevBypass"))
+                    {
+                        State.activeconfig.OpenKneeboard_EfbDevBypass = false;
+                    }
+                    if (!ConfigContainsProperty("OpenKneeboard_EfbOAuthClientId"))
+                    {
+                        State.activeconfig.OpenKneeboard_EfbOAuthClientId = "";
+                    }
+                    if (!ConfigContainsProperty("OpenKneeboard_EfbOAuthClientSecret"))
+                    {
+                        State.activeconfig.OpenKneeboard_EfbOAuthClientSecret = "";
+                    }
+                    if (!ConfigContainsProperty("OpenKneeboard_EfbOAuthScope"))
+                    {
+                        State.activeconfig.OpenKneeboard_EfbOAuthScope = "openid charts tiles offline_access";
+                    }
+                    if (!ConfigContainsProperty("OpenKneeboard_EfbOAuthDeviceAuthEndpoint"))
+                    {
+                        State.activeconfig.OpenKneeboard_EfbOAuthDeviceAuthEndpoint = "https://identity.api.navigraph.com/connect/deviceauthorization";
+                    }
+                    if (!ConfigContainsProperty("OpenKneeboard_EfbOAuthTokenEndpoint"))
+                    {
+                        State.activeconfig.OpenKneeboard_EfbOAuthTokenEndpoint = "https://identity.api.navigraph.com/connect/token";
                     }
 
                     // added 2.5.19

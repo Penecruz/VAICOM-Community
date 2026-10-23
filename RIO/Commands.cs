@@ -119,7 +119,7 @@ namespace VAICOM.Extensions.RIO
             { "wMsgJ_RDR_STAB_60" ,                 new CommandInfo { uniqueid = 23316, name = "wMsgJ_RDR_STAB_60",                 displayname = Labels.aicommands["wMsgJ_RDR_STAB_60"], enabled = true        } },
             { "wMsgJ_RDR_STAB_120" ,                new CommandInfo { uniqueid = 23317, name = "wMsgJ_RDR_STAB_120" ,               displayname = Labels.aicommands["wMsgJ_RDR_STAB_120"], enabled = true       } },
             { "wMsgJ_RDR_STAB_INDEF" ,              new CommandInfo { uniqueid = 23318, name = "wMsgJ_RDR_STAB_INDEF" ,             displayname = Labels.aicommands["wMsgJ_RDR_STAB_INDEF"], enabled = true     } },
-            { "wMsgJ_RDR_STAB_GROUND" ,             new CommandInfo { uniqueid = 23319, name = "wMsgJ_RDR_STAB_GROUND" ,            displayname = Labels.aicommands["wMsgJ_RDR_STAB_GROUND"], enabled = true     } },
+            
             // end of radar 23240 - 23329
 
             // block: LANTIRN 23330 - 23399
@@ -140,10 +140,10 @@ namespace VAICOM.Extensions.RIO
             { "wMsgLANTIRN_QDES" ,                  new CommandInfo { uniqueid = 23341, name = "wMsgLANTIRN_QDES",                    displayname = Labels.aicommands["wMsgLANTIRN_QDES"], enabled = true          } },
             { "wMsgLANTIRN_QWP_Minus" ,             new CommandInfo { uniqueid = 23342, name = "wMsgLANTIRN_QWP_Minus",               displayname = Labels.aicommands["wMsgLANTIRN_QWP_Minus"], enabled = true          } },
             { "wMsgLANTIRN_QWP_Plus" ,              new CommandInfo { uniqueid = 23343, name = "wMsgLANTIRN_QWP_Plus",                displayname = Labels.aicommands["wMsgLANTIRN_QWP_Plus"], enabled = true          } },            
-            { "wMsgLANTIRN_GPSZero" ,               new CommandInfo { uniqueid = 23344, name = "wMsgLANTIRN_GPSZero",           displayname = Labels.aicommands["wMsgLANTIRN_GPSZero"], enabled = true          } },//
-            { "wMsgLANTIRN_ToggleFOV" ,             new CommandInfo { uniqueid = 23345, name = "wMsgLANTIRN_ToggleFOV",         displayname = Labels.aicommands["wMsgLANTIRN_ToggleFOV"], enabled = true          } },//
-            { "wMsgLANTIRN_Head_Eyeball" ,          new CommandInfo { uniqueid = 23346, name = "wMsgLANTIRN_Head_Eyeball",  displayname = Labels.aicommands["wMsgLANTIRN_Head_Eyeball"], enabled = true     } },
-            { "wMsgLANTIRN_Head_Head" ,             new CommandInfo { uniqueid = 23347, name = "wMsgLANTIRN_Head_Head",     displayname = Labels.aicommands["wMsgLANTIRN_Head_Head"], enabled = true     } },
+            { "wMsgLANTIRN_GPSZero" ,               new CommandInfo { uniqueid = 23344, name = "wMsgLANTIRN_GPSZero",                 displayname = Labels.aicommands["wMsgLANTIRN_GPSZero"], enabled = true          } },//
+            { "wMsgLANTIRN_ToggleFOV" ,             new CommandInfo { uniqueid = 23345, name = "wMsgLANTIRN_ToggleFOV",               displayname = Labels.aicommands["wMsgLANTIRN_ToggleFOV"], enabled = true          } },//
+            { "wMsgLANTIRN_Head_Eyeball" ,          new CommandInfo { uniqueid = 23346, name = "wMsgLANTIRN_Head_Eyeball",            displayname = Labels.aicommands["wMsgLANTIRN_Head_Eyeball"], enabled = true     } },
+            { "wMsgLANTIRN_Head_Head" ,             new CommandInfo { uniqueid = 23347, name = "wMsgLANTIRN_Head_Head",               displayname = Labels.aicommands["wMsgLANTIRN_Head_Head"], enabled = true     } },
             { "wMsgLANTIRN_Srch_Any" ,              new CommandInfo { uniqueid = 23348, name = "wMsgLANTIRN_Srch_Any",              displayname = Labels.aicommands["wMsgLANTIRN_Srch_Any"]   , enabled = true         } },
             { "wMsgLANTIRN_Srch_Any_Active" ,       new CommandInfo { uniqueid = 23349, name = "wMsgLANTIRN_Srch_Any_Active",       displayname = Labels.aicommands["wMsgLANTIRN_Srch_Any_Active"], enabled = true            } },
             { "wMsgLANTIRN_Srch_Air" ,              new CommandInfo { uniqueid = 23350, name = "wMsgLANTIRN_Srch_Air",              displayname = Labels.aicommands["wMsgLANTIRN_Srch_Air"]     , enabled = true       } },
@@ -160,7 +160,7 @@ namespace VAICOM.Extensions.RIO
             { "wMsgJESTER_Steerpoint_ST" ,          new CommandInfo { uniqueid = 23361, name = "wMsgJESTER_Steerpoint_ST",      displayname = Labels.aicommands["wMsgJESTER_Steerpoint_ST"] , enabled = true            } },//
             { "wMsgJESTER_Steerpoint_HB" ,          new CommandInfo { uniqueid = 23362, name = "wMsgJESTER_Steerpoint_HB",      displayname = Labels.aicommands["wMsgJESTER_Steerpoint_HB"] , enabled = true            } },//
             { "wMsgJESTER_Steerpoint_MAN" ,         new CommandInfo { uniqueid = 23363, name = "wMsgJESTER_Steerpoint_MAN",     displayname = Labels.aicommands["wMsgJESTER_Steerpoint_MAN"], enabled = true             } },//
-            
+            { "wMsgLANTIRN_STAB_GROUND" ,           new CommandInfo { uniqueid = 23364, name = "wMsgLANTIRN_STAB_GROUND" ,      displayname = Labels.aicommands["wMsgLANTIRN_STAB_GROUND"], enabled = true   } },
             // end of LANTIRN 23330 - 23399
 
             // block: Weapons 23400 - 23499

@@ -58,7 +58,7 @@ namespace VAICOM
                 string contextinput = API.NormalizeKneeboardContext(Helpers.Common.StringNormalize(vaProxy.Context));
                 bool longpress = State.Proxy.Utility.ParseTokens("{CMDLONGPRESSINVOKED}") == "1";
 
-                if (API.IsOpenKneeboardTabActionContext(contextinput))
+                if (API.IsOpenKneeboardActionContext(contextinput))
                 {
                     API.ControlOpenKneeboardOut(vaProxy, contextinput);
                     VA_ExposeVariables(State.Proxy);
@@ -123,18 +123,19 @@ namespace VAICOM
                     case "alias.aicomms":
                         try
                         {
-                            bool hadDcsOptionsOpen = State.showingoptions;
-                            bool hadJesterMenuOpen = VAICOM.Extensions.RIO.helper.showingjestermenu;
                             bool _complete = DcsClient.Message.processcommand();
 
-                            bool keepTxLinkListeningForMenuFlow = State.showingoptions || VAICOM.Extensions.RIO.helper.showingjestermenu;
-                            bool menuFlowClosedThisCommand = (hadDcsOptionsOpen || hadJesterMenuOpen) && !keepTxLinkListeningForMenuFlow;
-                            bool shouldAutoSuspend = menuFlowClosedThisCommand || (_complete && !keepTxLinkListeningForMenuFlow);
+                            bool keepTxLinkListeningForMenuFlow = State.TXLinkMenuHoldActive
+                                || State.showingoptions
+                                || VAICOM.Extensions.RIO.helper.showingjestermenu;
+                            bool shouldAutoSuspend = State.TXLinkExplicitMenuCloseRequested
+                                || (_complete && !keepTxLinkListeningForMenuFlow);
 
                             if (PTT.TXLinkApply && shouldAutoSuspend)
                             {
                                 Thread.Sleep(200);
                                 PTT.PTT_ForceSuspendListeningAfterCommand();
+                                State.TXLinkExplicitMenuCloseRequested = false;
                             }
                         }
                         catch (Exception)
@@ -175,6 +176,30 @@ namespace VAICOM
                         if (State.dll_installed_rio)
                         {
                             Extensions.RIO.helper.ShowWheel(true);
+                        }
+                        else
+                        {
+                            UI.Playsound.Sorry();
+                            vaProxy.WriteToLog("This command requires AIRIO extension.", Colors.Warning);
+                        }
+                        break;
+
+                    case "airio.wheel.visible.on":
+                        if (State.dll_installed_rio)
+                        {
+                            Extensions.RIO.helper.SetMiniWheelVisibility(true);
+                        }
+                        else
+                        {
+                            UI.Playsound.Sorry();
+                            vaProxy.WriteToLog("This command requires AIRIO extension.", Colors.Warning);
+                        }
+                        break;
+
+                    case "airio.wheel.visible.off":
+                        if (State.dll_installed_rio)
+                        {
+                            Extensions.RIO.helper.SetMiniWheelVisibility(false);
                         }
                         else
                         {
@@ -576,6 +601,7 @@ namespace VAICOM
                 try
                 {
                     State.activeconfig.RIO_Enabled = false;
+                    State.activeconfig.CarrierSuppressAuto = false;
 
                     if (!State.datawasreset)
                     {

@@ -17,6 +17,118 @@ local colorByRecepientState = {
 		[RecepientState.CANNOT_BE_TUNED] 	= utils.COLOR.LIGHT_GRAY     
 	}
 
+local carrierManualEvents = {
+	[base.Message.wMsgLeaderSeeYouAtTen] = true,
+	[base.Message.wMsgLeaderTowerOverhead] = true,
+	[base.Message.wMsgLeaderEstablished] = true,
+	[base.Message.wMsgLeaderCommencing] = true,
+	[base.Message.wMsgLeaderHornetBall] = true,
+	[base.Message.wMsgLeaderRequestLanding] = true,
+	[base.Message.wMsgLeaderRequestTaxiToParking] = true,
+}
+
+local gatedAutoToManualEvent = {
+	[base.Message.wMsgLeaderTowerOverhead] = base.Message.wMsgLeaderTowerOverhead,
+	[base.Message.wMsgLeaderEstablished] = base.Message.wMsgLeaderEstablished,
+	[base.Message.wMsgLeaderCommencing] = base.Message.wMsgLeaderCommencing,
+	[base.Message.wMsgLeaderHornetBall] = base.Message.wMsgLeaderHornetBall,
+	[base.Message.wMsgATCTowerCopyOverhead] = base.Message.wMsgLeaderTowerOverhead,
+	[base.Message.wMsgATCYouAreClearedForLanding] = base.Message.wMsgLeaderRequestLanding,
+	[base.Message.wMsgATCCheckLandingGear] = base.Message.wMsgLeaderRequestLanding,
+	[base.Message.wMsgATCTaxiToParkingArea] = base.Message.wMsgLeaderRequestTaxiToParking,
+}
+
+local manualToGatedAutoEvents = {
+	[base.Message.wMsgLeaderTowerOverhead] = { base.Message.wMsgATCTowerCopyOverhead, base.Message.wMsgLeaderTowerOverhead },
+	[base.Message.wMsgLeaderHornetBall] = { base.Message.wMsgLeaderHornetBall },
+	[base.Message.wMsgLeaderRequestLanding] = { base.Message.wMsgATCYouAreClearedForLanding, base.Message.wMsgATCCheckLandingGear },
+	[base.Message.wMsgLeaderRequestTaxiToParking] = { base.Message.wMsgATCTaxiToParkingArea },
+	[base.Message.wMsgLeaderEstablished] = { base.Message.wMsgLeaderEstablished },
+	[base.Message.wMsgLeaderCommencing] = { base.Message.wMsgLeaderCommencing },
+}
+
+local function vaicom_now()
+	return base.Export and base.Export.LoGetModelTime and base.Export.LoGetModelTime() or 0
+end
+
+local function vaicom_mark_manual_carrier_event(eventId)
+	if not carrierManualEvents[eventId] then
+		return
+	end
+	base.vaicom = base.vaicom or {}
+	base.vaicom.state = base.vaicom.state or {}
+	base.vaicom.state.lastCarrierManualEvent = eventId
+	base.vaicom.state.lastCarrierManualAt = vaicom_now()
+end
+
+local function vaicom_init_auto_gate_state()
+	base.vaicom = base.vaicom or {}
+	base.vaicom.state = base.vaicom.state or {}
+	base.vaicom.state.autoGatePermits = base.vaicom.state.autoGatePermits or {}
+	base.vaicom.state.blockedAutoMessages = base.vaicom.state.blockedAutoMessages or {}
+	return base.vaicom.state
+end
+
+local function vaicom_has_auto_gate_permit(eventId)
+	local state = vaicom_init_auto_gate_state()
+	local permits = state.autoGatePermits
+	local count = permits[eventId] or 0
+	return count > 0
+end
+
+local function vaicom_consume_auto_gate_permit(eventId)
+	local state = vaicom_init_auto_gate_state()
+	local permits = state.autoGatePermits
+	local count = permits[eventId] or 0
+	if count > 0 then
+		permits[eventId] = count - 1
+	end
+end
+
+local function vaicom_is_recent_manual_carrier_event(requiredEventId)
+	if requiredEventId == nil then
+		return false
+	end
+	if not (base.vaicom and base.vaicom.state) then
+		return false
+	end
+	local lastEvent = base.vaicom.state.lastCarrierManualEvent
+	local lastAt = base.vaicom.state.lastCarrierManualAt or -999
+	if lastEvent ~= requiredEventId then
+		return false
+	end
+	return (vaicom_now() - lastAt) <= 12
+end
+
+local function vaicom_should_block_auto_carrier_sequence_event(eventId)
+	if not (base.vaicom and base.vaicom.settings and base.vaicom.settings.carriersuppressauto) then
+		return false
+	end
+	local requiredEventId = gatedAutoToManualEvent[eventId]
+	if requiredEventId == nil then
+		return false
+	end
+	if vaicom_has_auto_gate_permit(eventId) then
+		return false
+	end
+	return true
+end
+
+local function vaicom_grant_auto_gate_permits_for_manual_event(eventId)
+	if not (base.vaicom and base.vaicom.settings and base.vaicom.settings.carriersuppressauto) then
+		return
+	end
+	local events = manualToGatedAutoEvents[eventId]
+	if events == nil then
+		return
+	end
+	local state = vaicom_init_auto_gate_state()
+	for i = 1, #events do
+		local autoEvent = events[i]
+		state.autoGatePermits[autoEvent] = (state.autoGatePermits[autoEvent] or 0) + 1
+	end
+end
+
 function initialize(pUnitIn, easyComm, intercomId, communicators)
 	count=count+1	
 	base.assert(COMMUNICATOR_VOID ~= nil)
@@ -532,6 +644,24 @@ function setShowMenu(on)
 			
 	end
 end
+function onMenuHide(self, menu)
+	-- Step 1: determine whether this module needs the Mi-8-style communicator workaround.
+	local dcsId = base.string.upper(base.tostring(base.vaicom and base.vaicom.state and base.vaicom.state.dcsid or ""))
+	local keepCommandMenuAcquired = (dcsId == "MI-8MT")
+
+	-- Step 2: always hide the panel UI.
+	self.window:setVisible(false)
+	self.mainCaption:setVisible(false)
+
+	-- Step 3: release command menu for normal modules so DCS F-key menu state is reset.
+	-- Only keep it acquired for Mi-8 where freeCommandMenu() breaks communicator availability.
+	if not keepCommandMenuAcquired then
+		freeCommandMenu()
+	end
+
+	-- Step 4: release mouse capture state.
+	banMouse(self, false)
+end
 function RemoteInputs() --check remote Inputs for errors
 	local returnvalue = false			
 	datareadout = base.vaicom.receiver:receive()
@@ -570,7 +700,8 @@ function ProcessRemoteCommand()
 	end
 	
 	local clientmessage = base.vaicom.state.activemessage 
-	
+	base.vaicom.state.allowworldrefresh = (clientmessage and clientmessage.allowworldrefresh == true) or false
+
 	updateMainCaption()
 
 	-- update.all() rebuilds every recipient list (DCS queries + distance + sort)
@@ -592,19 +723,20 @@ function ProcessRemoteCommand()
 		socket.try(base.vaicom.sender:send(base.vaicom.flags.raw))
 		return
 	end
-	if clientmessage.type == base.vaicom.messagetype.undefined 			then						
+	if clientmessage.type == base.vaicom.messagetype.undefined 			then
 		socket.try(base.vaicom.sender:send(base.vaicom.flags.raw))
 		return
 	end
 	
 	ApplySettings(clientmessage)
 	
-	if clientmessage.type == base.vaicom.messagetype.settingschange 	then		
+	if clientmessage.type == base.vaicom.messagetype.settingschange 	then
 		socket.try(base.vaicom.sender:send(base.vaicom.flags.raw))
 		return
 	end
 	if clientmessage.type == base.vaicom.messagetype.requestupdate  	then
 		base.vaicom.state.includediagnostics = clientmessage.includediagnostics
+		base.vaicom.state.collectopposition = clientmessage.collectopposition
 		base.vaicom.state.sendupdateall()
 		return
 	end
@@ -657,15 +789,29 @@ function ProcessRemoteCommand()
 			base.MissionResourcesDialog.onRadioMenuRearm()
 			return
 		end
+		if clientmessage.command == base.Message.wMsgLeaderGroundToggleDTC then
+			local unitType = base.DCS and base.DCS.getPlayerUnitType and base.DCS.getPlayerUnitType()
+			if base.DCS and base.DCS.toggleDTC and unitType and unitType ~= "" then
+				local ok, err = base.pcall(function()
+					base.DCS.toggleDTC(unitType, true, nil, nil)
+				end)
+				if ok then
+					base.print("VAICOM DTC open: toggleDTC call accepted using source tag '<nil>'.")
+					return
+				end
+				base.print("VAICOM DTC open: toggleDTC call failed for source tag '<nil>' with error: " .. base.tostring(err) .. ". Falling back to raw command path.")
+			end
+		end
 		data.curCommunicatorId = clientmessage.tgtdevid or data.curCommunicatorId
 		selectAndTuneCommunicator(unitcomm)
 		local messagesendcommand	= clientmessage.command
+		local resolvedEvent			= base.Message[clientmessage.dcsid] or messagesendcommand
 		local messagesendparams     = SetParameters(unitcomm)
 		if messagesendcommand == base.Message.wMsgLeaderSpecialCommand then
 			purgeMessage =	{
 							type = base.Message.type.TYPE_CONSTRUCTABLE,
 							playMode = base.Message.playMode.PLAY_MODE_LIMITED_DURATION,						
-							event = base.Message[clientmessage.dcsid] or messagesendcommand,
+							event = resolvedEvent,
 							params = clientmessage.parameters or {},
 							perform = function(self,parameters)
 								data.pComm:sendMessage({	type		= self.type,
@@ -680,7 +826,7 @@ function ProcessRemoteCommand()
 			purgeMessage =	{	
 							type = base.Message.type.TYPE_CONSTRUCTABLE,
 							playMode = base.Message.playMode.PLAY_MODE_LIMITED_DURATION,	
-							event = base.Message[clientmessage.dcsid] or messagesendcommand,
+							event = resolvedEvent,
 							parameters = messagesendparams,
 							perform = function(self, parameters)
 								local messageParameters = {}
@@ -697,6 +843,8 @@ function ProcessRemoteCommand()
 							}	
 		end
 		socket.try(base.vaicom.sender:send(base.vaicom.flags.raw))		
+		vaicom_mark_manual_carrier_event(resolvedEvent)
+		vaicom_grant_auto_gate_permits_for_manual_event(resolvedEvent)
 		base.setmetatable(purgeMessage, sendMessage)
 		purgeMessage:perform()
 	end			
@@ -903,6 +1051,9 @@ function onMsgStart(pMessage, pRecepient, text)
 	end
 	local textColor = getMessageColor(pMsgSender, pMsgReceiver, event)
 	if pMsgReceiver == data.pComm or pMsgSender == data.pComm then
+		if vaicom_should_block_auto_carrier_sequence_event(event) then
+			return
+		end
 		for msgHandlerIndex, msgHandler in base.pairs(data.msgHandlers) do
 			local internalEvent, receiverAsRecepient = msgHandler:onMsg(pMessage, pRecepient)
 			if internalEvent ~= nil then
@@ -910,6 +1061,9 @@ function onMsgStart(pMessage, pRecepient, text)
 			end
 		end
 		self:onEvent(event, pMsgSender and pMsgSender:tonumber(), pMsgReceiver and pMsgReceiver:tonumber())
+		if gatedAutoToManualEvent[event] ~= nil then
+			vaicom_consume_auto_gate_permit(event)
+		end
 	end
 	if pMsgReceiver == data.pComm or pMsgSender == data.pComm then
 		commandDialogsPanel.onMsgStart(self, pMsgSender:tonumber(), pMsgReceiver and pMsgReceiver:tonumber(), text, textColor)
@@ -1041,35 +1195,385 @@ base.vaicom.categories = {
 				},		
 }
 
--- Per-update memoization for DCS engine boundary calls.
+-- Per-update caches for expensive DCS engine boundary calls.
 -- getCommunicator/getDesc/getPlayerName/range are queried by many properties for the
 -- same Locator within a single update.all sendupdateall pass. The object identities are
 -- stable across one pass (live values like frequency are still read off the
--- cached communicator each time), so we cache them and clear the cache at the
--- start of every sendupdateall to avoid cross-update staleness.
+-- cached communicator each time), so we cache them per Locator.
+-- LoGetWorldObjects full scan is mission-primed, then refreshed only on the timer-driven
+-- update cadence (60s target) when the client explicitly allows it.
+-- All props caches are cleared by resetPropsCaches at the start of every update.all and at the
+-- end of every sendupdateall to avoid cross-update staleness.
 local propcache = { comm = {}, desc = {}, pname = {}, range = {} }
-local function resetPropCache()
+local worldObjectsCache = { worldObjects = nil, worldObjectsUpdatedAt = 0 }
+local WORLD_OBJECTS_BACKGROUND_REFRESH_SEC = 60.0
+local function resetPropsCache()
 	propcache.comm = {}
 	propcache.desc = {}
 	propcache.pname = {}
 	propcache.range = {}
 end
+local function resetWorldObjectsCache()
+	worldObjectsCache.worldObjects = nil
+	worldObjectsCache.worldObjectsUpdatedAt = 0
+end
+local function getWorldObjectsCached()
+	if base.Export == nil or base.Export.LoGetWorldObjects == nil then
+		return nil, nil
+	end
+
+	local state = base.vaicom and base.vaicom.state or nil
+	local nowTick = base.tonumber((state and state.timer) or 0) or 0
+	local allowBackgroundRefresh = (state and state.allowworldrefresh == true) or false
+	local hasCache = (worldObjectsCache.worldObjects ~= nil)
+
+	-- Mission reload/reset detection: DCS mission time rewound.
+	if hasCache and nowTick < (worldObjectsCache.worldObjectsUpdatedAt or 0) then
+		resetWorldObjectsCache()
+		hasCache = false
+	end
+
+	local shouldRefresh = false
+	if not hasCache then
+		-- Prime cache once on mission load/first demand.
+		shouldRefresh = true
+	elseif allowBackgroundRefresh then
+		local elapsed = nowTick - (worldObjectsCache.worldObjectsUpdatedAt or 0)
+		if elapsed >= WORLD_OBJECTS_BACKGROUND_REFRESH_SEC then
+			shouldRefresh = true
+		end
+	end
+
+	if not shouldRefresh then
+		return true, worldObjectsCache.worldObjects
+	end
+
+	local okWorld, worldObjects = base.pcall(function() return base.Export.LoGetWorldObjects() end)
+	if okWorld and base.type(worldObjects) == "table" then
+		worldObjectsCache.worldObjects = worldObjects
+		worldObjectsCache.worldObjectsUpdatedAt = nowTick
+		return true, worldObjects
+	end
+
+	if hasCache then
+		return true, worldObjectsCache.worldObjects
+	end
+	return okWorld, worldObjects
+end
 local function getCommunicatorCached(Locator)
 	if Locator == nil then return nil end
 	local cached = propcache.comm[Locator]
 	if cached == nil then
-		cached = Locator:getCommunicator()
+		if Locator.getCommunicator then
+			local okComm, valueComm = base.pcall(function() return Locator:getCommunicator() end)
+			if okComm then
+				cached = valueComm
+			else
+				cached = nil
+			end
+		end
 		if cached == nil then cached = false end -- memoize the "no communicator" result
 		propcache.comm[Locator] = cached
 	end
 	if cached == false then return nil end
 	return cached
 end
+
+local function resolveUnitFromWorldObject(obj, side, worldObjectKey)
+	if obj == nil or base.type(obj) ~= "table" then return nil end
+
+	local unitApi = (base.Unit and base.Unit.getByName and base.Unit) or ((Unit and Unit.getByName) and Unit) or nil
+	if unitApi == nil then return nil end
+
+	local function tryByName(name)
+		local n = base.tostring(name or "")
+		if n == "" then return nil end
+		local ok, unit = base.pcall(function() return unitApi.getByName(n) end)
+		if ok and unit ~= nil then return unit end
+		return nil
+	end
+	
+	local unit = tryByName(obj.UnitName)
+	if unit ~= nil then return unit end
+	
+	local data = obj.Data or obj.data
+	if base.type(data) == "table" then
+		unit = tryByName(data.UnitName) or tryByName(data.unitName) or tryByName(data.name) or tryByName(data.Name)
+		if unit ~= nil then return unit end
+	end
+
+	local candidateName = base.string.upper(base.tostring(obj.Name or obj.name or obj.UnitName or obj.unitName or (base.type(data) == "table" and (data.Name or data.name or data.UnitName or data.unitName) or "") or ""))
+	local candidatePos = obj.Position or (obj.PositionAsMatrix and obj.PositionAsMatrix.p) or (base.type(data) == "table" and (data.Position or (data.PositionAsMatrix and data.PositionAsMatrix.p)) or nil)
+	if candidatePos ~= nil and base.world ~= nil and base.world.searchObjects ~= nil then
+		local objectApi = (base.Object and base.Object.Category and base.Object) or ((Object and Object.Category) and Object) or nil
+		local worldApi = (base.world and base.world.VolumeType and base.world) or ((world and world.VolumeType) and world) or nil
+		if objectApi ~= nil and worldApi ~= nil and objectApi.Category ~= nil and objectApi.Category.UNIT ~= nil and worldApi.VolumeType ~= nil and worldApi.VolumeType.SPHERE ~= nil then
+			local function isRadarEmitterUnit(found)
+				if found == nil then return false end
+				local okDesc, desc = base.pcall(function() return found:getDesc() end)
+				if not okDesc or base.type(desc) ~= "table" then return false end
+
+				local attr = desc.attributes or {}
+				if attr and (attr.SAM_SR or attr.SAM_TR or attr.SAM_SR_TR or attr.EWR or attr.RADAR_BAND1_FOR_ARM) then
+					return true
+				end
+
+				local t = base.string.upper(base.tostring(desc.typeName or desc.displayName or ""))
+				if t == "" then return false end
+				if base.string.find(t, "LAUNCHER", 1, true)
+					or base.string.find(t, "TEL ", 1, true)
+					or base.string.find(t, " TEL", 1, true)
+					or base.string.find(t, "TELAR", 1, true)
+					or base.string.find(t, "LN", 1, true)
+					or base.string.find(t, "ARTILLERY", 1, true)
+					or base.string.find(t, "AAA", 1, true)
+					or base.string.find(t, "S-60", 1, true)
+					or base.string.find(t, "ZIL-131", 1, true)
+					or base.string.find(t, "APA-80", 1, true)
+				then
+					return false
+				end
+
+				if base.string.find(t, "RADAR", 1, true)
+					or base.string.find(t, "EWR", 1, true)
+					or base.string.find(t, "SEARCH", 1, true)
+					or base.string.find(t, "TRACK", 1, true)
+					or base.string.find(t, " STR", 1, true)
+					or base.string.find(t, "STR ", 1, true)
+					or base.string.find(t, "_STR", 1, true)
+					or base.string.find(t, "STR_", 1, true)
+					or base.string.find(t, " SR", 1, true)
+					or base.string.find(t, "SR ", 1, true)
+					or base.string.find(t, "_SR", 1, true)
+					or base.string.find(t, "SR_", 1, true)
+					or base.string.find(t, " TR", 1, true)
+					or base.string.find(t, "TR ", 1, true)
+					or base.string.find(t, "_TR", 1, true)
+					or base.string.find(t, "TR_", 1, true)
+					or base.string.find(t, "HQ-7", 1, true)
+					or base.string.find(t, "HQ 7", 1, true)
+				then
+					return true
+				end
+
+				if candidateName ~= "" and base.string.find(t, candidateName, 1, true) ~= nil then
+					return true
+				end
+
+				return false
+			end
+
+			local radii = { 400, 1200, 3000, 6000 }
+			for _, radius in base.ipairs(radii) do
+				local nearestRadar = nil
+				local nearestRadarDistSq = nil
+				local center = {
+					x = base.tonumber(candidatePos.x) or 0,
+					y = base.tonumber(candidatePos.y) or 0,
+					z = base.tonumber(candidatePos.z) or 0,
+				}
+				local volume = {
+					id = worldApi.VolumeType.SPHERE,
+					params = {
+						point = center,
+						radius = radius,
+					}
+				}
+
+				base.pcall(function()
+					worldApi.searchObjects(objectApi.Category.UNIT, volume, function(found)
+						if found == nil then
+							return true
+						end
+
+						local okExist, exists = base.pcall(function() return found:isExist() end)
+						if okExist and not exists then
+							return true
+						end
+
+						if side ~= nil then
+							local okCoal, foundCoal = base.pcall(function() return found:getCoalition() end)
+							if okCoal and foundCoal ~= nil and foundCoal ~= side then
+								return true
+							end
+						end
+
+						local okPoint, p = base.pcall(function() return found:getPoint() end)
+						if okPoint and p ~= nil and isRadarEmitterUnit(found) then
+							local dx = (base.tonumber(p.x) or 0) - center.x
+							local dz = (base.tonumber(p.z) or 0) - center.z
+							local d2 = (dx * dx) + (dz * dz)
+							if nearestRadarDistSq == nil or d2 < nearestRadarDistSq then
+								nearestRadarDistSq = d2
+								nearestRadar = found
+							end
+						end
+
+						return true
+					end)
+				end)
+
+				if nearestRadar ~= nil then
+					return nearestRadar
+				end
+			end
+		end
+	end
+
+	if base.coalition == nil or base.coalition.getGroups == nil then
+		return nil
+	end
+
+	local candidateGroup = base.string.upper(base.tostring(obj.GroupName or obj.groupName or (base.type(data) == "table" and (data.GroupName or data.groupName) or "") or ""))
+
+	local sides = {}
+	if side ~= nil then
+		base.table.insert(sides, side)
+	else
+		if base.coalition.side ~= nil then
+			if base.coalition.side.RED ~= nil then base.table.insert(sides, base.coalition.side.RED) end
+			if base.coalition.side.BLUE ~= nil then base.table.insert(sides, base.coalition.side.BLUE) end
+			if base.coalition.side.NEUTRAL ~= nil then base.table.insert(sides, base.coalition.side.NEUTRAL) end
+		end
+	end
+
+	local nearest = nil
+	local nearestDistSq = nil
+
+	for _, s in base.ipairs(sides) do
+		local okGroups, groups = base.pcall(base.coalition.getGroups, s)
+		if okGroups and base.type(groups) == "table" then
+			for _, g in base.ipairs(groups) do
+				if g ~= nil and g.getUnits then
+					local gname = ""
+					local okGName, gnameValue = base.pcall(function() return g:getName() end)
+					if okGName and gnameValue ~= nil then gname = base.string.upper(base.tostring(gnameValue)) end
+
+					local okUnits, units = base.pcall(function() return g:getUnits() end)
+					if okUnits and base.type(units) == "table" then
+						for _, unit in base.ipairs(units) do
+							if unit ~= nil then
+								local okUName, unameValue = base.pcall(function() return unit:getName() end)
+								local uname = okUName and base.string.upper(base.tostring(unameValue or "")) or ""
+
+								local okDesc, desc = base.pcall(function() return unit:getDesc() end)
+								local typeText = ""
+								if okDesc and base.type(desc) == "table" then
+									typeText = base.string.upper(base.tostring(desc.typeName or desc.displayName or ""))
+								end
+
+								local nameMatch = (candidateName ~= "" and (uname == candidateName or typeText == candidateName or base.string.find(typeText, candidateName, 1, true) ~= nil))
+								local groupMatch = (candidateGroup ~= "" and gname ~= "" and gname == candidateGroup)
+
+								if nameMatch and (candidateGroup == "" or groupMatch) then
+									return unit
+								end
+
+								if candidatePos ~= nil and (nameMatch or groupMatch) then
+									local okPoint, upos = base.pcall(function() return unit:getPoint() end)
+									if okPoint and upos ~= nil then
+										local dx = (upos.x or 0) - (candidatePos.x or 0)
+										local dz = (upos.z or 0) - (candidatePos.z or 0)
+										local d2 = (dx * dx) + (dz * dz)
+										if nearestDistSq == nil or d2 < nearestDistSq then
+											nearestDistSq = d2
+											nearest = unit
+										end
+									end
+								end
+							end
+						end
+					end
+				end
+			end
+		end
+	end
+
+	if nearest ~= nil and nearestDistSq ~= nil and nearestDistSq <= (2500 * 2500) then
+		return nearest
+	end
+
+	return nil
+end
+
+local function isResolvedSamRadarUnit(unit)
+	if unit == nil then return false end
+	local okDesc, desc = base.pcall(function() return unit:getDesc() end)
+	if not okDesc or base.type(desc) ~= "table" then return false end
+
+	local attr = desc.attributes or {}
+	if attr and (attr.SAM_SR or attr.SAM_TR or attr.SAM_SR_TR or attr.EWR or attr.RADAR_BAND1_FOR_ARM) then
+		return true
+	end
+
+	local t = base.string.upper(base.tostring(desc.typeName or desc.displayName or ""))
+	if t == "" then return false end
+
+	if base.string.find(t, "LAUNCHER", 1, true)
+		or base.string.find(t, "TEL ", 1, true)
+		or base.string.find(t, " TEL", 1, true)
+		or base.string.find(t, "TELAR", 1, true)
+		or base.string.find(t, "LN", 1, true)
+		or base.string.find(t, "ARTILLERY", 1, true)
+		or base.string.find(t, "AAA", 1, true)
+		or base.string.find(t, "S-60", 1, true)
+		or base.string.find(t, "ZIL-131", 1, true)
+		or base.string.find(t, "APA-80", 1, true)
+	then
+		return false
+	end
+
+	return base.string.find(t, "RADAR", 1, true)
+		or base.string.find(t, "EWR", 1, true)
+		or base.string.find(t, "SEARCH", 1, true)
+		or base.string.find(t, "TRACK", 1, true)
+		or base.string.find(t, " STR", 1, true)
+		or base.string.find(t, "STR ", 1, true)
+		or base.string.find(t, "_STR", 1, true)
+		or base.string.find(t, "STR_", 1, true)
+		or base.string.find(t, " SR", 1, true)
+		or base.string.find(t, "SR ", 1, true)
+		or base.string.find(t, "_SR", 1, true)
+		or base.string.find(t, "SR_", 1, true)
+		or base.string.find(t, " TR", 1, true)
+		or base.string.find(t, "TR ", 1, true)
+		or base.string.find(t, "_TR", 1, true)
+		or base.string.find(t, "TR_", 1, true)
+		or base.string.find(t, "HQ-7", 1, true)
+		or base.string.find(t, "HQ 7", 1, true)
+		or base.string.find(t, "BIG BIRD", 1, true)
+		or base.string.find(t, "SNOW DRIFT", 1, true)
+		or base.string.find(t, "STRAIGHT FLUSH", 1, true)
+		or base.string.find(t, "FLAP LID", 1, true)
+		or base.string.find(t, "TIN SHIELD", 1, true)
+		or base.string.find(t, "DOG EAR", 1, true)
+		or base.string.find(t, "LOW BLOW", 1, true)
+		or base.string.find(t, "CLAM SHELL", 1, true)
+		or base.string.find(t, "PATRIOT", 1, true)
+		or base.string.find(t, "HAWK", 1, true)
+		or base.string.find(t, "KUB", 1, true)
+		or base.string.find(t, "BUK", 1, true)
+		or base.string.find(t, "NASAMS_RADAR_MPQ64F", 1, true)
+		or base.string.find(t, "MPQ64F", 1, true)
+		or base.string.find(t, "64H6E", 1, true)
+		or base.string.find(t, "9S18M1", 1, true)
+		or base.string.find(t, "RLS_19J6", 1, true)
+		or base.string.find(t, "P-19 S-125 SR", 1, true)
+		or base.string.find(t, "P 19 S 125 SR", 1, true)
+end
+
 local function getDescCached(Locator)
 	if Locator == nil then return nil end
 	local cached = propcache.desc[Locator]
 	if cached == nil then
-		cached = Locator:getDesc()
+		if Locator.getDesc then
+			local okDesc, valueDesc = base.pcall(function() return Locator:getDesc() end)
+			if okDesc then
+				cached = valueDesc
+			else
+				cached = nil
+			end
+		end
 		if cached == nil then cached = false end
 		propcache.desc[Locator] = cached
 	end
@@ -1081,7 +1585,12 @@ local function getPlayerNameCached(Locator)
 	local cached = propcache.pname[Locator]
 	if cached == nil then
 		if Locator.getPlayerName then
-			cached = Locator:getPlayerName()
+			local okPName, valuePName = base.pcall(function() return Locator:getPlayerName() end)
+			if okPName then
+				cached = valuePName
+			else
+				cached = nil
+			end
 		end
 		if cached == nil then cached = false end
 		propcache.pname[Locator] = cached
@@ -1094,12 +1603,23 @@ local function getRangeCached(Locator)
 	local cached = propcache.range[Locator]
 	if cached == nil then
 		local selfPoint = base.vaicom.state.playerpoint
-		if not selfPoint then
-			selfPoint = Locator:getPoint()
+		if not selfPoint and Locator.getPoint then
+			local okSelfPoint, valueSelfPoint = base.pcall(function() return Locator:getPoint() end)
+			if okSelfPoint then
+				selfPoint = valueSelfPoint
+			end
 		end
-		local ipoint = Locator:getPoint()
-		local distsq = (ipoint.x - selfPoint.x) * (ipoint.x - selfPoint.x) + (ipoint.z - selfPoint.z) * (ipoint.z - selfPoint.z)
-		cached = base.math.floor(base.math.sqrt(distsq))
+		local ipoint = nil
+		if Locator.getPoint then
+			local okIPoint, valueIPoint = base.pcall(function() return Locator:getPoint() end)
+			if okIPoint then
+				ipoint = valueIPoint
+			end
+		end
+		if selfPoint and ipoint and selfPoint.x and selfPoint.z and ipoint.x and ipoint.z then
+			local distsq = (ipoint.x - selfPoint.x) * (ipoint.x - selfPoint.x) + (ipoint.z - selfPoint.z) * (ipoint.z - selfPoint.z)
+			cached = base.math.floor(base.math.sqrt(distsq))
+		end
 		if cached == nil then cached = false end
 		propcache.range[Locator] = cached
 	end
@@ -1215,6 +1735,35 @@ base.vaicom.properties = {
 			ID = Locator.id_	
 		end	
 		return ID	
+	end,
+	status = function(Locator, recipientclass)
+		if Locator == nil then
+			return ""
+		end
+		if recipientclass ~= "Opposition" then
+			return ""
+		end
+		local parts = {}
+
+		local id = Locator.id_
+		local map = base.vaicom.state and base.vaicom.state.radaractivebyid or nil
+		if id ~= nil and map ~= nil then
+			local v = map[id]
+			if v == true then
+				base.table.insert(parts, "RadarActive:true")
+			elseif v == false then
+				base.table.insert(parts, "RadarActive:false")
+			end
+		end
+
+		local okInAir, inAirValue = base.pcall(function()
+			return Locator:inAir()
+		end)
+		if okInAir and inAirValue ~= nil then
+			base.table.insert(parts, "Airborne:"..base.tostring(inAirValue and true or false))
+		end
+
+		return base.table.concat(parts, ";")
 	end,
 	modulation = function(Locator)
 		local Modulation = nil
@@ -1850,6 +2399,18 @@ base.vaicom.objects = {
 		return Collection
 	end,
 	localOpposition = function(getside)
+		-- Lightweight profiling
+		local profiling = base.vaicom.state and base.vaicom.state.profiling
+		local profClock = profiling and socket.gettime or nil
+		local profStart = profiling and profClock() or 0
+		local profLast = profStart
+		local function profMark(label, suffix)
+			if not profiling then return end
+			local now = profClock()
+			base.print(base.string.format("VAICOM profiling (localOpposition) | %-40s %8.3f ms%s", label, (now - profLast) * 1000, suffix or ""))
+			profLast = now
+		end
+
 		local Collection = {}
 		local opposite = nil
 		if getside == base.coalition.side.BLUE then opposite = base.coalition.side.RED end
@@ -1864,11 +2425,98 @@ base.vaicom.objects = {
 		end
 
 		if opposite then
+			base.vaicom.state = base.vaicom.state or {}
+			base.vaicom.state.radaractivebyid = {}
 			addUnits(base.vaicom.objects.localJTACs(opposite))
+			profMark("localJTACs")
 			addUnits(base.vaicom.objects.localAWACSs(opposite))
+			profMark("localAWACSs")
 			addUnits(base.vaicom.objects.localTankers(opposite))
-			addUnits(base.vaicom.objects.localATCs(opposite))
+			profMark("localTankers")
 			addUnits(base.vaicom.objects.localAllies(opposite))
+			profMark("localAllies")
+
+			local function addSamRadarUnitsFromWorldObjects(side)
+				local added = 0
+				local okWorld, worldObjects = getWorldObjectsCached()
+				profMark("LoGetWorldObjects")
+				if not okWorld or base.type(worldObjects) ~= "table" then
+					return added
+				end
+
+				local samObjects = {}
+				-- Filter the world objects to find opposition SAM units.
+				for id, obj in base.pairs(worldObjects) do
+					if obj.CoalitionID == side then
+						local objectType = obj.Type
+						if objectType and base.type(objectType) == "table" then
+							-- The level1 value of 2 refers to ground units and the level2
+							-- value of 16 refers to SAM units. We also exclude static objects.
+							-- Object types referenced in Scripts\Database\wsTypes.lua
+							if objectType["level1"] == 2 and objectType["level2"] == 16
+								and (obj.Flags and obj.Flags.Born)
+								and not (obj.Flags and obj.Flags.Static) then
+								samObjects[id] = obj
+							end
+						end
+					end
+				end
+
+				local profResolveMs, profResolveCount, profMatchCount = 0, 0, 0
+
+				local function processSamObject(objectKey, obj)
+					if base.type(obj) ~= "table" then return end
+					profMatchCount = profMatchCount + 1
+					local tResolve = profiling and profClock() or 0
+					local unit = resolveUnitFromWorldObject(obj, side, objectKey)
+					if profiling then
+						profResolveMs = profResolveMs + (profClock() - tResolve) * 1000
+						profResolveCount = profResolveCount + 1
+					end
+					if unit ~= nil then
+						if not isResolvedSamRadarUnit(unit) then
+							return
+						end
+						
+						local radarActive = nil
+						local rawFlags = obj.Flags or obj.flags
+						if base.type(rawFlags) == "table" then
+							radarActive = rawFlags.RadarActive
+							if radarActive == nil then
+								radarActive = rawFlags.radarActive
+							end
+						elseif base.type(rawFlags) == "string" then
+							local f = base.string.upper(rawFlags)
+							if base.string.find(f, "RADARACTIVE:TRUE", 1, true) then radarActive = true end
+							if base.string.find(f, "RADARACTIVE:FALSE", 1, true) then radarActive = false end
+						end
+						if radarActive ~= nil then
+							base.vaicom.state.radaractivebyid[unit.id_] = (radarActive == true)
+						end
+						
+						local inactive = (unit.isActive and not unit:isActive()) or false
+						if not inactive then
+							base.vaicom.objects.addUniqueUnit(Collection, unit)
+							added = added + 1
+						end
+					end
+				end
+
+				for key, item in base.pairs(samObjects) do
+					processSamObject(key, item)
+				end
+
+				profMark("processSamObjects (total)", base.string.format(" (%d SAM text matches, %d added)", profMatchCount, added))
+				if profiling then
+					base.print(base.string.format("VAICOM profiling (localOpposition) | %-40s %8.3f ms (%d calls)", "  scan: resolveUnitFromWorldObject", profResolveMs, profResolveCount))
+				end
+
+				return added
+			end
+			addSamRadarUnitsFromWorldObjects(opposite)
+		end
+		if profiling then
+			base.print(base.string.format("VAICOM profiling (localOpposition) | %-40s %8.3f ms", "TOTAL", (profClock() - profStart) * 1000))
 		end
 		return Collection
 	end,
@@ -1978,7 +2626,7 @@ base.vaicom.list = {
 		if coalition then
 			Listing = base.vaicom.helper.mergetables(Listing, base.vaicom.objects.localAWACSs(coalition))
 		end
-      local isMultiplayerNow = data.initialized and base.DCS.isMultiplayer() or false
+		local isMultiplayerNow = data.initialized and base.DCS.isMultiplayer() or false
 		if (not isMultiplayerNow) and (not selectstr or selectstr == "radio") then
 			Listing = base.vaicom.filter.hasradio(Listing)
 		end
@@ -2045,6 +2693,206 @@ base.vaicom.get = {
 		end,
 	},
 	missiondata = {
+		drawingssnapshot = function()
+			local nowTick = base.tonumber((base.vaicom and base.vaicom.state and base.vaicom.state.timer) or 0) or 0
+			local function trimSafe(v)
+				local s = base.tostring(v or "")
+				s = s:gsub("^%s+", "")
+				s = s:gsub("%s+$", "")
+				return s
+			end
+			local function tryget(fn)
+				local ok, value = base.pcall(fn)
+				if ok then return value end
+				return nil
+			end
+
+			local function tostringSafe(v)
+				if v == nil then return "" end
+				return base.tostring(v)
+			end
+
+			local function sortedNumericKeys(tbl)
+				local keys = {}
+				if base.type(tbl) ~= "table" then return keys end
+				for k,_ in base.pairs(tbl) do
+					if base.type(k) == "number" then
+						base.table.insert(keys, k)
+					end
+				end
+				base.table.sort(keys)
+				return keys
+			end
+
+			local state = base.vaicom and base.vaicom.state or nil
+			if state == nil then
+				return {}, ""
+			end
+
+			local missionObj = tryget(function() return base.env and base.env.mission end)
+			local missionName = trimSafe(tryget(function() return base.DCS.getMissionName() end))
+			local theatre = tryget(function() return missionObj and missionObj.theatre end)
+
+			local lastTitle = trimSafe(state.missiondrawingstitle or "")
+			if missionName ~= "" and lastTitle ~= "" and missionName ~= lastTitle then
+				state.missiondrawingscacheid = ""
+				state.missiondrawingssentid = ""
+				state.missiondrawingssendcount = 0
+				state.missiondrawingslastsendat = -999
+				state.missiondrawingsnextretryat = -999
+				state.missiondrawingsslotkey = ""
+				state.missiondrawingscachecreatedat = nowTick
+				state.missiondrawingsready = false
+				state.missiondrawingslocked = false
+				state.missiondrawingstxreason = "mission-change"
+				state.missiondrawingstxchunk13bytes = 0
+				state.missiondrawingstxchunk13hastable = false
+				state.missiondrawingstxchunk13haskey = false
+				state.missiondrawingstxchunk13sentok = false
+				state.missiondrawingstxchunk13partcount = 0
+				state.missiondrawings = {}
+			end
+
+			if missionName ~= "" then
+				state.missiondrawingstitle = missionName
+			end
+
+			local missionTitleKey = trimSafe(state.missiondrawingstitle or "")
+			local missionIdentity = missionTitleKey .. "|" .. tostringSafe(theatre)
+
+			if state.missiondrawingslocked == true
+				and state.missiondrawingscacheid == missionIdentity
+				and base.type(state.missiondrawings) == "table"
+				and state.missiondrawingsready == true
+			then
+				return state.missiondrawings, missionIdentity
+			end
+
+			if state.missiondrawingscacheid == missionIdentity
+				and base.type(state.missiondrawings) == "table"
+				and state.missiondrawingsready == true
+			then
+				return state.missiondrawings, missionIdentity
+			end
+
+			state.missiondrawingscacheid = missionIdentity
+			state.missiondrawingssentid = ""
+			state.missiondrawingssendcount = 0
+			state.missiondrawingslastsendat = -999
+			state.missiondrawingsnextretryat = -999
+			state.missiondrawingscachecreatedat = nowTick
+			state.missiondrawingsready = false
+			state.missiondrawingslocked = false
+			state.missiondrawingstxreason = "identity-reset"
+			state.missiondrawingstxchunk13bytes = 0
+			state.missiondrawingstxchunk13hastable = false
+			state.missiondrawingstxchunk13haskey = false
+			state.missiondrawingstxchunk13sentok = false
+			state.missiondrawingstxchunk13partcount = 0
+			state.missiondrawings = {
+				missionIdentity = missionIdentity,
+				missionTitle = missionTitleKey,
+				layers = {},
+				hiddenOnF10Map = {},
+			}
+
+			local drawings = tryget(function() return missionObj and missionObj.drawings end)
+			if base.type(drawings) ~= "table" then
+				return state.missiondrawings, missionIdentity
+			end
+
+			local hiddenOnF10Map = tryget(function() return drawings.options and drawings.options.hiddenOnF10Map end)
+			if base.type(hiddenOnF10Map) == "table" then
+				for role, sides in base.pairs(hiddenOnF10Map) do
+					if base.type(sides) == "table" then
+						state.missiondrawings.hiddenOnF10Map[base.tostring(role)] = {
+							Neutral = sides.Neutral and true or false,
+							Blue = sides.Blue and true or false,
+							Red = sides.Red and true or false,
+						}
+					end
+				end
+			end
+
+			local layers = tryget(function() return drawings.layers end)
+			if base.type(layers) ~= "table" then
+				state.missiondrawingsready = true
+				return state.missiondrawings, missionIdentity
+			end
+
+			for _, layerIndex in base.pairs(sortedNumericKeys(layers)) do
+				local layer = layers[layerIndex]
+				if base.type(layer) == "table" then
+					local outLayer = {
+						id = layerIndex,
+						name = tostringSafe(layer.name),
+						visible = layer.visible and true or false,
+						objects = {},
+					}
+
+					local objects = layer.objects
+					if base.type(objects) == "table" then
+						for _, objectIndex in base.pairs(sortedNumericKeys(objects)) do
+							local obj = objects[objectIndex]
+							if base.type(obj) == "table" then
+								local outObj = {
+									id = objectIndex,
+									name = tostringSafe(obj.name),
+									layerName = tostringSafe(obj.layerName),
+									primitiveType = tostringSafe(obj.primitiveType),
+									visible = obj.visible and true or false,
+									mapX = base.tonumber(obj.mapX) or 0,
+									mapY = base.tonumber(obj.mapY) or 0,
+									angle = base.tonumber(obj.angle) or 0,
+									text = tostringSafe(obj.text),
+									font = tostringSafe(obj.font),
+									fontSize = base.tonumber(obj.fontSize) or 0,
+									colorString = tostringSafe(obj.colorString),
+									fillColorString = tostringSafe(obj.fillColorString),
+									thickness = base.tonumber(obj.thickness) or 0,
+									borderThickness = base.tonumber(obj.borderThickness) or 0,
+									style = tostringSafe(obj.style),
+									polygonMode = tostringSafe(obj.polygonMode),
+									lineMode = tostringSafe(obj.lineMode),
+									closed = obj.closed and true or false,
+									radius = base.tonumber(obj.radius) or 0,
+									width = base.tonumber(obj.width) or 0,
+									height = base.tonumber(obj.height) or 0,
+									points = {},
+								}
+
+								local points = obj.points
+								if base.type(points) ~= "table" then
+									points = obj.verticies
+								end
+								if base.type(points) ~= "table" then
+									points = obj.vertices
+								end
+
+								if base.type(points) == "table" then
+									for _, pointIndex in base.pairs(sortedNumericKeys(points)) do
+										local p = points[pointIndex]
+										if base.type(p) == "table" then
+											base.table.insert(outObj.points, {
+												x = base.tonumber(p.x) or 0,
+												y = base.tonumber(p.y) or 0,
+											})
+										end
+									end
+								end
+
+								base.table.insert(outLayer.objects, outObj)
+							end
+						end
+					end
+
+					base.table.insert(state.missiondrawings.layers, outLayer)
+				end
+			end
+
+			state.missiondrawingsready = true
+			return state.missiondrawings, missionIdentity
+		end,
 		listby = {
 				Radio 	= function(sortfunction)
 					local Stack = base.vaicom.list.localRadios()
@@ -2190,7 +3038,7 @@ base.vaicom.get = {
 					end
 					if #details == 0 then
 						for k, panel in base.pairs(Stack) do
-							local fallbackId = tonumber(k) or (#details + 1)
+							local fallbackId = base.tonumber(k) or (#details + 1)
 							appendMarker(panel, fallbackId)
 						end
 					end
@@ -2230,6 +3078,7 @@ base.vaicom.state = {
 		debugmode 				= false,
 		profiling				= false, -- Logs performance timings to the DCS log when true.
 		includediagnostics		= false,
+		collectopposition		= true,
 		dcsversion 				= base.vaicom.get.serverdata.dcsversion(),
 		root 					= base.tostring(base.lfs.writedir()),
 		currentdir 				= base.tostring(base.lfs.currentdir()),
@@ -2241,6 +3090,24 @@ base.vaicom.state = {
 		theatre					= "",
 		multiplayer				= false,
 		vrmode					= false,
+		missiondrawings			= {},
+		missiondrawingscacheid	= "",
+		missiondrawingssentid	= "",
+		missiondrawingssendcount = 0,
+		missiondrawingslastsendat = -999,
+		missiondrawingsnextretryat = -999,
+		missiondrawingsretrydone = false,
+		missiondrawingsslotkey = "",
+		missiondrawingscachecreatedat = -999,
+		missiondrawingstitle = "",
+		missiondrawingstxreason = "init",
+		missiondrawingslocked = false,
+		missiondrawingstxchunk13bytes = 0,
+		missiondrawingstxchunk13hastable = false,
+		missiondrawingstxchunk13haskey = false,
+		missiondrawingstxchunk13sentok = false,
+		missiondrawingstxchunk13partcount = 0,
+		missiondrawingsready = false,
 		menuhold				= false,
 		dcsid					= false,
 		dcsmodulecat			= false,
@@ -2317,7 +3184,7 @@ base.vaicom.state = {
 				-- This will be used by the sendupdateall function as well as this
 				-- is called after the update.all. This cache will be cleared once
 				-- the sendupdateall call completes to free up memory.
-				resetPropCache()
+				resetPropsCache()
 
 				base.vaicom.state.timer								= data.initialized and base.Export.LoGetModelTime()
 				base.vaicom.state.tod								= data.initialized and base.Export.LoGetMissionStartTime()
@@ -2339,6 +3206,7 @@ base.vaicom.state = {
 				local ah64ICSHot = false
 				local dcsId = base.vaicom.state.dcsid or ""
 				local isF4E = base.string.find(dcsId, "F-4E", 1, true) ~= nil
+				local isAH64 = base.string.find(dcsId, "AH-64D", 1, true) ~= nil
 				if data.initialized and isF4E and base.GetDevice(0) and base.GetDevice(0).get_argument_value then
 					local pilotIcs = base.GetDevice(0):get_argument_value(1378)
 					local seatProxyLod = base.GetDevice(0):get_argument_value(3060)
@@ -2350,12 +3218,17 @@ base.vaicom.state = {
 					-- F-4E ICS selector: cold mic is negative, hot mic is centered, radio override is positive.
 					-- Treat HOT MIC and radio override as active intercom states. (Off is inactive)
 					f4eICSHot = (pilotIcs ~= nil and pilotIcs > -0.1)
+				elseif data.initialized and isAH64 and base.GetDevice(0) and base.GetDevice(0).get_argument_value then
+					local seat = base.get_param_handle("SEAT"):get()
+					if seat ~= nil then
+						base.vaicom.state.riostate.ah64seat = seat
+					end
 				else
 					base.vaicom.state.riostate.f4ePilotIcs = 0
 					base.vaicom.state.riostate.f4eSeat = -1
 				end
 
-				if data.initialized and base.GetDevice(0) and base.GetDevice(0).get_argument_value and base.string.find(dcsId, "AH-64D", 1, true) ~= nil then
+				if data.initialized and isAH64 and base.GetDevice(0) and base.GetDevice(0).get_argument_value then
                     local seat = base.get_param_handle("SEAT"):get() -- Determine pilot or CPG seat
 					local pltIcsMode = base.GetDevice(0):get_argument_value(346)
 					local cpgIcsMode = base.GetDevice(0):get_argument_value(387) -- Added CPG controls for George Pilot expansion
@@ -2386,7 +3259,7 @@ base.vaicom.state = {
 				base.vaicom.state.availablerecipients.ATC			= data.initialized and base.vaicom.get.missiondata.listby.ATC(base.vaicom.helper.sortby.distance, 	"radio")
 				base.vaicom.state.availablerecipients.AWACS			= data.initialized and base.vaicom.get.missiondata.listby.AWACS(base.vaicom.helper.sortby.distance, "radio")
 				base.vaicom.state.availablerecipients.Tanker		= data.initialized and base.vaicom.get.missiondata.listby.Tanker(base.vaicom.helper.sortby.distance,"radio") 
-				base.vaicom.state.availablerecipients.Opposition	= data.initialized and base.vaicom.get.missiondata.listby.Opposition(base.vaicom.helper.sortby.distance, "radio")
+				base.vaicom.state.availablerecipients.Opposition	= (data.initialized and (base.vaicom.state.collectopposition ~= false)) and base.vaicom.get.missiondata.listby.Opposition(base.vaicom.helper.sortby.distance, "radio") or {}
 				base.vaicom.state.availablerecipients.Crew			= data.initialized and base.vaicom.get.missiondata.listby.Crew(base.vaicom.helper.sortby.distance, 	"radio") 
 				base.vaicom.state.availablerecipients.Aux			= data.initialized and base.vaicom.get.missiondata.listby.Aux(base.vaicom.helper.sortby.distance, 	"radio")
 				base.vaicom.state.availablerecipients.Moose			= data.initialized and base.vaicom.get.missiondata.listby.Moose(base.vaicom.helper.sortby.distance, "radio") -- Add moose
@@ -2445,7 +3318,7 @@ base.vaicom.state = {
 
 				local function extractIcaoToken(text)
 					local s = base.string.upper(base.tostring(text or ""))
-					return base.string.match(s, "%u%u%u%u")
+					return base.string.match(s, "%u[%u%d][%u%d][%u%d]")
 				end
 
 				local function normalizeIcaoKey(text)
@@ -2495,6 +3368,11 @@ base.vaicom.state = {
 				local function resolveIcaoMetaForAtc(callsign, atcName)
 					local overrides = loadIcaoOverrides()
 					local theatre = base.string.lower(base.tostring(base.vaicom.state and base.vaicom.state.theatre or ""))
+					if theatre == "sinaimap" then
+						theatre = "sinai"
+					elseif theatre == "syriamap" then
+						theatre = "syria"
+					end
 					local keyCallsign = normalizeIcaoKey(callsign)
 					local keyName = normalizeIcaoKey(atcName)
 
@@ -2508,38 +3386,86 @@ base.vaicom.state = {
 
 					local function readCodeAndType(scope, key)
 						if base.type(scope) ~= "table" or key == "" then
-							return nil, ""
+							return nil
 						end
 						local value = scope[key]
 						if value == nil then
-							return nil, ""
+							return nil
 						end
 
 						if base.type(value) == "table" then
-							local code = base.string.upper(base.tostring(value.icao or ""))
-							if base.string.match(code, "^%u%u%u%u$") then
-								return code, normalizeIcaoType(value.type)
+							local iata = base.string.upper(base.tostring(value.iata or ""))
+							local icao = base.string.upper(base.tostring(value.icao or ""))
+							if not base.string.match(icao, "^%u[%u%d][%u%d][%u%d]$") then
+								icao = ""
 							end
-							return nil, ""
+							if not base.string.match(iata, "^%u%u%u$") then
+								iata = ""
+							end
+							if icao ~= "" or iata ~= "" then
+								return {
+									icao = icao,
+									iata = iata,
+									type = normalizeIcaoType(value.type),
+								}
+							end
+							return nil
 						end
 
 						local code = base.string.upper(base.tostring(value))
-						if base.string.match(code, "^%u%u%u%u$") then
-							return code, ""
+						if base.string.match(code, "^%u[%u%d][%u%d][%u%d]$") then
+							return {
+								icao = code,
+								iata = "",
+								type = "",
+							}
 						end
-						return nil, ""
+						if base.string.match(code, "^%u%u%u$") then
+							return {
+								icao = "",
+								iata = code,
+								type = "",
+							}
+						end
+						return nil
 					end
 
-					local theatreTable = overrides[theatre]
-					local fallbackTable = overrides.default
-					local code, airfieldType = readCodeAndType(theatreTable, keyCallsign)
-					if code == nil then code, airfieldType = readCodeAndType(theatreTable, keyName) end
-					if code == nil then code, airfieldType = readCodeAndType(fallbackTable, keyCallsign) end
-					if code == nil then code, airfieldType = readCodeAndType(fallbackTable, keyName) end
-					if code ~= nil then
+					local function lookupFromScope(scope)
+						local resolved = readCodeAndType(scope, keyCallsign)
+						if resolved == nil then resolved = readCodeAndType(scope, keyName) end
+						return resolved
+					end
+
+					local scopes = {}
+					if base.type(overrides[theatre]) == "table" then
+						base.table.insert(scopes, overrides[theatre])
+					end
+					if theatre == "syria" and base.type(overrides.sinai) == "table" then
+						base.table.insert(scopes, overrides.sinai)
+					elseif theatre == "sinai" and base.type(overrides.syria) == "table" then
+						base.table.insert(scopes, overrides.syria)
+					end
+					if base.type(overrides.default) == "table" then
+						base.table.insert(scopes, overrides.default)
+					end
+
+					local resolved = nil
+					for _, scope in base.pairs(scopes) do
+						resolved = lookupFromScope(scope)
+						if resolved ~= nil then
+							break
+						end
+					end
+					if resolved ~= nil then
+						local preferred = resolved.icao
+						if preferred == nil or preferred == "" then
+							preferred = resolved.iata or ""
+						end
 						return {
-							icao = code,
-							type = airfieldType,
+							icao = resolved.icao or "",
+							iata = resolved.iata or "",
+							code = preferred,
+							type = resolved.type or "",
 						}
 					end
 
@@ -2547,6 +3473,8 @@ base.vaicom.state = {
 					if direct ~= nil then
 						return {
 							icao = direct,
+							iata = "",
+							code = direct,
 							type = "",
 						}
 					end
@@ -2592,11 +3520,23 @@ base.vaicom.state = {
 							end
 
 							local meta = resolveIcaoMetaForAtc(callsign, atcName)
-							local icao
-							if meta ~= nil and meta.icao ~= nil then
-								icao = meta.icao
+							local code
+							local icao = ""
+							local iata = ""
+							if meta ~= nil then
+								code = base.string.upper(base.tostring(meta.code or ""))
+								icao = base.string.upper(base.tostring(meta.icao or ""))
+								iata = base.string.upper(base.tostring(meta.iata or ""))
+								if code == "" then
+									if icao ~= "" then
+										code = icao
+									elseif iata ~= "" then
+										code = iata
+									end
+								end
 							else
-								icao = extractIcaoToken(callsign)
+								code = extractIcaoToken(callsign)
+								icao = code or ""
 							end
 
 							local point = nil
@@ -2611,7 +3551,9 @@ base.vaicom.state = {
 								shortCallsign = shortCallsign,
 								atcName = atcName,
 								meta = meta,
+								code = code,
 								icao = icao,
+								iata = iata,
 							})
 						end
 					end
@@ -2620,6 +3562,11 @@ base.vaicom.state = {
 				end
 
 				local function buildAllAtcIcaoTypes()
+					local function isUnknownAtcPlaceholder(value)
+						local t = base.string.upper(base.tostring(value or ""))
+						return t == "" or t == "UNKNOWN"
+					end
+
 					local result = {}
 					for _, d in base.pairs(buildAtcDescriptors()) do
 						local atc = d.locator
@@ -2634,23 +3581,38 @@ base.vaicom.state = {
 								local typeCode = base.string.upper(base.tostring(meta.type or ""))
 								if typeCode == "MIL" or typeCode == "CIV" or typeCode == "JOINT" then
 									local icao = base.string.upper(base.tostring(meta.icao or ""))
+									local iata = base.string.upper(base.tostring(meta.iata or ""))
+									local code = base.string.upper(base.tostring(meta.code or ""))
+									if code == "" then
+										if icao ~= "" then
+											code = icao
+										elseif iata ~= "" then
+											code = iata
+										end
+									end
+									if code ~= "" then
+										result[code] = typeCode
+									end
 									if icao ~= "" then
 										result[icao] = typeCode
 									end
-									if normalizedCallsign ~= "" then
+									if iata ~= "" then
+										result[iata] = typeCode
+									end
+									if normalizedCallsign ~= "" and not isUnknownAtcPlaceholder(normalizedCallsign) then
 										result[normalizedCallsign] = typeCode
 									end
-									if normalizedAtcName ~= "" then
+									if normalizedAtcName ~= "" and not isUnknownAtcPlaceholder(normalizedAtcName) then
 										result[normalizedAtcName] = typeCode
 									end
 
 									local upperCallsign = base.string.upper(base.tostring(callsign or ""))
-									if upperCallsign ~= "" then
+									if upperCallsign ~= "" and not isUnknownAtcPlaceholder(upperCallsign) then
 										result[upperCallsign] = typeCode
 									end
 
 									local shortCallsign = base.string.upper(base.tostring(d.shortCallsign or ""))
-									if shortCallsign ~= "" then
+									if shortCallsign ~= "" and not isUnknownAtcPlaceholder(shortCallsign) then
 										result[shortCallsign] = typeCode
 									end
 								end
@@ -2687,13 +3649,15 @@ base.vaicom.state = {
 
 					local function getClosestAtcInfo()
 						if not base.vaicom.state.playerpoint then
-                            return { icao = "DCS", elevationFt = 0 }
+							return { code = "DCS", icao = "DCS", iata = "", elevationFt = 0 }
 						end
 
 						local playerPoint = base.vaicom.state.playerpoint
 						local rotor = isRotorModule()
 
+						local closestCode = nil
 						local closestIcao = nil
+						local closestIata = nil
 						local closestElevationFt = 0
 						local closestDist = nil
 
@@ -2704,16 +3668,27 @@ base.vaicom.state = {
 								local dz = (atcPoint.z or 0) - (playerPoint.z or 0)
 								local distSq = (dx * dx) + (dz * dz)
 
-								local icao = d.icao
+								local code = base.string.upper(base.tostring(d.code or ""))
+								local icao = base.string.upper(base.tostring(d.icao or ""))
+								local iata = base.string.upper(base.tostring(d.iata or ""))
+								if code == "" then
+									if icao ~= "" then
+										code = icao
+									elseif iata ~= "" then
+										code = iata
+									end
+								end
 								local full = base.string.upper(d.atcName) .. " " .. base.string.upper(d.callsign)
 								local heliport = base.string.find(full, "HELI", 1, true) ~= nil
 									or base.string.find(full, "HELIPAD", 1, true) ~= nil
 									or base.string.find(full, "HELIPORT", 1, true) ~= nil
 									or base.string.find(full, "FARP", 1, true) ~= nil
-								if (rotor and icao ~= nil) or ((not rotor) and icao ~= nil and (not heliport)) then
+								if (rotor and code ~= "") or ((not rotor) and code ~= "" and (not heliport)) then
 									if closestDist == nil or distSq < closestDist then
 										closestDist = distSq
+										closestCode = code
 										closestIcao = icao
+										closestIata = iata
 										closestElevationFt = (base.tonumber(atcPoint.y) or 0) * 3.28084
 									end
 								end
@@ -2721,7 +3696,9 @@ base.vaicom.state = {
 						end
 
 						return {
-							icao = closestIcao or "DCS",
+							code = closestCode or closestIcao or closestIata or "DCS",
+							icao = closestIcao or "",
+							iata = closestIata or "",
 							elevationFt = closestElevationFt or 0
 						}
 					end
@@ -3071,7 +4048,8 @@ base.vaicom.state = {
 						end
 					end
 
-					local station = atcInfo and atcInfo.icao or "DCS"
+					local station = base.string.upper(base.tostring(atcInfo and (atcInfo.code or atcInfo.icao) or "DCS"))
+					if station == "" then station = "DCS" end
 					local metarTime = pad2(reportDay) .. pad2(reportHour) .. pad2(reportMin) .. "Z"
 					return "METAR " .. station .. " " .. metarTime .. " " .. windPart .. windVarPart .. " " .. skyPart .. " " .. tempPart .. " Q" .. base.string.format("%04d", qnhHpa) .. rmkPart
 				end
@@ -3081,30 +4059,53 @@ base.vaicom.state = {
 				end
 
 				local function buildAllAtcMetars()
+					local function isUnknownAtcPlaceholder(value)
+						local t = base.string.upper(base.tostring(value or ""))
+						return t == "" or t == "UNKNOWN"
+					end
+
 					local result = {}
 					for _, d in base.pairs(buildAtcDescriptors()) do
 						local atc = d.locator
 						if atc and d.point then
 							local atcPoint = d.point
 							local callsign = d.callsign
-							local icao = d.icao
+							local code = base.string.upper(base.tostring(d.code or ""))
+							local icao = base.string.upper(base.tostring(d.icao or ""))
+							local iata = base.string.upper(base.tostring(d.iata or ""))
+							if code == "" then
+								if icao ~= "" then
+									code = icao
+								elseif iata ~= "" then
+									code = iata
+								end
+							end
 							local stationInfo = {
-								icao = icao or "DCS",
+								code = code or "DCS",
+								icao = icao or "",
+								iata = iata or "",
 								elevationFt = (base.tonumber(atcPoint.y) or 0) * 3.28084
 							}
 							local metar = buildMetarForAtcInfo(stationInfo)
 
+							if code ~= nil and code ~= "" then
+								result[code] = metar
+							end
 							if icao ~= nil and icao ~= "" then
 								result[icao] = metar
 							end
 
+							if iata ~= nil and iata ~= "" then
+								result[iata] = metar
+							end
+
 							local upperCallsign = base.string.upper(base.tostring(callsign or ""))
-							if upperCallsign ~= "" then
+							if upperCallsign ~= "" and not isUnknownAtcPlaceholder(upperCallsign) then
 								result[upperCallsign] = metar
 							end
 
 							local shortCallsign = base.string.upper(base.tostring(d.shortCallsign or ""))
-							if shortCallsign ~= "" then
+							if shortCallsign ~= "" and not isUnknownAtcPlaceholder(shortCallsign) then
 								result[shortCallsign] = metar
 							end
 						end
@@ -3335,14 +4336,25 @@ base.vaicom.state = {
 						bullseyeY = 0,
 						bullseyeCoalition = "",
 						bullseyeValid = false,
+						mdSrc = 0,
+						mdFeat = 0,
+						mdTxCount = 0,
+						mdTxLocked = false,
+						mdTxReason = "",
+						mdTxNextRetryIn = -1,
+						mdTxSlot = "",
+						mdTxChunk13Bytes = 0,
+						mdTxChunk13HasTable = false,
+						mdTxChunk13HasKey = false,
+						mdTxChunk13SentOk = false,
+						mdTxChunk13PartCount = 0,
 						weatherType = "nil",
 						weatherKeys = {},
 						weatherSummary = {},
+						oppositionGroundProbe = {},
 					}
 
-					if base.vaicom.state and not base.vaicom.state.includediagnostics then
-						return probe
-					end
+					local includeDiagnostics = not (base.vaicom.state and not base.vaicom.state.includediagnostics)
 
 					local diagnosticsDebug = base.vaicom.state and base.vaicom.state.debugmode
 
@@ -3356,6 +4368,535 @@ base.vaicom.state = {
 						if base.type(target) ~= "table" then return end
 						if #target >= (maxItems or 40) then return end
 						base.table.insert(target, base.tostring(value))
+					end
+
+					local function collectOppositionGroundProbe()
+						-- Lightweight profiling
+						local cProfiling = base.vaicom.state.profiling
+						local cClock = cProfiling and socket.gettime or nil
+						local cStart = cProfiling and cClock() or 0
+						local cLast = cStart
+						local function cMark(label)
+							if not cProfiling then return end
+							local now = cClock()
+							base.print(base.string.format("VAICOM profiling (collectOppositionGroundProbe) | %-40s %8.3f ms", label, (now - cLast) * 1000))
+							cLast = now
+						end
+						local function cTotal()
+							if not cProfiling then return end
+							base.print(base.string.format("VAICOM profiling (collectOppositionGroundProbe) | %-40s %8.3f ms", "TOTAL", (cClock() - cStart) * 1000))
+						end
+
+						if base.type(probe.oppositionGroundProbe) ~= "table" then
+							probe.oppositionGroundProbe = {}
+						end
+
+						local pUnit = data and data.pUnit or nil
+						if pUnit == nil then
+							addProbeRow(probe.oppositionGroundProbe, "punit=nil", 24)
+							cTotal()
+							return
+						end
+
+						local coalition = nil
+						local okCoalition, coalitionValue = base.pcall(function()
+							return pUnit:getCoalition()
+						end)
+						if okCoalition then
+							coalition = coalitionValue
+						end
+						if coalition == nil then
+							addProbeRow(probe.oppositionGroundProbe, "coalition=nil", 24)
+							cTotal()
+							return
+						end
+						cMark("getCoalition")
+
+						local function collectPlayerFuelProbe()
+							local function isFuelProbeKey(key)
+								local keyLower = base.string.lower(base.tostring(key or ""))
+								return base.string.find(keyLower, "fuel", 1, true) ~= nil
+									or base.string.find(keyLower, "tank", 1, true) ~= nil
+									or base.string.find(keyLower, "consumption", 1, true) ~= nil
+									or base.string.find(keyLower, "flow", 1, true) ~= nil
+									or base.string.find(keyLower, "mass", 1, true) ~= nil
+							end
+
+							local fuelInternal = nil
+							local fuelExternal = nil
+							local fuelTotal = nil
+							local fuelLegacy = nil
+							local fuelConsumption = nil
+
+							local engineInfo = tryget(function()
+								return base.Export and base.Export.LoGetEngineInfo and base.Export.LoGetEngineInfo() or nil
+							end)
+							if base.type(engineInfo) == "table" then
+								addProbeRow(probe.oppositionGroundProbe, "fuel_engine_available=true", 40)
+								fuelInternal = tryget(function() return engineInfo.fuel_internal end)
+								fuelExternal = tryget(function() return engineInfo.fuel_external end)
+								fuelTotal = tryget(function() return engineInfo.fuel_total end)
+								fuelLegacy = tryget(function() return engineInfo.fuel end)
+								fuelConsumption = tryget(function() return engineInfo.fuel_consumption end)
+								if fuelInternal ~= nil then
+									addProbeRow(probe.oppositionGroundProbe, "fuel_internal="..base.tostring(fuelInternal), 40)
+								end
+								if fuelExternal ~= nil then
+									addProbeRow(probe.oppositionGroundProbe, "fuel_external="..base.tostring(fuelExternal), 40)
+								end
+								if fuelTotal ~= nil then
+									addProbeRow(probe.oppositionGroundProbe, "fuel_total="..base.tostring(fuelTotal), 40)
+								end
+								if fuelLegacy ~= nil then
+									addProbeRow(probe.oppositionGroundProbe, "fuel_engine_field="..base.tostring(fuelLegacy), 40)
+								end
+								if fuelConsumption ~= nil then
+									addProbeRow(probe.oppositionGroundProbe, "fuel_consumption="..base.tostring(fuelConsumption), 40)
+								end
+								if fuelTotal == nil and (fuelInternal ~= nil or fuelExternal ~= nil) then
+									local computedTotal = (base.tonumber(fuelInternal) or 0) + (base.tonumber(fuelExternal) or 0)
+									addProbeRow(probe.oppositionGroundProbe, "fuel_total_computed="..base.tostring(computedTotal), 40)
+								end
+
+								local sampledEngineKeys = 0
+								for k, v in base.pairs(engineInfo) do
+									if sampledEngineKeys >= 8 then break end
+									if isFuelProbeKey(k) then
+										sampledEngineKeys = sampledEngineKeys + 1
+										addProbeRow(probe.oppositionGroundProbe, "fuel_engine_key_"..base.tostring(k).."="..base.tostring(v), 40)
+									end
+								end
+							else
+								addProbeRow(probe.oppositionGroundProbe, "fuel_engine_available=false", 40)
+							end
+
+							local payloadInfo = tryget(function()
+								return base.Export and base.Export.LoGetPayloadInfo and base.Export.LoGetPayloadInfo() or nil
+							end)
+							local payloadFuelMass = nil
+							if base.type(payloadInfo) == "table" then
+								payloadFuelMass = tryget(function() return payloadInfo.fuel end)
+								if payloadFuelMass ~= nil then
+									addProbeRow(probe.oppositionGroundProbe, "fuel_payload="..base.tostring(payloadFuelMass), 40)
+								end
+								local sampledPayloadKeys = 0
+								for k, v in base.pairs(payloadInfo) do
+									if sampledPayloadKeys >= 8 then break end
+									if isFuelProbeKey(k) then
+										sampledPayloadKeys = sampledPayloadKeys + 1
+										addProbeRow(probe.oppositionGroundProbe, "fuel_payload_key_"..base.tostring(k).."="..base.tostring(v), 40)
+									end
+								end
+							else
+								addProbeRow(probe.oppositionGroundProbe, "fuel_payload_available=false", 40)
+							end
+
+							local unitFuelFrac = tryget(function()
+								return pUnit and pUnit.getFuel and pUnit:getFuel() or nil
+							end)
+							if unitFuelFrac ~= nil then
+								addProbeRow(probe.oppositionGroundProbe, "fuel_unit_fraction="..base.tostring(unitFuelFrac), 40)
+							end
+
+							local unitFuelLowState = tryget(function()
+								return pUnit and pUnit.getFuelLowState and pUnit:getFuelLowState() or nil
+							end)
+							if unitFuelLowState ~= nil then
+								addProbeRow(probe.oppositionGroundProbe, "fuel_unit_lowstate="..base.tostring(unitFuelLowState), 40)
+							end
+
+							local unitDesc = tryget(function()
+								return pUnit and pUnit.getDesc and pUnit:getDesc() or nil
+							end)
+							local unitFuelMassMax = nil
+							if base.type(unitDesc) == "table" then
+								unitFuelMassMax = tryget(function() return unitDesc.fuelMassMax end)
+								if unitFuelMassMax == nil then
+									unitFuelMassMax = tryget(function() return unitDesc.fuelMass end)
+								end
+								if unitFuelMassMax ~= nil then
+									addProbeRow(probe.oppositionGroundProbe, "fuel_unit_mass_max="..base.tostring(unitFuelMassMax), 40)
+								end
+
+								local sampledDescKeys = 0
+								for k, v in base.pairs(unitDesc) do
+									if sampledDescKeys >= 8 then break end
+									if isFuelProbeKey(k) then
+										sampledDescKeys = sampledDescKeys + 1
+										addProbeRow(probe.oppositionGroundProbe, "fuel_unit_desc_key_"..base.tostring(k).."="..base.tostring(v), 40)
+									end
+								end
+							end
+
+							if unitFuelFrac ~= nil and unitFuelMassMax ~= nil then
+								local unitFuelMassEstimated = (base.tonumber(unitFuelFrac) or 0) * (base.tonumber(unitFuelMassMax) or 0)
+								addProbeRow(probe.oppositionGroundProbe, "fuel_unit_mass_est="..base.tostring(unitFuelMassEstimated), 40)
+							end
+
+							if unitFuelMassMax ~= nil and fuelTotal ~= nil and (base.tonumber(fuelTotal) or 0) <= 1.0001 then
+								local engineFuelMassEstimated = (base.tonumber(fuelTotal) or 0) * (base.tonumber(unitFuelMassMax) or 0)
+								addProbeRow(probe.oppositionGroundProbe, "fuel_engine_total_mass_est="..base.tostring(engineFuelMassEstimated), 40)
+							end
+							if unitFuelMassMax ~= nil and fuelLegacy ~= nil and (base.tonumber(fuelLegacy) or 0) <= 1.0001 then
+								local engineLegacyMassEstimated = (base.tonumber(fuelLegacy) or 0) * (base.tonumber(unitFuelMassMax) or 0)
+								addProbeRow(probe.oppositionGroundProbe, "fuel_engine_field_mass_est="..base.tostring(engineLegacyMassEstimated), 40)
+							end
+							if payloadFuelMass ~= nil and unitFuelMassMax ~= nil then
+								local payloadToMaxRatio = (base.tonumber(unitFuelMassMax) or 0) > 0 and ((base.tonumber(payloadFuelMass) or 0) / (base.tonumber(unitFuelMassMax) or 1)) or 0
+								addProbeRow(probe.oppositionGroundProbe, "fuel_payload_ratio_to_max="..base.tostring(payloadToMaxRatio), 40)
+							end
+						end
+						collectPlayerFuelProbe()
+						cMark("fuel probe")
+
+						local opposite = nil
+						if coalition == base.coalition.side.BLUE then opposite = base.coalition.side.RED end
+						if coalition == base.coalition.side.RED then opposite = base.coalition.side.BLUE end
+						if opposite == nil then
+							addProbeRow(probe.oppositionGroundProbe, "opposite=nil", 24)
+							cTotal()
+							return
+						end
+
+						local groundCategoryBase = base.Group and base.Group.Category and base.Group.Category.GROUND or nil
+						local groundCategoryGlobal = Group and Group.Category and Group.Category.GROUND or nil
+						local groundCategory = groundCategoryGlobal or groundCategoryBase
+						local worldObjectsShape = ""
+						local worldSamCandidates = 0
+						local worldSamUnitsResolved = 0
+						local worldSamFieldRows = 0
+
+						local function countUnits(groups, sampleTarget, maxSamples)
+							local groupsCount = 0
+							local unitsCount = 0
+							if base.type(groups) ~= "table" then
+								return groupsCount, unitsCount
+							end
+							for _, g in base.pairs(groups) do
+								groupsCount = groupsCount + 1
+								local okUnits, units = base.pcall(base.vaicom.objects.getUnits, g)
+								if okUnits and base.type(units) == "table" then
+									for _, u in base.pairs(units) do
+										unitsCount = unitsCount + 1
+										if base.type(sampleTarget) == "table" and #sampleTarget < (maxSamples or 10) then
+											local uType = base.tostring((base.vaicom.properties and base.vaicom.properties.typename and base.vaicom.properties.typename(u)) or "")
+											local uName = base.tostring((base.vaicom.properties and base.vaicom.properties.displayname and base.vaicom.properties.displayname(u)) or "")
+											addProbeRow(sampleTarget, "unit="..uName.."|type="..uType, maxSamples or 10)
+										end
+									end
+								end
+							end
+							return groupsCount, unitsCount
+						end
+
+						local okGround, groundGroups = base.pcall(base.coalition.getGroups, opposite, groundCategory)
+						local directGroupsCount, directUnitsCount = countUnits((okGround and groundGroups) or nil, probe.oppositionGroundProbe, 8)
+						addProbeRow(probe.oppositionGroundProbe, "direct_ground_groups="..base.tostring(directGroupsCount), 24)
+						addProbeRow(probe.oppositionGroundProbe, "direct_ground_units="..base.tostring(directUnitsCount), 24)
+						addProbeRow(probe.oppositionGroundProbe, "groundcat_base="..base.tostring(groundCategoryBase), 24)
+						addProbeRow(probe.oppositionGroundProbe, "groundcat_global="..base.tostring(groundCategoryGlobal), 24)
+						cMark("direct ground groups + countUnits")
+
+						local okAll, allGroups = base.pcall(base.vaicom.objects.getGroups, opposite)
+						cMark("all groups: get groups")
+						if okAll and base.type(allGroups) == "table" then
+							local allCount = 0
+							local byCategoryGround = {}
+							local allGroupUnitsScanned = 0
+							local allGroupSamAttrHits = 0
+							local allGroupSamTextHits = 0
+							for _, g in base.pairs(allGroups) do
+								allCount = allCount + 1
+								local okCat, cat = base.pcall(function()
+									return g and g.getCategory and g:getCategory() or nil
+								end)
+								local isGround = okCat and (
+									(groundCategoryBase ~= nil and cat == groundCategoryBase) or
+									(groundCategoryGlobal ~= nil and cat == groundCategoryGlobal)
+								)
+								if isGround then
+									base.table.insert(byCategoryGround, g)
+								end
+
+								local okUnits, units = base.pcall(base.vaicom.objects.getUnits, g)
+								if okUnits and base.type(units) == "table" then
+									for _, u in base.pairs(units) do
+										allGroupUnitsScanned = allGroupUnitsScanned + 1
+										local okDesc, desc = base.pcall(function() return u and u:getDesc() or nil end)
+										if okDesc and base.type(desc) == "table" then
+											local attr = desc.attributes or {}
+											if attr and (attr.SAM_SR or attr.SAM_TR or attr.SAM_SR_TR or attr.EWR or attr.RADAR_BAND1_FOR_ARM) then
+												allGroupSamAttrHits = allGroupSamAttrHits + 1
+											end
+											local t = base.string.upper(base.tostring(desc.typeName or desc.displayName or ""))
+											if t ~= "" and (
+												base.string.find(t, "RADAR", 1, true)
+												or base.string.find(t, "EWR", 1, true)
+												or base.string.find(t, "SEARCH", 1, true)
+												or base.string.find(t, "TRACK", 1, true)
+												or base.string.find(t, " STR", 1, true)
+												or base.string.find(t, "SR ", 1, true)
+											) then
+												allGroupSamTextHits = allGroupSamTextHits + 1
+											end
+										end
+									end
+								end
+							end
+							cMark("all groups: scan (getUnits/getDesc)")
+							local fallbackGroupsCount, fallbackUnitsCount = countUnits(byCategoryGround, probe.oppositionGroundProbe, 8)
+							cMark("all groups: countUnits fallback")
+							addProbeRow(probe.oppositionGroundProbe, "all_groups="..base.tostring(allCount), 24)
+							addProbeRow(probe.oppositionGroundProbe, "cat_ground_groups="..base.tostring(fallbackGroupsCount), 24)
+							addProbeRow(probe.oppositionGroundProbe, "cat_ground_units="..base.tostring(fallbackUnitsCount), 24)
+							addProbeRow(probe.oppositionGroundProbe, "allgroup_units_scanned="..base.tostring(allGroupUnitsScanned), 24)
+							addProbeRow(probe.oppositionGroundProbe, "allgroup_sam_attr_hits="..base.tostring(allGroupSamAttrHits), 24)
+							addProbeRow(probe.oppositionGroundProbe, "allgroup_sam_text_hits="..base.tostring(allGroupSamTextHits), 24)
+						else
+							addProbeRow(probe.oppositionGroundProbe, "all_groups=unavailable", 24)
+						end
+
+						local function isSamRadarText(text)
+							local t = base.string.upper(base.tostring(text or ""))
+							if t == "" then return false end
+							if base.string.find(t, "LAUNCHER", 1, true)
+								or base.string.find(t, "TEL ", 1, true)
+								or base.string.find(t, " TEL", 1, true)
+								or base.string.find(t, "TELAR", 1, true)
+								or base.string.find(t, "LN", 1, true)
+							then
+								return false
+							end
+							return base.string.find(t, "RADAR", 1, true)
+								or base.string.find(t, "EWR", 1, true)
+								or base.string.find(t, "SEARCH", 1, true)
+								or base.string.find(t, "TRACK", 1, true)
+								or base.string.find(t, " STR", 1, true)
+								or base.string.find(t, "STR ", 1, true)
+								or base.string.find(t, "_STR", 1, true)
+								or base.string.find(t, "STR_", 1, true)
+								or base.string.find(t, " SR", 1, true)
+								or base.string.find(t, "SR ", 1, true)
+								or base.string.find(t, "_SR", 1, true)
+								or base.string.find(t, "SR_", 1, true)
+								or base.string.find(t, " TR", 1, true)
+								or base.string.find(t, "TR ", 1, true)
+								or base.string.find(t, "_TR", 1, true)
+								or base.string.find(t, "TR_", 1, true)
+								or base.string.find(t, "HQ-7", 1, true)
+								or base.string.find(t, "HQ 7", 1, true)
+								or base.string.find(t, "BIG BIRD", 1, true)
+								or base.string.find(t, "SNOW DRIFT", 1, true)
+								or base.string.find(t, "STRAIGHT FLUSH", 1, true)
+								or base.string.find(t, "FLAP LID", 1, true)
+								or base.string.find(t, "TIN SHIELD", 1, true)
+								or base.string.find(t, "DOG EAR", 1, true)
+								or base.string.find(t, "LOW BLOW", 1, true)
+								or base.string.find(t, "CLAM SHELL", 1, true)
+								or base.string.find(t, "PATRIOT", 1, true)
+								or base.string.find(t, "HAWK", 1, true)
+								or base.string.find(t, "KUB", 1, true)
+								or base.string.find(t, "BUK", 1, true)
+								or base.string.find(t, "NASAMS_RADAR_MPQ64F", 1, true)
+								or base.string.find(t, "MPQ64F", 1, true)
+								or base.string.find(t, "64H6E", 1, true)
+								or base.string.find(t, "9S18M1", 1, true)
+								or base.string.find(t, "RLS_19J6", 1, true)
+								or base.string.find(t, "P-19 S-125 SR", 1, true)
+								or base.string.find(t, "P 19 S 125 SR", 1, true)
+						end
+
+						local function getWorldObjectTypeText(obj)
+							if obj == nil or base.type(obj) ~= "table" then return "" end
+							if obj.typeName then return base.tostring(obj.typeName) end
+							if obj.TypeName then return base.tostring(obj.TypeName) end
+							if base.type(obj.type) == "string" then return obj.type end
+							if base.type(obj.Type) == "string" then return obj.Type end
+							if base.type(obj.Type) == "table" then
+								return base.tostring(obj.Type.level1 or obj.Type.name or obj.Type.typeName or obj.Type[1] or "")
+							end
+							if base.type(obj.type) == "table" then
+								return base.tostring(obj.type.level1 or obj.type.name or obj.type.typeName or obj.type[1] or "")
+							end
+							return ""
+						end
+
+						local function formatFlags(flags)
+							if flags == nil then return "" end
+							if base.type(flags) ~= "table" then
+								return base.tostring(flags)
+							end
+							local parts = {}
+							for k, v in base.pairs(flags) do
+								base.table.insert(parts, base.tostring(k)..":"..base.tostring(v))
+							end
+							base.table.sort(parts)
+							return base.table.concat(parts, ",")
+						end
+
+						local function probeResolvedUnitState(u)
+							if u == nil then return "" end
+							local bits = {}
+
+							local okActive, active = base.pcall(function() return u.isActive and u:isActive() end)
+							if okActive and active ~= nil then
+								base.table.insert(bits, "active="..base.tostring(active))
+							end
+
+							local controller = nil
+							local okCtrl, ctrl = base.pcall(function() return u.getController and u:getController() end)
+							if okCtrl then controller = ctrl end
+							base.table.insert(bits, "ctrl="..base.tostring(controller ~= nil))
+
+							if u.getRadar then
+								local okRadar, radar = base.pcall(function() return u:getRadar() end)
+								if okRadar then
+									base.table.insert(bits, "radar="..base.tostring(radar))
+								end
+							end
+
+							if controller ~= nil and controller.getOption then
+								if AI and AI.Option and AI.Option.Ground and AI.Option.Ground.id and AI.Option.Ground.id.ALARM_STATE then
+									local okAlarm, alarm = base.pcall(function() return controller:getOption(AI.Option.Ground.id.ALARM_STATE) end)
+									if okAlarm then
+										base.table.insert(bits, "alarm="..base.tostring(alarm))
+									end
+								end
+							end
+
+							return base.table.concat(bits, "|")
+						end
+
+						local function addWorldCandidateFields(item, objectKey, resolvedUnit)
+							if worldSamFieldRows >= 8 then return end
+							local name = base.tostring(item.Name or item.name or item.UnitName or item.unitName or "")
+							local typeTxt = base.tostring(getWorldObjectTypeText(item))
+							local coalitionTxt = base.tostring(item.Coalition or item.coalition or "")
+							local idTxt = base.tostring(item.ID or item.id or item.Id or item.UnitId or item.unitId or item.ObjectId or item.objectId or "")
+							local keyTxt = base.tostring(objectKey or "")
+							local flagsTxt = formatFlags(item.Flags or item.flags)
+							local groupTxt = base.tostring(item.GroupName or item.groupName or "")
+							local pos = item.Position or (item.PositionAsMatrix and item.PositionAsMatrix.p) or nil
+							local posTxt = ""
+							if base.type(pos) == "table" then
+								posTxt = base.tostring(base.tonumber(pos.x) or 0)..","..base.tostring(base.tonumber(pos.z) or 0)
+							end
+
+							local data = item.Data or item.data
+							local dataName = ""
+							local dataType = ""
+							local dataId = ""
+							if base.type(data) == "table" then
+								dataName = base.tostring(data.Name or data.name or data.UnitName or data.unitName or "")
+								dataType = base.tostring(data.TypeName or data.typeName or data.Type or data.type or "")
+								dataId = base.tostring(data.ID or data.id or data.Id or data.UnitId or data.unitId or data.ObjectId or data.objectId or "")
+							end
+
+							addProbeRow(
+								probe.oppositionGroundProbe,
+								"world_candidate_"..base.tostring(worldSamFieldRows + 1)
+								.."|name="..name
+								.."|type="..typeTxt
+								.."|coal="..coalitionTxt
+								.."|id="..idTxt
+								.."|key="..keyTxt
+								.."|flags="..flagsTxt
+								.."|group="..groupTxt
+								.."|pos="..posTxt
+								.."|dataName="..dataName
+								.."|dataType="..dataType
+								.."|dataId="..dataId,
+								24
+							)
+
+							local keys = {}
+							if base.type(item) == "table" then
+								for k, _ in base.pairs(item) do
+									if #keys >= 10 then break end
+									base.table.insert(keys, base.tostring(k))
+								end
+							end
+							addProbeRow(probe.oppositionGroundProbe, "world_candidate_keys_"..base.tostring(worldSamFieldRows + 1).."="..base.table.concat(keys, ","), 24)
+							local stateTxt = probeResolvedUnitState(resolvedUnit)
+							if stateTxt ~= "" then
+								addProbeRow(probe.oppositionGroundProbe, "world_candidate_state_"..base.tostring(worldSamFieldRows + 1).."="..stateTxt, 24)
+							end
+
+							worldSamFieldRows = worldSamFieldRows + 1
+						end
+
+						local profResolveMs, profResolveCount, profFieldsMs = 0, 0, 0
+						cMark("world: helper setup")
+
+						local function scanWorld(tbl, depth)
+							if base.type(tbl) ~= "table" or depth > 2 then return end
+							for key, item in base.pairs(tbl) do
+								if base.type(item) == "table" then
+									local itemType = getWorldObjectTypeText(item)
+									local itemName = item.Name or item.name or ""
+									if itemType ~= "" or itemName ~= "" then
+										if isSamRadarText(itemType) or isSamRadarText(itemName) then
+											worldSamCandidates = worldSamCandidates + 1
+											local tResolve = cProfiling and cClock() or 0
+											local u = resolveUnitFromWorldObject(item, opposite, key)
+											if cProfiling then profResolveMs = profResolveMs + (cClock() - tResolve) * 1000; profResolveCount = profResolveCount + 1 end
+											local tFields = cProfiling and cClock() or 0
+											addWorldCandidateFields(item, key, u)
+											if cProfiling then profFieldsMs = profFieldsMs + (cClock() - tFields) * 1000 end
+											local wf = item.Flags or item.flags
+											local wradar = nil
+											if base.type(wf) == "table" then
+												wradar = wf.RadarActive
+												if wradar == nil then wradar = wf.radarActive end
+											end
+											if wradar ~= nil and u ~= nil and u.id_ ~= nil then
+												base.vaicom.state = base.vaicom.state or {}
+												base.vaicom.state.radaractivebyid = base.vaicom.state.radaractivebyid or {}
+												base.vaicom.state.radaractivebyid[u.id_] = (wradar == true)
+											end
+											if u ~= nil then
+												worldSamUnitsResolved = worldSamUnitsResolved + 1
+											end
+										end
+									else
+										scanWorld(item, depth + 1)
+									end
+								end
+							end
+						end
+
+						local okWorld, worldObjects = getWorldObjectsCached()
+						cMark("world: LoGetWorldObjects")
+						if okWorld == nil then
+							worldObjectsShape = "missing_api"
+						elseif okWorld and base.type(worldObjects) == "table" then
+							local topCount = 0
+							for _ in base.pairs(worldObjects) do topCount = topCount + 1 end
+							worldObjectsShape = "table:"..base.tostring(topCount)
+							scanWorld(worldObjects, 0)
+							cMark("world: scanWorld (total)")
+							if cProfiling then
+								base.print(base.string.format("VAICOM profiling (collectOppositionGroundProbe) | %-40s %8.3f ms (%d calls)", "  scanWorld: resolveUnitFromWorldObject", profResolveMs, profResolveCount))
+								base.print(base.string.format("VAICOM profiling (collectOppositionGroundProbe) | %-40s %8.3f ms", "  scanWorld: addWorldCandidateFields", profFieldsMs))
+							end
+						else
+							worldObjectsShape = "unavailable"
+						end
+
+						addProbeRow(probe.oppositionGroundProbe, "world_shape="..base.tostring(worldObjectsShape), 24)
+						addProbeRow(probe.oppositionGroundProbe, "world_sam_candidates="..base.tostring(worldSamCandidates), 24)
+						addProbeRow(probe.oppositionGroundProbe, "world_sam_resolved="..base.tostring(worldSamUnitsResolved), 24)
+						cMark("world: summary rows")
+						cTotal()
+					end
+
+					if not includeDiagnostics then
+						if base.vaicom.state.collectopposition ~= false then
+							collectOppositionGroundProbe()
+						else
+							addProbeRow(probe.oppositionGroundProbe, "opposition_collection=disabled", 24)
+						end
+						return probe
 					end
 
 					local function copyStringList(src)
@@ -3527,7 +5068,7 @@ base.vaicom.state = {
 							end
 						end
 
-					local cmdKeywords = { "cmds", "countermeasure", "cms", "program", "chaff", "flare", "ecm", "jammer" }
+						local cmdKeywords = { "cmds", "countermeasure", "cms", "program", "chaff", "flare", "ecm", "jammer" }
 						scanKeywordTree(payload, "payload", 0, 7, probe.runtimeCmdsHits, 80, cmdKeywords, {})
 						if base.type(payload) == "table" then
 							scanKeywordTree(payload.Stations, "payload.Stations", 0, 6, probe.runtimeCmdsHits, 80, cmdKeywords, {})
@@ -3637,6 +5178,9 @@ base.vaicom.state = {
 					local shouldRefreshStatic = (diagCache.staticAt == nil or diagCache.staticAt == -10000) or ((nowTick - diagCache.staticAt) >= 86400)
 					local missionRef = base.tostring(missionObj)
 					if diagCache.missionRef ~= missionRef then
+						-- Force reset the world objects cache as this is a new mission
+						resetWorldObjectsCache()
+
 						diagCache.missionRef = missionRef
 						diagCache.staticAt = -10000
 						diagCache.payloadAt = -10000
@@ -3726,6 +5270,106 @@ base.vaicom.state = {
 						probe.bullseyeValid = true
 					end
 
+					local function normalizeLayerName(value)
+						local s = base.string.upper(base.tostring(value or ""))
+						if s == "NEUTRALS" then return "NEUTRAL" end
+						if s == "RED" or s == "BLUE" or s == "NEUTRAL" or s == "COMMON" then
+							return s
+						end
+						return ""
+					end
+
+					local function collectMissionDrawingsProbe()
+						probe.mdSrc = 0
+						probe.mdFeat = 0
+
+						local snapshot = base.vaicom and base.vaicom.state and base.vaicom.state.missiondrawings or nil
+						if base.type(snapshot) ~= "table" then return end
+
+						local state = base.vaicom and base.vaicom.state or nil
+						if base.type(state) == "table" then
+							probe.mdTxCount = base.tonumber(state.missiondrawingssendcount) or 0
+							probe.mdTxLocked = state.missiondrawingslocked and true or false
+							probe.mdTxReason = base.tostring(state.missiondrawingstxreason or "")
+							probe.mdTxSlot = base.tostring(state.missiondrawingsslotkey or "")
+							probe.mdTxChunk13Bytes = base.tonumber(state.missiondrawingstxchunk13bytes) or 0
+							probe.mdTxChunk13HasTable = state.missiondrawingstxchunk13hastable and true or false
+							probe.mdTxChunk13HasKey = state.missiondrawingstxchunk13haskey and true or false
+							probe.mdTxChunk13SentOk = state.missiondrawingstxchunk13sentok and true or false
+							probe.mdTxChunk13PartCount = base.tonumber(state.missiondrawingstxchunk13partcount) or 0
+							local nextRetryAt = base.tonumber(state.missiondrawingsnextretryat)
+							local nowTick = base.tonumber(state.timer) or 0
+							if nextRetryAt ~= nil then
+								probe.mdTxNextRetryIn = nextRetryAt - nowTick
+							else
+								probe.mdTxNextRetryIn = -1
+							end
+						end
+
+						local ownSide = resolvePlayerCoalitionSide()
+						local ownLayer = normalizeLayerName(mapCoalitionSideToText(ownSide))
+						local layers = snapshot.layers
+						if base.type(layers) ~= "table" then return end
+
+						for _, layer in base.pairs(layers) do
+							if base.type(layer) == "table" and layer.visible ~= false then
+								local layerName = normalizeLayerName(layer.name or layer.layerName)
+								local allowedLayer = (layerName == "COMMON") or (ownLayer ~= "" and layerName == ownLayer)
+								if allowedLayer then
+									local objects = layer.objects
+									if base.type(objects) == "table" then
+										for _, obj in base.pairs(objects) do
+											if base.type(obj) == "table" and obj.visible ~= false then
+												local primitive = base.string.upper(base.tostring(obj.primitiveType or ""))
+												local mapX = base.tonumber(obj.mapX)
+												local mapY = base.tonumber(obj.mapY)
+												if primitive ~= "" and mapX ~= nil and mapY ~= nil then
+													probe.mdSrc = probe.mdSrc + 1
+
+													local points = obj.points
+													local pointCount = 0
+													if base.type(points) == "table" then
+														for _, p in base.pairs(points) do
+															if base.type(p) == "table" and base.tonumber(p.x) ~= nil and base.tonumber(p.y) ~= nil then
+																pointCount = pointCount + 1
+															end
+														end
+													end
+
+													if primitive == "TEXTBOX" then
+														if base.tostring(obj.text or "") ~= "" then
+															probe.mdFeat = probe.mdFeat + 1
+														end
+													elseif primitive == "LINE" then
+														if pointCount >= 2 then
+															probe.mdFeat = probe.mdFeat + 1
+														end
+													elseif primitive == "POLYGON" then
+														local polygonMode = base.string.lower(base.tostring(obj.polygonMode or ""))
+														if polygonMode == "circle" then
+															if (base.tonumber(obj.radius) or 0) > 0 then
+																probe.mdFeat = probe.mdFeat + 1
+															end
+														elseif polygonMode == "rect" then
+															if (base.tonumber(obj.width) or 0) > 0 and (base.tonumber(obj.height) or 0) > 0 then
+																probe.mdFeat = probe.mdFeat + 1
+															end
+														else
+															if pointCount >= 2 then probe.mdFeat = probe.mdFeat + 1 end
+															if pointCount >= 3 then probe.mdFeat = probe.mdFeat + 1 end
+														end
+													end
+												end
+											end
+										end
+									end
+								end
+							end
+						end
+					end
+
+					collectMissionDrawingsProbe()
+
 					if shouldRefreshStatic then
 						probe.runtimeRadioDevices = {}
 						probe.runtimeRadioChannels = {}
@@ -3735,6 +5379,7 @@ base.vaicom.state = {
 						probe.tankerTaskEntries = {}
 
 						collectRuntimeRadioProbe()
+						collectOppositionGroundProbe()
 
 						diagCache.runtimeRadioDevices = copyStringList(probe.runtimeRadioDevices)
 						diagCache.runtimeRadioChannels = copyStringList(probe.runtimeRadioChannels)
@@ -4257,9 +5902,109 @@ base.vaicom.state = {
 
 				local selectedRadio = getSelectedRadio(base.vaicom.state.dcsid)
 				profMark("getSelectedRadio")
+
+				local playerUnitFuelMassMax = nil
+				do
+					local pUnit = base.vaicom.state and base.vaicom.state.playerunit
+					if pUnit and pUnit.getDesc then
+						local okDesc, desc = base.pcall(function() return pUnit:getDesc() end)
+						if okDesc and base.type(desc) == "table" then
+							playerUnitFuelMassMax = base.tonumber(desc.fuelMassMax)
+							if playerUnitFuelMassMax == nil then
+								playerUnitFuelMassMax = base.tonumber(desc.fuelMass)
+							end
+						end
+					end
+				end
             	
 				local missionGroupTacanMap = buildMissionGroupTacanMap()
 				profMark("buildMissionGroupTacanMap")
+
+				local missionDrawings = nil
+				do
+					local drawingSnapshot, drawingIdentity = base.vaicom.get.missiondata.drawingssnapshot()
+					if base.type(drawingSnapshot) == "table"
+						and base.type(base.vaicom.state) == "table"
+						and base.vaicom.state.missiondrawingsready == true
+						and drawingIdentity ~= ""
+					then
+						local function hasMissionDrawingObjects(snapshot)
+							if base.type(snapshot) ~= "table" then return false end
+							local layers = snapshot.layers
+							if base.type(layers) ~= "table" then return false end
+							for _, layer in base.pairs(layers) do
+								if base.type(layer) == "table" and base.type(layer.objects) == "table" then
+									for __, obj in base.pairs(layer.objects) do
+										if base.type(obj) == "table" then
+											return true
+										end
+									end
+								end
+							end
+							return false
+						end
+
+						local nowTick = base.tonumber(base.vaicom.state.timer) or 0
+						local sentId = base.tostring(base.vaicom.state.missiondrawingssentid or "")
+						local sendCount = base.tonumber(base.vaicom.state.missiondrawingssendcount) or 0
+					local nextRetryAt = base.tonumber(base.vaicom.state.missiondrawingsnextretryat) or -999
+					local retryDone = (base.vaicom.state.missiondrawingsretrydone == true)
+						local hasObjects = hasMissionDrawingObjects(drawingSnapshot)
+
+					local locked = (base.vaicom.state.missiondrawingslocked == true)
+
+					local unitId = data.pUnit and (base.tonumber(data.pUnit.id_) or 0) or 0
+					local callSign = data.pUnit and base.tostring(data.pUnit:getCallsign() or "") or ""
+					local slotKey = base.tostring(unitId) .. "|" .. callSign
+					local previousSlotKey = base.tostring(base.vaicom.state.missiondrawingsslotkey or "")
+					local slotChanged = (slotKey ~= "0|" and slotKey ~= "") and (slotKey ~= previousSlotKey)
+					if slotChanged then
+						base.vaicom.state.missiondrawingsslotkey = slotKey
+						base.vaicom.state.missiondrawingslocked = false
+						locked = false
+					end
+
+					local firstForIdentity = (sentId ~= drawingIdentity)
+					local retryReady = hasObjects and (not firstForIdentity) and (not slotChanged) and (not retryDone) and (nextRetryAt > 0) and (nowTick >= nextRetryAt)
+					local shouldSend = hasObjects and (firstForIdentity or slotChanged or retryReady)
+					local txReason = "hold"
+					if shouldSend then
+						if firstForIdentity then
+							txReason = "first"
+						elseif slotChanged then
+							txReason = "slot-change"
+						elseif retryReady then
+							txReason = "retry-once"
+						end
+					else
+						if not hasObjects then
+							txReason = "no-objects"
+						elseif locked then
+							txReason = "locked"
+						end
+					end
+
+						if shouldSend then
+						local nextCount = sendCount + 1
+							missionDrawings = drawingSnapshot
+							base.vaicom.state.missiondrawingssentid = drawingIdentity
+						base.vaicom.state.missiondrawingssendcount = nextCount
+							base.vaicom.state.missiondrawingslastsendat = nowTick
+						if firstForIdentity or slotChanged then
+							base.vaicom.state.missiondrawingsnextretryat = nowTick + 6
+							base.vaicom.state.missiondrawingsretrydone = false
+						elseif retryReady then
+							base.vaicom.state.missiondrawingsnextretryat = -999
+							base.vaicom.state.missiondrawingsretrydone = true
+						else
+							base.vaicom.state.missiondrawingsnextretryat = -999
+						end
+						base.vaicom.state.missiondrawingslocked = true
+					end
+
+					base.vaicom.state.missiondrawingstxreason = txReason
+					end
+				end
 				
                 local chunk = {}
 				chunk[1] 		= {
@@ -4292,9 +6037,10 @@ base.vaicom.state = {
 									radios				= {},
 								  }
 				chunk[3] 		= {		
-									missiontitle		= base.DCS.getMissionName(),
+									missiontitle		= ((base.vaicom.state and base.tostring(base.vaicom.state.missiondrawingstitle or "") ~= "") and base.vaicom.state.missiondrawingstitle) or base.DCS.getMissionName(),
 									missionbriefing		= base.DCS.getPlayerBriefing().descText,
 									missiondetails		= base.DCS.getPlayerBriefing().mission_goal,	
+									fuel_unit_mass_max	= playerUnitFuelMassMax,
 								  }
 				chunk[4] 		= {
 									availablerecipients =   {						
@@ -4335,9 +6081,9 @@ base.vaicom.state = {
 									menucargo	= (base.vaicom.state.activemessage.importmenus and base.vaicom.state.menucargo) or nil,
 								  }						
 				chunk[10] 		= {
-									riostate = base.vaicom.state.riostate or nil,
-									bpos	 = base.vaicom.state.bpos or nil,
-									cpos	 = base.vaicom.state.cpos or nil,
+									riostate  = base.vaicom.state.riostate or nil,
+									bpos	  = base.vaicom.state.bpos or nil,
+									cpos	  = base.vaicom.state.cpos or nil,
 								  }
 				chunk[11] 		= {
 									payload	 = base.vaicom.state.payload or nil,
@@ -4357,6 +6103,9 @@ base.vaicom.state = {
 									atcmetars = atcmetars,
 									atcicaotypes = atcicaotypes,
 									diagnostics = diagnostics,
+								  }
+				chunk[13] 		= {
+									missiondrawings		= missionDrawings,
 								  }
 				if base.vaicom and base.vaicom.state then
 					base.vaicom.state.atcicaotypes = chunk[12].atcicaotypes
@@ -4386,7 +6135,10 @@ base.vaicom.state = {
 				for recipientclass,_ in base.pairs(base.vaicom.state.availablerecipients) do
                 	for n,k in base.pairs(base.vaicom.state.availablerecipients[recipientclass]) do
 						-- We only send the first 50 for some recipient classes
-						if (recipientclass == "ATC" or recipientclass == "Allies") and n >= 50 then
+					if recipientclass == "ATC" and n >= 100 then
+						break
+					end
+					if recipientclass == "Allies" and n >= 50 then
 							break
 						end
 
@@ -4419,12 +6171,13 @@ base.vaicom.state = {
                                     	tacan = tacanValue,
 										freq = base.tostring(base.vaicom.properties.frequency(k)),
 										mod = base.tostring(base.vaicom.properties.modulation(k)),
+										status = base.tostring(base.vaicom.properties.status(k, recipientclass)),
 										ishuman = base.vaicom.properties.human(k),
 										playerid = base.vaicom.properties.playerid(k),
 										}	
 						local tbl 
 						if recipientclass == "ATC" then
-							tbl = ((n < 25) and 5) or ((n < 50) and 6)
+							tbl = ((n < 50) and 5) or ((n < 100) and 6)
 						else
 							if recipientclass == "Allies" then
 								tbl = ((n < 25) and 7) or ((n < 50) and 8)
@@ -4448,7 +6201,9 @@ base.vaicom.state = {
 						for _, value in base.pairs(err) do
 							base.env.error("VAICOM error sending chunk "..chunkId..", error: "..base.tostring(value))
 						end
+						return false
 					end
+					return true
 				end
 				local function addChunkHeader(tbl, cid)
 					tbl.cid    = cid
@@ -4460,10 +6215,65 @@ base.vaicom.state = {
 				-- Maximum udp packet size for localhost
 				-- (64K - 20 IP header - 8 UDP header)
 				local maxSize = (64 * 1024) - 20 - 8
-              	for chunkId = 1, 12 do
+				for chunkId = 1, 13 do
 					local chunkPayload = addChunkHeader(chunk[chunkId], chunkId)
 					local payload = JSON:encode(chunkPayload)
-					if chunkId == 9 and (#payload > maxSize) then
+					if chunkId == 13 then
+						-- Split large missiondrawings payload across multiple chunk 13 packets.
+						if base.vaicom and base.vaicom.state then
+							base.vaicom.state.missiondrawingstxchunk13bytes = #payload
+							base.vaicom.state.missiondrawingstxchunk13hastable = (base.type(chunkPayload.missiondrawings) == "table")
+							base.vaicom.state.missiondrawingstxchunk13haskey = (base.string.find(payload, '"missiondrawings"') ~= nil)
+							base.vaicom.state.missiondrawingstxchunk13sentok = false
+							base.vaicom.state.missiondrawingstxchunk13partcount = 0
+						end
+
+						local sentOk = false
+						local missionDrawingsTbl = chunkPayload.missiondrawings
+						if base.type(missionDrawingsTbl) == "table" then
+							local drawingsJson = JSON:encode(missionDrawingsTbl)
+							local safePartSize = 32000
+							local totalBytes = #drawingsJson
+							local partCount = 1
+							if totalBytes > safePartSize then
+								partCount = base.math.ceil(totalBytes / safePartSize)
+							end
+
+							if base.vaicom and base.vaicom.state then
+								base.vaicom.state.missiondrawingstxchunk13bytes = totalBytes
+								base.vaicom.state.missiondrawingstxchunk13partcount = partCount
+							end
+
+							if partCount <= 1 then
+								sentOk = sendChunk(payload, chunkId)
+							else
+								sentOk = true
+								local nowToken = base.tonumber(base.vaicom.state and base.vaicom.state.timer or 0) or 0
+								local transferId = base.tostring(nowToken) .. "|" .. base.tostring(base.vaicom.state and base.vaicom.state.missiondrawingssendcount or 0)
+								for partIndex = 1, partCount do
+									local startAt = ((partIndex - 1) * safePartSize) + 1
+									local endAt = base.math.min(startAt + safePartSize - 1, totalBytes)
+									local fragmentPayload = {
+										md_transferid = transferId,
+										md_partindex = partIndex,
+										md_partcount = partCount,
+										md_part = base.string.sub(drawingsJson, startAt, endAt),
+									}
+									local fragmentChunk = addChunkHeader(fragmentPayload, chunkId)
+									local fragmentJson = JSON:encode(fragmentChunk)
+									if not sendChunk(fragmentJson, chunkId) then
+										sentOk = false
+									end
+								end
+							end
+						else
+							sentOk = sendChunk(payload, chunkId)
+						end
+
+						if base.vaicom and base.vaicom.state then
+							base.vaicom.state.missiondrawingstxchunk13sentok = (sentOk == true)
+						end
+					elseif chunkId == 9 and (#payload > maxSize) then
 						-- Large menus that exceed the maximum payload cause udp errors
 						-- and prevent sending the chunk to VAICOM. Send empty menu item
 						-- if menus are too large.
@@ -4482,11 +6292,11 @@ base.vaicom.state = {
 				
 				-- Send chunk indicating that all chunks have been sent and now ready for processing.
 				local completedPayload = { completed = true }
-				sendChunk(JSON:encode(addChunkHeader(completedPayload, 13)), 13)
+				sendChunk(JSON:encode(addChunkHeader(completedPayload, 14)), 14)
 				profMark("encode+send chunks")
 
 				-- Clear receipients list Locator properties cache
-				resetPropCache()
+				resetPropsCache()
 
 				if profiling then
 					base.print(base.string.format("VAICOM profiling (sendupdateall) | %-40s %8.3f ms", "TOTAL", (profClock() - profStart) * 1000))

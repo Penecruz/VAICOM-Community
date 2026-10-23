@@ -1111,6 +1111,30 @@ namespace VAICOM
                     Log.Write($"Error while opening keywords reference: {ex.Message}", Static.Colors.Warning);
                 }
             }
+
+            private void OpenKneeboardHelpDoc(object sender, MouseButtonEventArgs e)
+            {
+                try
+                {
+                    string helpDocPath = VAICOM.Extensions.Kneeboard.OpenKneeboardBridge.GetOfflineHelpDocBrowserPath();
+                    if (string.IsNullOrWhiteSpace(helpDocPath) || !File.Exists(helpDocPath))
+                    {
+                        Log.Write("Unable to open OKB Out HTML manual; file was not found.", Static.Colors.Warning);
+                        return;
+                    }
+
+                    Log.Write("Opening OKB Out HTML manual.", Static.Colors.Message);
+                    Process.Start(new ProcessStartInfo
+                    {
+                        FileName = helpDocPath,
+                        UseShellExecute = true
+                    });
+                }
+                catch (Exception ex)
+                {
+                    Log.Write($"Error while opening OKB Out HTML manual: {ex.Message}", Static.Colors.Warning);
+                }
+            }
         }
 
     }

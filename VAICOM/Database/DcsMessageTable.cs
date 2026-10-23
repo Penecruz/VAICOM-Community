@@ -1046,6 +1046,9 @@ namespace VAICOM
                     DcsAutoEventIDs.Add(DcsMessageTable.FirstOrDefault(x => x.Value == "wMsgLeaderConfirmRemainingFuel").Key);
                     DcsAutoEventIDs.Add(DcsMessageTable.FirstOrDefault(x => x.Value == "wMsgLeaderInboundMarshallRespond").Key);
                     DcsAutoEventIDs.Add(DcsMessageTable.FirstOrDefault(x => x.Value == "wMsgLeaderTowerOverhead").Key);
+                    DcsAutoEventIDs.Add(DcsMessageTable.FirstOrDefault(x => x.Value == "wMsgLeaderSeeYouAtTen").Key);
+                    DcsAutoEventIDs.Add(DcsMessageTable.FirstOrDefault(x => x.Value == "wMsgLeaderEstablished").Key);
+                    DcsAutoEventIDs.Add(DcsMessageTable.FirstOrDefault(x => x.Value == "wMsgLeaderCommencing").Key);
 
                 }
                 catch (Exception e)

@@ -2,6 +2,7 @@
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using VAICOM.Extensions.AICPG;
 using VAICOM.Static;
 
 namespace VAICOM
@@ -12,6 +13,308 @@ namespace VAICOM
 
         public static partial class Server
         {
+
+            private static string ResolveAvModuleToken(string avModule)
+            {
+                if (!string.IsNullOrWhiteSpace(avModule))
+                {
+                    return avModule.Trim();
+                }
+
+                try
+                {
+                    if (State.currentstate != null && !string.IsNullOrWhiteSpace(State.currentstate.id))
+                    {
+                        return State.currentstate.id.Trim();
+                    }
+                }
+                catch
+                {
+                }
+
+                return "";
+            }
+
+            private static bool DetectFastOwnshipState(string receivedString)
+            {
+                const string prefix = "missiondata.update.ownship";
+                receivedString = (receivedString ?? "").Trim();
+                if (string.IsNullOrEmpty(receivedString) || !receivedString.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+                {
+                    return false;
+                }
+
+                try
+                {
+                    string[] parts = receivedString.Split(';');
+                    Dictionary<string, string> values = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+
+                    for (int i = 1; i < parts.Length; i++)
+                    {
+                        string part = parts[i];
+                        int idx = part.IndexOf('=');
+                        if (idx <= 0 || idx >= part.Length - 1)
+                        {
+                            continue;
+                        }
+
+                        string key = part.Substring(0, idx).Trim();
+                        string val = part.Substring(idx + 1).Trim();
+                        if (key.Length > 0)
+                        {
+                            values[key] = val;
+                        }
+                    }
+
+                    double x;
+                    double y;
+                    double z;
+                    if (!double.TryParse(values.ContainsKey("x") ? values["x"] : "", System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out x)
+                        || !double.TryParse(values.ContainsKey("y") ? values["y"] : "", System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out y)
+                        || !double.TryParse(values.ContainsKey("z") ? values["z"] : "", System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out z))
+                    {
+                        return true;
+                    }
+
+                    double heading;
+                    double? headingOpt = null;
+                    if (double.TryParse(values.ContainsKey("hdg") ? values["hdg"] : "", System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out heading))
+                    {
+                        headingOpt = heading;
+                    }
+
+                    double parsed;
+                    double? groundSpeedKnotsOpt = null;
+                    if (double.TryParse(values.ContainsKey("gs_kts") ? values["gs_kts"] : "", System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out parsed)
+                        || double.TryParse(values.ContainsKey("gskt") ? values["gskt"] : "", System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out parsed)
+                        || double.TryParse(values.ContainsKey("gskts") ? values["gskts"] : "", System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out parsed))
+                    {
+                        if (!double.IsNaN(parsed) && !double.IsInfinity(parsed) && parsed >= 0)
+                        {
+                            groundSpeedKnotsOpt = parsed;
+                        }
+                    }
+                    else if (double.TryParse(values.ContainsKey("gs_ms") ? values["gs_ms"] : "", System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out parsed)
+                        || double.TryParse(values.ContainsKey("groundspeed_ms") ? values["groundspeed_ms"] : "", System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out parsed)
+                        || double.TryParse(values.ContainsKey("groundspeed") ? values["groundspeed"] : "", System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out parsed)
+                        || double.TryParse(values.ContainsKey("gs") ? values["gs"] : "", System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out parsed))
+                    {
+                        if (!double.IsNaN(parsed) && !double.IsInfinity(parsed) && parsed >= 0)
+                        {
+                            groundSpeedKnotsOpt = parsed * 1.9438444924406;
+                        }
+                    }
+
+                    int wowState = -1;
+                    if (int.TryParse(values.ContainsKey("wow") ? values["wow"] : "", out wowState))
+                    {
+                        wowState = wowState != 0 ? 1 : 0;
+                    }
+                    else
+                    {
+                        wowState = -1;
+                    }
+
+                    if (State.IsAH64D)
+                    {
+                        AH64GeorgeState.GroundSpeed = groundSpeedKnotsOpt ?? 0;
+                    }
+                    Extensions.Kneeboard.OpenKneeboardBridge.UpdateFastOwnship(x, y, z, headingOpt, groundSpeedKnotsOpt, wowState);
+                }
+                catch (Exception e)
+                {
+                    Log.Write("Problem parsing ownship state message: " + e.Message, Colors.Inline);
+                }
+
+                return true;
+            }
+
+            private static bool DetectFastAvBusState(string receivedString)
+            {
+                const string prefix = "missiondata.update.avbus";
+                receivedString = (receivedString ?? "").Trim();
+                if (string.IsNullOrEmpty(receivedString) || !receivedString.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+                {
+                    return false;
+                }
+
+                try
+                {
+                    string[] parts = receivedString.Split(';');
+                    Dictionary<string, string> values = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+
+                    for (int i = 1; i < parts.Length; i++)
+                    {
+                        string part = parts[i];
+                        int idx = part.IndexOf('=');
+                        if (idx <= 0 || idx >= part.Length - 1)
+                        {
+                            continue;
+                        }
+
+                        string key = part.Substring(0, idx).Trim();
+                        string val = part.Substring(idx + 1).Trim();
+                        if (key.Length > 0)
+                        {
+                            values[key] = val;
+                        }
+                    }
+
+                    string state = values.ContainsKey("state") ? values["state"] : "";
+
+                    int parsedInt;
+                    bool hasFuel = int.TryParse(values.ContainsKey("hasFuel") ? values["hasFuel"] : "", out parsedInt) && parsedInt != 0;
+
+                    int wowState = -1;
+                    if (int.TryParse(values.ContainsKey("wow") ? values["wow"] : "", out parsedInt))
+                    {
+                        wowState = parsedInt != 0 ? 1 : 0;
+                    }
+
+                    double parsed;
+                    double? fuelFraction = null;
+                    if (double.TryParse(values.ContainsKey("fuelFraction") ? values["fuelFraction"] : "", System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out parsed))
+                    {
+                        fuelFraction = parsed;
+                    }
+
+                    double? fuelMassMaxKg = null;
+                    if (double.TryParse(values.ContainsKey("fuelMassMaxKg") ? values["fuelMassMaxKg"] : "", System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out parsed))
+                    {
+                        fuelMassMaxKg = parsed;
+                    }
+
+                    string fuelMassMaxSource = values.ContainsKey("fuelMassMaxSource") ? values["fuelMassMaxSource"] : "";
+                    string hasFuelReason = values.ContainsKey("hasFuelReason") ? values["hasFuelReason"] : "";
+                    string avModule = values.ContainsKey("avModule") ? values["avModule"] : "";
+                    avModule = ResolveAvModuleToken(avModule);
+
+                    if (!string.IsNullOrWhiteSpace(hasFuelReason) && !string.IsNullOrWhiteSpace(avModule))
+                    {
+                        fuelMassMaxSource = (fuelMassMaxSource ?? "").Trim();
+                        hasFuelReason = hasFuelReason.Trim();
+                        avModule = avModule.Trim();
+                        string sourceToken = string.IsNullOrWhiteSpace(fuelMassMaxSource) ? "none" : fuelMassMaxSource;
+                        fuelMassMaxSource = sourceToken + "|" + hasFuelReason + "|" + avModule;
+                    }
+
+                    double? totalFuelKg = null;
+                    if (double.TryParse(values.ContainsKey("totalFuelKg") ? values["totalFuelKg"] : "", System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out parsed))
+                    {
+                        totalFuelKg = parsed;
+                    }
+
+                    double? totalFuelLbs = null;
+                    if (double.TryParse(values.ContainsKey("totalFuelLbs") ? values["totalFuelLbs"] : "", System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out parsed))
+                    {
+                        totalFuelLbs = parsed;
+                    }
+
+                    double? internalFuelKg = null;
+                    if (double.TryParse(values.ContainsKey("internalFuelKg") ? values["internalFuelKg"] : "", System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out parsed))
+                    {
+                        internalFuelKg = parsed;
+                    }
+
+                    double? internalFuelLbs = null;
+                    if (double.TryParse(values.ContainsKey("internalFuelLbs") ? values["internalFuelLbs"] : "", System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out parsed))
+                    {
+                        internalFuelLbs = parsed;
+                    }
+
+                    double? externalFuelKg = null;
+                    if (double.TryParse(values.ContainsKey("externalFuelKg") ? values["externalFuelKg"] : "", System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out parsed))
+                    {
+                        externalFuelKg = parsed;
+                    }
+
+                    double? externalFuelLbs = null;
+                    if (double.TryParse(values.ContainsKey("externalFuelLbs") ? values["externalFuelLbs"] : "", System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out parsed))
+                    {
+                        externalFuelLbs = parsed;
+                    }
+
+                    if ((!fuelMassMaxKg.HasValue || fuelMassMaxKg.Value <= 0) && fuelFraction.HasValue)
+                    {
+                        double? cachedMassMax = null;
+                        try
+                        {
+                            if (State.currentstate != null
+                                && State.currentstate.fuel_unit_mass_max.HasValue
+                                && !double.IsNaN(State.currentstate.fuel_unit_mass_max.Value)
+                                && State.currentstate.fuel_unit_mass_max.Value > 0)
+                            {
+                                cachedMassMax = State.currentstate.fuel_unit_mass_max.Value;
+                            }
+                        }
+                        catch
+                        {
+                            cachedMassMax = null;
+                        }
+
+                        if (cachedMassMax.HasValue)
+                        {
+                            fuelMassMaxKg = cachedMassMax.Value;
+                            fuelMassMaxSource = "serverChunk3Cached";
+
+                            if (!totalFuelKg.HasValue)
+                            {
+                                totalFuelKg = Math.Max(0, fuelFraction.Value * cachedMassMax.Value);
+                            }
+
+                            if (!internalFuelKg.HasValue && totalFuelKg.HasValue)
+                            {
+                                internalFuelKg = Math.Min(totalFuelKg.Value, cachedMassMax.Value);
+                            }
+
+                            if (!externalFuelKg.HasValue && totalFuelKg.HasValue)
+                            {
+                                externalFuelKg = Math.Max(0, totalFuelKg.Value - cachedMassMax.Value);
+                            }
+
+                            const double kgToLbs = 2.20462262185;
+                            if (!totalFuelLbs.HasValue && totalFuelKg.HasValue)
+                            {
+                                totalFuelLbs = totalFuelKg.Value * kgToLbs;
+                            }
+                            if (!internalFuelLbs.HasValue && internalFuelKg.HasValue)
+                            {
+                                internalFuelLbs = internalFuelKg.Value * kgToLbs;
+                            }
+                            if (!externalFuelLbs.HasValue && externalFuelKg.HasValue)
+                            {
+                                externalFuelLbs = externalFuelKg.Value * kgToLbs;
+                            }
+
+                            hasFuel = totalFuelKg.HasValue && internalFuelKg.HasValue && externalFuelKg.HasValue;
+                            if (hasFuel)
+                            {
+                                state = "LIVE";
+                            }
+                        }
+                    }
+
+                    Extensions.Kneeboard.OpenKneeboardBridge.UpdateFastAvBus(
+                        state,
+                        hasFuel,
+                        wowState,
+                        fuelFraction,
+                        fuelMassMaxKg,
+                        fuelMassMaxSource,
+                        totalFuelKg,
+                        totalFuelLbs,
+                        internalFuelKg,
+                        internalFuelLbs,
+                        externalFuelKg,
+                        externalFuelLbs);
+                }
+                catch (Exception e)
+                {
+                    Log.Write("Problem parsing avbus state message: " + e.Message, Colors.Inline);
+                }
+
+                return true;
+            }
 
             public static void ProcessRawServerMessage(string receivedString)
             {
@@ -25,7 +328,17 @@ namespace VAICOM
 
                     Extensions.Kneeboard.OpenKneeboardBridge.AppendRawServerMessage(trimmed);
 
-                    if (DetectAH64WeaponState(trimmed))
+                    if (DetectAH64State(trimmed))
+                    {
+                        return;
+                    }
+
+                    if (DetectFastOwnshipState(trimmed))
+                    {
+                        return;
+                    }
+
+                    if (DetectFastAvBusState(trimmed))
                     {
                         return;
                     }
@@ -68,7 +381,7 @@ namespace VAICOM
                 }
             }
 
-            public static bool DetectAH64WeaponState(string receivedString)
+            public static bool DetectAH64State(string receivedString)
             {
                 const string prefix = "missiondata.update.ah64state";
                 receivedString = (receivedString ?? "").Trim();
@@ -99,21 +412,43 @@ namespace VAICOM
                         }
                     }
 
+                    bool apuOn = values.TryGetValue("apu", out string apuValue) && apuValue.Equals("1");
+                    bool cmwsArmed = values.TryGetValue("cmwsArmed", out string cmwsArmedValue) && cmwsArmedValue.Equals("1");
+                    bool cmwsBypass = values.TryGetValue("cmwsBypass", out string cmwsBypassValue) && cmwsBypassValue.Equals("1");
                     bool gunAvailable = values.TryGetValue("gun", out string gunValue) && gunValue.Equals("1");
                     bool rocketsAvailable = values.TryGetValue("rockets", out string rocketsValue) && rocketsValue.Equals("1");
                     bool missilesAvailable = values.TryGetValue("missiles", out string missilesValue) && missilesValue.Equals("1");
                     bool wow = values.TryGetValue("wow", out string wowValue) && wowValue.Equals("1");
 
-                    State.AH64GeorgeGunAvailable = gunAvailable;
-                    State.AH64GeorgeRocketsAvailable = rocketsAvailable;
-                    State.AH64GeorgeMissilesAvailable = missilesAvailable;
-                    State.AH64GeorgeWeaponStateValid = true;
-                    State.AH64GeorgeWowFromExport = wow;
+                    int navigationLights = values.TryGetValue("navigationLights", out string navigationLightsValue) && int.TryParse(navigationLightsValue, out int navLights) ? navLights : 0;
+                    int antiCollisionLights = values.TryGetValue("antiCollisionLights", out string antiCollisionLightsValue) && int.TryParse(antiCollisionLightsValue, out int acLights) ? acLights : 0;
+                    int formationLights = values.TryGetValue("formationLights", out string formationLightsValue) && int.TryParse(formationLightsValue, out int formLights) ? formLights : 0;
 
-                    if (!WeaponStillAvailable(State.AH64GeorgeSelectedWeapon))
+                    if (double.TryParse(values.ContainsKey("rpmR") ? values["rpmR"] : "", System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out double engineRpm))
                     {
-                        State.AH64GeorgeSelectedWeapon = State.AH64GeorgeWeaponMode.NoWeapon;
+                        if (!double.IsNaN(engineRpm) && !double.IsInfinity(engineRpm) && engineRpm >= 0)
+                        {
+                            AH64GeorgeState.EngineRpm = engineRpm;
+                        }
                     }
+
+                    AH64GeorgeState.ApuOnOffState = apuOn ? AH64Apu.On : AH64Apu.Off;
+                    AH64GeorgeState.SelectedCMWSArmSafe = cmwsArmed ? AH64CMWSArmSafe.Armed : AH64CMWSArmSafe.Safe;
+                    AH64GeorgeState.SelectedCMWSMode = cmwsBypass ? AH64CMWSMode.Bypass : AH64CMWSMode.Auto;
+                    AH64GeorgeState.GunAvailable = gunAvailable;
+                    AH64GeorgeState.RocketsAvailable = rocketsAvailable;
+                    AH64GeorgeState.MissilesAvailable = missilesAvailable;
+                    AH64GeorgeState.WeaponStateValid = true;
+
+                    AH64GeorgeState.SetExteriorLightsMode(navigationLights, antiCollisionLights, formationLights);
+
+                    if (!WeaponStillAvailable(AH64GeorgeState.SelectedWeapon))
+                    {
+                        AH64GeorgeState.SelectedWeapon = AH64WeaponMode.NoWeapon;
+                    }
+
+                    AH64GeorgeState.WeightOnWheels = wow;
+                    State.currentstate.airborne = !wow;
                 }
                 catch (Exception e)
                 {
@@ -123,18 +458,18 @@ namespace VAICOM
                 return true;
             }
 
-            private static bool WeaponStillAvailable(State.AH64GeorgeWeaponMode mode)
+            private static bool WeaponStillAvailable(AH64WeaponMode mode)
             {
                 switch (mode)
                 {
-                    case State.AH64GeorgeWeaponMode.Gun:
-                        return State.AH64GeorgeGunAvailable;
-                    case State.AH64GeorgeWeaponMode.Missiles:
-                        return State.AH64GeorgeMissilesAvailable;
-                    case State.AH64GeorgeWeaponMode.Rockets:
-                        return State.AH64GeorgeRocketsAvailable;
-                    case State.AH64GeorgeWeaponMode.NoWeapon:
-                    case State.AH64GeorgeWeaponMode.Unknown:
+                    case AH64WeaponMode.Gun:
+                        return AH64GeorgeState.GunAvailable;
+                    case AH64WeaponMode.Missiles:
+                        return AH64GeorgeState.MissilesAvailable;
+                    case AH64WeaponMode.Rockets:
+                        return AH64GeorgeState.RocketsAvailable;
+                    case AH64WeaponMode.NoWeapon:
+                    case AH64WeaponMode.Unknown:
                     default:
                         return true;
                 }

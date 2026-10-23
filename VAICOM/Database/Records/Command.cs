@@ -61,8 +61,7 @@ namespace VAICOM
             public bool isWSO()
             {
                 // Ensure the active module is "F-4E-45MC" and the command falls within the WSO range
-                return State.currentmodule.Id.Equals("F-4E-45MC", StringComparison.OrdinalIgnoreCase) &&
-                       (category == CommandCategories.WSO || (uniqueid >= 24000 && uniqueid <= 24999));
+                return State.IsF4E && (category == CommandCategories.WSO || (uniqueid >= 24000 && uniqueid <= 24999));
             }
 
             public bool RequiresFlightNumInsert()
@@ -186,7 +185,7 @@ namespace VAICOM
                 if ((this.uniqueid >= Commands.Table["wMsgAIPilotCmndsNull"].uniqueid) & (this.uniqueid <= Commands.Table["wMsgAIPilotCmndsMaximum"].uniqueid)) { value = Recipientclasses.AI_pilot; }
 
                 // George AI extension
-                if (this.dcsid != null && this.dcsid.StartsWith("wMsgGeorge", StringComparison.OrdinalIgnoreCase)) { value = Recipientclasses.Crew; }
+                if ((this.uniqueid >= Commands.Table["wMsgGeorgeCmndsNull"].uniqueid) & (this.uniqueid <= Commands.Table["wMsgGeorgeCmndsMaximum"].uniqueid)) { value = Recipientclasses.GeorgeCPG; }
 
                 // WSO extension
                 if ((this.uniqueid >= Commands.Table["wMsgWSOCmndsNull"].uniqueid) & (this.uniqueid <= Commands.Table["wMsgWSOCmndsMaximum"].uniqueid)) { value = Recipientclasses.WSO; }
@@ -221,7 +220,24 @@ namespace VAICOM
 
             public bool isGeorge()
             {
-                return this.dcsid != null && this.dcsid.StartsWith("wMsgGeorge", StringComparison.OrdinalIgnoreCase);
+                bool value = false;
+                if ((this.uniqueid >= Commands.Table["wMsgGeorgeCmndsNull"].uniqueid) & (this.uniqueid <= Commands.Table["wMsgGeorgeCmndsMaximum"].uniqueid)) { value = true; }
+                return value;
+            }
+
+            public bool isGeorgeCPG()
+            {
+                return category == CommandCategories.AH64D_George_CPG || category == CommandCategories.AH64D_George_roe
+                    || category == CommandCategories.AH64D_George_CPG_startup || category == CommandCategories.AH64D_George_CPG_search
+                    || category == CommandCategories.AH64D_George_CPG_sensors || category == CommandCategories.AH64D_George_CPG_targets
+                    || category == CommandCategories.AH64D_George_CPG_weapons;
+            }
+
+            public bool isGeorgePilot()
+            {
+                return category == CommandCategories.AH64D_George_PLT || category == CommandCategories.AH64D_George_PLT_ground || category == CommandCategories.AH64D_George_PLT_hover
+                    || category == CommandCategories.AH64D_George_PLT_flight || category == CommandCategories.AH64D_George_PLT_combat || category == CommandCategories.AH64D_George_PLT_defensive
+                    || category == CommandCategories.AH64D_George_roe;
             }
 
             public bool isVoid()
@@ -288,7 +304,20 @@ namespace VAICOM
             RIO_defensive,
             RIO_misc,
             AI_pilot,
-            AH64D_GeorgeAI,
+            AH64D_George,
+            AH64D_George_roe,
+            AH64D_George_CPG,
+            AH64D_George_CPG_startup,
+            AH64D_George_CPG_search,
+            AH64D_George_CPG_sensors,
+            AH64D_George_CPG_targets,
+            AH64D_George_CPG_weapons,
+            AH64D_George_PLT,
+            AH64D_George_PLT_ground,
+            AH64D_George_PLT_hover,
+            AH64D_George_PLT_flight,
+            AH64D_George_PLT_combat,
+            AH64D_George_PLT_defensive,
             kneeboard,
             WSO,
             WSO_navigation,

@@ -325,7 +325,7 @@ namespace VAICOM
                 }
                 catch (Exception a)
                 {
-                    Log.Write(a.Message + "/n" + a.StackTrace, Colors.Text);
+                    Log.Write(a.Message + "\n" + a.StackTrace, Colors.Text);
                 }
 
             }
@@ -460,7 +460,13 @@ namespace VAICOM
 
                 Func<CommandCategories, string> getCommandSection = category =>
                 {
-                    if (category == CommandCategories.AH64D_GeorgeAI) { return "AI Crew | AH-64D Apache"; }
+                    if (category == CommandCategories.AH64D_George
+                        || category == CommandCategories.AH64D_George_CPG
+                        || category == CommandCategories.AH64D_George_PLT
+                        || category.ToString().StartsWith("AH64D", StringComparison.OrdinalIgnoreCase))
+                    {
+                        return "AI Crew | AH-64D Apache";
+                    }
                     if (category == CommandCategories.AI_pilot || category.ToString().StartsWith("RIO", StringComparison.OrdinalIgnoreCase)) { return "AI Crew | F-14 Tomcat"; }
                     if (category == CommandCategories.WSO || category.ToString().StartsWith("WSO", StringComparison.OrdinalIgnoreCase)) { return "AI Crew | F-4E Phantom II"; }
 

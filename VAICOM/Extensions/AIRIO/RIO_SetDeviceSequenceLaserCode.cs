@@ -36,12 +36,38 @@ namespace VAICOM
                         State.currentmessage.type = Messagetypes.DeviceControl;
                         State.currentmessage.extsequence = new List<Extensions.RIO.DeviceAction>();
 
+                        string lasercode = Extensions.CommandNumbers.Digits();
+
+                        // The device's thumbwheels are fixed at 1xxx, so the leading 1 is
+                        // implicit. Accept the full real-world code as well as the short form.
+                        if (lasercode.Length == 4 && lasercode[0] == '1')
+                        {
+                            lasercode = lasercode.Substring(1);
+                        }
+
+                        if (lasercode.Length != 3)
+                        {
+                            ReportRioInputError("Could not read the laser code.\nSay three digits, or the full code as 1xxx.",
+                                                "Laser code: expected 3 digits, got '" + lasercode + "'");
+                            return;
+                        }
+
+                        // Each thumbwheel has its own range: 5-7, 1-8, 1-8. Checking only the
+                        // combined value against 788 lets a code such as 699 through, which
+                        // then matches no case below and silently sets a different code.
+                        if (lasercode[0] < '5' || lasercode[0] > '7'
+                            || lasercode[1] < '1' || lasercode[1] > '8'
+                            || lasercode[2] < '1' || lasercode[2] > '8')
+                        {
+                            ReportRioInputError("1" + lasercode + " is not a valid laser code.\nRange is 1511 to 1788.",
+                                                "Laser code 1" + lasercode + " is out of range (1511 to 1788)");
+                            return;
+                        }
+
                         string header = State.Proxy.Utility.ParseTokens("{CMDSEGMENT:0}");
                         //Log.Write("Segment 0 = " + header, Colors.Warning);
 
-                        int majval1;
-                        Int32.TryParse(State.Proxy.Utility.ParseTokens("{CMDSEGMENT:1}"), out majval1);
-                        //Log.Write("majval1 = " + majval1, Colors.Warning);
+                        int majval1 = Extensions.CommandNumbers.At(lasercode, 0);
                         switch (majval1)
                         {
                             //case 0:
@@ -76,9 +102,7 @@ namespace VAICOM
                                 //    break;
                         }
 
-                        int majval2;
-                        Int32.TryParse(State.Proxy.Utility.ParseTokens("{CMDSEGMENT:2}"), out majval2);
-                        //Log.Write("majval2 = " + majval2, Colors.Warning);
+                        int majval2 = Extensions.CommandNumbers.At(lasercode, 1);
                         switch (majval2)
                         {
                             //case 0:
@@ -113,9 +137,7 @@ namespace VAICOM
                                 //    break;
                         }
 
-                        int minval;
-                        Int32.TryParse(State.Proxy.Utility.ParseTokens("{CMDSEGMENT:3}"), out minval);
-                        //Log.Write("Segment 3 = " + minval, Colors.Warning);
+                        int minval = Extensions.CommandNumbers.At(lasercode, 2);
                         switch (minval)
                         {
                             //case 0:

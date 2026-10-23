@@ -292,6 +292,9 @@ namespace VAICOM
             private static readonly List<string> okbTabOrder = new List<string>()
             { "LOG", "ATC", "AWACS", "JTAC", "TANKER", "AOCS", "FLIGHT", "AI CREW", "GND CREW", "NOTES" };
 
+            private const string OkbActionPrefix = "vaicom-community;okb-out;";
+            private const string OkbTabPrefix = OkbActionPrefix + "tab-";
+
             private static string okbActiveTab = "LOG";
 
             public static string NormalizeKneeboardContext(string input)
@@ -302,8 +305,7 @@ namespace VAICOM
                 }
 
                 string normalized = input.Trim().ToLowerInvariant();
-                const string okbTabPrefix = "vaicom-community;okb-out;tab-";
-                if (!normalized.StartsWith(okbTabPrefix, StringComparison.Ordinal))
+                if (!normalized.StartsWith(OkbActionPrefix, StringComparison.Ordinal))
                 {
                     return normalized;
                 }
@@ -311,20 +313,49 @@ namespace VAICOM
                 return normalized;
             }
 
+            public static bool IsOpenKneeboardActionContext(string input)
+            {
+                return !string.IsNullOrWhiteSpace(input)
+                    && input.StartsWith(OkbActionPrefix, StringComparison.OrdinalIgnoreCase);
+            }
+
             public static bool IsOpenKneeboardTabActionContext(string input)
             {
                 return !string.IsNullOrWhiteSpace(input)
-                    && input.StartsWith("vaicom-community;okb-out;tab-", StringComparison.OrdinalIgnoreCase);
+                    && input.StartsWith(OkbTabPrefix, StringComparison.OrdinalIgnoreCase);
             }
 
             public static void ControlOpenKneeboardOut(dynamic vaProxy, string actionContext)
             {
-                if (!IsOpenKneeboardTabActionContext(actionContext))
+                if (!IsOpenKneeboardActionContext(actionContext))
                 {
                     return;
                 }
 
-                string action = actionContext.Trim().ToLowerInvariant().Substring("vaicom-community;okb-out;tab-".Length);
+                if (string.IsNullOrWhiteSpace(actionContext))
+                {
+                    return;
+                }
+
+                string normalizedContext = actionContext.Trim().ToLowerInvariant();
+                if (normalizedContext.Equals(OkbActionPrefix + "focus-okb", StringComparison.Ordinal))
+                {
+                    HandleFocusCommand(vaProxy, true);
+                    return;
+                }
+
+                if (normalizedContext.Equals(OkbActionPrefix + "focus-dcs", StringComparison.Ordinal))
+                {
+                    HandleFocusCommand(vaProxy, false);
+                    return;
+                }
+
+                if (!normalizedContext.StartsWith(OkbTabPrefix, StringComparison.Ordinal))
+                {
+                    return;
+                }
+
+                string action = normalizedContext.Substring(OkbTabPrefix.Length);
                 switch (action)
                 {
                     case "next":
@@ -369,6 +400,22 @@ namespace VAICOM
                 }
             }
 
+            private static void HandleFocusCommand(dynamic vaProxy, bool focusOpenKneeboard)
+            {
+                if (State.activeconfig == null || !State.activeconfig.OpenKneeboard_FocusSwitchEnabled)
+                {
+                    vaProxy.WriteToLog("OKB Out focus command ignored: enable Focus Switch in Preferences > OpenKneeboard Out.", Colors.Warning);
+                    return;
+                }
+
+                string statusMessage;
+                bool focused = focusOpenKneeboard
+                    ? OpenKneeboardBridge.TryFocusOpenKneeboard(out statusMessage)
+                    : OpenKneeboardBridge.TryFocusDcs(out statusMessage);
+
+                vaProxy.WriteToLog(statusMessage, focused ? Colors.Message : Colors.Warning);
+            }
+
             private static void CycleOkbTabs(dynamic vaProxy, int direction)
             {
                 string current = okbActiveTab;
@@ -391,7 +438,7 @@ namespace VAICOM
             {
                 string normalized = string.IsNullOrWhiteSpace(tab) ? "LOG" : tab.ToUpperInvariant();
                 okbActiveTab = normalized;
-                OpenKneeboardBridge.UpdateActiveCategory(normalized);
+                OpenKneeboardBridge.UpdateActiveCategory(normalized, true);
             }
 
             public static void CycleTabs(dynamic vaProxy, int ud)
@@ -420,61 +467,61 @@ namespace VAICOM
 
                         case "kneeboard.tab.all":
                             State.KneeboardState.activecat = "ALL";
-                            KneeboardUpdater.SwitchPage("ALL");
+                            KneeboardUpdater.SwitchPage("ALL", true, true);
                             //KneeboardUpdater.SendDeviceCommand(255, 3010, 1);
                             break;
 
                         case "kneeboard.tab.log":
                             State.KneeboardState.activecat = "LOG";
-                            KneeboardUpdater.SwitchPage("LOG");
+                            KneeboardUpdater.SwitchPage("LOG", true, true);
                             //KneeboardUpdater.SendDeviceCommand(255, 3011, 1);
                             break;
 
                         case "kneeboard.tab.awacs":
                             State.KneeboardState.activecat = "AWACS";
-                            KneeboardUpdater.SwitchPage("AWACS");
+                            KneeboardUpdater.SwitchPage("AWACS", true, true);
                             //KneeboardUpdater.SendDeviceCommand(255, 3012, 1);
                             break;
 
                         case "kneeboard.tab.jtac":
                             State.KneeboardState.activecat = "JTAC";
-                            KneeboardUpdater.SwitchPage("JTAC");
+                            KneeboardUpdater.SwitchPage("JTAC", true, true);
                             //KneeboardUpdater.SendDeviceCommand(255, 3013, 1);
                             break;
 
                         case "kneeboard.tab.atc":
                             State.KneeboardState.activecat = "ATC";
-                            KneeboardUpdater.SwitchPage("ATC");
+                            KneeboardUpdater.SwitchPage("ATC", true, true);
                             //KneeboardUpdater.SendDeviceCommand(255, 3014, 1);
                             break;
 
                         case "kneeboard.tab.tanker":
                             State.KneeboardState.activecat = "TANKER";
-                            KneeboardUpdater.SwitchPage("Tanker");
+                            KneeboardUpdater.SwitchPage("Tanker", true, true);
                             //KneeboardUpdater.SendDeviceCommand(255, 3015, 1);
                             break;
 
                         case "kneeboard.tab.flight":
                             State.KneeboardState.activecat = "FLIGHT";
-                            KneeboardUpdater.SwitchPage("Flight");
+                            KneeboardUpdater.SwitchPage("Flight", true, true);
                             //KneeboardUpdater.SendDeviceCommand(255, 3016, 1);
                             break;
 
                         case "kneeboard.tab.aocs":
                             State.KneeboardState.activecat = "AOCS";
-                            KneeboardUpdater.SwitchPage("AOCS");
+                            KneeboardUpdater.SwitchPage("AOCS", true, true);
                             //KneeboardUpdater.SendDeviceCommand(255, 3017, 1);
                             break;
 
                         case "kneeboard.tab.ref":
                             State.KneeboardState.activecat = "REF";
-                            KneeboardUpdater.SwitchPage("REF");
+                            KneeboardUpdater.SwitchPage("REF", true, true);
                             //KneeboardUpdater.SendDeviceCommand(255, 3018, 1);
                             break;
 
                         case "kneeboard.tab.notes":
                             State.KneeboardState.activecat = "NOTES";
-                            KneeboardUpdater.SwitchPage("NOTES");
+                            KneeboardUpdater.SwitchPage("NOTES", true, true);
                             //KneeboardUpdater.SendDeviceCommand(255, 3019, 1);
                             break;
 

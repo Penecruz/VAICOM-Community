@@ -92,6 +92,17 @@ namespace VAICOM.Properties {
         
         /// <summary>
         ///   Looks up a localized string similar to -- VAICOM PRO server-side script
+        ///-- ATC.lua (append)
+        ///-- https://github.com/Penecruz/VAICOM-Community.
+        /// </summary>
+        public static string Append_Core_ATC {
+            get {
+                return ResourceManager.GetString("Append_Core_ATC", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to -- VAICOM PRO server-side script
         ///-- common.lua (append)
         ///-- www.vaicompro.com
         ///
@@ -638,7 +649,18 @@ namespace VAICOM.Properties {
                 return ResourceManager.GetString("Append_Terrain_Siani_radio", resourceCulture);
             }
         }
-        
+
+        /// <summary>
+        ///   Index html page for OpenKneeboard (OKB) Out.
+        /// </summary>
+        public static string OKB_Out_Index_HTML
+        {
+            get
+            {
+                return ResourceManager.GetString("OKB_Out_Index_HTML", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized resource of type System.Byte[].
         /// </summary>
@@ -1391,6 +1413,15 @@ namespace VAICOM.Properties {
             }
         }
         
+        /// <summary>
+        ///   Looks up a localized string similar to local mainMenuPos, parameters = ...
+        /// </summary>
+        public static string Orig_Core_ATC {
+            get {
+                return ResourceManager.GetString("Orig_Core_ATC", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to --Speech construction module
         ///

@@ -158,7 +158,7 @@ namespace VAICOM.Extensions.RIO
             {"wMsgJ_RDR_STAB_60",                   "Radar Stabilize 60s"           },
             {"wMsgJ_RDR_STAB_120",                  "Radar Stabilize 120s"          },
             {"wMsgJ_RDR_STAB_INDEF",                "Radar Stabilize Indefinitely"  },
-            {"wMsgJ_RDR_STAB_GROUND",               "LANTIRN Stabilize"             },
+            {"wMsgLANTIRN_STAB_GROUND",             "LANTIRN Stabilize"             },
 
             {"wMsgLANTIRN_Head_Eyeball",            "LANTIRN Control Eyeballs"      },
             {"wMsgLANTIRN_Head_Head",               "LANTIRN Control Head"          },

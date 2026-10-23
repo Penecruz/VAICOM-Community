@@ -6,8 +6,9 @@ namespace VAICOM.Extensions.WSO
 {
     public static class Commands //Adds WSO commands to the command database
     {
-        // WSO commands: 24000 - 24999 (1000 slots reserved for WSO commands)
         /// <summary>
+        /// WSO commands: 24000 - 24999 (1000 slots reserved for WSO commands)
+        /// 
         /// Breakdown of ranges:
         /// 
         /// CommandCategories.WSO_navigation:       24000 - 24099

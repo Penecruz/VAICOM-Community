@@ -1,5 +1,9 @@
 ﻿using System;
+using System.ComponentModel;
+using System.Diagnostics;
 using System.Text.RegularExpressions;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -16,6 +20,7 @@ namespace VAICOM
             // ------------  EXTENSIONS PAGE -----------------------------
 
             private static readonly Regex OpenKneeboardOutPortDigitsOnlyRegex = new Regex("^[0-9]+$");
+            private const string OpenKneeboardOutFirewallRuleNamePrefix = "VAICOM OpenKneeboard Out TCP";
 
             // Pene edits Kneeboard Activate/deactivate Box
 
@@ -242,16 +247,16 @@ namespace VAICOM
 
             }
 
-            private void CarrierCommsOn(object sender, RoutedEventArgs e) { CarrierComms.IsChecked = true; }
-            private void CarrierCommsOff(object sender, RoutedEventArgs e) { CarrierComms.IsChecked = true; }
-            private void SetCurrentValueCarrierComms(object sender, EventArgs e)
+            private void CarrierSuppressAutoOn(object sender, RoutedEventArgs e)
             {
-                CarrierComms.IsEnabled = true;
-                CarrierComms.IsChecked = true;
+                State.activeconfig.CarrierSuppressAuto = true;
+                FileHandler.Lua.LuaFiles_Install(false, true);
             }
-
-            private void CarrierSuppressAutoOn(object sender, RoutedEventArgs e) { State.activeconfig.CarrierSuppressAuto = true; }
-            private void CarrierSuppressAutoOff(object sender, RoutedEventArgs e) { State.activeconfig.CarrierSuppressAuto = false; }
+            private void CarrierSuppressAutoOff(object sender, RoutedEventArgs e)
+            {
+                State.activeconfig.CarrierSuppressAuto = false;
+                FileHandler.Lua.LuaFiles_Install(false, true);
+            }
             private void SetCurrentValueCarrierSuppressAuto(object sender, EventArgs e)
             {
                 CarrierSuppressAuto.IsEnabled = true;
@@ -309,6 +314,7 @@ namespace VAICOM
             {
                 State.activeconfig.OpenKneeboard_Out = true;
                 Extensions.Kneeboard.OpenKneeboardBridge.SetEnabled(true);
+                EnsureOpenKneeboardOutFirewallRuleIfNeeded();
                 ChangeOKHostbug();
             }
 
@@ -339,6 +345,386 @@ namespace VAICOM
                     checkbox.IsEnabled = true;
                     checkbox.IsChecked = State.activeconfig.OpenKneeboard_AutoBrowse;
                 }
+            }
+
+            private void OpenKneeboardFocusSwitchOn(object sender, RoutedEventArgs e) { State.activeconfig.OpenKneeboard_FocusSwitchEnabled = true; }
+            private void OpenKneeboardFocusSwitchOff(object sender, RoutedEventArgs e) { State.activeconfig.OpenKneeboard_FocusSwitchEnabled = false; }
+            private void SetCurrentValueOpenKneeboardFocusSwitch(object sender, EventArgs e)
+            {
+                CheckBox checkbox = sender as CheckBox;
+                if (checkbox != null)
+                {
+                    checkbox.IsEnabled = true;
+                    checkbox.IsChecked = State.activeconfig.OpenKneeboard_FocusSwitchEnabled;
+                }
+            }
+
+            private void OpenKneeboardOutAllowLanOn(object sender, RoutedEventArgs e)
+            {
+                State.activeconfig.OpenKneeboard_Out_AllowLan = true;
+                RestartOpenKneeboardOutHostIfEnabled();
+                EnsureOpenKneeboardOutFirewallRuleIfNeeded();
+            }
+
+            private void OpenKneeboardOutAllowLanOff(object sender, RoutedEventArgs e)
+            {
+                State.activeconfig.OpenKneeboard_Out_AllowLan = false;
+                RestartOpenKneeboardOutHostIfEnabled();
+            }
+
+            private void SetCurrentValueOpenKneeboardOutAllowLan(object sender, EventArgs e)
+            {
+                CheckBox checkbox = sender as CheckBox;
+                if (checkbox != null)
+                {
+                    checkbox.IsEnabled = true;
+                    checkbox.IsChecked = State.activeconfig.OpenKneeboard_Out_AllowLan;
+                }
+            }
+
+            private void OpenKneeboardEfbEnableOn(object sender, RoutedEventArgs e)
+            {
+                State.activeconfig.OpenKneeboard_EfbEnabled = true;
+                Extensions.Kneeboard.OpenKneeboardBridge.UpdateServerData();
+                Extensions.Kneeboard.OpenKneeboardBridge.UpdateStatus("Navigraph EFB tab enabled.", "sent");
+            }
+
+            private void OpenKneeboardEfbEnableOff(object sender, RoutedEventArgs e)
+            {
+                State.activeconfig.OpenKneeboard_EfbEnabled = false;
+                Extensions.Kneeboard.OpenKneeboardBridge.UpdateServerData();
+                Extensions.Kneeboard.OpenKneeboardBridge.UpdateStatus("Navigraph EFB tab disabled.", "warning");
+            }
+            private void SetCurrentValueOpenKneeboardEfbEnable(object sender, EventArgs e)
+            {
+                CheckBox checkbox = sender as CheckBox;
+                if (checkbox != null)
+                {
+                    checkbox.IsEnabled = true;
+                    checkbox.IsChecked = State.activeconfig.OpenKneeboard_EfbEnabled;
+                }
+            }
+
+            private void OpenKneeboardEfbDevBypassOn(object sender, RoutedEventArgs e) { State.activeconfig.OpenKneeboard_EfbDevBypass = true; }
+            private void OpenKneeboardEfbDevBypassOff(object sender, RoutedEventArgs e) { State.activeconfig.OpenKneeboard_EfbDevBypass = false; }
+            private void SetCurrentValueOpenKneeboardEfbDevBypass(object sender, EventArgs e)
+            {
+                CheckBox checkbox = sender as CheckBox;
+                if (checkbox != null)
+                {
+                    checkbox.IsEnabled = true;
+                    checkbox.IsChecked = State.activeconfig.OpenKneeboard_EfbDevBypass;
+                }
+            }
+
+            private async void OpenKneeboardEfbSeedAuthClick(object sender, RoutedEventArgs e)
+            {
+                if (OpenKneeboardEfbSeedAuth != null)
+                {
+                    OpenKneeboardEfbSeedAuth.IsEnabled = false;
+                }
+
+                try
+                {
+                    if (Extensions.Kneeboard.OpenKneeboardNavigraphEfbState.HasStoredAuth())
+                    {
+                        Log.Write("Navigraph auth already present. Connect skipped.", Colors.Text);
+                        Extensions.Kneeboard.OpenKneeboardBridge.UpdateStatus("Navigraph EFB auth already present.", "sent");
+                        Extensions.Kneeboard.OpenKneeboardBridge.UpdateServerData();
+                        return;
+                    }
+
+                    Log.Write("Starting Navigraph device authentication...", Colors.Text);
+                    Extensions.Kneeboard.OpenKneeboardBridge.UpdateStatus("Starting Navigraph authentication...", "warning");
+
+                    // Developer credentials are now expected in encrypted AppData storage.
+                    // No end-user credential prompt is shown here.
+                    string devClientId = "", devClientSecret = "", devClientType = "";
+                    bool hasDevCreds = false;
+                    try
+                    {
+                        hasDevCreds = Extensions.Kneeboard.OpenKneeboardNavigraphCredentials
+                            .TryGetCredentials(out devClientId, out devClientSecret, out devClientType);
+                    }
+                    catch
+                    {
+                        hasDevCreds = false;
+                    }
+
+                    if (!hasDevCreds || string.IsNullOrWhiteSpace(devClientId))
+                    {
+                        string msg = "Missing encrypted Navigraph developer credentials in AppData. Configure device client credentials first.";
+                        System.Windows.MessageBox.Show(this, msg, "Navigraph developer credentials required", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
+                        Log.Write(msg, Static.Colors.Warning);
+                        Extensions.Kneeboard.OpenKneeboardBridge.UpdateStatus("Missing encrypted Navigraph developer credentials.", "warning");
+                        return;
+                    }
+
+                    var result = await Extensions.Kneeboard.OpenKneeboardNavigraphOAuthService
+                        .ConnectWithDeviceFlowAsync(CancellationToken.None)
+                        .ConfigureAwait(true);
+
+                    Settings.ConfigFile.WriteConfigToFile(true);
+                    Extensions.Kneeboard.OpenKneeboardBridge.UpdateServerData();
+
+                    if (result.Success)
+                    {
+                        Log.Write("Navigraph authentication completed.", Colors.Text);
+                        Extensions.Kneeboard.OpenKneeboardBridge.UpdateStatus("Navigraph EFB connected.", "sent");
+                    }
+                    else
+                    {
+                        string message = string.IsNullOrWhiteSpace(result.Message)
+                            ? "Navigraph authentication did not complete."
+                            : result.Message;
+                        if (message.IndexOf("client id", StringComparison.OrdinalIgnoreCase) >= 0)
+                        {
+                            message += " Set OpenKneeboard_EfbOAuthClientId in VAICOM config JSON.";
+                        }
+                        Log.Write(message, Colors.Warning);
+                        Extensions.Kneeboard.OpenKneeboardBridge.UpdateStatus(message, "warning");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Log.Write("Navigraph authentication failed: " + ex.Message, Colors.Warning);
+                    Extensions.Kneeboard.OpenKneeboardBridge.UpdateStatus("Navigraph authentication failed.", "error");
+                }
+                finally
+                {
+                    if (OpenKneeboardEfbSeedAuth != null)
+                    {
+                        OpenKneeboardEfbSeedAuth.IsEnabled = true;
+                    }
+                }
+            }
+
+            private void OpenKneeboardEfbClearAuthClick(object sender, RoutedEventArgs e)
+            {
+                Extensions.Kneeboard.OpenKneeboardNavigraphEfbState.ClearEncryptedAuthBlob();
+                Settings.ConfigFile.WriteConfigToFile(true);
+                Extensions.Kneeboard.OpenKneeboardBridge.UpdateServerData();
+                Log.Write("OKB EFB auth blob cleared.", Colors.Text);
+            }
+
+            private void OpenKneeboardEfbScopeInit(object sender, EventArgs e) { SetTextBoxValue(sender, State.activeconfig.OpenKneeboard_EfbOAuthScope); }
+            private void OpenKneeboardEfbDeviceEndpointInit(object sender, EventArgs e) { SetTextBoxValue(sender, State.activeconfig.OpenKneeboard_EfbOAuthDeviceAuthEndpoint); }
+            private void OpenKneeboardEfbTokenEndpointInit(object sender, EventArgs e) { SetTextBoxValue(sender, State.activeconfig.OpenKneeboard_EfbOAuthTokenEndpoint); }
+
+
+
+            private void OpenKneeboardEfbScopeLostFocus(object sender, RoutedEventArgs e)
+            {
+                string next = ReadTextBoxValue(sender);
+                if (State.activeconfig.OpenKneeboard_EfbOAuthScope == next) return;
+                State.activeconfig.OpenKneeboard_EfbOAuthScope = next;
+                Settings.ConfigFile.WriteConfigToFile(true);
+            }
+
+            private void OpenKneeboardEfbDeviceEndpointLostFocus(object sender, RoutedEventArgs e)
+            {
+                string next = ReadTextBoxValue(sender);
+                if (State.activeconfig.OpenKneeboard_EfbOAuthDeviceAuthEndpoint == next) return;
+                State.activeconfig.OpenKneeboard_EfbOAuthDeviceAuthEndpoint = next;
+                Settings.ConfigFile.WriteConfigToFile(true);
+            }
+
+
+            private void OpenKneeboardEfbTokenEndpointLostFocus(object sender, RoutedEventArgs e)
+            {
+                string next = ReadTextBoxValue(sender);
+                if (State.activeconfig.OpenKneeboard_EfbOAuthTokenEndpoint == next) return;
+                State.activeconfig.OpenKneeboard_EfbOAuthTokenEndpoint = next;
+                Settings.ConfigFile.WriteConfigToFile(true);
+            }
+
+            private static void SetTextBoxValue(object sender, string value)
+            {
+                TextBox textBox = sender as TextBox;
+                if (textBox == null)
+                {
+                    return;
+                }
+
+                textBox.IsEnabled = true;
+                textBox.Text = value ?? "";
+            }
+
+            private static string ReadTextBoxValue(object sender)
+            {
+                TextBox textBox = sender as TextBox;
+                if (textBox == null)
+                {
+                    return "";
+                }
+
+                return (textBox.Text ?? "").Trim();
+            }
+
+            private static void RestartOpenKneeboardOutHostIfEnabled()
+            {
+                if (!State.activeconfig.OpenKneeboard_Out)
+                {
+                    return;
+                }
+
+                Extensions.Kneeboard.OpenKneeboardBridge.SetEnabled(false);
+                Extensions.Kneeboard.OpenKneeboardBridge.SetEnabled(true);
+            }
+
+            private void EnsureOpenKneeboardOutFirewallRuleIfNeeded()
+            {
+                try
+                {
+                    if (!State.activeconfig.OpenKneeboard_Out_AllowLan)
+                    {
+                        return;
+                    }
+
+                    int port = State.activeconfig.OpenKneeboard_Out_Port;
+                    if (port <= 0 || port > 65535)
+                    {
+                        return;
+                    }
+
+                    bool ruleExists = OpenKneeboardOutFirewallRuleExists(port);
+                    if (ruleExists && OpenKneeboardOutFirewallRuleHasPrivateAndPublicProfiles(port))
+                    {
+                        return;
+                    }
+
+                    string message = "Allow Windows Firewall access for OpenKneeboard Out on Private and Public networks?\n\n"
+                        + "Port: " + port + " (TCP inbound)\n\n"
+                        + "Select No if you prefer to configure firewall manually to suit your network settings.";
+
+                    MessageBoxResult result = MessageBox.Show(message, "OpenKneeboard Out LAN Access", MessageBoxButton.YesNo, MessageBoxImage.Question);
+                    if (result != MessageBoxResult.Yes)
+                    {
+                        Log.Write("OpenKneeboard Out LAN firewall rule skipped by user.", Colors.Warning);
+                        return;
+                    }
+
+                    string ruleName = GetOpenKneeboardOutFirewallRuleName(port);
+                    string arguments = ruleExists
+                        ? "advfirewall firewall set rule name=\"" + ruleName + "\" new profile=private,public"
+                        : "advfirewall firewall add rule name=\"" + ruleName + "\" dir=in action=allow protocol=TCP localport=" + port + " profile=private,public";
+
+                    var startInfo = new ProcessStartInfo
+                    {
+                        FileName = "netsh",
+                        Arguments = arguments,
+                        UseShellExecute = true,
+                        Verb = "runas",
+                        WindowStyle = ProcessWindowStyle.Hidden,
+                    };
+
+                    using (Process process = Process.Start(startInfo))
+                    {
+                        if (process != null)
+                        {
+                            process.WaitForExit();
+                            if (process.ExitCode == 0)
+                            {
+                                if (ruleExists)
+                                {
+                                    Log.Write("OpenKneeboard Out firewall rule updated for Private and Public networks on TCP port " + port + ".", Colors.Text);
+                                }
+                                else
+                                {
+                                    Log.Write("OpenKneeboard Out firewall rule added for Private and Public networks on TCP port " + port + ".", Colors.Text);
+                                }
+                            }
+                            else
+                            {
+                                Log.Write("OpenKneeboard Out firewall rule creation/update returned exit code " + process.ExitCode + ".", Colors.Warning);
+                            }
+                        }
+                    }
+                }
+                catch (Win32Exception ex)
+                {
+                    if (ex.NativeErrorCode == 1223)
+                    {
+                        Log.Write("OpenKneeboard Out firewall rule creation/update canceled by user.", Colors.Warning);
+                    }
+                    else
+                    {
+                        Log.Write("OpenKneeboard Out firewall rule creation/update failed: " + ex.Message, Colors.Warning);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Log.Write("OpenKneeboard Out firewall setup failed: " + ex.Message, Colors.Warning);
+                }
+            }
+
+            private static bool OpenKneeboardOutFirewallRuleExists(int port)
+            {
+                try
+                {
+                    string output = GetOpenKneeboardOutFirewallRuleText(port);
+                    return output.IndexOf("No rules match", StringComparison.OrdinalIgnoreCase) < 0;
+                }
+                catch
+                {
+                    return false;
+                }
+            }
+
+            private static bool OpenKneeboardOutFirewallRuleHasPrivateAndPublicProfiles(int port)
+            {
+                try
+                {
+                    string output = GetOpenKneeboardOutFirewallRuleText(port);
+                    if (output.IndexOf("No rules match", StringComparison.OrdinalIgnoreCase) >= 0)
+                    {
+                        return false;
+                    }
+
+                    string lower = output.ToLowerInvariant();
+                    return lower.IndexOf("private") >= 0 && lower.IndexOf("public") >= 0;
+                }
+                catch
+                {
+                    return false;
+                }
+            }
+
+            private static string GetOpenKneeboardOutFirewallRuleText(int port)
+            {
+                var startInfo = new ProcessStartInfo
+                {
+                    FileName = "netsh",
+                    Arguments = "advfirewall firewall show rule name=\"" + GetOpenKneeboardOutFirewallRuleName(port) + "\"",
+                    UseShellExecute = false,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    CreateNoWindow = true,
+                };
+
+                using (Process process = Process.Start(startInfo))
+                {
+                    if (process == null)
+                    {
+                        return "";
+                    }
+
+                    string output = process.StandardOutput.ReadToEnd();
+                    string error = process.StandardError.ReadToEnd();
+                    process.WaitForExit();
+
+                    if (!string.IsNullOrWhiteSpace(error))
+                    {
+                        output = output + "\n" + error;
+                    }
+
+                    return output ?? "";
+                }
+            }
+
+            private static string GetOpenKneeboardOutFirewallRuleName(int port)
+            {
+                return OpenKneeboardOutFirewallRuleNamePrefix + " " + port;
             }
 
             private void OpenKneeboardOutPortInit(object sender, EventArgs e)
@@ -398,12 +784,8 @@ namespace VAICOM
                 {
                     State.activeconfig.OpenKneeboard_Out_Port = parsedPort;
                     Settings.ConfigFile.WriteConfigToFile(true);
-
-                    if (State.activeconfig.OpenKneeboard_Out)
-                    {
-                        Extensions.Kneeboard.OpenKneeboardBridge.SetEnabled(false);
-                        Extensions.Kneeboard.OpenKneeboardBridge.SetEnabled(true);
-                    }
+                    RestartOpenKneeboardOutHostIfEnabled();
+                    EnsureOpenKneeboardOutFirewallRuleIfNeeded();
                 }
 
                 textBox.Text = State.activeconfig.OpenKneeboard_Out_Port.ToString();

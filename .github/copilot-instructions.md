@@ -1,8 +1,16 @@
 # Copilot Instructions
 
 ## Project Guidelines
-- User prefers avoiding builds/tests during diagnostics.
+- User prefers avoiding builds/tests during diagnostics and does not want local debugger sessions launched because runtime testing is running on a remote system; prefer non-debugger diagnostics and code-based stabilization fixes.
 - User is okay with offering builds/tests going forward again.
+- User prefers direct in-file edits rather than chat-only diffs when they explicitly ask to edit files.
+
+## Performance Optimization
+- For performance in this repo, `LoGetWorldObjects` should refresh on mission load and then only on periodic background updates (target 60s), not on PTT-triggered updates; use cached data for fallbacks and prefer `LoGetSelfData` for ownship position.
+
+## Navigraph Credentials
+- Store Navigraph credentials/tokens encrypted in VAICOM data, not in plain config.
+- Retain Navigraph cache for 24 hours, with strict module-connection gating to prevent charts/tiles from displaying when no module is connected.
 
 ## Command Reference
 - Use the provided AH-64D George AI control reference as canonical behavior mapping when adding contextual George commands/macros.
@@ -16,17 +24,22 @@
 ## DCS Map Marker Panel
 - DCS map marker panel entries in this project are expected to look like `{ idx, time, initiator, coalition, groupID, text, pos=vec3 }`, with `pos` as the runtime coordinate source.
 
-## F-4E ICS Implementation
-- For F-4E ICS hot mic implementation, ignore WSO ICS state entirely and use only pilot ICS switch state because WSO seat occupancy disables WSO functions.
-
-## TX5 Intercom Implementation
-- For TX5 intercom hot mic, allow Options and menu navigation commands (e.g., Take 1..12) without requiring PTT press.
-
 ## OpenKneeboard Implementation
 - For OpenKneeboard FLT PLN tab, prefer a full-window, scrollable, table-like kneeboard layout and avoid large path/header blocks above route data.
 - For OpenKneeboard DTC map overlays, GEO_LINES should be treated as route-agnostic and displayed regardless of selected route (R1/R2/R3).
 - Disable text selection across the entire OpenKneeboard Out console UI to avoid messy selection highlights.
 - For OpenKneeboard SA map integration, attribution is already auto-rendered in the map UI, so do not add an extra footer attribution block.
+- For OKB work, keep HTML separated from OpenKneeboardBridge.cs in dedicated HTML files (e.g., OKB.html) and continue separating OKB UI code from bridge logic going forward.
+- In OKB UI, all tab messages should use the same buffering (padding), style, and night mode treatment.
+- When adding or changing OKB Out features, always update OKBHelpDoc.html to document settings, Icons, layer drawer items and other additions and changes in behavior.
+- For OKB EFB SA map history track: default layer state OFF; sample breadcrumb points every 5 seconds only when fast ownship position is enabled and movement is detected; render as dotted trail; retain track after disconnect and clear/reset on next module connection; add left-rail layer toggle with history track icon style matching provided path/pin concept.
+
+## F-4E ICS Implementation
+- For F-4E ICS hot mic implementation, ignore WSO ICS state entirely and use only pilot ICS switch state because WSO seat occupancy disables WSO functions.
+
+## TX5 Intercom Implementation
+- For TX5 intercom hot mic, allow Options and menu navigation commands (e.g., Take 1..12) without requiring PTT press.
+- For TX-Link behavior: with hot mic OFF, TX1-4 and TX5 short press should start listening and suspend on short press, long press, and command completion; with hot mic ON, TX1-4 should behave the same as hot mic OFF, while TX5 should remain listening with commands gated to AI crew/ground crew.
 
 ## F-14BU DTC Handling
 - For F-14BU DTC handling, NAV[0] (Primary) must always map to Route 1 (R1), and runtime NAVLOG route is always R1; F-14BU DTC can contain up to 12 routes.
@@ -60,5 +73,11 @@
 ## COM Frequency Display
 - For runtime COM frequency display, use strict three-decimal MHz formatting for module consistency (e.g., 305.000, 127.050).
 
+## ADB Fuel Flow Display
+- For ADB fuel flow display, prefer smoothing that remains readable but adapts quickly to value changes at the feed rate.
+
 ## Code Clarity
 - Add small step-by-step code notes/comments in complex command-flow methods for clarity.
+
+## Runtime Validation
+- Before finalizing Lua or HTML changes in this repo, proactively validate likely runtime failure points (scope/order issues, missing function definitions, nil guards, and call-site safety) because live-session debugging is costly.

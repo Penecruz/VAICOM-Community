@@ -90,7 +90,19 @@ namespace VAICOM
             public bool Kneeboard_Enabled;
             public bool OpenKneeboard_Out;
             public bool OpenKneeboard_AutoBrowse;
+            public bool OpenKneeboard_FocusSwitchEnabled;
+            public bool OpenKneeboard_Out_AllowLan;
             public int OpenKneeboard_Out_Port;
+            public bool OpenKneeboard_EfbEnabled;
+            public string OpenKneeboard_EfbAuthBlob;
+            public string OpenKneeboard_EfbClientBlob;
+            public bool OpenKneeboard_EfbDevBypass;
+            public string OpenKneeboard_EfbOAuthClientId;
+            public string OpenKneeboard_EfbOAuthClientSecret;
+            public string OpenKneeboard_EfbOAuthScope;
+            public string OpenKneeboard_EfbOAuthDeviceAuthEndpoint;
+            public string OpenKneeboard_EfbOAuthTokenEndpoint;
+            public string OpenKneeboard_EfbApiBase;
 
             // multiplayer page
 
@@ -293,7 +305,19 @@ namespace VAICOM
                 Kneeboard_Enabled = true,
                 OpenKneeboard_Out = false,
                 OpenKneeboard_AutoBrowse = false,
+                OpenKneeboard_FocusSwitchEnabled = false,
+                OpenKneeboard_Out_AllowLan = false,
                 OpenKneeboard_Out_Port = 7779,
+                OpenKneeboard_EfbEnabled = false,
+                OpenKneeboard_EfbAuthBlob = "",
+                OpenKneeboard_EfbClientBlob = "",
+                OpenKneeboard_EfbDevBypass = false,
+                OpenKneeboard_EfbOAuthClientId = "",
+                OpenKneeboard_EfbOAuthClientSecret = "",
+                OpenKneeboard_EfbOAuthScope = "openid charts tiles offline_access",
+                OpenKneeboard_EfbOAuthDeviceAuthEndpoint = "https://identity.api.navigraph.com/connect/deviceauthorization",
+                OpenKneeboard_EfbOAuthTokenEndpoint = "https://identity.api.navigraph.com/connect/token",
+                OpenKneeboard_EfbApiBase = "https://api.navigraph.com/v1",
 
                 // multiplayer page
 

@@ -130,8 +130,6 @@ namespace VAICOM
                 State.currentstate.easycomms = true;
                 State.currentmodule = DCSmodules.LookupTable["----"];
                 State.currentrecipientclass = Recipientclasses.Undefined;
-                State.AH64GeorgeWowFromExport = false;
-                State.AH64GeorgeWowFromServerState = false;
                 State.oneradioactive = true;
                 State.currentradiodevicename = "";
                 State.lastupdaterequesttimer = 0;
@@ -155,8 +153,8 @@ namespace VAICOM
                         { Processor.commcat.GROUND_CREW,    new Server.ServerCommsMessage()},
                     };
                 State.Stopwatch = new System.Diagnostics.Stopwatch();
-                Server.homebaselocation = new Server.Vector();
 
+                Server.homebaselocation = new Server.Vector();
             }
 
             public static void ResetConfig(dynamic vaProxy)
@@ -257,7 +255,7 @@ namespace VAICOM
                 }
             }
 
-            public static bool MergeRIO(dynamic vaProxy)
+            public static bool MergeRIO()
             {
                 bool RIOmerged = false;
 
@@ -279,7 +277,7 @@ namespace VAICOM
 
             }
 
-            public static bool MergeWSO(dynamic vaProxy)
+            public static bool MergeWSO()
             {
                 bool WSOmerged = false;
 
@@ -301,6 +299,27 @@ namespace VAICOM
                 }
 
                 return WSOmerged;
+            }
+
+            public static bool MergeCPG()
+            {
+                bool CGPmerged = false;
+
+                try
+                {
+                    int updates = Extensions.CPG.ExtImport.MergeCPG();
+                    if (updates > 0)
+                    {
+                        CGPmerged = true;
+                    }
+                }
+                catch (Exception e)
+                {
+                    Log.Write($"WARNING: Could not load the CP/G plugin extension: {e.Message}, {e.StackTrace}", Colors.Warning);
+                    CGPmerged = false;
+                }
+
+                return CGPmerged;
             }
 
             public static void CreateDatabase(dynamic vaProxy)
@@ -506,18 +525,19 @@ namespace VAICOM
                     FileHandler.Root.CheckWSOProfile(true);  // WSO (always refresh profile on startup)
                     FileHandler.Root.CheckF14UpdateProfile(true);  // F-14 update (always refresh profile on startup)
 
-                    // Call MergeRIO
-                    MergeRIO(vaProxy);
-
-                    // Call MergeWSO
-                    MergeWSO(vaProxy);
+                    // Merge RIO, WSO, and CPG extensions
+                    MergeRIO();
+                    MergeWSO();
+                    MergeCPG();
 
                     CreateDatabase(vaProxy);
                     StartNetwork(vaProxy);
+                    
                     if (State.activeconfig.OpenKneeboard_Out)
                     {
                         OpenKneeboardBridge.Initialize();
                     }
+
                     StartTimers(vaProxy);
                     StartSpeechSynth(vaProxy);
                     InitListeningState(vaProxy);

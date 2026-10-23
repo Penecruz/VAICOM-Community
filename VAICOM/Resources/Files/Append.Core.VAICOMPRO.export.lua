@@ -70,6 +70,25 @@ local function serialize_payload(payload)
         end
     end
 
+        -- Mirror probe path directly: RadioCommandDialogsPanel uses data.pUnit:getDesc().fuelMassMax.
+        -- In export, this is exposed through base.vaicom.state.playerunit when available.
+        if fuelMassMaxKg == nil and base.vaicom and base.vaicom.state then
+            local probeUnit = base.vaicom.state.playerunit
+            if probeUnit and type(probeUnit.getDesc) == "function" then
+                local okProbeDesc, probeDesc = pcall(probeUnit.getDesc, probeUnit)
+                if okProbeDesc and type(probeDesc) == "table" then
+                    if fuelMassMaxKg == nil then
+                        fuelMassMaxKg = tonumber(probeDesc.fuelMassMax)
+                        if fuelMassMaxKg ~= nil then fuelMassMaxSource = "vaicomPlayerUnitDesc" end
+                    end
+                    if fuelMassMaxKg == nil then
+                        fuelMassMaxKg = tonumber(probeDesc.fuelMass)
+                        if fuelMassMaxKg ~= nil then fuelMassMaxSource = "vaicomPlayerUnitDescFuelMass" end
+                    end
+                end
+            end
+        end
+
     return table.concat(parts, ";")
 end
 
@@ -92,7 +111,9 @@ vaicom.config = {
     receivefromclient = { address = "*", port = 33491, timeout = 0 },
     sendtoclient = { address = "127.0.0.1", port = 33492, timeout = 0 },
     beaconclose = "missiondata.update.beacon.unlock",
-    ah64stateprefix = "missiondata.update.ah64state"
+    ah64stateprefix = "missiondata.update.ah64state",
+    ownshipprefix = "missiondata.update.ownship",
+    avbusprefix = "missiondata.update.avbus"
 }
 
 vaicom.insert = {
@@ -100,10 +121,14 @@ vaicom.insert = {
     probe = {
         enabled = true,
         debugenabled = false,
-        intervalSeconds = 0.25,
+        intervalSeconds = 0.1,
         lastPoll = 0,
         lastState = nil,
-        lastWeaponState = nil,
+        lastAh64State = nil,
+        lastAh64StatePoll = 0,
+        intervalAh64StateSeconds = 3,
+        lastFuelMassMaxKg = nil,
+        lastOwnshipState = nil,
         logfile = nil,
         keylogfile = nil,
         statusfile = nil,
@@ -198,27 +223,17 @@ vaicom.insert = {
     end,
 
     DetectOnGroundState = function(self)
+        -- Detect if the aircraft is on the ground based on the landing gear rod positions
+        -- When weight-on-wheel the rod positions are less than 0.
         if type(LoGetMechInfo) == "function" then
-            local ok, mech = pcall(LoGetMechInfo)
-            if ok and type(mech) == "table" then
-                for k, v in pairs(mech) do
-                    if type(k) == "string" and string.find(string.upper(k), "WOW", 1, true) then
-                        if v == true then
-                            return true
-                        end
-                        if type(v) == "number" and v > 0 then
-                            return true
-                        end
-                    end
-                end
-            end
-        end
+            local ok, mechInfo = pcall(LoGetMechInfo)
+            if ok and type(mechInfo) == "table" then
+                local gear = mechInfo["gear"]
+                if type(gear) == "table" then
+                    local left = gear["main"]["left"]["rod"]
+                    local right = gear["main"]["right"]["rod"]
 
-        if type(LoGetSelfData) == "function" then
-            local ok, selfData = pcall(LoGetSelfData)
-            if ok and type(selfData) == "table" then
-                if selfData.InAir ~= nil then
-                    return not selfData.InAir
+                    return left ~= 0 or right ~= 0
                 end
             end
         end
@@ -226,18 +241,376 @@ vaicom.insert = {
         return false
     end,
 
-    SendWeaponStateUpdate = function(self, payload)
+    GetEngineRPMs = function(self)
+        if type(LoGetEngineInfo) == "function" then
+            local ok, engineInfo = pcall(LoGetEngineInfo)
+            if ok and type(engineInfo) == "table" then
+                local rpm = engineInfo["RPM"]
+                if type(rpm) == "table" then
+                    local left = rpm["left"]
+                    local right = rpm["right"]
+
+                    return math.floor(left), math.floor(right)
+                end
+            end
+        end
+
+        return 0, 0
+    end,
+
+    SendAh64StateUpdate = function(self, payload)
         if not vaicom.sendtoclient then return end
 
         local gun, rockets, missiles = self:ClassifyPayloadWeapons(payload)
+        local apu = payload.apu
+        local cmwsArmed = payload.cmwsArmed
+        local cmwsBypass = payload.cmwsBypass
+        local navigationLights = payload.navigationLights
+        local formationLights = payload.formationLights
+        local antiCollisionLights = payload.antiCollisionLights
         local wow = self:DetectOnGroundState()
-        local msg = string.format("%s;gun=%d;rockets=%d;missiles=%d;wow=%d", vaicom.config.ah64stateprefix, gun and 1 or 0, rockets and 1 or 0, missiles and 1 or 0, wow and 1 or 0)
+        local leftRPM, rightRPM = self:GetEngineRPMs()
 
-        if msg == self.probe.lastWeaponState then
+        local msg = string.format(
+            "%s;gun=%d;rockets=%d;missiles=%d;wow=%d;rpmL=%d;rpmR=%d;apu=%d;cmwsArmed=%d;cmwsBypass=%d;navigationLights=%d;formationLights=%d;antiCollisionLights=%d",
+            vaicom.config.ah64stateprefix,
+            gun and 1 or 0,
+            rockets and 1 or 0,
+            missiles and 1 or 0,
+            wow and 1 or 0,
+            leftRPM,
+            rightRPM,
+            apu,
+            cmwsArmed,
+            cmwsBypass,
+            navigationLights,
+            formationLights,
+            antiCollisionLights
+        )
+
+        local now = socket.gettime()
+        -- Skip sending update if state hasn't changed and interval hasn't elapsed
+        if msg == self.probe.lastAh64State and (now - self.probe.lastAh64StatePoll < self.probe.intervalAh64StateSeconds) then
+            return
+        end
+        
+        self.probe.lastAh64State = msg
+        self.probe.lastAh64StatePoll = now
+
+        pcall(function() vaicom.sendtoclient:send(msg) end)
+    end,
+
+    SendOwnshipStateUpdate = function(self) -- GPS simulation for VAICOM, fast position updates to ownship position with heading.
+        if not vaicom.sendtoclient then return end
+
+        local x = nil
+        local y = nil
+        local z = nil
+        local hdg = nil
+        local gs_ms = nil
+
+        if type(LoGetSelfData) == "function" then
+            local ok, selfData = pcall(LoGetSelfData)
+            if ok and type(selfData) == "table" then
+                if type(selfData.Position) == "table" then
+                    x = tonumber(selfData.Position.x)
+                    y = tonumber(selfData.Position.y)
+                    z = tonumber(selfData.Position.z)
+                    hdg = tonumber(selfData.Heading)
+                end
+
+                if type(selfData.Velocity) == "table" then
+                    local vx = tonumber(selfData.Velocity.x)
+                    local vz = tonumber(selfData.Velocity.z)
+                    if vx ~= nil and vz ~= nil then
+                        gs_ms = math.sqrt((vx * vx) + (vz * vz))
+                    end
+                end
+
+                if gs_ms == nil then
+                    local speedCandidate = tonumber(selfData.Speed)
+                    if speedCandidate ~= nil then
+                        gs_ms = math.abs(speedCandidate)
+                    end
+                end
+            end
+        end
+
+        if gs_ms == nil and type(LoGetVectorVelocity) == "function" then
+            local okVel, vel = pcall(LoGetVectorVelocity)
+            if okVel and type(vel) == "table" then
+                local vx = tonumber(vel.x)
+                local vz = tonumber(vel.z)
+                if vx ~= nil and vz ~= nil then
+                    gs_ms = math.sqrt((vx * vx) + (vz * vz))
+                end
+            end
+        end
+
+        local cachedOwnship = self.probe and self.probe.lastOwnshipState or nil
+        if x == nil or y == nil or z == nil then
+            if type(cachedOwnship) == "table" then
+                x = tonumber(cachedOwnship.x)
+                y = tonumber(cachedOwnship.y)
+                z = tonumber(cachedOwnship.z)
+            end
+        end
+
+        if hdg == nil and type(cachedOwnship) == "table" then
+            hdg = tonumber(cachedOwnship.hdg)
+        end
+
+        if gs_ms == nil and type(cachedOwnship) == "table" then
+            gs_ms = tonumber(cachedOwnship.gs_ms)
+        end
+
+        if x == nil or y == nil or z == nil then
             return
         end
 
-        self.probe.lastWeaponState = msg
+        if self.probe then
+            self.probe.lastOwnshipState = {
+                x = x,
+                y = y,
+                z = z,
+                hdg = hdg,
+                gs_ms = gs_ms,
+            }
+        end
+
+        local parts = {
+            vaicom.config.ownshipprefix,
+            string.format("x=%.3f", x),
+            string.format("y=%.3f", y),
+            string.format("z=%.3f", z),
+        }
+
+        if hdg ~= nil then
+            table.insert(parts, string.format("hdg=%.3f", hdg)) -- Heading is reported in radians, as per DCS API, converted to degrees upstream in the EFB.
+        end
+
+        if gs_ms ~= nil and gs_ms == gs_ms then
+            table.insert(parts, string.format("gs_ms=%.3f", math.max(0, gs_ms)))
+        end
+
+        local msg = table.concat(parts, ";")
+
+        pcall(function() vaicom.sendtoclient:send(msg) end)
+    end,
+
+    SendAvBusStateUpdate = function(self) -- Fast avionics bus simulation for FLT PLN live fuel data.
+        if not vaicom.sendtoclient then return end
+
+        local fuelFraction = nil
+        local fuelInternalRatio = nil
+        local fuelExternalRatio = nil
+        local fuelTotalRatio = nil
+        local fuelMassMaxKg = nil
+        local fuelMassMaxSource = "none"
+        local avModuleName = ""
+        local payloadFuelMassKg = nil
+        local wow = self:DetectOnGroundState() and 1 or 0
+
+        if type(LoGetEngineInfo) == "function" then
+            local okEngine, engineInfo = pcall(LoGetEngineInfo)
+            if okEngine and type(engineInfo) == "table" then
+                fuelInternalRatio = tonumber(engineInfo.fuel_internal)
+                fuelExternalRatio = tonumber(engineInfo.fuel_external)
+                fuelTotalRatio = tonumber(engineInfo.fuel_total)
+                if fuelTotalRatio == nil and (fuelInternalRatio ~= nil or fuelExternalRatio ~= nil) then
+                    fuelTotalRatio = (fuelInternalRatio or 0) + (fuelExternalRatio or 0)
+                end
+            end
+        end
+
+        if fuelFraction == nil and fuelInternalRatio ~= nil then
+            fuelFraction = fuelInternalRatio
+        elseif fuelFraction == nil and fuelTotalRatio ~= nil then
+            fuelFraction = fuelTotalRatio
+        end
+
+        local selfData = nil
+        if type(LoGetSelfData) == "function" then
+            local okSelf, loadedSelfData = pcall(LoGetSelfData)
+            if okSelf then
+                selfData = loadedSelfData
+                avModuleName = safe_tostring(selfData and selfData.Name or "")
+            end
+            if okSelf and type(selfData) == "table" and type(selfData.Desc) == "table" then
+                if fuelMassMaxKg == nil then
+                    fuelMassMaxKg = tonumber(selfData.Desc.fuelMassMax)
+                    if fuelMassMaxKg ~= nil then fuelMassMaxSource = "selfDesc" end
+                end
+                if fuelMassMaxKg == nil and type(selfData.Desc.attributes) == "table" then
+                    fuelMassMaxKg = tonumber(selfData.Desc.attributes.fuelMassMax)
+                    if fuelMassMaxKg ~= nil then fuelMassMaxSource = "selfDescAttr" end
+                end
+                if fuelMassMaxKg == nil then
+                    fuelMassMaxKg = tonumber(selfData.Desc.fuelMass)
+                    if fuelMassMaxKg ~= nil then fuelMassMaxSource = "selfDescFuelMass" end
+                end
+            end
+            if not okSelf then
+                selfData = nil
+            end
+        end
+
+        -- Some modules expose reliable max fuel only via Unit:getDesc() (probe path),
+        -- so mirror that lookup here when available.
+        if fuelMassMaxKg == nil and type(Unit) == "table" and type(Unit.getByName) == "function" then
+            local unitName = nil
+            if type(selfData) == "table" then
+                unitName = selfData.UnitName or selfData.Name
+            end
+            if unitName ~= nil and unitName ~= "" then
+                local okUnit, unitObj = pcall(Unit.getByName, unitName)
+                if okUnit and unitObj and type(unitObj.getDesc) == "function" then
+                    local okDesc, desc = pcall(unitObj.getDesc, unitObj)
+                    if okDesc and type(desc) == "table" then
+                        if fuelMassMaxKg == nil then
+                            fuelMassMaxKg = tonumber(desc.fuelMassMax)
+                            if fuelMassMaxKg ~= nil then fuelMassMaxSource = "unitDesc" end
+                        end
+                        if fuelMassMaxKg == nil then
+                            fuelMassMaxKg = tonumber(desc.fuelMass)
+                            if fuelMassMaxKg ~= nil then fuelMassMaxSource = "unitDescFuelMass" end
+                        end
+                    end
+                end
+            end
+        end
+
+        -- Intentionally avoid LoGetWorldObjects("self") as not useful in that context, misunderstanding on my part.
+        -- export-side fallback not worth it as primary seems reliable; rely on lower-cost option plus cached last value 1/min.
+
+        if type(LoGetPayloadInfo) == "function" then
+            local okPayload, payloadInfo = pcall(LoGetPayloadInfo)
+            if okPayload and type(payloadInfo) == "table" then
+                payloadFuelMassKg = tonumber(payloadInfo.fuel)
+            end
+        end
+
+        -- When Export-side descriptors do not expose fuelMassMax on some modules/states,
+        -- derive internal capacity from payload mass and normalized fuel fraction.
+        if fuelMassMaxKg == nil and payloadFuelMassKg ~= nil and fuelFraction ~= nil and fuelFraction > 0 then
+            fuelMassMaxKg = payloadFuelMassKg / fuelFraction
+            if fuelMassMaxKg ~= nil then fuelMassMaxSource = "payloadDerived" end
+        end
+
+        if fuelMassMaxKg == nil and self.probe and self.probe.lastFuelMassMaxKg ~= nil then
+            fuelMassMaxKg = tonumber(self.probe.lastFuelMassMaxKg)
+            if fuelMassMaxKg ~= nil then fuelMassMaxSource = "cached" end
+        end
+
+        if fuelMassMaxKg == nil and type(selfData) == "table" then
+            local moduleName = safe_tostring(selfData.Name)
+            local fallbackFuelMassByModule = {
+                ["FA-18C_hornet"] = 4900,
+                ["F/A-18C"] = 4900,
+                ["FA18C"] = 4900,
+            }
+            fuelMassMaxKg = tonumber(fallbackFuelMassByModule[moduleName])
+            if fuelMassMaxKg ~= nil then fuelMassMaxSource = "moduleFallback" end
+        end
+
+        if fuelMassMaxKg == nil and avModuleName ~= "" then
+            local moduleUpper = string.upper(avModuleName)
+            if string.find(moduleUpper, "18C", 1, true) ~= nil or string.find(moduleUpper, "HORNET", 1, true) ~= nil then
+                fuelMassMaxKg = 4900
+                fuelMassMaxSource = "moduleFallbackPattern"
+            end
+        end
+
+        if fuelMassMaxKg ~= nil and fuelMassMaxKg > 0 and self.probe then
+            self.probe.lastFuelMassMaxKg = fuelMassMaxKg
+        end
+
+        local totalFuelKg = nil
+        local internalFuelKg = nil
+        local externalFuelKg = nil
+
+        if payloadFuelMassKg ~= nil then
+            totalFuelKg = math.max(0, payloadFuelMassKg)
+        elseif fuelMassMaxKg ~= nil and fuelFraction ~= nil then
+            totalFuelKg = math.max(0, fuelFraction * fuelMassMaxKg)
+        end
+
+        if totalFuelKg ~= nil and fuelMassMaxKg ~= nil then
+            internalFuelKg = math.min(totalFuelKg, fuelMassMaxKg)
+            externalFuelKg = math.max(0, totalFuelKg - fuelMassMaxKg)
+        end
+
+        local kgToLbs = 2.20462262185
+        local totalFuelLbs = totalFuelKg and (totalFuelKg * kgToLbs) or nil
+        local internalFuelLbs = internalFuelKg and (internalFuelKg * kgToLbs) or nil
+        local externalFuelLbs = externalFuelKg and (externalFuelKg * kgToLbs) or nil
+
+        local hasFuel = totalFuelKg ~= nil and internalFuelKg ~= nil and externalFuelKg ~= nil
+        local busState = hasFuel and "LIVE" or "DEGRADED"
+        local hasFuelReason = "ok"
+        if not hasFuel then
+            if fuelFraction == nil then
+                hasFuelReason = "missingFuelFraction"
+            elseif fuelMassMaxKg == nil then
+                hasFuelReason = "missingFuelMassMaxKg"
+            elseif totalFuelKg == nil then
+                hasFuelReason = "missingTotalFuelKg"
+            elseif internalFuelKg == nil or externalFuelKg == nil then
+                hasFuelReason = "missingSplitFuel"
+            else
+                hasFuelReason = "unknown"
+            end
+        end
+
+        local parts = {
+            vaicom.config.avbusprefix,
+            string.format("state=%s", busState),
+            string.format("wow=%d", wow),
+            string.format("hasFuel=%d", hasFuel and 1 or 0),
+            string.format("fuelMassMaxSource=%s", safe_tostring(fuelMassMaxSource)),
+            string.format("hasFuelReason=%s", safe_tostring(hasFuelReason)),
+        }
+
+        if fuelFraction ~= nil then
+            table.insert(parts, string.format("fuelFraction=%.6f", fuelFraction))
+        end
+        if fuelMassMaxKg ~= nil then
+            table.insert(parts, string.format("fuelMassMaxKg=%.3f", fuelMassMaxKg))
+        end
+        table.insert(parts, string.format("avModule=%s", safe_tostring(avModuleName)))
+        if payloadFuelMassKg ~= nil then
+            table.insert(parts, string.format("payloadFuelKg=%.3f", payloadFuelMassKg))
+        end
+        if fuelInternalRatio ~= nil then
+            table.insert(parts, string.format("engineFuelInternal=%.6f", fuelInternalRatio))
+        end
+        if fuelExternalRatio ~= nil then
+            table.insert(parts, string.format("engineFuelExternal=%.6f", fuelExternalRatio))
+        end
+        if fuelTotalRatio ~= nil then
+            table.insert(parts, string.format("engineFuelTotal=%.6f", fuelTotalRatio))
+        end
+
+        if totalFuelKg ~= nil then
+            table.insert(parts, string.format("totalFuelKg=%.3f", totalFuelKg))
+        end
+        if totalFuelLbs ~= nil then
+            table.insert(parts, string.format("totalFuelLbs=%.1f", totalFuelLbs))
+        end
+        if internalFuelKg ~= nil then
+            table.insert(parts, string.format("internalFuelKg=%.3f", internalFuelKg))
+        end
+        if internalFuelLbs ~= nil then
+            table.insert(parts, string.format("internalFuelLbs=%.1f", internalFuelLbs))
+        end
+        if externalFuelKg ~= nil then
+            table.insert(parts, string.format("externalFuelKg=%.3f", externalFuelKg))
+        end
+        if externalFuelLbs ~= nil then
+            table.insert(parts, string.format("externalFuelLbs=%.1f", externalFuelLbs))
+        end
+
+        local msg = table.concat(parts, ";")
         pcall(function() vaicom.sendtoclient:send(msg) end)
     end,
 
@@ -413,12 +786,31 @@ vaicom.insert = {
         self.probe.lastPoll = now
 
         local moduleName, unitName, payloadText, payloadTable = self:BuildProbeSnapshot()
+        local isAh64 = string.find(moduleName or "", "AH-64D", 1, true) ~= nil
 
-        if not string.find(moduleName or "", "AH-64D", 1, true) then
-            return
+        if isAh64 then
+            local device = base.GetDevice(0)
+            -- Get the current indicator light for the APU 
+            local apu = device:get_argument_value(406) -- 0=off, 1=on
+            -- Get CMWS switch positions
+            local cmwsArmed = device:get_argument_value(614)
+			local cmwsBypass = device:get_argument_value(616)
+            -- Get exterior lights positions
+            local navigationLights = device:get_argument_value(326) -- -1=dim, 0=off, 1=bright
+            local antiCollisionLights = device:get_argument_value(332) -- -1=red, 0=off, 1=white
+            local formationLights = device:get_argument_value(329) -- 0=off, 1=on
+            payloadTable.apu = apu
+            payloadTable.cmwsArmed = cmwsArmed
+            payloadTable.cmwsBypass = cmwsBypass
+            payloadTable.navigationLights = navigationLights
+            payloadTable.antiCollisionLights = antiCollisionLights
+            payloadTable.formationLights = formationLights
+
+            self:SendAh64StateUpdate(payloadTable)
         end
 
-        self:SendWeaponStateUpdate(payloadTable)
+        self:SendOwnshipStateUpdate()
+        self:SendAvBusStateUpdate()
 
         local state = moduleName .. ";" .. unitName .. ";" .. payloadText
         if enableFileLogging and self.probe.logfile and state ~= self.probe.lastState then
