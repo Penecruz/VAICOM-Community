@@ -2901,7 +2901,7 @@
       });
 
       if (efbSaShowDoghouses !== false) {
-        const doghouseLegs = buildDoghouseLegData(doghouseRows, theatre);
+        const doghouseLegs = buildDoghouseLegData(doghouseRows, theatre, historySelection);
         doghouseLegs.forEach(function (d) {
           const heading = computeTrueHeadingDeg(
             { x: Number(d.fromXNum), y: Number(d.fromYNum) },
@@ -2912,8 +2912,10 @@
             headingDeg: heading,
             mhText: String(d.mhText || '-'),
             distText: String(d.distText || '-'),
+            distUnit: String(d.distUnit || 'NM'),
             eteText: String(d.eteText || '--:--'),
             altText: String(d.altText || '-'),
+            altUnit: String(d.altUnit || 'ft'),
           });
         });
       }

@@ -3977,10 +3977,10 @@
       return String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
     }
 
-    function buildDoghouseLegData(rows, theater) {
+    function buildDoghouseLegData(rows, theater, selectionKey) {
       const list = Array.isArray(rows) ? rows : [];
       if (list.length < 2) return [];
-      const unitModes = getGlobalUnitModes(latestData || null);
+      const unitModes = getGlobalUnitModes(latestData || null, selectionKey);
       const magVar = Number(getApproxMagVariationDeg(theater));
       const doghouses = [];
       for (let i = 1; i < list.length; i++) {
@@ -4167,7 +4167,10 @@
       persistNavlogDistDisplayModePreference(defaultNavlogDistDisplayMode);
     }
 
-    function resolveGlobalUnitSelection(data) {
+    function resolveGlobalUnitSelection(data, preferredSelection) {
+      const preferred = String(preferredSelection || '').trim();
+      if (preferred) return preferred;
+
       const model = data || latestData || null;
 
       const dtcSelected = getActiveFlightPlanSelection(model || {});
@@ -4214,8 +4217,8 @@
       return text + (metric ? 'km' : 'nm');
     }
 
-    function getGlobalUnitModes(data) {
-      const selected = resolveGlobalUnitSelection(data);
+    function getGlobalUnitModes(data, preferredSelection) {
+      const selected = resolveGlobalUnitSelection(data, preferredSelection);
       return {
         selected: selected,
         alt: getNavlogAltDisplayMode(selected),
@@ -5784,7 +5787,17 @@
         return;
       }
 
-      const baseDisplay = mode === 'm' ? (baseAlt * 0.3048) : baseAlt;
+      // Metric mode uses rounded meter values to avoid floating-point re-snap
+      // to the same boundary (e.g., 399.9m repeatedly snapping to 400m).
+      if (mode === 'm') {
+        const baseMeters = Math.round(baseAlt * 0.3048);
+        const nextMeters = Math.max(0, baseMeters + ((dir >= 0 ? 1 : -1) * stepSizeDisplay));
+        const nextAltFeet = Math.max(0, Math.round(nextMeters / 0.3048));
+        changeWaypointAltitude(selected, step, nextAltFeet - baseAlt);
+        return;
+      }
+
+      const baseDisplay = baseAlt;
       const lowerDisplay = Math.floor(baseDisplay / stepSizeDisplay) * stepSizeDisplay;
       const upperDisplay = Math.ceil(baseDisplay / stepSizeDisplay) * stepSizeDisplay;
       const isAligned = Math.abs(baseDisplay - Math.round(baseDisplay / stepSizeDisplay) * stepSizeDisplay) < 0.0001;
@@ -5796,8 +5809,7 @@
         nextDisplay = isAligned ? (baseDisplay - stepSizeDisplay) : lowerDisplay;
       }
 
-      let nextAlt = mode === 'm' ? (nextDisplay / 0.3048) : nextDisplay;
-      nextAlt = Math.max(0, Math.round(nextAlt));
+      const nextAlt = Math.max(0, Math.round(nextDisplay));
       changeWaypointAltitude(selected, step, nextAlt - baseAlt);
     }
 
