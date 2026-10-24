@@ -1096,6 +1096,23 @@ body.efb-tab .keywordsPanel {
     }
 
 @media (orientation: landscape) and (hover: none) and (pointer: coarse) {
+    /* Touch-landscape: keep full tab rail visible on narrower devices (e.g., iPad mini). */
+    .tabs {
+        width: 100%;
+        min-width: 0;
+    }
+
+    .tab {
+        flex: 1 1 0;
+        min-width: 0;
+        white-space: normal;
+        overflow-wrap: anywhere;
+        word-break: break-word;
+        line-height: 1.05;
+        padding-left: 6px;
+        padding-right: 6px;
+    }
+
     body.efb-tab .efbLeftRail {
         left: 8px;
         right: 166px;
@@ -1187,7 +1204,7 @@ body.efb-tab .keywordsPanel {
     }
 
     body.efb-tab .efbSaMapBraReadout {
-        bottom: 90px;
+        bottom: 53px; /* distance from bottom in landscape mode */
     }
 
     .bottomQuickBar {
@@ -1404,7 +1421,7 @@ body.efb-tab .keywordsPanel {
     position: absolute;
     left: 8px;
     right: 8px;
-    bottom: 106px;
+    bottom: 68px; /* distance from bottom in portrait mode */
     z-index: 5;
     margin: 0;
     pointer-events: none;
