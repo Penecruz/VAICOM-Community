@@ -9,6 +9,28 @@
       state.rowActionMode = '';
     }
 
+    function clearNavlogRowActionMenu(selected) {
+      const state = getFlightPlanPlanState(selected);
+      state.rowActionMenuStep = '';
+    }
+
+    function toggleNavlogRowActionMenu(selected, step) {
+      const state = getFlightPlanPlanState(selected);
+      const key = stepToKey(step);
+      if (!key) {
+        state.rowActionMenuStep = '';
+        return;
+      }
+      state.rowActionMenuStep = (stepToKey(state.rowActionMenuStep) === key) ? '' : key;
+    }
+
+    function isNavlogRowActionMenuOpen(selected, step) {
+      const state = getFlightPlanPlanState(selected);
+      const key = stepToKey(step);
+      if (!key) return false;
+      return stepToKey(state.rowActionMenuStep) === key;
+    }
+
     function clearNavlogRowReveal(selected) {
       const state = getFlightPlanPlanState(selected);
       state.rowRevealStep = '';
@@ -193,7 +215,7 @@
 
     function getFlightPlanPlanState(selected) {
       const key = getFlightPlanEtaStartKey(selected);
-      if (!key) return { speedAdjustments: {}, speedDisplayModes: {}, altAdjustments: {}, typeOverrides: {}, lockedStep: '', totSeconds: NaN, lockedStart: null, timeMarks: {}, timingLog: [], postFlightOpen: false, ataByStep: {}, speedRecommendations: {}, totPerformanceByStep: {}, lastOwnshipPos: null, autoAtaLastOwnshipPos: null, autoAtaLastCapturedStep: '', deletedSteps: {}, directToSourceStep: '', directToTargetStep: '', rowActionStep: '', rowActionMode: '', rowRevealStep: '', rowRevealMode: '', coordDisplayMode: 'xy', navlogAltDisplayMode: defaultNavlogAltDisplayMode, navlogSpdDisplayMode: defaultNavlogSpdDisplayMode, navlogDistDisplayMode: defaultNavlogDistDisplayMode, expandedBottomPanel: '', closingBottomPanel: '', closingBottomPanelUntilUtc: 0 };
+      if (!key) return { speedAdjustments: {}, speedDisplayModes: {}, altAdjustments: {}, typeOverrides: {}, lockedStep: '', totSeconds: NaN, lockedStart: null, timeMarks: {}, timingLog: [], postFlightOpen: false, ataByStep: {}, speedRecommendations: {}, totPerformanceByStep: {}, lastOwnshipPos: null, autoAtaLastOwnshipPos: null, autoAtaLastCapturedStep: '', deletedSteps: {}, directToSourceStep: '', directToTargetStep: '', rowActionStep: '', rowActionMode: '', rowActionMenuStep: '', rowRevealStep: '', rowRevealMode: '', coordDisplayMode: 'xy', navlogAltDisplayMode: defaultNavlogAltDisplayMode, navlogSpdDisplayMode: defaultNavlogSpdDisplayMode, navlogDistDisplayMode: defaultNavlogDistDisplayMode, expandedBottomPanel: '', closingBottomPanel: '', closingBottomPanelUntilUtc: 0 };
       const existing = fltPlanPlanStateBySelection[key];
       if (existing && typeof existing === 'object') {
         if (!existing.speedAdjustments || typeof existing.speedAdjustments !== 'object') existing.speedAdjustments = {};
@@ -214,6 +236,7 @@
         if (typeof existing.directToTargetStep !== 'string') existing.directToTargetStep = '';
         if (typeof existing.rowActionStep !== 'string') existing.rowActionStep = '';
         if (typeof existing.rowActionMode !== 'string') existing.rowActionMode = '';
+        if (typeof existing.rowActionMenuStep !== 'string') existing.rowActionMenuStep = '';
         if (typeof existing.rowRevealStep !== 'string') existing.rowRevealStep = '';
         if (typeof existing.rowRevealMode !== 'string') existing.rowRevealMode = '';
         if (typeof existing.coordDisplayMode !== 'string') existing.coordDisplayMode = 'xy';
@@ -225,7 +248,7 @@
         if (!isFinite(Number(existing.closingBottomPanelUntilUtc))) existing.closingBottomPanelUntilUtc = 0;
         return existing;
       }
-      const created = { speedAdjustments: {}, speedDisplayModes: {}, altAdjustments: {}, typeOverrides: {}, lockedStep: '', totSeconds: NaN, lockedStart: null, timeMarks: {}, timingLog: [], postFlightOpen: false, ataByStep: {}, speedRecommendations: {}, totPerformanceByStep: {}, lastOwnshipPos: null, autoAtaLastOwnshipPos: null, autoAtaLastCapturedStep: '', deletedSteps: {}, directToSourceStep: '', directToTargetStep: '', rowActionStep: '', rowActionMode: '', rowRevealStep: '', rowRevealMode: '', coordDisplayMode: 'xy', navlogAltDisplayMode: defaultNavlogAltDisplayMode, navlogSpdDisplayMode: defaultNavlogSpdDisplayMode, navlogDistDisplayMode: defaultNavlogDistDisplayMode, expandedBottomPanel: '', closingBottomPanel: '', closingBottomPanelUntilUtc: 0 };
+      const created = { speedAdjustments: {}, speedDisplayModes: {}, altAdjustments: {}, typeOverrides: {}, lockedStep: '', totSeconds: NaN, lockedStart: null, timeMarks: {}, timingLog: [], postFlightOpen: false, ataByStep: {}, speedRecommendations: {}, totPerformanceByStep: {}, lastOwnshipPos: null, autoAtaLastOwnshipPos: null, autoAtaLastCapturedStep: '', deletedSteps: {}, directToSourceStep: '', directToTargetStep: '', rowActionStep: '', rowActionMode: '', rowActionMenuStep: '', rowRevealStep: '', rowRevealMode: '', coordDisplayMode: 'xy', navlogAltDisplayMode: defaultNavlogAltDisplayMode, navlogSpdDisplayMode: defaultNavlogSpdDisplayMode, navlogDistDisplayMode: defaultNavlogDistDisplayMode, expandedBottomPanel: '', closingBottomPanel: '', closingBottomPanelUntilUtc: 0 };
       fltPlanPlanStateBySelection[key] = created;
       return created;
     }
