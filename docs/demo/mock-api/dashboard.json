@@ -1,0 +1,53 @@
+{
+  "module": "F-14B(U)",
+  "callsign": "Springfield 1-1",
+  "theater": "Caucasus",
+  "mission": "Community Demo Flight",
+  "status": "Connected (mock)",
+  "lastUpdateUtc": "2026-10-25T12:00:00Z",
+  "recentComms": [
+    {
+      "time": "12:03:11Z",
+      "tx": "TX1",
+      "message": "Inbound to Batumi"
+    },
+    {
+      "time": "12:03:37Z",
+      "tx": "TX2",
+      "message": "Request startup"
+    },
+    {
+      "time": "12:04:04Z",
+      "tx": "TX5",
+      "message": "Jester, tune TACAN"
+    }
+  ],
+  "markers": [
+    {
+      "idx": 1,
+      "time": 120311,
+      "initiator": "Pilot",
+      "coalition": 2,
+      "groupID": 11,
+      "text": "IP",
+      "pos": {
+        "x": -283451.2,
+        "y": 0.0,
+        "z": 60291.9
+      }
+    },
+    {
+      "idx": 2,
+      "time": 120402,
+      "initiator": "Pilot",
+      "coalition": 2,
+      "groupID": 11,
+      "text": "Target",
+      "pos": {
+        "x": -279901.4,
+        "y": 0.0,
+        "z": 57562.7
+      }
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "airports": [
+    "UGSB",
+    "UGKO",
+    "LTCG"
+  ],
+  "airportNames": {
+    "UGSB": "Batumi",
+    "UGKO": "Kutaisi",
+    "LTCG": "Trabzon"
+  },
+  "provider": "mock"
+}

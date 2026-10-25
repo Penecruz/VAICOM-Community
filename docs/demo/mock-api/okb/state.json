@@ -1,0 +1,170 @@
+{
+  "ActiveCategory": "LOG",
+  "NotesBuffer": "# Demo Notes\n\nThis is a mock OpenKneeboard dashboard feed.",
+  "AiCrewPhase": "READY",
+  "UpdatedUtc": "2026-10-25T12:00:00Z",
+  "Server": {
+    "Theater": "Caucasus",
+    "DcsLocation": "Batumi",
+    "ModuleConnected": true,
+    "Aircraft": "F-14B(U)",
+    "PlayerUsername": "DemoPilot",
+    "PlayerCallsign": "Springfield 1-1",
+    "MissionTitle": "VAICOM Community Demo",
+    "MissionBriefing": "Mock briefing for dashboard testing.",
+    "MissionDetails": "No live DCS/VAICOM connection. Local mock endpoint only.",
+    "MissionTimeSeconds": 45296,
+    "PlayerPosX": -283451.2,
+    "PlayerPosY": 60291.9,
+    "PlayerAltFeet": 13500,
+    "Multiplayer": true,
+    "DebugMode": false,
+    "AtcMetars": {
+      "UGSB": "UGSB 251200Z 08008KT 9999 FEW030 23/12 Q1016",
+      "UGKO": "UGKO 251200Z 09010KT 9999 SCT035 21/11 Q1015"
+    },
+    "AtcIcaoTypes": {
+      "UGSB": "AIRPORT",
+      "UGKO": "AIRPORT"
+    },
+    "Payload": {
+      "FuelInternalLbs": 10320,
+      "FuelExternalLbs": 2400
+    },
+    "Radios": [
+      {
+        "name": "ARC-182",
+        "frequency": "305.000"
+      },
+      {
+        "name": "ARC-159",
+        "frequency": "127.050"
+      }
+    ],
+    "FlightMembers": [
+      {
+        "Callsign": "Springfield 1-2",
+        "Aircraft": "F-14B"
+      }
+    ],
+    "FriendlyAssets": [
+      {
+        "Name": "Texaco",
+        "Type": "TANKER",
+        "X": -301000,
+        "Y": 74000
+      }
+    ],
+    "MapMarkers": [
+      {
+        "idx": 1,
+        "time": 120311,
+        "initiator": "Pilot",
+        "coalition": 2,
+        "groupID": 11,
+        "text": "IP",
+        "pos": {
+          "x": -283451.2,
+          "y": 0.0,
+          "z": 60291.9
+        }
+      },
+      {
+        "idx": 2,
+        "time": 120402,
+        "initiator": "Pilot",
+        "coalition": 2,
+        "groupID": 11,
+        "text": "Target",
+        "pos": {
+          "x": -279901.4,
+          "y": 0.0,
+          "z": 57562.7
+        }
+      }
+    ],
+    "MapMarkersAuthoritativeEmpty": false,
+    "Diagnostics": {
+      "MockMode": true
+    }
+  },
+  "Status": "Connected (mock)",
+  "AiCrewKeywords": [
+    "Jester",
+    "Tune TACAN",
+    "Lock target"
+  ],
+  "AiCrewKeywordSections": {
+    "NAV": [
+      "Tune TACAN",
+      "Set waypoint"
+    ],
+    "RADAR": [
+      "Pulse search",
+      "TWS auto"
+    ]
+  },
+  "RawServerMessages": [
+    "[12:03:11] TX1: Inbound Batumi",
+    "[12:04:04] TX5: Jester, tune TACAN"
+  ],
+  "Logs": [
+    "Demo endpoint active",
+    "Serving static mock snapshots"
+  ],
+  "Units": [
+    "ATC",
+    "AWACS",
+    "TANKER"
+  ],
+  "UnitDetails": {
+    "ATC": [
+      "Batumi",
+      "Kutaisi"
+    ],
+    "AWACS": [
+      "Magic"
+    ],
+    "TANKER": [
+      "Texaco"
+    ]
+  },
+  "AliasesChunk0": "",
+  "AliasesChunk1": "",
+  "Efb": {
+    "FeatureEnabled": true,
+    "ChartsProvider": "Mock",
+    "Enabled": true
+  },
+  "DtcFiles": [],
+  "DtcSelectedFile": "",
+  "DtcJson": {
+    "type": "F-14B(U)",
+    "ROUTES": [
+      {
+        "name": "R1",
+        "waypoints": [
+          {
+            "id": "ST",
+            "lat": 41.615,
+            "lon": 41.62,
+            "altFeet": 0
+          },
+          {
+            "id": "XIP",
+            "lat": 41.588,
+            "lon": 41.34,
+            "altFeet": 14500
+          },
+          {
+            "id": "XST",
+            "lat": 41.51,
+            "lon": 41.29,
+            "altFeet": 13000
+          }
+        ]
+      }
+    ]
+  },
+  "DtcSourceType": "MOCK"
+}
