@@ -52,17 +52,17 @@ You can still open:
 
 This is a lightweight standalone demo page and does not use the full OKB tabbed UI.
 
-## 3) GitHub-hosted demo (Development branch)
+## 3) GitHub-hosted demo (master branch)
 
 A GitHub Actions workflow is included:
 
 - `.github/workflows/deploy-demo-pages.yml`
 
-It publishes `docs/demo` to GitHub Pages when you push to the `Development` branch.
+It publishes `docs/demo` to GitHub Pages when you push to the `master` branch.
 
 ### One-time GitHub setup
 
-1. Push your `Development` branch.
+1. Push your `master` branch.
 2. In GitHub repository settings, open **Pages**.
 3. Set **Source** to **GitHub Actions**.
 4. Run (or re-run) the **Deploy Demo to GitHub Pages** workflow.
