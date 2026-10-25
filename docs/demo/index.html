@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VAICOM Dashboard Demo</title>
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <main class="container">
+    <header class="header">
+      <h1>VAICOM Dashboard Demo</h1>
+      <p class="subtitle">Static demonstration view with mock data (no VoiceAttack/VAICOM session required).</p>
+      <div class="badge">DEMO MODE</div>
+      <p class="endpoint" id="endpointLabel"></p>
+    </header>
+
+    <section class="grid" id="summaryGrid"></section>
+
+    <section class="panel">
+      <h2>Recent Comms</h2>
+      <ul id="commsList"></ul>
+    </section>
+
+    <section class="panel">
+      <h2>Map Markers</h2>
+      <ul id="markersList"></ul>
+    </section>
+  </main>
+
+  <script src="./app.js"></script>
+</body>
+</html>

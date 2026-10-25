@@ -8,6 +8,14 @@
 
 VAICOM Community Edition for DCS World
 
+## Web Dashboard Demo
+
+A basic web dashboard demo (mock data, no live VoiceAttack/VAICOM session required) is available here:
+
+- [Dashboard Demo](docs/demo/index.html)
+- [Demo Setup and Mock Endpoint](docs/demo/README.md)
+- [Privacy Policy](docs/Privacy-Policy.md)
+
 ## Overview - Community Edition
 
 On 31 OCT 2022 Hollywood_315 open sourced his awesome AI communications software for DCS Word. VAICOMPRO has been the launch pad for VR flyers in DCS to create a

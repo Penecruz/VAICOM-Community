@@ -1,0 +1,15 @@
+{
+  "updatedUtc": "2026-10-25T12:00:00Z",
+  "theater": "Caucasus",
+  "hasPosition": true,
+  "posX": -283451.2,
+  "posY": 60291.9,
+  "altFeet": 13500,
+  "hasHeading": true,
+  "headingDeg": 121.7,
+  "hasGroundSpeed": true,
+  "groundSpeedKnots": 356,
+  "hasWow": true,
+  "wow": 0,
+  "missionTimeSeconds": 45296
+}
