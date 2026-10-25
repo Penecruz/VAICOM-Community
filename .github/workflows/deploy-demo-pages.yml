@@ -3,7 +3,7 @@ name: Deploy Demo to GitHub Pages
 on:
   push:
     branches:
-      - Development
+      - master
     paths:
       - 'docs/demo/**'
       - '.github/workflows/deploy-demo-pages.yml'
