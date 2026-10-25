@@ -3,7 +3,7 @@ name: Deploy Demo to GitHub Pages
 on:
   push:
     branches:
-      - Development
+      - master
     paths:
       - 'docs/demo/**'
       - '.github/workflows/deploy-demo-pages.yml'
@@ -30,6 +30,8 @@ jobs:
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
+        with:
+          enablement: true
 
       - name: Upload demo artifact
         uses: actions/upload-pages-artifact@v3
