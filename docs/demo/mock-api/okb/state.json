@@ -59,7 +59,7 @@
         "Callsign": "Texaco 1-1",
         "Name": "Texaco",
         "TypeName": "KC-135",
-        "IcaoType": "A332",
+        "IcaoType": "K135",
         "Frequency": "275.000",
         "AltFrequencies": [
           "251.000"
@@ -143,6 +143,19 @@
         "AltFeet": 271,
         "X": -238700,
         "Y": 111600
+      },
+      {
+        "Category": "JTAC",
+        "Callsign": "Axeman 2-1",
+        "Name": "Axeman 2-1",
+        "TypeName": "JTAC",
+        "IcaoType": "",
+        "Frequency": "132.400",
+        "AltFrequencies": [],
+        "Tacan": "",
+        "AltFeet": 0,
+        "X": -257400,
+        "Y": 88950
       }
     ],
     "MapMarkers": [
@@ -206,7 +219,8 @@
   "Units": [
     "ATC",
     "AWACS",
-    "TANKER"
+    "TANKER",
+    "JTAC"
   ],
   "UnitDetails": {
     "ATC": [
@@ -220,6 +234,9 @@
     ],
     "TANKER": [
       "275.000 Texaco 1-1 KC-135 211/139/16000 31Y"
+    ],
+    "JTAC": [
+      "132.400 Axeman 2-1 JTAC"
     ]
   },
   "AliasesChunk0": "",

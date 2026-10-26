@@ -3224,6 +3224,44 @@
         return [lon, lat];
       }
 
+      function findVisibleWaypointByStep(step) {
+        const target = Number(step);
+        if (!isFinite(target)) return null;
+        for (let i = 0; i < visibleRows.length; i++) {
+          const row = visibleRows[i] || {};
+          const n = Number(row.step);
+          if (isFinite(n) && Math.round(n) === Math.round(target)) {
+            if (isFinite(Number(row.xNum)) && isFinite(Number(row.yNum))) {
+              return row;
+            }
+          }
+        }
+        return null;
+      }
+
+      function offsetPointByBearingDistance(point, bearingDeg, distanceMeters) {
+        const src = point || {};
+        const north = Number(src.xNum);
+        const east = Number(src.yNum);
+        const brg = Number(bearingDeg);
+        const dist = Number(distanceMeters);
+        if (!isFinite(north) || !isFinite(east) || !isFinite(brg) || !isFinite(dist)) return null;
+        const rad = brg * (Math.PI / 180.0);
+        return {
+          xNum: north + (Math.cos(rad) * dist),
+          yNum: east + (Math.sin(rad) * dist),
+        };
+      }
+
+      function midpointPoint(a, b) {
+        const ax = Number(a && a.xNum);
+        const ay = Number(a && a.yNum);
+        const bx = Number(b && b.xNum);
+        const by = Number(b && b.yNum);
+        if (!isFinite(ax) || !isFinite(ay) || !isFinite(bx) || !isFinite(by)) return null;
+        return { xNum: (ax + bx) / 2.0, yNum: (ay + by) / 2.0 };
+      }
+
       function getStaticDemoAssetLonLat(asset, index) {
         if (!staticDemoForceOwnshipAtPgua) return null;
         const baseLon = Number(staticDemoPguaLonLat[0]);
@@ -3231,22 +3269,52 @@
         if (!isFinite(baseLon) || !isFinite(baseLat)) return null;
 
         const category = String((asset && asset.category) || '').toUpperCase();
-        if (category === 'PLAYER') return [baseLon, baseLat];
+        const callsign = String((asset && asset.callsign) || '').toUpperCase().trim();
+        const typeName = String((asset && asset.typeName) || '').toUpperCase().trim();
+
+        if (category === 'PLAYER') {
+          const wp1 = findVisibleWaypointByStep(1);
+          const wp2 = findVisibleWaypointByStep(2);
+          const mid = midpointPoint(wp1, wp2);
+          const midLonLat = mid ? toLonLat(mid) : null;
+          if (Array.isArray(midLonLat) && midLonLat.length === 2) return midLonLat;
+          return [baseLon, baseLat];
+        }
+
+        const wp10 = findVisibleWaypointByStep(10);
+        if (wp10 && (category === 'TANKER' || callsign.indexOf('TEXACO') >= 0)) {
+          const p = { xNum: Number(wp10.xNum), yNum: Number(wp10.yNum) + (15 * 1852.0) };
+          const ll = toLonLat(p);
+          if (Array.isArray(ll) && ll.length === 2) return ll;
+        }
+
+        if (wp10 && (category === 'AWACS' || typeName.indexOf('E-2') >= 0 || callsign.indexOf('MAGIC') >= 0 || callsign.indexOf('OVERLORD') >= 0)) {
+          const p = offsetPointByBearingDistance(wp10, 315, 25 * 1852.0);
+          const ll = p ? toLonLat(p) : null;
+          if (Array.isArray(ll) && ll.length === 2) return ll;
+        }
+
+        const wp5 = findVisibleWaypointByStep(5);
+        if (wp5 && category === 'JTAC' && callsign.indexOf('AXEMAN 2-1') >= 0) {
+          const p = offsetPointByBearingDistance(wp5, 202.5, 1600);
+          const ll = p ? toLonLat(p) : null;
+          if (Array.isArray(ll) && ll.length === 2) return ll;
+        }
 
         const kind = String(getMudMapAssetKind(asset) || '').toLowerCase();
         const slot = Math.max(0, Number(index) || 0) % 4;
         const kindOffsets = {
-          awacs: [0.090, 0.070],
-          tanker: [0.060, 0.040],
-          jtac: [0.040, -0.020],
-          'jtac-target': [0.070, -0.040],
-          rotary: [0.030, 0.020],
-          marker: [0.020, -0.030],
-          fixed: [0.050, 0.025],
+          awacs: [0.050, 0.040],
+          tanker: [0.035, 0.028],
+          jtac: [0.025, -0.015],
+          'jtac-target': [0.040, -0.028],
+          rotary: [0.020, 0.016],
+          marker: [0.012, -0.016],
+          fixed: [0.030, 0.020],
         };
         const offset = kindOffsets[kind] || kindOffsets.fixed;
-        const lon = baseLon + Number(offset[0]) + (slot * 0.010);
-        const lat = baseLat + Number(offset[1]) - (slot * 0.006);
+        const lon = baseLon + Number(offset[0]) + (slot * 0.006);
+        const lat = baseLat + Number(offset[1]) - (slot * 0.004);
         return [lon, lat];
       }
 
@@ -3414,7 +3482,37 @@
         });
       }
 
-      rawAssets.concat(activeJtacAsset ? [activeJtacAsset] : []).concat(historyJtacAssets).forEach(function (asset, assetIndex) {
+      const staticDemoInjectedAssets = (function () {
+        if (!staticDemoForceOwnshipAtPgua) return [];
+        const wp5 = findVisibleWaypointByStep(5);
+        if (!wp5) return [];
+        const jtacPoint = offsetPointByBearingDistance(wp5, 202.5, 1600);
+        if (!jtacPoint) return [];
+        return [{
+          callsign: 'AXEMAN 2-1',
+          name: 'AXEMAN 2-1',
+          category: 'JTAC',
+          typeName: 'JTAC',
+          icaoType: '',
+          frequency: '132.400',
+          altFrequencies: [],
+          tacan: '',
+          mpClientCallsign: '',
+          altFeet: 0,
+          markerId: 0,
+          markerDisplayId: 0,
+          markerText: '',
+          xNum: Number(jtacPoint.xNum),
+          yNum: Number(jtacPoint.yNum),
+        }];
+      })();
+
+      const mapAssetsForRender = rawAssets
+        .concat(staticDemoInjectedAssets)
+        .concat(activeJtacAsset ? [activeJtacAsset] : [])
+        .concat(historyJtacAssets);
+
+      mapAssetsForRender.forEach(function (asset, assetIndex) {
         const category = String((asset && asset.category) || '').toUpperCase();
         if (category === 'ATC') return;
         const isPlayer = category === 'PLAYER';
