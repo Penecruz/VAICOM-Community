@@ -1279,7 +1279,11 @@
     pollEfbSaOwnshipFast();
     pollFastAvBus();
     updateFakeMissionControlsUi();
-    tick();
+    tick().finally(function () {
+      if (!fakeMissionEnabled) {
+        startFakeMissionMode();
+      }
+    });
     clockTick();
     runtimeState.timers.clockTickTimer = setInterval(clockTick, 250);
     setInterval(tick, 1000);
