@@ -3183,6 +3183,38 @@
         });
       });
 
+      const ownshipPoint = getPlayerMapPoint(model);
+      const shouldAlignStaticDemoAssets = isStaticMarianasDemo && !fakeMissionEnabled;
+      let staticDemoAssetDeltaX = 0;
+      let staticDemoAssetDeltaY = 0;
+      if (shouldAlignStaticDemoAssets && ownshipPoint && visibleRows.length) {
+        const ownX = Number(ownshipPoint.xNum);
+        const ownY = Number(ownshipPoint.yNum);
+        const anchor = visibleRows[0] || null;
+        const anchorX = Number(anchor && anchor.xNum);
+        const anchorY = Number(anchor && anchor.yNum);
+        if (isFinite(ownX) && isFinite(ownY) && isFinite(anchorX) && isFinite(anchorY)) {
+          const dx = anchorX - ownX;
+          const dy = anchorY - ownY;
+          const horizontalBias = Math.abs(dy) > (Math.abs(dx) * 1.5);
+          staticDemoAssetDeltaX = horizontalBias ? 0 : dx;
+          staticDemoAssetDeltaY = dy;
+        }
+      }
+
+      function alignStaticDemoAssetPoint(point) {
+        if (!shouldAlignStaticDemoAssets) return point;
+        const p = point && typeof point === 'object' ? point : null;
+        if (!p) return point;
+        const xNum = Number(p.xNum);
+        const yNum = Number(p.yNum);
+        if (!isFinite(xNum) || !isFinite(yNum)) return point;
+        return Object.assign({}, p, {
+          xNum: xNum + staticDemoAssetDeltaX,
+          yNum: yNum + staticDemoAssetDeltaY,
+        });
+      }
+
       if (bullseyePoint) {
         addPointFeature(bullseyePoint, {
           kind: 'bullseye',
@@ -3197,15 +3229,16 @@
       (Array.isArray(mapOverlays.airfields) ? mapOverlays.airfields : []).forEach(function (p) {
         const isVfr = !!(p && p.isVfr);
         const stroke = isVfr ? '#4aa360' : '#3a8fd0';
+        const alignedAirfield = alignStaticDemoAssetPoint(p);
         const airfieldType = String((p && p.type) || 'airport').toLowerCase();
         const airfieldAsset = {
           callsign: String((p && p.callsign) || '').trim(),
           name: String((p && p.name) || (p && p.label) || '').trim(),
           category: 'ATC',
-          xNum: Number(p && p.xNum),
-          yNum: Number(p && p.yNum),
+          xNum: Number(alignedAirfield && alignedAirfield.xNum),
+          yNum: Number(alignedAirfield && alignedAirfield.yNum),
         };
-        addPointFeature(p, {
+        addPointFeature(alignedAirfield, {
           kind: 'airfield',
           group: 'asset',
           assetKey: makeMapAssetSelectionKey(airfieldAsset),
@@ -3233,7 +3266,6 @@
 
       const selected = getActiveFlightPlanSelection(model);
         const rawAssets = getMudMapAssets(model, dlinkOnEnabled, allowJtacTargets);
-      const ownshipPoint = getPlayerMapPoint(model);
       const ownshipHeadingResolver = (typeof getOwnshipHeadingDeg === 'function')
         ? getOwnshipHeadingDeg
         : function () { return NaN; };
@@ -3346,9 +3378,10 @@
         const category = String((asset && asset.category) || '').toUpperCase();
         if (category === 'ATC') return;
         const isPlayer = category === 'PLAYER';
-        const plottedAsset = (isPlayer && ownshipPoint && isFinite(Number(ownshipPoint.xNum)) && isFinite(Number(ownshipPoint.yNum)))
+        const plottedAssetBase = (isPlayer && ownshipPoint && isFinite(Number(ownshipPoint.xNum)) && isFinite(Number(ownshipPoint.yNum)))
           ? Object.assign({}, asset || {}, { xNum: Number(ownshipPoint.xNum), yNum: Number(ownshipPoint.yNum) })
           : asset;
+        const plottedAsset = alignStaticDemoAssetPoint(plottedAssetBase);
         const callsign = String((asset && asset.callsign) || '').trim();
         const mpClientCallsign = String((asset && asset.mpClientCallsign) || '').trim();
         const label = isPlayer
