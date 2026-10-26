@@ -7,11 +7,11 @@
       "isbeta": false,
       "isdev": false,
       "productid": 1,
-      "releasedate": 20261025,
-      "version": 3192,
-      "versionstring": "3.1.9.2",
+      "releasedate": 20261026,
+      "version": 3193,
+      "versionstring": "3.1.9.3",
       "downloadurl": "https://raw.githubusercontent.com/Penecruz/VAICOM-Community/Development/VAICOM_Installer/Resources/VAICOMPRO.zip",
-      "releasenotes": "BETA 3.1.9.2 \n - Move VKB BRA/BE display ribbon down on EFB Map both Portrait and Landscape orientations. \n - VKB Tab Rail handling in Landscape orientaton on small devices now scales correctly. \n - VKB FLT PLN Tab NAVLOG column scaling now has minimum width for readability and if required adds horizontal table psition bar at bottom of NALOG (iPad mini). \n - DIR TO/DEL STP function now works similar to Alt/SPD popup edits, single click STP number and then select required mode to arm, click desired SIR TO STP or STP to delete. \n - Fix VKB NAVLOG Metric units handling. "
+      "releasenotes": "BETA 3.1.9.3 \n - Move VKB BRA/BE display ribbon down on EFB Map both Portrait and Landscape orientations. \n - VKB Tab Rail handling in Landscape orientaton on small devices now scales correctly. \n - VKB FLT PLN Tab NAVLOG column scaling now has minimum width for readability and if required adds horizontal table psition bar at bottom of NALOG (iPad mini). \n - DIR TO/DEL STP function now works similar to Alt/SPD popup edits, single click STP number and then select required mode to arm, click desired SIR TO STP or STP to delete. \n - Fix VKB NAVLOG Metric units handling.\n - Fix last deleted F10 marker remains in VKB Map markers list and on EFB Moving Map. \n - Add protection against slow DCs module disconnect and retry if reconnect fails first time due to socket not released. "
     }
   ]
 }
