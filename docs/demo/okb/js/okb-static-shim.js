@@ -1,5 +1,6 @@
 (function () {
-  const MOCK_ROOT = '/mock-api/okb';
+  const MOCK_ROOT_URL = new URL('../mock-api/okb/', window.location.href);
+  const HELP_DOC_URL = new URL('./docs/OKBHelpDoc.html', window.location.href);
   const LUA_FILE = 'MarianaIslands.lua';
   const HISTORY_KEY = 'vaicom.demo.okb.historytracks';
 
@@ -244,14 +245,14 @@
     if (bootPromise) return bootPromise;
 
     bootPromise = (async function () {
-      baseState = await loadJson(MOCK_ROOT + '/state.json', {});
-      baseClock = await loadJson(MOCK_ROOT + '/clock.json', {});
-      baseOwnship = await loadJson(MOCK_ROOT + '/ownship.json', {});
-      baseAvbus = await loadJson(MOCK_ROOT + '/avbus.json', {});
-      baseAirports = await loadJson(MOCK_ROOT + '/airports.json', { airports: [], airportNames: {}, provider: 'mock' });
-      baseCharts = await loadJson(MOCK_ROOT + '/charts.json', { charts: [], provider: 'mock' });
+      baseState = await loadJson(new URL('state.json', MOCK_ROOT_URL).href, {});
+      baseClock = await loadJson(new URL('clock.json', MOCK_ROOT_URL).href, {});
+      baseOwnship = await loadJson(new URL('ownship.json', MOCK_ROOT_URL).href, {});
+      baseAvbus = await loadJson(new URL('avbus.json', MOCK_ROOT_URL).href, {});
+      baseAirports = await loadJson(new URL('airports.json', MOCK_ROOT_URL).href, { airports: [], airportNames: {}, provider: 'mock' });
+      baseCharts = await loadJson(new URL('charts.json', MOCK_ROOT_URL).href, { charts: [], provider: 'mock' });
 
-      const lua = await loadText(MOCK_ROOT + '/' + LUA_FILE, '');
+      const lua = await loadText(new URL(LUA_FILE, MOCK_ROOT_URL).href, '');
       routeLibrary = parseRouteToolLua(lua);
       missionStartMs = Date.now();
     })();
@@ -260,14 +261,23 @@
   }
 
   function parseInputUrl(input) {
-    if (typeof input === 'string') return new URL(input, window.location.origin);
-    if (input && typeof input.url === 'string') return new URL(input.url, window.location.origin);
-    return new URL(String(input || ''), window.location.origin);
+    if (typeof input === 'string') return new URL(input, window.location.href);
+    if (input && typeof input.url === 'string') return new URL(input.url, window.location.href);
+    return new URL(String(input || ''), window.location.href);
+  }
+
+  function normalizeOkbPath(pathname) {
+    const lower = String(pathname || '').toLowerCase();
+    if (!lower) return '/';
+    const okbIdx = lower.indexOf('/okb/');
+    if (okbIdx >= 0) return lower.substring(okbIdx);
+    if (lower.endsWith('/okb')) return '/okb';
+    return lower;
   }
 
   window.fetch = async function (input, init) {
     const reqUrl = parseInputUrl(input);
-    const path = reqUrl.pathname.toLowerCase();
+    const path = normalizeOkbPath(reqUrl.pathname);
     const method = String((init && init.method) || (input && input.method) || 'GET').toUpperCase();
 
     const intercept =
@@ -327,7 +337,7 @@
 
     if (path === '/okb/helpdoc') {
       try {
-        return await nativeFetch('/okb/docs/OKBHelpDoc.html', { cache: 'no-store' });
+        return await nativeFetch(HELP_DOC_URL.href, { cache: 'no-store' });
       } catch (_) {
         return toTextResponse('Help content is unavailable in static shim mode.', 200);
       }
