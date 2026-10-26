@@ -1234,6 +1234,19 @@
     efbSaTrackUpEnabled = readEfbSaTrackUpEnabledPreference();
     efbSaAnchorMode = readEfbSaAnchorModePreference();
     efbSaUseFastOwnshipEnabled = readEfbSaUseFastOwnshipPreference();
+
+    // Static demo default behavior: open directly to EFB SA map and center on ownship.
+    // This keeps airport symbols, waypoints, and ownship aligned on first load without
+    // requiring SIM TEST MODE auto-start.
+    const isStaticOkbDemo = String((window && window.location && window.location.pathname) || '')
+      .toLowerCase()
+      .indexOf('/demo/okb/') >= 0;
+    if (isStaticOkbDemo) {
+      selectedTab = 'EFB';
+      efbViewerMode = 'sa-map';
+      efbSaFollowOwnshipEnabled = true;
+      efbSaAnchorMode = 'center';
+    }
     efbAdLandingEnabled = readEfbAdLandingEnabledPreference();
     applyEfbAdLandingUi();
     autoAtaRecSpdEnabled = readAutoAtaRecSpdEnabledPreference();
@@ -1279,11 +1292,7 @@
     pollEfbSaOwnshipFast();
     pollFastAvBus();
     updateFakeMissionControlsUi();
-    tick().finally(function () {
-      if (!fakeMissionEnabled) {
-        startFakeMissionMode();
-      }
-    });
+    tick();
     clockTick();
     runtimeState.timers.clockTickTimer = setInterval(clockTick, 250);
     setInterval(tick, 1000);
