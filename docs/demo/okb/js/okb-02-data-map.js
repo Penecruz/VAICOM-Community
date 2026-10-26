@@ -1116,6 +1116,37 @@
       return html;
     }
 
+    function tryBuildEfbLocalChartAssetUrl(chartId) {
+      const raw = String(chartId || '').trim();
+      if (raw.toLowerCase().indexOf('local:') !== 0) return '';
+
+      const rest = raw.substring(6);
+      const sep = rest.indexOf(':');
+      if (sep <= 0) return '';
+
+      // local:<ICAO>:<encoded-relative-path>
+      const airport = String(rest.substring(0, sep) || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 8);
+      let relativePath = String(rest.substring(sep + 1) || '');
+      try { relativePath = decodeURIComponent(relativePath); } catch (_) { }
+      relativePath = relativePath.replace(/\\/g, '/').replace(/^\/+/, '').trim();
+      if (!airport || !relativePath || relativePath.indexOf('..') >= 0) return '';
+
+      // Build direct static asset URL so <img src> works without fetch interception.
+      return new URL(relativePath, new URL('./assets/' + airport + '/', window.location.href)).href;
+    }
+
+    function getEfbChartImageUrl(selectedChartId, nightModeEnabled) {
+      const id = String(selectedChartId || '').trim();
+      if (!id) return '';
+
+      const localAssetUrl = tryBuildEfbLocalChartAssetUrl(id);
+      if (localAssetUrl) return localAssetUrl;
+
+      const isNavigraphChart = id.toLowerCase().indexOf('nav:') === 0;
+      const chartMode = (nightModeEnabled && isNavigraphChart) ? '&mode=night' : '';
+      return '/okb/efb/chart?id=' + encodeURIComponent(id) + chartMode;
+    }
+
     function formatEfbTabContentHtml(data) {
       const gate = getEfbModuleGateState(data);
       if (!gate.allowed) {
@@ -1177,10 +1208,7 @@
       const selectedChart = charts.find(function (c) { return String((c && c.id) || '') === selected; }) || null;
       const selectedChartId = String((selectedChart && selectedChart.id) || '');
       const isNavigraphChart = selectedChartId.toLowerCase().indexOf('nav:') === 0;
-      const chartMode = (nightModeEnabled && isNavigraphChart) ? '&mode=night' : '';
-      const chartUrl = selectedChart
-        ? ('/okb/efb/chart?id=' + encodeURIComponent(selectedChartId) + chartMode)
-        : '';
+      const chartUrl = selectedChart ? getEfbChartImageUrl(selectedChartId, nightModeEnabled) : '';
       const drawerTitle = efbDrawerMode === 'chart'
         ? ('Charts · ' + escapeHtml(airportKey || 'UNSET'))
         : (efbDrawerMode === 'sa-layers' ? 'SA Map Layers'
