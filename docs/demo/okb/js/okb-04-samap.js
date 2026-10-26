@@ -2654,7 +2654,11 @@
           .filter(function (row) { return row && row.visible !== false && Array.isArray(row.points) && row.points.length; })
         : [];
 
-      function toLonLat(point) {
+      const theatreNorm = String(theatre || '').replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+      const isStaticMarianasDemo = theatreNorm === 'MARIANAISLANDS'
+        && String((window && window.location && window.location.pathname) || '').toLowerCase().indexOf('/demo/okb/') >= 0;
+
+      function toLonLat(point, options) {
         const north = Number(point && point.xNum);
         const east = Number(point && point.yNum);
         if (!isFinite(north) || !isFinite(east)) return null;
@@ -2666,14 +2670,24 @@
             && Math.abs(Number(lon)) <= 180;
         }
 
+        const opts = options && typeof options === 'object' ? options : {};
+        const preferSwapped = !!opts.preferSwapped;
         const llPrimary = convertDcsXYToLatLon(theatre, north, east);
-        if (llPrimary && validLonLat(llPrimary.lon, llPrimary.lat)) {
-          return [Number(llPrimary.lon), Number(llPrimary.lat)];
-        }
-
         const llSwapped = convertDcsXYToLatLon(theatre, east, north);
-        if (llSwapped && validLonLat(llSwapped.lon, llSwapped.lat)) {
-          return [Number(llSwapped.lon), Number(llSwapped.lat)];
+        if (preferSwapped) {
+          if (llSwapped && validLonLat(llSwapped.lon, llSwapped.lat)) {
+            return [Number(llSwapped.lon), Number(llSwapped.lat)];
+          }
+          if (llPrimary && validLonLat(llPrimary.lon, llPrimary.lat)) {
+            return [Number(llPrimary.lon), Number(llPrimary.lat)];
+          }
+        } else {
+          if (llPrimary && validLonLat(llPrimary.lon, llPrimary.lat)) {
+            return [Number(llPrimary.lon), Number(llPrimary.lat)];
+          }
+          if (llSwapped && validLonLat(llSwapped.lon, llSwapped.lat)) {
+            return [Number(llSwapped.lon), Number(llSwapped.lat)];
+          }
         }
 
         if (validLonLat(east, north)) {
@@ -2757,8 +2771,8 @@
       const pointsForBounds = [];
       const features = [];
 
-      function addPointFeature(point, props) {
-        const lonLat = toLonLat(point);
+      function addPointFeature(point, props, options) {
+        const lonLat = toLonLat(point, options);
         if (!lonLat) return;
         pointsForBounds.push(lonLat);
         features.push({
@@ -3213,7 +3227,7 @@
           stroke: stroke,
           textColor: stroke,
           radius: 5,
-        });
+        }, { preferSwapped: isStaticMarianasDemo });
       });
 
       const selected = getActiveFlightPlanSelection(model);
@@ -3360,7 +3374,7 @@
           tacan: String((asset && asset.tacan) || '').trim(),
           mpClientCallsign: mpClientCallsign,
           altFeet: Number(asset && asset.altFeet),
-        });
+        }, { preferSwapped: isStaticMarianasDemo });
       });
 
       const missionDrawingObjects = getMissionDrawingObjectsForSaMap(model);
