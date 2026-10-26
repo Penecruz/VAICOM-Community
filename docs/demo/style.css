@@ -35,6 +35,25 @@ body {
   letter-spacing: 0.08em;
 }
 
+.quickLinkWrap {
+  margin: 10px 0 0;
+}
+
+.primaryLink {
+  display: inline-block;
+  background: #1d4ed8;
+  color: #ffffff;
+  text-decoration: none;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.primaryLink:hover {
+  background: #2563eb;
+}
+
 .endpoint {
   margin-top: 8px;
   color: #93c5fd;
