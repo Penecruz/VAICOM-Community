@@ -8,11 +8,11 @@
     "DcsLocation": "Mariana Islands",
     "ModuleConnected": true,
     "Aircraft": "F/A-18C",
-    "PlayerUsername": "DemoPilot",
-    "PlayerCallsign": "Springfield 1-1",
+    "PlayerUsername": "Maverick",
+    "PlayerCallsign": "Sting 1-1",
     "MissionTitle": "VAICOM Community Demo",
-    "MissionBriefing": "Mock briefing for dashboard testing.",
-    "MissionDetails": "No live DCS/VAICOM connection. Local mock endpoint only.",
+    "MissionBriefing": "Mock briefing for VAICOM Kneeboard Demo Mode.",
+    "MissionDetails": "No live DCS/VAICOM connection. The data here is basically a web mockup although all the functions for the UI work, what you are seeing is static data. In a live connection to DCS the data is dynamically generated from the DCS lua environment, aircaft frequencies, TACAN channels, positions, weather, stores and more is pulled from the running mission or server. This demo is designed to give you a feel for how the Kneeboard functions, Flight Plan managment and the Moving Map. ",
     "MissionTimeSeconds": 45296,
     "PlayerPosX": -283451.2,
     "PlayerPosY": 60291.9,
@@ -49,7 +49,7 @@
     ],
     "FlightMembers": [
       {
-        "Callsign": "Springfield 1-2",
+        "Callsign": "Sting 1-2",
         "Aircraft": "F/A-18C"
       }
     ],
