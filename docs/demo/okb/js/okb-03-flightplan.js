@@ -3585,11 +3585,18 @@
 
       const model = data || latestData || {};
       const theater = String(resolveOpenFreeMapFallbackTheatreText(model) || efbSaOwnshipFast.theater || '').trim();
+      const theaterNorm = theater.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+      const diagnostics = ((model && model.Server) || {}).Diagnostics || {};
+      const isStaticMarianasDemo = theaterNorm === 'MARIANAISLANDS' && !!diagnostics.MockMode;
       const llPrimary = convertDcsXYToLatLon(theater, Number(ownship.xNum), Number(ownship.yNum));
       const llSwap = convertDcsXYToLatLon(theater, Number(ownship.yNum), Number(ownship.xNum));
-      const ll = (llPrimary && isFinite(Number(llPrimary.lon)) && isFinite(Number(llPrimary.lat)))
-        ? llPrimary
-        : ((llSwap && isFinite(Number(llSwap.lon)) && isFinite(Number(llSwap.lat))) ? llSwap : null);
+      const ll = isStaticMarianasDemo
+        ? ((llSwap && isFinite(Number(llSwap.lon)) && isFinite(Number(llSwap.lat)))
+          ? llSwap
+          : ((llPrimary && isFinite(Number(llPrimary.lon)) && isFinite(Number(llPrimary.lat))) ? llPrimary : null))
+        : ((llPrimary && isFinite(Number(llPrimary.lon)) && isFinite(Number(llPrimary.lat)))
+          ? llPrimary
+          : ((llSwap && isFinite(Number(llSwap.lon)) && isFinite(Number(llSwap.lat))) ? llSwap : null));
       if (!ll) return false;
 
       const payload = item.payload || {};

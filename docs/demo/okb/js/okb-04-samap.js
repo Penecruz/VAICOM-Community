@@ -2655,8 +2655,9 @@
         : [];
 
       const theatreNorm = String(theatre || '').replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+      const mockMode = !!(diagnostics && diagnostics.MockMode);
       const isStaticMarianasDemo = theatreNorm === 'MARIANAISLANDS'
-        && String((window && window.location && window.location.pathname) || '').toLowerCase().indexOf('/demo/okb/') >= 0;
+        && (mockMode || String((window && window.location && window.location.pathname) || '').toLowerCase().indexOf('/demo/okb/') >= 0);
 
       function toLonLat(point, options) {
         const north = Number(point && point.xNum);
