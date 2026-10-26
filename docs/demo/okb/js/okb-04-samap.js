@@ -3185,25 +3185,30 @@
 
       const ownshipPoint = getPlayerMapPoint(model);
       const shouldAlignStaticDemoAssets = isStaticMarianasDemo && !fakeMissionEnabled;
+      const staticDemoPgua = shouldAlignStaticDemoAssets
+        ? (Array.isArray(mapOverlays.airfields) ? mapOverlays.airfields : []).find(function (af) {
+          const icao = String((af && af.icao) || '').toUpperCase().trim();
+          return icao === 'PGUA';
+        })
+        : null;
+      const staticDemoPguaX = Number(staticDemoPgua && staticDemoPgua.xNum);
+      const staticDemoPguaY = Number(staticDemoPgua && staticDemoPgua.yNum);
+      const staticDemoForceOwnshipAtPgua = shouldAlignStaticDemoAssets
+        && isFinite(staticDemoPguaX)
+        && isFinite(staticDemoPguaY);
       let staticDemoAssetDeltaX = 0;
       let staticDemoAssetDeltaY = 0;
-      if (shouldAlignStaticDemoAssets && ownshipPoint && visibleRows.length) {
+      if (staticDemoForceOwnshipAtPgua && ownshipPoint) {
         const ownX = Number(ownshipPoint.xNum);
         const ownY = Number(ownshipPoint.yNum);
-        const anchor = visibleRows[0] || null;
-        const anchorX = Number(anchor && anchor.xNum);
-        const anchorY = Number(anchor && anchor.yNum);
-        if (isFinite(ownX) && isFinite(ownY) && isFinite(anchorX) && isFinite(anchorY)) {
-          const dx = anchorX - ownX;
-          const dy = anchorY - ownY;
-          const horizontalBias = Math.abs(dy) > (Math.abs(dx) * 1.5);
-          staticDemoAssetDeltaX = horizontalBias ? 0 : dx;
-          staticDemoAssetDeltaY = dy;
+        if (isFinite(ownX) && isFinite(ownY)) {
+          staticDemoAssetDeltaX = staticDemoPguaX - ownX;
+          staticDemoAssetDeltaY = staticDemoPguaY - ownY;
         }
       }
 
       function alignStaticDemoAssetPoint(point) {
-        if (!shouldAlignStaticDemoAssets) return point;
+        if (!staticDemoForceOwnshipAtPgua) return point;
         const p = point && typeof point === 'object' ? point : null;
         if (!p) return point;
         const xNum = Number(p.xNum);
@@ -3229,16 +3234,15 @@
       (Array.isArray(mapOverlays.airfields) ? mapOverlays.airfields : []).forEach(function (p) {
         const isVfr = !!(p && p.isVfr);
         const stroke = isVfr ? '#4aa360' : '#3a8fd0';
-        const alignedAirfield = alignStaticDemoAssetPoint(p);
         const airfieldType = String((p && p.type) || 'airport').toLowerCase();
         const airfieldAsset = {
           callsign: String((p && p.callsign) || '').trim(),
           name: String((p && p.name) || (p && p.label) || '').trim(),
           category: 'ATC',
-          xNum: Number(alignedAirfield && alignedAirfield.xNum),
-          yNum: Number(alignedAirfield && alignedAirfield.yNum),
+          xNum: Number(p && p.xNum),
+          yNum: Number(p && p.yNum),
         };
-        addPointFeature(alignedAirfield, {
+        addPointFeature(p, {
           kind: 'airfield',
           group: 'asset',
           assetKey: makeMapAssetSelectionKey(airfieldAsset),
@@ -3378,10 +3382,12 @@
         const category = String((asset && asset.category) || '').toUpperCase();
         if (category === 'ATC') return;
         const isPlayer = category === 'PLAYER';
-        const plottedAssetBase = (isPlayer && ownshipPoint && isFinite(Number(ownshipPoint.xNum)) && isFinite(Number(ownshipPoint.yNum)))
-          ? Object.assign({}, asset || {}, { xNum: Number(ownshipPoint.xNum), yNum: Number(ownshipPoint.yNum) })
-          : asset;
-        const plottedAsset = alignStaticDemoAssetPoint(plottedAssetBase);
+        const plottedAssetBase = (isPlayer && staticDemoForceOwnshipAtPgua)
+          ? Object.assign({}, asset || {}, { xNum: staticDemoPguaX, yNum: staticDemoPguaY })
+          : ((isPlayer && ownshipPoint && isFinite(Number(ownshipPoint.xNum)) && isFinite(Number(ownshipPoint.yNum)))
+            ? Object.assign({}, asset || {}, { xNum: Number(ownshipPoint.xNum), yNum: Number(ownshipPoint.yNum) })
+            : asset);
+        const plottedAsset = isPlayer ? plottedAssetBase : alignStaticDemoAssetPoint(plottedAssetBase);
         const callsign = String((asset && asset.callsign) || '').trim();
         const mpClientCallsign = String((asset && asset.mpClientCallsign) || '').trim();
         const label = isPlayer
