@@ -1,7 +1,7 @@
 {
-  "module": "F-14B(U)",
+  "module": "F/A-18C",
   "callsign": "Springfield 1-1",
-  "theater": "Caucasus",
+  "theater": "MarianaIslands",
   "mission": "Community Demo Flight",
   "status": "Connected (mock)",
   "lastUpdateUtc": "2026-10-25T12:00:00Z",
