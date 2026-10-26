@@ -17,6 +17,9 @@
   let routeLibrary = [];
   let selectedRouteToken = '';
   let missionStartMs = Date.now();
+  let baseHelpDocHtml = '';
+
+  const HELP_DOC_SCOPED_STYLE = `<style>.okbHelpDocScope{font-family:'Segoe UI',Tahoma,Arial,sans-serif;color:#14263a !important;line-height:1.45;background:transparent;}.okbHelpDocScope *{writing-mode:horizontal-tb !important;text-orientation:mixed !important;transform:none !important;}.okbHelpDocScope,.okbHelpDocScope p,.okbHelpDocScope li,.okbHelpDocScope span,.okbHelpDocScope div{color:#14263a !important;}.okbHelpDocScope h2{margin:0 0 10px 0;font-size:22px;border-bottom:1px solid #c7d3df;padding-bottom:4px;color:#0f2438 !important;}.okbHelpDocScope h3{margin:12px 0 8px 0;font-size:18px;color:#16324b !important;}.okbHelpDocScope h4,.okbHelpDocScope h5,.okbHelpDocScope h6{margin:10px 0 6px 0;color:#1b3953 !important;}.okbHelpDocScope p{margin:8px 0;}.okbHelpDocScope ul,.okbHelpDocScope ol{margin:6px 0 10px 24px;padding:0;text-align:left !important;list-style-position:outside;}.okbHelpDocScope li{margin:4px 0;}.okbHelpDocScope strong,.okbHelpDocScope b{color:#0f2a43 !important;font-weight:700;}.okbHelpDocScope em,.okbHelpDocScope i{color:#1a3a56 !important;}.okbHelpDocScope code{background:#eaf1f8;border:1px solid #d5e2ef;border-radius:4px;padding:1px 5px;}.okbHelpDocScope pre{background:#eef4fb;border:1px solid #d5e2ef;border-radius:8px;padding:8px;overflow:auto;color:#11283f !important;}.okbHelpDocScope .tab{background:#ffffff;border:1px solid #c7d3df;border-radius:10px;padding:12px;margin-bottom:12px;display:block;}.okbHelpDocScope .controls{display:block !important;border-left:4px solid #9fb8d4;padding-left:10px;margin-top:10px;text-align:left !important;background:rgba(245,249,255,0.62);border-radius:0 6px 6px 0;}.okbHelpDocScope .controls > h3{display:block !important;margin:0 0 6px 0 !important;text-align:left !important;clear:both;}.okbHelpDocScope .controls > ul,.okbHelpDocScope .controls > ol{display:block !important;margin:0 0 12px 28px !important;padding:0 !important;text-align:left !important;clear:both;}.okbHelpDocScope a{color:#1a4b84;text-decoration:underline;font-weight:600;}.okbHelpDocScope table{width:100%;border-collapse:collapse;margin:10px 0;color:#112a42 !important;}.okbHelpDocScope th,.okbHelpDocScope td{border:1px solid #c7d3df;padding:6px 8px;text-align:left;vertical-align:top;}.okbHelpDocScope th{background:#edf3fa;color:#0f2a43 !important;}.okbHelpDocScope hr{border:none;border-top:1px solid #c7d3df;margin:14px 0;}.okbHelpDocScope .helpImage{display:block;max-width:92%;height:auto;margin:12px auto;border:1px solid #c7d3df;border-radius:8px;background:#fff;}.okbHelpDocScope .helpImageCaption{margin:4px auto 12px auto;text-align:center;font-size:14px;color:#3c5166;}body.night-mode .okbHelpDocScope{color:#dfe8f2;}body.night-mode .okbHelpDocScope,body.night-mode .okbHelpDocScope p,body.night-mode .okbHelpDocScope li,body.night-mode .okbHelpDocScope span,body.night-mode .okbHelpDocScope div{color:#dfe8f2 !important;}body.night-mode .okbHelpDocScope .tab{background:rgba(45,57,72,0.62);border-color:#5f7184;}body.night-mode .okbHelpDocScope h2{border-bottom-color:#5f7184;color:#eef5ff !important;}body.night-mode .okbHelpDocScope h3{color:#d7e8ff !important;}body.night-mode .okbHelpDocScope h4,body.night-mode .okbHelpDocScope h5,body.night-mode .okbHelpDocScope h6{color:#cfe1f7 !important;}body.night-mode .okbHelpDocScope strong,body.night-mode .okbHelpDocScope b{color:#f0f7ff !important;}body.night-mode .okbHelpDocScope em,body.night-mode .okbHelpDocScope i{color:#d2e7ff !important;}body.night-mode .okbHelpDocScope code{background:rgba(52,67,84,0.9);border-color:#5f7184;color:#e7eef8;}body.night-mode .okbHelpDocScope pre{background:rgba(41,54,69,0.9);border-color:#5f7184;color:#e7eef8 !important;}body.night-mode .okbHelpDocScope .controls{background:rgba(49,64,81,0.65);border-left-color:#7fa6ce;}body.night-mode .okbHelpDocScope a{color:#9bc8ff;}body.night-mode .okbHelpDocScope table,body.night-mode .okbHelpDocScope th,body.night-mode .okbHelpDocScope td{border-color:#5f7184;color:#e2ebf6 !important;}body.night-mode .okbHelpDocScope th{background:rgba(57,72,90,0.92);color:#f0f7ff !important;}body.night-mode .okbHelpDocScope hr{border-top-color:#5f7184;}body.night-mode .okbHelpDocScope .helpImage{border-color:#5f7184;background:rgba(35,47,61,0.9);}body.night-mode .okbHelpDocScope .helpImageCaption{color:#bfd5ec;}</style>`;
 
   function deepClone(value) {
     return JSON.parse(JSON.stringify(value));
@@ -151,6 +154,80 @@
     return routeLibrary.length ? routeLibrary[0] : null;
   }
 
+  function normalizeHelpDocSectionId(tab) {
+    const token = String(tab || '').trim().toUpperCase();
+    switch (token) {
+      case 'DTC':
+      case 'FLT PLN':
+      case 'FLTPLN':
+        return 'fltpln';
+      case 'ATC':
+      case 'WX/ATC':
+        return 'atc';
+      case 'AWACS':
+        return 'awacs';
+      case 'JTAC':
+        return 'jtac';
+      case 'TANKER':
+        return 'tanker';
+      case 'AOCS':
+        return 'aocs';
+      case 'FLIGHT':
+        return 'flight';
+      case 'AI CREW':
+      case 'AICREW':
+        return 'aicrew';
+      case 'GND CREW':
+      case 'GNDCREW':
+        return 'gndcrew';
+      case 'NOTES':
+        return 'notes';
+      case 'EFB':
+        return 'efb';
+      case 'LOG':
+      default:
+        return 'log';
+    }
+  }
+
+  function extractSectionById(html, sectionId) {
+    if (!html || !sectionId) return '';
+    const pattern = new RegExp(`<section\\b[^>]*\\bid\\s*=\\s*['\"]${sectionId.replace(/[.*+?^${}()|[\\]\\]/g, '\\$&')}['\"][^>]*>[\\s\\S]*?<\\/section>`, 'i');
+    const match = pattern.exec(html);
+    return match ? match[0] : '';
+  }
+
+  function transformHelpDocFragment(html) {
+    return String(html || '').replace(/\/okb\/helpimg\?name=/gi, 'Images/');
+  }
+
+  function buildHelpDocTabHtml(tab) {
+    try {
+      const html = String(baseHelpDocHtml || '');
+      if (!html.trim()) {
+        return '<p>Help document is empty.</p>';
+      }
+
+      const globalSection = extractSectionById(html, 'global');
+      const tabSection = extractSectionById(html, normalizeHelpDocSectionId(tab));
+
+      if (!globalSection.trim() && !tabSection.trim()) {
+        return '<p>No help content found for this tab.</p>';
+      }
+
+      const merged = !globalSection.trim()
+        ? (tabSection || '')
+        : (!tabSection.trim() ? globalSection : (globalSection + '\n' + tabSection));
+
+      return HELP_DOC_SCOPED_STYLE + "<div class='okbHelpDocScope'>" + transformHelpDocFragment(merged) + '</div>';
+    } catch (e) {
+      const msg = (e && e.message) ? String(e.message) : 'Unknown error';
+      return '<p>Failed to load help content: ' + msg.replace(/[&<>\"]/g, function (c) {
+        return c === '&' ? '&amp;' : c === '<' ? '&lt;' : c === '>' ? '&gt;' : '&quot;';
+      }) + '</p>';
+    }
+  }
+
   function buildState(selectedTab, selectedFile) {
     const state = deepClone(baseState || {});
     const route = pickSelectedRoute(selectedFile);
@@ -251,6 +328,7 @@
       baseAvbus = await loadJson(new URL('avbus.json', MOCK_ROOT_URL).href, {});
       baseAirports = await loadJson(new URL('airports.json', MOCK_ROOT_URL).href, { airports: [], airportNames: {}, provider: 'mock' });
       baseCharts = await loadJson(new URL('charts.json', MOCK_ROOT_URL).href, { charts: [], provider: 'mock' });
+      baseHelpDocHtml = await loadText(HELP_DOC_URL.href, '');
 
       const lua = await loadText(new URL(LUA_FILE, MOCK_ROOT_URL).href, '');
       routeLibrary = parseRouteToolLua(lua);
@@ -336,11 +414,12 @@
     }
 
     if (path === '/okb/helpdoc') {
-      try {
-        return await nativeFetch(HELP_DOC_URL.href, { cache: 'no-store' });
-      } catch (_) {
-        return toTextResponse('Help content is unavailable in static shim mode.', 200);
-      }
+      const tab = reqUrl.searchParams.get('tab') || '';
+      const payload = buildHelpDocTabHtml(tab);
+      return new Response(payload, {
+        status: 200,
+        headers: { 'Content-Type': 'text/html; charset=utf-8' }
+      });
     }
 
     return nativeFetch(input, init);
