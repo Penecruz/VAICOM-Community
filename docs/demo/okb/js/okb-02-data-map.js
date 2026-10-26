@@ -2617,6 +2617,7 @@
       }
 
       selectedTab = normalized;
+      ensureFakeMissionTakeoffWhenFltPlnActive();
       try {
         const token = encodeURIComponent(String(selectedTab || '').trim());
         fetch('state?selectedTab=' + token, { cache: 'no-store' }).catch(function () { });
@@ -3677,6 +3678,20 @@
       return clone;
     }
 
+    function ensureFakeMissionTakeoffWhenFltPlnActive() {
+      if (!fakeMissionEnabled || !fakeMissionState) return;
+      if (selectedTab !== 'DTC') return;
+      if (typeof setTakeoffTimeByAnchorFromNow !== 'function') return;
+
+      const selected = String(getActiveFlightPlanSelection(latestData) || '').trim();
+      if (!selected) return;
+      if (typeof hasTakeoffTimeBySelection === 'function' && hasTakeoffTimeBySelection(selected)) return;
+
+      // FLT PLN auto-prime: when sim test mode is active, first visit to FLT PLN
+      // should trigger TAKEOFF now so ownship movement starts immediately.
+      setTakeoffTimeByAnchorFromNow(selected, 'TAKEOFF');
+    }
+
     function startFakeMissionMode() {
       fakeMissionEnabled = true;
       fakeMissionSpeed = 1.0;
@@ -3691,6 +3706,7 @@
           altFeet: Number(fakeMissionState.playerAltFeet),
         };
       }
+      ensureFakeMissionTakeoffWhenFltPlnActive();
       dlinkOnEnabled = true;
       applyDlinkOnUi();
       fakeMissionLastRealMs = Date.now();
