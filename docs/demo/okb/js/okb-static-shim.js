@@ -1,6 +1,7 @@
 (function () {
   const MOCK_ROOT_URL = new URL('../mock-api/okb/', window.location.href);
   const HELP_DOC_URL = new URL('./docs/OKBHelpDoc.html', window.location.href);
+  const CHARTS_ASSETS_ROOT_URL = new URL('./assets/', window.location.href);
   const LUA_FILE = 'MarianaIslands.lua';
   const HISTORY_KEY = 'vaicom.demo.okb.historytracks';
 
@@ -14,6 +15,8 @@
   let baseAvbus = null;
   let baseAirports = null;
   let baseCharts = null;
+  let efbChartManifestByAirport = {};
+  let efbChartManifestLoadPromiseByAirport = {};
   let routeLibrary = [];
   let selectedRouteToken = '';
   let missionStartMs = Date.now();
@@ -284,6 +287,96 @@
     return av;
   }
 
+  function normalizeAirportCode(value) {
+    return String(value || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 8) || 'UNSET';
+  }
+
+  function getAirportManifestUrl(airport) {
+    return new URL(normalizeAirportCode(airport) + '/manifest.json', CHARTS_ASSETS_ROOT_URL).href;
+  }
+
+  function getLocalChartId(airport, relativePath) {
+    return 'local:' + normalizeAirportCode(airport) + ':' + encodeURIComponent(String(relativePath || ''));
+  }
+
+  function decodeLocalChartId(chartId) {
+    const raw = String(chartId || '');
+    const marker = 'local:';
+    if (raw.toLowerCase().indexOf(marker) !== 0) return null;
+    const rest = raw.substring(marker.length);
+    const sep = rest.indexOf(':');
+    if (sep <= 0) return null;
+
+    const airport = normalizeAirportCode(rest.substring(0, sep));
+    let relativePath = rest.substring(sep + 1);
+    try { relativePath = decodeURIComponent(relativePath); } catch (_) { }
+
+    relativePath = String(relativePath || '').replace(/\\/g, '/').replace(/^\/+/, '').trim();
+    if (!relativePath || relativePath.indexOf('..') >= 0) return null;
+
+    return { airport: airport, relativePath: relativePath };
+  }
+
+  function inferChartName(relativePath) {
+    const normalized = String(relativePath || '').replace(/\\/g, '/');
+    const fileName = normalized.split('/').pop() || normalized;
+    return fileName.replace(/\.[^.]+$/, '') || 'Chart';
+  }
+
+  function parseAirportManifestCharts(airport, manifest) {
+    const source = Array.isArray(manifest)
+      ? manifest
+      : (Array.isArray(manifest && manifest.charts) ? manifest.charts : []);
+
+    const charts = [];
+    for (let i = 0; i < source.length; i++) {
+      const item = source[i];
+      const file = typeof item === 'string'
+        ? item
+        : String((item && (item.file || item.path || item.src || item.image || '')) || '').trim();
+      if (!file) continue;
+
+      const safeFile = file.replace(/\\/g, '/').replace(/^\/+/, '').trim();
+      if (!safeFile || safeFile.indexOf('..') >= 0) continue;
+
+      charts.push({
+        id: getLocalChartId(airport, safeFile),
+        name: String((item && item.name) || inferChartName(safeFile)),
+        type: 'AIRPORT',
+        file: safeFile
+      });
+    }
+
+    return charts;
+  }
+
+  async function loadAirportCharts(airport) {
+    const key = normalizeAirportCode(airport);
+    if (Array.isArray(efbChartManifestByAirport[key])) return efbChartManifestByAirport[key];
+    if (efbChartManifestLoadPromiseByAirport[key]) return efbChartManifestLoadPromiseByAirport[key];
+
+    efbChartManifestLoadPromiseByAirport[key] = (async function () {
+      try {
+        const response = await nativeFetch(getAirportManifestUrl(key), { cache: 'no-store' });
+        if (!response.ok) {
+          efbChartManifestByAirport[key] = [];
+          return efbChartManifestByAirport[key];
+        }
+
+        const manifest = await response.json();
+        efbChartManifestByAirport[key] = parseAirportManifestCharts(key, manifest);
+        return efbChartManifestByAirport[key];
+      } catch (_) {
+        efbChartManifestByAirport[key] = [];
+        return efbChartManifestByAirport[key];
+      } finally {
+        delete efbChartManifestLoadPromiseByAirport[key];
+      }
+    })();
+
+    return efbChartManifestLoadPromiseByAirport[key];
+  }
+
   function loadHistoryTracks() {
     try {
       const raw = localStorage.getItem(HISTORY_KEY);
@@ -362,7 +455,7 @@
       path === '/okb/state' || path === '/okb/index.json' || path === '/okb/clock' ||
       path === '/okb/sa/ownship' || path === '/okb/fltpln/avbus' || path === '/okb/dtc/list' ||
       path === '/okb/dtc/select' || path === '/okb/efb/airports' || path === '/okb/efb/charts' ||
-      path === '/okb/efb/historytracks' || path === '/okb/dev/servermessages' ||
+      path === '/okb/efb/chart' || path === '/okb/efb/historytracks' || path === '/okb/dev/servermessages' ||
       path === '/okb/dev/refresh' || path === '/okb/helpdoc';
 
     if (!intercept) {
@@ -394,10 +487,35 @@
     }
 
     if (path === '/okb/efb/charts') {
-      const airport = reqUrl.searchParams.get('airport') || '';
-      const payload = deepClone(baseCharts || { charts: [], provider: 'mock' });
-      payload.airport = airport || payload.airport || '';
+      const airport = normalizeAirportCode(reqUrl.searchParams.get('airport') || '');
+      const charts = await loadAirportCharts(airport);
+      const payload = { airport: airport, charts: charts.map(function (c) { return { id: c.id, name: c.name, type: c.type }; }) };
       return toJsonResponse(payload);
+    }
+
+    if (path === '/okb/efb/chart') {
+      const chartId = reqUrl.searchParams.get('id') || '';
+      const parsed = decodeLocalChartId(chartId);
+      if (!parsed) {
+        return new Response('', { status: 404 });
+      }
+
+      try {
+        const chartUrl = new URL(parsed.relativePath, new URL(parsed.airport + '/', CHARTS_ASSETS_ROOT_URL)).href;
+        const chartResponse = await nativeFetch(chartUrl, { cache: 'no-store' });
+        if (!chartResponse.ok) {
+          return new Response('', { status: 404 });
+        }
+
+        const contentType = chartResponse.headers.get('content-type') || 'application/octet-stream';
+        const bytes = await chartResponse.arrayBuffer();
+        return new Response(bytes, {
+          status: 200,
+          headers: { 'Content-Type': contentType }
+        });
+      } catch (_) {
+        return new Response('', { status: 404 });
+      }
     }
 
     if (path === '/okb/efb/historytracks') {

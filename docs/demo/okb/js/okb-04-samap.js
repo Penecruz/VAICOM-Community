@@ -6052,14 +6052,22 @@
       return lines.join('\n');
     }
 
+    function normalizeMissionSummaryText(value) {
+      return String(value || '')
+        .replace(/\r/g, '')
+        .replace(/[ \t]+\n/g, '\n')
+        .replace(/\n{3,}/g, '\n\n')
+        .trim();
+    }
+
     function formatLogTabSummaryContent(data, server) {
       const parts = [];
-      const briefing = String((server && server.MissionBriefing) || '').trim();
-      const details = String((server && server.MissionDetails) || '').trim();
-      if (briefing) { parts.push('Mission Briefing:\n' + briefing); }
-      if (details) { parts.push('Mission Details:\n' + details); }
+      const briefing = normalizeMissionSummaryText(server && server.MissionBriefing);
+      const details = normalizeMissionSummaryText(server && server.MissionDetails);
+      if (briefing) { parts.push('Mission Briefing\n----------------\n' + briefing); }
+      if (details) { parts.push('Mission Details\n---------------\n' + details); }
       const log = getMergedLog(data.Logs, 'LOG');
-      if (log) { parts.push('Log:\n' + log); }
+      if (log) { parts.push('Log\n---\n' + log); }
       return parts.length ? parts.join('\n\n') : 'No log data yet.';
     }
 
