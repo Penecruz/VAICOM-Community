@@ -2786,6 +2786,22 @@
         });
       }
 
+      function addPointFeatureLonLat(lon, lat, props) {
+        const x = Number(lon);
+        const y = Number(lat);
+        if (!isFinite(x) || !isFinite(y) || Math.abs(x) > 180 || Math.abs(y) > 90) return;
+        const lonLat = [x, y];
+        pointsForBounds.push(lonLat);
+        features.push({
+          type: 'Feature',
+          geometry: {
+            type: 'Point',
+            coordinates: lonLat,
+          },
+          properties: props || {},
+        });
+      }
+
       function addLineFeature(points, props) {
         const coords = (Array.isArray(points) ? points : [])
           .map(function (p) { return toLonLat(p); })
@@ -3185,39 +3201,53 @@
 
       const ownshipPoint = getPlayerMapPoint(model);
       const shouldAlignStaticDemoAssets = isStaticMarianasDemo && !fakeMissionEnabled;
-      const staticDemoPgua = shouldAlignStaticDemoAssets
-        ? (Array.isArray(mapOverlays.airfields) ? mapOverlays.airfields : []).find(function (af) {
-          const icao = String((af && af.icao) || '').toUpperCase().trim();
-          return icao === 'PGUA';
-        })
-        : null;
-      const staticDemoPguaX = Number(staticDemoPgua && staticDemoPgua.xNum);
-      const staticDemoPguaY = Number(staticDemoPgua && staticDemoPgua.yNum);
+      const staticDemoMarianasAirportLonLatByIcao = {
+        PGUA: [144.9248, 13.5840],
+        PGUM: [144.7960, 13.4853],
+        PGSN: [145.7295, 15.1190],
+        PGWT: [145.6180, 14.9971],
+      };
+      const staticDemoPguaLonLat = staticDemoMarianasAirportLonLatByIcao.PGUA || null;
       const staticDemoForceOwnshipAtPgua = shouldAlignStaticDemoAssets
-        && isFinite(staticDemoPguaX)
-        && isFinite(staticDemoPguaY);
-      let staticDemoAssetDeltaX = 0;
-      let staticDemoAssetDeltaY = 0;
-      if (staticDemoForceOwnshipAtPgua && ownshipPoint) {
-        const ownX = Number(ownshipPoint.xNum);
-        const ownY = Number(ownshipPoint.yNum);
-        if (isFinite(ownX) && isFinite(ownY)) {
-          staticDemoAssetDeltaX = staticDemoPguaX - ownX;
-          staticDemoAssetDeltaY = staticDemoPguaY - ownY;
-        }
+        && Array.isArray(staticDemoPguaLonLat)
+        && isFinite(Number(staticDemoPguaLonLat[0]))
+        && isFinite(Number(staticDemoPguaLonLat[1]));
+
+      function getStaticDemoAirfieldLonLat(airfield) {
+        if (!shouldAlignStaticDemoAssets) return null;
+        const icao = String((airfield && airfield.icao) || '').toUpperCase().trim();
+        const ll = staticDemoMarianasAirportLonLatByIcao[icao];
+        if (!Array.isArray(ll) || ll.length < 2) return null;
+        const lon = Number(ll[0]);
+        const lat = Number(ll[1]);
+        if (!isFinite(lon) || !isFinite(lat)) return null;
+        return [lon, lat];
       }
 
-      function alignStaticDemoAssetPoint(point) {
-        if (!staticDemoForceOwnshipAtPgua) return point;
-        const p = point && typeof point === 'object' ? point : null;
-        if (!p) return point;
-        const xNum = Number(p.xNum);
-        const yNum = Number(p.yNum);
-        if (!isFinite(xNum) || !isFinite(yNum)) return point;
-        return Object.assign({}, p, {
-          xNum: xNum + staticDemoAssetDeltaX,
-          yNum: yNum + staticDemoAssetDeltaY,
-        });
+      function getStaticDemoAssetLonLat(asset, index) {
+        if (!staticDemoForceOwnshipAtPgua) return null;
+        const baseLon = Number(staticDemoPguaLonLat[0]);
+        const baseLat = Number(staticDemoPguaLonLat[1]);
+        if (!isFinite(baseLon) || !isFinite(baseLat)) return null;
+
+        const category = String((asset && asset.category) || '').toUpperCase();
+        if (category === 'PLAYER') return [baseLon, baseLat];
+
+        const kind = String(getMudMapAssetKind(asset) || '').toLowerCase();
+        const slot = Math.max(0, Number(index) || 0) % 4;
+        const kindOffsets = {
+          awacs: [0.090, 0.070],
+          tanker: [0.060, 0.040],
+          jtac: [0.040, -0.020],
+          'jtac-target': [0.070, -0.040],
+          rotary: [0.030, 0.020],
+          marker: [0.020, -0.030],
+          fixed: [0.050, 0.025],
+        };
+        const offset = kindOffsets[kind] || kindOffsets.fixed;
+        const lon = baseLon + Number(offset[0]) + (slot * 0.010);
+        const lat = baseLat + Number(offset[1]) - (slot * 0.006);
+        return [lon, lat];
       }
 
       if (bullseyePoint) {
@@ -3242,7 +3272,7 @@
           xNum: Number(p && p.xNum),
           yNum: Number(p && p.yNum),
         };
-        addPointFeature(p, {
+        const airfieldProps = {
           kind: 'airfield',
           group: 'asset',
           assetKey: makeMapAssetSelectionKey(airfieldAsset),
@@ -3265,7 +3295,13 @@
           stroke: stroke,
           textColor: stroke,
           radius: 5,
-        }, { preferSwapped: isStaticMarianasDemo });
+        };
+        const staticLonLat = getStaticDemoAirfieldLonLat(p);
+        if (staticLonLat) {
+          addPointFeatureLonLat(staticLonLat[0], staticLonLat[1], airfieldProps);
+        } else {
+          addPointFeature(p, airfieldProps, { preferSwapped: isStaticMarianasDemo });
+        }
       });
 
       const selected = getActiveFlightPlanSelection(model);
@@ -3378,16 +3414,13 @@
         });
       }
 
-      rawAssets.concat(activeJtacAsset ? [activeJtacAsset] : []).concat(historyJtacAssets).forEach(function (asset) {
+      rawAssets.concat(activeJtacAsset ? [activeJtacAsset] : []).concat(historyJtacAssets).forEach(function (asset, assetIndex) {
         const category = String((asset && asset.category) || '').toUpperCase();
         if (category === 'ATC') return;
         const isPlayer = category === 'PLAYER';
-        const plottedAssetBase = (isPlayer && staticDemoForceOwnshipAtPgua)
-          ? Object.assign({}, asset || {}, { xNum: staticDemoPguaX, yNum: staticDemoPguaY })
-          : ((isPlayer && ownshipPoint && isFinite(Number(ownshipPoint.xNum)) && isFinite(Number(ownshipPoint.yNum)))
-            ? Object.assign({}, asset || {}, { xNum: Number(ownshipPoint.xNum), yNum: Number(ownshipPoint.yNum) })
-            : asset);
-        const plottedAsset = isPlayer ? plottedAssetBase : alignStaticDemoAssetPoint(plottedAssetBase);
+        const plottedAsset = (isPlayer && ownshipPoint && isFinite(Number(ownshipPoint.xNum)) && isFinite(Number(ownshipPoint.yNum)))
+          ? Object.assign({}, asset || {}, { xNum: Number(ownshipPoint.xNum), yNum: Number(ownshipPoint.yNum) })
+          : asset;
         const callsign = String((asset && asset.callsign) || '').trim();
         const mpClientCallsign = String((asset && asset.mpClientCallsign) || '').trim();
         const label = isPlayer
@@ -3395,7 +3428,7 @@
           : (callsign || String((asset && asset.name) || category || 'ASSET').trim());
         const assetKey = makeMapAssetSelectionKey(asset);
         const isJtacHistory = !!(asset && asset.isJtacHistory);
-        addPointFeature(plottedAsset, {
+        const assetProps = {
           kind: isPlayer ? 'player' : 'asset',
           group: isPlayer ? 'player' : 'asset',
           label: (isJtacHistory ? String((asset && asset.name) || label) : label),
@@ -3414,7 +3447,13 @@
           tacan: String((asset && asset.tacan) || '').trim(),
           mpClientCallsign: mpClientCallsign,
           altFeet: Number(asset && asset.altFeet),
-        }, { preferSwapped: isStaticMarianasDemo });
+        };
+        const staticAssetLonLat = getStaticDemoAssetLonLat(asset, assetIndex);
+        if (staticAssetLonLat) {
+          addPointFeatureLonLat(staticAssetLonLat[0], staticAssetLonLat[1], assetProps);
+        } else {
+          addPointFeature(plottedAsset, assetProps, { preferSwapped: isStaticMarianasDemo });
+        }
       });
 
       const missionDrawingObjects = getMissionDrawingObjectsForSaMap(model);
