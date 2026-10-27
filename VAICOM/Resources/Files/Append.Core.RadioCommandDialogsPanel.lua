@@ -1118,8 +1118,15 @@ local function vaicom_loop()
 			socket.try(base.vaicom.sender:send(base.vaicom.flags.raw))
 		end
 	end
-	if base.vaicom and base.vaicom.receiver and data.initialized and data.pUnit then 
-		if RemoteInputs() then 	
+	-- Retry the receiving server socket connection if still pending
+	if base.vaicom and base.vaicom.receiverPending and data.initialized and data.pUnit then
+		local now = base.os.clock()
+		if now >= (base.vaicom.receiverNextTry or 0) then
+			base.vaicom.receiverNextTry = now + 0.5
+			base.vaicom.init.bindReceiver()
+		end
+	elseif base.vaicom and base.vaicom.receiver and data.initialized and data.pUnit then
+		if RemoteInputs() then
 			base.vaicom.flags.remote = true
 			ProcessRemoteCommand()
 		else
@@ -6312,28 +6319,64 @@ base.vaicom.init = {
 		Gui.SetupApplicationUpdateCallback()
 		Gui.EnableHighSpeedUpdate(true)
 		Gui.AddUpdateCallback(vaicom_loop)
-		base.vaicom.sender = socket.try(socket.udp()) 
-		socket.try(base.vaicom.sender:setpeername(base.vaicom.config.sendaddress,base.vaicom.config.sendport))
-		socket.try(base.vaicom.sender:settimeout(base.vaicom.config.sendtimeout))
-		base.vaicom.receiver = socket.try(socket.udp()) 
-		socket.try(base.vaicom.receiver:setsockname(base.vaicom.config.receiveaddress,base.vaicom.config.receiveport))
-		socket.try(base.vaicom.receiver:settimeout(base.vaicom.config.receivetimeout))	
-		base.vaicom.relay = socket.try(socket.udp()) 
-		socket.try(base.vaicom.relay:setpeername(base.vaicom.config.relayaddress,base.vaicom.config.relayport))
-		socket.try(base.vaicom.relay:settimeout(base.vaicom.config.relaytimeout))
+
+		local config = base.vaicom.config
+		base.vaicom.sender = socket.try(socket.udp())
+        socket.try(base.vaicom.sender:setpeername(config.sendaddress, config.sendport))
+        socket.try(base.vaicom.sender:settimeout(config.sendtimeout))
+		base.vaicom.relay = socket.try(socket.udp())
+        socket.try(base.vaicom.relay:setpeername(config.relayaddress, config.relayport))
+        socket.try(base.vaicom.relay:settimeout(config.relaytimeout))
+
+		-- The receiver port can still be held by the previous mission for a few seconds so retry from vaicom_loop instead of failing initialize
+		base.vaicom.receiverRetries = 0
+		base.vaicom.receiverNextTry = 0
+		base.vaicom.init.bindReceiver()
+	end,
+	-- Returns true when the receiver is bound. On failure it keeps receiverPending set so vaicom_loop retries.
+	bindReceiver = function()
+		local config = base.vaicom.config
+		local sock
+		local ok, err = base.pcall(function()
+			sock = socket.try(socket.udp())
+			socket.try(sock:setsockname(config.receiveaddress, config.receiveport))
+			socket.try(sock:settimeout(config.receivetimeout))
+		end)
+		if ok then
+			base.vaicom.receiver = sock
+			base.vaicom.receiverPending = nil
+			base.print("VAICOM: Receiving server socket listening after " .. base.tostring(base.vaicom.receiverRetries) .. " retries")
+			return true
+		end
+		if sock then base.pcall(function() sock:close() end) end
+		base.vaicom.receiverRetries = (base.vaicom.receiverRetries or 0) + 1
+		local msg = base.type(err) == "table" and base.tostring(err[1] or err.message or err) or base.tostring(err)
+		if base.vaicom.receiverRetries == 1 then
+			base.print("VAICOM: Receiving server socket on " .. base.tostring(config.receiveaddress) .. ":" .. base.tostring(config.receiveport) .. " failed (" .. msg .. "), retrying...")
+		end
+		if base.vaicom.receiverRetries >= 120 then   -- about 60 s, then give up
+			base.vaicom.receiverPending = nil
+			base.print("VAICOM: Receiving server socket on " .. base.tostring(config.receiveaddress) .. ":" .. base.tostring(config.receiveport) .. " failed (" .. msg .. "), retries exceeded so giving up")
+		else
+			base.vaicom.receiverPending = true
+		end
+		return false
 	end,
 	stop = function(self)
-		if base.vaicom.sender then
-			socket.try(base.vaicom.sender:close())
-			base.vaicom.sender = nil
-		end
-		if base.vaicom.receiver then
-			socket.try(base.vaicom.receiver:close())
-			base.vaicom.receiver = nil
-		end
-		if base.vaicom.relay then
-			socket.try(base.vaicom.relay:close())
-			base.vaicom.relay = nil
+		base.vaicom.receiverPending = nil
+		-- Socket close errors are logged, the connection references are removed on success or failure.
+		for _, name in base.ipairs({"sender", "receiver", "relay"}) do
+			local conn = base.vaicom[name]
+			if conn then
+				local ok, err = base.pcall(function() socket.try(conn:close()) end)
+				if not ok then
+					local msg = base.type(err) == "table" and base.tostring(err[1] or err.message or err) or base.tostring(err)
+					base.print("VAICOM: Closing of " .. name .. " socket failed: " .. base.tostring(msg))
+				end
+				base.vaicom[name] = nil
+			else
+				base.print("VAICOM: No " .. name .. " socket to close")
+			end
 		end
 	end,
 }

@@ -6131,7 +6131,7 @@ namespace VAICOM
                         }
 
                         // If runtime still reports active markers but this frame has no marker details,
-                        // hold the prior set to avoid UI blanking/flicker between update ticks.
+                        // hold the prior set to avoid UI flicker between update ticks.
                         if (markers.Count == 0 && markerCountHint > 0 && lastMapMarkerSnapshot.Count > 0)
                         {
                             consecutiveMapMarkerEmptyFrames = 0;
@@ -6140,21 +6140,27 @@ namespace VAICOM
 
                         if (markers.Count == 0)
                         {
-                            if (lastMapMarkerSnapshot.Count > 0)
-                            {
-                                // Keep marker snapshot stable for the active mission unless we receive
-                                // concrete non-empty marker updates. Runtime can emit empty marker frames
-                                // during tab switches or sparse update periods, which should not clear UI.
-                                authoritativeEmpty = false;
-                                consecutiveMapMarkerEmptyFrames = 0;
-                                return CloneMapMarkers(lastMapMarkerSnapshot);
-                            }
-
                             if (markerCountHint <= 0)
                             {
-                                // With no prior snapshot, allow empty state confirmation.
+                                // Confirm empty marker state across a few frames,
+                                // then clear stale cache so the last deleted marker does not stick.
                                 consecutiveMapMarkerEmptyFrames = Math.Max(0, consecutiveMapMarkerEmptyFrames) + 1;
                                 authoritativeEmpty = consecutiveMapMarkerEmptyFrames >= 3;
+                                if (authoritativeEmpty)
+                                {
+                                    lastMapMarkerSnapshot = new List<OpenKneeboardMapMarker>();
+                                    return new List<OpenKneeboardMapMarker>();
+                                }
+                            }
+                            else
+                            {
+                                consecutiveMapMarkerEmptyFrames = 0;
+                            }
+
+                            if (lastMapMarkerSnapshot.Count > 0)
+                            {
+                                // Keep marker snapshot stable during transient empty frames.
+                                return CloneMapMarkers(lastMapMarkerSnapshot);
                             }
                         }
                         else

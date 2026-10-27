@@ -844,12 +844,20 @@ vaicom.insert = {
             false
         )
 
-        vaicom.receivefromclient = create_udp_socket(
-            vaicom.config.receivefromclient.address,
-            vaicom.config.receivefromclient.port,
-            vaicom.config.receivefromclient.timeout,
-            true
-        )
+        -- The port can still be held by the previous mission for a few seconds.
+        -- We set up a pending state for retries to run instead of aborting.
+        vaicom.receiveRetries = 0
+        vaicom.receiveNextTry = 0
+        vaicom.receivePending = false
+        local receiveOk = pcall(function()
+            vaicom.receivefromclient = create_udp_socket(
+                vaicom.config.receivefromclient.address,
+                vaicom.config.receivefromclient.port,
+                vaicom.config.receivefromclient.timeout,
+                true
+            )
+        end)
+        if not receiveOk then vaicom.receivePending = true end
 
         vaicom.sendtoclient = create_udp_socket(
             vaicom.config.sendtoclient.address,
@@ -863,6 +871,33 @@ vaicom.insert = {
 
     BeforeNextFrame = function(self)
         self:PollProbe()
+
+        -- If the receiving server socket is pending, retry every 0.5 seconds
+        -- retry until successful or until 120 retries (about 60 seconds)
+        if vaicom.receivePending then
+            local now = socket.gettime()
+            if now >= vaicom.receiveNextTry then
+                vaicom.receiveNextTry = now + 0.5
+                vaicom.receiveRetries = vaicom.receiveRetries + 1
+                local ok, err = pcall(function()
+                    vaicom.receivefromclient = create_udp_socket(
+                        vaicom.config.receivefromclient.address,
+                        vaicom.config.receivefromclient.port,
+                        vaicom.config.receivefromclient.timeout,
+                        true
+                    )
+                end)
+                if ok then
+                    vaicom.receivePending = false
+                    base.log.write("VAICOM", base.log.INFO, "receiving server listening after " .. vaicom.receiveRetries .. " retries")
+                elseif vaicom.receiveRetries >= 120 then
+                    vaicom.receivePending = false
+                    -- socket.try raises a table, not a string so get the actual error message
+                    local msg = type(err) == "table" and tostring(err[1] or err.message or err) or tostring(err)
+                    base.log.write("VAICOM", base.log.ERROR, "receiver server gave up after " .. vaicom.receiveRetries .. " retries: " .. msg)
+                end
+            end
+        end
 
         if vaicom.receivefromclient then
             local newdata, err = vaicom.receivefromclient:receive()
