@@ -433,10 +433,12 @@
               clearNavlogRowReveal(selected);
               if (action === 'dir') {
                 setNavlogRowAction(selected, step, 'dir');
+                clearNavlogRowActionMenu(selected);
                 setNavlogDirectToSource(selected, step);
                 render(latestData);
               } else if (action === 'del') {
                 setNavlogRowAction(selected, step, 'del');
+                clearNavlogRowActionMenu(selected);
                 render(latestData);
               }
             }
@@ -446,11 +448,24 @@
             const selected = getActiveFlightPlanSelection(latestData);
             const step = String(node.getAttribute('data-navlog-step') || '');
             if (selected && step) {
+              const inStepCell = ev && ev.target && ev.target.closest && ev.target.closest('[data-navlog-step-cell="1"]');
               const state = getFlightPlanPlanState(selected);
               const rowActionStep = stepToKey(state.rowActionStep);
               const rowActionMode = String(state.rowActionMode || '').toLowerCase();
+
+              if (!inStepCell) {
+                if (rowActionMode && rowActionStep) {
+                  clearNavlogRowAction(selected);
+                  clearNavlogRowReveal(selected);
+                  clearNavlogRowActionMenu(selected);
+                  render(latestData);
+                }
+                return;
+              }
+
               if (rowActionMode === 'dir' && rowActionStep && rowActionStep === step) {
                 clearNavlogRowAction(selected);
+                clearNavlogRowActionMenu(selected);
                 render(latestData);
                 return;
               }
@@ -458,6 +473,7 @@
                 if (setNavlogDirectToTarget(selected, step)) {
                   clearNavlogRowAction(selected);
                   clearNavlogRowReveal(selected);
+                  clearNavlogRowActionMenu(selected);
                   render(latestData);
                 }
                 return;
@@ -466,6 +482,7 @@
                 deleteNavlogStep(selected, step);
                 clearNavlogRowAction(selected);
                 clearNavlogRowReveal(selected);
+                clearNavlogRowActionMenu(selected);
                 render(latestData);
                 return;
               }
@@ -473,12 +490,15 @@
                 deleteNavlogStep(selected, step);
                 clearNavlogRowAction(selected);
                 clearNavlogRowReveal(selected);
+                clearNavlogRowActionMenu(selected);
                 render(latestData);
                 return;
               }
-              clearNavlogRowAction(selected);
-              clearNavlogRowReveal(selected);
+
+              // No armed action yet: toggle the STP action popup on simple tap.
+              toggleNavlogRowActionMenu(selected, step);
               render(latestData);
+              return;
             }
             return;
           }
@@ -732,6 +752,24 @@
 
         const activeSelection = getActiveFlightPlanSelection(latestData);
         if (activeSelection) {
+          const target = ev && ev.target;
+          const inNavlogWrap = target && target.closest && target.closest('.fltPlanWpWrap');
+          const inStepCell = target && target.closest && target.closest('[data-navlog-step-cell="1"]');
+          const inActionPopup = target && target.closest && target.closest('.fltPlanRowActionPopup');
+          const state = getFlightPlanPlanState(activeSelection);
+          const rowActionMode = String((state && state.rowActionMode) || '').toLowerCase();
+          const rowActionStep = stepToKey(state && state.rowActionStep);
+          const rowMenuStep = stepToKey(state && state.rowActionMenuStep);
+          if (inNavlogWrap && !inStepCell && !inActionPopup && (rowMenuStep || (rowActionMode && rowActionStep))) {
+            if (rowActionMode && rowActionStep) {
+              clearNavlogRowAction(activeSelection);
+              clearNavlogRowReveal(activeSelection);
+            }
+            clearNavlogRowActionMenu(activeSelection);
+            render(latestData);
+            return;
+          }
+
           const expanded = getExpandedTimeAnchor(activeSelection);
           const expandedNav = getExpandedNavEdit(activeSelection);
           if (expanded) {
@@ -938,17 +976,9 @@
       if (navlogRowDrag && navlogRowDrag.pointerId === ev.pointerId && latestData) {
         const dx = ev.clientX - navlogRowDrag.startX;
         const dy = ev.clientY - navlogRowDrag.startY;
-        if (Math.abs(dx) >= 28 && Math.abs(dx) > Math.abs(dy)) {
-          const step = stepToKey(navlogRowDrag.step);
-          if (step) {
-            const mode = dx > 0 ? 'dir' : 'del';
-            clearNavlogRowAction(navlogRowDrag.selected);
-            setNavlogRowReveal(navlogRowDrag.selected, step, mode);
-            render(latestData);
-          }
+        if (Math.abs(dx) > 12 || Math.abs(dy) > 12) {
+          if (navlogRowDrag.timer) clearTimeout(navlogRowDrag.timer);
           navlogRowDrag = null;
-          ev.preventDefault();
-          return;
         }
       }
       if (!mapPanDrag || mapPanDrag.pointerId !== ev.pointerId || !latestData) return;
@@ -968,6 +998,9 @@
     function stopNavlogRowDrag(ev) {
       if (!navlogRowDrag) return;
       if (ev && navlogRowDrag.pointerId !== ev.pointerId) return;
+      if (navlogRowDrag.timer) {
+        clearTimeout(navlogRowDrag.timer);
+      }
       navlogRowDrag = null;
     }
 
