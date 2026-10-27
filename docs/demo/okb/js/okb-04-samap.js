@@ -6178,7 +6178,8 @@
       return String(text || '')
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;');
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
     }
 
     function formatKeywordReferenceHtml(data, tab) {
@@ -7026,4 +7027,3 @@
         renderFltPlanFilesOverlay(data);
       }
     }
-
