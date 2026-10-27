@@ -3764,7 +3764,7 @@
     }
 
     function tabLabel(tab) {
-      if (tab === 'ATC') return 'WX/ATC';
+      if (tab === 'ATC') return 'WX ATC';
       if (tab === 'DTC') return 'FLT PLN';
       if (tab === 'EFB') return 'EFB';
       return tab;

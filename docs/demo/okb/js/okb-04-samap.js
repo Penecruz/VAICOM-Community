@@ -2932,7 +2932,7 @@
       });
 
       if (efbSaShowDoghouses !== false) {
-        const doghouseLegs = buildDoghouseLegData(doghouseRows, theatre);
+        const doghouseLegs = buildDoghouseLegData(doghouseRows, theatre, historySelection);
         doghouseLegs.forEach(function (d) {
           const heading = computeTrueHeadingDeg(
             { x: Number(d.fromXNum), y: Number(d.fromYNum) },
@@ -2943,8 +2943,10 @@
             headingDeg: heading,
             mhText: String(d.mhText || '-'),
             distText: String(d.distText || '-'),
+            distUnit: String(d.distUnit || 'NM'),
             eteText: String(d.eteText || '--:--'),
             altText: String(d.altText || '-'),
+            altUnit: String(d.altUnit || 'ft'),
           });
         });
       }
@@ -5484,11 +5486,12 @@
           const stepLabel = String((wp && wp.stepDisplay !== undefined && wp.stepDisplay !== null && String(wp.stepDisplay).trim()) ? wp.stepDisplay : wp.step);
           html += '<tr' + rowClassAttr + rowDataAttrs + '>';
           if (isStart) {
-            html += '<td class="fltPlanCellNum">' + escapeHtml(stepLabel) + '</td>';
+            html += '<td class="fltPlanCellNum fltPlanStepCell">' + escapeHtml(stepLabel) + '</td>';
           } else {
             const dirArmedClass = isNavlogRowActionArmed(selected, stepKey, 'dir') ? ' armed' : '';
             const delArmedClass = isNavlogRowActionArmed(selected, stepKey, 'del') ? ' armed' : '';
-            html += '<td class="fltPlanCellNum"><span class="fltPlanStepCellWrap"><span>' + escapeHtml(stepLabel) + '</span><button type="button" class="fltPlanRowActionBtn dir' + dirArmedClass + '" data-row-action="dir" data-row-step="' + escapeHtml(stepKey) + '">DIR TO</button><button type="button" class="fltPlanRowActionBtn del' + delArmedClass + '" data-row-action="del" data-row-step="' + escapeHtml(stepKey) + '">DEL STP</button></span></td>';
+            const stepMenuOpenClass = isNavlogRowActionMenuOpen(selected, stepKey) ? ' open' : '';
+            html += '<td class="fltPlanCellNum fltPlanStepCell"><span class="fltPlanStepCellWrap' + stepMenuOpenClass + '" data-navlog-step-cell="1" data-navlog-step="' + escapeHtml(stepKey) + '"><span class="fltPlanStepCellMain">' + escapeHtml(stepLabel) + '</span><span class="fltPlanRowActionPopup"><button type="button" class="fltPlanRowActionBtn dir' + dirArmedClass + '" data-row-action="dir" data-row-step="' + escapeHtml(stepKey) + '">DIR TO</button><button type="button" class="fltPlanRowActionBtn del' + delArmedClass + '" data-row-action="del" data-row-step="' + escapeHtml(stepKey) + '">DEL STP</button></span></span></td>';
           }
           if (wp.isStart) {
             html += '<td>' + escapeHtml(wp.type) + '</td>';
@@ -5526,7 +5529,9 @@
         });
       }
 
-      html += '</tbody></table></div></div>';
+      html += '</tbody></table></div>';
+      html += '<input type="range" class="fltPlanWpPanSlider" min="0" max="0" step="1" value="0" aria-label="NAVLOG horizontal pan">';
+      html += '</div>';
       const freqWrapClass = 'fltPlanInfoFreqWrap' + getBottomPanelClassSuffix(selected, 'FREQ');
       const cmdsWrapClass = 'fltPlanInfoCmdsWrap' + getBottomPanelClassSuffix(selected, 'CMDS');
       const assetsWrapClass = 'fltPlanInfoAssetsWrap' + getBottomPanelClassSuffix(selected, 'ASSETS');
@@ -6178,8 +6183,7 @@
       return String(text || '')
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;');
+        .replace(/>/g, '&gt;');
     }
 
     function formatKeywordReferenceHtml(data, tab) {
@@ -6483,6 +6487,72 @@
       return fullText.substring(start, end).trim();
     }
 
+    function syncNavlogHorizontalPanUi(selectionKey) {
+      const host = document.getElementById('tabBody');
+      if (!host) return;
+
+      const wrap = host.querySelector('.fltPlanWpTableWrap');
+      const slider = host.querySelector('.fltPlanWpPanSlider');
+      if (!wrap || !slider) return;
+
+      const key = getFlightPlanEtaStartKey(selectionKey || '') || String(selectionKey || '__RUNTIME_PLAYER__');
+      const store = (window.__okbNavlogPanByKey && typeof window.__okbNavlogPanByKey === 'object')
+        ? window.__okbNavlogPanByKey
+        : (window.__okbNavlogPanByKey = {});
+
+      wrap.setAttribute('data-navlog-pan-key', key);
+      slider.setAttribute('data-navlog-pan-key', key);
+
+      function syncRangeToWrap() {
+        const max = Math.max(0, Math.round(wrap.scrollWidth - wrap.clientWidth));
+        slider.max = String(max);
+        if (max <= 0) {
+          slider.value = '0';
+          slider.classList.remove('active');
+          wrap.scrollLeft = 0;
+          return;
+        }
+
+        slider.classList.add('active');
+        let current = Number(wrap.scrollLeft);
+        if (!isFinite(current)) current = 0;
+        current = Math.max(0, Math.min(max, Math.round(current)));
+        slider.value = String(current);
+      }
+
+      if (!wrap.getAttribute('data-navlog-pan-bound')) {
+        wrap.addEventListener('scroll', function () {
+          const max = Math.max(0, Math.round(wrap.scrollWidth - wrap.clientWidth));
+          const current = Math.max(0, Math.min(max, Math.round(Number(wrap.scrollLeft) || 0)));
+          slider.max = String(max);
+          slider.value = String(current);
+          if (max > 0) slider.classList.add('active'); else slider.classList.remove('active');
+          const runtimeKey = String(wrap.getAttribute('data-navlog-pan-key') || key);
+          store[runtimeKey] = current;
+        }, { passive: true });
+        wrap.setAttribute('data-navlog-pan-bound', '1');
+      }
+
+      if (!slider.getAttribute('data-navlog-pan-bound')) {
+        slider.addEventListener('input', function () {
+          const target = Math.max(0, Math.round(Number(slider.value) || 0));
+          wrap.scrollLeft = target;
+          const runtimeKey = String(slider.getAttribute('data-navlog-pan-key') || key);
+          store[runtimeKey] = target;
+        });
+        slider.setAttribute('data-navlog-pan-bound', '1');
+      }
+
+      const maxNow = Math.max(0, Math.round(wrap.scrollWidth - wrap.clientWidth));
+      let desired = Number(store[key]);
+      if (!isFinite(desired)) {
+        desired = Number(wrap.scrollLeft) || 0;
+      }
+      desired = Math.max(0, Math.min(maxNow, Math.round(desired)));
+      wrap.scrollLeft = desired;
+      syncRangeToWrap();
+    }
+
     function renderTabs(data) {
       const tabsEl = document.getElementById('tabs');
       tabsEl.innerHTML = '';
@@ -6662,6 +6732,7 @@
         activeDtcSelection = getActiveFlightPlanSelection(displayData);
         tabBody.className = 'content mainContent fltPlanContent';
         tabBody.innerHTML = formatDtcTabContentHtml(displayData);
+        syncNavlogHorizontalPanUi(activeDtcSelection);
         if (activeDtcSelection) {
           updateDtcRouteButtonUi(activeDtcSelection);
         }
@@ -7027,3 +7098,4 @@
         renderFltPlanFilesOverlay(data);
       }
     }
+
