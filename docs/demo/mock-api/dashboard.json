@@ -1,15 +1,15 @@
 {
-  "module": "F-14B(U)",
-  "callsign": "Springfield 1-1",
-  "theater": "Caucasus",
-  "mission": "Community Demo Flight",
+  "module": "F/A-18C",
+  "callsign": "Sting 1-1",
+  "theater": "MarianaIslands",
+  "mission": "Demo Mission",
   "status": "Connected (mock)",
   "lastUpdateUtc": "2026-10-25T12:00:00Z",
   "recentComms": [
     {
       "time": "12:03:11Z",
       "tx": "TX1",
-      "message": "Inbound to Batumi"
+      "message": "Inbound for landing"
     },
     {
       "time": "12:03:37Z",

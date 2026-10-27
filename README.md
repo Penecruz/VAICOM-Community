@@ -40,7 +40,7 @@ The VAICOM Community Team
 
 VAICOM Community 3.0.X.X is not designed to be backwards compatible with DCS 2.7.X If you wish to continue using VAICOMPRO for DCS 2.7, please use Hollywood_315's final release and not VAICOMPRO Community.
 
-VAICOM Community Edition will not pass the Integrity Check on Multiplayer Servers that require Pure Client Scripts unless the AIRIO and Kneeboard extensions are deactivated via the VAICOMPRO UI.
+VAICOM Community Edition will not pass the Integrity Check on Multiplayer Servers that require Pure Client Scripts unless the legacy Kneeboard extension is deactivated via the VAICOMPRO UI.
 This is because VAICOMPRO adds lines to some of DCS World's core LUA files to enable it to function. Multiplayer Server administrators must enable Pure Client Scripts as an option as it is off by default. Very few Servers require Pure Client Scripts. This is something that only ED can change.
 
 DiCE: DCS Integrated Countermeasure Editor creates many functionality issues with VAICOM Community, and it is recommended this be uninstalled before using VAICOM Community.
@@ -82,30 +82,29 @@ Flashing Comms Menu after DCS World update is a known issue and can be resolved 
 ## Patch Notes
 
 
-This update is focused on two key areas, the F-14 Tomcat and Vaicom performance. It restores previous functionality for the F-14A/B and adds a couple of changes to keywords and fixes up some non-functioning commands and removes some that were never wired in previously. It adds functionality for the F-14B(U) and as a first pass and this we will make changes in future releases based on user feedback. It also adds new coding to block the flashing of the Jester Wheel when some commands were issued.
-On the performance side a massive code cleanup of the communications between Vaicom and DCS with increased use of caching and removing data not used from the network traffic. With the rise of OpenKneeboard Out Vaicom was grabbing more data from DCS, this was causing frame rate latency issues for some users, particularly on very busy missions or servers with lots of units and client slots. 
+This is a major update for the VAICOM Kneeboard, it includes may enhancements to the UI and UX. The Kneeboard now allows the display on either OpenKneeboard via the OKB Out plugin or on an iPad via the soon to be released VAICOM iOS App. This is a big step towards allowing the upgraded Kneeboard to be used by both VR and Flatscreen DCS pilots and makes the old Vaicom DCS Kneeboard overlay redundant. In a future version of VAICOM the old overlay for the DCS kneeboard will be depreciated as its impact on the Integrity Check (IC) is something we need to move away from. 
 
-New
-- Added Tomcat shutdown command and sequence handling, including F-14B(U)-specific routing, cue playback, and alias registration.
-- Added module-aware AIRIO context-key flows, including EGI direct waypoint support.
-- Added Flight Plan tab-aware diagnostics collection (now tied to FLT PLN tab view).
-- Added expanded map-marker diagnostics support with increased marker cap (20 → 64).
-- Added expanded AI CREW keyword categories in kneeboard output, including Startup, Shutdown, Walkman, and Miscellaneous etc.
+Additions
+- Added refactored version of the VAICOM kneeboard that allows display on OpenKneeboard, iPad and a web browser.	
+- Added new VAICOM Kneeboard scaling depending on device, includes UI controls and drawers.
+- Added new LAN Access to VAICOM kneeboard to allow the kneeboard to be displayed on local network devices.
+- Added automatic firewall configuration for LAN Access (user can decline and manually configure if they like).
+- Added new draw tool to VAICOM Kneeboard, now allows drawing on all tabs independently including the EFB tab Moving Map.
+- Added Landscape orientation option for Vaicom Kneeboard on iPad and Web Browser.
+- Added new commands for Ground Crew “Open DTC manager”, “Open DTC editor” for DTC management on ground.
+- Added new EFB Moving Map layers SAM threats and MIZ draw layer.
+- Added AH-64D Apache DTC import and SA markup.
 
-Improved
-- Refreshed F-14/AIRIO Jester script mappings and command coverage across radar, weapons, LANTIRN, datalink, TACAN, NAV/utility, CMDS/defensive, and GGW/JDAM behaviors.
-- Modernized AIRIO command architecture: improved command wiring, labels/hints, routing/validation, and proxy timing reliability.
-- Improved AIRIO option-hint selection and EGI direct-waypoint sequencing reliability.
-- Improved AIRIO GGW preplanned command handling with broader spoken-number parsing, clearer pass/fail logging, explicit sequence dispatch, and queued feedback cues.
-- Improved OpenKneeboard AI CREW rendering/grouping and tightened AI CREW vs GND CREW separation behavior.
-- Improved profile deployment/update flow, including auto keyword finish and stronger embedded resource handling integrity.
-- Improved F-14 wheel chocks/miniwheel runtime handling to reduce desync and visibility issues.
-- Added caching in update/data paths to reduce runtime overhead.
-- Removed redundant opposition aircraft/helicopter build pass to reduce duplicate update work.
-- Simplified F-14 Jester integration by removing obsolete JesterInit patch resources and handling legacy miniwheel suppression directly in appended JesterAI page.
-
-Fixed
-- Fixed a null-pointer issue that could prevent some units from being collected for kneeboard output.
+Improvements
+- Reworked FLT PLN Tab runtime and DTC Comms handling that now is aircraft specific in layout.
+- Refined F10 map marker display on both the FLT PLN Tab and the EFB Moving Map, now with popup data block.
+- Improved map and overlay stability when EFB Moving Map is in North Up and has Follow Me selected.
+- Improved EFB Moving Map north pointer now is clickable to snap to North Up briefly then back to Track up if that is the selected mode.
+	
+Fixes
+- Fixed performance issue due to excessive collection of mission data (Thanks to DKS Dev Juicebox for the steer on this bug).
+- Fixed FLT PLN NAVLOG Auto ATA logging when landing point is also takeoff point.
+- Fixed many backend calls to be more efficient in using cached data when possible.
 
 Known Issues
 - C-130J Select Tunes radio command will tune radio but not change AMU or CNI-MU display.

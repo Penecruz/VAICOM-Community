@@ -4,15 +4,15 @@
   "AiCrewPhase": "READY",
   "UpdatedUtc": "2026-10-25T12:00:00Z",
   "Server": {
-    "Theater": "Caucasus",
-    "DcsLocation": "Batumi",
+    "Theater": "MarianaIslands",
+    "DcsLocation": "Mariana Islands",
     "ModuleConnected": true,
-    "Aircraft": "F-14B(U)",
-    "PlayerUsername": "DemoPilot",
-    "PlayerCallsign": "Springfield 1-1",
+    "Aircraft": "F/A-18C",
+    "PlayerUsername": "Maverick",
+    "PlayerCallsign": "Sting 1-1",
     "MissionTitle": "VAICOM Community Demo",
-    "MissionBriefing": "Mock briefing for dashboard testing.",
-    "MissionDetails": "No live DCS/VAICOM connection. Local mock endpoint only.",
+    "MissionBriefing": "VAICOM OpenKneeboard demo in static mode (no live DCS/VAICOM connection).",
+    "MissionDetails": "DEMO MODE OVERVIEW\n- This kneeboard uses VAICOM source UI files rendered with static mock data.\n- All tab interactions are functional for demonstration and review.\n\nIN A LIVE DCS SESSION, DATA WOULD BE\n- Generated dynamically from the DCS Lua runtime environment.\n- Updated with aircraft radio frequencies, TACAN channels, position, weather, stores, and mission context.\n\nPURPOSE\n- Showcase OpenKneeboard layout and workflow.\n- Demonstrate flight plan selection/management and moving map layers/interactions.",
     "MissionTimeSeconds": 45296,
     "PlayerPosX": -283451.2,
     "PlayerPosY": 60291.9,
@@ -20,12 +20,18 @@
     "Multiplayer": true,
     "DebugMode": false,
     "AtcMetars": {
-      "UGSB": "UGSB 251200Z 08008KT 9999 FEW030 23/12 Q1016",
-      "UGKO": "UGKO 251200Z 09010KT 9999 SCT035 21/11 Q1015"
+      "PGUA": "PGUA 261230Z 08012KT 9999 FEW025 SCT045 30/25 A2992",
+      "PGUM": "PGUM 261230Z 07010KT 9999 SCT028 BKN050 29/25 A2990",
+      "PGSN": "PGSN 261230Z 06009KT 9000 FEW020 SCT040 29/24 A2989",
+      "PGWT": "PGWT 261230Z 07011KT 9999 FEW030 SCT050 30/24 A2991",
+      "PGRO": "PGRO 261230Z 06008KT 9999 FEW025 SCT045 29/24 A2988"
     },
     "AtcIcaoTypes": {
-      "UGSB": "AIRPORT",
-      "UGKO": "AIRPORT"
+      "PGUA": "MIL",
+      "PGUM": "CIV",
+      "PGSN": "CIV",
+      "PGWT": "CIV",
+      "PGRO": "CIV"
     },
     "Payload": {
       "FuelInternalLbs": 10320,
@@ -43,16 +49,113 @@
     ],
     "FlightMembers": [
       {
-        "Callsign": "Springfield 1-2",
-        "Aircraft": "F-14B"
+        "Callsign": "Sting 1-2",
+        "Aircraft": "F/A-18C"
       }
     ],
     "FriendlyAssets": [
       {
+        "Category": "TANKER",
+        "Callsign": "Texaco 1-1",
         "Name": "Texaco",
-        "Type": "TANKER",
+        "TypeName": "KC-135",
+        "IcaoType": "K135",
+        "Frequency": "275.000",
+        "AltFrequencies": [
+          "251.000"
+        ],
+        "Tacan": "31Y",
+        "AltFeet": 16000,
         "X": -301000,
         "Y": 74000
+      },
+      {
+        "Category": "AWACS",
+        "Callsign": "Magic 1-1",
+        "Name": "Magic",
+        "TypeName": "E-2D",
+        "IcaoType": "E2D",
+        "Frequency": "251.000",
+        "AltFrequencies": [
+          "264.000"
+        ],
+        "Tacan": "",
+        "AltFeet": 25000,
+        "X": -312500,
+        "Y": 82500
+      },
+      {
+        "Category": "ATC",
+        "Callsign": "Andersen",
+        "Name": "Andersen AFB",
+        "TypeName": "PGUA",
+        "IcaoType": "MIL",
+        "Frequency": "340.200",
+        "AltFrequencies": [
+          "118.100"
+        ],
+        "Tacan": "54X",
+        "AltFeet": 545,
+        "X": -287200,
+        "Y": 65100
+      },
+      {
+        "Category": "ATC",
+        "Callsign": "Guam Intl",
+        "Name": "Antonio B. Won Pat Intl",
+        "TypeName": "PGUM",
+        "IcaoType": "CIV",
+        "Frequency": "335.800",
+        "AltFrequencies": [
+          "118.700"
+        ],
+        "Tacan": "",
+        "AltFeet": 298,
+        "X": -298600,
+        "Y": 59800
+      },
+      {
+        "Category": "ATC",
+        "Callsign": "Saipan Intl",
+        "Name": "Francisco C. Ada/Saipan Intl",
+        "TypeName": "PGSN",
+        "IcaoType": "CIV",
+        "Frequency": "257.800",
+        "AltFrequencies": [
+          "119.900"
+        ],
+        "Tacan": "",
+        "AltFeet": 214,
+        "X": -245900,
+        "Y": 102800
+      },
+      {
+        "Category": "ATC",
+        "Callsign": "Tinian Intl",
+        "Name": "Tinian Intl",
+        "TypeName": "PGWT",
+        "IcaoType": "CIV",
+        "Frequency": "259.100",
+        "AltFrequencies": [
+          "118.400"
+        ],
+        "Tacan": "",
+        "AltFeet": 271,
+        "X": -238700,
+        "Y": 111600
+      },
+      {
+        "Category": "JTAC",
+        "Callsign": "Axeman 2-1",
+        "Name": "Axeman 2-1",
+        "TypeName": "JTAC",
+        "IcaoType": "",
+        "Frequency": "132.400",
+        "AltFrequencies": [],
+        "Tacan": "",
+        "AltFeet": 0,
+        "X": -257400,
+        "Y": 88950
       }
     ],
     "MapMarkers": [
@@ -105,8 +208,9 @@
     ]
   },
   "RawServerMessages": [
-    "[12:03:11] TX1: Inbound Batumi",
-    "[12:04:04] TX5: Jester, tune TACAN"
+    "[12:03:11] TX1: Inbound Andersen",
+    "[12:03:40] TX2: Contact Texaco 1-1 275.000",
+    "[12:04:04] TX5: Jester, tune TACAN 13Y"
   ],
   "Logs": [
     "Demo endpoint active",
@@ -115,18 +219,24 @@
   "Units": [
     "ATC",
     "AWACS",
-    "TANKER"
+    "TANKER",
+    "JTAC"
   ],
   "UnitDetails": {
     "ATC": [
-      "Batumi",
-      "Kutaisi"
+      "PGUA Andersen AFB UHF 340.200 / VHF 118.100 TACAN 54X",
+      "PGUM Guam Intl UHF 335.800 / VHF 118.700",
+      "PGSN Saipan Intl UHF 257.800 / VHF 119.900",
+      "PGWT Tinian Intl UHF 259.100 / VHF 118.400"
     ],
     "AWACS": [
-      "Magic"
+      "251.000 Magic 1-1 E-2D 090/25000"
     ],
     "TANKER": [
-      "Texaco"
+      "275.000 Texaco 1-1 KC-135 211/139/16000 31Y"
+    ],
+    "JTAC": [
+      "132.400 Axeman 2-1 JTAC"
     ]
   },
   "AliasesChunk0": "",

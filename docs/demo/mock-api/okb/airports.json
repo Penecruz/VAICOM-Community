@@ -1,13 +1,13 @@
 {
   "airports": [
-    "UGSB",
-    "UGKO",
-    "LTCG"
+    "PGUA",
+    "PGUM",
+    "PGWT"
   ],
   "airportNames": {
-    "UGSB": "Batumi",
-    "UGKO": "Kutaisi",
-    "LTCG": "Trabzon"
+    "PGUA": "Andersen AFB",
+    "PGUM": "Antonio B. Won Pat Intl",
+    "PGWT": "Tinian Intl"
   },
   "provider": "mock"
 }
