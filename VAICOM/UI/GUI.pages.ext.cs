@@ -587,8 +587,8 @@ namespace VAICOM
                         return;
                     }
 
-                    bool ruleExists = OpenKneeboardOutFirewallRuleExists(port);
-                    if (ruleExists && OpenKneeboardOutFirewallRuleHasPrivateAndPublicProfiles(port))
+                    OpenKneeboardOutFirewallRuleInfo info = GetOpenKneeboardOutFirewallRuleInfo(port);
+                    if (info.Exists && info.HasPrivateAndPublic)
                     {
                         return;
                     }
@@ -605,14 +605,16 @@ namespace VAICOM
                     }
 
                     string ruleName = GetOpenKneeboardOutFirewallRuleName(port);
-                    string arguments = ruleExists
-                        ? "advfirewall firewall set rule name=\"" + ruleName + "\" new profile=private,public"
-                        : "advfirewall firewall add rule name=\"" + ruleName + "\" dir=in action=allow protocol=TCP localport=" + port + " profile=private,public";
+                    string escapedRuleName = ruleName.Replace("'", "''");
+
+                    string script = info.Exists
+                        ? "Set-NetFirewallRule -DisplayName '" + escapedRuleName + "' -Profile Private,Public; if ($?) { exit 0 } else { exit 1 }"
+                        : "New-NetFirewallRule -DisplayName '" + escapedRuleName + "' -Direction Inbound -Action Allow -Protocol TCP -LocalPort " + port + " -Profile Private,Public | Out-Null; if ($?) { exit 0 } else { exit 1 }";
 
                     var startInfo = new ProcessStartInfo
                     {
-                        FileName = "netsh",
-                        Arguments = arguments,
+                        FileName = "powershell.exe",
+                        Arguments = "-NoProfile -NonInteractive -ExecutionPolicy Bypass -Command \"" + script.Replace("\"", "\\\"") + "\"",
                         UseShellExecute = true,
                         Verb = "runas",
                         WindowStyle = ProcessWindowStyle.Hidden,
@@ -625,7 +627,7 @@ namespace VAICOM
                             process.WaitForExit();
                             if (process.ExitCode == 0)
                             {
-                                if (ruleExists)
+                                if (info.Exists)
                                 {
                                     Log.Write("OpenKneeboard Out firewall rule updated for Private and Public networks on TCP port " + port + ".", Colors.Text);
                                 }
@@ -658,68 +660,67 @@ namespace VAICOM
                 }
             }
 
-            private static bool OpenKneeboardOutFirewallRuleExists(int port)
+            private struct OpenKneeboardOutFirewallRuleInfo
             {
+                public bool Exists;
+                public bool HasPrivateAndPublic;
+            }
+
+            private static OpenKneeboardOutFirewallRuleInfo GetOpenKneeboardOutFirewallRuleInfo(int port)
+            {
+                var info = new OpenKneeboardOutFirewallRuleInfo { Exists = false, HasPrivateAndPublic = false };
+
                 try
                 {
-                    string output = GetOpenKneeboardOutFirewallRuleText(port);
-                    return output.IndexOf("No rules match", StringComparison.OrdinalIgnoreCase) < 0;
+                    string ruleName = GetOpenKneeboardOutFirewallRuleName(port);
+                    string escapedRuleName = ruleName.Replace("'", "''");
+
+                    // $rule.Profile.ToString() returns enum member names (e.g. "Private, Public").
+                    string script = "$rule = Get-NetFirewallRule -DisplayName '" + escapedRuleName + "' -ErrorAction SilentlyContinue; "
+                        + "if ($rule) { Write-Output 'True'; Write-Output $rule.Profile.ToString() } else { Write-Output 'False'; Write-Output '' }";
+
+                    var startInfo = new ProcessStartInfo
+                    {
+                        FileName = "powershell.exe",
+                        Arguments = "-NoProfile -NonInteractive -ExecutionPolicy Bypass -Command \"" + script.Replace("\"", "\\\"") + "\"",
+                        UseShellExecute = false,
+                        RedirectStandardOutput = true,
+                        RedirectStandardError = true,
+                        CreateNoWindow = true,
+                    };
+
+                    using (Process process = Process.Start(startInfo))
+                    {
+                        if (process == null)
+                        {
+                            return info;
+                        }
+
+                        string[] lines = process.StandardOutput.ReadToEnd()
+                            .Split(new[] { "\r\n", "\n" }, StringSplitOptions.None);
+                        process.StandardError.ReadToEnd();
+                        process.WaitForExit();
+
+                        if (lines.Length > 0)
+                        {
+                            info.Exists = bool.TryParse(lines[0].Trim(), out bool exists) && exists;
+                        }
+
+                        if (info.Exists && lines.Length > 1)
+                        {
+                            string profileText = lines[1];
+                            info.HasPrivateAndPublic =
+                                profileText.IndexOf("Private", StringComparison.OrdinalIgnoreCase) >= 0 &&
+                                profileText.IndexOf("Public", StringComparison.OrdinalIgnoreCase) >= 0;
+                        }
+                    }
                 }
                 catch
                 {
-                    return false;
+                    // Keep defaults (Exists = false) on failure.
                 }
-            }
 
-            private static bool OpenKneeboardOutFirewallRuleHasPrivateAndPublicProfiles(int port)
-            {
-                try
-                {
-                    string output = GetOpenKneeboardOutFirewallRuleText(port);
-                    if (output.IndexOf("No rules match", StringComparison.OrdinalIgnoreCase) >= 0)
-                    {
-                        return false;
-                    }
-
-                    string lower = output.ToLowerInvariant();
-                    return lower.IndexOf("private") >= 0 && lower.IndexOf("public") >= 0;
-                }
-                catch
-                {
-                    return false;
-                }
-            }
-
-            private static string GetOpenKneeboardOutFirewallRuleText(int port)
-            {
-                var startInfo = new ProcessStartInfo
-                {
-                    FileName = "netsh",
-                    Arguments = "advfirewall firewall show rule name=\"" + GetOpenKneeboardOutFirewallRuleName(port) + "\"",
-                    UseShellExecute = false,
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                    CreateNoWindow = true,
-                };
-
-                using (Process process = Process.Start(startInfo))
-                {
-                    if (process == null)
-                    {
-                        return "";
-                    }
-
-                    string output = process.StandardOutput.ReadToEnd();
-                    string error = process.StandardError.ReadToEnd();
-                    process.WaitForExit();
-
-                    if (!string.IsNullOrWhiteSpace(error))
-                    {
-                        output = output + "\n" + error;
-                    }
-
-                    return output ?? "";
-                }
+                return info;
             }
 
             private static string GetOpenKneeboardOutFirewallRuleName(int port)
