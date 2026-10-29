@@ -581,6 +581,20 @@ namespace VAICOM
                         }
                         break;
 
+                    case "wso.wheel.visible.on":
+                        if (WSOCommandHandler.IsWSO())
+                        {
+                            WSOCommandHandler.SetWheelVisible(true);
+                        }
+                        break;
+
+                    case "wso.wheel.visible.off":
+                        if (WSOCommandHandler.IsWSO())
+                        {
+                            WSOCommandHandler.SetWheelVisible(false);
+                        }
+                        break;
+
                     case "test":
                         API.API_Test(vaProxy);
                         break;

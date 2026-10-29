@@ -70,7 +70,7 @@ function collectActionCacheEntries(menu, path, entries, all = false) {
 	const allowedActions = [
 		"divert_tgt1_lat_lon", "hold_flightplan_1", "hold_flightplan_2",
 		"resume_flightplan_1", "resume_flightplan_2", "radio_tune_atc",
-     "nav_tacan_tr", "designate_wpt",
+    	"nav_tacan_tr", "designate_wpt",
 		"radar_focus_targets_thinking", "radar_lock_targets_thinking",
 		"radar_focus_target", "radar_lock_target", "radar_unlock_tgt"
 	];
@@ -91,7 +91,7 @@ function collectActionCacheEntries(menu, path, entries, all = false) {
 				action,
 				name: itemName,
 				value: action_value,
-              idx: (i + 1).toString(),
+            	idx: (i + 1).toString(),
 				path: itemPath.join(" > ")
 			});
 		}
@@ -116,7 +116,7 @@ function sendActionCacheSnapshot(reason) {
 			return;
 		}
 
-     const entries = [];
+    	const entries = [];
 		collectActionCacheEntries(main_menu, ["Main Menu"], entries, true);
 
 		sendSocketMessage(JSON.stringify({
@@ -129,9 +129,43 @@ function sendActionCacheSnapshot(reason) {
 	}
 }
 
+// Function and styling to hide or show the Jester wheel.
+const VAICOM_WHEEL_HIDE_STYLE_ID = "vaicom-wheel-hide-style";
+function vaicomSetWheelVisible(visible) {
+	const existing = document.getElementById(VAICOM_WHEEL_HIDE_STYLE_ID);
+
+	if (visible) {
+		if (existing) {
+			existing.remove();
+		}
+		return;
+	}
+
+	if (existing) {
+		return;
+	}
+
+	const style = document.createElement("style");
+	style.id = VAICOM_WHEEL_HIDE_STYLE_ID;
+	style.textContent = "canvas { opacity: 0 !important; pointer-events: none !important; }";
+	(document.head || document.documentElement).appendChild(style);
+}
+
+window.vaicomSetWheelVisible = vaicomSetWheelVisible;
+
 function hb_send_proxy(category, action, value = "") {
 	if (value === undefined || value === null) {
 		value = "";
+	}
+
+	// VAICOM special commands are handled here and not sent to the HB proxy
+	if (category === "vaicom") {
+		if (action === "show_wheel") {
+			vaicomSetWheelVisible(true);
+		} else if (action === "hide_wheel") {
+			vaicomSetWheelVisible(false);
+		}
+		return;
 	}
 
 	if (typeof window.edQuery === "function") {

@@ -416,6 +416,13 @@ namespace VAICOM
                     HbSendProxyCommand.SendWheelCommand(State.WsoWheelClient, category, action, value);
                 }
 
+                public static void SetWheelVisible(bool visible)
+                {
+                    // Special commands, identified by "vaicom" category, used to show or hide the Jester wheel.
+                    string action = visible ? "show_wheel" : "hide_wheel";
+                    HbSendProxyCommand.SendWheelCommand(State.WsoWheelClient, "vaicom", action, "");
+                }
+
                 public static bool IsWSO()
                 {
                     if (!State.IsF4E)
