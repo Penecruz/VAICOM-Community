@@ -1006,6 +1006,53 @@
       }
     }
 
+    function getStoresStationConfig(data) {
+      const server = (data && data.Server) || {};
+      const aircraft = String(server.Aircraft || '').trim().toUpperCase();
+      const isF14 = aircraft.indexOf('F-14') >= 0 || aircraft.indexOf('F14') >= 0 || aircraft.indexOf('TOMCAT') >= 0;
+      const isA10 = aircraft.indexOf('A-10') >= 0 || aircraft.indexOf('A10') >= 0 || aircraft.indexOf('WARTHOG') >= 0;
+      const isF16 = aircraft.indexOf('F-16') >= 0 || aircraft.indexOf('F16') >= 0 || aircraft.indexOf('VIPER') >= 0;
+      const isFA18 = aircraft.indexOf('FA-18') >= 0 || aircraft.indexOf('F/A-18') >= 0 || aircraft.indexOf('F18') >= 0 || aircraft.indexOf('HORNET') >= 0;
+
+      if (isF14) {
+        return {
+          id: 'F14',
+          title: 'F-14 STATION LAYOUT',
+          labels: ['1A', '1B', '2', '3', '4', '5', '6', '7', '8B', '8A']
+        };
+      }
+
+      if (isA10) {
+        return {
+          id: 'A10CII',
+          title: 'A-10C II 11-STATION LAYOUT',
+          labels: ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11']
+        };
+      }
+
+      if (isF16) {
+        return {
+          id: 'F16C',
+          title: 'F-16C 9-STATION LAYOUT',
+          labels: ['1', '2', '3', '4', '5L', '5', '5R', '6', '7', '8', '9']
+        };
+      }
+
+      if (isFA18) {
+        return {
+          id: 'FA18C',
+          title: 'F/A-18C 9-STATION LAYOUT',
+          labels: ['1', '2', '3', '4', '5', '6', '7', '8', '9']
+        };
+      }
+
+      return {
+        id: 'STD10',
+        title: 'STANDARD 10-STATION LAYOUT',
+        labels: ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10']
+      };
+    }
+
     function formatStoresPageHtml(pageSwitcherHtml, data) {
       const server = (data && data.Server) || {};
       const payload = (server && server.Payload) || {};
@@ -1019,6 +1066,7 @@
       const stations = aidAllowsLiveStores
         ? liveStations
         : (storesBaselineSnapshot.hasSnapshot ? storesBaselineSnapshot.stations : liveStations);
+      const storesStationConfig = getStoresStationConfig(data);
 
       function fmtFuel(kgValue, lbsValue) {
         const kg = formatFastAvBusNumber(kgValue, 1);
@@ -1067,19 +1115,23 @@
       html += '</div>';
 
       html += '<div class="fltPlanStoresWrap">';
+      html += '<div class="fltPlanStoresConfig">' + escapeHtml(storesStationConfig.title) + '</div>';
       html += '<table class="fltPlanStoresGrid">';
       html += '<thead><tr><th class="fltPlanStoresStation">STN</th><th>STORE</th></tr></thead><tbody>';
 
       if (!stations.length) {
         html += '<tr><td class="fltPlanStoresStation">-</td><td class="fltPlanStoresEmpty">WAITING FOR AID CONNECTION</td></tr>';
       } else {
-        for (let i = 0; i < stations.length; i++) {
+        const configuredCount = Array.isArray(storesStationConfig.labels) ? storesStationConfig.labels.length : 0;
+        const rowCount = configuredCount > 0 ? configuredCount : stations.length;
+        for (let i = 0; i < rowCount; i++) {
           const station = stations[i] || {};
           const clsid = String(station.CLSID || '').trim();
           const count = Number(station.count || 0);
           const empty = !clsid || count <= 0;
           const name = empty ? 'EMPTY' : getStoreFriendlyName(clsid);
-          html += '<tr><td class="fltPlanStoresStation">' + String(i + 1) + '</td><td' + (empty ? ' class="fltPlanStoresEmpty"' : '') + '>' + escapeHtml(name) + '</td ></tr >';
+          const stationLabel = String((storesStationConfig.labels && storesStationConfig.labels[i]) || String(i + 1));
+          html += '<tr><td class="fltPlanStoresStation">' + escapeHtml(stationLabel) + '</td><td' + (empty ? ' class="fltPlanStoresEmpty"' : '') + '>' + escapeHtml(name) + '</td ></tr >';
         }
       }
 

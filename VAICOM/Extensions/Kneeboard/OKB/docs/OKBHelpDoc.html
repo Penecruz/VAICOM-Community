@@ -374,6 +374,7 @@
               <li><strong>Stores empty-state</strong>: When no station payload is available, the Stores table shows <code>WAITING FOR AID CONNECTION</code>.</li>
               <li><strong>Status behavior</strong>: <code>OFF</code> when bus is disabled/unavailable, <code>ON</code> when enabled with retained/cached values but not currently live, <code>LIVE</code> when active high-rate updates are present, <code>DEGRADED</code> for anomalous/invalid feed quality.</li>
               <li><strong>Stores feed gating</strong>: Stores rendering is gated by AID status: when <code>OFF</code>, the Stores table stays on the mission-baseline snapshot; when <code>ON/LIVE/DEGRADED</code>, Stores can follow regular runtime/server update-cycle changes.</li>
+              <li><strong>Aircraft station layouts</strong>: Stores/AID now applies aircraft-specific station labels/counts. Default layout uses <code>1..10</code>. F-14 uses <code>1A, 1B, 2, 3, 4, 5, 6, 7, 8B, 8A</code>, A-10C II uses <code>1..11</code>, F-16C uses <code>1, 2, 3, 4, 5L, 5, 5R, 6, 7, 8, 9</code>, and F/A-18C uses <code>1..9</code>.</li>
               <li>Ideal for confirming stores station position, hung ordnance, and other critical information.</li>
           </ul>
 
