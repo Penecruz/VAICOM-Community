@@ -154,6 +154,35 @@ function ProcCommand(command, value)
         jester:performClickableAction(device_commands.PROXY_Jester_BU_wpt_from_ggw_target, value, false)
     elseif command == device_commands.PROXY_Jester_BU_izlid_point_zone then
         jester:performClickableAction(device_commands.PROXY_Jester_BU_izlid_point_zone, value, false)
+    -- Fixed pass-through IDs for steerpoint track actions (resilient against command_defs counter() shifts).
+    elseif command == 10048 then
+        jester:performClickableAction(device_commands.JESTER_Steerpoint_SP1, value, false)
+    elseif command == 10049 then
+        jester:performClickableAction(device_commands.JESTER_Steerpoint_SP2, value, false)
+    elseif command == 10050 then
+        jester:performClickableAction(device_commands.JESTER_Steerpoint_SP3, value, false)
+    elseif command == 10051 then
+        jester:performClickableAction(device_commands.JESTER_Steerpoint_FP, value, false)
+    elseif command == 10052 then
+        jester:performClickableAction(device_commands.JESTER_Steerpoint_IP, value, false)
+    elseif command == 10053 then
+        jester:performClickableAction(device_commands.JESTER_Steerpoint_ST, value, false)
+    elseif command == 10054 then
+        jester:performClickableAction(device_commands.JESTER_Steerpoint_HB, value, false)
+    elseif command == 10055 then
+        jester:performClickableAction(device_commands.JESTER_Steerpoint_MAN, value, false)
+    elseif command == 10056 then
+        lantirn:performClickableAction(device_commands.LANTIRN_QWP_Minus, value, false)
+    elseif command == 10057 then
+        lantirn:performClickableAction(device_commands.LANTIRN_QWP_Plus, value, false)
+    elseif command == 10058 then
+        jester:performClickableAction(device_commands.JESTER_LANTIRN_inhibit_auto_designate, value, false)
+    elseif command == 10059 then
+        jester:performClickableAction(device_commands.JESTER_LANTIRN_designate, value, false)
+    elseif command == 10060 then
+        lantirn:performClickableAction(device_commands.LANTIRN_Undesignate, value, false)
+    elseif command == 10061 then
+        lantirn:performClickableAction(device_commands.LANTIRN_GPSZero, value, false)
     elseif command == device_commands.PROXY_Iceman_set_heading_absolute then
         jester:performClickableAction(device_commands.Iceman_set_heading_absolute, value, false)
     elseif command == device_commands.PROXY_Iceman_set_heading_relative then

@@ -43,10 +43,11 @@
             public static DeviceAction Atom_J_MENU_CTXT_CLOSE = new DeviceAction() { device = Devices.RIO, command = start + 0, value = 0 };
             public static DeviceAction Atom_J_MENU_MAIN_CLOSE = new DeviceAction() { device = Devices.RIO, command = start + 0, value = 0 };
 
-            public static DeviceAction Atom_JESTER_LANTIRN_inhibit_auto_designate = new DeviceAction() { device = Devices.RIO, command = 3761, value = 1 }; // JESTER_LANTIRN_inhibit_auto_designate
+            // Route volatile counter()-assigned LANTIRN/Jester actions through fixed PROXY ids.
+            public static DeviceAction Atom_JESTER_LANTIRN_inhibit_auto_designate = new DeviceAction() { device = Devices.PROXY, command = 10058, value = 1 }; // PROXY -> JESTER_LANTIRN_inhibit_auto_designate
             public static DeviceAction Atom_JESTER_LANTIRN_track_target_id = new DeviceAction() { device = Devices.RIO, command = 3762, value = -1 }; // JESTER_LANTIRN_track_target_id 
             public static DeviceAction Atom_JESTER_LANTIRN_track_zone_id = new DeviceAction() { device = Devices.RIO, command = 3763, value = 0.5 }; // JESTER_LANTIRN_track_zone_id
-            public static DeviceAction Atom_JESTER_LANTIRN_designate = new DeviceAction() { device = Devices.LANTIRN, command = 3764, value = 1 }; // JESTER_LANTIRN_designate
+            public static DeviceAction Atom_JESTER_LANTIRN_designate = new DeviceAction() { device = Devices.PROXY, command = 10059, value = 1 }; // PROXY -> JESTER_LANTIRN_designate
             //public static DeviceAction Atom_KNEEBOARD_Laser100                      = new DeviceAction() { device = Devices.KNEEBOARD, command = 3593, value = 1 }; // KNEEBOARD_Laser100
             //public static DeviceAction Atom_KNEEBOARD_Laser10                       = new DeviceAction() { device = Devices.KNEEBOARD, command = 3594, value = 1 }; // KNEEBOARD_Laser10
             //public static DeviceAction Atom_KNEEBOARD_Laser1                        = new DeviceAction() { device = Devices.KNEEBOARD, command = 3595, value = 1 }; // KNEEBOARD_Laser1
@@ -57,12 +58,13 @@
             public static DeviceAction Atom_LANTIRN_LaserLatched = new DeviceAction() { device = Devices.LANTIRN, command = 3503, value = 1 }; // LANTIRN_LaserLatched
             public static DeviceAction Atom_LANTIRN_Laser_ARM = new DeviceAction() { device = Devices.LANTIRN, command = 3516, value = 1 }; // LANTIRN_Laser_ARM
             public static DeviceAction Atom_LANTIRN_Laser_ARM_Toggle = new DeviceAction() { device = Devices.LANTIRN, command = 3517, value = -1 }; // LANTIRN_Laser_ARM_Toggle
-            public static DeviceAction Atom_LANTIRN_Undesignate = new DeviceAction() { device = Devices.LANTIRN, command = 3504, value = 1 }; // LANTIRN_Undesignate
+            public static DeviceAction Atom_LANTIRN_Undesignate = new DeviceAction() { device = Devices.PROXY, command = 10060, value = 1 }; // PROXY -> LANTIRN_Undesignate
             public static DeviceAction Atom_LANTIRN_QHUD_QADL = new DeviceAction() { device = Devices.LANTIRN, command = 3507, value = 1 }; // LANTIRN_QHUD_QADL
             public static DeviceAction Atom_LANTIRN_QSNO = new DeviceAction() { device = Devices.LANTIRN, command = 3509, value = 1 }; // LANTIRN_QSNO
             public static DeviceAction Atom_LANTIRN_QDES = new DeviceAction() { device = Devices.LANTIRN, command = 3508, value = 1 }; // LANTIRN_QDES
-            public static DeviceAction Atom_LANTIRN_QWP_Minus = new DeviceAction() { device = Devices.LANTIRN, command = 3510, value = 1 }; // LANTIRN_QWP_Minus
-            public static DeviceAction Atom_LANTIRN_QWP_Plus = new DeviceAction() { device = Devices.LANTIRN, command = 3511, value = 1 }; // LANTIRN_QWP_Plus
+            // Route QWP +/- via fixed PROXY ids to avoid hardcoding volatile counter()-assigned LANTIRN ids.
+            public static DeviceAction Atom_LANTIRN_QWP_Minus = new DeviceAction() { device = Devices.PROXY, command = 10056, value = 1 }; // PROXY -> LANTIRN_QWP_Minus
+            public static DeviceAction Atom_LANTIRN_QWP_Plus = new DeviceAction() { device = Devices.PROXY, command = 10057, value = 1 }; // PROXY -> LANTIRN_QWP_Plus
 
             // block: radar (DONE!)
             public static DeviceAction Atom_J_RDR_GO_SILENT = new DeviceAction() { device = Devices.RIO, command = 3564, value = 1 }; // JESTER_Quiet
@@ -402,15 +404,16 @@
             public static DeviceAction Atom_J_RAD_DL_HOST_TICO = new DeviceAction() { device = Devices.RIO, command = start + 0, value = 0 };
             public static DeviceAction Atom_J_RAD_DL_HOST_FORE = new DeviceAction() { device = Devices.RIO, command = start + 0, value = 0 };
             public static DeviceAction Atom_J_RAD_DL_HOST_BURK = new DeviceAction() { device = Devices.RIO, command = start + 0, value = 0 };
-            public static DeviceAction Atom_JESTER_Steerpoint_SP1 = new DeviceAction() { device = Devices.RIO, command = 3566, value = 1 }; // LANTIRN Q JESTER_Steerpoint_SP1
-            public static DeviceAction Atom_JESTER_Steerpoint_SP2 = new DeviceAction() { device = Devices.RIO, command = 3567, value = 1 }; // LANTIRN Q JESTER_Steerpoint_SP2
-            public static DeviceAction Atom_JESTER_Steerpoint_SP3 = new DeviceAction() { device = Devices.RIO, command = 3568, value = 1 }; // LANTIRN Q JESTER_Steerpoint_SP3
-            public static DeviceAction Atom_JESTER_Steerpoint_FP = new DeviceAction() { device = Devices.RIO, command = 3569, value = 1 }; // LANTIRN Q JESTER_Steerpoint_FP
-            public static DeviceAction Atom_JESTER_Steerpoint_IP = new DeviceAction() { device = Devices.RIO, command = 3570, value = 1 }; // LANTIRN Q JESTER_Steerpoint_IP
-            public static DeviceAction Atom_JESTER_Steerpoint_ST = new DeviceAction() { device = Devices.RIO, command = 3571, value = 1 }; // LANTIRN Q JESTER_Steerpoint_ST
-            public static DeviceAction Atom_JESTER_Steerpoint_HB = new DeviceAction() { device = Devices.RIO, command = 3572, value = 1 }; // LANTIRN Q JESTER_Steerpoint_HB
-            public static DeviceAction Atom_JESTER_Steerpoint_MAN = new DeviceAction() { device = Devices.RIO, command = 3573, value = 1 }; // LANTIRN Q JESTER_Steerpoint_MAN
-            public static DeviceAction Atom_LANTIRN_GPSZero = new DeviceAction() { device = Devices.LANTIRN, command = 3683, value = 1 }; // LANTIRN Q LANTIRN_GPSZero = reset??
+            // Route steerpoint-track actions through fixed PROXY IDs to avoid DCS counter() drift.
+            public static DeviceAction Atom_JESTER_Steerpoint_SP1 = new DeviceAction() { device = Devices.PROXY, command = 10048, value = 1 }; // PROXY -> JESTER_Steerpoint_SP1
+            public static DeviceAction Atom_JESTER_Steerpoint_SP2 = new DeviceAction() { device = Devices.PROXY, command = 10049, value = 1 }; // PROXY -> JESTER_Steerpoint_SP2
+            public static DeviceAction Atom_JESTER_Steerpoint_SP3 = new DeviceAction() { device = Devices.PROXY, command = 10050, value = 1 }; // PROXY -> JESTER_Steerpoint_SP3
+            public static DeviceAction Atom_JESTER_Steerpoint_FP = new DeviceAction() { device = Devices.PROXY, command = 10051, value = 1 }; // PROXY -> JESTER_Steerpoint_FP
+            public static DeviceAction Atom_JESTER_Steerpoint_IP = new DeviceAction() { device = Devices.PROXY, command = 10052, value = 1 }; // PROXY -> JESTER_Steerpoint_IP
+            public static DeviceAction Atom_JESTER_Steerpoint_ST = new DeviceAction() { device = Devices.PROXY, command = 10053, value = 1 }; // PROXY -> JESTER_Steerpoint_ST
+            public static DeviceAction Atom_JESTER_Steerpoint_HB = new DeviceAction() { device = Devices.PROXY, command = 10054, value = 1 }; // PROXY -> JESTER_Steerpoint_HB
+            public static DeviceAction Atom_JESTER_Steerpoint_MAN = new DeviceAction() { device = Devices.PROXY, command = 10055, value = 1 }; // PROXY -> JESTER_Steerpoint_MAN
+            public static DeviceAction Atom_LANTIRN_GPSZero = new DeviceAction() { device = Devices.PROXY, command = 10061, value = 1 }; // PROXY -> LANTIRN_GPSZero (reset)
             public static DeviceAction Atom_LANTIRN_ToggleFOV = new DeviceAction() { device = Devices.LANTIRN, command = 3512, value = 1 }; // LANTIRN_ToggleFOV
 
             public static DeviceAction Atom_J_UTIL_NAV_MAP_MARKER = new DeviceAction() { device = Devices.RIO, command = start + 0, value = 0 };

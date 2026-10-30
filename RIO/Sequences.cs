@@ -55,12 +55,14 @@ namespace VAICOM.Extensions.RIO
                 public static List<DeviceAction> Seq_LANTIRN_LaserLatched = new List<DeviceAction>() { RIO.Atom_J_MENU_CLOSE, RIO.Atom_J_MENU_OPEN, RIO.Atom_J_MENU_OPTION_7, RIO.Atom_J_MENU_OPTION_1 }; // RIO.Atom_LANTIRN_LaserLatched          };
                 public static List<DeviceAction> Seq_LANTIRN_Laser_ARM = new List<DeviceAction>() { RIO.Atom_LANTIRN_Laser_ARM };
                 public static List<DeviceAction> Seq_LANTIRN_Laser_ARM_Toggle = new List<DeviceAction>() { RIO.Atom_LANTIRN_Laser_ARM_Toggle };
-                public static List<DeviceAction> Seq_LANTIRN_Undesignate = new List<DeviceAction>() { RIO.Atom_J_MENU_CLOSE, RIO.Atom_J_MENU_OPEN, RIO.Atom_J_MENU_OPTION_7, RIO.Atom_J_MENU_OPTION_4 };
+                public static List<DeviceAction> Seq_LANTIRN_Undesignate = new List<DeviceAction>() { RIO.Atom_LANTIRN_Undesignate };
                 public static List<DeviceAction> Seq_LANTIRN_QHUD_QADL = new List<DeviceAction>() { RIO.Atom_J_MENU_CLOSE, RIO.Atom_J_MENU_OPEN, RIO.Atom_J_MENU_OPTION_2, RIO.Atom_J_MENU_OPTION_1 };
                 public static List<DeviceAction> Seq_LANTIRN_QSNO = new List<DeviceAction>() { RIO.Atom_J_MENU_CLOSE, RIO.Atom_J_MENU_OPEN, RIO.Atom_J_MENU_OPTION_2, RIO.Atom_J_MENU_OPTION_2 };
-                public static List<DeviceAction> Seq_LANTIRN_QDES = new List<DeviceAction>() { RIO.Atom_J_MENU_CLOSE, RIO.Atom_J_MENU_OPEN, RIO.Atom_J_MENU_OPTION_2, RIO.Atom_J_MENU_OPTION_4 };
-                public static List<DeviceAction> Seq_LANTIRN_QWP_Minus = new List<DeviceAction>() { RIO.Atom_J_MENU_CLOSE, RIO.Atom_J_MENU_OPEN, RIO.Atom_J_MENU_OPTION_6 }; // RIO.Atom_LANTIRN_QWP_Minus        };
-                public static List<DeviceAction> Seq_LANTIRN_QWP_Plus = new List<DeviceAction>() { RIO.Atom_J_MENU_CLOSE, RIO.Atom_J_MENU_OPEN, RIO.Atom_J_MENU_OPTION_5 }; // RIO.Atom_LANTIRN_QWP_Plus        };
+                // Updated DCS wheel path: context menu -> 7 -> 3 for QDES.
+                public static List<DeviceAction> Seq_LANTIRN_QDES = new List<DeviceAction>() { RIO.Atom_J_MENU_CLOSE, RIO.Atom_J_MENU_OPEN, RIO.Atom_J_MENU_OPTION_7, RIO.Atom_J_MENU_OPTION_3 };
+                // Use proxy-backed LANTIRN QWP actions so command ids resolve via current DCS counter() mapping.
+                public static List<DeviceAction> Seq_LANTIRN_QWP_Minus = new List<DeviceAction>() { RIO.Atom_LANTIRN_QWP_Minus };
+                public static List<DeviceAction> Seq_LANTIRN_QWP_Plus = new List<DeviceAction>() { RIO.Atom_LANTIRN_QWP_Plus };
 
                 // block: radar (DONE)
                 public static List<DeviceAction> Seq_J_RDR_GO_SILENT = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_2, RIO.Atom_J_MENU_OPTION_1, RIO.Atom_J_MENU_OPTION_7 };
@@ -486,14 +488,16 @@ namespace VAICOM.Extensions.RIO
 
                 public static List<DeviceAction> Seq_J_RESET = new List<DeviceAction>() { RIO.Atom_J_MENU_OPTION_1, RIO.Atom_J_RESET, RIO.Atom_J_MENU_OPEN, RIO.Atom_J_MENU_CLOSE };
 
-                public static List<DeviceAction> Seq_JESTER_Steerpoint_SP1 = new List<DeviceAction>() { RIO.Atom_JESTER_Steerpoint_SP1 };
-                public static List<DeviceAction> Seq_JESTER_Steerpoint_SP2 = new List<DeviceAction>() { RIO.Atom_JESTER_Steerpoint_SP2 };
-                public static List<DeviceAction> Seq_JESTER_Steerpoint_SP3 = new List<DeviceAction>() { RIO.Atom_JESTER_Steerpoint_SP3 };
-                public static List<DeviceAction> Seq_JESTER_Steerpoint_FP = new List<DeviceAction>() { RIO.Atom_JESTER_Steerpoint_FP };
-                public static List<DeviceAction> Seq_JESTER_Steerpoint_IP = new List<DeviceAction>() { RIO.Atom_JESTER_Steerpoint_IP };
-                public static List<DeviceAction> Seq_JESTER_Steerpoint_ST = new List<DeviceAction>() { RIO.Atom_JESTER_Steerpoint_ST };
-                public static List<DeviceAction> Seq_JESTER_Steerpoint_HB = new List<DeviceAction>() { RIO.Atom_JESTER_Steerpoint_HB };
-                public static List<DeviceAction> Seq_JESTER_Steerpoint_MAN = new List<DeviceAction>() { RIO.Atom_JESTER_Steerpoint_MAN };
+                // DCS wheel path for LANTIRN QWP steerpoint selection:
+                // context menu -> 2 (Q mode utility) -> 3 (QWP list) -> 1..8 (SP1/SP2/SP3/FP/IP/ST/HB/DP)
+                public static List<DeviceAction> Seq_JESTER_Steerpoint_SP1 = new List<DeviceAction>() { RIO.Atom_J_MENU_CLOSE, RIO.Atom_J_MENU_OPEN, RIO.Atom_J_MENU_OPTION_2, RIO.Atom_J_MENU_OPTION_3, RIO.Atom_J_MENU_OPTION_1 };
+                public static List<DeviceAction> Seq_JESTER_Steerpoint_SP2 = new List<DeviceAction>() { RIO.Atom_J_MENU_CLOSE, RIO.Atom_J_MENU_OPEN, RIO.Atom_J_MENU_OPTION_2, RIO.Atom_J_MENU_OPTION_3, RIO.Atom_J_MENU_OPTION_2 };
+                public static List<DeviceAction> Seq_JESTER_Steerpoint_SP3 = new List<DeviceAction>() { RIO.Atom_J_MENU_CLOSE, RIO.Atom_J_MENU_OPEN, RIO.Atom_J_MENU_OPTION_2, RIO.Atom_J_MENU_OPTION_3, RIO.Atom_J_MENU_OPTION_3 };
+                public static List<DeviceAction> Seq_JESTER_Steerpoint_FP = new List<DeviceAction>() { RIO.Atom_J_MENU_CLOSE, RIO.Atom_J_MENU_OPEN, RIO.Atom_J_MENU_OPTION_2, RIO.Atom_J_MENU_OPTION_3, RIO.Atom_J_MENU_OPTION_4 };
+                public static List<DeviceAction> Seq_JESTER_Steerpoint_IP = new List<DeviceAction>() { RIO.Atom_J_MENU_CLOSE, RIO.Atom_J_MENU_OPEN, RIO.Atom_J_MENU_OPTION_2, RIO.Atom_J_MENU_OPTION_3, RIO.Atom_J_MENU_OPTION_5 };
+                public static List<DeviceAction> Seq_JESTER_Steerpoint_ST = new List<DeviceAction>() { RIO.Atom_J_MENU_CLOSE, RIO.Atom_J_MENU_OPEN, RIO.Atom_J_MENU_OPTION_2, RIO.Atom_J_MENU_OPTION_3, RIO.Atom_J_MENU_OPTION_6 };
+                public static List<DeviceAction> Seq_JESTER_Steerpoint_HB = new List<DeviceAction>() { RIO.Atom_J_MENU_CLOSE, RIO.Atom_J_MENU_OPEN, RIO.Atom_J_MENU_OPTION_2, RIO.Atom_J_MENU_OPTION_3, RIO.Atom_J_MENU_OPTION_7 };
+                public static List<DeviceAction> Seq_JESTER_Steerpoint_MAN = new List<DeviceAction>() { RIO.Atom_J_MENU_CLOSE, RIO.Atom_J_MENU_OPEN, RIO.Atom_J_MENU_OPTION_2, RIO.Atom_J_MENU_OPTION_3, RIO.Atom_J_MENU_OPTION_8 };
                 public static List<DeviceAction> Seq_LANTIRN_GPSZero = new List<DeviceAction>() { RIO.Atom_LANTIRN_GPSZero };
                 public static List<DeviceAction> Seq_LANTIRN_ToggleFOV = new List<DeviceAction>() { RIO.Atom_LANTIRN_ToggleFOV };
 
