@@ -1,24 +1,27 @@
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
+using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Net.Sockets;
-using System.Text.RegularExpressions;
+using System.Numerics;
+using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Runtime.InteropServices;
-using System.Reflection;
 using System.Windows;
-using System.Globalization;
+using System.Windows.Documents;
+using System.Windows.Media.Media3D;
+using Microsoft.Win32;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using VAICOM.Client;
-using VAICOM.Static;
 using VAICOM.Database;
+using VAICOM.Static;
 
 namespace VAICOM
 {
@@ -1809,6 +1812,22 @@ namespace VAICOM
                     "AI Pilot",
                 };
 
+                private static readonly string[] F4EAiCrewKeywordSectionOrder = new[]
+                {
+                    "Navigation",
+                    "TACAN",
+                    "Radio",
+                    "Radar",
+                    "Weapons",
+                    "Defensive/Countermeasures",
+                    "Crew",
+                    "Ground Crew",
+                    "Alignment",
+                    "Altitude",
+                    "Fuel",
+                    "Miscellaneous",
+                };
+
                 private static readonly string[] AH64CPGKeywordSectionOrder = new[]
                 {
                     "Startup and Shutdown",
@@ -1858,7 +1877,12 @@ namespace VAICOM
                             return BuildF14AiCrewKeywordSections();
                         }
 
-                        if (moduleId.StartsWith("AH-64D", StringComparison.OrdinalIgnoreCase))
+                        if (State.IsF4E)
+                        {
+                            return BuildF4EAiCrewKeywordSections();
+                        }
+
+                        if (State.IsAH64D)
                         {
                             return BuildAH64AiCrewKeywordSections();
                         }
@@ -2083,6 +2107,225 @@ namespace VAICOM
                     return null;
                 }
 
+                private static Dictionary<string, List<string>> BuildF4EAiCrewKeywordSections()
+                {
+                    Dictionary<string, SortedSet<string>> buckets = new Dictionary<string, SortedSet<string>>(StringComparer.OrdinalIgnoreCase);
+                    foreach (string section in F4EAiCrewKeywordSectionOrder)
+                    {
+                        buckets[section] = new SortedSet<string>(StringComparer.OrdinalIgnoreCase);
+                    }
+
+                    foreach (KeyValuePair<string, string> alias in Extensions.WSO.Aliases.aicommands)
+                    {
+                        string phrase = (alias.Key ?? string.Empty).Trim();
+                        string commandId = alias.Value ?? string.Empty;
+                        if (string.IsNullOrWhiteSpace(phrase) || string.IsNullOrWhiteSpace(commandId))
+                        {
+                            continue;
+                        }
+
+                        string section = ClassifyF4EAiCrewKeywordSection(commandId);
+                        if (string.IsNullOrWhiteSpace(section))
+                        {
+                            continue;
+                        }
+
+                        if (buckets.TryGetValue(section, out SortedSet<string> set))
+                        {
+                            set.Add(phrase);
+                        }
+                    }
+
+                    foreach (KeyValuePair<string, IEnumerable<string>> extra in GetF4EManualAiCrewKeywordSections())
+                    {
+                        if (string.IsNullOrWhiteSpace(extra.Key) || extra.Value == null)
+                        {
+                            continue;
+                        }
+
+                        if (!buckets.TryGetValue(extra.Key, out SortedSet<string> set))
+                        {
+                            continue;
+                        }
+
+                        foreach (string keyword in extra.Value)
+                        {
+                            if (!string.IsNullOrWhiteSpace(keyword))
+                            {
+                                set.Add(keyword.Trim());
+                            }
+                        }
+                    }
+
+                    Dictionary<string, List<string>> sections = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
+                    foreach (string section in F4EAiCrewKeywordSectionOrder)
+                    {
+                        if (!buckets.TryGetValue(section, out SortedSet<string> set) || set.Count == 0)
+                        {
+                            continue;
+                        }
+
+                        sections[section] = set.ToList();
+                    }
+
+                    return sections;
+                }
+
+                private static Dictionary<string, IEnumerable<string>> GetF4EManualAiCrewKeywordSections()
+                {
+                    return new Dictionary<string, IEnumerable<string>>(StringComparer.OrdinalIgnoreCase)
+                    {
+                        {
+                            "Navigation",
+                            new[]
+                            {
+                                "Deactivate/Hold/Hold at [Flight plan 1; Primary flight plan; Flight plan 2; Secondary flight plan] waypoint [1..9]",
+                                "Go to [Flight Plan; Flight plan 1; Primary flight plan; Flight plan 2; Secondary flight plan] [at] waypoint [1..9]",
+                                "Resume [Flight Plan; Flight plan 1; Primary flight plan; Flight plan 2; Secondary flight plan] [at] waypoint [1..9]",
+                                "Resume At Waypoint [1..9]",
+                                "Hold at current Waypoint",
+                                "Designate [Flight plan 1; Primary flight plan; Flight plan 2; Secondary flight plan] waypoint [1..9] as [Turn point; Nav fix; Navigation fix; Target; CAP; I P; Inbound point; Fence in; Fence out; Alternate; Homebase]",
+                                "Divert to [Flight plan 1; Primary flight plan; Flight plan 2; Secondary flight plan] waypoint [1..9]",
+                                "Divert to <Airfield;Asset>",
+                            }
+                        },
+                        {
+                            "Weapons",
+                            new[]
+                            {
+                                "Pave spike laser code [1] [1..7] [1..8] [1..8]",
+                                "Pave Spike Lock Target",
+                                "Pave Spike Unlock Target",
+                            }
+                        },
+                        {
+                            "Radio",
+                            new[]
+                            {
+                                "Tune Radio [to] <Airfield;Asset>",
+                                "Tune/Set Radio [Frequency] [2..3] [0..9] [0..9] decimal [0..9] [0;25;50;75]",
+                                "Push/Select [Comm;Radio] [Button;Channel] [1..18]",
+                                "Push/Select [Aux] [Button;Channel] [1..20]"
+                            }
+                        },
+                        {
+                            "Radar",
+                            new[]
+                            {
+                                "Radar Focus Target [1..20]",
+                                "Radar Lock Target [1..20]",
+                                "Lock That Target",
+                                "Select Next Target"
+                            }
+                        },
+                        {
+                            "TACAN",
+                            new[]
+                            {
+                                "Tune TACAN <asset name>",
+                                "Tune TACAN station [Alpha-Zulu] [Alpha-Zulu] [Alpha-Zulu]",
+                                "Set/Select TACAN [channel] [zero;0;1] [0..9] [0..9] [X-ray;Yankee]"
+                            }
+                        },
+                        {
+                            "Fuel",
+                            new[]
+                            {
+                                "Rejoin With Tanker [1..8]",
+                            }
+                        },
+                        {
+                            "Miscellaneous",
+                            new[]
+                            {
+                                "On Station For [15; 30; 45; 60] Minutes"
+                            }
+                        },
+                    };
+                }
+
+                private static string ClassifyF4EAiCrewKeywordSection(string commandId)
+                {
+                    if (string.IsNullOrWhiteSpace(commandId))
+                    {
+                        return null;
+                    }
+
+                    if (commandId.StartsWith("wMsgWSO_Navigation_TACAN_", StringComparison.OrdinalIgnoreCase))
+                    {
+                        return "TACAN";
+                    }
+
+                    if (commandId.StartsWith("wMsgWSO_Navigation", StringComparison.OrdinalIgnoreCase))
+                    {
+                        return "Navigation";
+                    }
+
+                    if (commandId.StartsWith("wMsgWSO_Radar_", StringComparison.OrdinalIgnoreCase)
+                        || commandId.StartsWith("wMsgWSO_ToggleRadar", StringComparison.OrdinalIgnoreCase))
+                    {
+                        return "Radar";
+                    }
+
+                    if (commandId.StartsWith("wMsgWSO_Radio_", StringComparison.OrdinalIgnoreCase))
+                    {
+                        return "Radio";
+                    }
+
+                    if (commandId.StartsWith("wMsgWSO_A2G_", StringComparison.OrdinalIgnoreCase)
+                        || commandId.StartsWith("wMsgWSO_Lantirn_", StringComparison.OrdinalIgnoreCase))
+                    {
+                        return "Weapons";
+                    }
+
+                    if (commandId.StartsWith("wMsgWSO_Systems_Chaff", StringComparison.OrdinalIgnoreCase)
+                        || commandId.StartsWith("wMsgWSO_Systems_Flare", StringComparison.OrdinalIgnoreCase)
+                        || commandId.StartsWith("wMsgWSO_Systems_Jammer", StringComparison.OrdinalIgnoreCase)
+                        || commandId.StartsWith("wMsgWSO_CounterMeasures", StringComparison.OrdinalIgnoreCase)
+                        || commandId.StartsWith("wMsgWSO_SetChaffMode", StringComparison.OrdinalIgnoreCase))
+                    {
+                        return "Defensive/Countermeasures";
+                    }
+
+                    if (commandId.StartsWith("wMsgWSO_Crew_", StringComparison.OrdinalIgnoreCase)
+                        || commandId.StartsWith("wMsgWSO_ReportSpeed", StringComparison.OrdinalIgnoreCase))
+                    {
+                        return "Crew";
+                    }
+
+                    if (commandId.StartsWith("wMsgWSO_Ground_", StringComparison.OrdinalIgnoreCase))
+                    {
+                        return "Ground Crew";
+                    }
+
+                    if (commandId.StartsWith("wMsgWSO_Systems_AVTR_", StringComparison.OrdinalIgnoreCase))
+                    {
+                        return "Recorder";
+                    }
+
+                    if (commandId.StartsWith("wMsgWSO_INSAlignment_", StringComparison.OrdinalIgnoreCase))
+                    {
+                        return "Alignment";
+                    }
+
+                    if (commandId.StartsWith("wMsgWSO_Altitude_", StringComparison.OrdinalIgnoreCase))
+                    {
+                        return "Altitude";
+                    }
+
+                    if (commandId.StartsWith("wMsgWSO_Fuel_", StringComparison.OrdinalIgnoreCase))
+                    {
+                        return "Fuel";
+                    }
+
+                    if (commandId.StartsWith("wMsgWSO_Context_", StringComparison.OrdinalIgnoreCase))
+                    {
+                        return "Miscellaneous";
+                    }
+
+                    return null;
+                }
+
                 private static Dictionary<string, List<string>> BuildAH64AiCrewKeywordSections()
                 {
                     Dictionary<string, SortedSet<string>> buckets = new Dictionary<string, SortedSet<string>>(StringComparer.OrdinalIgnoreCase);
@@ -2226,17 +2469,18 @@ namespace VAICOM
                         }
                         else if (State.IsF4E)
                         {
-                            foreach (KeyValuePair<string, string> alias in Database.Aliases.aicommands)
+                            Dictionary<string, List<string>> sections = BuildF4EAiCrewKeywordSections();
+                            foreach (string sectionName in F4EAiCrewKeywordSectionOrder)
                             {
-                                if (alias.Value != null && alias.Value.StartsWith("wMsgWSO_", StringComparison.OrdinalIgnoreCase))
+                                if (!sections.TryGetValue(sectionName, out List<string> sectionKeywords))
                                 {
-                                    keywords.Add(alias.Key);
+                                    continue;
                                 }
-                            }
 
-                            foreach (string key in GetF4EManualAiCrewKeywords())
-                            {
-                                keywords.Add(key);
+                                foreach (string key in sectionKeywords)
+                                {
+                                    keywords.Add(key);
+                                }
                             }
                         }
                         else if (State.IsAH64D)
@@ -2300,30 +2544,6 @@ namespace VAICOM
                     {
                         return new List<string>();
                     }
-                }
-
-                private static IEnumerable<string> GetF4EManualAiCrewKeywords()
-                {
-                    return new[]
-                    {
-                        "Hold at [Flight plan 1; Primary flight plan; Flight plan 2; Secondary flight plan] waypoint [1..9]",
-                        "Go to [Flight Plan; Flight plan 1; Primary flight plan; Flight plan 2; Secondary flight plan] [at] waypoint [1..9]",
-                        "Resume [Flight Plan; Flight plan 1; Primary flight plan; Flight plan 2; Secondary flight plan] [at] waypoint [1..9]",
-                        "Resume At Waypoint [1..9]",
-                        "Hold at current Waypoint",
-                        "Designate [Flight plan 1; Primary flight plan; Flight plan 2; Secondary flight plan] waypoint [1..9] as [Turn point; Nav fix; Navigation fix; Target; CAP; I P; Inbound point; Fence in; Fence out; Alternate; Homebase]",
-                        "Divert to <Airfield;Asset>",
-                        "Tune Radio [to] <Airfield;Asset>",
-                        "Tune/Set Radio [Frequency] [2..3] [0..9] [0..9] decimal [0..9] [0;25;50;75]",
-                        "Push/Select [Comm;Radio] [Button;Channel] [1..18]",
-                        "Push/Select [Aux] [Button;Channel] [1..20]",
-                        "Tune TACAN <asset name>",
-                        "Tune TACAN station [Alpha-Zulu] [Alpha-Zulu] [Alpha-Zulu]",
-                        "Set/Select TACAN [channel] [zero;0;1] [0..9] [0..9] [X-ray;Yankee]",
-                        "Radar Focus Target [1..20]",
-                        "Radar Lock Target [1..20]",
-                        "On Station For [15; 30; 45; 60] Minutes"
-                    };
                 }
 
                 private static void StartWebHost()
