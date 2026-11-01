@@ -119,6 +119,7 @@ namespace VAICOM
 
                     try // light receive msg bug
                     {
+                        UI.VaicomOverlayWindow.RcvVisible = true;
                         if (State.configwindowopen && (State.configurationwindow != null))
                         {
                             State.configurationwindow.Dispatcher.BeginInvoke((MethodInvoker)delegate

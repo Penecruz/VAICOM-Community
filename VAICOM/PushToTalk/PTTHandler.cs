@@ -550,6 +550,11 @@ namespace VAICOM
             {
                 try
                 {
+                    if (!keypress || !State.currentTXnode.enabled)
+                    {
+                        UI.VaicomOverlayWindow.TxInfoVisible = false;
+                    }
+
                     if (State.configwindowopen && (State.configurationwindow != null))
                     {
 

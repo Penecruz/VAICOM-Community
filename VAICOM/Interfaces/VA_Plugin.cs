@@ -155,6 +155,16 @@ namespace VAICOM
                         UI.Initialize.OpenConfiguration(vaProxy, true);
                         break;
 
+                    // VAICOM overlay (only displayed in DCS while the config window is open)
+
+                    case "vaicom.overlay.show":
+                        UI.VaicomOverlayWindow.ShowOverlay();
+                        break;
+
+                    case "vaicom.overlay.hide":
+                        UI.VaicomOverlayWindow.HideOverlay();
+                        break;
+
                     // Chatter on/off
 
                     case "chatter":

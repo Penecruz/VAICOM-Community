@@ -124,6 +124,7 @@ namespace VAICOM
 
                 public static void audioOutput_PlaybackStopped(object sender, StoppedEventArgs args)
                 {
+                    UI.VaicomOverlayWindow.RcvVisible = false;
                     if (State.configwindowopen && (State.configurationwindow != null))
                     {
                         State.configurationwindow.Dispatcher.BeginInvoke((MethodInvoker)delegate

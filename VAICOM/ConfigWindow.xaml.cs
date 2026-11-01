@@ -815,6 +815,7 @@ namespace VAICOM
             private void Window_Closed(object sender, EventArgs e)
             {
                 State.configwindowopen = false;
+                UI.VaicomOverlayWindow.CloseOverlay();
             }
 
             // ------------------------------------------------------------

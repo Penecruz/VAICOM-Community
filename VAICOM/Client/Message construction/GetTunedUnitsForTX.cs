@@ -177,6 +177,16 @@ namespace VAICOM
             {
                 try
                 {
+                    try
+                    {
+                        UI.VaicomOverlayWindow.TxInfo1Text = TX.radios[0].name;
+                        UI.VaicomOverlayWindow.TxInfo2Text =
+                            ((TX.Equals(PTT.TXNodes.TX1) || TX.Equals(PTT.TXNodes.TX2) || TX.Equals(PTT.TXNodes.TX3)) && !TX.radios[0].isSRSserver)
+                            ? TX.radios[0].modulation + " " + Helpers.Common.NormalizeFreqString(TX.radios[0].frequency) + " MHz " + TX.displaytunedunit
+                            : "----";
+                        UI.VaicomOverlayWindow.TxInfoVisible = State.dcsrunning && !State.currentmodule.IsFC;
+                    }
+                    catch { }
 
                     if (State.configwindowopen && (State.configurationwindow != null))
                     {

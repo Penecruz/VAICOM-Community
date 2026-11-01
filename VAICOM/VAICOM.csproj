@@ -280,6 +280,7 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
+    <Page Include="VaicomOverlayWindow.xaml" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Resources\Audio\Helpers\delimeter_44100.wav" />
@@ -362,6 +363,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Remove="FileManager\LuaFiles.cs~RF30cd3c9d.TMP" />
+    <None Remove="VaicomOverlayWindow.xaml" />
     <None Remove="Resources\Files\NoLoadContext" />
   </ItemGroup>
   <ItemGroup>

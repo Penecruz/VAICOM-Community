@@ -1,0 +1,105 @@
+﻿<Window x:Class="VAICOM.UI.VaicomOverlayWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="VAICOM Overlay"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
+        ShowInTaskbar="False"
+        ShowActivated="False"
+        Topmost="True"
+        ResizeMode="NoResize"
+        WindowStartupLocation="Manual"
+        SizeToContent="WidthAndHeight">
+    <Window.Resources>
+        <Style TargetType="TextBlock" x:Key="LcdText">
+            <Setter Property="Foreground" Value="#FF397863"/>
+            <Setter Property="FontSize" Value="10"/>
+            <Setter Property="LineStackingStrategy" Value="BlockLineHeight"/>
+            <Setter Property="LineHeight" Value="11"/>
+        </Style>
+    </Window.Resources>
+
+    <!-- bezel, same colour as the LCD text -->
+    <Border Background="#FF397863"
+            BorderBrush="#FF397863"
+            BorderThickness="1"
+            CornerRadius="10"
+            Padding="1.25"
+            MouseLeftButtonDown="DragHandle_MouseLeftButtonDown">
+        <!-- LCD glass -->
+        <Border CornerRadius="6" BorderBrush="#FF2E5E4C" BorderThickness="1" Padding="10,6,10,6" Width="250">
+            <Border.Background>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                    <GradientStop Color="#FF74E6BA" Offset="0"/>
+                    <GradientStop Color="#FF5FD2A5" Offset="1"/>
+                </LinearGradientBrush>
+            </Border.Background>
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <!-- top row: data / auto / counter / beacon / xmit / chatter / okb -->
+                <Grid Grid.Row="0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock x:Name="Databug" Grid.Column="0" Style="{StaticResource LcdText}" Text="SP | DP" VerticalAlignment="Center"/>
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Center">
+                        <TextBlock x:Name="Easycommsbug" Style="{StaticResource LcdText}" Text="AUTO" Margin="0,0,6,0"/>
+                        <TextBlock x:Name="Counterbug"   Style="{StaticResource LcdText}" Text="0"    Margin="0,0,6,0"/>
+                        <TextBlock x:Name="Beaconbug"    Style="{StaticResource LcdText}" Text="BCN"  Margin="0,0,6,0" Visibility="Hidden"/>
+                        <TextBlock x:Name="Transmitbug"  Style="{StaticResource LcdText}" Text="XMIT" Margin="0,0,6,0" Visibility="Hidden"/>
+                        <TextBlock x:Name="RCV_Bug" Style="{StaticResource LcdText}" Text="MSG" Visibility="Hidden"/>
+                    </StackPanel>
+                    <StackPanel Grid.Column="2" Orientation="Horizontal">
+                        <TextBlock x:Name="Chatterbug" Style="{StaticResource LcdText}" Text="CHTR" Margin="0,0,6,0" Visibility="Hidden"/>
+                        <TextBlock x:Name="OK_Host"    Style="{StaticResource LcdText}" Text="OKB" Visibility="Hidden"/>
+                    </StackPanel>
+                </Grid>
+
+                <!-- centre: module + easy comms -->
+                <Grid Grid.Row="1" VerticalAlignment="Center" Margin="0,3,0,3">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    <TextBlock x:Name="ModuleInfo" Grid.Row="0" Style="{StaticResource LcdText}" Text="---" FontSize="20" LineHeight="22"
+                               TextAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                    <TextBlock x:Name="EasyCommsInfo" Grid.Row="1" Style="{StaticResource LcdText}" Text="Easy Communication: ---" FontSize="12" LineHeight="14"
+                               TextAlignment="Center" Margin="0,2,0,0"/>
+                    <TextBlock x:Name="TXInfo1" Grid.Row="0" Style="{StaticResource LcdText}" Text="" FontSize="20" LineHeight="22"
+                               TextAlignment="Center" TextTrimming="CharacterEllipsis" Visibility="Hidden"/>
+                    <TextBlock x:Name="TXInfo2" Grid.Row="1" Style="{StaticResource LcdText}" Text="" FontSize="12" LineHeight="14"
+                               TextAlignment="Center" Margin="0,2,0,0" Visibility="Hidden"/>
+                </Grid>
+
+                <!-- bottom row: mode / selection bugs / squelch -->
+                <Grid Grid.Row="2">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0" Orientation="Horizontal" HorizontalAlignment="Left">
+                        <TextBlock x:Name="MultiMode"  Style="{StaticResource LcdText}" Text="MULTI"/>
+                        <TextBlock x:Name="SingleMode" Style="{StaticResource LcdText}" Text="SNGL" Visibility="Collapsed"/>
+                        <TextBlock x:Name="S2Mbug"     Style="{StaticResource LcdText}" Text="S2M" Margin="6,0,0,0" Visibility="Collapsed"/>
+                        <TextBlock x:Name="M2Sbug"     Style="{StaticResource LcdText}" Text="M2S" Margin="6,0,0,0" Visibility="Collapsed"/>
+                    </StackPanel>
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Center">
+                        <TextBlock x:Name="SRSbug"  Style="{StaticResource LcdText}" Text="" Margin="0,0,6,0"/>
+                        <TextBlock x:Name="Iselbug" Style="{StaticResource LcdText}" Text="" Margin="0,0,6,0"/>
+                        <TextBlock x:Name="Dialbug" Style="{StaticResource LcdText}" Text=""/>
+                    </StackPanel>
+                    <TextBlock x:Name="Squelchbug" Grid.Column="2" Style="{StaticResource LcdText}" Text="SQL" HorizontalAlignment="Right"/>
+                </Grid>
+            </Grid>
+        </Border>
+    </Border>
+</Window>

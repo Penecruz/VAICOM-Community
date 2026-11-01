@@ -156,6 +156,7 @@ namespace VAICOM
                     State.currentstate.fsmstate = message.fsm;
                     try // dim light receive msg bug
                     {
+                        UI.VaicomOverlayWindow.RcvVisible = false;
                         if (State.configwindowopen && (State.configurationwindow != null))
                         {
                             State.configurationwindow.Dispatcher.BeginInvoke((MethodInvoker)delegate
@@ -303,6 +304,7 @@ namespace VAICOM
                         State.lastreceivedmessagetimer = 0;
                         try // light receive msg bug
                         {
+                            UI.VaicomOverlayWindow.RcvVisible = true;
                             if (State.configwindowopen && (State.configurationwindow != null))
                             {
                                 State.configurationwindow.Dispatcher.BeginInvoke((MethodInvoker)delegate
