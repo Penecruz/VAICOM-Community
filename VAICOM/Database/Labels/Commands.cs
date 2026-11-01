@@ -289,8 +289,8 @@ namespace VAICOM
             //{
 
                 // Direct Cockpit Commnads
-                { "gearup",           "gearup"             },
-                { "geardown",         "geardown"           },
+                //{ "gearup",           "gearup"             },
+                //{ "geardown",         "geardown"           },
                 //{ "loadout",          "loadout"           },
                 //{ "Emergency Landing",   "Emergency Landing"       },
 

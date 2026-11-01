@@ -1053,6 +1053,21 @@
       };
     }
 
+    function mapStoresToConfiguredLayout(stations, storesStationConfig) {
+      const source = Array.isArray(stations) ? stations : [];
+      if (!storesStationConfig || storesStationConfig.id !== 'F16C') return source;
+
+      // F-16 runtime payload station order is physical pylon order:
+      // 1,2,3,4,5L,6,7,8,9,5,5R.
+      // Re-map to the displayed STORES/AID label order:
+      // 1,2,3,4,5L,5,5R,6,7,8,9.
+      if (source.length < 11) return source;
+      const sourceToDisplayIndex = [0, 1, 2, 3, 9, 4, 10, 5, 6, 7, 8];
+      return sourceToDisplayIndex.map(function (sourceIndex) {
+        return source[sourceIndex] || {};
+      });
+    }
+
     function formatStoresPageHtml(pageSwitcherHtml, data) {
       const server = (data && data.Server) || {};
       const payload = (server && server.Payload) || {};
@@ -1067,6 +1082,7 @@
         ? liveStations
         : (storesBaselineSnapshot.hasSnapshot ? storesBaselineSnapshot.stations : liveStations);
       const storesStationConfig = getStoresStationConfig(data);
+      const displayStations = mapStoresToConfiguredLayout(stations, storesStationConfig);
 
       function fmtFuel(kgValue, lbsValue) {
         const kg = formatFastAvBusNumber(kgValue, 1);
@@ -1119,13 +1135,13 @@
       html += '<table class="fltPlanStoresGrid">';
       html += '<thead><tr><th class="fltPlanStoresStation">STN</th><th>STORE</th></tr></thead><tbody>';
 
-      if (!stations.length) {
+      if (!displayStations.length) {
         html += '<tr><td class="fltPlanStoresStation">-</td><td class="fltPlanStoresEmpty">WAITING FOR AID CONNECTION</td></tr>';
       } else {
         const configuredCount = Array.isArray(storesStationConfig.labels) ? storesStationConfig.labels.length : 0;
-        const rowCount = configuredCount > 0 ? configuredCount : stations.length;
+        const rowCount = configuredCount > 0 ? configuredCount : displayStations.length;
         for (let i = 0; i < rowCount; i++) {
-          const station = stations[i] || {};
+          const station = displayStations[i] || {};
           const clsid = String(station.CLSID || '').trim();
           const count = Number(station.count || 0);
           const empty = !clsid || count <= 0;

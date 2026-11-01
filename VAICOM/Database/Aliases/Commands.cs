@@ -1021,9 +1021,9 @@ namespace VAICOM
             //public static Dictionary<string, string> cockpitcontrol = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             //{
 
-                /// Direct Cockpit Commnads
-                { "Gear Up",                          "gearup"                                          },
-                { "Gear Down",                        "geardown"                                        },
+                /// Direct Cockpit Commnads Not in use potentially for future use with TX-6
+                //{ "Gear Up",                          "gearup"                                          },
+                //{ "Gear Down",                        "geardown"                                        },
                 //{ "View Loadout",                     "loadout"                                         },
                 //{ "Emergency Landing",               "Emergency Landing"                                  },
 
