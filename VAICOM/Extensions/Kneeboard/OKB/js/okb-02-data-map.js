@@ -324,11 +324,21 @@
       return 'U' + String(idx);
     }
 
-    function createEfbSaUserWaypoint(xNum, yNum, lat, lon) {
+    function tryReadFiniteNumber(value) {
+      if (value === null || value === undefined) return null;
+      const text = String(value).trim();
+      if (!text) return null;
+      const n = Number(text);
+      return isFinite(n) ? n : null;
+    }
+
+    function createEfbSaUserWaypoint(xNum, yNum, lat, lon, elevationInfo) {
       const north = (xNum === null || xNum === undefined || String(xNum).trim() === '') ? NaN : Number(xNum);
       const east = (yNum === null || yNum === undefined || String(yNum).trim() === '') ? NaN : Number(yNum);
       const latNum = (lat === null || lat === undefined || String(lat).trim() === '') ? NaN : Number(lat);
       const lonNum = (lon === null || lon === undefined || String(lon).trim() === '') ? NaN : Number(lon);
+      const elevFeet = tryReadFiniteNumber(elevationInfo && elevationInfo.elevationFeet);
+      const elevMeters = tryReadFiniteNumber(elevationInfo && elevationInfo.elevationMeters);
       const hasXY = isFinite(north) && isFinite(east);
       const hasLatLon = isFinite(latNum) && isFinite(lonNum) && Math.abs(latNum) <= 90 && Math.abs(lonNum) <= 180;
       if (!hasXY && !hasLatLon) return null;
@@ -340,6 +350,10 @@
         yNum: hasXY ? east : null,
         lat: hasLatLon ? latNum : null,
         lon: hasLatLon ? lonNum : null,
+        elevationFeet: elevFeet,
+        elevationMeters: elevMeters,
+        elevationSource: String((elevationInfo && elevationInfo.source) || '').trim(),
+        elevationCache: String((elevationInfo && elevationInfo.cache) || '').trim(),
         createdUtcMs: Date.now(),
         updatedUtcMs: Date.now(),
       };
@@ -347,6 +361,223 @@
       efbSaUserWaypoints.push(wp);
       persistEfbSaUserWaypointsPreference();
       return wp;
+    }
+
+    function setEfbSaUserWaypointElevation(id, elevationInfo) {
+      const wp = findEfbSaUserWaypointById(id);
+      if (!wp) return false;
+      const elevFeet = tryReadFiniteNumber(elevationInfo && elevationInfo.elevationFeet);
+      const elevMeters = tryReadFiniteNumber(elevationInfo && elevationInfo.elevationMeters);
+      if (elevFeet === null && elevMeters === null) return false;
+      wp.elevationFeet = elevFeet;
+      wp.elevationMeters = elevMeters;
+      wp.elevationSource = String((elevationInfo && elevationInfo.source) || '').trim();
+      wp.elevationCache = String((elevationInfo && elevationInfo.cache) || '').trim();
+      wp.updatedUtcMs = Date.now();
+      persistEfbSaUserWaypointsPreference();
+      return true;
+    }
+
+    const efbSaDemWarmTiles = {};
+    const efbSaDemWarmTileTtlMs = 20 * 60 * 1000;
+    const efbSaDemPrefetchLastByTile = {};
+    const efbSaDemPrefetchInFlightByTile = {};
+    const efbSaDemPrefetchIntervalMs = 45 * 1000;
+
+    function computeEfbSaSrtmTileId(lat, lon) {
+      const latNum = Number(lat);
+      const lonNum = Number(lon);
+      if (!isFinite(latNum) || !isFinite(lonNum)) return '';
+      const clampedLat = Math.max(-89.999999, Math.min(89.999999, latNum));
+      const clampedLon = Math.max(-179.999999, Math.min(179.999999, lonNum));
+      const latFloor = Math.floor(clampedLat);
+      const lonFloor = Math.floor(clampedLon);
+      const latHem = latFloor >= 0 ? 'N' : 'S';
+      const lonHem = lonFloor >= 0 ? 'E' : 'W';
+      return latHem + String(Math.abs(latFloor)).padStart(2, '0') + lonHem + String(Math.abs(lonFloor)).padStart(3, '0');
+    }
+
+    function buildEfbSaDemTileKey(theatre, lat, lon) {
+      const tileId = computeEfbSaSrtmTileId(lat, lon);
+      if (!tileId) return '';
+      const theatreKey = String(theatre || '').trim().toUpperCase() || 'UNKNOWN';
+      return theatreKey + '::' + tileId;
+    }
+
+    function buildEfbSaDemTileKeyById(theatre, tileId) {
+      const theatreKey = String(theatre || '').trim().toUpperCase() || 'UNKNOWN';
+      const tileToken = String(tileId || '').trim().toUpperCase();
+      if (!tileToken) return '';
+      return theatreKey + '::' + tileToken;
+    }
+
+    function getEfbSaTileCenterLatLon(tileId) {
+      const token = String(tileId || '').trim().toUpperCase();
+      const m = token.match(/^([NS])(\d{2})([EW])(\d{3})$/);
+      if (!m) return null;
+      const latDeg = Number(m[2]);
+      const lonDeg = Number(m[4]);
+      if (!isFinite(latDeg) || !isFinite(lonDeg)) return null;
+      const latBase = m[1] === 'S' ? -latDeg : latDeg;
+      const lonBase = m[3] === 'W' ? -lonDeg : lonDeg;
+      return {
+        lat: Math.max(-89.999999, Math.min(89.999999, latBase + 0.5)),
+        lon: Math.max(-179.999999, Math.min(179.999999, lonBase + 0.5)),
+      };
+    }
+
+    function isEfbSaDemTileWarm(theatre, lat, lon) {
+      const key = buildEfbSaDemTileKey(theatre, lat, lon);
+      if (!key) return false;
+      const warmMs = Number(efbSaDemWarmTiles[key] || 0);
+      return isFinite(warmMs) && (Date.now() - warmMs) <= efbSaDemWarmTileTtlMs;
+    }
+
+    async function requestEfbSaWaypointElevation(theatre, lat, lon) {
+      const latNum = Number(lat);
+      const lonNum = Number(lon);
+      if (!isFinite(latNum) || !isFinite(lonNum)) return null;
+      const theatreToken = String(theatre || '').trim();
+      try {
+        const query = '?lat=' + encodeURIComponent(latNum.toFixed(7))
+          + '&lon=' + encodeURIComponent(lonNum.toFixed(7))
+          + '&theatre=' + encodeURIComponent(theatreToken);
+        const res = await fetch('/okb/efb/elevation' + query, { cache: 'no-store' });
+        if (!res || !res.ok) return null;
+        const payload = await res.json();
+        if (!payload || payload.ok !== true) return null;
+        const elevationFeet = tryReadFiniteNumber(payload.elevationFeet);
+        const elevationMeters = tryReadFiniteNumber(payload.elevationMeters);
+        if (elevationFeet === null && elevationMeters === null) return null;
+        const tileKey = buildEfbSaDemTileKey(theatreToken, latNum, lonNum);
+        if (tileKey) efbSaDemWarmTiles[tileKey] = Date.now();
+        return {
+          elevationFeet: elevationFeet,
+          elevationMeters: elevationMeters,
+          source: String(payload.source || '').trim(),
+          cache: String(payload.cache || '').trim(),
+          tile: String(payload.tile || '').trim(),
+        };
+      } catch (_) {
+        return null;
+      }
+    }
+
+    async function prefetchEfbSaOwnshipDem(theatre, lat, lon) {
+      const latNum = Number(lat);
+      const lonNum = Number(lon);
+      if (!isFinite(latNum) || !isFinite(lonNum)) return null;
+      const clampedLat = Math.max(-89.999999, Math.min(89.999999, latNum));
+      const clampedLon = Math.max(-179.999999, Math.min(179.999999, lonNum));
+      const latFloor = Math.floor(clampedLat);
+      const lonFloor = Math.floor(clampedLon);
+      const theatreToken = String(theatre || '').trim();
+      const tileIds = [];
+      const seen = {};
+      for (let dLat = -1; dLat <= 1; dLat++) {
+        for (let dLon = -1; dLon <= 1; dLon++) {
+          const sampleLat = Math.max(-89.999999, Math.min(89.999999, latFloor + dLat + 0.5));
+          const sampleLon = Math.max(-179.999999, Math.min(179.999999, lonFloor + dLon + 0.5));
+          const tileId = computeEfbSaSrtmTileId(sampleLat, sampleLon);
+          if (!tileId || seen[tileId]) continue;
+          seen[tileId] = true;
+          tileIds.push(tileId);
+        }
+      }
+
+      const now = Date.now();
+      const tasks = tileIds.map(function (tileId) {
+        const tileKey = buildEfbSaDemTileKeyById(theatreToken, tileId);
+        if (!tileKey) return null;
+        const warmMs = Number(efbSaDemWarmTiles[tileKey] || 0);
+        if (isFinite(warmMs) && (now - warmMs) <= efbSaDemWarmTileTtlMs) return null;
+        const lastMs = Number(efbSaDemPrefetchLastByTile[tileKey] || 0);
+        if (isFinite(lastMs) && (now - lastMs) < efbSaDemPrefetchIntervalMs) return null;
+        if (efbSaDemPrefetchInFlightByTile[tileKey]) return null;
+
+        const center = getEfbSaTileCenterLatLon(tileId);
+        if (!center) return null;
+
+        efbSaDemPrefetchLastByTile[tileKey] = now;
+        efbSaDemPrefetchInFlightByTile[tileKey] = true;
+        return requestEfbSaWaypointElevation(theatreToken, center.lat, center.lon)
+          .then(function () { })
+          .catch(function () { })
+          .then(function () {
+            delete efbSaDemPrefetchInFlightByTile[tileKey];
+          });
+      }).filter(function (p) { return !!p; });
+
+      if (!tasks.length) return null;
+      await Promise.all(tasks);
+      return true;
+    }
+
+    async function refreshEfbSaMoraFromOwnship(theatre, lat, lon) {
+      const now = Date.now();
+      if (efbSaMoraRequestInFlight) return;
+      if (efbSaMoraLastRequestUtcMs && (now - efbSaMoraLastRequestUtcMs) < 30000) return;
+      const latNum = Number(lat);
+      const lonNum = Number(lon);
+      if (!isFinite(latNum) || !isFinite(lonNum)) {
+        efbSaMoraCode = '--';
+        efbSaMoraFeet = NaN;
+        return;
+      }
+
+      efbSaMoraRequestInFlight = true;
+      efbSaMoraLastRequestUtcMs = now;
+      try {
+        const radiusNm = 40;
+        const stepNm = 8;
+        const degPerNm = 1.0 / 60.0;
+        const theatreToken = String(theatre || '').trim();
+        const tasks = [];
+        for (let northNm = -radiusNm; northNm <= radiusNm + 0.001; northNm += stepNm) {
+          for (let eastNm = -radiusNm; eastNm <= radiusNm + 0.001; eastNm += stepNm) {
+            if ((northNm * northNm) + (eastNm * eastNm) > (radiusNm * radiusNm)) continue;
+            const sampleLat = Math.max(-89.999999, Math.min(89.999999, latNum + (northNm * degPerNm)));
+            const cosLat = Math.cos(sampleLat * (Math.PI / 180.0));
+            if (!isFinite(cosLat) || Math.abs(cosLat) < 0.000001) continue;
+            const sampleLon = Math.max(-179.999999, Math.min(179.999999, lonNum + ((eastNm * degPerNm) / cosLat)));
+            tasks.push(requestEfbSaWaypointElevation(theatreToken, sampleLat, sampleLon));
+          }
+        }
+
+        if (!tasks.length) {
+          efbSaMoraCode = '--';
+          efbSaMoraFeet = NaN;
+          return;
+        }
+
+        const rows = await Promise.all(tasks);
+        let maxTerrainFeet = NaN;
+        rows.forEach(function (row) {
+          if (!row) return;
+          const feet = tryReadFiniteNumber(row.elevationFeet);
+          if (feet === null) return;
+          const clampedFeet = Math.max(0, feet);
+          if (!isFinite(maxTerrainFeet) || clampedFeet > maxTerrainFeet) maxTerrainFeet = clampedFeet;
+        });
+
+        if (!isFinite(maxTerrainFeet)) {
+          efbSaMoraCode = '--';
+          efbSaMoraFeet = NaN;
+          return;
+        }
+
+        const bufferFeet = maxTerrainFeet > 5000 ? 2000 : 1000;
+        const moraFeet = Math.ceil((maxTerrainFeet + bufferFeet) / 100.0) * 100.0;
+        const codeNum = Math.ceil(moraFeet / 100.0);
+        efbSaMoraFeet = moraFeet;
+        efbSaMoraCode = (isFinite(codeNum) && codeNum > 0) ? String(codeNum) : '--';
+        efbSaMoraLastUpdateUtcMs = Date.now();
+      } catch (_) {
+        efbSaMoraCode = '--';
+        efbSaMoraFeet = NaN;
+      } finally {
+        efbSaMoraRequestInFlight = false;
+      }
     }
 
     function renameEfbSaUserWaypoint(id, name) {
@@ -437,6 +668,15 @@
       if (!ll) return 'MGRS N/A';
       const mgrs = String(formatLatLonMgrs(ll.lat, ll.lon) || '').toUpperCase().trim();
       return mgrs || 'MGRS N/A';
+    }
+
+    function formatEfbSaUserWaypointElevation(wp) {
+      const feet = tryReadFiniteNumber(wp && wp.elevationFeet);
+      const meters = tryReadFiniteNumber(wp && wp.elevationMeters);
+      if (feet === null && meters === null) return 'ELEV: N/A';
+      const feetText = feet !== null ? String(Math.round(feet)) : '-';
+      const metersText = meters !== null ? String(Math.round(meters)) : '-';
+      return 'ELEV: ' + feetText + ' FT (' + metersText + ' M)';
     }
 
     function safe(v) { return (v === null || v === undefined || v === '') ? '-' : String(v); }
@@ -1217,6 +1457,7 @@
           const name = String((wp && wp.name) || '').trim() || id;
           const latLon = formatEfbSaUserWaypointLatLon(saMapTheater, wp);
           const mgrs = formatEfbSaUserWaypointMgrs(saMapTheater, wp);
+          const elev = formatEfbSaUserWaypointElevation(wp);
           const active = id === selectedUserWaypointId ? ' active' : '';
           const editing = id === String(efbSaUserWaypointEditingId || '').trim();
           const nameLine = editing
@@ -1224,7 +1465,7 @@
             : ('<button type="button" class="efbWaypointNameBtn" data-efb-user-waypoint-select="' + escapeHtml(id) + '">' + escapeHtml(name) + '</button>');
           return '<div class="efbWaypointRow' + active + '" data-efb-user-waypoint="' + escapeHtml(id) + '">'
             + nameLine
-            + '<div class="efbWaypointMeta">LAT/LON: ' + escapeHtml(latLon) + '\nMGRS: ' + escapeHtml(mgrs) + '</div>'
+            + '<div class="efbWaypointMeta">LAT/LON: ' + escapeHtml(latLon) + '\nMGRS: ' + escapeHtml(mgrs) + '\n' + escapeHtml(elev) + '</div>'
             + '<div class="efbWaypointActions">'
             + '<button type="button" class="efbWaypointActionBtn" data-efb-user-waypoint-center="' + escapeHtml(id) + '">Center</button>'
             + '<button type="button" class="efbWaypointActionBtn" data-efb-user-waypoint-rename="' + escapeHtml(id) + '">Rename</button>'
@@ -1449,6 +1690,7 @@
               const name = String((wp && wp.name) || '').trim() || id;
               const latLon = formatEfbSaUserWaypointLatLon(theater, wp);
               const mgrs = formatEfbSaUserWaypointMgrs(theater, wp);
+              const elev = formatEfbSaUserWaypointElevation(wp);
               const active = id === selectedUserWaypointId ? ' active' : '';
               const editing = id === String(efbSaUserWaypointEditingId || '').trim();
               const nameLine = editing
@@ -1456,7 +1698,7 @@
                 : ('<button type="button" class="efbWaypointNameBtn" data-efb-user-waypoint-select="' + escapeHtml(id) + '">' + escapeHtml(name) + '</button>');
               return '<div class="efbWaypointRow' + active + '" data-efb-user-waypoint="' + escapeHtml(id) + '">'
                 + nameLine
-                + '<div class="efbWaypointMeta">LAT/LON: ' + escapeHtml(latLon) + '\nMGRS: ' + escapeHtml(mgrs) + '</div>'
+                + '<div class="efbWaypointMeta">LAT/LON: ' + escapeHtml(latLon) + '\nMGRS: ' + escapeHtml(mgrs) + '\n' + escapeHtml(elev) + '</div>'
                 + '<div class="efbWaypointActions">'
                 + '<button type="button" class="efbWaypointActionBtn" data-efb-user-waypoint-center="' + escapeHtml(id) + '">Center</button>'
                 + '<button type="button" class="efbWaypointActionBtn" data-efb-user-waypoint-rename="' + escapeHtml(id) + '">Rename</button>'

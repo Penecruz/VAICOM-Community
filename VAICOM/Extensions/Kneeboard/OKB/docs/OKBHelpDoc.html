@@ -792,6 +792,7 @@
                 <li><strong>Map zoom controls</strong>: The same right-rail zoom controls apply in SA Map mode.</li>
                 <li><strong>Mode-specific right rail</strong>: Rotation tools are chart-mode controls and are replaced by AD quick zoom in SA Map mode.</li>
                 <li><strong>AD quick zoom</strong>: In SA Map mode, the right-rail AD control replaces chart rotation tools. First press zooms to aerodrome/taxi detail near ownship. Second press restores the pre-AD zoom level while preserving follow behavior.</li>
+                <li><strong>MORA</strong>: The SA Map top-left now shows MORA (Minimum Off Route Altitude) as digits. It scans highest terrain within 40 NM of ownship, applies +1000 ft (+2000 ft if terrain is above 5000 ft), rounds up to nearest 100 ft, and shows hundreds shorthand (for example <code>7600 ft</code> as <code>76</code>). If unavailable it shows <code>--</code>.</li>
                 <li><strong>TOT Transit cueing</strong>: When Auto ATA captures a waypoint transit, the waypoint symbol is highlighted/pulsed and the EFB top-center 3-digit recommended SPD balloon flashes.</li>
             </ul>
 
@@ -818,7 +819,7 @@
                 <li><strong>Saved history tracks drawer</strong>: Use the dedicated left-rail history icon (history marker with clock) to open saved-track tools. Use <strong>Save active</strong> to snapshot the current active trail, <strong>Reset active</strong> to clear the live trail, then show/hide, rename, or delete saved snapshots. Visible saved tracks are drawn as lighter grayscale dots.</li>
                 <li><strong>Doghouses</strong>: Show/hide leg doghouse blocks (MH, DIST, ETE, ALT) generated from the active navlog route. DIST/ALT use the global NAVLOG unit mode with explicit suffixes.</li>
                 <li><strong>BRA/B-E altitude units</strong>: SA map BRA/B-E readouts use the global NAVLOG altitude mode and display explicit unit suffixes.</li>
-                <li><strong>User waypoints</strong>: Show/hide custom user waypoint symbols and labels.</li>
+                <li><strong>User waypoints</strong>: Show/hide custom user waypoint symbols and labels. DEM tiles are prefetched from ownship position while SA Map is active; new user waypoints show ELEV metadata when the waypoint is inside a warmed DEM tile.</li>
                 <li><strong>DTC overlays</strong>: Show/hide DTC map overlays (threats, GEO lines, points, etc.).</li>
                 <li><strong>Mission drawings (MIZ)</strong>: Show/hide mission-authored F10 drawing objects as a dedicated Moving Map layer.</li>
                 <li><strong>MIZ snapshot behavior</strong>: The mission drawing snapshot is captured/retained for the mission session (MP Servers may require re-slotting to load due to session constraints) and this toggle controls display only (it does not re-fetch or rebuild mission drawing data).</li>

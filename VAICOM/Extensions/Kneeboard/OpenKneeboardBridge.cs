@@ -1,8 +1,10 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
@@ -58,6 +60,365 @@ namespace VAICOM
                 private static long lastRuntimeConnectedUtcTicks;
                 private static FastOwnshipState fastOwnship = new FastOwnshipState();
                 private static FastAvBusState fastAvBus = new FastAvBusState();
+                private static readonly IOpenKneeboardDemProvider ElevationProvider = new SrtmSkadiDemProvider();
+
+                private interface IOpenKneeboardDemProvider
+                {
+                    OpenKneeboardElevationResult GetElevation(OpenKneeboardElevationRequest request);
+                }
+
+                private sealed class OpenKneeboardElevationRequest
+                {
+                    public double Latitude;
+                    public double Longitude;
+                    public string Theatre;
+                }
+
+                private sealed class OpenKneeboardElevationResult
+                {
+                    public bool Success;
+                    public double? ElevationMeters;
+                    public string Source;
+                    public string Cache;
+                    public string TileId;
+                    public string Error;
+                }
+
+                private sealed class SrtmSkadiDemProvider : IOpenKneeboardDemProvider
+                {
+                    private const string SourceName = "SRTM30-SKADI";
+                    private const string SkadiBaseUrl = "https://elevation-tiles-prod.s3.amazonaws.com/skadi";
+                    private const int MaxDecodedTileCacheCount = 10;
+                    private const short SrtmVoidValue = unchecked((short)-32768);
+                    private static readonly ConcurrentDictionary<string, SrtmTile> TileCache = new ConcurrentDictionary<string, SrtmTile>(StringComparer.OrdinalIgnoreCase);
+                    private static readonly LinkedList<string> TileCacheLru = new LinkedList<string>();
+                    private static readonly object TileCacheSync = new object();
+
+                    private sealed class SrtmTile
+                    {
+                        public short[] Samples;
+                        public int GridSize;
+                    }
+
+                    public OpenKneeboardElevationResult GetElevation(OpenKneeboardElevationRequest request)
+                    {
+                        OpenKneeboardElevationResult failResult = new OpenKneeboardElevationResult
+                        {
+                            Success = false,
+                            Source = SourceName,
+                            Cache = "",
+                            TileId = "",
+                            Error = "invalid_request"
+                        };
+
+                        if (request == null
+                            || !IsFinite(request.Latitude)
+                            || !IsFinite(request.Longitude)
+                            || Math.Abs(request.Latitude) > 90.0
+                            || Math.Abs(request.Longitude) > 180.0)
+                        {
+                            return failResult;
+                        }
+
+                        string tileId = BuildTileId(request.Latitude, request.Longitude);
+                        if (string.IsNullOrWhiteSpace(tileId))
+                        {
+                            failResult.Error = "tile_id_unavailable";
+                            return failResult;
+                        }
+
+                        string theatreFolder = GetOkbDemTheatreFolderPath(request.Theatre, true);
+                        if (string.IsNullOrWhiteSpace(theatreFolder))
+                        {
+                            failResult.TileId = tileId;
+                            failResult.Error = "dem_cache_path_unavailable";
+                            return failResult;
+                        }
+
+                        string tilePath = Path.Combine(theatreFolder, tileId + ".hgt.gz");
+                        string cacheHint = File.Exists(tilePath) ? "disk" : "download";
+
+                        if (!File.Exists(tilePath) && !TryDownloadTile(tileId, tilePath))
+                        {
+                            failResult.TileId = tileId;
+                            failResult.Cache = cacheHint;
+                            failResult.Error = "tile_download_failed";
+                            return failResult;
+                        }
+
+                        string cacheMode;
+                        string loadError;
+                        SrtmTile tile = LoadTile(tileId, tilePath, out cacheMode, out loadError);
+                        if (tile == null)
+                        {
+                            failResult.TileId = tileId;
+                            failResult.Cache = cacheHint;
+                            failResult.Error = string.IsNullOrWhiteSpace(loadError) ? "tile_decode_failed" : loadError;
+                            return failResult;
+                        }
+
+                        double? meters = SampleTile(tile, request.Latitude, request.Longitude);
+                        if (!meters.HasValue)
+                        {
+                            failResult.TileId = tileId;
+                            failResult.Cache = cacheMode;
+                            failResult.Error = "tile_sample_unavailable";
+                            return failResult;
+                        }
+
+                        return new OpenKneeboardElevationResult
+                        {
+                            Success = true,
+                            ElevationMeters = meters,
+                            Source = SourceName,
+                            Cache = cacheMode,
+                            TileId = tileId,
+                            Error = ""
+                        };
+                    }
+
+                    private static bool IsFinite(double value)
+                    {
+                        return !double.IsNaN(value) && !double.IsInfinity(value);
+                    }
+
+                    private static string BuildTileId(double latitude, double longitude)
+                    {
+                        if (!IsFinite(latitude) || !IsFinite(longitude)) return "";
+                        double clampedLat = Math.Max(-89.999999, Math.Min(89.999999, latitude));
+                        double clampedLon = Math.Max(-179.999999, Math.Min(179.999999, longitude));
+                        int latFloor = (int)Math.Floor(clampedLat);
+                        int lonFloor = (int)Math.Floor(clampedLon);
+                        char latHem = latFloor >= 0 ? 'N' : 'S';
+                        char lonHem = lonFloor >= 0 ? 'E' : 'W';
+                        return string.Format(CultureInfo.InvariantCulture, "{0}{1:00}{2}{3:000}", latHem, Math.Abs(latFloor), lonHem, Math.Abs(lonFloor));
+                    }
+
+                    private static bool TryDownloadTile(string tileId, string tilePath)
+                    {
+                        try
+                        {
+                            if (string.IsNullOrWhiteSpace(tileId) || string.IsNullOrWhiteSpace(tilePath))
+                            {
+                                return false;
+                            }
+
+                            string tileFolder = tileId.Substring(0, 3).ToUpperInvariant();
+                            string url = SkadiBaseUrl + "/" + tileFolder + "/" + tileId.ToUpperInvariant() + ".hgt.gz";
+
+                            string targetDir = Path.GetDirectoryName(tilePath) ?? "";
+                            if (!string.IsNullOrWhiteSpace(targetDir))
+                            {
+                                Directory.CreateDirectory(targetDir);
+                            }
+
+                            string tempPath = tilePath + ".tmp";
+                            if (File.Exists(tempPath))
+                            {
+                                try { File.Delete(tempPath); } catch { }
+                            }
+
+                            HttpWebRequest request = WebRequest.Create(url) as HttpWebRequest;
+                            if (request == null)
+                            {
+                                return false;
+                            }
+
+                            request.Method = "GET";
+                            request.Proxy = null;
+                            request.Timeout = 15000;
+                            request.ReadWriteTimeout = 15000;
+                            request.UserAgent = "VAICOM-OKB-DEM/1.0";
+
+                            using (HttpWebResponse response = request.GetResponse() as HttpWebResponse)
+                            {
+                                if (response == null || response.StatusCode != HttpStatusCode.OK)
+                                {
+                                    return false;
+                                }
+
+                                using (Stream source = response.GetResponseStream())
+                                {
+                                    if (source == null)
+                                    {
+                                        return false;
+                                    }
+
+                                    using (FileStream fs = new FileStream(tempPath, FileMode.Create, FileAccess.Write, FileShare.None))
+                                    {
+                                        source.CopyTo(fs);
+                                    }
+                                }
+                            }
+
+                            if (!File.Exists(tempPath))
+                            {
+                                return false;
+                            }
+
+                            if (File.Exists(tilePath))
+                            {
+                                File.Delete(tilePath);
+                            }
+
+                            File.Move(tempPath, tilePath);
+                            return true;
+                        }
+                        catch
+                        {
+                            return false;
+                        }
+                    }
+
+                    private static SrtmTile LoadTile(string tileId, string tilePath, out string cacheMode, out string error)
+                    {
+                        cacheMode = "disk";
+                        error = "";
+                        if (string.IsNullOrWhiteSpace(tileId) || string.IsNullOrWhiteSpace(tilePath))
+                        {
+                            error = "tile_path_invalid";
+                            return null;
+                        }
+
+                        SrtmTile cached;
+                        if (TileCache.TryGetValue(tileId, out cached) && cached != null)
+                        {
+                            TouchTile(tileId);
+                            cacheMode = "memory";
+                            return cached;
+                        }
+
+                        try
+                        {
+                            if (!File.Exists(tilePath))
+                            {
+                                error = "tile_file_missing";
+                                return null;
+                            }
+
+                            byte[] compressed = File.ReadAllBytes(tilePath);
+                            if (compressed == null || compressed.Length == 0)
+                            {
+                                error = "tile_file_empty";
+                                return null;
+                            }
+
+                            byte[] raw;
+                            using (MemoryStream input = new MemoryStream(compressed, false))
+                            using (GZipStream gzip = new GZipStream(input, CompressionMode.Decompress))
+                            using (MemoryStream output = new MemoryStream())
+                            {
+                                gzip.CopyTo(output);
+                                raw = output.ToArray();
+                            }
+
+                            if (raw == null || raw.Length < 4 || (raw.Length % 2) != 0)
+                            {
+                                error = "tile_payload_invalid";
+                                return null;
+                            }
+
+                            int sampleCount = raw.Length / 2;
+                            int grid = (int)Math.Round(Math.Sqrt(sampleCount));
+                            if (grid <= 1 || grid * grid != sampleCount)
+                            {
+                                error = "tile_grid_invalid";
+                                return null;
+                            }
+
+                            short[] samples = new short[sampleCount];
+                            int o = 0;
+                            for (int i = 0; i < sampleCount; i++)
+                            {
+                                int hi = raw[o++];
+                                int lo = raw[o++];
+                                samples[i] = unchecked((short)((hi << 8) | lo));
+                            }
+
+                            SrtmTile decoded = new SrtmTile
+                            {
+                                Samples = samples,
+                                GridSize = grid
+                            };
+
+                            TileCache[tileId] = decoded;
+                            TouchTile(tileId);
+                            cacheMode = "disk";
+                            return decoded;
+                        }
+                        catch
+                        {
+                            error = "tile_decode_failed";
+                            return null;
+                        }
+                    }
+
+                    private static void TouchTile(string tileId)
+                    {
+                        if (string.IsNullOrWhiteSpace(tileId)) return;
+                        lock (TileCacheSync)
+                        {
+                            LinkedListNode<string> node = TileCacheLru.Find(tileId);
+                            if (node != null)
+                            {
+                                TileCacheLru.Remove(node);
+                            }
+
+                            TileCacheLru.AddFirst(tileId);
+                            while (TileCacheLru.Count > MaxDecodedTileCacheCount)
+                            {
+                                string oldest = TileCacheLru.Last == null ? "" : TileCacheLru.Last.Value;
+                                if (TileCacheLru.Last != null)
+                                {
+                                    TileCacheLru.RemoveLast();
+                                }
+
+                                if (!string.IsNullOrWhiteSpace(oldest))
+                                {
+                                    SrtmTile removed;
+                                    TileCache.TryRemove(oldest, out removed);
+                                }
+                            }
+                        }
+                    }
+
+                    private static double? SampleTile(SrtmTile tile, double latitude, double longitude)
+                    {
+                        if (tile == null || tile.Samples == null || tile.Samples.Length == 0 || tile.GridSize <= 1)
+                        {
+                            return null;
+                        }
+
+                        int latFloor = (int)Math.Floor(Math.Max(-89.999999, Math.Min(89.999999, latitude)));
+                        int lonFloor = (int)Math.Floor(Math.Max(-179.999999, Math.Min(179.999999, longitude)));
+                        double latOffset = latitude - latFloor;
+                        double lonOffset = longitude - lonFloor;
+                        if (!IsFinite(latOffset) || !IsFinite(lonOffset))
+                        {
+                            return null;
+                        }
+
+                        int n = tile.GridSize - 1;
+                        int row = (int)Math.Round((1.0 - latOffset) * n);
+                        int col = (int)Math.Round(lonOffset * n);
+                        row = Math.Max(0, Math.Min(n, row));
+                        col = Math.Max(0, Math.Min(n, col));
+
+                        int index = (row * tile.GridSize) + col;
+                        if (index < 0 || index >= tile.Samples.Length)
+                        {
+                            return null;
+                        }
+
+                        short meters = tile.Samples[index];
+                        if (meters == SrtmVoidValue)
+                        {
+                            return null;
+                        }
+
+                        return meters;
+                    }
+                }
 
                 private static void MarkRuntimeConnectedHeartbeat()
                 {
@@ -128,6 +489,86 @@ namespace VAICOM
 
                         string pluginRoot = Path.Combine(appsRoot, Products.Products.Families.Vaicom.VaicomProPlugin.rootfoldername);
                         return Path.Combine(pluginRoot, "OKB", "Tracks");
+                    }
+                    catch
+                    {
+                        return "";
+                    }
+                }
+
+                private static string NormalizeDemTheatreKey(string theatre)
+                {
+                    string raw = string.IsNullOrWhiteSpace(theatre) ? "UNKNOWN" : theatre.Trim();
+                    StringBuilder sb = new StringBuilder(raw.Length);
+                    foreach (char c in raw)
+                    {
+                        if (char.IsLetterOrDigit(c) || c == '_' || c == '-' || c == '.')
+                        {
+                            sb.Append(c);
+                        }
+                        else if (char.IsWhiteSpace(c))
+                        {
+                            sb.Append('_');
+                        }
+                    }
+
+                    string value = sb.ToString().Trim('_', '.', '-');
+                    if (string.IsNullOrWhiteSpace(value))
+                    {
+                        return "UNKNOWN";
+                    }
+
+                    if (value.Length > 64)
+                    {
+                        value = value.Substring(0, 64);
+                    }
+
+                    return value.ToUpperInvariant();
+                }
+
+                private static string GetOkbDemRootFolderPath(bool ensureFolder)
+                {
+                    try
+                    {
+                        string appsRoot = GetVaAppsRootPath();
+                        if (string.IsNullOrWhiteSpace(appsRoot))
+                        {
+                            return "";
+                        }
+
+                        string pluginRoot = Path.Combine(appsRoot, Products.Products.Families.Vaicom.VaicomProPlugin.rootfoldername);
+                        string demRoot = Path.Combine(pluginRoot, "OKB", "DEM");
+                        if (ensureFolder)
+                        {
+                            Directory.CreateDirectory(demRoot);
+                        }
+
+                        return demRoot;
+                    }
+                    catch
+                    {
+                        return "";
+                    }
+                }
+
+                private static string GetOkbDemTheatreFolderPath(string theatre, bool ensureFolder)
+                {
+                    try
+                    {
+                        string demRoot = GetOkbDemRootFolderPath(ensureFolder);
+                        if (string.IsNullOrWhiteSpace(demRoot))
+                        {
+                            return "";
+                        }
+
+                        string theatreKey = NormalizeDemTheatreKey(theatre);
+                        string theatreFolder = Path.Combine(demRoot, theatreKey);
+                        if (ensureFolder)
+                        {
+                            Directory.CreateDirectory(theatreFolder);
+                        }
+
+                        return theatreFolder;
                     }
                     catch
                     {
@@ -2974,6 +3415,12 @@ namespace VAICOM
                         return;
                     }
 
+                    if (path == "/okb/efb/elevation")
+                    {
+                        WriteJson(context.Response, BuildEfbElevationJson(context.Request));
+                        return;
+                    }
+
                     if (path == "/okb/efb/historytracks")
                     {
                         string method = (context.Request.HttpMethod ?? "GET").Trim().ToUpperInvariant();
@@ -4261,6 +4708,64 @@ namespace VAICOM
                     catch
                     {
                         return "{\"updatedUtc\":\"\",\"moduleConnected\":false,\"hasData\":false,\"isFresh\":false,\"state\":\"OFF\",\"hasFuel\":false}";
+                    }
+                }
+
+                private static string BuildEfbElevationJson(HttpListenerRequest request)
+                {
+                    try
+                    {
+                        if (request == null)
+                        {
+                            return "{\"ok\":false,\"error\":\"invalid_request\"}";
+                        }
+
+                        double latitude;
+                        double longitude;
+                        bool latOk = double.TryParse(request.QueryString["lat"], NumberStyles.Float, CultureInfo.InvariantCulture, out latitude);
+                        bool lonOk = double.TryParse(request.QueryString["lon"], NumberStyles.Float, CultureInfo.InvariantCulture, out longitude);
+                        if (!latOk || !lonOk || double.IsNaN(latitude) || double.IsNaN(longitude) || double.IsInfinity(latitude) || double.IsInfinity(longitude))
+                        {
+                            return "{\"ok\":false,\"error\":\"invalid_coordinates\"}";
+                        }
+
+                        string theatre = request.QueryString["theatre"] ?? "";
+                        if (string.IsNullOrWhiteSpace(theatre) && State.currentstate != null)
+                        {
+                            theatre = State.currentstate.theatre ?? "";
+                        }
+
+                        OpenKneeboardElevationResult result = ElevationProvider.GetElevation(new OpenKneeboardElevationRequest
+                        {
+                            Latitude = latitude,
+                            Longitude = longitude,
+                            Theatre = theatre ?? ""
+                        });
+
+                        double? meters = result == null ? null : result.ElevationMeters;
+                        if (meters.HasValue && meters.Value < 0)
+                        {
+                            meters = 0;
+                        }
+
+                        double? feet = meters.HasValue ? (double?)(meters.Value * 3.280839895) : null;
+
+                        var payload = new
+                        {
+                            ok = result != null && result.Success,
+                            elevationMeters = meters,
+                            elevationFeet = feet,
+                            source = result == null ? "" : (result.Source ?? ""),
+                            cache = result == null ? "" : (result.Cache ?? ""),
+                            tile = result == null ? "" : (result.TileId ?? ""),
+                            error = result == null ? "provider_unavailable" : (result.Error ?? "")
+                        };
+
+                        return JsonConvert.SerializeObject(payload, Formatting.None);
+                    }
+                    catch
+                    {
+                        return "{\"ok\":false,\"error\":\"elevation_request_failed\"}";
                     }
                 }
 

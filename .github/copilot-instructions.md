@@ -33,6 +33,7 @@
 - In OKB UI, all tab messages should use the same buffering (padding), style, and night mode treatment.
 - When adding or changing OKB Out features, always update OKBHelpDoc.html to document settings, Icons, layer drawer items and other additions and changes in behavior.
 - For OKB EFB SA map history track: default layer state OFF; sample breadcrumb points every 5 seconds only when fast ownship position is enabled and movement is detected; render as dotted trail; retain track after disconnect and clear/reset on next module connection; add left-rail layer toggle with history track icon style matching provided path/pin concept.
+- For OKB DEM local caching, prefer using `\VoiceAttack\Apps\VAICOMPRO\OKB\DEM` with per-terrain subfolders.
 
 ## F-4E ICS Implementation
 - For F-4E ICS hot mic implementation, ignore WSO ICS state entirely and use only pilot ICS switch state because WSO seat occupancy disables WSO functions.
@@ -75,6 +76,9 @@
 
 ## ADB Fuel Flow Display
 - For ADB fuel flow display, prefer smoothing that remains readable but adapts quickly to value changes at the feed rate.
+
+## EFB SA Map
+- Compute MORA from highest terrain within 40nm of ownship: add 1000ft buffer (or 2000ft if terrain >5000ft), round up to nearest 100ft, and display as two-digit hundreds format (e.g., 7600ft -> 76) in prominent top-left UI size.
 
 ## Code Clarity
 - Add small step-by-step code notes/comments in complex command-flow methods for clarity.

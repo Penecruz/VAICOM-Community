@@ -206,6 +206,11 @@
     let autoAtaRecPulseUnable = false;
     let autoAtaWaypointPulseUntilByKey = {};
     let efbSaOwnshipFast = { hasPosition: false, posX: NaN, posY: NaN, altFeet: NaN, headingDeg: NaN, hasHeading: false, hasGroundSpeed: false, groundSpeedKnots: NaN, hasWow: false, wow: -1, theater: '', updatedUtcMs: 0, lastPollMs: 0 };
+    let efbSaMoraCode = '--';
+    let efbSaMoraFeet = NaN;
+    let efbSaMoraLastUpdateUtcMs = 0;
+    let efbSaMoraLastRequestUtcMs = 0;
+    let efbSaMoraRequestInFlight = false;
     let fastAvBus = {
       enabled: true,
       state: 'OFF',
@@ -2605,6 +2610,8 @@
           const yNum = tryReadFiniteNumber(row.yNum);
           const lat = tryReadFiniteNumber(row.lat);
           const lon = tryReadFiniteNumber(row.lon);
+          const elevationFeet = tryReadFiniteNumber(row.elevationFeet);
+          const elevationMeters = tryReadFiniteNumber(row.elevationMeters);
           const hasXY = xNum !== null && yNum !== null;
           const hasLatLon = lat !== null && lon !== null && Math.abs(lat) <= 90 && Math.abs(lon) <= 180;
           if (!hasXY && !hasLatLon) return;
@@ -2616,6 +2623,10 @@
             yNum: hasXY ? yNum : null,
             lat: hasLatLon ? lat : null,
             lon: hasLatLon ? lon : null,
+            elevationFeet: elevationFeet,
+            elevationMeters: elevationMeters,
+            elevationSource: String(row.elevationSource || '').trim(),
+            elevationCache: String(row.elevationCache || '').trim(),
             createdUtcMs: Number(row.createdUtcMs) || Date.now(),
             updatedUtcMs: Number(row.updatedUtcMs) || 0,
           });

@@ -1372,9 +1372,85 @@
       const selectedAssetInfo = { x: NaN, y: NaN, props: null };
       const modelForWaypoints = latestData || {};
       const theatreForWaypoints = String(resolveOpenFreeMapFallbackTheatreText(modelForWaypoints) || '').trim();
+      try {
+        const ownshipFeature = orderedFeatures.find(function (f) {
+          const props = (f && f.properties) || {};
+          const geom = (f && f.geometry) || {};
+          const coords = Array.isArray(geom.coordinates) ? geom.coordinates : [];
+          return String(props.kind || '').toLowerCase() === 'player'
+            && coords.length >= 2
+            && isFinite(Number(coords[0]))
+            && isFinite(Number(coords[1]));
+        });
+        if (ownshipFeature) {
+          const ownLat = Number(ownshipFeature.geometry.coordinates[1]);
+          const ownLon = Number(ownshipFeature.geometry.coordinates[0]);
+          prefetchEfbSaOwnshipDem(theatreForWaypoints, ownLat, ownLon).catch(function () { });
+          refreshEfbSaMoraFromOwnship(theatreForWaypoints, ownLat, ownLon).catch(function () { });
+        }
+      } catch (_) {
+      }
       function makeNode(name) { return document.createElementNS('http://www.w3.org/2000/svg', name); }
       const renderLayer = makeNode('g');
       overlaySvg = renderLayer;
+
+      try {
+        const moraRaw = String(efbSaMoraCode || '--').trim();
+        const moraCode = moraRaw || '--';
+        const isNight = !!nightModeEnabled;
+        const mainColor = isNight ? '#f0f6ff' : '#14375a';
+        const subColor = isNight ? '#d7e7ff' : '#35587e';
+        const strokeColor = isNight ? 'rgba(8,16,28,0.92)' : 'rgba(255,255,255,0.95)';
+
+        if (moraCode === '--') {
+          const txt = makeNode('text');
+          txt.setAttribute('x', '14');
+          txt.setAttribute('y', '42');
+          txt.setAttribute('font-size', '34');
+          txt.setAttribute('font-weight', '800');
+          txt.setAttribute('fill', mainColor);
+          txt.setAttribute('stroke', strokeColor);
+          txt.setAttribute('stroke-width', '2.2');
+          txt.setAttribute('paint-order', 'stroke');
+          txt.style.pointerEvents = 'none';
+          txt.textContent = '--';
+          overlaySvg.appendChild(txt);
+        } else {
+          const largeDigits = moraCode.length > 1 ? moraCode.substring(0, moraCode.length - 1) : moraCode;
+          const smallDigit = moraCode.length > 1 ? moraCode.substring(moraCode.length - 1) : '';
+
+          const t1 = makeNode('text');
+          t1.setAttribute('x', '12');
+          t1.setAttribute('y', '47');
+          t1.setAttribute('font-size', '46');
+          t1.setAttribute('font-weight', '900');
+          t1.setAttribute('fill', mainColor);
+          t1.setAttribute('stroke', strokeColor);
+          t1.setAttribute('stroke-width', '2.4');
+          t1.setAttribute('paint-order', 'stroke');
+          t1.style.pointerEvents = 'none';
+          t1.textContent = largeDigits;
+          overlaySvg.appendChild(t1);
+
+          if (smallDigit) {
+            const t2 = makeNode('text');
+            const smallX = 22 + (largeDigits.length * 26);
+            t2.setAttribute('x', String(smallX));
+            t2.setAttribute('y', '30');
+            t2.setAttribute('font-size', '28');
+            t2.setAttribute('font-weight', '800');
+            t2.setAttribute('fill', subColor);
+            t2.setAttribute('stroke', strokeColor);
+            t2.setAttribute('stroke-width', '1.8');
+            t2.setAttribute('paint-order', 'stroke');
+            t2.style.pointerEvents = 'none';
+            t2.textContent = smallDigit;
+            overlaySvg.appendChild(t2);
+          }
+        }
+      } catch (_) {
+      }
+
       const metersPerPixel = (function () {
         try {
           const center = map.getCenter ? map.getCenter() : null;
@@ -2338,6 +2414,8 @@
               mgrsText: String(formatEfbSaUserWaypointMgrs(theatreForWaypoints, wp) || '').toUpperCase().trim(),
               xNum: (wp && wp.xNum !== null && wp.xNum !== undefined && String(wp.xNum) !== '') ? Number(wp.xNum) : NaN,
               yNum: (wp && wp.yNum !== null && wp.yNum !== undefined && String(wp.yNum) !== '') ? Number(wp.yNum) : NaN,
+              elevationFeet: (wp && wp.elevationFeet !== null && wp.elevationFeet !== undefined && String(wp.elevationFeet) !== '') ? Number(wp.elevationFeet) : NaN,
+              elevationMeters: (wp && wp.elevationMeters !== null && wp.elevationMeters !== undefined && String(wp.elevationMeters) !== '') ? Number(wp.elevationMeters) : NaN,
             };
           }
         });
@@ -2458,7 +2536,7 @@
           const mgrsText = String(p.mgrsText || '').trim();
           if (mgrsText) infoLines.push('MGRS: ' + mgrsText);
           const elevFeet = Number(p.elevationFeet);
-          if (isFinite(elevFeet)) infoLines.push('ELEV: ' + String(Math.round(elevFeet)) + ' FT');
+          if (category !== 'USER_WAYPOINT' && isFinite(elevFeet)) infoLines.push('ELEV: ' + String(Math.round(elevFeet)) + ' FT');
           const friendlyBearing = Number(p.friendlyBearing);
           const friendlyRangeNm = Number(p.friendlyRangeNm);
           if (isFinite(friendlyBearing) && isFinite(friendlyRangeNm) && friendlyRangeNm > 0) {
@@ -2471,6 +2549,16 @@
         } else if (category !== 'MAP_MARKER' && freqText) infoLines.push('FREQ: ' + freqText);
         if (category !== 'MAP_MARKER' && tacanText) infoLines.push('TACAN: ' + tacanText);
         if (category !== 'MAP_MARKER' && mpText) infoLines.push('MP: ' + mpText);
+
+        if (category === 'USER_WAYPOINT') {
+          const userElevFeet = (p.elevationFeet === null || p.elevationFeet === undefined || String(p.elevationFeet).trim() === '') ? NaN : Number(p.elevationFeet);
+          const userElevMeters = (p.elevationMeters === null || p.elevationMeters === undefined || String(p.elevationMeters).trim() === '') ? NaN : Number(p.elevationMeters);
+          if (isFinite(userElevFeet) || isFinite(userElevMeters)) {
+            const feetText = isFinite(userElevFeet) ? String(Math.round(userElevFeet)) : '-';
+            const metersText = isFinite(userElevMeters) ? String(Math.round(userElevMeters)) : '-';
+            infoLines.push('ELEV: ' + feetText + ' FT (' + metersText + ' M)');
+          }
+        }
 
         if (infoLines.length) {
           const fontSize = 10;
@@ -2639,6 +2727,29 @@
                 ? (String(Math.round(Number(created.xNum))) + '/' + String(Math.round(Number(created.yNum))))
                 : 'null/null'
             });
+
+            try {
+              const canCheckWarmTile = typeof isEfbSaDemTileWarm === 'function';
+              const canRequestElevation = typeof requestEfbSaWaypointElevation === 'function';
+              const canSetElevation = typeof setEfbSaUserWaypointElevation === 'function';
+              if (canCheckWarmTile && canRequestElevation && canSetElevation && isEfbSaDemTileWarm(theater, lat, lon)) {
+                setTimeout(function () {
+                  requestEfbSaWaypointElevation(theater, lat, lon).then(function (elevationInfo) {
+                    if (!elevationInfo) return;
+                    if (!setEfbSaUserWaypointElevation(created.id, elevationInfo)) return;
+                    setEfbSaUserWaypointDiag({
+                      lastElevationTile: String(elevationInfo.tile || ''),
+                      lastElevationFeet: (elevationInfo.elevationFeet === null || elevationInfo.elevationFeet === undefined)
+                        ? 'N/A'
+                        : String(Math.round(Number(elevationInfo.elevationFeet)))
+                    });
+                    efbUiDirty = true;
+                    if (latestData) render(latestData);
+                  }).catch(function () { });
+                }, 0);
+              }
+            } catch (_) {
+            }
 
             renderOpenFreeMapOverlay(item, item.payload || { features: [] });
             const fallback = host.querySelector('.fltPlanOpenMapFallback');
