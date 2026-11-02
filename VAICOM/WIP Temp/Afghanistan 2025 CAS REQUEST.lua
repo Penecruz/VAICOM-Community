@@ -79,6 +79,15 @@ local function formatCoords(point)
   return ddm, mgrs
 end
 
+local function formatElevationFeet(point)
+  local meters = point and tonumber(point.y) or nil
+  if not meters then
+    return "N/A"
+  end
+  local feet = meters * 3.28084
+  return string.format("%d ft", math.floor(feet + 0.5))
+end
+
 local function getAliveUnitsFromGroup(g)
   local out = {}
   if not g then return out end
@@ -252,13 +261,14 @@ local function isDetectedBy(observer, target)
   return d <= 4000
 end
 
-local function makeMarkerText(markerTitle, enemyType, count, ddm, mgrs, detectorName)
+local function makeMarkerText(markerTitle, enemyType, count, ddm, mgrs, elevFt, detectorName)
   return table.concat({
     tostring(markerTitle or "ISR DETECTION"),
     "Type: " .. tostring(enemyType or "Unknown"),
     "Count: " .. tostring(count or 0),
     "DDM: " .. tostring(ddm or "N/A"),
     "MGRS: " .. tostring(mgrs or "N/A"),
+    "Elevation: " .. tostring(elevFt or "N/A"),
     "Detected by: " .. tostring(detectorName or "Unknown")
   }, "\n")
 end
@@ -332,10 +342,11 @@ local function scanDetections()
         local center = averagePoint(eUnits)
         if center then
           local ddm, mgrs = formatCoords(center)
+          local elevFt = formatElevationFeet(center)
           local eType = eUnits[1] and eUnits[1]:getTypeName() or "Unknown"
           local detectorName = detectedBy:getName() or "Unknown"
           local markerTitle, allowSmoke = getDetectionMode(detectedBy)
-          local text = makeMarkerText(markerTitle, eType, #eUnits, ddm, mgrs, detectorName)
+          local text = makeMarkerText(markerTitle, eType, #eUnits, ddm, mgrs, elevFt, detectorName)
           local gName = eg:getName() or ("EnemyGroup_" .. tostring(eg:getID() or math.random(100000)))
           local rec = upsertCoalitionMark(gName, center, text, now)
 
