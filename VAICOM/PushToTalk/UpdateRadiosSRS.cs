@@ -125,8 +125,8 @@ namespace VAICOM
                     {"artillery_commander",new radioslotlist() { Slot_map = { "VHF AM", "UHF", "VHF FM" } } },
                     {"FA-18C_hornet", new radioslotlist() { Slot_map = { "COMM1: ARC-210", "COMM2: ARC-210", ""} } },
                     {"F-14" ,       new radioslotlist() { Slot_map = { "UHF ARC-159", "VHF/UHF ARC-182", "" } } },
-                    {"F-14A" ,       new radioslotlist() { Slot_map = { "UHF ARC-159", "VHF/UHF ARC-182", "" } } },
-                    {"F-14B" ,       new radioslotlist() { Slot_map = { "UHF ARC-159", "VHF/UHF ARC-182", "" } } },
+                    {"F-14B" ,      new radioslotlist() { Slot_map = { "UHF ARC-159", "VHF/UHF ARC-182", "" } } },
+                    {"F-14BU" ,     new radioslotlist() { Slot_map = { "UHF ARC-159", "VHF/UHF ARC-182", "" } } },
                     {"AJS37" ,      new radioslotlist() { Slot_map = { "FR22", "FR24", "" } } },// HB Changed names to identify radios correctly :).
                     {"F-5E-3" ,     new radioslotlist() { Slot_map = { "UHF Radio AN/ARC-164", "", "" } } },
                     {"F-5E-3_FC" ,  new radioslotlist() { Slot_map = { "VHF AM", "UHF", "VHF FM" } } }, // Adds Flaming Cliffs version
@@ -211,8 +211,8 @@ namespace VAICOM
                     {"artillery_commander",new radioslotlist() { Slot_map = { "CA UHF/VHF", "CA UHF/VHF", "CA FM" } } },
                     {"FA-18C_hornet", new radioslotlist() { Slot_map = { "AN/ARC-210 V/UHF", "AN/ARC-210 V/UHF", ""} } },
                     {"F-14" ,       new radioslotlist() { Slot_map = { "AN/ARC-159 UHF", "AN/ARC-182 V/UHF","" } } },
-                    {"F-14A" ,       new radioslotlist() { Slot_map = { "AN/ARC-159 UHF", "AN/ARC-182 V/UHF", "" } } },
-                    {"F-14B" ,       new radioslotlist() { Slot_map = { "AN/ARC-159 UHF", "AN/ARC-182 V/UHF", "" } } },
+                    {"F-14B" ,      new radioslotlist() { Slot_map = { "AN/ARC-159 UHF", "AN/ARC-182 V/UHF", "" } } },
+                    {"F-14BU" ,     new radioslotlist() { Slot_map = { "AN/ARC-159 UHF", "AN/ARC-182 V/UHF", "" } } },
                     {"AJS37" ,      new radioslotlist() { Slot_map = { "FR 22", "FR 24", "" } } },
                     {"F-5E-3" ,     new radioslotlist() { Slot_map = { "AN/ARC-164", "", "" } } },
                     {"F-5E-3_FC" ,  new radioslotlist() { Slot_map = { "AN/ARC-164", "", "" } } }, // Adds Flaming Cliffs version

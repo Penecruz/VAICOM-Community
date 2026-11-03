@@ -761,41 +761,11 @@ namespace VAICOM
 
                 private static bool IsF14BUActive()
                 {
-                    try
-                    {
-                        string stateId = (State.currentstate != null && !string.IsNullOrWhiteSpace(State.currentstate.id))
-                            ? State.currentstate.id.Trim()
-                            : string.Empty;
+                    string stateId = (State.currentstate != null && !string.IsNullOrWhiteSpace(State.currentstate.id))
+                        ? State.currentstate.id.Trim()
+                        : string.Empty;
 
-                        if (!string.IsNullOrWhiteSpace(stateId))
-                        {
-                            if (stateId.Equals("F-14BU", StringComparison.OrdinalIgnoreCase)
-                                || stateId.Equals("F-14B(U)", StringComparison.OrdinalIgnoreCase)
-                                || stateId.Equals("F14BU", StringComparison.OrdinalIgnoreCase)
-                                || (stateId.IndexOf("F-14B", StringComparison.OrdinalIgnoreCase) >= 0
-                                    && stateId.IndexOf("U", StringComparison.OrdinalIgnoreCase) >= 0))
-                            {
-                                return true;
-                            }
-                        }
-
-                        string rioMod = !string.IsNullOrWhiteSpace(State.riomod)
-                            ? State.riomod.Trim()
-                            : string.Empty;
-
-                        if (!string.IsNullOrWhiteSpace(rioMod)
-                            && (rioMod.Equals("F-14BU", StringComparison.OrdinalIgnoreCase)
-                                || rioMod.Equals("F-14B(U)", StringComparison.OrdinalIgnoreCase)
-                                || rioMod.Equals("F14BU", StringComparison.OrdinalIgnoreCase)))
-                        {
-                            return true;
-                        }
-                    }
-                    catch
-                    {
-                    }
-
-                    return false;
+                    return !string.IsNullOrWhiteSpace(stateId) && stateId.Equals("F-14BU", StringComparison.OrdinalIgnoreCase);
                 }
 
                 public static void SetRioDeviceSequence()

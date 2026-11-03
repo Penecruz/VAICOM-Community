@@ -83,7 +83,7 @@ namespace VAICOM
             if (currentmodule != null)
             {
                 DCSmodule f14ab;
-                if (Products.DCSmodules.LookupTable.TryGetValue("F-14AB", out f14ab) && currentmodule.Equals(f14ab))
+                if (Products.DCSmodules.LookupTable.TryGetValue("F-14B", out f14ab) && currentmodule.Equals(f14ab))
                 {
                     return true;
                 }
@@ -100,7 +100,7 @@ namespace VAICOM
                 return false;
             }
 
-            return currentstate.id.Equals("F-14AB", StringComparison.OrdinalIgnoreCase)
+            return currentstate.id.Equals("F-14B", StringComparison.OrdinalIgnoreCase)
                 || currentstate.id.Equals("F-14BU", StringComparison.OrdinalIgnoreCase);
         }
 

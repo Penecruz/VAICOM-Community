@@ -223,12 +223,6 @@ namespace VAICOM
                     State.currentmodule = DCSmodules.LookupTable["FA-18C"];
                     return true;
                 }
-                // Tomcat
-                if ((State.currentstate.id.ToLower().Contains("f") & State.currentstate.id.ToLower().Contains("14")) || (State.currentstate.id.ToLower().Contains("tomcat")))
-                {
-                    State.currentmodule = DCSmodules.LookupTable["F-14AB"];
-                    return true;
-                }
                 // Gazelle
                 if (State.currentstate.id.ToLower().Contains("342") || (State.currentstate.id.ToLower().Contains("gazelle")))
                 {
@@ -341,11 +335,6 @@ namespace VAICOM
 
             private static string GetModuleDisplayName()
             {
-                if (State.currentmodule.Id.Equals("F-14", StringComparison.OrdinalIgnoreCase))
-                {
-                    return State.currentstate.id.Equals("F-14BU", StringComparison.OrdinalIgnoreCase) ? "F-14B(U)" : "F-14A/B";
-                }
-
                 return $"{State.currentmodule.Name} {State.currentmodule.Alias}";
             }
         }

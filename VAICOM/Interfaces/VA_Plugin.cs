@@ -659,6 +659,7 @@ namespace VAICOM
                     vaProxy.SetBoolean("vaicompro.serverdata.currentserver.easycomms", State.currentstate.easycomms);
                     vaProxy.SetBoolean("vaicompro.serverdata.currentserver.vrmode", State.currentstate.vrmode);
 
+                    vaProxy.SetText("vaicompro.playerdata.currentmodule.id", State.currentmodule.Id);
                     vaProxy.SetText("vaicompro.playerdata.currentmodule.name", State.currentmodule.Name);
                     vaProxy.SetText("vaicompro.playerdata.currentmodule.cat", State.currentstate.playerunitcat);
 
