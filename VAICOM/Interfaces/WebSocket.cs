@@ -104,7 +104,12 @@ namespace VAICOM
                         }
 
                         string receivedMessage = messageBuilder.ToString();
-                        if (!WSOActionCache.TryHandleActionCacheMessage(receivedMessage) && !WSOActionCache.TryHandleJesterMenuActionLine(receivedMessage))
+                        if (receivedMessage.Contains("\"type\":\"activate_keyboard_focus\""))
+                        {
+                            // Call the handler to simulate a mouse click on the text input field of the wheel.
+                            WSOActivateKeyboardInput.ClickAsync();
+                        }
+                        else if (!WSOActionCache.TryHandleActionCacheMessage(receivedMessage) && !WSOActionCache.TryHandleJesterMenuActionLine(receivedMessage))
                         {
                             Log.Write($"Received Jester wheel message: {receivedMessage}", Colors.Text);
                         }

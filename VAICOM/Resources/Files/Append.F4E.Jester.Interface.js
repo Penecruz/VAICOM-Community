@@ -168,6 +168,14 @@ function hb_send_proxy(category, action, value = "") {
 		return;
 	}
 
+	// The wheel triggers this event when a text entry field is shown. We send a message
+	// to the server for this event so that it can handle keyboard focus appropriately.
+	// In VR, unlike 2D, focus is not given to this control unless it is clicked on.
+	// We have this performed on the server by simulating a click on the text entry field.
+	if (category === "misc" && action === "activate_keyboard_focus") {
+		sendSocketMessage(JSON.stringify({ type: "activate_keyboard_focus" }));
+	}
+
 	if (typeof window.edQuery === "function") {
 		sendSocketMessage(`Jester 2.0 Menu: ${category}|${action}|${value}`);
 
