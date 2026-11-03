@@ -1385,8 +1385,12 @@
         if (ownshipFeature) {
           const ownLat = Number(ownshipFeature.geometry.coordinates[1]);
           const ownLon = Number(ownshipFeature.geometry.coordinates[0]);
+          const now = Date.now();
           prefetchEfbSaOwnshipDem(theatreForWaypoints, ownLat, ownLon).catch(function () { });
-          refreshEfbSaMoraFromOwnship(theatreForWaypoints, ownLat, ownLon).catch(function () { });
+          if (!window.__okbMoraKickMs || (now - Number(window.__okbMoraKickMs)) >= 1000) {
+            window.__okbMoraKickMs = now;
+            refreshEfbSaMoraFromOwnship(theatreForWaypoints, ownLat, ownLon).catch(function () { });
+          }
         }
       } catch (_) {
       }
@@ -2096,8 +2100,8 @@
                 const headingDeg = Number(props && props.headingDeg);
                 const roofHeight = 26;
                 const bodyWidth = 120;
-                const bodyHeight = 108;
-                const rowHeight = bodyHeight / 3;
+                const bodyHeight = 144;
+                const rowHeight = bodyHeight / 4;
                 const zoomFactor = clamp((mapZoom - efbSaDoghouseMinZoom) / 3.0, 0, 1);
                 const offsetNmDynamic = Math.max(0.6, Number(efbSaDoghouseOffsetNm) * (1.0 - (0.65 * zoomFactor)));
                 const offsetPxFromNm = isFinite(metersPerPixel) && metersPerPixel > 0
@@ -2182,6 +2186,15 @@
                 sep2.setAttribute('stroke-width', '2.0');
                 gDog.appendChild(sep2);
 
+                const sep3 = makeNode('line');
+                sep3.setAttribute('x1', bodyX.toFixed(1));
+                sep3.setAttribute('y1', (bodyY + (rowHeight * 3)).toFixed(1));
+                sep3.setAttribute('x2', (bodyX + bodyWidth).toFixed(1));
+                sep3.setAttribute('y2', (bodyY + (rowHeight * 3)).toFixed(1));
+                sep3.setAttribute('stroke', '#000000');
+                sep3.setAttribute('stroke-width', '2.0');
+                gDog.appendChild(sep3);
+
                 function row(y, text, center) {
                   const tx = makeNode('text');
                   tx.setAttribute('x', (center ? anchorX : (bodyX + 8)).toFixed(1));
@@ -2200,6 +2213,7 @@
                 row(bodyY + (rowHeight * 0.5), 'DIST ' + String((props && props.distText) || '-') + ' ' + String((props && props.distUnit) || 'NM'), true);
                 row(bodyY + (rowHeight * 1.5), 'ETE ' + String((props && props.eteText) || '--:--'), true);
                 row(bodyY + (rowHeight * 2.5), 'ALT ' + String((props && props.altText) || '-') + ' ' + String((props && props.altUnit) || 'ft'), true);
+                row(bodyY + (rowHeight * 3.5), 'MSA ' + String((props && props.msaText) || '--') + ' ' + String((props && props.msaUnit) || 'ft'), true);
 
                 doghousePlacedAnchors.push({
                   x: anchorX,
@@ -4117,6 +4131,7 @@
       const unitModes = getGlobalUnitModes(latestData || null, selectionKey);
       const magVar = Number(getApproxMagVariationDeg(theater));
       const doghouses = [];
+      let msaKickIssued = false;
       for (let i = 1; i < list.length; i++) {
         const fromWp = list[i - 1];
         const toWp = list[i];
@@ -4151,6 +4166,21 @@
 
         const distTextRaw = formatDistanceByMode(distanceNm, unitModes.dist, false);
         const altTextRaw = formatAltitudeByMode(altFeet, unitModes.alt, false);
+
+        const legKey = buildDoghouseMsaLegKey(theater, fromX, fromY, toX, toY);
+        let msaFeet = NaN;
+        if (legKey && efbSaDoghouseMsaByLegKey && efbSaDoghouseMsaByLegKey[legKey]) {
+          msaFeet = Number(efbSaDoghouseMsaByLegKey[legKey].feet);
+        }
+        const msaTextRaw = formatAltitudeByMode(msaFeet, unitModes.alt, false);
+
+        if (legKey && !isFinite(msaFeet) && !msaKickIssued) {
+          msaKickIssued = true;
+          ensureDoghouseMsaForLeg(theater, fromX, fromY, toX, toY).then(function (msa) {
+            if (!msa || !isFinite(Number(msa.feet))) return;
+          }).catch(function () { });
+        }
+
         doghouses.push({
           fromXNum: fromX,
           fromYNum: fromY,
@@ -4164,6 +4194,8 @@
           eteText: formatDoghouseEteSeconds(eteSeconds),
           altText: altTextRaw,
           altUnit: unitModes.alt === 'm' ? 'm' : 'ft',
+          msaText: msaTextRaw,
+          msaUnit: unitModes.alt === 'm' ? 'm' : 'ft',
         });
       }
       return doghouses;

@@ -2984,6 +2984,8 @@
             eteText: String(d.eteText || '--:--'),
             altText: String(d.altText || '-'),
             altUnit: String(d.altUnit || 'ft'),
+            msaText: String(d.msaText || '--'),
+            msaUnit: String(d.msaUnit || 'ft'),
           });
         });
       }

@@ -486,31 +486,32 @@
       }
 
       const now = Date.now();
-      const tasks = tileIds.map(function (tileId) {
+      let warmedAny = false;
+      for (let i = 0; i < tileIds.length; i++) {
+        const tileId = tileIds[i];
         const tileKey = buildEfbSaDemTileKeyById(theatreToken, tileId);
-        if (!tileKey) return null;
+        if (!tileKey) continue;
         const warmMs = Number(efbSaDemWarmTiles[tileKey] || 0);
-        if (isFinite(warmMs) && (now - warmMs) <= efbSaDemWarmTileTtlMs) return null;
+        if (isFinite(warmMs) && (now - warmMs) <= efbSaDemWarmTileTtlMs) continue;
         const lastMs = Number(efbSaDemPrefetchLastByTile[tileKey] || 0);
-        if (isFinite(lastMs) && (now - lastMs) < efbSaDemPrefetchIntervalMs) return null;
-        if (efbSaDemPrefetchInFlightByTile[tileKey]) return null;
+        if (isFinite(lastMs) && (now - lastMs) < efbSaDemPrefetchIntervalMs) continue;
+        if (efbSaDemPrefetchInFlightByTile[tileKey]) continue;
 
         const center = getEfbSaTileCenterLatLon(tileId);
-        if (!center) return null;
+        if (!center) continue;
 
         efbSaDemPrefetchLastByTile[tileKey] = now;
         efbSaDemPrefetchInFlightByTile[tileKey] = true;
-        return requestEfbSaWaypointElevation(theatreToken, center.lat, center.lon)
-          .then(function () { })
-          .catch(function () { })
-          .then(function () {
-            delete efbSaDemPrefetchInFlightByTile[tileKey];
-          });
-      }).filter(function (p) { return !!p; });
+        try {
+          await requestEfbSaWaypointElevation(theatreToken, center.lat, center.lon);
+          warmedAny = true;
+        } catch (_) {
+        } finally {
+          delete efbSaDemPrefetchInFlightByTile[tileKey];
+        }
+      }
 
-      if (!tasks.length) return null;
-      await Promise.all(tasks);
-      return true;
+      return warmedAny ? true : null;
     }
 
     async function refreshEfbSaMoraFromOwnship(theatre, lat, lon) {
@@ -532,7 +533,7 @@
         const stepNm = 8;
         const degPerNm = 1.0 / 60.0;
         const theatreToken = String(theatre || '').trim();
-        const tasks = [];
+        const samples = [];
         for (let northNm = -radiusNm; northNm <= radiusNm + 0.001; northNm += stepNm) {
           for (let eastNm = -radiusNm; eastNm <= radiusNm + 0.001; eastNm += stepNm) {
             if ((northNm * northNm) + (eastNm * eastNm) > (radiusNm * radiusNm)) continue;
@@ -540,25 +541,39 @@
             const cosLat = Math.cos(sampleLat * (Math.PI / 180.0));
             if (!isFinite(cosLat) || Math.abs(cosLat) < 0.000001) continue;
             const sampleLon = Math.max(-179.999999, Math.min(179.999999, lonNum + ((eastNm * degPerNm) / cosLat)));
-            tasks.push(requestEfbSaWaypointElevation(theatreToken, sampleLat, sampleLon));
+            if (!isEfbSaDemTileWarm(theatreToken, sampleLat, sampleLon)) continue;
+            samples.push({ lat: sampleLat, lon: sampleLon });
           }
         }
 
-        if (!tasks.length) {
-          efbSaMoraCode = '--';
-          efbSaMoraFeet = NaN;
+        if (!samples.length) {
+          const center = await requestEfbSaWaypointElevation(theatreToken, latNum, lonNum);
+          const centerFeet = tryReadFiniteNumber(center && center.elevationFeet);
+          if (centerFeet === null) {
+            efbSaMoraCode = '--';
+            efbSaMoraFeet = NaN;
+            return;
+          }
+          const centerClamped = Math.max(0, centerFeet);
+          const centerBufferFeet = centerClamped > 5000 ? 2000 : 1000;
+          const centerMoraFeet = Math.ceil((centerClamped + centerBufferFeet) / 100.0) * 100.0;
+          const centerCodeNum = Math.ceil(centerMoraFeet / 100.0);
+          efbSaMoraFeet = centerMoraFeet;
+          efbSaMoraCode = (isFinite(centerCodeNum) && centerCodeNum > 0) ? String(centerCodeNum) : '--';
+          efbSaMoraLastUpdateUtcMs = Date.now();
           return;
         }
 
-        const rows = await Promise.all(tasks);
         let maxTerrainFeet = NaN;
-        rows.forEach(function (row) {
-          if (!row) return;
+        for (let i = 0; i < samples.length; i++) {
+          const sample = samples[i];
+          const row = await requestEfbSaWaypointElevation(theatreToken, sample.lat, sample.lon);
+          if (!row) continue;
           const feet = tryReadFiniteNumber(row.elevationFeet);
-          if (feet === null) return;
+          if (feet === null) continue;
           const clampedFeet = Math.max(0, feet);
           if (!isFinite(maxTerrainFeet) || clampedFeet > maxTerrainFeet) maxTerrainFeet = clampedFeet;
-        });
+        }
 
         if (!isFinite(maxTerrainFeet)) {
           efbSaMoraCode = '--';
@@ -577,6 +592,112 @@
         efbSaMoraFeet = NaN;
       } finally {
         efbSaMoraRequestInFlight = false;
+      }
+    }
+
+    function buildDoghouseMsaLegKey(theatre, fromX, fromY, toX, toY) {
+      const t = String(theatre || '').trim().toUpperCase() || 'UNKNOWN';
+      const fx = Number(fromX);
+      const fy = Number(fromY);
+      const tx = Number(toX);
+      const ty = Number(toY);
+      if (!isFinite(fx) || !isFinite(fy) || !isFinite(tx) || !isFinite(ty)) return '';
+      return [
+        t,
+        String(Math.round(fx)),
+        String(Math.round(fy)),
+        String(Math.round(tx)),
+        String(Math.round(ty))
+      ].join('::');
+    }
+
+    async function ensureDoghouseMsaForLeg(theatre, fromX, fromY, toX, toY) {
+      const key = buildDoghouseMsaLegKey(theatre, fromX, fromY, toX, toY);
+      if (!key) return null;
+      if (efbSaDoghouseMsaByLegKey[key]) return efbSaDoghouseMsaByLegKey[key];
+      if (efbSaDoghouseMsaInFlightByLegKey[key]) return null;
+      if (efbSaDoghouseMsaGlobalInFlight >= efbSaDoghouseMsaMaxInFlight) return null;
+
+      const now = Date.now();
+      const lastAttempt = Number(efbSaDoghouseMsaLastAttemptUtcMsByLegKey[key] || 0);
+      if (isFinite(lastAttempt) && (now - lastAttempt) < 45000) return null;
+
+      const fx = Number(fromX);
+      const fy = Number(fromY);
+      const tx = Number(toX);
+      const ty = Number(toY);
+      const dx = tx - fx;
+      const dy = ty - fy;
+      const legMeters = Math.sqrt((dx * dx) + (dy * dy));
+      if (!isFinite(legMeters) || legMeters <= 1) return null;
+
+      const alongStepNm = 5.0;
+      const crossOffsetsNm = [-5, -2, 0, 2, 5];
+      const legNm = legMeters / 1852.0;
+      const segments = Math.max(1, Math.ceil(legNm / alongStepNm));
+      const ux = dx / legMeters;
+      const uy = dy / legMeters;
+      const px = -uy;
+      const py = ux;
+
+      const theatreToken = String(theatre || '').trim();
+      efbSaDoghouseMsaLastAttemptUtcMsByLegKey[key] = now;
+      efbSaDoghouseMsaInFlightByLegKey[key] = true;
+      efbSaDoghouseMsaGlobalInFlight += 1;
+
+      try {
+        const samples = [];
+        for (let i = 0; i <= segments; i++) {
+          const t = i / segments;
+          const baseX = fx + (dx * t);
+          const baseY = fy + (dy * t);
+          for (let c = 0; c < crossOffsetsNm.length; c++) {
+            const crossMeters = Number(crossOffsetsNm[c]) * 1852.0;
+            const sx = baseX + (px * crossMeters);
+            const sy = baseY + (py * crossMeters);
+            const llPrimary = convertDcsXYToLatLon(theatreToken, sx, sy);
+            const llSwap = convertDcsXYToLatLon(theatreToken, sy, sx);
+            const ll = (llPrimary && isFinite(Number(llPrimary.lat)) && isFinite(Number(llPrimary.lon)))
+              ? llPrimary
+              : ((llSwap && isFinite(Number(llSwap.lat)) && isFinite(Number(llSwap.lon))) ? llSwap : null);
+            if (!ll) continue;
+            const sampleLat = Number(ll.lat);
+            const sampleLon = Number(ll.lon);
+            if (!isFinite(sampleLat) || !isFinite(sampleLon)) continue;
+            if (!isEfbSaDemTileWarm(theatreToken, sampleLat, sampleLon)) continue;
+            samples.push({ lat: sampleLat, lon: sampleLon });
+          }
+        }
+
+        if (!samples.length) return null;
+
+        let maxTerrainFeet = NaN;
+        for (let s = 0; s < samples.length; s++) {
+          const sample = samples[s];
+          const row = await requestEfbSaWaypointElevation(theatreToken, sample.lat, sample.lon);
+          if (!row) continue;
+          const feet = tryReadFiniteNumber(row.elevationFeet);
+          if (feet === null) continue;
+          const clamped = Math.max(0, feet);
+          if (!isFinite(maxTerrainFeet) || clamped > maxTerrainFeet) {
+            maxTerrainFeet = clamped;
+          }
+        }
+
+        if (!isFinite(maxTerrainFeet)) return null;
+
+        const msaFeet = Math.ceil((maxTerrainFeet + 1000.0) / 100.0) * 100.0;
+        const msa = {
+          feet: msaFeet,
+          updatedUtcMs: Date.now(),
+        };
+        efbSaDoghouseMsaByLegKey[key] = msa;
+        return msa;
+      } catch (_) {
+        return null;
+      } finally {
+        delete efbSaDoghouseMsaInFlightByLegKey[key];
+        efbSaDoghouseMsaGlobalInFlight = Math.max(0, Number(efbSaDoghouseMsaGlobalInFlight || 0) - 1);
       }
     }
 

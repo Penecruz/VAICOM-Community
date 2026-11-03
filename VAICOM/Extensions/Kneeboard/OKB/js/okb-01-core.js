@@ -211,6 +211,11 @@
     let efbSaMoraLastUpdateUtcMs = 0;
     let efbSaMoraLastRequestUtcMs = 0;
     let efbSaMoraRequestInFlight = false;
+    let efbSaDoghouseMsaByLegKey = {};
+    let efbSaDoghouseMsaInFlightByLegKey = {};
+    let efbSaDoghouseMsaLastAttemptUtcMsByLegKey = {};
+    let efbSaDoghouseMsaGlobalInFlight = 0;
+    const efbSaDoghouseMsaMaxInFlight = 1;
     let fastAvBus = {
       enabled: true,
       state: 'OFF',
