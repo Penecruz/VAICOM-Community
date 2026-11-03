@@ -3450,6 +3450,30 @@ namespace VAICOM
                         return;
                     }
 
+                    if (path == "/okb/efb/sendkeys")
+                    {
+                        string method = (context.Request.HttpMethod ?? "GET").Trim().ToUpperInvariant();
+                        if (method != "POST")
+                        {
+                            context.Response.StatusCode = 405;
+                            WriteJson(context.Response, "{\"ok\":false,\"error\":\"method_not_allowed\"}");
+                            return;
+                        }
+
+                        string body = ReadRequestBody(context.Request);
+                        string text = ExtractSendKeysText(body);
+                        bool ok = TrySendTextToActiveWindow(text);
+                        if (!ok)
+                        {
+                            context.Response.StatusCode = 400;
+                            WriteJson(context.Response, "{\"ok\":false,\"error\":\"send_failed\"}");
+                            return;
+                        }
+
+                        WriteJson(context.Response, "{\"ok\":true}");
+                        return;
+                    }
+
                     if (path == "/okb/efb/chart")
                     {
                         string chartId = context.Request.QueryString["id"] ?? "";
@@ -5287,6 +5311,74 @@ namespace VAICOM
                     catch
                     {
                         return "";
+                    }
+                }
+
+                private static string ExtractSendKeysText(string rawJson)
+                {
+                    try
+                    {
+                        if (string.IsNullOrWhiteSpace(rawJson))
+                        {
+                            return "";
+                        }
+
+                        JObject obj = JObject.Parse(rawJson);
+                        string text = (string)obj["text"] ?? "";
+                        string cleaned = Regex.Replace(text.ToUpperInvariant(), "[^A-Z0-9/ -]", "");
+                        if (cleaned.Length > 24)
+                        {
+                            cleaned = cleaned.Substring(0, 24);
+                        }
+                        return cleaned;
+                    }
+                    catch
+                    {
+                        return "";
+                    }
+                }
+
+                private static bool TrySendTextToActiveWindow(string text)
+                {
+                    try
+                    {
+                        string token = text ?? "";
+                        if (token.Length == 0)
+                        {
+                            return false;
+                        }
+
+                        Exception sendError = null;
+                        var sendThread = new Thread(() =>
+                        {
+                            try
+                            {
+                                System.Windows.Forms.SendKeys.SendWait(token);
+                            }
+                            catch (Exception ex)
+                            {
+                                sendError = ex;
+                            }
+                        });
+                        sendThread.IsBackground = true;
+                        sendThread.SetApartmentState(ApartmentState.STA);
+                        sendThread.Start();
+                        sendThread.Join(2000);
+                        if (sendThread.IsAlive)
+                        {
+                            return false;
+                        }
+
+                        if (sendError != null)
+                        {
+                            return false;
+                        }
+
+                        return true;
+                    }
+                    catch
+                    {
+                        return false;
                     }
                 }
 

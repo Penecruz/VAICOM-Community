@@ -1013,6 +1013,8 @@
       const isA10 = aircraft.indexOf('A-10') >= 0 || aircraft.indexOf('A10') >= 0 || aircraft.indexOf('WARTHOG') >= 0;
       const isF16 = aircraft.indexOf('F-16') >= 0 || aircraft.indexOf('F16') >= 0 || aircraft.indexOf('VIPER') >= 0;
       const isFA18 = aircraft.indexOf('FA-18') >= 0 || aircraft.indexOf('F/A-18') >= 0 || aircraft.indexOf('F18') >= 0 || aircraft.indexOf('HORNET') >= 0;
+      const isAH64 = aircraft.indexOf('AH-64') >= 0 || aircraft.indexOf('AH64') >= 0 || aircraft.indexOf('APACHE') >= 0;
+      const isF4E = aircraft.indexOf('F-4E') >= 0 || aircraft.indexOf('F4E') >= 0 || aircraft.indexOf('PHANTOM') >= 0;
 
       if (isF14) {
         return {
@@ -1046,6 +1048,22 @@
         };
       }
 
+      if (isAH64) {
+        return {
+          id: 'AH64D',
+          title: 'AH-64D 6-STATION LAYOUT',
+          labels: ['1', '2', 'IASF', '3', '4', 'MMA']
+        };
+      }
+
+      if (isF4E) {
+        return {
+          id: 'F4E',
+          title: 'F-4E 14-STATION LAYOUT',
+          labels: ['1', '2L', '2', '2R', '3', '4', '5', '6', '7', '8L', '8', '8R', '9', 'CMS']
+        };
+      }
+
       return {
         id: 'STD10',
         title: 'STANDARD 10-STATION LAYOUT',
@@ -1055,17 +1073,42 @@
 
     function mapStoresToConfiguredLayout(stations, storesStationConfig) {
       const source = Array.isArray(stations) ? stations : [];
-      if (!storesStationConfig || storesStationConfig.id !== 'F16C') return source;
+      if (!storesStationConfig) return source;
 
-      // F-16 runtime payload station order is physical pylon order:
-      // 1,2,3,4,5L,6,7,8,9,5,5R.
-      // Re-map to the displayed STORES/AID label order:
-      // 1,2,3,4,5L,5,5R,6,7,8,9.
-      if (source.length < 11) return source;
-      const sourceToDisplayIndex = [0, 1, 2, 3, 9, 4, 10, 5, 6, 7, 8];
-      return sourceToDisplayIndex.map(function (sourceIndex) {
-        return source[sourceIndex] || {};
-      });
+      if (storesStationConfig.id === 'F16C') {
+        // F-16 runtime payload station order is physical pylon order:
+        // 1,2,3,4,5L,6,7,8,9,5,5R.
+        // Re-map to the displayed STORES/AID label order:
+        // 1,2,3,4,5L,5,5R,6,7,8,9.
+        if (source.length < 11) return source;
+        const sourceToDisplayIndex = [0, 1, 2, 3, 9, 4, 10, 5, 6, 7, 8];
+        return sourceToDisplayIndex.map(function (sourceIndex) {
+          return source[sourceIndex] || {};
+        });
+      }
+
+      if (storesStationConfig.id === 'AH64D') {
+        // AH-64D runtime payload arrives in numeric station sequence: 1,2,3,4,5,6.
+        // Re-map to displayed STORES/AID label order: 1,2,IASF,3,4,MMA.
+        // Runtime station 5 is IASF and runtime station 6 is MMA.
+        if (source.length < 6) return source;
+        const sourceToDisplayIndex = [0, 1, 4, 2, 3, 5];
+        return sourceToDisplayIndex.map(function (sourceIndex) {
+          return source[sourceIndex] || {};
+        });
+      }
+
+      if (storesStationConfig.id === 'F4E') {
+        // F-4E runtime payload order arrives as: 1,2L,2,2R,3,4,5,6,7,8L,8,8R,9,CMS.
+        // Re-map is identity to preserve in-game STORES ordering.
+        if (source.length < 14) return source;
+        const sourceToDisplayIndex = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13];
+        return sourceToDisplayIndex.map(function (sourceIndex) {
+          return source[sourceIndex] || {};
+        });
+      }
+
+      return source;
     }
 
     function formatStoresPageHtml(pageSwitcherHtml, data) {

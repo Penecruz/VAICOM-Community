@@ -94,6 +94,16 @@
       title="Help">?</button>
     <button id="drawOverlayToggleBtn" class="overlayToggleBtn drawOverlayToggleBtn hiddenFloatingBtn" type="button"
       title="Draw OFF (tap to draw)">✎</button>
+    <button id="radialKeyboardToggleBtn" class="overlayToggleBtn radialKeyboardToggleBtn" type="button"
+      title="Open radial keyboard" aria-label="Open radial keyboard">
+      <svg class="drawEraseIcon" viewBox="0 0 64 64" aria-hidden="true" focusable="false">
+        <rect x="8" y="12" width="48" height="34" rx="4" ry="4" />
+        <rect x="14" y="20" width="6" height="6" rx="1" /><rect x="23" y="20" width="6" height="6" rx="1" /><rect x="32" y="20" width="6" height="6" rx="1" /><rect x="41" y="20" width="6" height="6" rx="1" />
+        <rect x="14" y="29" width="6" height="6" rx="1" /><rect x="23" y="29" width="6" height="6" rx="1" /><rect x="32" y="29" width="6" height="6" rx="1" /><rect x="41" y="29" width="6" height="6" rx="1" />
+        <path d="M14 50h22" />
+        <path d="M42 47l10 5-10 5z" fill="currentColor" stroke="none" />
+      </svg>
+    </button>
     <button id="drawEraseToggleBtn" class="overlayToggleBtn drawEraseToggleBtn hiddenFloatingBtn" type="button"
       title="Eraser OFF" aria-label="Eraser mode">
       <svg class="drawEraseIcon" viewBox="0 0 64 64" aria-hidden="true" focusable="false">
@@ -186,6 +196,28 @@
       </div>
       <label class="overlayOption"><input id="overlayDrawMode" type="checkbox"> Draw ON</label>
       <div class="overlayHint">Draw stays on until toggled off.</div>
+    </div>
+  </div>
+
+  <div id="radialKeyboardOverlay" class="overlayBackdrop radialKeyboardOverlayBackdrop hidden">
+    <div id="radialKeyboardOverlayPanel" class="overlayPanel radialKeyboardOverlayPanel">
+      <div class="overlayTitleRow">
+        <span>Data Entry Keyboard</span>
+        <button id="radialKeyboardCloseBtn" class="overlayCloseBtn" type="button">✕</button>
+      </div>
+      <div class="efbSearchWheelWrap radialKeyboardWheelWrap">
+        <div id="radialKeyboardOuterRing"></div>
+        <div id="radialKeyboardInnerRing"></div>
+        <div class="efbSearchCenter">
+          <div id="radialKeyboardToken" class="efbSearchToken">TEXT</div>
+          <div id="radialKeyboardActions" class="efbSearchCenterActions">
+            <button type="button" class="efbSearchActionBtn" data-radial-keyboard-action="back">Back</button>
+            <button type="button" class="efbSearchActionBtn" data-radial-keyboard-action="clear">Clear</button>
+            <button id="radialKeyboardSendBtn" type="button" class="efbSearchActionBtn" data-radial-keyboard-action="send">Send</button>
+          </div>
+        </div>
+      </div>
+      <div id="radialKeyboardStatus" class="overlayHint">Focus target input in DCS, then press Send.</div>
     </div>
   </div>
 

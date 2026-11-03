@@ -223,6 +223,12 @@
       setHelpOverlayOpen(!helpOverlayOpen);
     });
 
+    document.getElementById('radialKeyboardToggleBtn').addEventListener('click', function (ev) {
+      ev.preventDefault();
+      ev.stopPropagation();
+      setRadialKeyboardOverlayOpen(!radialKeyboardOverlayOpen);
+    });
+
     document.getElementById('overlayCloseBtn').addEventListener('click', function (ev) {
       ev.preventDefault();
       ev.stopPropagation();
@@ -241,6 +247,12 @@
       setHelpOverlayOpen(false);
     });
 
+    document.getElementById('radialKeyboardCloseBtn').addEventListener('click', function (ev) {
+      ev.preventDefault();
+      ev.stopPropagation();
+      setRadialKeyboardOverlayOpen(false);
+    });
+
     document.getElementById('settingsOverlay').addEventListener('click', function (ev) {
       if (ev.target && ev.target.id === 'settingsOverlay') {
         setSettingsOverlayOpen(false);
@@ -256,6 +268,93 @@
     document.getElementById('helpOverlay').addEventListener('click', function (ev) {
       if (ev.target && ev.target.id === 'helpOverlay') {
         setHelpOverlayOpen(false);
+      }
+    });
+
+    document.getElementById('radialKeyboardOverlay').addEventListener('click', function (ev) {
+      if (ev.target && ev.target.id === 'radialKeyboardOverlay') {
+        setRadialKeyboardOverlayOpen(false);
+      }
+    });
+
+    document.getElementById('radialKeyboardOuterRing').addEventListener('click', function (ev) {
+      const target = getEventElementTarget(ev);
+      if (!target) return;
+      const ch = String(target.getAttribute('data-radial-keyboard-char') || '').toUpperCase();
+      if (!ch) return;
+      efbRadialKeyboardToken = normalizeEfbRadialKeyboardToken(String(efbRadialKeyboardToken || '') + ch);
+      radialKeyboardStatusText = 'Input ready.';
+      renderRadialKeyboardOverlayUi();
+    });
+
+    document.getElementById('radialKeyboardInnerRing').addEventListener('click', function (ev) {
+      const target = getEventElementTarget(ev);
+      if (!target) return;
+      const raw = String(target.getAttribute('data-radial-keyboard-char') || '').toUpperCase();
+      if (!raw) return;
+      const ch = raw === 'SP' ? ' ' : raw;
+      efbRadialKeyboardToken = normalizeEfbRadialKeyboardToken(String(efbRadialKeyboardToken || '') + ch);
+      radialKeyboardStatusText = 'Input ready.';
+      renderRadialKeyboardOverlayUi();
+    });
+
+    document.getElementById('radialKeyboardActions').addEventListener('click', async function (ev) {
+      const target = getEventElementTarget(ev);
+      if (!target) return;
+      const action = String(target.getAttribute('data-radial-keyboard-action') || '').toLowerCase();
+      if (!action || efbRadialKeyboardSending) return;
+
+      if (action === 'back') {
+        if (efbRadialKeyboardToken) {
+          efbRadialKeyboardToken = String(efbRadialKeyboardToken).slice(0, -1);
+          radialKeyboardStatusText = efbRadialKeyboardToken ? 'Input ready.' : 'Focus target input in DCS, then press Send.';
+          renderRadialKeyboardOverlayUi();
+        }
+        return;
+      }
+
+      if (action === 'clear') {
+        efbRadialKeyboardToken = '';
+        radialKeyboardStatusText = 'Input cleared.';
+        renderRadialKeyboardOverlayUi();
+        return;
+      }
+
+      if (action !== 'send') return;
+      const payload = String(efbRadialKeyboardToken || '').trim();
+      if (!payload) {
+        radialKeyboardStatusText = 'Nothing to send.';
+        renderRadialKeyboardOverlayUi();
+        return;
+      }
+
+      efbRadialKeyboardSending = true;
+      radialKeyboardStatusText = 'Sending...';
+      renderRadialKeyboardOverlayUi();
+
+      try {
+        const res = await fetch('/okb/efb/sendkeys', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text: payload }),
+        });
+
+        if (!res.ok) {
+          let err = 'Send failed.';
+          try {
+            const json = await res.json();
+            if (json && json.error) err = String(json.error);
+          } catch (_) { }
+          throw new Error(err);
+        }
+
+        efbRadialKeyboardToken = '';
+        radialKeyboardStatusText = 'Sent.';
+      } catch (ex) {
+        radialKeyboardStatusText = ex && ex.message ? String(ex.message) : 'Send failed.';
+      } finally {
+        efbRadialKeyboardSending = false;
+        renderRadialKeyboardOverlayUi();
       }
     });
 

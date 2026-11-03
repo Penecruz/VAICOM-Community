@@ -1402,6 +1402,13 @@
         .slice(0, 10);
     }
 
+    function normalizeEfbRadialKeyboardToken(value) {
+      return String(value || '')
+        .toUpperCase()
+        .replace(/[^A-Z0-9\-\/ ]/g, '')
+        .slice(0, 24);
+    }
+
     function getEventElementTarget(ev) {
       const raw = ev && ev.target ? ev.target : null;
       if (!raw) return null;
@@ -2198,6 +2205,7 @@
         window.setTimeout(finalizeClose, 280);
       };
 
+
       const refreshEfbSearchOverlayUi = function () {
         const renameSearchMode = efbSearchMode === 'user-waypoint-rename' || efbSearchMode === 'history-track-rename';
         const normalizedToken = renameSearchMode
@@ -2368,6 +2376,7 @@
           }
         };
       }
+
 
       const drawerCloseBtn = document.getElementById('efbDrawerCloseBtn');
       if (drawerCloseBtn) {
@@ -3500,6 +3509,7 @@
       if (drawOverlayOpen) {
         setSettingsOverlayOpen(false);
         setHelpOverlayOpen(false);
+        setRadialKeyboardOverlayOpen(false);
       }
       const overlay = document.getElementById('drawOverlay');
       if (!overlay) return;
@@ -3509,11 +3519,56 @@
       }
     }
 
+    function renderRadialKeyboardOverlayUi() {
+      const outerWrap = document.getElementById('radialKeyboardOuterRing');
+      const innerWrap = document.getElementById('radialKeyboardInnerRing');
+      const tokenEl = document.getElementById('radialKeyboardToken');
+      const sendBtn = document.getElementById('radialKeyboardSendBtn');
+      const statusEl = document.getElementById('radialKeyboardStatus');
+
+      const outerChars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+      const innerChars = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '-', '/', 'SP'];
+
+      if (outerWrap) {
+        outerWrap.innerHTML = buildEfbSearchRingButtons(outerChars, 176, 'efbSearchOuterBtn').replace(/data-efb-search-char=/g, 'data-radial-keyboard-char=');
+      }
+      if (innerWrap) {
+        innerWrap.innerHTML = buildEfbSearchRingButtons(innerChars, 132, 'efbSearchInnerBtn').replace(/data-efb-search-char=/g, 'data-radial-keyboard-char=');
+      }
+      if (tokenEl) {
+        const tokenText = String(efbRadialKeyboardToken || '');
+        tokenEl.textContent = tokenText ? tokenText.replace(/ /g, '·') : 'TEXT';
+      }
+      if (sendBtn) {
+        sendBtn.disabled = !!efbRadialKeyboardSending;
+        sendBtn.textContent = efbRadialKeyboardSending ? 'Sending…' : 'Send';
+      }
+      if (statusEl) {
+        statusEl.textContent = String(radialKeyboardStatusText || 'Focus target input in DCS, then press Send.');
+      }
+    }
+
+    function setRadialKeyboardOverlayOpen(open) {
+      radialKeyboardOverlayOpen = !!open;
+      if (radialKeyboardOverlayOpen) {
+        setSettingsOverlayOpen(false);
+        setHelpOverlayOpen(false);
+        setDrawOverlayOpen(false);
+      }
+      const overlay = document.getElementById('radialKeyboardOverlay');
+      if (!overlay) return;
+      setOverlayAnimated(overlay, radialKeyboardOverlayOpen, 'overlayBackdrop radialKeyboardOverlayBackdrop');
+      if (radialKeyboardOverlayOpen) {
+        renderRadialKeyboardOverlayUi();
+      }
+    }
+
     function setHelpOverlayOpen(open) {
       helpOverlayOpen = !!open;
       if (helpOverlayOpen) {
         setSettingsOverlayOpen(false);
         setDrawOverlayOpen(false);
+        setRadialKeyboardOverlayOpen(false);
       }
       const overlay = document.getElementById('helpOverlay');
       if (!overlay) return;

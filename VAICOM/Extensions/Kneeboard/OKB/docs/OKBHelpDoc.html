@@ -374,7 +374,7 @@
               <li><strong>Stores empty-state</strong>: When no station payload is available, the Stores table shows <code>WAITING FOR AID CONNECTION</code>.</li>
               <li><strong>Status behavior</strong>: <code>OFF</code> when bus is disabled/unavailable, <code>ON</code> when enabled with retained/cached values but not currently live, <code>LIVE</code> when active high-rate updates are present, <code>DEGRADED</code> for anomalous/invalid feed quality.</li>
               <li><strong>Stores feed gating</strong>: Stores rendering is gated by AID status: when <code>OFF</code>, the Stores table stays on the mission-baseline snapshot; when <code>ON/LIVE/DEGRADED</code>, Stores can follow regular runtime/server update-cycle changes.</li>
-              <li><strong>Aircraft station layouts</strong>: Stores/AID now applies aircraft-specific station labels/counts. Default layout uses <code>1..10</code>. F-14 uses <code>1A, 1B, 2, 3, 4, 5, 6, 7, 8B, 8A</code>, A-10C II uses <code>1..11</code>, F-16C uses <code>1, 2, 3, 4, 5L, 5, 5R, 6, 7, 8, 9</code>, and F/A-18C uses <code>1..9</code>.</li>
+              <li><strong>Aircraft station layouts</strong>: Stores/AID now applies aircraft-specific station labels/counts. Default layout uses <code>1..10</code>. F-14 uses <code>1A, 1B, 2, 3, 4, 5, 6, 7, 8B, 8A</code>, A-10C II uses <code>1..11</code>, F-16C uses <code>1, 2, 3, 4, 5L, 5, 5R, 6, 7, 8, 9</code>, F/A-18C uses <code>1..9</code>, AH-64D uses <code>1, 2, IASF, 3, 4, MMA</code> (runtime order mapped to match in-game display order), and F-4E uses <code>1, 2L, 2, 2R, 3, 4, 5, 6, 7, 8L, 8, 8R, 9, CMS</code>.</li>
               <li>Ideal for confirming stores station position, hung ordnance, and other critical information.</li>
           </ul>
 
@@ -718,9 +718,10 @@
                 <div class="iconLegendItem"><svg class="helpIconSvg" viewBox="0 0 64 64" aria-hidden="true"><path d="M14 24h36v6h-4l2 9h-8l-2-7h-12l-2 7h-8l2-9h-4z" fill="currentColor" /><rect x="27" y="39" width="10" height="15" fill="currentColor" /><rect x="18" y="54" width="28" height="4" fill="currentColor" /></svg><span>Airport charts drawer</span></div>
                 <div class="iconLegendItem"><svg class="helpIconSvg" viewBox="0 0 64 64" aria-hidden="true"><path d="M32 11c8 0 14 6 14 14h-6l9 9 9-9h-6c0-11-9-20-20-20-8 0-15 5-18 12l5 2c2.2-5 7.2-8 13-8z" fill="currentColor" /><path d="M13 39h6c0 11 9 20 20 20 8 0 15-5 18-12l-5-2c-2.2 5-7.2 8-13 8-8 0-14-6-14-14h6l-9-9-9 9z" fill="currentColor" /></svg><span>Pinned charts drawer</span></div>
                 <div class="iconLegendItem"><span class="helpIconGlyph" aria-hidden="true">📌</span><span>Quick pin toggle</span></div>
+                <div class="iconLegendItem"><svg class="helpIconSvg" viewBox="0 0 64 64" aria-hidden="true"><rect x="8" y="12" width="48" height="34" rx="4" ry="4" fill="none" stroke="currentColor" stroke-width="3" /><g fill="currentColor"><rect x="14" y="20" width="6" height="6" rx="1" /><rect x="23" y="20" width="6" height="6" rx="1" /><rect x="32" y="20" width="6" height="6" rx="1" /><rect x="41" y="20" width="6" height="6" rx="1" /><rect x="14" y="29" width="6" height="6" rx="1" /><rect x="23" y="29" width="6" height="6" rx="1" /><rect x="32" y="29" width="6" height="6" rx="1" /><rect x="41" y="29" width="6" height="6" rx="1" /></g><path d="M14 50h22" stroke="currentColor" stroke-width="3" stroke-linecap="round" /><path d="M42 47l10 5-10 5z" fill="currentColor" /></svg><span>Radial keyboard send tool</span></div>
             </div>
 
-            <h3>Mode and Left Rail Controls</h3>
+            <h3>Mode, Rail, and Global Quick Controls</h3>
             <ul>
                 <li><strong>Moving Map/Charts toggle</strong>: Switches the EFB viewport between chart mode and Moving Map mode.</li>
                 <li><strong>Auto Nearest Airport</strong>: Resolves/selects airport from current mission context, then opens the chart list for that airport.</li>
@@ -728,6 +729,7 @@
                 <li><strong>Pinned drawer (loop icon)</strong>: Opens pinned charts drawer (favorites) for quick chart cycling from your saved set.</li>
                 <li><strong>Quick Pin</strong>: Pins/unpins the currently displayed chart without opening a drawer.</li>
                 <li><strong>Search</strong>: Opens the stylus-oriented chart search overlay with radial character input and center token display.</li>
+                <li><strong>Radial Keyboard (global quick bar)</strong>: Opens from the lower global controls row next to Draw and slides up from the bottom as a popup for VR text entry. Use <strong>Back</strong>, <strong>Clear</strong>, and <strong>Send</strong>. Manually focus the target DCS text input field first; Send then emits keyboard text to the active data entry field.</li>
                 <li><strong>Layers</strong>: Opens the SA Map layers drawer when SA Map mode is active.</li>
                 <li><strong>Saved history tracks</strong>: Opens the saved history drawer (same interaction style as User Waypoints) for Save active, Reset active, Show/Hide, Rename, and Delete actions.</li>
             </ul>

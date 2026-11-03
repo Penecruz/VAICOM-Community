@@ -152,6 +152,8 @@
     let defaultNavlogDistDisplayMode = 'nm';
     let settingsOverlayOpen = false;
     let drawOverlayOpen = false;
+    let radialKeyboardOverlayOpen = false;
+    let radialKeyboardStatusText = 'Focus target input in DCS, then press Send.';
     let helpOverlayOpen = false;
     let helpOverlayLoadedTab = '';
     let fltPlanFilesOverlayOpen = false;
@@ -182,6 +184,8 @@
     let efbSearchMode = 'airport';
     let efbSearchToken = '';
     let efbSearchAnimateOpenOnce = false;
+    let efbRadialKeyboardToken = '';
+    let efbRadialKeyboardSending = false;
     let efbViewerMode = 'chart';
     let efbSaShowAirports = true;
     let efbSaShowNavlog = true;
@@ -773,6 +777,7 @@
         efbRightToolsOpen = false;
         efbSearchOverlayOpen = false;
         efbSearchAnimateOpenOnce = false;
+        radialKeyboardOverlayOpen = false;
         efbUiDirty = true;
       }
 
@@ -2536,6 +2541,18 @@
       return '<svg class="efbRailIconSvg" viewBox="0 0 64 64" aria-hidden="true">'
         + '<path d="M32 11c8 0 14 6 14 14h-6l9 9 9-9h-6c0-11-9-20-20-20-8 0-15 5-18 12l5 2c2.2-5 7.2-8 13-8z" fill="currentColor"/>'
         + '<path d="M13 39h6c0 11 9 20 20 20 8 0 15-5 18-12l-5-2c-2.2 5-7.2 8-13 8-8 0-14-6-14-14h6l-9-9-9 9z" fill="currentColor"/>'
+        + '</svg>';
+    }
+
+    function getEfbRadialKeyboardIconSvg() {
+      return '<svg class="efbRailIconSvg" viewBox="0 0 64 64" aria-hidden="true">'
+        + '<rect x="8" y="12" width="48" height="34" rx="4" ry="4" fill="none" stroke="currentColor" stroke-width="3"/>'
+        + '<g fill="currentColor">'
+        + '<rect x="14" y="20" width="6" height="6" rx="1"/><rect x="23" y="20" width="6" height="6" rx="1"/><rect x="32" y="20" width="6" height="6" rx="1"/><rect x="41" y="20" width="6" height="6" rx="1"/>'
+        + '<rect x="14" y="29" width="6" height="6" rx="1"/><rect x="23" y="29" width="6" height="6" rx="1"/><rect x="32" y="29" width="6" height="6" rx="1"/><rect x="41" y="29" width="6" height="6" rx="1"/>'
+        + '</g>'
+        + '<path d="M14 50h22" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>'
+        + '<path d="M42 47l10 5-10 5z" fill="currentColor"/>'
         + '</svg>';
     }
 

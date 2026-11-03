@@ -1740,6 +1740,75 @@ body.efb-tab .keywordsPanel {
     font-weight: 800;
 }
 
+.radialKeyboardToggleBtn {
+    font-size: 30px;
+}
+
+.radialKeyboardToggleBtn .drawEraseIcon {
+    width: 42px;
+    height: 42px;
+    stroke-width: 4;
+}
+
+.radialKeyboardOverlayBackdrop {
+    align-items: flex-end;
+    justify-content: center;
+}
+
+.overlayPanel.radialKeyboardOverlayPanel {
+    width: min(450px, calc(100vw - 18px));
+    max-width: calc(100vw - 18px);
+    margin: 0 auto calc(90px + env(safe-area-inset-bottom));
+    border-radius: 14px 14px 0 0;
+    transform: translateY(110%);
+    transform-origin: bottom center;
+    transition: transform 220ms ease, opacity 200ms ease;
+    padding: 12px 10px 10px;
+}
+
+.overlayBackdrop.overlayOpen .radialKeyboardOverlayPanel {
+    transform: translateY(0);
+}
+
+.radialKeyboardWheelWrap {
+    width: 430px;
+    height: 430px;
+    margin: 10px auto 4px;
+    max-width: 100%;
+}
+
+.radialKeyboardOverlayPanel .overlayTitleRow {
+    justify-content: center;
+    position: relative;
+    margin-bottom: 8px;
+}
+
+.radialKeyboardOverlayPanel .overlayTitleRow > span {
+    display: block;
+    width: 100%;
+    text-align: center;
+}
+
+.radialKeyboardOverlayPanel .overlayTitleRow .overlayCloseBtn {
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.radialKeyboardWheelWrap .efbSearchCenter {
+    width: 154px;
+    min-height: 110px;
+    gap: 6px;
+    padding: 7px;
+}
+
+.radialKeyboardWheelWrap .efbSearchActionBtn {
+    min-width: 56px;
+    height: 28px;
+    font-size: 13px;
+}
+
 .fltPlanQuickBar {
     position: fixed;
     right: 112px;
