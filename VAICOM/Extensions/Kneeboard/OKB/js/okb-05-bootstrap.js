@@ -253,6 +253,16 @@
       setRadialKeyboardOverlayOpen(false);
     });
 
+    document.getElementById('radialKeyboardFlipBtn').addEventListener('click', function (ev) {
+      ev.preventDefault();
+      ev.stopPropagation();
+      radialKeyboardCalculatorFace = !radialKeyboardCalculatorFace;
+      radialKeyboardStatusText = radialKeyboardCalculatorFace
+        ? 'Calculator ready. Use Send to output to focused DCS input.'
+        : 'Focus target input in DCS, then press Send.';
+      renderRadialKeyboardOverlayUi();
+    });
+
     document.getElementById('settingsOverlay').addEventListener('click', function (ev) {
       if (ev.target && ev.target.id === 'settingsOverlay') {
         setSettingsOverlayOpen(false);
@@ -298,11 +308,81 @@
       renderRadialKeyboardOverlayUi();
     });
 
+    async function sendRadialEntryPayload(payload, origin) {
+      const cleaned = String(payload || '');
+      if (!cleaned.trim()) {
+        radialKeyboardStatusText = 'Nothing to send.';
+        renderRadialKeyboardOverlayUi();
+        return;
+      }
+
+      const isCalc = origin === 'calc';
+      if (isCalc) {
+        radialCalculatorSending = true;
+      } else {
+        efbRadialKeyboardSending = true;
+      }
+      radialKeyboardStatusText = 'Sending...';
+      renderRadialKeyboardOverlayUi();
+
+      try {
+        const res = await fetch('/okb/efb/sendkeys', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text: cleaned }),
+        });
+
+        if (!res.ok) {
+          let err = 'Send failed.';
+          try {
+            const json = await res.json();
+            if (json && json.error) err = String(json.error);
+          } catch (_) { }
+          throw new Error(err);
+        }
+
+        if (isCalc) {
+          radialCalculatorExpression = '0';
+        } else {
+          efbRadialKeyboardToken = '';
+        }
+        radialKeyboardStatusText = 'Sent.';
+      } catch (ex) {
+        radialKeyboardStatusText = ex && ex.message ? String(ex.message) : 'Send failed.';
+      } finally {
+        radialCalculatorSending = false;
+        efbRadialKeyboardSending = false;
+        renderRadialKeyboardOverlayUi();
+      }
+    }
+
+    function normalizeCalculatorExpression(expr) {
+      let next = String(expr || '');
+      next = next.replace(/[^0-9+\-*/.]/g, '');
+      if (next.length > 28) next = next.slice(0, 28);
+      return next || '0';
+    }
+
+    function evaluateCalculatorExpression(expr) {
+      const safe = String(expr || '').replace(/[^0-9+\-*/.]/g, '');
+      if (!safe) return '0';
+      if (!/^[0-9+\-*/.]+$/.test(safe)) return 'ERR';
+      if (/[*\/+\-]{2,}/.test(safe.replace(/^-/, ''))) return 'ERR';
+      try {
+        const result = Function('return (' + safe + ')')();
+        if (!isFinite(result)) return 'ERR';
+        const rounded = Math.round(result * 1000000) / 1000000;
+        return String(rounded);
+      } catch (_) {
+        return 'ERR';
+      }
+    }
+
     document.getElementById('radialKeyboardActions').addEventListener('click', async function (ev) {
       const target = getEventElementTarget(ev);
       if (!target) return;
       const action = String(target.getAttribute('data-radial-keyboard-action') || '').toLowerCase();
-      if (!action || efbRadialKeyboardSending) return;
+      if (!action || efbRadialKeyboardSending || radialCalculatorSending) return;
 
       if (action === 'back') {
         if (efbRadialKeyboardToken) {
@@ -321,40 +401,62 @@
       }
 
       if (action !== 'send') return;
-      const payload = String(efbRadialKeyboardToken || '').trim();
-      if (!payload) {
-        radialKeyboardStatusText = 'Nothing to send.';
+      await sendRadialEntryPayload(efbRadialKeyboardToken, 'keyboard');
+    });
+
+    document.getElementById('radialCalculatorGrid').addEventListener('click', async function (ev) {
+      const target = getEventElementTarget(ev);
+      if (!target) return;
+
+      const action = String(target.getAttribute('data-calc-action') || '').toLowerCase();
+      const value = String(target.getAttribute('data-calc-value') || '');
+
+      if (radialCalculatorSending || efbRadialKeyboardSending) return;
+
+      if (value) {
+        if (radialCalculatorExpression === '0' && /[0-9]/.test(value)) {
+          radialCalculatorExpression = value;
+        } else {
+          radialCalculatorExpression = normalizeCalculatorExpression(String(radialCalculatorExpression || '') + value);
+        }
+        radialKeyboardStatusText = 'Calculator input ready.';
         renderRadialKeyboardOverlayUi();
         return;
       }
 
-      efbRadialKeyboardSending = true;
-      radialKeyboardStatusText = 'Sending...';
-      renderRadialKeyboardOverlayUi();
-
-      try {
-        const res = await fetch('/okb/efb/sendkeys', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ text: payload }),
-        });
-
-        if (!res.ok) {
-          let err = 'Send failed.';
-          try {
-            const json = await res.json();
-            if (json && json.error) err = String(json.error);
-          } catch (_) { }
-          throw new Error(err);
-        }
-
-        efbRadialKeyboardToken = '';
-        radialKeyboardStatusText = 'Sent.';
-      } catch (ex) {
-        radialKeyboardStatusText = ex && ex.message ? String(ex.message) : 'Send failed.';
-      } finally {
-        efbRadialKeyboardSending = false;
+      if (action === 'clear') {
+        radialCalculatorExpression = '0';
+        radialKeyboardStatusText = 'Calculator cleared.';
         renderRadialKeyboardOverlayUi();
+        return;
+      }
+
+      if (action === 'back') {
+        const trimmed = String(radialCalculatorExpression || '').slice(0, -1);
+        radialCalculatorExpression = trimmed ? normalizeCalculatorExpression(trimmed) : '0';
+        radialKeyboardStatusText = 'Calculator input ready.';
+        renderRadialKeyboardOverlayUi();
+        return;
+      }
+
+      if (action === 'sign') {
+        const current = String(radialCalculatorExpression || '0');
+        radialCalculatorExpression = current.indexOf('-') === 0 ? current.slice(1) : ('-' + current);
+        radialCalculatorExpression = normalizeCalculatorExpression(radialCalculatorExpression);
+        radialKeyboardStatusText = 'Calculator input ready.';
+        renderRadialKeyboardOverlayUi();
+        return;
+      }
+
+      if (action === 'equals') {
+        radialCalculatorExpression = evaluateCalculatorExpression(radialCalculatorExpression);
+        radialKeyboardStatusText = radialCalculatorExpression === 'ERR' ? 'Invalid expression.' : 'Result ready.';
+        renderRadialKeyboardOverlayUi();
+        return;
+      }
+
+      if (action === 'send') {
+        await sendRadialEntryPayload(radialCalculatorExpression, 'calc');
       }
     });
 

@@ -202,18 +202,58 @@
   <div id="radialKeyboardOverlay" class="overlayBackdrop radialKeyboardOverlayBackdrop hidden">
     <div id="radialKeyboardOverlayPanel" class="overlayPanel radialKeyboardOverlayPanel">
       <div class="overlayTitleRow">
-        <span>Data Entry Keyboard</span>
+        <button id="radialKeyboardFlipBtn" class="overlayCloseBtn radialKeyboardFlipBtn" type="button" title="Flip keyboard/calculator">⇄</button>
+        <span id="radialKeyboardTitleText">Data Entry Keyboard</span>
         <button id="radialKeyboardCloseBtn" class="overlayCloseBtn" type="button">✕</button>
       </div>
-      <div class="efbSearchWheelWrap radialKeyboardWheelWrap">
-        <div id="radialKeyboardOuterRing"></div>
-        <div id="radialKeyboardInnerRing"></div>
-        <div class="efbSearchCenter">
-          <div id="radialKeyboardToken" class="efbSearchToken">TEXT</div>
-          <div id="radialKeyboardActions" class="efbSearchCenterActions">
-            <button type="button" class="efbSearchActionBtn" data-radial-keyboard-action="back">Back</button>
-            <button type="button" class="efbSearchActionBtn" data-radial-keyboard-action="clear">Clear</button>
-            <button id="radialKeyboardSendBtn" type="button" class="efbSearchActionBtn" data-radial-keyboard-action="send">Send</button>
+      <div id="radialKeyboardFlipCard" class="radialKeyboardFlipCard">
+        <div class="radialKeyboardFace radialKeyboardFaceFront">
+          <div class="efbSearchWheelWrap radialKeyboardWheelWrap">
+            <div id="radialKeyboardOuterRing"></div>
+            <div id="radialKeyboardInnerRing"></div>
+            <div class="efbSearchCenter">
+              <div id="radialKeyboardToken" class="efbSearchToken">TEXT</div>
+              <div id="radialKeyboardActions" class="efbSearchCenterActions radialKeyboardActionsStack">
+                <div class="radialKeyboardActionRow">
+                  <button type="button" class="efbSearchActionBtn" data-radial-keyboard-action="back">Back</button>
+                  <button type="button" class="efbSearchActionBtn" data-radial-keyboard-action="clear">Clear</button>
+                </div>
+                <div class="radialKeyboardActionRow radialKeyboardActionRowSend">
+                  <button id="radialKeyboardSendBtn" type="button" class="efbSearchActionBtn radialKeyboardSendBtn" data-radial-keyboard-action="send">Send</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="radialKeyboardFace radialKeyboardFaceBack">
+          <div class="radialCalculatorWrap">
+            <div id="radialCalculatorDisplay" class="radialCalculatorDisplay">0</div>
+            <div id="radialCalculatorGrid" class="radialCalculatorGrid">
+              <button type="button" class="radialCalcBtn" data-calc-action="clear">C</button>
+              <button type="button" class="radialCalcBtn" data-calc-action="back">⌫</button>
+              <button type="button" class="radialCalcBtn" data-calc-value="/">÷</button>
+              <button type="button" class="radialCalcBtn" data-calc-value="*">×</button>
+
+              <button type="button" class="radialCalcBtn" data-calc-value="7">7</button>
+              <button type="button" class="radialCalcBtn" data-calc-value="8">8</button>
+              <button type="button" class="radialCalcBtn" data-calc-value="9">9</button>
+              <button type="button" class="radialCalcBtn" data-calc-value="-">−</button>
+
+              <button type="button" class="radialCalcBtn" data-calc-value="4">4</button>
+              <button type="button" class="radialCalcBtn" data-calc-value="5">5</button>
+              <button type="button" class="radialCalcBtn" data-calc-value="6">6</button>
+              <button type="button" class="radialCalcBtn" data-calc-value="+">+</button>
+
+              <button type="button" class="radialCalcBtn" data-calc-value="1">1</button>
+              <button type="button" class="radialCalcBtn" data-calc-value="2">2</button>
+              <button type="button" class="radialCalcBtn" data-calc-value="3">3</button>
+              <button type="button" class="radialCalcBtn radialCalcEqualsBtn" data-calc-action="equals">=</button>
+
+              <button type="button" class="radialCalcBtn" data-calc-action="sign">+/−</button>
+              <button type="button" class="radialCalcBtn" data-calc-value="0">0</button>
+              <button type="button" class="radialCalcBtn" data-calc-value=".">.</button>
+              <button id="radialCalcSendBtn" type="button" class="radialCalcBtn radialCalcSendBtn" data-calc-action="send">Send</button>
+            </div>
           </div>
         </div>
       </div>

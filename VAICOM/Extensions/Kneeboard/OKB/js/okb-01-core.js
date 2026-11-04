@@ -154,6 +154,9 @@
     let drawOverlayOpen = false;
     let radialKeyboardOverlayOpen = false;
     let radialKeyboardStatusText = 'Focus target input in DCS, then press Send.';
+    let radialKeyboardCalculatorFace = false;
+    let radialCalculatorExpression = '0';
+    let radialCalculatorSending = false;
     let helpOverlayOpen = false;
     let helpOverlayLoadedTab = '';
     let fltPlanFilesOverlayOpen = false;

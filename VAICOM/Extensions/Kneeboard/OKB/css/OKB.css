@@ -1796,6 +1796,94 @@ body.efb-tab .keywordsPanel {
     transform: translateY(-50%);
 }
 
+.radialKeyboardFlipBtn {
+    left: 0;
+    right: auto !important;
+    font-size: 18px;
+    font-weight: 700;
+    min-width: 40px;
+}
+
+.radialKeyboardFlipCard {
+    position: relative;
+    width: 100%;
+    min-height: 444px;
+    transform-style: preserve-3d;
+    transition: transform 420ms cubic-bezier(.2,.7,.2,1);
+}
+
+.radialKeyboardOverlayPanel.calc-face .radialKeyboardFlipCard {
+    transform: rotateY(180deg);
+}
+
+.radialKeyboardFace {
+    position: absolute;
+    inset: 0;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+}
+
+.radialKeyboardFaceBack {
+    transform: rotateY(180deg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.radialCalculatorWrap {
+    width: 100%;
+    max-width: 430px;
+    margin: 8px auto 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.radialCalculatorDisplay {
+    width: 100%;
+    min-height: 54px;
+    border: 1px solid #7c8692;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.9);
+    padding: 6px 10px;
+    box-sizing: border-box;
+    text-align: right;
+    font-size: 34px;
+    font-weight: 700;
+    color: #17324a;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.radialCalculatorGrid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 6px;
+}
+
+.radialCalcBtn {
+    height: 50px;
+    border: 1px solid #7c8692;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.94);
+    color: #153149;
+    font-size: 22px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.radialCalcBtn:hover {
+    filter: brightness(1.06);
+}
+
+.radialCalcEqualsBtn,
+.radialCalcSendBtn {
+    background: #4aa8e8;
+    border-color: #3e95d2;
+    color: #ffffff;
+}
+
 .radialKeyboardWheelWrap .efbSearchCenter {
     width: 154px;
     min-height: 110px;
@@ -1807,6 +1895,30 @@ body.efb-tab .keywordsPanel {
     min-width: 56px;
     height: 28px;
     font-size: 13px;
+}
+
+.radialKeyboardActionsStack {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    width: 100%;
+}
+
+.radialKeyboardActionRow {
+    display: flex;
+    gap: 6px;
+    justify-content: center;
+}
+
+.radialKeyboardActionRowSend {
+    justify-content: center;
+}
+
+.radialKeyboardSendBtn {
+    min-width: 88px;
+    background: #4aa8e8;
+    border-color: #3e95d2;
+    color: #ffffff;
 }
 
 .fltPlanQuickBar {

@@ -3520,14 +3520,25 @@
     }
 
     function renderRadialKeyboardOverlayUi() {
+      const panelEl = document.getElementById('radialKeyboardOverlayPanel');
+      const titleEl = document.getElementById('radialKeyboardTitleText');
       const outerWrap = document.getElementById('radialKeyboardOuterRing');
       const innerWrap = document.getElementById('radialKeyboardInnerRing');
       const tokenEl = document.getElementById('radialKeyboardToken');
       const sendBtn = document.getElementById('radialKeyboardSendBtn');
       const statusEl = document.getElementById('radialKeyboardStatus');
+      const calcDisplayEl = document.getElementById('radialCalculatorDisplay');
+      const calcSendBtn = document.getElementById('radialCalcSendBtn');
 
       const outerChars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
       const innerChars = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '-', '/', 'SP'];
+
+      if (panelEl) {
+        panelEl.classList.toggle('calc-face', !!radialKeyboardCalculatorFace);
+      }
+      if (titleEl) {
+        titleEl.textContent = radialKeyboardCalculatorFace ? 'Data Entry Calculator' : 'Data Entry Keyboard';
+      }
 
       if (outerWrap) {
         outerWrap.innerHTML = buildEfbSearchRingButtons(outerChars, 176, 'efbSearchOuterBtn').replace(/data-efb-search-char=/g, 'data-radial-keyboard-char=');
@@ -3542,6 +3553,13 @@
       if (sendBtn) {
         sendBtn.disabled = !!efbRadialKeyboardSending;
         sendBtn.textContent = efbRadialKeyboardSending ? 'Sending…' : 'Send';
+      }
+      if (calcDisplayEl) {
+        calcDisplayEl.textContent = String(radialCalculatorExpression || '0');
+      }
+      if (calcSendBtn) {
+        calcSendBtn.disabled = !!radialCalculatorSending;
+        calcSendBtn.textContent = radialCalculatorSending ? 'Sending…' : 'Send';
       }
       if (statusEl) {
         statusEl.textContent = String(radialKeyboardStatusText || 'Focus target input in DCS, then press Send.');
