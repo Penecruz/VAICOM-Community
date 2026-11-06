@@ -416,6 +416,7 @@ namespace VAICOM
             //{ "wMsgClearKneeboardTab",         new Command { uniqueid = 23005, category = CommandCategories.special, eventnumber = 4000, name = "wMsgClearKneeboardTab",  displayname = Labels.aicommands["wMsgClearKneeboardTab"] } },
             { "repeat",                        new Command { uniqueid = 23006, category = CommandCategories.special, eventnumber = 4000, dcsid = "wMsgReplySayAgain",displayname = Labels.aicommands["repeat"] } }, //
             { "loadout" ,                      new Command { uniqueid = 23007, category = CommandCategories.special, eventnumber = 4000, dcsid = "wMsgLoadout" , displayname=Labels.aicommands["loadout"]} },
+            { "jestercontext",                 new Command { uniqueid = 23008, category = CommandCategories.special, eventnumber = 4000, dcsid = "wMsgJesterContextMenu", displayname = Labels.aicommands["jestercontext"] } },
             { "wMsgSpecialCmndsMaximum",       new Command { uniqueid = 23099, category = CommandCategories.special, eventnumber = 4000, dcsid = "wMsgSpecialCmndsMaximum" } },
 
             // AOCS commands 23100

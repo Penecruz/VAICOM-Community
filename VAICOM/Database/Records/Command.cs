@@ -107,6 +107,11 @@ namespace VAICOM
                 return value;
             }
 
+            public bool isJesterContext()
+            {
+                return this.dcsid.Equals("wMsgJesterContextMenu");
+            }
+
             public bool isSwitch()
             {
                 return this.dcsid.Equals("wMsgSwitchListening");
@@ -243,7 +248,7 @@ namespace VAICOM
             public bool isVoid()
             {
 
-                return (this.isSpecial() & !this.isOptions() & !this.isSelect() & !this.isMenu() & !this.isState() & !this.isRIO() & !this.isWSO() & !this.isGeorge());
+                return (this.isSpecial() & !this.isOptions() & !this.isJesterContext() & !this.isSelect() & !this.isMenu() & !this.isState() & !this.isRIO() & !this.isWSO() & !this.isGeorge());
 
             }
 

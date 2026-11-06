@@ -68,6 +68,11 @@ namespace VAICOM
 
                 public static void ShowWheel(bool show)
                 {
+                    ShowWheel(show, true);
+                }
+
+                public static void ShowWheel(bool show, bool openMainMenu)
+                {
 
                     if (show && !showingjestermenu)
                     {
@@ -118,7 +123,7 @@ namespace VAICOM
 
                             State.currentmessage.extsequence.AddRange(closemenu);
                             State.currentmessage.extsequence.AddRange(openmenu);
-                            if (tables.menustate[tables.menucats.PLAYERSEAT].Equals(tables.menustates.Pilot))
+                            if (openMainMenu && tables.menustate[tables.menucats.PLAYERSEAT].Equals(tables.menustates.Pilot))
                             {
                                 State.currentmessage.extsequence.AddRange(openmenu);
                             }

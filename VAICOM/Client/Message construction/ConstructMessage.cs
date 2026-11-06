@@ -125,6 +125,7 @@ namespace VAICOM
                                 if (!State.currentrecipientclass.Equals(Recipientclasses.Crew)
                                     && !State.currentcommand.isMenu()
                                     && !State.currentcommand.isOptions()
+                                    && !State.currentcommand.isJesterContext()
                                     && !State.currentcommand.isGeorge())
                                 {
                                     Log.Write("ICS HOT MIC: Use Push-To-Talk TX nodes to transmit radio messages.", Colors.Warning);
@@ -483,19 +484,37 @@ namespace VAICOM
                             return; // Exit the method
                         }
 
-                        // OPTIONS
-                        if (State.currentcommand.isOptions())
+                        // OPTIONS / JESTER CONTEXT
+                        if (State.currentcommand.isOptions() || State.currentcommand.isJesterContext())
                         {
-                            Log.Write("Identified as options command", Colors.Inline);
+                            bool jesterContextCommand = State.currentcommand.isJesterContext();
+                            Log.Write(jesterContextCommand ? "Identified as jester context command" : "Identified as options command", Colors.Inline);
                             State.TXLinkMenuHoldActive = true;
                             State.TXLinkExplicitMenuCloseRequested = false;
 
-                            if (State.currentkey["recipient"].Equals("RIO") || State.currentkey["recipient"].Equals("Iceman"))
+                            bool addressedRio = State.have["recipient"] &&
+                                (State.currentkey["recipient"].Equals("RIO") || State.currentkey["recipient"].Equals("Iceman"));
+
+                            if (jesterContextCommand)
+                            {
+                                if (!addressedRio)
+                                {
+                                    Log.Write("Jester Context requires RIO or Iceman recipient.", Colors.Warning);
+                                    UI.Playsound.Recipientna();
+                                    return;
+                                }
+
+                                State.showingoptions = false;
+                                // Force a fresh wheel-open request even if local state flag got stale.
+                                VAICOM.Extensions.RIO.helper.showingjestermenu = false;
+                                VAICOM.Extensions.RIO.helper.ShowWheel(true, false);
+                            }
+                            else if (addressedRio)
                             {
                                 State.showingoptions = false;
                                 // Force a fresh wheel-open request even if local state flag got stale.
                                 VAICOM.Extensions.RIO.helper.showingjestermenu = false;
-                                VAICOM.Extensions.RIO.helper.ShowWheel(true);
+                                VAICOM.Extensions.RIO.helper.ShowWheel(true, true);
                             }
                             else
                             {

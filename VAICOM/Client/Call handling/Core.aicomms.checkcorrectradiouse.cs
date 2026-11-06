@@ -29,7 +29,7 @@ namespace VAICOM
                     bool calledRIO = State.currentrecipientclass.Equals(Recipientclasses.RIO) || State.currentrecipientclass.Equals(Recipientclasses.AI_pilot);
                     bool calledmenu = State.currentcommand.category.Equals(CommandCategories.menu);
                     bool calledreply = State.currentcommand.isReply();
-                    bool optionsroot = State.currentcommand.isOptions() & !State.have["recipient"];
+                    bool optionsroot = (State.currentcommand.isOptions() || State.currentcommand.isJesterContext()) & !State.have["recipient"];
 
                     bool singlemode = (State.currentmodule.Singlehotkey & !State.activeconfig.ForceMultiHotkey) || (!State.currentmodule.Singlehotkey & State.activeconfig.ForceSingleHotkey);
 

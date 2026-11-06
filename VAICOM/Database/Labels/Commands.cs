@@ -270,6 +270,7 @@ namespace VAICOM
                 { "switch",             "Switch to VoIP"        },
                 { "select",             "Select Recipient"      },
                 { "options",            "Show Options"          },
+                { "jestercontext",      "Jester Context"        },
                 { "state",              "Check Unit"            },
                 { "readbriefing",       "Read Mission Briefing" },
                 { "loadout",            "loadout"               },

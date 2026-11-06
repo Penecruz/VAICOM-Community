@@ -74,7 +74,7 @@ namespace VAICOM
 
                     try
                     {
-                        if (State.currentcommand != null && (State.currentcommand.isOptions() || State.currentcommand.isMenu() || isKneeboardPageCommand))
+                        if (State.currentcommand != null && (State.currentcommand.isOptions() || State.currentcommand.isJesterContext() || State.currentcommand.isMenu() || isKneeboardPageCommand))
                         {
                             return false;
                         }
@@ -90,6 +90,7 @@ namespace VAICOM
                                 || IsAiCrewRecipientClass(State.currentrecipientclass)
                                 || isKneeboardPageCommand
                                 || State.currentcommand.isOptions()
+                                || State.currentcommand.isJesterContext()
                                 || State.currentcommand.isMenu());
 
                         // void hotkey
@@ -258,7 +259,7 @@ namespace VAICOM
                 {
 
                     // OPTIONS
-                    if (State.currentcommand.isOptions() || State.currentcommand.isMenu())
+                    if (State.currentcommand.isOptions() || State.currentcommand.isJesterContext() || State.currentcommand.isMenu())
                     {
                         if (State.have["recipient"])
                         {
@@ -467,7 +468,7 @@ namespace VAICOM
                             State.processlocked = false;
                         }
 
-                        if (!State.currentcommand.isMenu() && !State.currentcommand.isOptions())
+                        if (!State.currentcommand.isMenu() && !State.currentcommand.isOptions() && !State.currentcommand.isJesterContext())
                         {
                             Extensions.RIO.helper.ShowWheel(false);
                             Extensions.RIO.helper.showingjestermenu = false;
@@ -955,6 +956,7 @@ namespace VAICOM
                             && !(intercomTxHotMicContext || txLinkCrewEligibilityHotMic)
                             && isCrewDomainRecipientClass
                             && !State.currentcommand.isOptions()
+                            && !State.currentcommand.isJesterContext()
                             && !State.currentcommand.isMenu())
                         {
                             Log.Write("TX-LINK: AI crew/intercom recipients require TX5 intercom context.", Colors.Warning);
@@ -973,6 +975,7 @@ namespace VAICOM
                         bool isHotMicAllowedCommand = isIntercomRecipientClass
                             || isKneeboardPageCommand
                             || State.currentcommand.isOptions()
+                            || State.currentcommand.isJesterContext()
                             || State.currentcommand.isMenu();
 
                         if (intercomOnlyHotMic && !isHotMicAllowedCommand)
@@ -1003,7 +1006,7 @@ namespace VAICOM
                             {
                                 State.MessageReset();
                                 State.processlocked = false;
-                                return !State.currentcommand.isOptions() && !State.currentcommand.isMenu();
+                                return !State.currentcommand.isOptions() && !State.currentcommand.isJesterContext() && !State.currentcommand.isMenu();
                             }
                         }
                         else
@@ -1095,7 +1098,7 @@ namespace VAICOM
                         }
 
                         bool riocommand = State.AIRIOactive && State.currentcommand.isRIO();
-                        bool optionscommand = State.currentcommand.isOptions();
+                        bool optionscommand = State.currentcommand.isOptions() || State.currentcommand.isJesterContext();
                         bool menucommand = State.currentcommand.isMenu();
 
                         options = optionscommand;

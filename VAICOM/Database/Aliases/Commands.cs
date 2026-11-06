@@ -460,6 +460,7 @@ namespace VAICOM
                 { "Switch",                 "switch"                },
                 { "Select",                 "select"                },
                 { "Options",                "options"               },
+                { "Jester Context",         "jestercontext"         },
                 { "View Loadout",           "loadout"               },
 
                 // aocs
