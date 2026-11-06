@@ -484,7 +484,7 @@ namespace VAICOM
                             return; // Exit the method
                         }
 
-                        // OPTIONS / JESTER CONTEXT
+                        // OPTIONS and JESTER CONTEXT
                         if (State.currentcommand.isOptions() || State.currentcommand.isJesterContext())
                         {
                             bool jesterContextCommand = State.currentcommand.isJesterContext();

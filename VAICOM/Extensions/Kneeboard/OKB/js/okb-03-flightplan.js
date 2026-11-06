@@ -3543,6 +3543,9 @@
               }
               if (selectedKey && selectedTab === 'EFB' && normalizeEfbViewerMode(efbViewerMode) === 'sa-map') {
                 applyOpenFreeMapOwnshipCamera(selectedKey, latestData || null);
+                if (typeof redrawTabDrawCanvas === 'function') {
+                  redrawTabDrawCanvas();
+                }
               }
               if (fallback) fallback.style.display = 'none';
             });
@@ -3550,6 +3553,9 @@
             map.on('move', function () {
               const currentPayload = item.payload || payload;
               renderOpenFreeMapOverlay(item, currentPayload);
+              if (selectedTab === 'EFB' && normalizeEfbViewerMode(efbViewerMode) === 'sa-map' && typeof redrawTabDrawCanvas === 'function') {
+                redrawTabDrawCanvas();
+              }
             });
 
             map.on('idle', function () {
@@ -3567,6 +3573,9 @@
               state.centerLat = Number(center.lat);
               state.zoom = Number(map.getZoom());
               state.bearing = Number(map.getBearing());
+              if (selectedTab === 'EFB' && normalizeEfbViewerMode(efbViewerMode) === 'sa-map' && typeof redrawTabDrawCanvas === 'function') {
+                redrawTabDrawCanvas();
+              }
             });
 
             function suppressFollowByUserInput(delayMs) {

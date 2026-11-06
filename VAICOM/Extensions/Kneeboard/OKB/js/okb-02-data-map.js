@@ -4200,7 +4200,11 @@
       if (!tabDrawStrokeByTab[key] && createIfMissing) {
         tabDrawStrokeByTab[key] = [];
       }
-      return tabDrawStrokeByTab[key] || [];
+      const strokes = tabDrawStrokeByTab[key] || [];
+      for (let i = 0; i < strokes.length; i++) {
+        normalizeDrawStrokeShape(strokes[i]);
+      }
+      return strokes;
     }
 
     function clearSelectedTabDrawStrokes() {
@@ -4252,6 +4256,100 @@
       return true;
     }
 
+    function isEfbSaMapGeoDrawModeActive() {
+      return selectedTab === 'EFB' && normalizeEfbViewerMode(efbViewerMode) === 'sa-map';
+    }
+
+    function getEfbSaMapSelectionKeyForDraw() {
+      const context = typeof resolveActiveSaMapContext === 'function'
+        ? resolveActiveSaMapContext(latestData || null)
+        : null;
+      const selected = context && context.selected ? String(context.selected) : String(lastEfbSaMapSelectionKey || '__EFB_OWNSHIP__');
+      return selected;
+    }
+
+    function getEfbSaMapInstanceForDraw() {
+      const selected = getEfbSaMapSelectionKeyForDraw();
+      const key = typeof getFlightPlanEtaStartKey === 'function' ? getFlightPlanEtaStartKey(selected) : '';
+      if (!key) return null;
+      const containerId = String(openFreeMapContainerIdBySelectionKey[key] || '');
+      if (!containerId) return null;
+      const item = openFreeMapInstancesByContainerId[containerId];
+      if (!item || !item.map || !item.host) return null;
+      return item;
+    }
+
+    function canvasPointToSaMapGeo(point) {
+      const canvas = getTabDrawCanvas();
+      const item = getEfbSaMapInstanceForDraw();
+      if (!canvas || !item || !point) return null;
+
+      const canvasRect = canvas.getBoundingClientRect();
+      const hostRect = item.host.getBoundingClientRect ? item.host.getBoundingClientRect() : null;
+      if (!hostRect) return null;
+
+      const clientX = Number(canvasRect.left) + Number(point.x);
+      const clientY = Number(canvasRect.top) + Number(point.y);
+      const px = clientX - Number(hostRect.left || 0);
+      const py = clientY - Number(hostRect.top || 0);
+      if (!isFinite(px) || !isFinite(py)) return null;
+
+      try {
+        const ll = item.map.unproject([px, py]);
+        const lon = Number(ll && ll.lng);
+        const lat = Number(ll && ll.lat);
+        if (!isFinite(lat) || !isFinite(lon)) return null;
+        return { lat: lat, lon: lon };
+      } catch (_) {
+        return null;
+      }
+    }
+
+    function saMapGeoToCanvasPoint(geo) {
+      const canvas = getTabDrawCanvas();
+      const item = getEfbSaMapInstanceForDraw();
+      if (!canvas || !item || !geo) return null;
+
+      const lat = Number(geo.lat);
+      const lon = Number(geo.lon);
+      if (!isFinite(lat) || !isFinite(lon)) return null;
+
+      try {
+        const projected = item.map.project([lon, lat]);
+        if (!projected) return null;
+
+        const hostRect = item.host.getBoundingClientRect ? item.host.getBoundingClientRect() : null;
+        const canvasRect = canvas.getBoundingClientRect();
+        if (!hostRect) return null;
+
+        const clientX = Number(hostRect.left || 0) + Number(projected.x);
+        const clientY = Number(hostRect.top || 0) + Number(projected.y);
+        const x = clientX - Number(canvasRect.left || 0);
+        const y = clientY - Number(canvasRect.top || 0);
+        if (!isFinite(x) || !isFinite(y)) return null;
+        return { x: x, y: y };
+      } catch (_) {
+        return null;
+      }
+    }
+
+    function normalizeDrawStrokeShape(stroke) {
+      const row = stroke && typeof stroke === 'object' ? stroke : null;
+      if (!row) return null;
+      if (!Array.isArray(row.points)) {
+        row.points = [];
+      }
+      row.points = row.points.filter(function (p) {
+        return p && isFinite(Number(p.x)) && isFinite(Number(p.y));
+      });
+      if (Array.isArray(row.geoPoints)) {
+        row.geoPoints = row.geoPoints.filter(function (p) {
+          return p && isFinite(Number(p.lat)) && isFinite(Number(p.lon));
+        });
+      }
+      return row;
+    }
+
     function drawStrokePathToCanvas(stroke) {
       const canvas = getTabDrawCanvas();
       if (!canvas || !stroke || !Array.isArray(stroke.points) || stroke.points.length <= 0) return;
@@ -4262,7 +4360,23 @@
       const width = isFinite(Number(stroke.width)) ? Number(stroke.width) : tabDrawStrokeWidthPx;
       const isEraser = String(stroke.tool || '').toLowerCase() === 'erase';
       const color = String(stroke.color || tabDrawStrokeColor);
-      const points = stroke.points;
+      const points = Array.isArray(stroke.points) ? stroke.points : [];
+
+      let drawPoints = points;
+      if (stroke.geoAnchored && Array.isArray(stroke.geoPoints) && stroke.geoPoints.length > 0) {
+        const projected = [];
+        for (let i = 0; i < stroke.geoPoints.length; i++) {
+          const projectedPoint = saMapGeoToCanvasPoint(stroke.geoPoints[i]);
+          if (projectedPoint) {
+            projected.push(projectedPoint);
+          }
+        }
+        if (projected.length > 0) {
+          drawPoints = projected;
+        }
+      }
+
+      if (!Array.isArray(drawPoints) || drawPoints.length <= 0) return;
 
       ctx.save();
       ctx.scale(dpr, dpr);
@@ -4272,12 +4386,12 @@
       ctx.lineJoin = 'round';
       ctx.lineCap = 'round';
       ctx.beginPath();
-      ctx.moveTo(points[0].x, points[0].y);
-      for (let i = 1; i < points.length; i++) {
-        ctx.lineTo(points[i].x, points[i].y);
+      ctx.moveTo(drawPoints[0].x, drawPoints[0].y);
+      for (let i = 1; i < drawPoints.length; i++) {
+        ctx.lineTo(drawPoints[i].x, drawPoints[i].y);
       }
-      if (points.length === 1) {
-        ctx.lineTo(points[0].x + 0.01, points[0].y + 0.01);
+      if (drawPoints.length === 1) {
+        ctx.lineTo(drawPoints[0].x + 0.01, drawPoints[0].y + 0.01);
       }
       ctx.stroke();
       ctx.restore();
@@ -4320,14 +4434,22 @@
       if (!point) return;
 
       const isEraser = !!drawEraserEnabled;
+      const useGeo = isEfbSaMapGeoDrawModeActive();
+      const geoPoint = useGeo ? canvasPointToSaMapGeo(point) : null;
       const strokes = getSelectedDrawStrokes(true);
       const stroke = {
         tool: isEraser ? 'erase' : 'draw',
         color: tabDrawStrokeColor,
         width: isEraser ? tabDrawEraserWidthPx : tabDrawStrokeWidthPx,
+        geoAnchored: !!(useGeo && geoPoint),
         points: [point],
       };
 
+      if (stroke.geoAnchored) {
+        stroke.geoPoints = [geoPoint];
+      }
+
+      normalizeDrawStrokeShape(stroke);
       strokes.push(stroke);
       tabDrawActiveStroke = stroke;
       tabDrawActivePointerId = (ev && typeof ev.pointerId === 'number') ? ev.pointerId : null;
@@ -4344,6 +4466,17 @@
       const point = eventToCanvasPoint(ev);
       if (!point) return;
       tabDrawActiveStroke.points.push(point);
+
+      if (tabDrawActiveStroke.geoAnchored) {
+        const geoPoint = canvasPointToSaMapGeo(point);
+        if (geoPoint) {
+          if (!Array.isArray(tabDrawActiveStroke.geoPoints)) {
+            tabDrawActiveStroke.geoPoints = [];
+          }
+          tabDrawActiveStroke.geoPoints.push(geoPoint);
+        }
+      }
+
       redrawTabDrawCanvas();
     }
 
