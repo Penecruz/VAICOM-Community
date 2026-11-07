@@ -2,8 +2,8 @@
       const rows = Array.isArray(efbSaUserWaypoints) ? efbSaUserWaypoints : [];
       writeStoredPreferenceValue(efbSaUserWaypointsStorageKey, JSON.stringify(rows));
     }
-
-    function readEfbSaSavedHistoryTracksPreference() {
+    // Read the saved history tracks preference from storage and parse it back to the Kneeboard.
+    function readEfbSaSavedHistoryTracksPreference() { 
       try {
         const raw = readStoredPreferenceValue(efbSaSavedHistoryTracksStorageKey);
         if (!raw) return {};
@@ -4191,6 +4191,24 @@
       }
     }
 
+    const tabDrawMinPointDistancePx = 1.35;
+    const tabDrawMinPointDistanceSq = tabDrawMinPointDistancePx * tabDrawMinPointDistancePx;
+    let tabDrawRedrawScheduled = false;
+
+    function scheduleTabDrawRedraw() {
+      if (tabDrawRedrawScheduled) return;
+      tabDrawRedrawScheduled = true;
+      const flush = function () {
+        tabDrawRedrawScheduled = false;
+        redrawTabDrawCanvas();
+      };
+      if (typeof window !== 'undefined' && typeof window.requestAnimationFrame === 'function') {
+        window.requestAnimationFrame(flush);
+      } else {
+        setTimeout(flush, 16);
+      }
+    }
+
     function getDrawTabKey(tab) {
       return String(tab || 'LOG').trim().toUpperCase() || 'LOG';
     }
@@ -4201,9 +4219,6 @@
         tabDrawStrokeByTab[key] = [];
       }
       const strokes = tabDrawStrokeByTab[key] || [];
-      for (let i = 0; i < strokes.length; i++) {
-        normalizeDrawStrokeShape(strokes[i]);
-      }
       return strokes;
     }
 
@@ -4350,6 +4365,23 @@
       return row;
     }
 
+    function getSaMapProjectionKeyForDraw() {
+      const item = getEfbSaMapInstanceForDraw();
+      const canvas = getTabDrawCanvas();
+      if (!item || !item.map || !canvas) return '';
+      try {
+        const center = item.map.getCenter ? item.map.getCenter() : null;
+        const lat = center && isFinite(Number(center.lat)) ? Number(center.lat).toFixed(6) : '0';
+        const lon = center && isFinite(Number(center.lng)) ? Number(center.lng).toFixed(6) : '0';
+        const zoom = item.map.getZoom ? Number(item.map.getZoom()).toFixed(4) : '0';
+        const bearing = item.map.getBearing ? Number(item.map.getBearing()).toFixed(2) : '0';
+        const pitch = item.map.getPitch ? Number(item.map.getPitch()).toFixed(2) : '0';
+        return zoom + '|' + bearing + '|' + pitch + '|' + lat + '|' + lon + '|' + canvas.width + 'x' + canvas.height;
+      } catch (_) {
+        return '';
+      }
+    }
+
     function drawStrokePathToCanvas(stroke) {
       const canvas = getTabDrawCanvas();
       if (!canvas || !stroke || !Array.isArray(stroke.points) || stroke.points.length <= 0) return;
@@ -4364,15 +4396,28 @@
 
       let drawPoints = points;
       if (stroke.geoAnchored && Array.isArray(stroke.geoPoints) && stroke.geoPoints.length > 0) {
-        const projected = [];
-        for (let i = 0; i < stroke.geoPoints.length; i++) {
-          const projectedPoint = saMapGeoToCanvasPoint(stroke.geoPoints[i]);
-          if (projectedPoint) {
-            projected.push(projectedPoint);
+        const projectionKey = getSaMapProjectionKeyForDraw();
+        const geoCount = stroke.geoPoints.length;
+        const canUseProjectionCache = Array.isArray(stroke._cachedProjectedPoints)
+          && stroke._cachedProjectionKey === projectionKey
+          && Number(stroke._cachedProjectionCount || 0) === geoCount;
+
+        if (canUseProjectionCache) {
+          drawPoints = stroke._cachedProjectedPoints;
+        } else {
+          const projected = [];
+          for (let i = 0; i < geoCount; i++) {
+            const projectedPoint = saMapGeoToCanvasPoint(stroke.geoPoints[i]);
+            if (projectedPoint) {
+              projected.push(projectedPoint);
+            }
           }
-        }
-        if (projected.length > 0) {
-          drawPoints = projected;
+          if (projected.length > 0) {
+            drawPoints = projected;
+          }
+          stroke._cachedProjectionKey = projectionKey;
+          stroke._cachedProjectionCount = geoCount; // Cache the number of geo points to detect changes
+          stroke._cachedProjectedPoints = projected; // Cache the projected points for future use should improve performance
         }
       }
 
@@ -4450,11 +4495,14 @@
       }
 
       normalizeDrawStrokeShape(stroke);
+      stroke._cachedProjectionKey = '';  // Reset cached projection key
+      stroke._cachedProjectionCount = -1;
+      stroke._cachedProjectedPoints = null;
       strokes.push(stroke);
       tabDrawActiveStroke = stroke;
       tabDrawActivePointerId = (ev && typeof ev.pointerId === 'number') ? ev.pointerId : null;
       setDrawInteractionInNotes(true);
-      redrawTabDrawCanvas();
+      scheduleTabDrawRedraw();
     }
 
     function appendTabDrawPoint(ev) {
@@ -4463,8 +4511,19 @@
         return;
       }
 
-      const point = eventToCanvasPoint(ev);
+        const point = eventToCanvasPoint(ev); // Get the point from the event
       if (!point) return;
+
+      const points = Array.isArray(tabDrawActiveStroke.points) ? tabDrawActiveStroke.points : [];
+      const lastPoint = points.length > 0 ? points[points.length - 1] : null;
+      if (lastPoint) {
+        const dx = Number(point.x) - Number(lastPoint.x);
+        const dy = Number(point.y) - Number(lastPoint.y);
+        if ((dx * dx + dy * dy) < tabDrawMinPointDistanceSq) {
+          return;
+        }
+      }
+
       tabDrawActiveStroke.points.push(point);
 
       if (tabDrawActiveStroke.geoAnchored) {
@@ -4474,10 +4533,11 @@
             tabDrawActiveStroke.geoPoints = [];
           }
           tabDrawActiveStroke.geoPoints.push(geoPoint);
+          tabDrawActiveStroke._cachedProjectionCount = -1;
         }
       }
 
-      redrawTabDrawCanvas();
+      scheduleTabDrawRedraw();
     }
 
     function endTabDrawStroke(ev) {
@@ -4485,6 +4545,7 @@
         return;
       }
       clearActiveTabDrawStroke();
+      scheduleTabDrawRedraw();
     }
 
     function bindTabDrawCanvasOnce() {
