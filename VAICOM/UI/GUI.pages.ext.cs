@@ -312,6 +312,12 @@ namespace VAICOM
 
             private void OpenKneeboardOutOn(object sender, RoutedEventArgs e)
             {
+                if (State.activeconfig.OpenKneeboard_Out)
+                {
+                    ChangeOKHostbug();
+                    return;
+                }
+
                 State.activeconfig.OpenKneeboard_Out = true;
                 Extensions.Kneeboard.OpenKneeboardBridge.SetEnabled(true);
                 EnsureOpenKneeboardOutFirewallRuleIfNeeded();
@@ -320,6 +326,12 @@ namespace VAICOM
 
             private void OpenKneeboardOutOff(object sender, RoutedEventArgs e)
             {
+                if (!State.activeconfig.OpenKneeboard_Out)
+                {
+                    ChangeOKHostbug();
+                    return;
+                }
+
                 State.activeconfig.OpenKneeboard_Out = false;
                 Extensions.Kneeboard.OpenKneeboardBridge.SetEnabled(false);
                 ChangeOKHostbug();
@@ -361,6 +373,11 @@ namespace VAICOM
 
             private void OpenKneeboardOutAllowLanOn(object sender, RoutedEventArgs e)
             {
+                if (State.activeconfig.OpenKneeboard_Out_AllowLan)
+                {
+                    return;
+                }
+
                 State.activeconfig.OpenKneeboard_Out_AllowLan = true;
                 RestartOpenKneeboardOutHostIfEnabled();
                 EnsureOpenKneeboardOutFirewallRuleIfNeeded();
@@ -368,6 +385,11 @@ namespace VAICOM
 
             private void OpenKneeboardOutAllowLanOff(object sender, RoutedEventArgs e)
             {
+                if (!State.activeconfig.OpenKneeboard_Out_AllowLan)
+                {
+                    return;
+                }
+
                 State.activeconfig.OpenKneeboard_Out_AllowLan = false;
                 RestartOpenKneeboardOutHostIfEnabled();
             }
