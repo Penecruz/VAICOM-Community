@@ -89,6 +89,173 @@ namespace VAICOM
                     }
                 }
 
+                private const string VaicomManagedBlockStart = "-- VAICOM_MANAGED_BLOCK_START:RadioCommandDialogsPanel";
+                private const string VaicomManagedBlockEnd = "-- VAICOM_MANAGED_BLOCK_END:RadioCommandDialogsPanel";
+
+                private static bool IsManagedAppendBlockFile(Server.LuaFile thisfile)
+                {
+                    return thisfile != null
+                        && thisfile.filename.Equals("RadioCommandDialogsPanel.lua", StringComparison.OrdinalIgnoreCase)
+                        && thisfile.installfolder.Equals("Scripts\\UI\\RadioCommandDialogPanel", StringComparison.OrdinalIgnoreCase);
+                }
+
+                private static string NormalizeLineEndings(string content)
+                {
+                    return (content ?? string.Empty).Replace("\r\n", "\n").Replace("\r", "\n");
+                }
+
+                private static string ToEnvironmentLineEndings(string content)
+                {
+                    return (content ?? string.Empty).Replace("\n", Environment.NewLine);
+                }
+
+                private static string BuildManagedBlock(string source)
+                {
+                    string payload = NormalizeLineEndings(source).Trim('\n');
+                    if (string.IsNullOrWhiteSpace(payload))
+                    {
+                        return string.Empty;
+                    }
+
+                    return VaicomManagedBlockStart + "\n" + payload + "\n" + VaicomManagedBlockEnd;
+                }
+
+                private static bool TryFindManagedBlock(string content, out int startIndex, out int endIndex)
+                {
+                    startIndex = content.IndexOf(VaicomManagedBlockStart, StringComparison.Ordinal);
+                    if (startIndex < 0)
+                    {
+                        endIndex = -1;
+                        return false;
+                    }
+
+                    int endMarkerIndex = content.IndexOf(VaicomManagedBlockEnd, startIndex, StringComparison.Ordinal);
+                    if (endMarkerIndex < 0)
+                    {
+                        endIndex = -1;
+                        return false;
+                    }
+
+                    endIndex = endMarkerIndex + VaicomManagedBlockEnd.Length;
+
+                    while (endIndex < content.Length && (content[endIndex] == '\r' || content[endIndex] == '\n'))
+                    {
+                        endIndex++;
+                    }
+
+                    while (startIndex > 0 && (content[startIndex - 1] == '\r' || content[startIndex - 1] == '\n'))
+                    {
+                        startIndex--;
+                    }
+
+                    return true;
+                }
+
+                private static string RemoveManagedBlocks(string content)
+                {
+                    string normalized = NormalizeLineEndings(content);
+
+                    int startIndex;
+                    int endIndex;
+                    while (TryFindManagedBlock(normalized, out startIndex, out endIndex))
+                    {
+                        normalized = normalized.Remove(startIndex, endIndex - startIndex);
+                    }
+
+                    return normalized;
+                }
+
+                private static string RemoveLegacyAppendPayload(string content, string source)
+                {
+                    string normalized = NormalizeLineEndings(content);
+                    string payload = NormalizeLineEndings(source).Trim('\n');
+
+                    if (string.IsNullOrWhiteSpace(payload))
+                    {
+                        return normalized;
+                    }
+
+                    normalized = normalized.Replace("\n" + payload, "\n");
+                    normalized = normalized.Replace(payload, string.Empty);
+
+                    return normalized;
+                }
+
+                private static string BuildManagedRadioCommandDialogsPanelContent(string existingContent, string originalContent, string appendContent, bool restore)
+                {
+                    string normalizedExisting = NormalizeLineEndings(existingContent);
+                    string normalizedOriginal = NormalizeLineEndings(originalContent);
+                    string normalizedAppend = NormalizeLineEndings(appendContent);
+
+                    if (string.IsNullOrWhiteSpace(normalizedExisting))
+                    {
+                        normalizedExisting = normalizedOriginal;
+                    }
+
+                    int blockStartIndex;
+                    int blockEndIndex;
+                    bool hasManagedBlock = TryFindManagedBlock(normalizedExisting, out blockStartIndex, out blockEndIndex);
+                    bool hasLegacyVaicomPayload = !string.IsNullOrWhiteSpace(normalizedAppend)
+                        && normalizedExisting.IndexOf(normalizedAppend.Trim('\n'), StringComparison.Ordinal) >= 0;
+
+                    if (!hasManagedBlock && hasLegacyVaicomPayload && !string.IsNullOrWhiteSpace(normalizedOriginal))
+                    {
+                        normalizedExisting = normalizedOriginal;
+                    }
+
+                    normalizedExisting = RemoveManagedBlocks(normalizedExisting);
+                    normalizedExisting = RemoveLegacyAppendPayload(normalizedExisting, normalizedAppend);
+
+                    if (restore)
+                    {
+                        return ToEnvironmentLineEndings(normalizedExisting);
+                    }
+
+                    string block = BuildManagedBlock(normalizedAppend);
+                    if (string.IsNullOrWhiteSpace(block))
+                    {
+                        return ToEnvironmentLineEndings(normalizedExisting);
+                    }
+
+                    int insertAt = -1;
+                    if (!string.IsNullOrWhiteSpace(normalizedOriginal))
+                    {
+                        if (normalizedExisting.StartsWith(normalizedOriginal, StringComparison.Ordinal))
+                        {
+                            insertAt = normalizedOriginal.Length;
+                        }
+                        else
+                        {
+                            int foundAt = normalizedExisting.IndexOf(normalizedOriginal, StringComparison.Ordinal);
+                            if (foundAt >= 0)
+                            {
+                                insertAt = foundAt + normalizedOriginal.Length;
+                            }
+                        }
+                    }
+
+                    string finalContent;
+                    if (insertAt >= 0)
+                    {
+                        string head = normalizedExisting.Substring(0, insertAt).TrimEnd('\n');
+                        string tail = normalizedExisting.Substring(insertAt).TrimStart('\n');
+
+                        finalContent = head + "\n\n" + block;
+                        if (!string.IsNullOrWhiteSpace(tail))
+                        {
+                            finalContent += "\n\n" + tail;
+                        }
+                        finalContent += "\n";
+                    }
+                    else
+                    {
+                        string body = normalizedExisting.TrimStart('\n');
+                        finalContent = block + "\n\n" + body;
+                    }
+
+                    return ToEnvironmentLineEndings(finalContent);
+                }
+
                 public static void LuaFiles_Install(bool restore, bool forcequiet)
                 {
                     // --- finds all DCS install locations and manipulates lua files
@@ -356,7 +523,7 @@ namespace VAICOM
                                             bool isJesterModInstall = !string.IsNullOrWhiteSpace(thisfile.installfolder)
                                                 && thisfile.installfolder.StartsWith("jester\\mods", StringComparison.OrdinalIgnoreCase);
 
-                                            if ((State.luahardreset || isJesterModInstall) && thisfile.hardreset && !thisfile.stringreplace)
+                                            if ((State.luahardreset || isJesterModInstall) && thisfile.hardreset && !thisfile.stringreplace && !IsManagedAppendBlockFile(thisfile))
                                             {
                                                 if (File.Exists(path))
                                                 {
@@ -463,7 +630,15 @@ namespace VAICOM
 
                                                 if (thisfile.append)
                                                 {
-                                                    if (uselegacy)
+                                                    if (IsManagedAppendBlockFile(thisfile))
+                                                    {
+                                                        string existingContent = File.Exists(path) ? File.ReadAllText(path) : string.Empty;
+                                                        string managedOrig = uselegacy ? thisfile.orig_legacy : thisfile.orig;
+                                                        string managedSource = uselegacy ? thisfile.source_legacy : thisfile.source;
+
+                                                        writestring = BuildManagedRadioCommandDialogsPanelContent(existingContent, managedOrig, managedSource, restore);
+                                                    }
+                                                    else if (uselegacy)
                                                     {
                                                         writestring = thisfile.orig_legacy;
 
@@ -523,8 +698,9 @@ namespace VAICOM
                                                     }
                                                 }
 
-                                                // write the file (append mode)
-                                                using (StreamWriter writer = new StreamWriter(path, true))
+                                                bool appendWriteMode = !IsManagedAppendBlockFile(thisfile);
+
+                                                using (StreamWriter writer = new StreamWriter(path, appendWriteMode))
                                                 {
                                                     writer.Write(writestring);
                                                 }
