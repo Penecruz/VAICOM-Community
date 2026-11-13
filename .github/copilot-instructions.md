@@ -34,6 +34,7 @@
 - When adding or changing OKB Out features, always update OKBHelpDoc.html to document settings, Icons, layer drawer items and other additions and changes in behavior.
 - For OKB EFB SA map history track: default layer state OFF; sample breadcrumb points every 5 seconds only when fast ownship position is enabled and movement is detected; render as dotted trail; retain track after disconnect and clear/reset on next module connection; add left-rail layer toggle with history track icon style matching provided path/pin concept.
 - For OKB DEM local caching, prefer using `\VoiceAttack\Apps\VAICOMPRO\OKB\DEM` with per-terrain subfolders.
+- For VAICOM Light work, prefer reusing as much existing VAICOM UI as feasible (especially OKB Out tab, Config, Help, About, and Reset screens). Keep VAICOM Light as a separate project in the same repo, ship it separately from the normal VAICOM installer/zip, use a light-specific updater channel, and keep full and light on the same version numbers. Always keep VAICOM Light and Full synchronized for shared OKB JS/CSS/features by shipping complete Light output (including VAICOM.dll/dependencies), using matched version numbers from the same commit, and ensuring Light update artifacts include shared binaries/resources.
 
 ## F-4E ICS Implementation
 - For F-4E ICS hot mic implementation, ignore WSO ICS state entirely and use only pilot ICS switch state because WSO seat occupancy disables WSO functions.

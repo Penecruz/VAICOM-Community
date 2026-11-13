@@ -52,17 +52,20 @@ namespace VAICOM
             {
             }
 
-            if (State.startup || (!State.activeconfig.Debugmode & !State.trainerrunning))
+            bool debugMode = false;
+            try { debugMode = State.activeconfig != null && State.activeconfig.Debugmode; } catch { debugMode = false; }
+
+            if (State.startup || (!debugMode & !State.trainerrunning))
             {
                 if (State.startup && State.deepdebugmode)
                 {
-                    State.Proxy.WriteToLog(writestring, color);
+                    TryWriteToProxyLog(writestring, color);
                 }
                 else
                 {
                     if (color != Colors.Text && color != Colors.Text && color != Colors.Notification && color != Colors.Alert && color != Colors.Inline && color != Colors.Recognition)
                     {
-                        State.Proxy.WriteToLog(writestring, color);
+                        TryWriteToProxyLog(writestring, color);
                     }
                 }
             }
@@ -70,7 +73,7 @@ namespace VAICOM
             {
                 if (State.deepdebugmode || color != Colors.Inline)
                 {
-                    State.Proxy.WriteToLog(writestring, color);
+                    TryWriteToProxyLog(writestring, color);
                     try
                     {
                         string timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
@@ -80,6 +83,22 @@ namespace VAICOM
                     {
                     }
                 }
+            }
+        }
+
+        private static void TryWriteToProxyLog(string writestring, string color)
+        {
+            try
+            {
+                if (State.Proxy == null)
+                {
+                    return;
+                }
+
+                State.Proxy.WriteToLog(writestring, color);
+            }
+            catch
+            {
             }
         }
     }

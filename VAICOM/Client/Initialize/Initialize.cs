@@ -111,6 +111,11 @@ namespace VAICOM
                 State.blockallcommands = false;
             }
 
+            public static void ResetStateValues()
+            {
+                ResetStateValues(null);
+            }
+
             public static void ResetStateValues(dynamic vaProxy)
             {
                 State.random1 = new Random();
@@ -532,7 +537,8 @@ namespace VAICOM
 
                     CreateDatabase(vaProxy);
                     StartNetwork(vaProxy);
-                    
+
+                    OpenKneeboardBridge.UseVoiceAttackRuntimeSettings();
                     if (State.activeconfig.OpenKneeboard_Out)
                     {
                         OpenKneeboardBridge.Initialize();

@@ -1,0 +1,46 @@
+<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
+  <PropertyGroup>
+	<OutputType>WinExe</OutputType>
+	<TargetFramework>net472</TargetFramework>
+	<UseWPF>true</UseWPF>
+	<RootNamespace>VAICOM.Light</RootNamespace>
+	<AssemblyName>VAICOM.Light</AssemblyName>
+	<ApplicationIcon>..\VAICOM\Resources\Icons\vaicompro_icon_32.ico</ApplicationIcon>
+  </PropertyGroup>
+
+  <ItemGroup>
+	<Reference Include="System.Windows.Forms" />
+  </ItemGroup>
+
+  <ItemGroup>
+	<ProjectReference Include="..\VAICOM\VAICOM.csproj" />
+	<ProjectReference Include="..\VAICOM.Shared\VAICOM.Shared.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+	<Resource Include="..\VAICOM\Resources\Images\UI_2511_BG_Config.png">
+	  <Link>Resources\Images\UI_2511_BG_Config.png</Link>
+	</Resource>
+	<Resource Include="..\VAICOM\Resources\Images\UI_2511_BG_Help.png">
+	  <Link>Resources\Images\UI_2511_BG_Help.png</Link>
+	</Resource>
+	<Resource Include="..\VAICOM\Resources\Images\UI_2511_BG_About.png">
+	  <Link>Resources\Images\UI_2511_BG_About.png</Link>
+	</Resource>
+	<Resource Include="..\VAICOM\Resources\Images\UI_2511_BG_Reset.png">
+	  <Link>Resources\Images\UI_2511_BG_Reset.png</Link>
+	</Resource>
+	<Resource Include="..\VAICOM\Resources\Images\Navigraph_Logo_tx.png">
+	  <Link>Resources\Images\Navigraph_Logo_tx.png</Link>
+	</Resource>
+	<Resource Include="..\VAICOM\Resources\Images\EagleDynamics.png">
+	  <Link>Resources\Images\EagleDynamics.png</Link>
+	</Resource>
+	<Resource Include="..\VAICOM\Resources\Images\FREE-000-1024x485.png">
+	  <Link>Resources\Images\FREE-000-1024x485.png</Link>
+	</Resource>
+	<Resource Include="..\VAICOM\Resources\Images\MainMenulogo.png">
+	  <Link>Resources\Images\MainMenulogo.png</Link>
+	</Resource>
+  </ItemGroup>
+</Project>

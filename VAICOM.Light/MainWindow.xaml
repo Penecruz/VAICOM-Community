@@ -1,0 +1,203 @@
+<Window x:Class="VAICOM.Light.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="VAICOM LIGHT for DCS World - Kneeboard Only" Height="420" Width="690"
+        WindowStartupLocation="CenterScreen"
+        Foreground="#FFF3F3F3">
+    <Window.Resources>
+        <ImageBrush x:Key="LightBrandBackground"
+                    ImageSource="pack://application:,,,/VAICOM.Light;component/Resources/Images/UI_2511_BG_Config.png"
+                    Stretch="UniformToFill" />
+
+        <Style x:Key="LightTabItemStyle" TargetType="TabItem">
+            <Setter Property="Foreground" Value="#FFEDEDED" />
+            <Setter Property="Background" Value="#33000000" />
+            <Setter Property="BorderBrush" Value="#66FFFFFF" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Padding" Value="10,4" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TabItem">
+                        <Grid Margin="0,0,2,0">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="*" />
+                                <RowDefinition Height="3" />
+                            </Grid.RowDefinitions>
+                            <Border x:Name="TabBorder"
+									Grid.Row="0"
+									Background="{TemplateBinding Background}"
+									BorderBrush="{TemplateBinding BorderBrush}"
+									BorderThickness="{TemplateBinding BorderThickness}"
+									Padding="{TemplateBinding Padding}">
+                                <ContentPresenter ContentSource="Header" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </Border>
+                            <Border x:Name="TabAccent" Grid.Row="1" Background="#00000000" />
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="TabBorder" Property="Background" Value="#66000000" />
+                                <Setter TargetName="TabBorder" Property="BorderBrush" Value="#FFFFFFFF" />
+                                <Setter TargetName="TabAccent" Property="Background" Value="#FFFFFFFF" />
+                                <Setter Property="Foreground" Value="#FFFFFFFF" />
+                                <Setter Property="FontWeight" Value="SemiBold" />
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="TabBorder" Property="Background" Value="#55000000" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style TargetType="TabControl">
+            <Setter Property="Background" Value="#22000000" />
+            <Setter Property="BorderBrush" Value="#66FFFFFF" />
+            <Setter Property="ItemContainerStyle" Value="{StaticResource LightTabItemStyle}" />
+        </Style>
+
+        <Style TargetType="TextBox">
+            <Setter Property="Foreground" Value="#FFFFFFFF" />
+            <Setter Property="Background" Value="#44000000" />
+            <Setter Property="BorderBrush" Value="#77FFFFFF" />
+        </Style>
+
+        <Style TargetType="Button">
+            <Setter Property="Margin" Value="0,0,8,8" />
+            <Setter Property="Padding" Value="12,6" />
+            <Setter Property="Background" Value="#CCECECEC" />
+            <Setter Property="Foreground" Value="#FF111111" />
+        </Style>
+
+        <Style TargetType="CheckBox">
+            <Setter Property="Foreground" Value="#FFFFFFFF" />
+            <Setter Property="Margin" Value="0,0,16,8" />
+        </Style>
+    </Window.Resources>
+
+    <Grid Margin="12" Background="{StaticResource LightBrandBackground}">
+        <Border Margin="8" Padding="8" Background="#3A000000" BorderThickness="1" BorderBrush="#44FFFFFF">
+            <TabControl Margin="0,0,0,1">
+                <TabItem Header="VKB Out">
+                    <Grid Margin="10,60,10,10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="116*"/>
+                            <ColumnDefinition Width="56*"/>
+                            <ColumnDefinition Width="131*"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="0" />
+                            <RowDefinition Height="23.96"/>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" MinHeight="55.641" />
+                            <RowDefinition Height="Auto" MinHeight="48" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition />
+                        </Grid.RowDefinitions>
+
+                        <StackPanel Orientation="Horizontal" Margin="0,-24,10,12" Grid.RowSpan="2" Grid.ColumnSpan="3">
+                            <TextBlock Text="Host:" FontWeight="Bold" Width="90" />
+                            <TextBlock x:Name="HostStatusText" Text="Unknown" />
+                            <TextBlock Text="    Connection:" FontWeight="Bold" Margin="16,0,0,0" />
+                            <TextBlock x:Name="ConnectionStatusText" Text="Unknown" Margin="8,0,0,0" />
+                        </StackPanel>
+
+                        <CheckBox Grid.Row="1" x:Name="OpenKneeboardOutCheckBox" Content="Enable" Checked="OpenKneeboardOutCheckBox_Checked" Unchecked="OpenKneeboardOutCheckBox_Unchecked" Grid.ColumnSpan="3" />
+
+                        <StackPanel Grid.Row="3" Orientation="Horizontal" VerticalAlignment="Center" Grid.ColumnSpan="3" Height="29">
+                            <TextBlock Text="VKB Broadcast Port" VerticalAlignment="Center" Margin="0,0,8,0" />
+                            <TextBox x:Name="BroadcastPortTextBox" Width="68" Height="24" VerticalContentAlignment="Center" LostFocus="BroadcastPortTextBox_LostFocus" />
+                            <CheckBox x:Name="AllowLanAccessCheckBox" Content="Allow LAN Access" Margin="16,0,0,0" VerticalAlignment="Center" Checked="AllowLanAccessCheckBox_Checked" Unchecked="AllowLanAccessCheckBox_Unchecked" />
+                        </StackPanel>
+
+                        <CheckBox Grid.Row="5" x:Name="AutoBrowseCheckBox" Content="Auto Browse" Checked="AutoBrowseCheckBox_Checked" Unchecked="AutoBrowseCheckBox_Unchecked" Margin="0,24,0,10" Grid.ColumnSpan="3" RenderTransformOrigin="0.505,2.362" HorizontalAlignment="Left" Width="590" >
+                            <CheckBox.RenderTransform>
+                                <TransformGroup>
+                                    <ScaleTransform/>
+                                    <SkewTransform/>
+                                    <RotateTransform Angle="0.01"/>
+                                    <TranslateTransform X="-0.007"/>
+                                </TransformGroup>
+                            </CheckBox.RenderTransform>
+                        </CheckBox>
+                        <CheckBox Grid.Row="5" x:Name="EnableEfbTabCheckBox" Content="Enable EFB Tab" Checked="EnableEfbTabCheckBox_Checked" Unchecked="EnableEfbTabCheckBox_Unchecked" Margin="0,3,16,27" RenderTransformOrigin="0.495,1" Grid.ColumnSpan="3" />
+
+                        <StackPanel Grid.Row="6" Orientation="Horizontal" VerticalAlignment="Center" Grid.ColumnSpan="3" Height="48">
+                            <Image Source="pack://application:,,,/VAICOM.Light;component/Resources/Images/Navigraph_Logo_tx.png" Width="48" Height="48" Margin="0,0,12,0" />
+                            <Button Content="Connect" Width="100" Click="NavigraphConnect_Click" />
+                            <Button Content="Logout" Width="100" Click="NavigraphLogout_Click" />
+                            <Button Content="Refresh" Width="100" Click="RefreshStatus_Click" RenderTransformOrigin="0.49,0.537" />
+                        </StackPanel>
+
+                        <Border Grid.Row="8" BorderThickness="1" BorderBrush="#77FFFFFF" CornerRadius="4" Padding="8" Margin="0,5,0,15" Background="#33000000" RenderTransformOrigin="0.487,2.827" Grid.ColumnSpan="3">
+                            <TextBlock x:Name="ActionStatusText" Text="Ready." TextWrapping="Wrap" Margin="0,0,0,1" />
+                        </Border>
+
+                        <TextBlock Grid.Row="8" TextWrapping="Wrap"
+								   Text="Tip: Minimize the window to send VAICOM Light to the system tray. Double-click the tray icon to restore." Margin="0,70,0,-37" Grid.ColumnSpan="3" />
+                    </Grid>
+                </TabItem>
+
+                <TabItem Header="Config">
+                    <Grid Margin="0,62,12,12">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
+
+                        <TextBlock Text="DCS Installation Targets" FontWeight="Bold" Margin="0,0,0,8" />
+                        <CheckBox Grid.Row="1" x:Name="InstallStableCheckBox" Content="Install to DCS World (Detected)" Checked="LuaTargetSettings_Changed" Unchecked="LuaTargetSettings_Changed" />
+
+                        <StackPanel Grid.Row="2" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,0,8">
+                            <CheckBox x:Name="InstallCustomCheckBox" Content="Install to DCS custom path" VerticalAlignment="Center" Checked="LuaTargetSettings_Changed" Unchecked="LuaTargetSettings_Changed" />
+                            <TextBox x:Name="CustomDcsPathTextBox" Width="420" Height="24" Margin="8,0,8,0" VerticalContentAlignment="Center" LostFocus="CustomDcsPathTextBox_LostFocus" />
+                            <Button Content="Browse" Width="96" Click="BrowseCustomDcsPath_Click" />
+                        </StackPanel>
+
+                        <StackPanel Grid.Row="3" Orientation="Horizontal" Margin="0,0,0,8">
+                            <Button Content="Repair VAICOM Lua Files" Width="157" Click="RepairLuaHooks_Click" />
+                            <Button Content="Remove VAICOM Files" Width="170" Click="RemoveLuaHooks_Click" />
+                        </StackPanel>
+
+                        <TextBlock Grid.Row="4" Text="Config Status" FontWeight="Bold" Margin="0,8,0,4" />
+                        <TextBox Grid.Row="5" x:Name="UpdateFeedText" IsReadOnly="True" Height="29" VerticalAlignment="Top" />
+                    </Grid>
+                </TabItem>
+
+                <TabItem Header="Help">
+                    <StackPanel Margin="0,62,12,12" Height="262">
+                        <TextBlock TextWrapping="Wrap" TextAlignment="Center"
+                                   Text="VAICOM LIGHT hosts VAICOM Kneeboard Out features without VoiceAttack. Use the VKB Out tab controls to manage broadcast status." Height="59" Width="828" />
+                        <Button Content="Open Help" Width="122" Click="OpenHelpDoc_Click" RenderTransformOrigin="0.494,0.569" />
+                    </StackPanel>
+                </TabItem>
+
+                <TabItem Header="About">
+                    <StackPanel Margin="12,62,12,0">
+                        <TextBlock TextWrapping="Wrap" Margin="0,0,0,10" TextAlignment="Center"
+                                   Text="VAICOM LIGHT a standalone host for the VAICOM kneeboard in OpenKneeboard and the VAICOM iOS App" Height="34" />
+                        <Image Source="Resources/Images/MainMenulogo.png" Height="153" Stretch="Uniform" Width="542" />
+                        <TextBlock TextWrapping="Wrap" Margin="0,0,0,10" TextAlignment="Center"
+                         Text="The VAICOM Community can be found on Discord at https://discord.gg/7c22BHNSCS" />
+                    </StackPanel>
+                </TabItem>
+
+                <TabItem Header="Reset">
+                    <StackPanel Margin="12,62,12,0" Height="331">
+                        <TextBlock TextWrapping="Wrap" Margin="0,0,0,8" TextAlignment="Center"
+                                   Text="Reset actions are limited to the network host restart during initial testing." Height="58" />
+                        <Button Content="Reset Host" Width="112" Click="RestartHost_Click" Height="31" />
+                    </StackPanel>
+                </TabItem>
+                <TextBlock TextWrapping="Wrap"
+                    Text="VAICOM LIGHT a standalone host for the VAICOM kneeboard in OpenKneeboard and the VAICOM iOS app for iPad." />
+            </TabControl>
+        </Border>
+    </Grid>
+</Window>
