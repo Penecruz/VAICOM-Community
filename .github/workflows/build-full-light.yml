@@ -1,0 +1,41 @@
+name: Build Full and Light
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Restore
+        run: dotnet restore VAICOM28.sln
+
+      - name: Build Full
+        run: dotnet build VAICOM/VAICOM.csproj -c Release --no-restore
+
+      - name: Build Light
+        run: dotnet build VAICOM.Light/VAICOM.Light.csproj -c Release --no-restore
+
+      - name: Upload Full artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: VAICOM-Full
+          path: VAICOM/bin/Release/**
+
+      - name: Upload Light artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: VAICOM-Light
+          path: VAICOM.Light/bin/Release/**

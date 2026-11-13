@@ -230,12 +230,46 @@ namespace VAICOM
 
             public static void UDPstart()
             {
-                Task ReceivingUdpClient = new Task(UDPreceive);
-                ReceivingUdpClient.Start();
-                State.ReceivingUdpClientMessages.BeginReceive(State.ReturnCallMessages, null);
+                try
+                {
+                    if (State.ReceivingUdpClient != null)
+                    {
+                        Task receivingUdpClient = new Task(UDPreceive);
+                        receivingUdpClient.Start();
+                    }
+                    else
+                    {
+                        Log.Write("UDP start warning: main receiving socket was not initialized.", Colors.Warning);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Log.Write("UDP start warning: failed to start main receiver task. " + ex.Message, Colors.Warning);
+                }
 
-                //. for tray
-                State.ReceivingTrayMessages.BeginReceive(State.TrayMessages, null);
+                try
+                {
+                    if (State.ReceivingUdpClientMessages != null && State.ReturnCallMessages != null)
+                    {
+                        State.ReceivingUdpClientMessages.BeginReceive(State.ReturnCallMessages, null);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Log.Write("UDP start warning: messages receiver not started. " + ex.Message, Colors.Warning);
+                }
+
+                try
+                {
+                    if (State.ReceivingTrayMessages != null && State.TrayMessages != null)
+                    {
+                        State.ReceivingTrayMessages.BeginReceive(State.TrayMessages, null);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Log.Write("UDP start warning: tray receiver not started. " + ex.Message, Colors.Warning);
+                }
             }
 
             // ----------------------------------------------------------------------------------------------------------
@@ -248,6 +282,12 @@ namespace VAICOM
                 {
                     try
                     {
+                        if (State.ReceivingUdpClient == null)
+                        {
+                            Thread.Sleep(250);
+                            continue;
+                        }
+
                         byte[] receivedbytes = State.ReceivingUdpClient.Receive(ref State.ReceiveIpEndPoint);
                         string receivedString = "";
                         try
@@ -257,7 +297,6 @@ namespace VAICOM
                         catch (Exception e)
                         {
                             Log.Write("Processing UTF8 input failed: " + e.Message, Colors.Inline);
-
                         }
 
                         try
@@ -269,12 +308,17 @@ namespace VAICOM
                             Log.Write("Problem with processing raw server message: " + e.StackTrace, Colors.Inline);
                         }
                     }
-                    catch (ObjectDisposedException closedException)
+                    catch (ObjectDisposedException)
                     {
                         break;
                     }
-                    Thread.Sleep(1);
+                    catch (Exception ex)
+                    {
+                        Log.Write("UDP receive warning: " + ex.Message, Colors.Warning);
+                        Thread.Sleep(250);
+                    }
 
+                    Thread.Sleep(1);
                 }
             }
 

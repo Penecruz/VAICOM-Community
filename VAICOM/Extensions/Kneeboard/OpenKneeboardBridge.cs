@@ -61,6 +61,277 @@ namespace VAICOM
                 private static FastOwnshipState fastOwnship = new FastOwnshipState();
                 private static FastAvBusState fastAvBus = new FastAvBusState();
                 private static readonly IOpenKneeboardDemProvider ElevationProvider = new SrtmSkadiDemProvider();
+                private static readonly object RuntimeSettingsSync = new object();
+                private static Func<OpenKneeboardBridgeRuntimeSettings> runtimeSettingsProvider = BuildVoiceAttackRuntimeSettings;
+
+                public sealed class OpenKneeboardBridgeRuntimeSettings
+                {
+                    public string VaAppsRootPath;
+                    public string PluginRootFolderName;
+                    public bool OpenKneeboardOutEnabled;
+                    public int OpenKneeboardOutPort;
+                    public bool OpenKneeboardOutAllowLan;
+                    public bool DebugMode;
+                    public string PluginReadableVersion;
+                    public string PluginSemanticVersion;
+                    public string ConfigSubFolder;
+                    public string DocumentationSubFolder;
+                    public string ExportSubFolder;
+                    public string LogfilesSubFolder;
+                }
+
+                public static void SetRuntimeSettingsProvider(Func<OpenKneeboardBridgeRuntimeSettings> provider)
+                {
+                    lock (RuntimeSettingsSync)
+                    {
+                        runtimeSettingsProvider = provider ?? BuildVoiceAttackRuntimeSettings;
+                    }
+                }
+
+                public static void UseVoiceAttackRuntimeSettings()
+                {
+                    SetRuntimeSettingsProvider(null);
+                }
+
+                private static OpenKneeboardBridgeRuntimeSettings GetRuntimeSettings()
+                {
+                    Func<OpenKneeboardBridgeRuntimeSettings> provider;
+                    lock (RuntimeSettingsSync)
+                    {
+                        provider = runtimeSettingsProvider;
+                    }
+
+                    OpenKneeboardBridgeRuntimeSettings settings = null;
+                    try
+                    {
+                        if (provider != null)
+                        {
+                            settings = provider();
+                        }
+                    }
+                    catch
+                    {
+                    }
+
+                    if (settings == null)
+                    {
+                        settings = new OpenKneeboardBridgeRuntimeSettings();
+                    }
+
+                    if (string.IsNullOrWhiteSpace(settings.PluginRootFolderName)) settings.PluginRootFolderName = Products.Products.Families.Vaicom.VaicomProPlugin.rootfoldername;
+                    if (settings.OpenKneeboardOutPort <= 0 || settings.OpenKneeboardOutPort > 65535) settings.OpenKneeboardOutPort = DefaultOpenKneeboardOutPort;
+                    if (string.IsNullOrWhiteSpace(settings.PluginReadableVersion)) settings.PluginReadableVersion = "3.1.0";
+                    if (string.IsNullOrWhiteSpace(settings.PluginSemanticVersion)) settings.PluginSemanticVersion = "3.1.0";
+                    if (string.IsNullOrWhiteSpace(settings.ConfigSubFolder)) settings.ConfigSubFolder = "config";
+                    if (string.IsNullOrWhiteSpace(settings.DocumentationSubFolder)) settings.DocumentationSubFolder = "Documentation";
+                    if (string.IsNullOrWhiteSpace(settings.ExportSubFolder)) settings.ExportSubFolder = "Export";
+                    if (string.IsNullOrWhiteSpace(settings.LogfilesSubFolder)) settings.LogfilesSubFolder = "LogFiles";
+
+                    return settings;
+                }
+
+                private static OpenKneeboardBridgeRuntimeSettings BuildVoiceAttackRuntimeSettings()
+                {
+                    OpenKneeboardBridgeRuntimeSettings settings = new OpenKneeboardBridgeRuntimeSettings();
+
+                    try
+                    {
+                        settings.VaAppsRootPath = string.IsNullOrWhiteSpace(State.VA_APPS)
+                            ? (State.Proxy == null ? "" : Convert.ToString(State.Proxy.SessionState["VA_APPS"]))
+                            : State.VA_APPS;
+                    }
+                    catch
+                    {
+                        settings.VaAppsRootPath = "";
+                    }
+
+                    settings.PluginRootFolderName = Products.Products.Families.Vaicom.VaicomProPlugin.rootfoldername;
+                    settings.OpenKneeboardOutEnabled = State.activeconfig != null && State.activeconfig.OpenKneeboard_Out;
+                    settings.OpenKneeboardOutPort = State.activeconfig != null ? State.activeconfig.OpenKneeboard_Out_Port : DefaultOpenKneeboardOutPort;
+                    settings.OpenKneeboardOutAllowLan = State.activeconfig != null && State.activeconfig.OpenKneeboard_Out_AllowLan;
+                    settings.DebugMode = State.activeconfig != null && State.activeconfig.Debugmode;
+                    settings.PluginReadableVersion = string.IsNullOrWhiteSpace(State.versionstring) ? State.pluginversionnumber : State.versionstring;
+                    settings.PluginSemanticVersion = string.IsNullOrWhiteSpace(State.pluginversionnumber) ? "3.1.0" : State.pluginversionnumber;
+                    settings.ConfigSubFolder = AppData.SubFolders.ContainsKey("config") ? AppData.SubFolders["config"] : "config";
+                    settings.DocumentationSubFolder = AppData.SubFolders.ContainsKey("documentation") ? AppData.SubFolders["documentation"] : "Documentation";
+                    settings.ExportSubFolder = AppData.SubFolders.ContainsKey("export") ? AppData.SubFolders["export"] : "Export";
+                    settings.LogfilesSubFolder = AppData.SubFolders.ContainsKey("logfiles") ? AppData.SubFolders["logfiles"] : "LogFiles";
+                    return settings;
+                }
+
+                private static readonly object RuntimeDataSync = new object();
+                private static Func<OpenKneeboardBridgeRuntimeDataSnapshot> runtimeDataSnapshotProvider = BuildVoiceAttackRuntimeDataSnapshot;
+
+                public sealed class OpenKneeboardBridgeRuntimeDataSnapshot
+                {
+                    public bool ModuleConnected;
+                    public string CurrentModuleId;
+                    public bool CurrentModuleIsMetric;
+
+                    public bool HasCurrentState;
+                    public string CurrentStateModuleId;
+                    public string CurrentStateTheatre;
+                    public string CurrentStateRoot;
+                    public string CurrentStateDcsVersion;
+                    public string CurrentStateClientVersion;
+                    public string CurrentStateAircraft;
+                    public string CurrentStatePlayerUsername;
+                    public string CurrentStatePlayerCallsign;
+                    public string CurrentStatePlayerCoalition;
+                    public string CurrentStateMissionTitle;
+                    public string CurrentStateMissionBriefing;
+                    public string CurrentStateMissionDetails;
+                    public bool CurrentStateMultiplayer;
+                    public double CurrentStateTimer;
+                    public string CurrentStateSortie;
+                    public double CurrentStateTod;
+                    public bool CurrentStateAirborne;
+                    public bool HasCurrentStateBpos;
+                    public double CurrentStatePosX;
+                    public double CurrentStatePosY;
+                    public double CurrentStatePosZ;
+                    public object CurrentStatePayload;
+                    public object CurrentStateDiagnostics;
+                    public object CurrentStateMissionDrawings;
+                    public List<Servers.Server.RadioDevice> CurrentStateRadios;
+                    public Dictionary<string, string> CurrentStateAtcMetars;
+                    public Dictionary<string, string> CurrentStateAtcIcaoTypes;
+                    public Dictionary<string, List<Servers.Server.DcsUnit>> CurrentStateAvailableRecipients;
+                    public int CurrentStateMarkerCount;
+                    public bool CurrentStateHasMarkerDetails;
+                    public List<Servers.Server.MapMarkerState> CurrentStateMarkerDetails;
+                }
+
+                public static void SetRuntimeDataSnapshotProvider(Func<OpenKneeboardBridgeRuntimeDataSnapshot> provider)
+                {
+                    lock (RuntimeDataSync)
+                    {
+                        runtimeDataSnapshotProvider = provider ?? BuildVoiceAttackRuntimeDataSnapshot;
+                    }
+                }
+
+                public static void UseVoiceAttackRuntimeDataSnapshot()
+                {
+                    SetRuntimeDataSnapshotProvider(null);
+                }
+
+                private static OpenKneeboardBridgeRuntimeDataSnapshot GetRuntimeDataSnapshot()
+                {
+                    Func<OpenKneeboardBridgeRuntimeDataSnapshot> provider;
+                    lock (RuntimeDataSync)
+                    {
+                        provider = runtimeDataSnapshotProvider;
+                    }
+
+                    OpenKneeboardBridgeRuntimeDataSnapshot snapshot = null;
+                    try
+                    {
+                        if (provider != null)
+                        {
+                            snapshot = provider();
+                        }
+                    }
+                    catch
+                    {
+                    }
+
+                    if (snapshot == null)
+                    {
+                        snapshot = new OpenKneeboardBridgeRuntimeDataSnapshot();
+                    }
+
+                    snapshot.CurrentModuleId = snapshot.CurrentModuleId ?? "";
+                    snapshot.CurrentStateModuleId = snapshot.CurrentStateModuleId ?? "";
+                    snapshot.CurrentStateTheatre = snapshot.CurrentStateTheatre ?? "";
+                    snapshot.CurrentStateRoot = snapshot.CurrentStateRoot ?? "";
+                    snapshot.CurrentStateDcsVersion = snapshot.CurrentStateDcsVersion ?? "";
+                    snapshot.CurrentStateClientVersion = snapshot.CurrentStateClientVersion ?? "";
+                    snapshot.CurrentStateAircraft = snapshot.CurrentStateAircraft ?? "";
+                    snapshot.CurrentStatePlayerUsername = snapshot.CurrentStatePlayerUsername ?? "";
+                    snapshot.CurrentStatePlayerCallsign = snapshot.CurrentStatePlayerCallsign ?? "";
+                    snapshot.CurrentStatePlayerCoalition = snapshot.CurrentStatePlayerCoalition ?? "";
+                    snapshot.CurrentStateMissionTitle = snapshot.CurrentStateMissionTitle ?? "";
+                    snapshot.CurrentStateMissionBriefing = snapshot.CurrentStateMissionBriefing ?? "";
+                    snapshot.CurrentStateMissionDetails = snapshot.CurrentStateMissionDetails ?? "";
+                    snapshot.CurrentStateSortie = snapshot.CurrentStateSortie ?? "";
+                    snapshot.CurrentStateRadios = snapshot.CurrentStateRadios ?? new List<Servers.Server.RadioDevice>();
+                    snapshot.CurrentStateAtcMetars = snapshot.CurrentStateAtcMetars ?? new Dictionary<string, string>();
+                    snapshot.CurrentStateAtcIcaoTypes = snapshot.CurrentStateAtcIcaoTypes ?? new Dictionary<string, string>();
+                    snapshot.CurrentStateAvailableRecipients = snapshot.CurrentStateAvailableRecipients ?? new Dictionary<string, List<Servers.Server.DcsUnit>>(StringComparer.OrdinalIgnoreCase);
+                    snapshot.CurrentStateMarkerDetails = snapshot.CurrentStateMarkerDetails ?? new List<Servers.Server.MapMarkerState>();
+                    return snapshot;
+                }
+
+                private static OpenKneeboardBridgeRuntimeDataSnapshot BuildVoiceAttackRuntimeDataSnapshot()
+                {
+                    OpenKneeboardBridgeRuntimeDataSnapshot snapshot = new OpenKneeboardBridgeRuntimeDataSnapshot();
+
+                    try { snapshot.ModuleConnected = State.moduleConnected; } catch { snapshot.ModuleConnected = false; }
+                    try { snapshot.CurrentModuleId = State.currentmodule == null ? "" : (State.currentmodule.Id ?? ""); } catch { snapshot.CurrentModuleId = ""; }
+                    try { snapshot.CurrentModuleIsMetric = State.currentmodule != null && State.currentmodule.IsMetric; } catch { snapshot.CurrentModuleIsMetric = false; }
+
+                    try
+                    {
+                        if (State.currentstate != null)
+                        {
+                            snapshot.HasCurrentState = true;
+                            snapshot.CurrentStateModuleId = State.currentstate.id ?? "";
+                            snapshot.CurrentStateTheatre = State.currentstate.theatre ?? "";
+                            snapshot.CurrentStateRoot = State.currentstate.root ?? "";
+                            snapshot.CurrentStateDcsVersion = State.currentstate.dcsversion ?? "";
+                            snapshot.CurrentStateClientVersion = State.currentstate.clientversion ?? "";
+                            snapshot.CurrentStateAircraft = State.currentstate.id ?? "";
+                            snapshot.CurrentStatePlayerUsername = State.currentstate.playerusername ?? "";
+                            snapshot.CurrentStatePlayerCallsign = State.currentstate.playercallsign ?? "";
+                            snapshot.CurrentStatePlayerCoalition = State.currentstate.playercoalition ?? "";
+                            snapshot.CurrentStateMissionTitle = State.currentstate.missiontitle ?? "";
+                            snapshot.CurrentStateMissionBriefing = State.currentstate.missionbriefing ?? "";
+                            snapshot.CurrentStateMissionDetails = State.currentstate.missiondetails ?? "";
+                            snapshot.CurrentStateMultiplayer = State.currentstate.multiplayer;
+                            snapshot.CurrentStateTimer = State.currentstate.timer;
+                            snapshot.CurrentStateSortie = State.currentstate.sortie ?? "";
+                            snapshot.CurrentStateTod = State.currentstate.tod;
+                            snapshot.CurrentStateAirborne = State.currentstate.airborne;
+                            snapshot.CurrentStatePayload = State.currentstate.payload;
+                            snapshot.CurrentStateDiagnostics = State.currentstate.diagnostics;
+                            snapshot.CurrentStateMissionDrawings = State.currentstate.missiondrawings;
+                            snapshot.CurrentStateRadios = State.currentstate.radios == null
+                                ? new List<Servers.Server.RadioDevice>()
+                                : new List<Servers.Server.RadioDevice>(State.currentstate.radios);
+                            snapshot.CurrentStateAtcMetars = State.currentstate.atcmetars == null
+                                ? new Dictionary<string, string>()
+                                : new Dictionary<string, string>(State.currentstate.atcmetars);
+                            snapshot.CurrentStateAtcIcaoTypes = State.currentstate.atcicaotypes == null
+                                ? new Dictionary<string, string>()
+                                : new Dictionary<string, string>(State.currentstate.atcicaotypes);
+                            snapshot.CurrentStateAvailableRecipients = State.currentstate.availablerecipients == null
+                                ? new Dictionary<string, List<Servers.Server.DcsUnit>>(StringComparer.OrdinalIgnoreCase)
+                                : new Dictionary<string, List<Servers.Server.DcsUnit>>(State.currentstate.availablerecipients, StringComparer.OrdinalIgnoreCase);
+
+                            if (State.currentstate.riostate != null)
+                            {
+                                snapshot.CurrentStateMarkerCount = State.currentstate.riostate.markers;
+                                snapshot.CurrentStateHasMarkerDetails = State.currentstate.riostate.markerdetails != null;
+                                snapshot.CurrentStateMarkerDetails = State.currentstate.riostate.markerdetails == null
+                                    ? new List<Servers.Server.MapMarkerState>()
+                                    : new List<Servers.Server.MapMarkerState>(State.currentstate.riostate.markerdetails);
+                            }
+
+                            if (State.currentstate.bpos != null)
+                            {
+                                snapshot.HasCurrentStateBpos = true;
+                                snapshot.CurrentStatePosX = State.currentstate.bpos.x;
+                                snapshot.CurrentStatePosY = State.currentstate.bpos.y;
+                                snapshot.CurrentStatePosZ = State.currentstate.bpos.z;
+                            }
+                        }
+                    }
+                    catch
+                    {
+                    }
+
+                    return snapshot;
+                }
 
                 private interface IOpenKneeboardDemProvider
                 {
@@ -456,10 +727,7 @@ namespace VAICOM
                 {
                     try
                     {
-                        string appsRoot = string.IsNullOrWhiteSpace(State.VA_APPS)
-                            ? (State.Proxy == null ? "" : Convert.ToString(State.Proxy.SessionState["VA_APPS"]))
-                            : State.VA_APPS;
-
+                        string appsRoot = GetRuntimeSettings().VaAppsRootPath;
                         if (string.IsNullOrWhiteSpace(appsRoot))
                         {
                             string roaming = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
@@ -477,7 +745,15 @@ namespace VAICOM
                     }
                 }
 
-                private static string GetOkgTracksFolderPath()
+                private static string GetPluginRootFolderName()
+                {
+                    string pluginRootFolder = GetRuntimeSettings().PluginRootFolderName;
+                    return string.IsNullOrWhiteSpace(pluginRootFolder)
+                        ? Products.Products.Families.Vaicom.VaicomProPlugin.rootfoldername
+                        : pluginRootFolder;
+                }
+
+                private static string GetPluginRootPath()
                 {
                     try
                     {
@@ -487,8 +763,136 @@ namespace VAICOM
                             return "";
                         }
 
-                        string pluginRoot = Path.Combine(appsRoot, Products.Products.Families.Vaicom.VaicomProPlugin.rootfoldername);
+                        return Path.Combine(appsRoot, GetPluginRootFolderName());
+                    }
+                    catch
+                    {
+                        return "";
+                    }
+                }
+
+                private static string GetConfiguredSubFolder(string configuredSubFolder, string defaultSubFolder)
+                {
+                    return string.IsNullOrWhiteSpace(configuredSubFolder)
+                        ? defaultSubFolder
+                        : configuredSubFolder;
+                }
+
+                private static bool IsOpenKneeboardOutEnabled()
+                {
+                    return GetRuntimeSettings().OpenKneeboardOutEnabled;
+                }
+
+                private static bool IsDebugModeEnabled()
+                {
+                    return GetRuntimeSettings().DebugMode;
+                }
+
+                private static bool HasModuleIdentity(string moduleId)
+                {
+                    return !string.IsNullOrWhiteSpace(moduleId)
+                        && !string.Equals(moduleId.Trim(), "----", StringComparison.OrdinalIgnoreCase);
+                }
+
+                private static bool IsModuleConnectedBroad(OpenKneeboardBridgeRuntimeDataSnapshot runtimeData)
+                {
+                    if (runtimeData == null || !runtimeData.ModuleConnected)
+                    {
+                        return false;
+                    }
+
+                    return HasModuleIdentity(runtimeData.CurrentModuleId)
+                        || HasModuleIdentity(runtimeData.CurrentStateModuleId);
+                }
+
+                private static bool IsModuleConnectedStrict(OpenKneeboardBridgeRuntimeDataSnapshot runtimeData)
+                {
+                    if (runtimeData == null || !runtimeData.ModuleConnected)
+                    {
+                        return false;
+                    }
+
+                    return HasModuleIdentity(runtimeData.CurrentModuleId)
+                        && HasModuleIdentity(runtimeData.CurrentStateModuleId);
+                }
+
+                private static double GetMissionTimeSeconds(OpenKneeboardBridgeRuntimeDataSnapshot runtimeData)
+                {
+                    if (runtimeData == null)
+                    {
+                        return 0;
+                    }
+
+                    double missionStartSeconds;
+                    bool hasMissionStart = double.TryParse(runtimeData.CurrentStateSortie ?? "", out missionStartSeconds);
+                    if (hasMissionStart && runtimeData.CurrentStateTimer >= 0)
+                    {
+                        return missionStartSeconds + runtimeData.CurrentStateTimer;
+                    }
+
+                    return runtimeData.CurrentStateTod;
+                }
+
+                private static string GetCurrentTheatre()
+                {
+                    OpenKneeboardBridgeRuntimeDataSnapshot runtimeData = GetRuntimeDataSnapshot();
+                    if (runtimeData == null || !runtimeData.HasCurrentState)
+                    {
+                        return "";
+                    }
+
+                    return runtimeData.CurrentStateTheatre ?? "";
+                }
+
+                private static string GetOkgTracksFolderPath()
+                {
+                    try
+                    {
+                        string pluginRoot = GetPluginRootPath();
+                        if (string.IsNullOrWhiteSpace(pluginRoot))
+                        {
+                            return "";
+                        }
+
                         return Path.Combine(pluginRoot, "OKB", "Tracks");
+                    }
+                    catch
+                    {
+                        return "";
+                    }
+                }
+
+                private static string GetPluginConfigFolderPath()
+                {
+                    try
+                    {
+                        string pluginRoot = GetPluginRootPath();
+                        if (string.IsNullOrWhiteSpace(pluginRoot))
+                        {
+                            return "";
+                        }
+
+                        string configFolder = GetConfiguredSubFolder(GetRuntimeSettings().ConfigSubFolder, "config");
+                        return Path.Combine(pluginRoot, configFolder);
+                    }
+                    catch
+                    {
+                        return "";
+                    }
+                }
+
+                private static string GetLogFilesFolderPath()
+                {
+                    try
+                    {
+                        string pluginRoot = GetPluginRootPath();
+                        if (string.IsNullOrWhiteSpace(pluginRoot))
+                        {
+                            return "";
+                        }
+
+                        string logsFolder = GetConfiguredSubFolder(GetRuntimeSettings().LogfilesSubFolder, "LogFiles");
+                        return Path.Combine(pluginRoot, logsFolder);
                     }
                     catch
                     {
@@ -910,7 +1314,7 @@ namespace VAICOM
                     catch
                     {
                     }
-                    SetPluginRegistration(State.activeconfig != null && State.activeconfig.OpenKneeboard_Out);
+                    SetPluginRegistration(IsOpenKneeboardOutEnabled());
                     LoadIndexHtmlPage();
                     StartWebHost();
                 }
@@ -1198,10 +1602,7 @@ namespace VAICOM
 
                     try
                     {
-                        if (State.activeconfig != null)
-                        {
-                            configuredPort = State.activeconfig.OpenKneeboard_Out_Port;
-                        }
+                        configuredPort = GetRuntimeSettings().OpenKneeboardOutPort;
                     }
                     catch
                     {
@@ -1229,7 +1630,7 @@ namespace VAICOM
                 {
                     try
                     {
-                        return State.activeconfig != null && State.activeconfig.OpenKneeboard_Out_AllowLan;
+                        return GetRuntimeSettings().OpenKneeboardOutAllowLan;
                     }
                     catch
                     {
@@ -1414,20 +1815,11 @@ namespace VAICOM
                 {
                     try
                     {
-                        string appsRoot = string.IsNullOrWhiteSpace(State.VA_APPS)
-                            ? (State.Proxy == null ? "" : Convert.ToString(State.Proxy.SessionState["VA_APPS"]))
-                            : State.VA_APPS;
-
-                        if (string.IsNullOrWhiteSpace(appsRoot))
+                        string outputFolder = GetPluginConfigFolderPath();
+                        if (string.IsNullOrWhiteSpace(outputFolder))
                         {
                             return "";
                         }
-
-                        string pluginRoot = Path.Combine(appsRoot, Products.Products.Families.Vaicom.VaicomProPlugin.rootfoldername);
-                        string configFolder = AppData.SubFolders.ContainsKey("config")
-                            ? AppData.SubFolders["config"]
-                            : "config";
-                        string outputFolder = Path.Combine(pluginRoot, configFolder);
 
                         return Path.Combine(outputFolder, "OpenKneeboard." + GetOpenKneeboardOutPort() + ".v1.json");
                     }
@@ -1441,20 +1833,11 @@ namespace VAICOM
                 {
                     try
                     {
-                        string appsRoot = string.IsNullOrWhiteSpace(State.VA_APPS)
-                            ? (State.Proxy == null ? "" : Convert.ToString(State.Proxy.SessionState["VA_APPS"]))
-                            : State.VA_APPS;
-
-                        if (string.IsNullOrWhiteSpace(appsRoot))
+                        string outputFolder = GetPluginConfigFolderPath();
+                        if (string.IsNullOrWhiteSpace(outputFolder))
                         {
                             return "";
                         }
-
-                        string pluginRoot = Path.Combine(appsRoot, Products.Products.Families.Vaicom.VaicomProPlugin.rootfoldername);
-                        string configFolder = AppData.SubFolders.ContainsKey("config")
-                            ? AppData.SubFolders["config"]
-                            : "config";
-                        string outputFolder = Path.Combine(pluginRoot, configFolder);
 
                         return Path.Combine(outputFolder, "OpenKneeboard.Keywords.v1.json");
                     }
@@ -1474,12 +1857,9 @@ namespace VAICOM
                             Directory.CreateDirectory(folder);
                         }
 
-                        string readableVersion = string.IsNullOrWhiteSpace(State.versionstring)
-                            ? State.pluginversionnumber
-                            : State.versionstring;
-                        string semanticVersion = string.IsNullOrWhiteSpace(State.pluginversionnumber)
-                            ? "3.1.0"
-                            : State.pluginversionnumber;
+                        OpenKneeboardBridgeRuntimeSettings runtimeSettings = GetRuntimeSettings();
+                        string readableVersion = runtimeSettings.PluginReadableVersion;
+                        string semanticVersion = runtimeSettings.PluginSemanticVersion;
 
                         var manifest = new
                         {
@@ -1605,22 +1985,18 @@ namespace VAICOM
                             Directory.CreateDirectory(folder);
                         }
 
-                        string readableVersion = string.IsNullOrWhiteSpace(State.versionstring)
-                            ? State.pluginversionnumber
-                            : State.versionstring;
-                        string semanticVersion = string.IsNullOrWhiteSpace(State.pluginversionnumber)
-                            ? "3.1.0"
-                            : State.pluginversionnumber;
+                        OpenKneeboardBridgeRuntimeSettings runtimeSettings = GetRuntimeSettings();
+                        string readableVersion = runtimeSettings.PluginReadableVersion;
+                        string semanticVersion = runtimeSettings.PluginSemanticVersion;
 
                         string targetHtmlPath = keywordsHtmlPath;
                         if (string.IsNullOrWhiteSpace(targetHtmlPath))
                         {
-                            string appsRoot = string.IsNullOrWhiteSpace(State.VA_APPS)
-                                ? (State.Proxy == null ? "" : Convert.ToString(State.Proxy.SessionState["VA_APPS"]))
-                                : State.VA_APPS;
-                            if (!string.IsNullOrWhiteSpace(appsRoot))
+                            string pluginRoot = GetPluginRootPath();
+                            if (!string.IsNullOrWhiteSpace(pluginRoot))
                             {
-                                targetHtmlPath = Path.Combine(appsRoot, Products.Products.Families.Vaicom.VaicomProPlugin.rootfoldername, AppData.SubFolders["export"], "keywords.html");
+                                string exportSubFolder = GetConfiguredSubFolder(runtimeSettings.ExportSubFolder, "Export");
+                                targetHtmlPath = Path.Combine(pluginRoot, exportSubFolder, "keywords.html");
                             }
                         }
 
@@ -1688,20 +2064,20 @@ namespace VAICOM
                     RefreshDtcFilesSnapshot();
                 }
 
-                private static string BuildRuntimeRadioMissionIdentity()
+                private static string BuildRuntimeRadioMissionIdentity(OpenKneeboardBridgeRuntimeDataSnapshot runtimeData)
                 {
                     try
                     {
-                        if (State.currentstate == null)
+                        if (runtimeData == null || !runtimeData.HasCurrentState)
                         {
                             return "";
                         }
 
-                        string title = (State.currentstate.missiontitle ?? string.Empty).Trim();
-                        string root = (State.currentstate.root ?? string.Empty).Trim();
-                        string theatre = (State.currentstate.theatre ?? string.Empty).Trim();
-                        string aircraft = (State.currentstate.id ?? string.Empty).Trim();
-                        string callsign = (State.currentstate.playercallsign ?? string.Empty).Trim();
+                        string title = (runtimeData.CurrentStateMissionTitle ?? string.Empty).Trim();
+                        string root = (runtimeData.CurrentStateRoot ?? string.Empty).Trim();
+                        string theatre = (runtimeData.CurrentStateTheatre ?? string.Empty).Trim();
+                        string aircraft = (runtimeData.CurrentStateAircraft ?? string.Empty).Trim();
+                        string callsign = (runtimeData.CurrentStatePlayerCallsign ?? string.Empty).Trim();
                         return string.Join("|", new[] { title, root, theatre, aircraft, callsign });
                     }
                     catch
@@ -2989,7 +3365,7 @@ namespace VAICOM
 
                 private static void StartWebHost()
                 {
-                    if (isRunning || !State.activeconfig.OpenKneeboard_Out)
+                    if (isRunning || !IsOpenKneeboardOutEnabled())
                     {
                         return;
                     }
@@ -4010,35 +4386,13 @@ namespace VAICOM
                 {
                     try
                     {
-                        string appsRoot = string.IsNullOrWhiteSpace(State.VA_APPS)
-                            ? (State.Proxy == null ? "" : Convert.ToString(State.Proxy.SessionState["VA_APPS"]))
-                            : State.VA_APPS;
-
-                        if (string.IsNullOrWhiteSpace(appsRoot))
-                        {
-                            try
-                            {
-                                string roaming = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-                                if (!string.IsNullOrWhiteSpace(roaming))
-                                {
-                                    appsRoot = Path.Combine(roaming, "VoiceAttack", "Apps");
-                                }
-                            }
-                            catch
-                            {
-                            }
-                        }
-
-                        if (string.IsNullOrWhiteSpace(appsRoot))
+                        string pluginRoot = GetPluginRootPath();
+                        if (string.IsNullOrWhiteSpace(pluginRoot))
                         {
                             return "";
                         }
 
-                        string docFolder = AppData.SubFolders.ContainsKey("documentation")
-                            ? AppData.SubFolders["documentation"]
-                            : "Documentation";
-
-                        string pluginRoot = Path.Combine(appsRoot, Products.Products.Families.Vaicom.VaicomProPlugin.rootfoldername);
+                        string docFolder = GetConfiguredSubFolder(GetRuntimeSettings().DocumentationSubFolder, "Documentation");
                         return Path.Combine(pluginRoot, docFolder, "OKBHelpDoc.html");
                     }
                     catch
@@ -4387,8 +4741,8 @@ namespace VAICOM
                 {
                     try
                     {
-                        bool moduleConnectedNow = false;
-                        try { moduleConnectedNow = State.moduleConnected; } catch { moduleConnectedNow = false; }
+                        OpenKneeboardBridgeRuntimeDataSnapshot runtimeData = GetRuntimeDataSnapshot();
+                        bool moduleConnectedNow = IsModuleConnectedBroad(runtimeData);
 
                         // Only hard-clear runtime sections when disconnect is stable.
                         // Brief false pulses can occur during category/tab transitions.
@@ -4501,27 +4855,17 @@ namespace VAICOM
 
                     try
                     {
-                        if (State.currentstate != null)
+                        OpenKneeboardBridgeRuntimeDataSnapshot runtimeData = GetRuntimeDataSnapshot();
+                        if (runtimeData.HasCurrentState)
                         {
-                            double missionStartSeconds = 0;
-                            double missionElapsedSeconds = State.currentstate.timer;
-                            bool hasMissionStart = double.TryParse(State.currentstate.sortie ?? "", out missionStartSeconds);
-                            if (hasMissionStart && missionElapsedSeconds >= 0)
-                            {
-                                missionTimeSeconds = missionStartSeconds + missionElapsedSeconds;
-                            }
-                            else
-                            {
-                                missionTimeSeconds = State.currentstate.tod;
-                            }
-
+                            missionTimeSeconds = GetMissionTimeSeconds(runtimeData);
                             missionIdentity = string.Join("|", new[]
                             {
-                                State.currentstate.theatre ?? "",
-                                State.currentstate.missiontitle ?? "",
-                                State.currentstate.id ?? "",
-                                State.currentstate.playercallsign ?? "",
-                                State.currentstate.multiplayer ? "1" : "0"
+                                runtimeData.CurrentStateTheatre ?? "",
+                                runtimeData.CurrentStateMissionTitle ?? "",
+                                runtimeData.CurrentStateModuleId ?? "",
+                                runtimeData.CurrentStatePlayerCallsign ?? "",
+                                runtimeData.CurrentStateMultiplayer ? "1" : "0"
                             });
                         }
                     }
@@ -4555,28 +4899,8 @@ namespace VAICOM
                         int wow = -1;
                         double missionTimeSeconds = 0;
                         bool hasPosition = false;
-                        bool moduleConnectedNow = false;
-
-                        try
-                        {
-                            bool moduleConnectedFlag = false;
-                            string currentModuleId = "";
-                            string currentStateModuleId = "";
-                            try { moduleConnectedFlag = State.moduleConnected; } catch { moduleConnectedFlag = false; }
-                            try { currentModuleId = State.currentmodule == null ? "" : (State.currentmodule.Id ?? ""); } catch { currentModuleId = ""; }
-                            try { currentStateModuleId = State.currentstate == null ? "" : (State.currentstate.id ?? ""); } catch { currentStateModuleId = ""; }
-
-                            bool moduleFromCurrentModule = !string.IsNullOrWhiteSpace(currentModuleId)
-                                && !string.Equals(currentModuleId.Trim(), "----", StringComparison.OrdinalIgnoreCase);
-                            bool moduleFromCurrentState = !string.IsNullOrWhiteSpace(currentStateModuleId)
-                                && !string.Equals(currentStateModuleId.Trim(), "----", StringComparison.OrdinalIgnoreCase);
-
-                            moduleConnectedNow = moduleConnectedFlag && moduleFromCurrentModule && moduleFromCurrentState;
-                        }
-                        catch
-                        {
-                            moduleConnectedNow = false;
-                        }
+                        OpenKneeboardBridgeRuntimeDataSnapshot runtimeData = GetRuntimeDataSnapshot();
+                        bool moduleConnectedNow = IsModuleConnectedStrict(runtimeData);
 
                         FastOwnshipState ownshipFast;
                         if (TryGetFastOwnship(out ownshipFast))
@@ -4593,31 +4917,26 @@ namespace VAICOM
                             wow = ownshipFast.Wow;
                         }
 
-                        if (State.currentstate != null)
+                        if (runtimeData.HasCurrentState)
                         {
-                            theater = State.currentstate.theatre ?? "";
+                            theater = runtimeData.CurrentStateTheatre ?? "";
 
                             if (moduleConnectedNow)
                             {
                                 // Use processed server-state airborne as authoritative WoW for stability across modules.
                                 hasWow = true;
-                                wow = State.currentstate.airborne ? 0 : 1;
+                                wow = runtimeData.CurrentStateAirborne ? 0 : 1;
                             }
 
-                            if (!hasPosition && State.currentstate.bpos != null)
+                            if (!hasPosition && runtimeData.HasCurrentStateBpos)
                             {
-                                posX = State.currentstate.bpos.x;
-                                posY = State.currentstate.bpos.z;
-                                altFeet = State.currentstate.bpos.y * 3.28084;
+                                posX = runtimeData.CurrentStatePosX;
+                                posY = runtimeData.CurrentStatePosZ;
+                                altFeet = runtimeData.CurrentStatePosY * 3.28084;
                                 hasPosition = true;
                             }
 
-                            double missionStartSeconds;
-                            double missionElapsedSeconds = State.currentstate.timer;
-                            bool hasMissionStart = double.TryParse(State.currentstate.sortie ?? "", out missionStartSeconds);
-                            missionTimeSeconds = hasMissionStart && missionElapsedSeconds >= 0
-                                ? (missionStartSeconds + missionElapsedSeconds)
-                                : State.currentstate.tod;
+                            missionTimeSeconds = GetMissionTimeSeconds(runtimeData);
                         }
 
                         if (!moduleConnectedNow)
@@ -4655,27 +4974,8 @@ namespace VAICOM
                 {
                     try
                     {
-                        bool moduleConnectedNow = false;
-                        try
-                        {
-                            bool moduleConnectedFlag = false;
-                            string currentModuleId = "";
-                            string currentStateModuleId = "";
-                            try { moduleConnectedFlag = State.moduleConnected; } catch { moduleConnectedFlag = false; }
-                            try { currentModuleId = State.currentmodule == null ? "" : (State.currentmodule.Id ?? ""); } catch { currentModuleId = ""; }
-                            try { currentStateModuleId = State.currentstate == null ? "" : (State.currentstate.id ?? ""); } catch { currentStateModuleId = ""; }
-
-                            bool moduleFromCurrentModule = !string.IsNullOrWhiteSpace(currentModuleId)
-                                && !string.Equals(currentModuleId.Trim(), "----", StringComparison.OrdinalIgnoreCase);
-                            bool moduleFromCurrentState = !string.IsNullOrWhiteSpace(currentStateModuleId)
-                                && !string.Equals(currentStateModuleId.Trim(), "----", StringComparison.OrdinalIgnoreCase);
-
-                            moduleConnectedNow = moduleConnectedFlag && moduleFromCurrentModule && moduleFromCurrentState;
-                        }
-                        catch
-                        {
-                            moduleConnectedNow = false;
-                        }
+                        OpenKneeboardBridgeRuntimeDataSnapshot runtimeData = GetRuntimeDataSnapshot();
+                        bool moduleConnectedNow = IsModuleConnectedStrict(runtimeData);
 
                         FastAvBusState value;
                         bool hasAny = TryGetFastAvBus(out value);
@@ -4754,9 +5054,9 @@ namespace VAICOM
                         }
 
                         string theatre = request.QueryString["theatre"] ?? "";
-                        if (string.IsNullOrWhiteSpace(theatre) && State.currentstate != null)
+                        if (string.IsNullOrWhiteSpace(theatre))
                         {
-                            theatre = State.currentstate.theatre ?? "";
+                            theatre = GetCurrentTheatre();
                         }
 
                         OpenKneeboardElevationResult result = ElevationProvider.GetElevation(new OpenKneeboardElevationRequest
@@ -4815,7 +5115,7 @@ namespace VAICOM
                     {
                         try
                         {
-                            string theatre = (State.currentstate == null ? "" : State.currentstate.theatre) ?? "";
+                            string theatre = GetCurrentTheatre();
                             airports.AddRange(OpenKneeboardNavigraphApiProxy.GetTheatreAirportCandidates(theatre));
                             airportNames = OpenKneeboardNavigraphApiProxy.GetTheatreAirportDisplayNames(theatre);
                         }
@@ -4870,7 +5170,7 @@ namespace VAICOM
                         .OrderBy(a => a, StringComparer.OrdinalIgnoreCase)
                         .ToList();
 
-                    string currentTheatre = (State.currentstate == null ? "" : State.currentstate.theatre) ?? "";
+                    string currentTheatre = GetCurrentTheatre();
                     Dictionary<string, string> iataByIcao = OpenKneeboardNavigraphApiProxy.GetIataByIcao(airports, currentTheatre);
 
                     if (useNavigraph && airports.Count > 0)
@@ -4930,7 +5230,7 @@ namespace VAICOM
                         ? "UNSET"
                         : airport.Trim().ToUpperInvariant();
 
-                    string theatre = (State.currentstate == null ? "" : State.currentstate.theatre) ?? "";
+                    string theatre = GetCurrentTheatre();
                     requestedAirport = OpenKneeboardNavigraphApiProxy.ResolveAirportCodeToIcao(requestedAirport, theatre);
 
                     string normalizedAirport = ExtractAirportToken(requestedAirport);
@@ -5425,7 +5725,7 @@ namespace VAICOM
 
                 public static void SetRawServerCaptureEnabled(bool enabled)
                 {
-                    bool allow = enabled && State.activeconfig != null && State.activeconfig.Debugmode;
+                    bool allow = enabled && IsDebugModeEnabled();
 
                     lock (Sync)
                     {
@@ -5447,7 +5747,7 @@ namespace VAICOM
                     bool doCapture;
                     lock (Sync)
                     {
-                        doCapture = captureRawServerMessages && State.activeconfig != null && State.activeconfig.Debugmode;
+                        doCapture = captureRawServerMessages && IsDebugModeEnabled();
                         if (!doCapture)
                         {
                             return;
@@ -5464,7 +5764,12 @@ namespace VAICOM
 
                     try
                     {
-                        string logsFolder = Path.Combine(State.VA_APPS, Products.Products.Families.Vaicom.VaicomProPlugin.rootfoldername, AppData.SubFolders["logfiles"]);
+                        string logsFolder = GetLogFilesFolderPath();
+                        if (string.IsNullOrWhiteSpace(logsFolder))
+                        {
+                            return;
+                        }
+
                         string filePath = Path.Combine(logsFolder, "VAICOMPRO.ServerMessages.log");
 
                         lock (RawServerLogSync)
@@ -5482,7 +5787,12 @@ namespace VAICOM
                 {
                     try
                     {
-                        string logsFolder = Path.Combine(State.VA_APPS, Products.Products.Families.Vaicom.VaicomProPlugin.rootfoldername, AppData.SubFolders["logfiles"]);
+                        string logsFolder = GetLogFilesFolderPath();
+                        if (string.IsNullOrWhiteSpace(logsFolder))
+                        {
+                            return;
+                        }
+
                         string filePath = Path.Combine(logsFolder, "VAICOMPRO.ServerMessages.log");
 
                         lock (RawServerLogSync)
@@ -5855,9 +6165,7 @@ namespace VAICOM
                                         continue;
                                     }
 
-                                    string activeTheater = string.IsNullOrWhiteSpace(State.currentstate == null ? "" : State.currentstate.theatre)
-                                        ? ""
-                                        : State.currentstate.theatre.Trim();
+                                    string activeTheater = (GetCurrentTheatre() ?? "").Trim();
 
                                     if (!string.IsNullOrWhiteSpace(activeTheater))
                                     {
@@ -6378,28 +6686,17 @@ namespace VAICOM
 
                     try
                     {
-                        bool moduleConnectedFlag = false;
-                        string currentModuleId = "";
-                        string currentStateModuleId = "";
-
-                        try { moduleConnectedFlag = State.moduleConnected; } catch { moduleConnectedFlag = false; }
-                        try { currentModuleId = State.currentmodule == null ? "" : (State.currentmodule.Id ?? ""); } catch { currentModuleId = ""; }
-                        try { currentStateModuleId = State.currentstate == null ? "" : (State.currentstate.id ?? ""); } catch { currentStateModuleId = ""; }
-                        try { server.MetarMetric = State.currentmodule != null && State.currentmodule.IsMetric; } catch { server.MetarMetric = false; }
-
-                        bool moduleFromCurrentModule = !string.IsNullOrWhiteSpace(currentModuleId)
-                            && !string.Equals(currentModuleId.Trim(), "----", StringComparison.OrdinalIgnoreCase);
-                        bool moduleFromCurrentState = !string.IsNullOrWhiteSpace(currentStateModuleId)
-                            && !string.Equals(currentStateModuleId.Trim(), "----", StringComparison.OrdinalIgnoreCase);
+                        OpenKneeboardBridgeRuntimeDataSnapshot runtimeData = GetRuntimeDataSnapshot();
+                        server.MetarMetric = runtimeData.CurrentModuleIsMetric;
 
                         // MP slot/cockpit transitions can temporarily desync currentmodule/currentstate IDs.
                         // Treat either runtime module identity source as sufficient while the core flag is true.
-                        server.ModuleConnected = moduleConnectedFlag && (moduleFromCurrentModule || moduleFromCurrentState);
+                        server.ModuleConnected = IsModuleConnectedBroad(runtimeData);
 
                         // Keep module-connected state stable across brief identity dropouts
                         // (e.g., tab/category transitions) so runtime COMMS/marker panels do not flicker blank.
                         if (!server.ModuleConnected
-                            && moduleConnectedFlag
+                            && runtimeData.ModuleConnected
                             && priorServer != null
                             && priorServer.ModuleConnected)
                         {
@@ -6422,39 +6719,29 @@ namespace VAICOM
                             MarkRuntimeConnectedHeartbeat();
                         }
 
-                        if (State.currentstate != null)
+                        if (runtimeData.HasCurrentState)
                         {
-                            server.Theater = State.currentstate.theatre;
-                            server.DcsLocation = !string.IsNullOrWhiteSpace(State.currentstate.dcsversion)
-                                ? State.currentstate.dcsversion
-                                : (!string.IsNullOrWhiteSpace(State.currentstate.clientversion)
-                                    ? State.currentstate.clientversion
-                                    : State.currentstate.root);
-                            server.Aircraft = State.currentstate.id;
-                            server.PlayerUsername = State.currentstate.playerusername;
-                            server.PlayerCallsign = State.currentstate.playercallsign;
-                            server.PlayerCoalition = State.currentstate.playercoalition;
-                            server.MissionTitle = State.currentstate.missiontitle;
-                            server.MissionBriefing = State.currentstate.missionbriefing;
-                            server.MissionDetails = State.currentstate.missiondetails;
-                            double missionStartSeconds = 0;
-                            double missionElapsedSeconds = State.currentstate.timer;
-                            bool hasMissionStart = double.TryParse(State.currentstate.sortie ?? "", out missionStartSeconds);
-                            if (hasMissionStart && missionElapsedSeconds >= 0)
-                            {
-                                server.MissionTimeSeconds = missionStartSeconds + missionElapsedSeconds;
-                            }
-                            else
-                            {
-                                server.MissionTimeSeconds = State.currentstate.tod;
-                            }
-                            server.PlayerPosX = State.currentstate.bpos == null ? 0 : State.currentstate.bpos.x;
-                            server.PlayerPosY = State.currentstate.bpos == null ? 0 : State.currentstate.bpos.z;
-                            server.PlayerAltFeet = State.currentstate.bpos == null ? 0 : (State.currentstate.bpos.y * 3.28084);
-                            server.Multiplayer = State.currentstate.multiplayer;
-                            server.DebugMode = State.activeconfig.Debugmode;
-                            server.Payload = State.currentstate.payload;
-                            string runtimeRadioMissionIdentity = BuildRuntimeRadioMissionIdentity();
+                            server.Theater = runtimeData.CurrentStateTheatre;
+                            server.DcsLocation = !string.IsNullOrWhiteSpace(runtimeData.CurrentStateDcsVersion)
+                                ? runtimeData.CurrentStateDcsVersion
+                                : (!string.IsNullOrWhiteSpace(runtimeData.CurrentStateClientVersion)
+                                    ? runtimeData.CurrentStateClientVersion
+                                    : runtimeData.CurrentStateRoot);
+                            server.Aircraft = runtimeData.CurrentStateAircraft;
+                            server.PlayerUsername = runtimeData.CurrentStatePlayerUsername;
+                            server.PlayerCallsign = runtimeData.CurrentStatePlayerCallsign;
+                            server.PlayerCoalition = runtimeData.CurrentStatePlayerCoalition;
+                            server.MissionTitle = runtimeData.CurrentStateMissionTitle;
+                            server.MissionBriefing = runtimeData.CurrentStateMissionBriefing;
+                            server.MissionDetails = runtimeData.CurrentStateMissionDetails;
+                            server.MissionTimeSeconds = GetMissionTimeSeconds(runtimeData);
+                            server.PlayerPosX = runtimeData.HasCurrentStateBpos ? runtimeData.CurrentStatePosX : 0;
+                            server.PlayerPosY = runtimeData.HasCurrentStateBpos ? runtimeData.CurrentStatePosZ : 0;
+                            server.PlayerAltFeet = runtimeData.HasCurrentStateBpos ? (runtimeData.CurrentStatePosY * 3.28084) : 0;
+                            server.Multiplayer = runtimeData.CurrentStateMultiplayer;
+                            server.DebugMode = IsDebugModeEnabled();
+                            server.Payload = runtimeData.CurrentStatePayload;
+                            string runtimeRadioMissionIdentity = BuildRuntimeRadioMissionIdentity(runtimeData);
                             if (!string.IsNullOrWhiteSpace(runtimeRadioMissionIdentity)
                                 && !string.Equals(lastRuntimeRadioMissionIdentity, runtimeRadioMissionIdentity, StringComparison.Ordinal))
                             {
@@ -6462,9 +6749,9 @@ namespace VAICOM
                                 lastRuntimeRadioSnapshot = new List<Servers.Server.RadioDevice>();
                             }
 
-                            List<Servers.Server.RadioDevice> runtimeRadios = State.currentstate.radios == null
+                            List<Servers.Server.RadioDevice> runtimeRadios = runtimeData.CurrentStateRadios == null
                                 ? new List<Servers.Server.RadioDevice>()
-                                : new List<Servers.Server.RadioDevice>(State.currentstate.radios);
+                                : new List<Servers.Server.RadioDevice>(runtimeData.CurrentStateRadios);
 
                             if (runtimeRadios.Count > 0)
                             {
@@ -6494,23 +6781,23 @@ namespace VAICOM
                             {
                                 server.Radios = runtimeRadios;
                             }
-                            server.AtcMetars = State.currentstate.atcmetars == null
+                            server.AtcMetars = runtimeData.CurrentStateAtcMetars == null
                                 ? new Dictionary<string, string>()
-                                : new Dictionary<string, string>(State.currentstate.atcmetars);
-                            server.AtcIcaoTypes = State.currentstate.atcicaotypes == null
+                                : new Dictionary<string, string>(runtimeData.CurrentStateAtcMetars);
+                            server.AtcIcaoTypes = runtimeData.CurrentStateAtcIcaoTypes == null
                                 ? new Dictionary<string, string>()
-                                : new Dictionary<string, string>(State.currentstate.atcicaotypes);
-                            server.Diagnostics = State.currentstate.diagnostics;
-                            server.FlightMembers = BuildFlightMemberSnapshot();
-                            server.FriendlyAssets = BuildFriendlyAssetsSnapshot();
+                                : new Dictionary<string, string>(runtimeData.CurrentStateAtcIcaoTypes);
+                            server.Diagnostics = runtimeData.CurrentStateDiagnostics;
+                            server.FlightMembers = BuildFlightMemberSnapshot(runtimeData);
+                            server.FriendlyAssets = BuildFriendlyAssetsSnapshot(runtimeData);
                             bool markerSnapshotAuthoritativeEmpty;
-                            server.MapMarkers = BuildMapMarkerSnapshot(out markerSnapshotAuthoritativeEmpty);
+                            server.MapMarkers = BuildMapMarkerSnapshot(runtimeData, out markerSnapshotAuthoritativeEmpty);
                             server.MapMarkersAuthoritativeEmpty = markerSnapshotAuthoritativeEmpty;
-                            server.MissionDrawings = State.currentstate.missiondrawings;
+                            server.MissionDrawings = runtimeData.CurrentStateMissionDrawings;
                         }
 
                         if (server.ModuleConnected
-                            && State.currentstate == null
+                            && !runtimeData.HasCurrentState
                             && priorServer != null)
                         {
                             // Preserve last-known runtime sections while currentstate is briefly unavailable.
@@ -6548,19 +6835,19 @@ namespace VAICOM
                     return server;
                 }
 
-                private static List<OpenKneeboardFlightMember> BuildFlightMemberSnapshot()
+                private static List<OpenKneeboardFlightMember> BuildFlightMemberSnapshot(OpenKneeboardBridgeRuntimeDataSnapshot runtimeData)
                 {
                     List<OpenKneeboardFlightMember> members = new List<OpenKneeboardFlightMember>();
 
                     try
                     {
-                        if (State.currentstate == null)
+                        if (runtimeData == null || !runtimeData.HasCurrentState)
                         {
                             return members;
                         }
 
-                        string playerCallsign = string.IsNullOrWhiteSpace(State.currentstate.playercallsign) ? "" : State.currentstate.playercallsign.Trim();
-                        string playerName = string.IsNullOrWhiteSpace(State.currentstate.playerusername) ? "" : State.currentstate.playerusername.Trim();
+                        string playerCallsign = string.IsNullOrWhiteSpace(runtimeData.CurrentStatePlayerCallsign) ? "" : runtimeData.CurrentStatePlayerCallsign.Trim();
+                        string playerName = string.IsNullOrWhiteSpace(runtimeData.CurrentStatePlayerUsername) ? "" : runtimeData.CurrentStatePlayerUsername.Trim();
                         int playerJet = ParseJetPositionFromCallsign(playerCallsign);
 
                         if (!string.IsNullOrWhiteSpace(playerCallsign) || !string.IsNullOrWhiteSpace(playerName))
@@ -6574,9 +6861,9 @@ namespace VAICOM
                         }
 
                         List<Servers.Server.DcsUnit> flightUnits = null;
-                        if (State.currentstate.availablerecipients != null)
+                        if (runtimeData.CurrentStateAvailableRecipients != null)
                         {
-                            State.currentstate.availablerecipients.TryGetValue("Flight", out flightUnits);
+                            runtimeData.CurrentStateAvailableRecipients.TryGetValue("Flight", out flightUnits);
                         }
 
                         if (flightUnits != null)
@@ -6768,11 +7055,11 @@ namespace VAICOM
                     return isKnownAwacsCallsign || isAwacsType;
                 }
 
-                private static string ResolveAtcIcaoType(string callsign, string atcName)
+                private static string ResolveAtcIcaoType(Dictionary<string, string> atcIcaoTypes, string callsign, string atcName)
                 {
                     try
                     {
-                        if (State.currentstate == null || State.currentstate.atcicaotypes == null)
+                        if (atcIcaoTypes == null)
                         {
                             return string.Empty;
                         }
@@ -6782,18 +7069,18 @@ namespace VAICOM
 
                         string type;
                         if (!string.IsNullOrWhiteSpace(keyCallsign)
-                            && State.currentstate.atcicaotypes.TryGetValue(keyCallsign, out type))
+                            && atcIcaoTypes.TryGetValue(keyCallsign, out type))
                         {
                             return NormalizeAtcIcaoTypeValue(type);
                         }
 
                         if (!string.IsNullOrWhiteSpace(keyName)
-                            && State.currentstate.atcicaotypes.TryGetValue(keyName, out type))
+                            && atcIcaoTypes.TryGetValue(keyName, out type))
                         {
                             return NormalizeAtcIcaoTypeValue(type);
                         }
 
-                        foreach (KeyValuePair<string, string> pair in State.currentstate.atcicaotypes)
+                        foreach (KeyValuePair<string, string> pair in atcIcaoTypes)
                         {
                             string normalizedKey = NormalizeAtcLookupKey(pair.Key);
                             if (!string.IsNullOrWhiteSpace(keyCallsign)
@@ -6835,18 +7122,18 @@ namespace VAICOM
                     return (t == "MIL" || t == "CIV" || t == "JOINT") ? t : string.Empty;
                 }
 
-                private static string BuildMapMarkerMissionIdentity()
+                private static string BuildMapMarkerMissionIdentity(OpenKneeboardBridgeRuntimeDataSnapshot runtimeData)
                 {
                     try
                     {
-                        if (State.currentstate == null)
+                        if (runtimeData == null || !runtimeData.HasCurrentState)
                         {
                             return "";
                         }
 
-                        string title = (State.currentstate.missiontitle ?? string.Empty).Trim();
-                        string root = (State.currentstate.root ?? string.Empty).Trim();
-                        string theatre = (State.currentstate.theatre ?? string.Empty).Trim();
+                        string title = (runtimeData.CurrentStateMissionTitle ?? string.Empty).Trim();
+                        string root = (runtimeData.CurrentStateRoot ?? string.Empty).Trim();
+                        string theatre = (runtimeData.CurrentStateTheatre ?? string.Empty).Trim();
                         return string.Join("|", new[] { title, root, theatre });
                     }
                     catch
@@ -6885,11 +7172,11 @@ namespace VAICOM
                     return copy;
                 }
 
-                private static List<OpenKneeboardMapMarker> BuildMapMarkerSnapshot(out bool authoritativeEmpty)
+                private static List<OpenKneeboardMapMarker> BuildMapMarkerSnapshot(OpenKneeboardBridgeRuntimeDataSnapshot runtimeData, out bool authoritativeEmpty)
                 {
                     authoritativeEmpty = false;
                     List<OpenKneeboardMapMarker> markers = new List<OpenKneeboardMapMarker>();
-                    string missionIdentity = BuildMapMarkerMissionIdentity();
+                    string missionIdentity = BuildMapMarkerMissionIdentity(runtimeData);
 
                     try
                     {
@@ -6902,20 +7189,20 @@ namespace VAICOM
                             consecutiveMapMarkerEmptyFrames = 0;
                         }
 
-                        if (State.currentstate == null || State.currentstate.riostate == null)
+                        if (runtimeData == null || !runtimeData.HasCurrentState)
                         {
                             return CloneMapMarkers(lastMapMarkerSnapshot);
                         }
 
-                        int markerCountHint = State.currentstate.riostate.markers;
-                        if (State.currentstate.riostate.markerdetails == null)
+                        int markerCountHint = runtimeData.CurrentStateMarkerCount;
+                        if (!runtimeData.CurrentStateHasMarkerDetails)
                         {
                             // Keep the last-known marker set when details are momentarily missing.
                             // This avoids blank/fill flicker when browsing away and back across tabs.
                             return CloneMapMarkers(lastMapMarkerSnapshot);
                         }
 
-                        foreach (Servers.Server.MapMarkerState marker in State.currentstate.riostate.markerdetails)
+                        foreach (Servers.Server.MapMarkerState marker in runtimeData.CurrentStateMarkerDetails)
                         {
                             if (marker == null)
                             {
@@ -6995,37 +7282,37 @@ namespace VAICOM
                     return CloneMapMarkers(lastMapMarkerSnapshot);
                 }
 
-                private static List<OpenKneeboardFriendlyAsset> BuildFriendlyAssetsSnapshot()
+                private static List<OpenKneeboardFriendlyAsset> BuildFriendlyAssetsSnapshot(OpenKneeboardBridgeRuntimeDataSnapshot runtimeData)
                 {
                     List<OpenKneeboardFriendlyAsset> assets = new List<OpenKneeboardFriendlyAsset>();
                     const int maxFriendlyAssets = 128;
 
                     try
                     {
-                        if (State.currentstate == null || State.currentstate.availablerecipients == null)
+                        if (runtimeData == null || !runtimeData.HasCurrentState || runtimeData.CurrentStateAvailableRecipients == null)
                         {
                             return assets;
                         }
 
-                        string playerCoalition = (State.currentstate.playercoalition ?? string.Empty).Trim();
+                        string playerCoalition = (runtimeData.CurrentStatePlayerCoalition ?? string.Empty).Trim();
                         // Keep ATC early so large mission recipient sets do not crowd out airfields
                         // before SA-map/WX overlays are assembled.
                         string[] categories = new[] { "Player", "ATC", "Flight", "Tanker", "AWACS", "JTAC", "Allies" };
                         HashSet<string> seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-                        if (State.currentstate.bpos != null)
+                        if (runtimeData.HasCurrentStateBpos)
                         {
-                            double playerNorth = State.currentstate.bpos.x;
-                            double playerEast = State.currentstate.bpos.z;
+                            double playerNorth = runtimeData.CurrentStatePosX;
+                            double playerEast = runtimeData.CurrentStatePosZ;
                             if (!double.IsNaN(playerNorth) && !double.IsInfinity(playerNorth) && !double.IsNaN(playerEast) && !double.IsInfinity(playerEast))
                             {
-                                string playerCallsign = string.IsNullOrWhiteSpace(State.currentstate.playercallsign) ? "" : State.currentstate.playercallsign.Trim();
-                                string playerName = string.IsNullOrWhiteSpace(State.currentstate.id) ? "" : State.currentstate.id.Trim();
-                                string playerUsername = string.IsNullOrWhiteSpace(State.currentstate.playerusername) ? "" : State.currentstate.playerusername.Trim();
+                                string playerCallsign = string.IsNullOrWhiteSpace(runtimeData.CurrentStatePlayerCallsign) ? "" : runtimeData.CurrentStatePlayerCallsign.Trim();
+                                string playerName = string.IsNullOrWhiteSpace(runtimeData.CurrentStateAircraft) ? "" : runtimeData.CurrentStateAircraft.Trim();
+                                string playerUsername = string.IsNullOrWhiteSpace(runtimeData.CurrentStatePlayerUsername) ? "" : runtimeData.CurrentStatePlayerUsername.Trim();
 
                                 List<Servers.Server.DcsUnit> playerUnits;
-                                if (State.currentstate.availablerecipients != null
-                                    && State.currentstate.availablerecipients.TryGetValue("Player", out playerUnits)
+                                if (runtimeData.CurrentStateAvailableRecipients != null
+                                    && runtimeData.CurrentStateAvailableRecipients.TryGetValue("Player", out playerUnits)
                                     && playerUnits != null)
                                 {
                                     Servers.Server.DcsUnit ownUnit = playerUnits.FirstOrDefault(u => u != null && u.pos != null)
@@ -7051,7 +7338,7 @@ namespace VAICOM
                                     }
                                 }
 
-                                string playerDisplay = State.currentstate.multiplayer
+                                string playerDisplay = runtimeData.CurrentStateMultiplayer
                                     ? (!string.IsNullOrWhiteSpace(playerUsername) ? playerUsername : playerCallsign)
                                     : (!string.IsNullOrWhiteSpace(playerCallsign) ? playerCallsign : playerUsername);
 
@@ -7067,14 +7354,14 @@ namespace VAICOM
                                     Callsign = playerDisplay,
                                     Name = playerName,
                                     Category = "PLAYER",
-                                    TypeName = string.IsNullOrWhiteSpace(State.currentstate.id) ? "" : State.currentstate.id,
+                                    TypeName = string.IsNullOrWhiteSpace(runtimeData.CurrentStateAircraft) ? "" : runtimeData.CurrentStateAircraft,
                                     Frequency = "",
                                     Tacan = "",
                                     MpClientCallsign = playerUsername,
                                     RawLine = string.Empty,
                                     X = playerNorth,
                                     Y = playerEast,
-                                    AltFeet = State.currentstate.bpos.y * 3.28084,
+                                    AltFeet = runtimeData.CurrentStatePosY * 3.28084,
                                 });
                             }
                         }
@@ -7082,7 +7369,7 @@ namespace VAICOM
                         foreach (string category in categories)
                         {
                             List<Servers.Server.DcsUnit> units;
-                            if (!State.currentstate.availablerecipients.TryGetValue(category, out units) || units == null)
+                            if (!runtimeData.CurrentStateAvailableRecipients.TryGetValue(category, out units) || units == null)
                             {
                                 continue;
                             }
@@ -7137,7 +7424,7 @@ namespace VAICOM
                                     Category = normalizedCategory,
                                     TypeName = string.IsNullOrWhiteSpace(unit.typename) ? "" : unit.typename,
                                     Frequency = string.IsNullOrWhiteSpace(unit.freq) ? "" : unit.freq,
-                                    IcaoType = ResolveAtcIcaoType(callsign, name),
+                                    IcaoType = ResolveAtcIcaoType(runtimeData.CurrentStateAtcIcaoTypes, callsign, name),
                                     AltFrequencies = unit.altfreq == null
                                         ? new List<string>()
                                         : unit.altfreq.Where(f => !string.IsNullOrWhiteSpace(f)).ToList(),
