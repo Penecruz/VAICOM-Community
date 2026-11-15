@@ -724,6 +724,11 @@ namespace VAICOM
                 // George
                 { "wAIUnitFlightCrewMembersGeorgeNull", new Recipient { uniqueid = 19600, category = RecipientCategories.GeorgeCPG, name = "wAIUnitFlightCrewMembersGeorgeNull", } },
                 { "wAIUnitFlightCrewMembersGeorgeMaximum", new Recipient { uniqueid = 19699, category = RecipientCategories.GeorgeCPG, name = "wAIUnitFlightCrewMembersGeorgeMaximum", } },
+
+                // VAICOM overlay
+                { "wAIUnitVaicomOverlayNull",      new Recipient { uniqueid = 19700, category = RecipientCategories.vaicom_overlay, name = "wAIUnitVaicomOverlayNull",      } },
+                { "vaicom_overlay",                new Recipient { uniqueid = 19701, category = RecipientCategories.vaicom_overlay, name = "wAIUnitVaicomOverlay",          displayname = Labels.airecipients["vaicom_overlay"]  } },
+                { "wAIUnitVaicomOverlayMaximum",   new Recipient { uniqueid = 19799, category = RecipientCategories.vaicom_overlay, name = "wAIUnitVaicomOverlayMaximum",   } },
             };
         }
     }

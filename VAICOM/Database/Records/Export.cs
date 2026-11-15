@@ -11,7 +11,6 @@ namespace VAICOM
 
         public static partial class Aliases
         {
-
             private static void AppendAliasWithGeorgeVariant(ref string target, string category, string alias, ref int counter)
             {
                 if (string.IsNullOrWhiteSpace(alias))
@@ -85,6 +84,11 @@ namespace VAICOM
                                     // unnecesary to add to the recipient strings, which will also create
                                     // redundant combinations of commands.
                                     if (cat.Equals("GeorgeCPG") && alias.Key.Equals("George"))
+                                    {
+                                        continue;
+                                    }
+
+                                    if (cat.Equals("vaicom_overlay"))
                                     {
                                         continue;
                                     }
@@ -320,6 +324,12 @@ namespace VAICOM
                             {
                                 outputcommandstring = outputcommandstring + commandstrings[commandcat];
                             }
+
+                            // VAICOM overlay commands
+                            if (cat.Equals("vaicom_overlay") && commandcat.Contains("vaicom_overlay"))
+                            {
+                                outputcommandstring = outputcommandstring + commandstrings[commandcat];
+                            }
                         }
 
                         // Skip the WSO recipient category as this is handled seperately
@@ -356,7 +366,7 @@ namespace VAICOM
                             string blockstring = "";
 
                             blockstring += outputrecipientstring;
-                            if (cat.StartsWith("WSO") || cat.Equals("aijtac") || cat.Equals("aiatc") || cat.Equals("aifarp") || cat.Equals("aiship") || cat.Equals("aitanker") || cat.Equals("aiawacs") || cat.Equals("aocs")) //,
+                            if (cat.StartsWith("WSO") || cat.Equals("aijtac") || cat.Equals("aiatc") || cat.Equals("aifarp") || cat.Equals("aiship") || cat.Equals("aitanker") || cat.Equals("aiawacs") || cat.Equals("aocs") || cat.Equals("vaicom_overlay")) //,
                             {
                                 //blockstring += outputsenderstring;
                             }
@@ -427,7 +437,7 @@ namespace VAICOM
                     counter = counter + 1;
                 }
 
-                // pragmatic add of Switch for vspx 
+                // Pragmatic add of Switch for VSPX
                 string outputspecialcmdstring = "";
                 foreach (KeyValuePair<string, string> alias in Aliases.aicommands)
                 {
@@ -463,14 +473,32 @@ namespace VAICOM
                     }
                 }
 
+                // Pragmatic add of keywords for VAICOM overlay for VSPX
+                string outputvaicomoverlaycmds = "";
+                foreach (KeyValuePair<string, string> alias in Aliases.aicommands)
+                {
+                    try
+                    {
+                        if (Commands.Table[alias.Value].category.Equals(CommandCategories.vaicom_overlay))
+                        {
+                            outputvaicomoverlaycmds += alias.Key + "; ";
+                            counter = counter + 1;
+                        }
+                    }
+                    catch
+                    {
+                    }
+                }
+
                 outputstring += outputappendixwpnstring;
                 outputstring += outputappendixdirstring;
                 outputstring += outputmenucontrolcmds;
+                outputstring += outputvaicomoverlaycmds;
                 outputstring += commandstrings["reply"];
                 //outputstring += outputsenderstring;
                 outputstring += outputspecialcmdstring;
 
-                // pragmatic add of Kneeboard for vspx 
+                // Pragmatic add of keywords for Kneeboard for VSPX
                 foreach (KeyValuePair<string, string> alias in Aliases.airecipients)
                 {
                     try
@@ -486,7 +514,7 @@ namespace VAICOM
                     }
                 }
 
-                // pragmatic add of F10 Menu Items in the recipients list for vspx 
+                // Pragmatic add of F10 Menu Items in the recipients list for VSPX
                 foreach (KeyValuePair<string, string> alias in Aliases.airecipients)
                 {
                     try
@@ -502,7 +530,7 @@ namespace VAICOM
                     }
                 }
 
-                // pragmatic add of Dynamic matched F10 Menu commands for vspx 
+                // Pragmatic add of Dynamic matched F10 Menu commands for VSPX
                 foreach (KeyValuePair<string, string> alias in Aliases.aicommands)
                 {
                     try
@@ -518,7 +546,7 @@ namespace VAICOM
                     }
                 }
 
-                // pragmatic add of imported F10 Menu commands for vspx 
+                // Pragmatic add of imported F10 Menu commands for VSPX
                 foreach (KeyValuePair<string, string> alias in Aliases.importedmenus)
                 {
                     try
@@ -549,7 +577,7 @@ namespace VAICOM
             }
 
 
-            // OLD VERSION: creates up-to-date string to reflect database
+            // OLD VERSION: creates up-to-date string of keywords using * wildcards to reflect database
             public static string CreateMasterKeywordString()
             {
                 int counter = 0;

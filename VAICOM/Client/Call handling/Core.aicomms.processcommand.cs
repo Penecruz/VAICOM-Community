@@ -482,7 +482,6 @@ namespace VAICOM
 
                     try
                     {
-
                         // for kneeboard commands
                         if (State.currentcommand.isKneeboard() || State.currentcommand.uniqueid.Equals(23004) || State.currentcommand.uniqueid.Equals(23005))
                         {
@@ -603,13 +602,39 @@ namespace VAICOM
                             }
                             else
                             {
-                                Log.Write("Interactive Kneeboard and OpenKneeboard Out are disabled. Please enable one in the Vaicom Pro UI extension tab", Colors.Warning);
+                                Log.Write("Interactive Kneeboard and OpenKneeboard Out are disabled. Please enable one in the Vaicom UI Extension tab or VKB tab.", Colors.Warning);
                                 UI.Playsound.Error();
                             }
                         }
                     }
                     catch
                     {
+                    }
+
+                    // VAICOM overlay commands
+                    if (State.currentcommand.isVaicomOverlay())
+                    {
+                        if (State.configwindowopen || State.configurationwindow != null)
+                        {
+                            switch (State.currentcommand.dcsid)
+                            {
+                                case "wMsgVaicomOverlayShow":
+                                    UI.VaicomOverlayWindow.ShowOverlay();
+                                    UI.Playsound.Proceed();
+                                    break;
+                                case "wMsgVaicomOverlayHide":
+                                    UI.VaicomOverlayWindow.HideOverlay();
+                                    UI.Playsound.Proceed();
+                                    break;
+                                default:
+                                    break;
+                            }
+                        }
+                        else
+                        {
+                            Log.Write("The VAICOM window is not currently open. Please open this for the overlay to be displayed.", Colors.Warning);
+                            UI.Playsound.Error();
+                        }
                     }
 
 

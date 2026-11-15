@@ -95,6 +95,7 @@ namespace VAICOM
                 {RecipientCategories.WSO,            "WSO"                                   },
                 {RecipientCategories.GeorgeCPG,      "George CPG"                            },
                 {RecipientCategories.kneeboard,      "Interactive Kneeboard extension"       },
+                {RecipientCategories.vaicom_overlay, "VAICOM Overlay Window"                 },
             };
 
             public static Dictionary<CommandCategories, string> Commands = new Dictionary<CommandCategories, string>()
@@ -158,6 +159,7 @@ namespace VAICOM
                 {CommandCategories.WSO_groundcrew,              "F-4E AI WSO | Ground Crew"     },
                 {CommandCategories.WSO_misc,                    "F-4E AI WSO | Misc"            },
                 {CommandCategories.kneeboard,                   "Interactive Kneeboard extension" },
+                {CommandCategories.vaicom_overlay,              "VAICOM Overlay Window"         }
             };
         }
 

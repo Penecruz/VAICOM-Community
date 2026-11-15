@@ -51,6 +51,9 @@
                 //Kneeboard
                 if ((this.uniqueid >= Recipients.Table["wAIUnitKneeboardNull"].uniqueid) & (this.uniqueid <= Recipients.Table["wAIUnitKneeboardMaximum"].uniqueid)) { value = Recipientclasses.Kneeboard; }
 
+                // VAICOM overlay
+                if ((this.uniqueid >= Recipients.Table["wAIUnitVaicomOverlayNull"].uniqueid) & (this.uniqueid <= Recipients.Table["wAIUnitVaicomOverlayMaximum"].uniqueid)) { value = Recipientclasses.VaicomOverlay; }
+
                 return value;
             }
 
@@ -62,6 +65,11 @@
             public bool isKneeboard()
             {
                 return (this.uniqueid >= Recipients.Table["wAIUnitKneeboardNull"].uniqueid) & (this.uniqueid <= Recipients.Table["wAIUnitKneeboardMaximum"].uniqueid);
+            }
+
+            public bool isVaicomOverlay()
+            {
+                return (this.uniqueid >= Recipients.Table["wAIUnitVaicomOverlayNull"].uniqueid) & (this.uniqueid <= Recipients.Table["wAIUnitVaicomOverlayMaximum"].uniqueid);
             }
 
         }
@@ -151,6 +159,9 @@
                     case ("kneeboard"):
                         returnclass = Kneeboard;
                         break;
+                    case ("vaicom_overlay"):
+                        returnclass = VaicomOverlay;
+                        break;
 
                     default:
                         returnclass = Undefined;
@@ -190,6 +201,7 @@
             public static Recipientclass WSO = new Recipientclass { Name = "WSO" };
             public static Recipientclass GeorgeCPG = new Recipientclass { Name = "GeorgeCPG" };
             public static Recipientclass Kneeboard = new Recipientclass { Name = "Kneeboard" };
+            public static Recipientclass VaicomOverlay = new Recipientclass { Name = "VAICOM Overlay" };
         }
 
         public enum RecipientCategories
@@ -215,6 +227,7 @@
             GeorgeCPG,
             ally,
             kneeboard,
+            vaicom_overlay,
         }
     }
 

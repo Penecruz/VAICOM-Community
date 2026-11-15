@@ -733,6 +733,9 @@ namespace VAICOM
 
                 { "Kneeboard",              "kneeboard"              },
                 { "Show Kneeboard",         "kneeboard"              },
+
+                { "Show VAICOM Overlay",    "vaicom_overlay"         },
+                { "Hide VAICOM Overlay",    "vaicom_overlay"         },
             };
 
         }

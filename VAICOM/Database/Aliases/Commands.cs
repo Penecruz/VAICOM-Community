@@ -481,8 +481,12 @@ namespace VAICOM
 
                 { "Page",                  "wMsgShowKneeboardTab"         },
 
+                // VAICOM Overlay
+                { "Show VAICOM Overlay",   "wMsgVaicomOverlayShow"        },
+                { "Hide VAICOM Overlay",   "wMsgVaicomOverlayHide"        },
+
                 // Moose
-                    // Moose Airboss In flight commands
+                // Moose Airboss In flight commands
                 { "Airboss Mother Comms Check",      "Action Radio Check Marshal"                      }, //Only one istance of a CVN LHA or a Range can be present in the mission.
                 { "Mother Comms Check",              "Action Radio Check Marshal"                      }, //used in Imported script Dynamic F10 menu Commands for Moose Airboss Script
                 { "Airboss LSO Comms Check",         "Action Radio Check LSO"                          }, //These aliases must be unique and different from the standard DCS aliases!!
@@ -499,12 +503,12 @@ namespace VAICOM
                 { "Airboss Emergency Landing",       "Action Emergency Landing"                        },
                 { "Declaring an Emergency",          "Action Emergency Landing"                        },
                 { "Airboss Training Pattern",        "Action Emergency Landing"                        },
-                        //Ship commands used while in flight
+                // Ship commands used while in flight
                 { "Skipper Start Case One",          "Action Start CASE I"                             },
                 { "Skipper Start Case Two",          "Action Start CASE II"                            },
                 { "Skipper Start Case Three",        "Action Start CASE III"                           },
                 { "Skipper Stop Recovery",           "Action Stop Recovery"                            },
-                        //Airboss Config Commands ---Do we actually want these included??
+                // Airboss Config Commands ---Do we actually want these included??
                 { "Airboss set Flight Student",      "Action Flight Student"                           }, 
                 { "Airboss Set Naval Aviator",       "Action Naval Aviator"                            },
                 { "Airboss Set Topgun Graduate",     "Action TOPGUN Graduate"                          },
@@ -522,7 +526,7 @@ namespace VAICOM
                 { "Airboss Display Pattern Queue",   "Action Pattern Queue"                            },
                 { "Airboss Display Waiting Queue",   "Action Waiting Queue"                            },
 
-                    // Moose Range
+                // Moose Range
                 { "Illuminate the Range",            "Action Illuminate Range"                         },
                 { "Smoke the strafe pits",           "Action Smoke Strafe Pits"                        },
                 { "Smoke the gunnery targets",       "Action Smoke Strafe Tgts"                        },
@@ -534,7 +538,7 @@ namespace VAICOM
                 { "I'll be marking white",           "Action White Smoke"                              },
                 { "Range Weather",                   "Action Weather Report"                           },
                     
-                    // Moose AWACS
+                // Moose AWACS
                 { "Chalice Checking In",             "Action Check In"                                 }, // difficult due to conflicts with DCS aliases.
                 { "Chalice Say Bogey Dope",          "Action Bogey Dope"                               }, 
                 { "Chalice Say Picture",             "Action Picture"                                  }, 

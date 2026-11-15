@@ -595,6 +595,8 @@ namespace VAICOM
 
                 { "Zweibrucken",                                "Zweibrucken"                       },
                 //{ "kneeboard notes",         "Flip to Notes tab"     },
+
+                { "vaicom_overlay",                              "Overlay"                          }
             };
 
         }

@@ -500,6 +500,7 @@ namespace VAICOM
                     if (category == CommandCategories.menu || category == CommandCategories.auxmenu) { return "Menu"; }
                     if (category == CommandCategories.cargocontrol) { return "Cargo"; }
                     if (category == CommandCategories.special) { return "Special"; }
+                    if (category == CommandCategories.vaicom_overlay) { return "VAICOM Overlay"; }
 
                     return "Other";
                 };
@@ -905,6 +906,7 @@ namespace VAICOM
                                 if (group.Key.Equals("Kneeboard", StringComparison.OrdinalIgnoreCase)) return 15;
                                 if (group.Key.Equals("Cockpit", StringComparison.OrdinalIgnoreCase)) return 16;
                                 if (group.Key.Equals("Other", StringComparison.OrdinalIgnoreCase)) return 17;
+                                if (group.Key.Equals("VAICOM Overlay", StringComparison.OrdinalIgnoreCase)) return 18;
                                 return 18;
                             })
                             .ThenBy(group => group.Key)

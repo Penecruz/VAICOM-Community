@@ -198,6 +198,9 @@ namespace VAICOM
                 // Kneeboard
                 if ((this.uniqueid >= Commands.Table["wMsgKneeboardCmndsNull"].uniqueid) & (this.uniqueid <= Commands.Table["wMsgKneeboardCmndsMaximum"].uniqueid)) { value = Recipientclasses.Kneeboard; }
 
+                // VAICOM overlay window
+                if ((this.uniqueid >= Commands.Table["wMsgVaicomOverlayCmndsNull"].uniqueid) & (this.uniqueid <= Commands.Table["wMsgVaicomOverlayCmndsMaximum"].uniqueid)) { value = Recipientclasses.VaicomOverlay; }
+
                 return value;
             }
 
@@ -270,6 +273,11 @@ namespace VAICOM
             {
                 return ((this.uniqueid >= Commands.Table["wMsgKneeboardCmndsNull"].uniqueid) & (this.uniqueid <= Commands.Table["wMsgKneeboardCmndsMaximum"].uniqueid));
             }
+
+            public bool isVaicomOverlay()
+            {
+                return ((this.uniqueid >= Commands.Table["wMsgVaicomOverlayCmndsNull"].uniqueid) & (this.uniqueid <= Commands.Table["wMsgVaicomOverlayCmndsMaximum"].uniqueid));
+            }
         }
 
         public enum CommandCategories
@@ -324,6 +332,7 @@ namespace VAICOM
             AH64D_George_PLT_combat,
             AH64D_George_PLT_defensive,
             kneeboard,
+            vaicom_overlay,
             WSO,
             WSO_navigation,
             WSO_radar,

@@ -449,6 +449,12 @@ namespace VAICOM
             { "wMsgKneeboardPreviousTab" ,           new Command { uniqueid = 25008, category = CommandCategories.kneeboard,    eventnumber = 4000,  dcsid = "wMsgKneeboardPreviousTab"   } },
             { "wMsgKneeboardCmndsMaximum" ,          new Command { uniqueid = 25100, category = CommandCategories.kneeboard,    eventnumber = 4000,  dcsid = "wMsgKneeboardCmndsMaximum" } },
 
+            // VAICOM overlay window 25125-25150
+            { "wMsgVaicomOverlayCmndsNull",          new Command { uniqueid = 25125, category = CommandCategories.vaicom_overlay, eventnumber = 4000, dcsid = "wMsgVaicomOverlayCmndsNull" } },
+            { "wMsgVaicomOverlayShow",               new Command { uniqueid = 25126, category = CommandCategories.vaicom_overlay, eventnumber = 4000, dcsid = "wMsgVaicomOverlayShow" } },
+            { "wMsgVaicomOverlayHide",               new Command { uniqueid = 25127, category = CommandCategories.vaicom_overlay, eventnumber = 4000, dcsid = "wMsgVaicomOverlayHide" } },
+            { "wMsgVaicomOverlayCmndsMaximum",       new Command { uniqueid = 25150, category = CommandCategories.vaicom_overlay, eventnumber = 4000, dcsid = "wMsgVaicomOverlayCmndsMaximum" } },
+
             // George CPG/PLT commands 25200-25999
             { "wMsgGeorgeCmndsNull",          new Command { uniqueid = 25200, category = CommandCategories.AH64D_George, eventnumber = 4000, dcsid = "wMsgGeorgeCmndsNull" } },
             { "wMsgGeorgeCmndsMaximum",       new Command { uniqueid = 25999, category = CommandCategories.AH64D_George, eventnumber = 4000, dcsid = "wMsgGeorgeCmndsMaximum" } },
