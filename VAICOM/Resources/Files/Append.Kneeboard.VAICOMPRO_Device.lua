@@ -9,6 +9,8 @@ package.cpath = package.cpath..";.\\LuaSocket\\?.dll;"
 local	socket 		= require('socket')
 local 	JSON    	= require('JSON')
 
+local base = _G
+
 local 	dev = GetSelf()
 local 	dev_timer
 local 	update_time_step = 0.02
@@ -19,6 +21,9 @@ need_to_be_closed = false
 
 local sender
 local receiver
+local receive_pending = false
+local receive_retries = 0
+local receive_next_try = 0
 
 local config = {
 	sendaddress = "127.0.0.1",
@@ -28,15 +33,45 @@ local config = {
 	receiveport = 52341,
 	receivetimeout = 0	
 }
-local start = function()	
-	sender = socket.try(socket.udp()) 
+
+local function try_start_receiver()
+	local candidate, err = socket.udp()
+	if not candidate then
+		return nil, err
+	end
+	local ok
+	ok, err = candidate:setsockname(config.receiveaddress, config.receiveport)
+	if ok then
+		ok, err = candidate:settimeout(config.receivetimeout)
+	end
+	if not ok then
+		local closed, close_err = candidate:close()
+		if not closed then
+			-- errors can raise a table, not a string so get the actual error message
+			local msg = type(close_err) == "table" and tostring(close_err[1] or close_err.message or close_err) or tostring(close_err)
+			base.log.write("VAICOM", base.log.ERROR, "Error closing kneeboard receiver socket: " .. msg)
+		end
+		return nil, err
+	end
+	receiver = candidate
+	return true
+end
+
+local start = function()
+	sender = socket.try(socket.udp())
 	socket.try(sender:setpeername(config.sendaddress,config.sendport))
-	socket.try(sender:settimeout(config.sendtimeout))	
-	receiver = socket.try(socket.udp()) 
-	socket.try(receiver:setsockname(config.receiveaddress,config.receiveport))
-	socket.try(receiver:settimeout(config.receivetimeout))
+	socket.try(sender:settimeout(config.sendtimeout))
+	receive_retries = 0
+	local ok = try_start_receiver()
+	receive_pending = not ok
+	if receive_pending then
+		receive_next_try = socket.gettime() + 0.5
+	else
+		base.log.write("VAICOM", base.log.INFO, "Kneeboard receiver socket on " .. config.receiveaddress .. ":" .. config.receiveport .. " listening after " .. (receive_retries + 1) .. " attempts")
+	end
 end
 local stop  = function()	
+	receive_pending = false
 	if sender then
 		socket.try(sender:close())
 		sender = nil
@@ -107,12 +142,12 @@ function post_initialize()
 	init_aliasdata_all()
 	init_page_active()
 	set_page_active("LOG")	
+	dev_timer = 0
 	stop()
 	start()
 	if kneeboard then
 		kneeboard:performClickableAction(3004,1) 
 	end
-	dev_timer = 0
 end
 
 function SetCommand(command,value)
@@ -409,6 +444,23 @@ local last_update_time = 0
 
 function update()
     dev_timer = dev_timer + update_time_step
+    if receive_pending then
+        local now = socket.gettime()
+        if now >= receive_next_try then
+            receive_next_try = now + 0.5
+            receive_retries = receive_retries + 1
+            local ok, err = try_start_receiver()
+            if ok then
+                receive_pending = false
+                base.log.write("VAICOM", base.log.INFO, "Kneeboard receiving socket listening after " .. (receive_retries + 1) .. " attempts")
+            elseif receive_retries >= 120 then
+                receive_pending = false
+                -- errors can raise a table, not a string so get the actual error message
+				local msg = type(err) == "table" and tostring(err[1] or err.message or err) or tostring(err)
+				base.log.write("VAICOM", base.log.ERROR, "Kneeboard gave up after " .. receive_retries .. " retries: " .. msg)
+            end
+        end
+    end
     local datareadout = receiver and receiver:receive()
     receiveddata = datareadout or false
     if receiveddata then
