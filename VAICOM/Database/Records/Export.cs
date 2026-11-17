@@ -24,18 +24,18 @@ namespace VAICOM
                 if (alias.StartsWith("George", StringComparison.OrdinalIgnoreCase)
                     && (alias.Length == 6 || char.IsWhiteSpace(alias[6]) || alias[6] == ','))
                 {
-                    switch (category)
+                    if (category.StartsWith("AH64D_George_CPG"))
                     {
-                        case "AH64D_George_CPG":
-                            target += "Gunner" + alias.Substring(6) + "; ";
-                            break;
-                        case "AH64D_George_PLT":
-                            target += "Steve" + alias.Substring(6) + "; ";
-                            break;
-                        default:
-                            target += "Gunner" + alias.Substring(6) + "; ";
-                            target += "Steve" + alias.Substring(6) + "; ";
-                            break;
+                        target += "Gunner" + alias.Substring(6) + "; ";
+                    }
+                    else if (category.StartsWith("AH64D_George_PLT"))
+                    {
+                        target += "Steve" + alias.Substring(6) + "; ";
+                    }
+                    else
+                    {
+                        target += "Gunner" + alias.Substring(6) + "; ";
+                        target += "Steve" + alias.Substring(6) + "; ";
                     }
 
                     counter = counter + 1;
