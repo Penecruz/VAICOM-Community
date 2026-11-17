@@ -1073,7 +1073,10 @@ namespace VAICOM
                             bool dcsKneeboardAutoBrowse = State.activeconfig.KneeboardlinkPTT && State.activeconfig.Kneeboard_Enabled;
                             bool openKneeboardAutoBrowse = State.activeconfig.OpenKneeboard_AutoBrowse && State.activeconfig.OpenKneeboard_Out;
 
-                            if (dcsKneeboardAutoBrowse || openKneeboardAutoBrowse)
+                            // Don't attempt to switch page for Vaicom overlay commands.
+                            bool allowSwitchPage = !State.currentcommand.isVaicomOverlay();
+
+                            if (allowSwitchPage && (dcsKneeboardAutoBrowse || openKneeboardAutoBrowse))
                             {
                                 string cat = "";
                                 bool isAiCrewRecipient = IsAiCrewRecipientClass(State.currentrecipientclass);

@@ -201,7 +201,7 @@
             public static Recipientclass WSO = new Recipientclass { Name = "WSO" };
             public static Recipientclass GeorgeCPG = new Recipientclass { Name = "GeorgeCPG" };
             public static Recipientclass Kneeboard = new Recipientclass { Name = "Kneeboard" };
-            public static Recipientclass VaicomOverlay = new Recipientclass { Name = "VAICOM Overlay" };
+            public static Recipientclass VaicomOverlay = new Recipientclass { Name = "vaicom_overlay" };
         }
 
         public enum RecipientCategories
