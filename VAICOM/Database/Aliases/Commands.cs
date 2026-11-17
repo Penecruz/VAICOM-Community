@@ -482,8 +482,8 @@ namespace VAICOM
                 { "Page",                  "wMsgShowKneeboardTab"         },
 
                 // VAICOM Overlay
-                { "Show VAICOM Overlay",   "wMsgVaicomOverlayShow"        },
-                { "Hide VAICOM Overlay",   "wMsgVaicomOverlayHide"        },
+                { "Show VAICOM Overlay",   "showvaicomoverlay"        },
+                { "Hide VAICOM Overlay",   "hidevaicomoverlay"        },
 
                 // Moose
                 // Moose Airboss In flight commands

@@ -618,11 +618,11 @@ namespace VAICOM
                         {
                             switch (State.currentcommand.dcsid)
                             {
-                                case "wMsgVaicomOverlayShow":
+                                case "showvaicomoverlay":
                                     UI.VaicomOverlayWindow.ShowOverlay();
                                     UI.Playsound.Proceed();
                                     break;
-                                case "wMsgVaicomOverlayHide":
+                                case "hidevaicomoverlay":
                                     UI.VaicomOverlayWindow.HideOverlay();
                                     UI.Playsound.Proceed();
                                     break;

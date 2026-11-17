@@ -451,8 +451,8 @@ namespace VAICOM
 
             // VAICOM overlay window 25125-25150
             { "wMsgVaicomOverlayCmndsNull",          new Command { uniqueid = 25125, category = CommandCategories.vaicom_overlay, eventnumber = 4000, dcsid = "wMsgVaicomOverlayCmndsNull" } },
-            { "wMsgVaicomOverlayShow",               new Command { uniqueid = 25126, category = CommandCategories.vaicom_overlay, eventnumber = 4000, dcsid = "wMsgVaicomOverlayShow" } },
-            { "wMsgVaicomOverlayHide",               new Command { uniqueid = 25127, category = CommandCategories.vaicom_overlay, eventnumber = 4000, dcsid = "wMsgVaicomOverlayHide" } },
+            { "showvaicomoverlay",                   new Command { uniqueid = 25126, category = CommandCategories.vaicom_overlay, eventnumber = 4000, dcsid = "showvaicomoverlay" } },
+            { "hidevaicomoverlay",                   new Command { uniqueid = 25127, category = CommandCategories.vaicom_overlay, eventnumber = 4000, dcsid = "hidevaicomoverlay" } },
             { "wMsgVaicomOverlayCmndsMaximum",       new Command { uniqueid = 25150, category = CommandCategories.vaicom_overlay, eventnumber = 4000, dcsid = "wMsgVaicomOverlayCmndsMaximum" } },
 
             // George CPG/PLT commands 25200-25999

@@ -285,8 +285,8 @@ namespace VAICOM
                 { "wMsgKneeboardPreviousTab", "Previous kneeboard tab" },
                 { "wMsgShowKneeboardTab", "Show kneeboard tab"       },
 
-                { "wMsgVaicomOverlayShow", "Show VAICOM Overlay"     },
-                { "wMsgVaicomOverlayHide", "Hide VAICOM Overlay"     },
+                { "showvaicomoverlay",      "Show VAICOM Overlay"     },
+                { "hidevaicomoverlay",      "Hide VAICOM Overlay"     },
             //};
 
             //public static Dictionary<string, string> cockpitcontrol = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
