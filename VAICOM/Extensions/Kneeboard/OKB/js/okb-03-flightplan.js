@@ -2123,22 +2123,54 @@
                 const headingRad = renderHeading * (Math.PI / 180.0);
                 const rightX = Math.cos(headingRad);
                 const rightY = Math.sin(headingRad);
+                const forwardX = -rightY;
+                const forwardY = rightX;
                 const minSepPx = Math.max(118, Math.max(bodyWidth, bodyHeight) + 12);
-                function hasConflict(x, y) {
-                  return doghousePlacedAnchors.some(function (a) {
+                function getConflicts(x, y) {
+                  return doghousePlacedAnchors.filter(function (a) {
                     const dx = Number(a.x) - Number(x);
                     const dy = Number(a.y) - Number(y);
                     return ((dx * dx) + (dy * dy)) < (minSepPx * minSepPx);
                   });
                 }
+                function normalizeAngleDeltaDeg(a, b) {
+                  let diff = Math.abs(Number(a) - Number(b)) % 360;
+                  if (diff > 180) diff = 360 - diff;
+                  return diff;
+                }
+                function isSameTrackReciprocalConflict(anchor) {
+                  const anchorHeading = Number(anchor && anchor.renderHeadingDeg);
+                  if (!isFinite(anchorHeading) || !isFinite(renderHeading)) return false;
+
+                  const headingDelta = normalizeAngleDeltaDeg(renderHeading, anchorHeading);
+                  const isReciprocal = Math.abs(headingDelta - 180) <= 28;
+                  if (!isReciprocal) return false;
+
+                  const midDx = Number(anchor && anchor.midX) - Number(p.x);
+                  const midDy = Number(anchor && anchor.midY) - Number(p.y);
+                  if (!isFinite(midDx) || !isFinite(midDy)) return false;
+
+                  const crossTrackPx = Math.abs((midDx * rightX) + (midDy * rightY));
+                  const alongTrackPx = Math.abs((midDx * forwardX) + (midDy * forwardY));
+                  const crossTrackLimitPx = Math.max(26, offsetPx * 0.7);
+                  const alongTrackLimitPx = Math.max(90, minSepPx * 1.1);
+
+                  return crossTrackPx <= crossTrackLimitPx && alongTrackPx <= alongTrackLimitPx;
+                }
 
                 let sideSign = 1;
                 let anchorX = p.x + (rightX * offsetPx * sideSign);
                 let anchorY = p.y + (rightY * offsetPx * sideSign);
-                if (hasConflict(anchorX, anchorY)) {
-                  sideSign = -1;
-                  anchorX = p.x + (rightX * offsetPx * sideSign);
-                  anchorY = p.y + (rightY * offsetPx * sideSign);
+                const rightConflicts = getConflicts(anchorX, anchorY);
+                if (rightConflicts.length) {
+                  const keepRightForReciprocal = rightConflicts.every(function (a) {
+                    return isSameTrackReciprocalConflict(a);
+                  });
+                  if (!keepRightForReciprocal) {
+                    sideSign = -1;
+                    anchorX = p.x + (rightX * offsetPx * sideSign);
+                    anchorY = p.y + (rightY * offsetPx * sideSign);
+                  }
                 }
                 const bodyX = anchorX - (bodyWidth / 2);
                 const bodyY = anchorY - (bodyHeight / 2);
@@ -2217,7 +2249,11 @@
 
                 doghousePlacedAnchors.push({
                   x: anchorX,
-                  y: anchorY
+                  y: anchorY,
+                  midX: p.x,
+                  midY: p.y,
+                  renderHeadingDeg: renderHeading,
+                  sideSign: sideSign
                 });
 
                 gDog.style.pointerEvents = 'none';
