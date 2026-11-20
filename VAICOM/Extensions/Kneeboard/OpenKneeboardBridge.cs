@@ -4975,11 +4975,17 @@ namespace VAICOM
                     try
                     {
                         OpenKneeboardBridgeRuntimeDataSnapshot runtimeData = GetRuntimeDataSnapshot();
-                        bool moduleConnectedNow = IsModuleConnectedStrict(runtimeData);
+                        bool moduleConnectedNow = IsModuleConnectedBroad(runtimeData);
 
                         FastAvBusState value;
                         bool hasAny = TryGetFastAvBus(out value);
                         bool fresh = hasAny && (DateTime.UtcNow - value.UpdatedUtc) <= TimeSpan.FromSeconds(2);
+
+                        // AvBus stream itself is a strong runtime signal; avoid hard OFF when ID snapshots lag.
+                        if (!moduleConnectedNow && hasAny)
+                        {
+                            moduleConnectedNow = true;
+                        }
 
                         string state = "OFF";
                         if (moduleConnectedNow)
@@ -5725,7 +5731,7 @@ namespace VAICOM
 
                 public static void SetRawServerCaptureEnabled(bool enabled)
                 {
-                    bool allow = enabled && IsDebugModeEnabled();
+                    bool allow = enabled;
 
                     lock (Sync)
                     {
@@ -5747,7 +5753,7 @@ namespace VAICOM
                     bool doCapture;
                     lock (Sync)
                     {
-                        doCapture = captureRawServerMessages && IsDebugModeEnabled();
+                        doCapture = captureRawServerMessages;
                         if (!doCapture)
                         {
                             return;
@@ -5774,8 +5780,9 @@ namespace VAICOM
 
                         lock (RawServerLogSync)
                         {
+                            string line = DateTime.UtcNow.ToString("o") + " | " + rawMessage + Environment.NewLine;
                             Directory.CreateDirectory(logsFolder);
-                            File.AppendAllText(filePath, DateTime.UtcNow.ToString("o") + " | " + rawMessage + Environment.NewLine);
+                            File.AppendAllText(filePath, line);
                         }
                     }
                     catch

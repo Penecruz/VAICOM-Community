@@ -535,9 +535,9 @@
       }
 
       const state = getFastAvBusDisplayState();
-      const classState = (!fastAvBus.enabled || state === 'OFF')
+      const classState = !fastAvBus.enabled
         ? 'off'
-        : (state === 'LIVE' ? 'live' : (state === 'ON' ? 'on' : 'degraded'));
+        : (state === 'LIVE' ? 'live' : (state === 'DEGRADED' ? 'degraded' : 'on'));
       btn.className = 'fltPlanQuickBtn fastAvBusBtn ' + classState;
       btn.textContent = 'AID';
 

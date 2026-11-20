@@ -120,6 +120,10 @@ namespace VAICOM
                         AH64GeorgeState.GroundSpeed = groundSpeedKnotsOpt ?? 0;
                     }
                     Extensions.Kneeboard.OpenKneeboardBridge.UpdateFastOwnship(x, y, z, headingOpt, groundSpeedKnotsOpt, wowState);
+
+                    
+                    // Parse avbus from the same message when present so fuel data is not dropped (hopefully!)
+                    DetectFastAvBusState(receivedString);
                 }
                 catch (Exception e)
                 {
@@ -133,10 +137,18 @@ namespace VAICOM
             {
                 const string prefix = "missiondata.update.avbus";
                 receivedString = (receivedString ?? "").Trim();
-                if (string.IsNullOrEmpty(receivedString) || !receivedString.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+                if (string.IsNullOrEmpty(receivedString))
                 {
                     return false;
                 }
+
+                int prefixIndex = receivedString.IndexOf(prefix, StringComparison.OrdinalIgnoreCase);
+                if (prefixIndex < 0)
+                {
+                    return false;
+                }
+
+                receivedString = receivedString.Substring(prefixIndex);
 
                 try
                 {

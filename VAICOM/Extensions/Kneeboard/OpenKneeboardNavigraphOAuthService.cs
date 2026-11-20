@@ -318,10 +318,7 @@ namespace VAICOM
                                 new KeyValuePair<string, string>("client_id", config.ClientId),
                                 new KeyValuePair<string, string>("refresh_token", refreshToken),
                             };
-                            if (!string.IsNullOrWhiteSpace(config.Scope))
-                            {
-                                payload.Add(new KeyValuePair<string, string>("scope", config.Scope));
-                            }
+                            // Do not send scope on refresh by default; OAuth servers could reject scope changes on refresh? Pene
                             if (!string.IsNullOrWhiteSpace(config.ClientSecret))
                             {
                                 payload.Add(new KeyValuePair<string, string>("client_secret", config.ClientSecret));
@@ -386,6 +383,16 @@ namespace VAICOM
                                 };
 
                                 ApplyTileCookiesFromResponse(updated, response);
+
+                                // Preserve any existing auth fields not destroy and overwrite(should keep it simple maybe?)
+                                // transient refresh responses should not drop useful persisted data.
+                                foreach (var prop in existing.Properties())
+                                {
+                                    if (updated[prop.Name] == null)
+                                    {
+                                        updated[prop.Name] = prop.Value;
+                                    }
+                                }
 
                                 OpenKneeboardNavigraphEfbState.SetEncryptedAuthBlob(updated.ToString(Newtonsoft.Json.Formatting.None));
                                 message = "Token refreshed.";

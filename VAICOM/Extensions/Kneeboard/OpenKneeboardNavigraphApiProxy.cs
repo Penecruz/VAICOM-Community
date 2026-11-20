@@ -97,6 +97,7 @@ namespace VAICOM
                                 "https://charts.api.navigraph.com/2/airports/" + Uri.EscapeDataString(normalizedAirport) + "/signedurls/charts.json",
                             };
 
+                            bool chartNotFound = false;
                             string resolvedCatalogUrl = null;
                             foreach (var url in catalogUrls)
                             {
@@ -104,7 +105,12 @@ namespace VAICOM
                                 var resp = client.GetAsync(url).GetAwaiter().GetResult();
                                 if (!resp.IsSuccessStatusCode)
                                 {
-                                    try { Log.Write("Navigraph charts request failed: " + ((int)resp.StatusCode) + " " + resp.ReasonPhrase, VAICOM.Static.Colors.Warning); } catch { }
+                                    try { Log.Write(FormatNavigraphHttpFailure("Navigraph charts request failed", resp.StatusCode, resp.ReasonPhrase), VAICOM.Static.Colors.Warning); } catch { }
+                                    if ((int)resp.StatusCode == 404)
+                                    {
+                                        chartNotFound = true;
+                                        break;
+                                    }
                                     continue;
                                 }
 
@@ -149,7 +155,12 @@ namespace VAICOM
                                     var signedResp = client.GetAsync(signedUrl).GetAwaiter().GetResult();
                                     if (!signedResp.IsSuccessStatusCode)
                                     {
-                                        try { Log.Write("Navigraph charts signed URL request failed: " + ((int)signedResp.StatusCode) + " " + signedResp.ReasonPhrase, VAICOM.Static.Colors.Warning); } catch { }
+                                        try { Log.Write(FormatNavigraphHttpFailure("Navigraph charts signed URL request failed", signedResp.StatusCode, signedResp.ReasonPhrase), VAICOM.Static.Colors.Warning); } catch { }
+                                        if ((int)signedResp.StatusCode == 404)
+                                        {
+                                            chartNotFound = true;
+                                            break;
+                                        }
                                         continue;
                                     }
 
@@ -166,6 +177,11 @@ namespace VAICOM
                                 {
                                     break;
                                 }
+                            }
+
+                            if (chartNotFound)
+                            {
+                                return null;
                             }
 
                             if (string.IsNullOrWhiteSpace(txt))
@@ -991,6 +1007,7 @@ namespace VAICOM
                             var resp = client.GetAsync(url).GetAwaiter().GetResult();
                             if (!resp.IsSuccessStatusCode)
                             {
+                                try { Log.Write(FormatNavigraphHttpFailure("Navigraph chart tile request failed", resp.StatusCode, resp.ReasonPhrase), VAICOM.Static.Colors.Warning); } catch { }
                                 return null;
                             }
                             var bytes = resp.Content.ReadAsByteArrayAsync().GetAwaiter().GetResult();
@@ -1049,9 +1066,14 @@ namespace VAICOM
                                     try
                                     {
                                         string body = resp.Content.ReadAsStringAsync().GetAwaiter().GetResult();
-                                        Log.Write("Navigraph chart image request failed: " + ((int)resp.StatusCode) + " " + resp.ReasonPhrase + " body=" + BuildLogPreview(body), VAICOM.Static.Colors.Warning);
+                                        Log.Write(FormatNavigraphHttpFailure("Navigraph chart image request failed", resp.StatusCode, resp.ReasonPhrase) + " body=" + BuildLogPreview(body), VAICOM.Static.Colors.Warning);
                                     }
                                     catch { }
+
+                                    if ((int)resp.StatusCode == 404)
+                                    {
+                                        return null;
+                                    }
                                 }
                                 if (resp.IsSuccessStatusCode)
                                 {
@@ -1074,7 +1096,11 @@ namespace VAICOM
                             if (string.IsNullOrWhiteSpace(apiBase)) apiBase = "https://api.navigraph.com/v1";
                             var url = apiBase.TrimEnd('/') + $"/charts/{Uri.EscapeDataString(chartId)}/image";
                             var resp = client.GetAsync(url).GetAwaiter().GetResult();
-                            if (!resp.IsSuccessStatusCode) return null;
+                            if (!resp.IsSuccessStatusCode)
+                            {
+                                try { Log.Write(FormatNavigraphHttpFailure("Navigraph chart image fallback request failed", resp.StatusCode, resp.ReasonPhrase), VAICOM.Static.Colors.Warning); } catch { }
+                                return null;
+                            }
                             var bytes = resp.Content.ReadAsByteArrayAsync().GetAwaiter().GetResult();
                             TryWriteTileCache(cacheKey, bytes);
                             return bytes;
@@ -1124,6 +1150,29 @@ namespace VAICOM
                     }
 
                     return s.Substring(0, 220) + "...";
+                }
+
+                private static string FormatNavigraphHttpFailure(string context, HttpStatusCode statusCode, string reasonPhrase)
+                {
+                    string message = (context ?? "Navigraph request failed") + ": " + ((int)statusCode) + " " + (reasonPhrase ?? "");
+                    string hint = BuildNavigraphHttpStatusHint(statusCode);
+                    return string.IsNullOrWhiteSpace(hint) ? message : (message + " - " + hint);
+                }
+
+                private static string BuildNavigraphHttpStatusHint(HttpStatusCode statusCode)
+                {
+                    int code = (int)statusCode;
+                    if (code == 403)
+                    {
+                        return "No valid credentials or access denied; try logging in to Navigraph again.";
+                    }
+
+                    if (code == 404)
+                    {
+                        return "No chart exists for this airport or region.";
+                    }
+
+                    return "";
                 }
 
                 private static string TryResolveAirportName(HttpClient client, string icao)
@@ -1445,7 +1494,7 @@ namespace VAICOM
                                             {
                                                 try
                                                 {
-                                                    Log.Write("Navigraph enroute tile request failed: " + ((int)resp.StatusCode) + " " + resp.ReasonPhrase, VAICOM.Static.Colors.Warning);
+                                                    Log.Write(FormatNavigraphHttpFailure("Navigraph enroute tile request failed", resp.StatusCode, resp.ReasonPhrase), VAICOM.Static.Colors.Warning);
 
                                                     if ((int)resp.StatusCode == 403)
                                                     {

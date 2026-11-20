@@ -1291,7 +1291,7 @@
     document.getElementById('fastAvBusToggleBtn').addEventListener('click', function (ev) {
       ev.preventDefault();
       ev.stopPropagation();
-      if (selectedTab !== 'DTC') return;
+      if (selectedTab !== 'DTC' && selectedTab !== 'EFB') return;
       if (fastAvBusLongPressFired) {
         fastAvBusLongPressFired = false;
         return;
