@@ -873,7 +873,7 @@ vaicom.insert = {
         self:PollProbe()
 
         -- If the receiving server socket is pending, retry every 0.5 seconds
-        -- retry until successful or until 120 retries (about 60 seconds)
+        -- retry until successful or until 360 retries (about 3 minutes)
         if vaicom.receivePending then
             local now = socket.gettime()
             if now >= vaicom.receiveNextTry then
@@ -890,7 +890,7 @@ vaicom.insert = {
                 if ok then
                     vaicom.receivePending = false
                     base.log.write("VAICOM", base.log.INFO, "receiving server listening after " .. vaicom.receiveRetries .. " retries")
-                elseif vaicom.receiveRetries >= 120 then
+                elseif vaicom.receiveRetries >= 360 then
                     vaicom.receivePending = false
                     -- socket.try raises a table, not a string so get the actual error message
                     local msg = type(err) == "table" and tostring(err[1] or err.message or err) or tostring(err)

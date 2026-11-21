@@ -402,7 +402,7 @@ namespace VAICOM
                     // Users should set this to any empty string in VoiceAttack even if their action does not
                     // require a value. This is due to VoiceAttack remembering what the last value was
                     // that was set, so will reuse that value even if one is not specified.
-                    if (string.IsNullOrEmpty(value))
+                    if (string.IsNullOrEmpty(value) || value.Equals("Not set", StringComparison.OrdinalIgnoreCase))
                     {
                         value = "";
                     }

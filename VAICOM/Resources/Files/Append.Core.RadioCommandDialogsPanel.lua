@@ -6354,9 +6354,9 @@ base.vaicom.init = {
 		if base.vaicom.receiverRetries == 1 then
 			base.print("VAICOM: Receiving server socket on " .. base.tostring(config.receiveaddress) .. ":" .. base.tostring(config.receiveport) .. " failed (" .. msg .. "), retrying...")
 		end
-		if base.vaicom.receiverRetries >= 120 then   -- about 60 s, then give up
+		if base.vaicom.receiverRetries >= 360 then   -- about 3 minutes, then give up
 			base.vaicom.receiverPending = nil
-			base.print("VAICOM: Receiving server socket on " .. base.tostring(config.receiveaddress) .. ":" .. base.tostring(config.receiveport) .. " failed (" .. msg .. "), retries exceeded so giving up")
+			base.error("VAICOM: Receiving server socket on " .. base.tostring(config.receiveaddress) .. ":" .. base.tostring(config.receiveport) .. " failed (" .. msg .. "), retries exceeded so giving up")
 		else
 			base.vaicom.receiverPending = true
 		end
