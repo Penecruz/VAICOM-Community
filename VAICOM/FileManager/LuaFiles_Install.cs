@@ -614,7 +614,7 @@ namespace VAICOM
 
                                                     try
                                                     {
-                                                        using (StreamWriter writer = new StreamWriter(path, true))
+                                                        using (StreamWriter writer = new StreamWriter(path, false))
                                                         {
                                                             writer.Write(writestring);
                                                         }
